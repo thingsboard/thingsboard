@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2023 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,8 +54,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class TbGetOriginatorFieldsNodeTest {
+
     private static final EntityId DUMMY_ENTITY_ID = new DeviceId(UUID.randomUUID());
-    public static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
+    private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
         @Override
         public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
             try {
@@ -81,15 +82,14 @@ public class TbGetOriginatorFieldsNodeTest {
 
     @BeforeEach
     public void setUp() {
-        config = new TbGetOriginatorFieldsConfiguration();
         node = new TbGetOriginatorFieldsNode();
+        config = new TbGetOriginatorFieldsConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
     }
 
     @Test
-    public void givenConfigWithNullFetchTo_whenOnInit_thenException() {
+    public void givenConfigWithNullFetchTo_whenInit_thenException() {
         // GIVEN
-        config = config.defaultConfiguration();
         config.setFetchTo(null);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
@@ -97,15 +97,13 @@ public class TbGetOriginatorFieldsNodeTest {
         var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
 
         // THEN
-        assertThat(exception.getMessage()).isEqualTo("FetchTo cannot be NULL!");
+        assertThat(exception.getMessage()).isEqualTo("FetchTo cannot be null!");
         verify(ctxMock, never()).tellSuccess(any());
     }
 
     @Test
     public void givenDefaultConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
-        config = config.defaultConfiguration();
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
         node.init(ctxMock, nodeConfiguration);
@@ -311,35 +309,18 @@ public class TbGetOriginatorFieldsNodeTest {
     }
 
     @Test
-    public void givenEmptyFieldsMapping_whenOnMsg_thenShouldTellSuccessWithSameMsg() {
+    public void givenEmptyFieldsMapping_whenInit_thenException() {
         // GIVEN
+        config = config.defaultConfiguration();
         config.setFieldsMapping(Collections.emptyMap());
-        config.setIgnoreNullStrings(false);
-        config.setFetchTo(FetchTo.METADATA);
-
-        node.config = config;
-        node.fetchTo = FetchTo.METADATA;
-        var msgMetaData = new TbMsgMetaData(Map.of(
-                "testKey1", "testValue1",
-                "testKey2", "123"));
-        var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_ENTITY_ID, msgMetaData, msgData);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
-        node.onMsg(ctxMock, msg);
+        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
 
         // THEN
-        var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
-        verify(ctxMock, never()).tellFailure(any(), any());
-
-        var expectedMsgMetaData = new TbMsgMetaData(Map.of(
-                "testKey1", "testValue1",
-                "testKey2", "123"
-        ));
-
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msgData);
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(expectedMsgMetaData);
+        assertThat(exception.getMessage()).isEqualTo("At least one field mapping should be specified!");
+        verify(ctxMock, never()).tellSuccess(any());
     }
 
     @Test
@@ -373,4 +354,5 @@ public class TbGetOriginatorFieldsNodeTest {
         assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msgData);
         assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msgMetaData);
     }
+
 }

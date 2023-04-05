@@ -60,7 +60,7 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     }
 
     protected ObjectNode getMsgDataAsObjectNode(TbMsg msg) {
-        JsonNode msgDataNode = JacksonUtil.toJsonNode(msg.getData());
+        var msgDataNode = JacksonUtil.toJsonNode(msg.getData());
         if (msgDataNode == null || !msgDataNode.isObject()) {
             throw new IllegalArgumentException("Message body is not an object!");
         }

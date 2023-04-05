@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.metadata;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import org.junit.runner.RunWith;
@@ -66,7 +65,7 @@ import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @RunWith(MockitoJUnitRunner.class)
-public abstract class TbAbstractAttributeNodeTest {
+public abstract class OldTbAbstractAttributeNodeTest {
     final CustomerId customerId = new CustomerId(Uuids.timeBased());
     final TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
     final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
@@ -74,24 +73,23 @@ public abstract class TbAbstractAttributeNodeTest {
     final String keyAttrConf = "${word}";
     final String valueAttrConf = "${result}";
     @Mock
-    TbContext ctx;
+    protected TbContext ctxMock;
     @Mock
-    AttributesService attributesService;
+    protected AttributesService attributesServiceMock;
     @Mock
-    TimeseriesService timeseriesService;
+    protected TimeseriesService timeseriesServiceMock;
     @Mock
-    UserService userService;
+    protected UserService userServiceMock;
     @Mock
-    AssetService assetService;
+    protected AssetService assetServiceMock;
     @Mock
-    DeviceService deviceService;
+    protected DeviceService deviceServiceMock;
     TbMsg msg;
     Map<String, String> metaData;
-    TbAbstractGetEntityAttrNode node;
+    TbAbstractGetEntityAttrNode<? extends EntityId> node;
 
-    void init(TbAbstractGetEntityAttrNode node) throws TbNodeException {
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(getTbNodeConfig()));
+    protected void init(TbAbstractGetEntityAttrNode node) throws TbNodeException {
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(getTbNodeConfig()));
 
         metaData = new HashMap<>();
         metaData.putIfAbsent("word", "temperature");
@@ -104,13 +102,13 @@ public abstract class TbAbstractAttributeNodeTest {
     void errorThrownIfCannotLoadAttributes(User user) {
         msg = TbMsg.newMsg("USER", user.getId(), new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
-        when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(getEntityId()), eq(SERVER_SCOPE), anyCollection()))
+        when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
+        when(attributesServiceMock.find(any(), eq(getEntityId()), eq(SERVER_SCOPE), anyCollection()))
                 .thenThrow(new IllegalStateException("something wrong"));
 
-        node.onMsg(ctx, msg);
+        node.onMsg(ctxMock, msg);
         final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellFailure(same(msg), captor.capture());
+        verify(ctxMock).tellFailure(same(msg), captor.capture());
 
         Throwable value = captor.getValue();
         assertEquals("something wrong", value.getMessage());
@@ -120,13 +118,13 @@ public abstract class TbAbstractAttributeNodeTest {
     void errorThrownIfCannotLoadAttributesAsync(User user) {
         msg = TbMsg.newMsg("USER", user.getId(), new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
-        when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(getEntityId()), eq(SERVER_SCOPE), anyCollection()))
+        when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
+        when(attributesServiceMock.find(any(), eq(getEntityId()), eq(SERVER_SCOPE), anyCollection()))
                 .thenReturn(Futures.immediateFailedFuture(new IllegalStateException("something wrong")));
 
-        node.onMsg(ctx, msg);
+        node.onMsg(ctxMock, msg);
         final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellFailure(same(msg), captor.capture());
+        verify(ctxMock).tellFailure(same(msg), captor.capture());
 
         Throwable value = captor.getValue();
         assertEquals("something wrong", value.getMessage());
@@ -136,9 +134,9 @@ public abstract class TbAbstractAttributeNodeTest {
     void failedChainUsedIfCustomerCannotBeFound(User user) {
         msg = TbMsg.newMsg("USER", user.getId(), new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
-        node.onMsg(ctx, msg);
+        node.onMsg(ctxMock, msg);
         var exceptionCaptor = ArgumentCaptor.forClass(NoSuchElementException.class);
-        verify(ctx).tellFailure(eq(msg), exceptionCaptor.capture());
+        verify(ctxMock).tellFailure(eq(msg), exceptionCaptor.capture());
 
         assertThat(exceptionCaptor.getValue().getMessage()).contains("Did not find entity! Msg ID: ");
         assertTrue(msg.getMetaData().getData().isEmpty());
@@ -146,30 +144,29 @@ public abstract class TbAbstractAttributeNodeTest {
 
     void entityAttributeAddedInMetadata(EntityId entityId, String type) {
         msg = TbMsg.newMsg(type, entityId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-        entityAttributeFetched(getEntityId());
+        entityAttributesFetched(getEntityId());
     }
 
     void usersCustomerAttributesFetched(User user) {
         msg = TbMsg.newMsg("USER", user.getId(), new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
-        entityAttributeFetched(getEntityId());
+        entityAttributesFetched(getEntityId());
     }
 
     void assetsCustomerAttributesFetched(Asset asset) {
         msg = TbMsg.newMsg("ASSET", asset.getId(), new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
-        entityAttributeFetched(getEntityId());
+        entityAttributesFetched(getEntityId());
     }
 
     void deviceCustomerAttributesFetched(Device device) {
         msg = TbMsg.newMsg("DEVICE", device.getId(), new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
-        entityAttributeFetched(getEntityId());
+        entityAttributesFetched(getEntityId());
     }
 
     void deviceCustomerTelemetryFetched(Device device) throws TbNodeException {
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(getTbNodeConfigForTelemetry()));
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(getTbNodeConfigForTelemetry()));
 
         TbAbstractGetEntityAttrNode node = getEmptyNode();
         node.init(null, nodeConfiguration);
@@ -178,32 +175,33 @@ public abstract class TbAbstractAttributeNodeTest {
 
         List<TsKvEntry> timeseries = Lists.newArrayList(new BasicTsKvEntry(1L, new StringDataEntry("temperature", "highest")));
 
-        when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
-        when(timeseriesService.findLatest(any(), eq(getEntityId()), anyCollection()))
+        when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
+        when(timeseriesServiceMock.findLatest(any(), eq(getEntityId()), anyCollection()))
                 .thenReturn(Futures.immediateFuture(timeseries));
 
-        node.onMsg(ctx, msg);
-        verify(ctx).tellSuccess(msg);
+        node.onMsg(ctxMock, msg);
+        verify(ctxMock).tellSuccess(msg);
         assertEquals(msg.getMetaData().getValue("answer"), "highest");
     }
 
-    void entityAttributeFetched(EntityId entityId) {
-        List<AttributeKvEntry> attributes = Lists.newArrayList(new BaseAttributeKvEntry(new StringDataEntry("temperature", "high"), 1L));
+    protected void entityAttributesFetched(EntityId entityId) {
+        List<AttributeKvEntry> attributes = List.of(new BaseAttributeKvEntry(new StringDataEntry("temperature", "high"), 1L));
 
-        when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(entityId), eq(SERVER_SCOPE), anyCollection()))
+        when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
+        when(attributesServiceMock.find(any(), eq(entityId), eq(SERVER_SCOPE), anyCollection()))
                 .thenReturn(Futures.immediateFuture(attributes));
 
-        node.onMsg(ctx, msg);
-        verify(ctx).tellSuccess(msg);
+        node.onMsg(ctxMock, msg);
+
+        verify(ctxMock).tellSuccess(msg);
         assertEquals(msg.getMetaData().getValue("answer"), "high");
     }
 
-    TbGetEntityAttrNodeConfiguration getTbNodeConfig() {
+    protected TbGetEntityAttrNodeConfiguration getTbNodeConfig() {
         return getConfig(false);
     }
 
-    TbGetEntityAttrNodeConfiguration getTbNodeConfigForTelemetry() {
+    protected TbGetEntityAttrNodeConfiguration getTbNodeConfigForTelemetry() {
         return getConfig(true);
     }
 
@@ -222,17 +220,17 @@ public abstract class TbAbstractAttributeNodeTest {
     abstract EntityId getEntityId();
 
     void mockFindDevice(Device device) {
-        when(ctx.getDeviceService()).thenReturn(deviceService);
-        when(deviceService.findDeviceByIdAsync(any(), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+        when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
+        when(deviceServiceMock.findDeviceByIdAsync(any(), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
     }
 
     void mockFindAsset(Asset asset) {
-        when(ctx.getAssetService()).thenReturn(assetService);
-        when(assetService.findAssetByIdAsync(any(), eq(asset.getId()))).thenReturn(Futures.immediateFuture(asset));
+        when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
+        when(assetServiceMock.findAssetByIdAsync(any(), eq(asset.getId()))).thenReturn(Futures.immediateFuture(asset));
     }
 
     void mockFindUser(User user) {
-        when(ctx.getUserService()).thenReturn(userService);
-        when(userService.findUserByIdAsync(any(), eq(user.getId()))).thenReturn(Futures.immediateFuture(user));
+        when(ctxMock.getUserService()).thenReturn(userServiceMock);
+        when(userServiceMock.findUserByIdAsync(any(), eq(user.getId()))).thenReturn(Futures.immediateFuture(user));
     }
 }

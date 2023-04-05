@@ -51,6 +51,7 @@ import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 @Slf4j
 public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> extends TbAbstractNodeWithFetchTo<C> {
+
     private static final String VALUE = "value";
     private static final String TS = "ts";
     private boolean isTellFailureIfAbsent;
@@ -188,4 +189,5 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         failuresPairSet.clear();
         return new RuntimeException(errorMessage.toString());
     }
+
 }

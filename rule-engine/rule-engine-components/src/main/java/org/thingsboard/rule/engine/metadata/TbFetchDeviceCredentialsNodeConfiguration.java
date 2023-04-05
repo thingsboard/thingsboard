@@ -24,10 +24,12 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TbFetchDeviceCredentialsNodeConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbFetchDeviceCredentialsNodeConfiguration> {
+
     @Override
     public TbFetchDeviceCredentialsNodeConfiguration defaultConfiguration() {
         var configuration = new TbFetchDeviceCredentialsNodeConfiguration();
         configuration.setFetchTo(FetchTo.METADATA);
         return configuration;
     }
+
 }

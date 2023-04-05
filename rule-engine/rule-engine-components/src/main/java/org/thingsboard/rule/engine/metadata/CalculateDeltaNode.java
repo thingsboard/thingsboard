@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2023 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -34,7 +35,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.common.util.JacksonUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -54,6 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
 public class CalculateDeltaNode implements TbNode {
+
     private Map<EntityId, ValueWithTs> cache;
     private CalculateDeltaNodeConfiguration config;
     private TbContext ctx;
@@ -93,7 +94,6 @@ public class CalculateDeltaNode implements TbNode {
                                 ctx.tellNext(msg, TbRelationTypes.FAILURE);
                                 return;
                             }
-
 
                             if (config.getRound() != null) {
                                 delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
@@ -181,4 +181,5 @@ public class CalculateDeltaNode implements TbNode {
             this.value = value;
         }
     }
+
 }
