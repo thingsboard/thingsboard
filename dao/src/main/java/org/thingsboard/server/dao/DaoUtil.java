@@ -110,6 +110,10 @@ public abstract class DaoUtil {
         return ids;
     }
 
+    public static <I extends EntityId> I fromUuid(UUID uuid, Function<UUID, I> mapper) {
+        return uuid != null ? mapper.apply(uuid) : null;
+    }
+
     public static <T> void processInBatches(Function<PageLink, PageData<T>> finder, int batchSize, Consumer<T> processor) {
         processBatches(finder, batchSize, batch -> batch.getData().forEach(processor));
     }

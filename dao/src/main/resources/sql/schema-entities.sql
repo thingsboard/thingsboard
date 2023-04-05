@@ -1098,3 +1098,12 @@ BEGIN
     RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result))::text;
 END
 $$;
+
+CREATE TABLE IF NOT EXISTS entity_statistics (
+    entity_id uuid NOT NULL,
+    entity_type varchar(32) NOT NULL,
+    tenant_id uuid,
+    latest_value jsonb,
+    ts bigint NOT NULL,
+    CONSTRAINT entity_statistics_pkey PRIMARY KEY (entity_id, entity_type)
+);

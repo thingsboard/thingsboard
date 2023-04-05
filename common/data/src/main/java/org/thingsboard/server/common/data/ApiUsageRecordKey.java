@@ -19,14 +19,17 @@ import lombok.Getter;
 
 public enum ApiUsageRecordKey {
 
-    TRANSPORT_MSG_COUNT(ApiFeature.TRANSPORT, "transportMsgCount", "transportMsgLimit"),
-    TRANSPORT_DP_COUNT(ApiFeature.TRANSPORT, "transportDataPointsCount", "transportDataPointsLimit"),
+    TRANSPORT_MSG_COUNT(ApiFeature.TRANSPORT, "transportMsgCount", "transportMsgLimit", true),
+    TRANSPORT_DP_COUNT(ApiFeature.TRANSPORT, "transportDataPointsCount", "transportDataPointsLimit", true),
     STORAGE_DP_COUNT(ApiFeature.DB, "storageDataPointsCount", "storageDataPointsLimit"),
     RE_EXEC_COUNT(ApiFeature.RE, "ruleEngineExecutionCount", "ruleEngineExecutionLimit"),
     JS_EXEC_COUNT(ApiFeature.JS, "jsExecutionCount", "jsExecutionLimit"),
     EMAIL_EXEC_COUNT(ApiFeature.EMAIL, "emailCount", "emailLimit"),
     SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit"),
-    CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit");
+    CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit"),
+
+    ACTIVE_DEVICES("activeDevicesCount"),
+    INACTIVE_DEVICES("inactiveDevicesCount");
 
     private static final ApiUsageRecordKey[] JS_RECORD_KEYS = {JS_EXEC_COUNT};
     private static final ApiUsageRecordKey[] RE_RECORD_KEYS = {RE_EXEC_COUNT};
@@ -42,11 +45,29 @@ public enum ApiUsageRecordKey {
     private final String apiCountKey;
     @Getter
     private final String apiLimitKey;
+    @Getter
+    private final boolean counter;
+    @Getter
+    private final boolean countPerEntity;
 
     ApiUsageRecordKey(ApiFeature apiFeature, String apiCountKey, String apiLimitKey) {
+        this(apiFeature, apiCountKey, apiLimitKey, false);
+    }
+
+    ApiUsageRecordKey(ApiFeature apiFeature, String apiCountKey, String apiLimitKey, boolean countPerEntity) {
         this.apiFeature = apiFeature;
         this.apiCountKey = apiCountKey;
         this.apiLimitKey = apiLimitKey;
+        this.counter = true;
+        this.countPerEntity = countPerEntity;
+    }
+
+    ApiUsageRecordKey(String apiCountKey) {
+        this.apiCountKey = apiCountKey;
+        this.apiFeature = null;
+        this.apiLimitKey = null;
+        this.counter = false;
+        this.countPerEntity = false;
     }
 
     public static ApiUsageRecordKey[] getKeys(ApiFeature feature) {

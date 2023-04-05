@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.stats;
+package org.thingsboard.server.common.data.stats;
 
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-public interface TbApiUsageReportClient {
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public interface EntityStatisticsValue {
 
-    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value);
-
-    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key);
-
-    void report(TenantId tenantId, CustomerId customerId, EntityId entityId, ApiUsageRecordKey key, long value);
+    EntityStatisticsValue update(EntityStatisticsValue newValue);
 
 }

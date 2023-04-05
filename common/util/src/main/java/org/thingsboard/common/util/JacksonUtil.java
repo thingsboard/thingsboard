@@ -125,6 +125,9 @@ public class JacksonUtil {
     }
 
     public static <T> T treeToValue(JsonNode node, Class<T> clazz) {
+        if (node == null) {
+            return null;
+        }
         try {
             return OBJECT_MAPPER.treeToValue(node, clazz);
         } catch (IOException e) {

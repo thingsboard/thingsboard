@@ -277,5 +277,8 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao, ExportableEntit
 
     PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink);
 
+    PageData<DeviceId> findDevicesIdsByTenantId(UUID tenantId, PageLink pageLink);
+
+    long count();
 
 }

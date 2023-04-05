@@ -562,9 +562,9 @@ public class DefaultTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback, dataPoints)) {
             reportActivityInternal(sessionInfo);
             TenantId tenantId = getTenantId(sessionInfo);
-            DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+            DeviceId deviceId = getDeviceId(sessionInfo);
             CustomerId customerId = getCustomerId(sessionInfo);
-            MsgPackCallback packCallback = new MsgPackCallback(msg.getTsKvListCount(), new ApiStatsProxyCallback<>(tenantId, customerId, dataPoints, callback));
+            MsgPackCallback packCallback = new MsgPackCallback(msg.getTsKvListCount(), new ApiStatsProxyCallback<>(tenantId, customerId, deviceId, dataPoints, callback));
             for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
                 TbMsgMetaData metaData = new TbMsgMetaData();
                 metaData.putValue("deviceName", sessionInfo.getDeviceName());
@@ -581,7 +581,7 @@ public class DefaultTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback, msg.getKvCount())) {
             reportActivityInternal(sessionInfo);
             TenantId tenantId = getTenantId(sessionInfo);
-            DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+            DeviceId deviceId = getDeviceId(sessionInfo);
             JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
@@ -589,7 +589,7 @@ public class DefaultTransportService implements TransportService {
             metaData.putValue(DataConstants.NOTIFY_DEVICE_METADATA_KEY, "false");
             CustomerId customerId = getCustomerId(sessionInfo);
             sendToRuleEngine(tenantId, deviceId, customerId, sessionInfo, json, metaData, SessionMsgType.POST_ATTRIBUTES_REQUEST,
-                    new TransportTbQueueCallback(new ApiStatsProxyCallback<>(tenantId, customerId, msg.getKvList().size(), callback)));
+                    new TransportTbQueueCallback(new ApiStatsProxyCallback<>(tenantId, customerId, deviceId, msg.getKvList().size(), callback)));
         }
     }
 
@@ -598,7 +598,7 @@ public class DefaultTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                    .setGetAttributes(msg).build(), new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
+                    .setGetAttributes(msg).build(), new ApiStatsProxyCallback<>(sessionInfo, 1, callback));
         }
     }
 
@@ -611,7 +611,7 @@ public class DefaultTransportService implements TransportService {
             }
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setSubscribeToAttributes(msg).build(),
-                    new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
+                    new ApiStatsProxyCallback<>(sessionInfo, 1, callback));
         }
     }
 
@@ -624,7 +624,7 @@ public class DefaultTransportService implements TransportService {
             }
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setSubscribeToRPC(msg).build(),
-                    new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
+                    new ApiStatsProxyCallback<>(sessionInfo, 1, callback));
         }
     }
 
@@ -633,7 +633,7 @@ public class DefaultTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setToDeviceRPCCallResponse(msg).build(),
-                    new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
+                    new ApiStatsProxyCallback<>(sessionInfo, 1, callback));
         }
     }
 
@@ -657,7 +657,7 @@ public class DefaultTransportService implements TransportService {
         if (checkLimits(sessionInfo, responseMsg, callback)) {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setRpcResponseStatusMsg(responseMsg).build(),
-                    new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, TransportServiceCallback.EMPTY));
+                    new ApiStatsProxyCallback<>(sessionInfo, 1, TransportServiceCallback.EMPTY));
         }
     }
 
@@ -1192,12 +1192,22 @@ public class DefaultTransportService implements TransportService {
     private class ApiStatsProxyCallback<T> implements TransportServiceCallback<T> {
         private final TenantId tenantId;
         private final CustomerId customerId;
+        private final DeviceId deviceId;
         private final int dataPoints;
         private final TransportServiceCallback<T> callback;
 
-        public ApiStatsProxyCallback(TenantId tenantId, CustomerId customerId, int dataPoints, TransportServiceCallback<T> callback) {
+        public ApiStatsProxyCallback(TenantId tenantId, CustomerId customerId, DeviceId deviceId, int dataPoints, TransportServiceCallback<T> callback) {
             this.tenantId = tenantId;
             this.customerId = customerId;
+            this.deviceId = deviceId;
+            this.dataPoints = dataPoints;
+            this.callback = callback;
+        }
+
+        public ApiStatsProxyCallback(TransportProtos.SessionInfoProto sessionInfo, int dataPoints, TransportServiceCallback<T> callback) {
+            this.tenantId = getTenantId(sessionInfo);
+            this.customerId = getCustomerId(sessionInfo);
+            this.deviceId = getDeviceId(sessionInfo);
             this.dataPoints = dataPoints;
             this.callback = callback;
         }
@@ -1205,8 +1215,8 @@ public class DefaultTransportService implements TransportService {
         @Override
         public void onSuccess(T msg) {
             try {
-                apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.TRANSPORT_MSG_COUNT, 1);
-                apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.TRANSPORT_DP_COUNT, dataPoints);
+                apiUsageClient.report(tenantId, customerId, deviceId, ApiUsageRecordKey.TRANSPORT_MSG_COUNT, 1);
+                apiUsageClient.report(tenantId, customerId, deviceId, ApiUsageRecordKey.TRANSPORT_DP_COUNT, dataPoints);
             } finally {
                 callback.onSuccess(msg);
             }

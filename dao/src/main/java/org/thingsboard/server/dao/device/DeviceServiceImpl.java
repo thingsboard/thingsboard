@@ -355,6 +355,11 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     @Override
+    public PageData<DeviceId> findDevicesIdsByTenantId(TenantId tenantId, PageLink pageLink) {
+        return deviceDao.findDevicesIdsByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     public PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -679,6 +684,11 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public long countByTenantId(TenantId tenantId) {
         return deviceDao.countByTenantId(tenantId);
+    }
+
+    @Override
+    public long count() {
+        return deviceDao.count();
     }
 
     private PaginatedRemover<TenantId, Device> tenantDevicesRemover =

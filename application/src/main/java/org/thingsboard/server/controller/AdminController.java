@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,12 +40,11 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.FeaturesInfo;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
+import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
@@ -61,11 +62,19 @@ import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
+import org.thingsboard.server.service.stats.device.DevicesStatisticsService;
+import org.thingsboard.server.service.stats.device.DevicesSummaryStatistics;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
 import org.thingsboard.server.service.system.SystemInfoService;
 import org.thingsboard.server.service.update.UpdateService;
 
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.UUID;
+
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
@@ -79,9 +88,9 @@ public class AdminController extends BaseController {
     private final SmsService smsService;
     private final AdminSettingsService adminSettingsService;
     private final SystemSecurityService systemSecurityService;
-    @Lazy
     private final JwtSettingsService jwtSettingsService;
-    @Lazy
+    @Autowired(required = false)
+    private DevicesStatisticsService devicesStatisticsService;
     private final JwtTokenFactory tokenFactory;
     private final EntitiesVersionControlService versionControlService;
     private final TbAutoCommitSettingsService autoCommitSettingsService;
@@ -380,6 +389,43 @@ public class AdminController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    @ApiOperation(value = "Get devices summary statistics (getDevicesSummaryStatistics)",
+            notes = "Calculates summary statistics of devices for a given tenant if specified, or in scope of the whole platform." + NEW_LINE +
+                    "Stats for each device is generated every day for the previous day. " +
+                    "So, for each non-deleted device the stats timestamp would be the start of the previous day. " +
+                    "For deleted device, the stats timestamp is the start of the day before the day it was deleted." + NEW_LINE +
+                    "With that in mind, you can specify either both `startTs` and `endTs`, or `periodTs` (UTC). " +
+                    "If `periodTs` is specified, the start and end ts will be the start and the end of the month for this `periodTs`.\n" +
+                    "If neither `periodTs` nor `startTs` and `endTs` are specified, the default start and end ts " +
+                    "will be the start and the end of the previous month." + NEW_LINE +
+                    "Usage example: summary statistics are retrieved on the first day of the month " +
+                    "(after the stats were generated for the previous day), without specifying timestamp ranges, " +
+                    "so that the stats cover all present devices, and all the devices that were deleted during the previous month.")
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @GetMapping("/statistics/devices")
+    public DevicesSummaryStatistics getDevicesSummaryStatistics(@RequestParam(value = "tenantId", required = false) UUID tenantUuid,
+                                                                @RequestParam(value = "periodTs", required = false) Long periodTs,
+                                                                @RequestParam(value = "periodTs", required = false) Long startTs,
+                                                                @RequestParam(value = "periodTs", required = false) Long endTs) {
+        if (devicesStatisticsService == null) {
+            throw new IllegalArgumentException("Devices statistics calculation is disabled. Use 'usage.stats.devices.enabled' ('DEVICES_STATS_ENABLED') property to enable");
+        }
+        TenantId tenantId = tenantUuid != null && !tenantUuid.equals(EntityId.NULL_UUID) ? TenantId.fromUUID(tenantUuid) : null;
+
+        ZonedDateTime period = null;
+        if (periodTs != null && periodTs != 0) {
+            period = SchedulerUtils.fromMillis(periodTs);
+        } else if (startTs == null || startTs == 0 || endTs == null || endTs == 0) {
+            period = SchedulerUtils.fromMillis(System.currentTimeMillis()).minusMonths(1);
+        }
+        if (period != null) {
+            startTs = period.withDayOfMonth(1).with(LocalTime.MIN).toInstant().toEpochMilli();
+            endTs = period.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX).toInstant().toEpochMilli();
+        }
+
+        return devicesStatisticsService.getSummaryStatistics(tenantId, startTs, endTs);
     }
 
     @ApiOperation(value = "Check for new Platform Releases (checkUpdates)",

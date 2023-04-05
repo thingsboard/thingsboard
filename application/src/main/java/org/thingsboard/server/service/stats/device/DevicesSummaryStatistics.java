@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.stats;
+package org.thingsboard.server.service.stats.device;
 
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.Builder;
+import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface TbApiUsageReportClient {
+import java.util.Map;
 
-    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value);
+@Data
+@Builder
+public class DevicesSummaryStatistics {
 
-    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key);
-
-    void report(TenantId tenantId, CustomerId customerId, EntityId entityId, ApiUsageRecordKey key, long value);
+    private final TenantId tenantId;
+    private final int totalDevicesCount;
+    private final Map<DeviceClass, Integer> perClassDevicesCount;
 
 }

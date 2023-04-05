@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.stats;
+package org.thingsboard.server.common.data.stats;
 
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
-import org.thingsboard.server.common.data.id.CustomerId;
+import lombok.Data;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface TbApiUsageReportClient {
+import java.io.Serializable;
 
-    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value);
+@Data
+public class EntityStatistics implements HasTenantId, Serializable {
 
-    void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key);
+    private TenantId tenantId;
+    private EntityId entityId;
 
-    void report(TenantId tenantId, CustomerId customerId, EntityId entityId, ApiUsageRecordKey key, long value);
+    private EntityStatisticsValue latestValue;
+
+    private long ts;
 
 }
