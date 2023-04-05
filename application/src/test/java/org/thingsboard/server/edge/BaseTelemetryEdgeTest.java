@@ -15,11 +15,20 @@
  */
 package org.thingsboard.server.edge;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.protobuf.AbstractMessage;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -27,9 +36,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
+import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
 
@@ -231,6 +242,55 @@ abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
         TransportProtos.KeyValueProto keyValueProto = attributesUpdatedMsg.getKv(0);
         Assert.assertEquals("key1", keyValueProto.getKey());
         Assert.assertEquals("value1", keyValueProto.getStringV());
+    }
+
+    @Test
+    public void testSendAttributesDeleteRequestToCloud_nonDeviceEntity() throws Exception {
+        edgeImitator.expectMessageAmount(2);
+        Asset savedAsset = saveAsset("Delete Attribute Test");
+        doPost("/api/edge/" + edge.getUuidId() + "/asset/" + savedAsset.getUuidId(), Asset.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        final String attributeKey = "key1";
+        ObjectNode attributesData = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        attributesData.put(attributeKey, "value1");
+        doPost("/api/plugins/telemetry/ASSET/" + savedAsset.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributesData);
+
+        // Wait before device attributes saved to database before deleting them
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    String urlTemplate = "/api/plugins/telemetry/ASSET/" + savedAsset.getId() + "/keys/attributes/" + DataConstants.SERVER_SCOPE;
+                    List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});
+                    return actualKeys != null && !actualKeys.isEmpty() && actualKeys.contains(attributeKey);
+                });
+
+        EntityDataProto.Builder builder = EntityDataProto.newBuilder()
+                .setEntityIdMSB(savedAsset.getUuidId().getMostSignificantBits())
+                .setEntityIdLSB(savedAsset.getUuidId().getLeastSignificantBits())
+                .setEntityType(savedAsset.getId().getEntityType().name());
+        AttributeDeleteMsg.Builder attributeDeleteMsg = AttributeDeleteMsg.newBuilder();
+        attributeDeleteMsg.setScope(DataConstants.SERVER_SCOPE);
+        ArrayNode arrayNode = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+        arrayNode.add(attributeKey);
+        List<String> keys = new Gson().fromJson(arrayNode.toString(), new TypeToken<>(){}.getType());
+        attributeDeleteMsg.addAllAttributeNames(keys);
+        attributeDeleteMsg.build();
+        builder.setAttributeDeleteMsg(attributeDeleteMsg);
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        uplinkMsgBuilder.addEntityData(builder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    String urlTemplate = "/api/plugins/telemetry/ASSET/" + savedAsset.getId() + "/keys/attributes/" + DataConstants.SERVER_SCOPE;
+                    List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});
+                    return actualKeys != null && actualKeys.isEmpty();
+                });
     }
 
 }
