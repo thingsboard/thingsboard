@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.settings;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.UpdateMessage;
+import lombok.EqualsAndHashCode;
 
-import java.util.Map;
+import java.io.Serializable;
 
-import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
-
+@EqualsAndHashCode(callSuper = true)
+@ApiModel
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class NewPlatformVersionNotificationInfo implements NotificationInfo {
+public class LastVisitedDashboardInfo extends AbstractUserDashboardInfo implements Serializable {
 
-    private Map<String, String> message;
+    private static final long serialVersionUID = -6461562426034242608L;
 
-    @Override
-    public Map<String, String> getTemplateData() {
-        return message;
-    }
+    @ApiModelProperty(position = 3, value = "Starred flag")
+    private boolean starred;
+    @ApiModelProperty(position = 4, value = "Last visit timestamp")
+    private long lastVisited;
 
 }

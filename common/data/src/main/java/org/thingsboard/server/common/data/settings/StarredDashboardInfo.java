@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.settings;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.UpdateMessage;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.HasTitle;
+import org.thingsboard.server.common.data.id.DashboardId;
 
-import java.util.Map;
+import java.io.Serializable;
 
-import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
-
+@EqualsAndHashCode(callSuper = true)
+@ApiModel
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class NewPlatformVersionNotificationInfo implements NotificationInfo {
+public class StarredDashboardInfo extends AbstractUserDashboardInfo implements Serializable {
 
-    private Map<String, String> message;
-
-    @Override
-    public Map<String, String> getTemplateData() {
-        return message;
-    }
+    private static final long serialVersionUID = -7830828696329673361L;
+    @ApiModelProperty(position = 4, value = "Starred timestamp")
+    private long starredAt;
 
 }

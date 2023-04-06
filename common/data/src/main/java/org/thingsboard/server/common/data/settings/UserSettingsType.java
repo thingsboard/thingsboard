@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.settings;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.UpdateMessage;
+import lombok.Getter;
 
-import java.util.Map;
+public enum UserSettingsType {
 
-import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
+    GENERAL, VISITED_DASHBOARDS(true), QUICK_LINKS, DOC_LINKS, DASHBOARDS;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class NewPlatformVersionNotificationInfo implements NotificationInfo {
+    @Getter
+    private final boolean reserved;
 
-    private Map<String, String> message;
-
-    @Override
-    public Map<String, String> getTemplateData() {
-        return message;
+    UserSettingsType() {
+        this.reserved = false;
     }
 
+    UserSettingsType(boolean reserved) {
+        this.reserved = reserved;
+    }
 }

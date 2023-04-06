@@ -13,29 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.dao.dashboard;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.UpdateMessage;
-
-import java.util.Map;
-
-import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class NewPlatformVersionNotificationInfo implements NotificationInfo {
-
-    private Map<String, String> message;
-
-    @Override
-    public Map<String, String> getTemplateData() {
-        return message;
-    }
-
+public class DashboardTitleEvictEvent {
+    private final DashboardId key;
 }

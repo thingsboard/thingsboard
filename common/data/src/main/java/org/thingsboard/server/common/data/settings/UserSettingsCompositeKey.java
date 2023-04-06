@@ -13,29 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.settings;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.UpdateMessage;
 
-import java.util.Map;
+import java.io.Serializable;
+import java.util.UUID;
 
-import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
-
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class NewPlatformVersionNotificationInfo implements NotificationInfo {
+@Data
+public class UserSettingsCompositeKey implements Serializable {
 
-    private Map<String, String> message;
+    private static final long serialVersionUID = -7883642552545291489L;
 
-    @Override
-    public Map<String, String> getTemplateData() {
-        return message;
+    private UUID userId;
+    private String type;
+
+    public UserSettingsCompositeKey(UserSettings userSettings) {
+        this.userId = userSettings.getUserId().getId();
+        this.type = userSettings.getType().name();
     }
 
+    @Override
+    public String toString() {
+        return userId.toString() + "_" + type;
+    }
 }

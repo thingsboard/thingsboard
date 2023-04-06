@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.NewPlatformVersionNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
@@ -44,7 +46,7 @@ public class NewPlatformVersionTriggerProcessor implements NotificationRuleTrigg
     @Override
     public NotificationInfo constructNotificationInfo(NewPlatformVersionTrigger trigger, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
         return NewPlatformVersionNotificationInfo.builder()
-                .message(trigger.getMessage().getMessage())
+                .message(JacksonUtil.convertValue(trigger.getMessage(), new TypeReference<>() {}))
                 .build();
     }
 
