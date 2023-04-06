@@ -755,7 +755,7 @@ transport:
         # PEM server credentials
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
-          cert_file: "${MQTT_SSL_PEM_CERT:mgttserver.pem}"
+          cert_file: "${MQTT_SSL_PEM_CERT:mqttserver.pem}"
           # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
           key_file: "${MQTT_SSL_PEM_KEY:mqttserver_key.pem}"
           # Server certificate private key password (optional)
