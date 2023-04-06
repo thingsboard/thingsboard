@@ -1078,7 +1078,6 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         return loadedCustomerUsers;
     }
 
-
     private Alarm createTestAlarm(Device device) {
         Alarm alarm = new Alarm();
         alarm.setOriginator(device.getId());
@@ -1087,6 +1086,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         alarm.setType("testAlarm");
         alarm.setStartTs(System.currentTimeMillis());
         return doPost("/api/alarm", alarm, Alarm.class);
+    }
 
     @Test
     public void testEmptyDashboardSettings() throws Exception {
