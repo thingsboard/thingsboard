@@ -26,11 +26,13 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.FeaturesInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.UsageInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -49,7 +51,9 @@ import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -68,6 +72,9 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
 
     @Autowired
     private TbApiUsageStateClient apiUsageStateClient;
+
+    @Autowired
+    private TbTenantProfileCache tenantProfileCache;
 
     //For system administrator
     @Test
@@ -328,6 +335,100 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isTwoFaEnabled());
         Assert.assertTrue(featuresInfo.isNotificationEnabled());
         Assert.assertTrue(featuresInfo.isOauthEnabled());
+    }
+
+    @Test
+    public void testUsageInfo() throws Exception {
+        loginTenantAdmin();
+
+        TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
+
+        Assert.assertNotNull(tenantProfile);
+
+        DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
+
+        UsageInfo usageInfo = doGet("/api/usage", UsageInfo.class);
+        Assert.assertNotNull(usageInfo);
+        Assert.assertEquals(0, usageInfo.getDevices());
+        Assert.assertEquals(configuration.getMaxDevices(), usageInfo.getMaxDevices());
+
+        Assert.assertEquals(0, usageInfo.getAssets());
+        Assert.assertEquals(configuration.getMaxAssets(), usageInfo.getMaxAssets());
+
+        Assert.assertEquals(1, usageInfo.getCustomers());
+        Assert.assertEquals(configuration.getMaxCustomers(), usageInfo.getMaxCustomers());
+
+        Assert.assertEquals(2, usageInfo.getUsers());
+        Assert.assertEquals(configuration.getMaxUsers(), usageInfo.getMaxUsers());
+
+        Assert.assertEquals(0, usageInfo.getDashboards());
+        Assert.assertEquals(configuration.getMaxDashboards(), usageInfo.getMaxDashboards());
+
+        Assert.assertEquals(0, usageInfo.getTransportMessages());
+        Assert.assertEquals(configuration.getMaxTransportMessages(), usageInfo.getMaxTransportMessages());
+
+        Assert.assertEquals(0, usageInfo.getJsExecutions());
+        Assert.assertEquals(configuration.getMaxJSExecutions(), usageInfo.getMaxJsExecutions());
+
+        Assert.assertEquals(0, usageInfo.getEmails());
+        Assert.assertEquals(configuration.getMaxEmails(), usageInfo.getMaxEmails());
+
+        Assert.assertEquals(0, usageInfo.getSms());
+        Assert.assertEquals(configuration.getMaxSms(), usageInfo.getMaxSms());
+
+        Assert.assertEquals(0, usageInfo.getAlarms());
+        Assert.assertEquals(configuration.getMaxCreatedAlarms(), usageInfo.getMaxAlarms());
+
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Device device = new Device();
+            device.setName("device" + i);
+            devices.add(doPost("/api/device", device, Device.class));
+        }
+
+        usageInfo = doGet("/api/usage", UsageInfo.class);
+        Assert.assertEquals(devices.size(), usageInfo.getDevices());
+
+        List<Asset> assets = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Asset asset = new Asset();
+            asset.setName("asset" + i);
+            assets.add(doPost("/api/asset", asset, Asset.class));
+        }
+
+        usageInfo = doGet("/api/usage", UsageInfo.class);
+        Assert.assertEquals(assets.size(), usageInfo.getAssets());
+
+        List<Customer> customers = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Customer customer = new Customer();
+            customer.setTitle("customer" + i);
+            customers.add(doPost("/api/customer", customer, Customer.class));
+        }
+
+        usageInfo = doGet("/api/usage", UsageInfo.class);
+        Assert.assertEquals(customers.size() + 1, usageInfo.getCustomers());
+
+        List<User> users = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            User user = new User();
+            user.setAuthority(Authority.TENANT_ADMIN);
+            user.setEmail(i + "user@thingsboard.org");
+            users.add(doPost("/api/user", user, User.class));
+        }
+
+        usageInfo = doGet("/api/usage", UsageInfo.class);
+        Assert.assertEquals(users.size() + 2, usageInfo.getUsers());
+
+        List<Dashboard> dashboards = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Dashboard dashboard = new Dashboard();
+            dashboard.setTitle("dashboard" + i);
+            dashboards.add(doPost("/api/dashboard", dashboard, Dashboard.class));
+        }
+
+        usageInfo = doGet("/api/usage", UsageInfo.class);
+        Assert.assertEquals(dashboards.size(), usageInfo.getDashboards());
     }
 
     private OAuth2Info createDefaultOAuth2Info() {

@@ -13,23 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.entity;
+package org.thingsboard.server.dao.usage;
 
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.UsageInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Optional;
+public interface UsageInfoService {
 
-public interface EntityDaoService {
-
-    Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId);
-
-    default long countByTenantId(TenantId tenantId) {
-        throw new IllegalArgumentException("Not implemented for " + getEntityType());
-    }
-
-    EntityType getEntityType();
+    UsageInfo getUsageInfo(TenantId tenantId);
 
 }

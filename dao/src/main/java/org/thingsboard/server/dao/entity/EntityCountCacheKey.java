@@ -15,21 +15,27 @@
  */
 package org.thingsboard.server.dao.entity;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Optional;
+import java.io.Serializable;
 
-public interface EntityDaoService {
+@Getter
+@EqualsAndHashCode
+@RequiredArgsConstructor
+public class EntityCountCacheKey implements Serializable {
 
-    Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId);
+    private static final long serialVersionUID = -1992105662738434178L;
 
-    default long countByTenantId(TenantId tenantId) {
-        throw new IllegalArgumentException("Not implemented for " + getEntityType());
+    private final TenantId tenantId;
+    private final EntityType entityType;
+
+    @Override
+    public String toString() {
+        return tenantId + "_" + entityType;
     }
-
-    EntityType getEntityType();
 
 }
