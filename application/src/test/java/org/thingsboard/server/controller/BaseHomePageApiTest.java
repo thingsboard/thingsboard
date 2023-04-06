@@ -179,6 +179,13 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
 
     @Test
     public void testDevicesCountWsCmd() throws Exception {
+        loginSysAdmin();
+
+        EntityTypeFilter allDeviceFilter = new EntityTypeFilter();
+        allDeviceFilter.setEntityType(EntityType.DEVICE);
+        EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
+        Long initialCount = doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
+
         loginTenantAdmin();
 
         List<Device> devices = new ArrayList<>();
@@ -195,7 +202,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         getWsClient().send(cmd);
         EntityCountUpdate update = getWsClient().parseCountReply(getWsClient().waitForReply());
         Assert.assertEquals(1, update.getCmdId());
-        Assert.assertEquals(100, update.getCount());
+        Assert.assertEquals(initialCount + 100, update.getCount());
 
         loginTenantAdmin();
         for (Device device : devices) {
