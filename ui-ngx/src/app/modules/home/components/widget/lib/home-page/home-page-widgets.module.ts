@@ -21,6 +21,9 @@ import { ClusterInfoTableComponent } from '@home/components/widget/lib/home-page
 import { ConfiguredFeaturesComponent } from '@home/components/widget/lib/home-page/configured-features.component';
 import { VersionInfoComponent } from '@home/components/widget/lib/home-page/version-info.component';
 import { DocLinksWidgetComponent } from '@home/components/widget/lib/home-page/doc-links-widget.component';
+import { DocLinkComponent } from '@home/components/widget/lib/home-page/doc-link.component';
+import { AddDocLinkDialogComponent } from '@home/components/widget/lib/home-page/add-doc-link-dialog.component';
+import { EditDocLinksDialogComponent } from '@home/components/widget/lib/home-page/edit-doc-links-dialog.component';
 
 @NgModule({
   declarations:
@@ -28,7 +31,10 @@ import { DocLinksWidgetComponent } from '@home/components/widget/lib/home-page/d
       ClusterInfoTableComponent,
       ConfiguredFeaturesComponent,
       VersionInfoComponent,
-      DocLinksWidgetComponent
+      DocLinksWidgetComponent,
+      DocLinkComponent,
+      AddDocLinkDialogComponent,
+      EditDocLinksDialogComponent
     ],
   imports: [
     CommonModule,
@@ -38,7 +44,10 @@ import { DocLinksWidgetComponent } from '@home/components/widget/lib/home-page/d
     ClusterInfoTableComponent,
     ConfiguredFeaturesComponent,
     VersionInfoComponent,
-    DocLinksWidgetComponent
+    DocLinksWidgetComponent,
+    DocLinkComponent,
+    AddDocLinkDialogComponent,
+    EditDocLinksDialogComponent
   ]
 })
 export class HomePageWidgetsModule { }

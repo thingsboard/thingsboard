@@ -1,0 +1,63 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form class="tb-edit-doc-links-dialog" [formGroup]="editDocLinksFormGroup">
+  <mat-toolbar style="background: transparent;">
+    <h2>Documentation</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            (click)="close()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+         (cdkDropListDropped)="docLinkDrop($event)" [cdkDropListDisabled]="editMode || addMode">
+      <div cdkDrag class="tb-draggable" *ngFor="let docLinkControl of docLinksFormArray().controls; trackBy: trackByDocLink;
+               let $index = index; last as isLast;"
+           fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+        <tb-doc-link fxFlex #docLinkComponent [formControl]="docLinkControl"
+                     [disableEdit]="editMode || addMode"
+                     (editModeChanged)="editMode = $event"
+                     (docLinkUpdated)="update()"
+                     (docLinkDeleted)="deleteLink($index)">
+        </tb-doc-link>
+        <div *ngIf="!docLinkComponent.isEditing()"
+             cdkDragHandle
+             matTooltip="{{ 'action.drag' | translate }}"
+             matTooltipPosition="above"
+             class="tb-drag-handle">
+          <mat-icon>drag_indicator</mat-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions>
+    <div *ngIf="!editMode && !addMode" fxFlex class="tb-add-doc-button"
+         matTooltip="Add link"
+         matTooltipPosition="above"
+         (click)="addLink()">
+      <mat-icon class="tb-add-icon">add</mat-icon>
+    </div>
+    <tb-doc-link *ngIf="addMode" fxFlex [(ngModel)]="addingDocLink"
+                 [ngModelOptions]="{standalone: true}"
+                 (docLinkAdded)="linkAdded($event)"
+                 (docLinkAddCanceled)="addMode = false">
+    </tb-doc-link>
+  </div>
+</form>

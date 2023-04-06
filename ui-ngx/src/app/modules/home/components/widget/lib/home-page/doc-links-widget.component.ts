@@ -20,10 +20,20 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
 import { map } from 'rxjs';
-import { DocumentationLinks } from '@shared/models/user-settings.models';
+import { DocumentationLink, DocumentationLinks } from '@shared/models/user-settings.models';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetContext } from '@home/models/widget-component.models';
+import {
+  ImportDialogCsvComponent,
+  ImportDialogCsvData
+} from '@home/components/import-export/import-dialog-csv.component';
+import { MatDialog } from '@angular/material/dialog';
+import { AddDocLinkDialogComponent } from '@home/components/widget/lib/home-page/add-doc-link-dialog.component';
+import {
+  EditDocLinksDialogComponent,
+  EditDocLinksDialogData
+} from '@home/components/widget/lib/home-page/edit-doc-links-dialog.component';
 
 const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
   [
@@ -103,13 +113,18 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit {
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
-              private userSettingsService: UserSettingsService) {
+              private userSettingsService: UserSettingsService,
+              private dialog: MatDialog) {
     super(store);
   }
 
   ngOnInit() {
     this.settings = this.ctx.settings;
     this.columns = this.settings.columns || 3;
+    this.loadDocLinks();
+  }
+
+  private loadDocLinks() {
     this.userSettingsService.getDocumentationLinks().pipe(
       map((documentationLinks) => {
         if (!documentationLinks || !documentationLinks.links) {
@@ -127,10 +142,35 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit {
   }
 
   edit() {
-
+    this.dialog.open<EditDocLinksDialogComponent, EditDocLinksDialogData,
+      boolean>(EditDocLinksDialogComponent, {
+      disableClose: true,
+      autoFocus: false,
+      data: {
+        docLinks: this.documentationLinks
+      },
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+    }).afterClosed().subscribe(
+      (result) => {
+        if (result) {
+          this.loadDocLinks();
+        }
+      });
   }
 
   addLink() {
-
+    this.dialog.open<AddDocLinkDialogComponent, any,
+      DocumentationLink>(AddDocLinkDialogComponent, {
+      disableClose: true,
+      autoFocus: false,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+    }).afterClosed().subscribe(
+      (docLink) => {
+        if (docLink) {
+          this.documentationLinks.links.push(docLink);
+          this.cd.markForCheck();
+          this.userSettingsService.updateDocumentationLinks(this.documentationLinks).subscribe();
+        }
+    });
   }
 }
