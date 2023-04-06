@@ -774,6 +774,7 @@ transport:
           key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+      logging_enabled: "${MQTT_SSL_LOGGING_ENABLED:false}"
   # Local CoAP transport parameters
   coap:
     # Enable/disable coap transport protocol.
