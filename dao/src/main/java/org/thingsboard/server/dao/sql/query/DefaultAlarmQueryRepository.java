@@ -19,13 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -302,6 +305,95 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 queryLog.logQuery(ctx, dataQuery, System.currentTimeMillis() - queryTs);
             }
             return AlarmDataAdapter.createAlarmData(pageLink, rows, totalElements, orderedEntityIds);
+        });
+    }
+
+    @Override
+    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
+        QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
+
+        ctx.append("select count(id) from alarm_info a ");
+
+        if (query.isSearchPropagatedAlarms()) {
+            ctx.append(JOIN_ENTITY_ALARMS);
+            ctx.append("where a.tenant_id = :tenantId and ea.tenant_id = :tenantId");
+            ctx.addUuidParameter("tenantId", tenantId.getId());
+            if (customerId != null && !customerId.isNullUid()) {
+                ctx.append(" and a.customer_id = :customerId and ea.customer_id = :customerId");
+                ctx.addUuidParameter("customerId", customerId.getId());
+            }
+        } else {
+            ctx.append("where a.tenant_id = :tenantId");
+            ctx.addUuidParameter("tenantId", tenantId.getId());
+            if (customerId != null && !customerId.isNullUid()) {
+                ctx.append(" and a.customer_id = :customerId");
+                ctx.addUuidParameter("customerId", customerId.getId());
+            }
+        }
+
+        long startTs;
+        long endTs;
+        if (query.getTimeWindow() > 0) {
+            endTs = System.currentTimeMillis();
+            startTs = endTs - query.getTimeWindow();
+        } else {
+            startTs = query.getStartTs();
+            endTs = query.getEndTs();
+        }
+
+        if (startTs > 0) {
+            ctx.append(" and a.created_time >= :startTime");
+            ctx.addLongParameter("startTime", startTs);
+            if (query.isSearchPropagatedAlarms()) {
+                ctx.append(" and ea.created_time >= :startTime");
+            }
+        }
+
+        if (endTs > 0) {
+            ctx.append(" and a.created_time <= :endTime");
+            ctx.addLongParameter("endTime", endTs);
+            if (query.isSearchPropagatedAlarms()) {
+                ctx.append(" and ea.created_time <= :endTime");
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(query.getTypeList())) {
+            ctx.append(" and a.type in (:alarmTypes)");
+            ctx.addStringListParameter("alarmTypes", query.getTypeList());
+            if (query.isSearchPropagatedAlarms()) {
+                ctx.append(" and ea.alarm_type in (:alarmTypes)");
+            }
+        }
+
+        if (query.getSeverityList() != null && !query.getSeverityList().isEmpty()) {
+            ctx.append(" and a.severity in (:alarmSeverities)");
+            ctx.addStringListParameter("alarmSeverities", query.getSeverityList().stream().map(AlarmSeverity::name).collect(Collectors.toList()));
+        }
+
+        AlarmStatusFilter asf = AlarmStatusFilter.from(query.getStatusList());
+        if (asf.hasAnyFilter()) {
+            if (asf.hasAckFilter()) {
+                ctx.append(" and a.acknowledged = :ackStatus");
+                ctx.addBooleanParameter("ackStatus", asf.getAckFilter());
+            }
+            if (asf.hasClearFilter()) {
+                ctx.append(" and a.cleared = :clearStatus");
+                ctx.addBooleanParameter("clearStatus", asf.getClearFilter());
+            }
+        }
+
+        if (query.getAssigneeId() != null) {
+            ctx.addUuidParameter("assigneeId", query.getAssigneeId().getId());
+            ctx.append(" and a.assignee_id = :assigneeId");
+        }
+
+        return transactionTemplate.execute(trStatus -> {
+            long queryTs = System.currentTimeMillis();
+            try {
+                return jdbcTemplate.queryForObject(ctx.getQuery(), ctx, Long.class);
+            } finally {
+                queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - queryTs);
+            }
         });
     }
 

@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 
-import java.util.Collections;
-import java.util.Map;
+public class AlarmCountCmd extends DataCmd {
 
-@Data
-public class UserOriginatedNotificationInfo implements NotificationInfo {
+    @Getter
+    private final AlarmCountQuery query;
 
-    private String description;
-
-    @Override
-    public Map<String, String> getTemplateData() {
-        return Collections.emptyMap();
+    @JsonCreator
+    public AlarmCountCmd(@JsonProperty("cmdId") int cmdId,
+                         @JsonProperty("query") AlarmCountQuery query) {
+        super(cmdId);
+        this.query = query;
     }
-
 }

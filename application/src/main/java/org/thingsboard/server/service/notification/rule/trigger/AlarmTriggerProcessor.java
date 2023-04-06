@@ -20,13 +20,13 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.AlarmAction;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.ClearRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
-import org.thingsboard.server.dao.notification.trigger.AlarmTrigger;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.msg.notification.trigger.AlarmTrigger;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
@@ -93,7 +93,7 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(AlarmTrigger trigger, AlarmNotificationRuleTriggerConfig triggerConfig) {
+    public RuleOriginatedNotificationInfo constructNotificationInfo(AlarmTrigger trigger) {
         AlarmApiCallResult alarmUpdate = trigger.getAlarmUpdate();
         AlarmInfo alarmInfo = alarmUpdate.getAlarm();
         return AlarmNotificationInfo.builder()

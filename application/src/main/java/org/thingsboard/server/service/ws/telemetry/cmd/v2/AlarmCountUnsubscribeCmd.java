@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.Data;
 
-public interface NotificationRuleTrigger {
+@Data
+public class AlarmCountUnsubscribeCmd implements UnsubscribeCmd {
 
-    NotificationRuleTriggerType getType();
-
-    EntityId getOriginatorEntityId();
+    private final int cmdId;
 
 }

@@ -20,15 +20,17 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 @Service
 public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<EntityActionNotificationRuleTriggerConfig> {
@@ -51,11 +53,11 @@ public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRu
         } else {
             return false;
         }
-        return triggerConfig.getEntityType() == null || getEntityType(trigger.getMsg()) == triggerConfig.getEntityType();
+        return isEmpty(triggerConfig.getEntityTypes()) || triggerConfig.getEntityTypes().contains(getEntityType(trigger.getMsg()));
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger, EntityActionNotificationRuleTriggerConfig triggerConfig) {
+    public RuleOriginatedNotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger) {
         TbMsg msg = trigger.getMsg();
         String msgType = msg.getType();
         ActionType actionType = msgType.equals(DataConstants.ENTITY_CREATED) ? ActionType.ADDED :
@@ -65,8 +67,10 @@ public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRu
                 .entityId(msg.getOriginator())
                 .entityName(msg.getMetaData().getValue("entityName"))
                 .actionType(actionType)
-                .originatorUserId(UUID.fromString(msg.getMetaData().getValue("userId")))
-                .originatorUserName(msg.getMetaData().getValue("userName"))
+                .userId(UUID.fromString(msg.getMetaData().getValue("userId")))
+                .userEmail(trigger.getMsg().getMetaData().getValue("userEmail"))
+                .userFirstName(trigger.getMsg().getMetaData().getValue("userFirstName"))
+                .userLastName(trigger.getMsg().getMetaData().getValue("userLastName"))
                 .entityCustomerId(msg.getCustomerId())
                 .build();
     }

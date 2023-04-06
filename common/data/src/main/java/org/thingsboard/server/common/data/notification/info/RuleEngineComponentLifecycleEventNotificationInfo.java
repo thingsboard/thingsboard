@@ -31,7 +31,7 @@ import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class RuleEngineComponentLifecycleEventNotificationInfo implements NotificationInfo {
+public class RuleEngineComponentLifecycleEventNotificationInfo implements RuleOriginatedNotificationInfo {
 
     private RuleChainId ruleChainId;
     private String ruleChainName;

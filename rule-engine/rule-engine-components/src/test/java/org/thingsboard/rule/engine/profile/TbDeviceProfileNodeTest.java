@@ -64,7 +64,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;

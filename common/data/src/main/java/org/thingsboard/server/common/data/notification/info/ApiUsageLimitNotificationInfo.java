@@ -19,12 +19,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.ApiFeature;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Map;
-import java.util.UUID;
 
 import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 
@@ -32,32 +32,32 @@ import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DeviceInactivityNotificationInfo implements RuleOriginatedNotificationInfo {
+public class ApiUsageLimitNotificationInfo implements RuleOriginatedNotificationInfo {
 
-    private UUID deviceId;
-    private String deviceName;
-    private String deviceLabel;
-    private String deviceType;
-    private CustomerId deviceCustomerId;
-
-    @Override
-    public CustomerId getOriginatorEntityCustomerId() {
-        return deviceCustomerId;
-    }
+    private ApiFeature feature;
+    private ApiUsageRecordKey recordKey;
+    private ApiUsageStateValue status;
+    private String limit;
+    private String currentValue;
+    private TenantId tenantId;
+    private String tenantName;
 
     @Override
     public Map<String, String> getTemplateData() {
         return mapOf(
-                "deviceId", deviceId.toString(),
-                "deviceName", deviceName,
-                "deviceLabel", deviceLabel,
-                "deviceType", deviceType
+                "feature", feature.getLabel(),
+                "unitLabel", recordKey.getUnitLabel(),
+                "status", status.name().toLowerCase(),
+                "limit", limit,
+                "currentValue", currentValue,
+                "tenantId", tenantId.toString(),
+                "tenantName", tenantName
         );
     }
 
     @Override
-    public EntityId getStateEntityId() {
-        return new DeviceId(deviceId);
+    public TenantId getAffectedTenantId() {
+        return tenantId;
     }
 
 }

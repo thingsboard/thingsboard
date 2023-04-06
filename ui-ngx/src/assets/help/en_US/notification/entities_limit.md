@@ -15,9 +15,11 @@ Available template parameters:
   * *currentCount* - the current count of entities;
   * *limit* - the limit on number of entities;    
   * *percents* - the percent from the notification rule configuration;
+  * *tenantId* - id of the tenant;
+  * *tenantName* - name of the tenant;
 
 Parameter names must be wrapped using `${...}`. For example: `${recipientFirstName}`. 
-You may also modify the value of the parameter with one of the sufixes:
+You may also modify the value of the parameter with one of the suffixes:
 
   * `upperCase`, for example - `${recipientFirstName:upperCase}`
   * `lowerCase`, for example - `${recipientFirstName:lowerCase}`
