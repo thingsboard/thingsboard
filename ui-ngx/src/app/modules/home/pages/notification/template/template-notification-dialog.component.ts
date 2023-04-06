@@ -176,9 +176,10 @@ export class TemplateNotificationDialogComponent
 
   private allowNotificationType(): NotificationType[] {
     if (this.isSysAdmin()) {
-      return [NotificationType.GENERAL, NotificationType.ENTITIES_LIMIT, NotificationType.API_USAGE_LIMIT];
+      return [NotificationType.GENERAL, NotificationType.ENTITIES_LIMIT, NotificationType.API_USAGE_LIMIT, NotificationType.NEW_PLATFORM_VERSION];
     }
     return Object.values(NotificationType)
-      .filter(type => type !== NotificationType.ENTITIES_LIMIT && type !== NotificationType.API_USAGE_LIMIT);
+      .filter(type => type !== NotificationType.ENTITIES_LIMIT && type !== NotificationType.API_USAGE_LIMIT
+        && type !== NotificationType.NEW_PLATFORM_VERSION);
   }
 }
