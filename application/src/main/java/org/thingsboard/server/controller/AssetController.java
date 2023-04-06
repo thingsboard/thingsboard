@@ -255,6 +255,9 @@ public class AssetController extends BaseController {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (type != null && type.trim().length() > 0) {
             return checkNotNull(assetService.findAssetInfosByTenantIdAndType(tenantId, type, pageLink));
+        } else if (assetProfileId != null && assetProfileId.length() > 0) {
+            AssetProfileId profileId = new AssetProfileId(toUUID(assetProfileId));
+            return checkNotNull(assetService.findAssetInfosByTenantIdAndAssetProfileId(tenantId, profileId, pageLink));
         } else {
             return checkNotNull(assetService.findAssetInfosByTenantId(tenantId, pageLink));
         }
