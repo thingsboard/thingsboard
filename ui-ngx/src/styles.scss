@@ -74,7 +74,7 @@ body {
   line-height: normal;
 }
 
-a:not(.mdc-button) {
+a:not(.mat-mdc-button-base) {
   font-weight: 400;
   color: #106cc8;
   text-decoration: none;
@@ -85,7 +85,7 @@ a:not(.mdc-button) {
 
 a:hover,
 a:focus {
-  &:not(.mdc-button) {
+  &:not(.mat-mdc-button-base) {
     border-bottom: 1px solid #4054b2;
   }
 }

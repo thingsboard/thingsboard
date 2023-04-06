@@ -20,6 +20,7 @@
   }
 
   .tb-title {
+    margin-top: 8px;
     font-style: normal;
     font-weight: 500;
     font-size: 14px;
@@ -37,12 +38,16 @@
     vertical-align: middle;
   }
 
+  .tb-features-list {
+    overflow: auto;
+  }
+
   .mat-grid-tile.tb-feature-tile {
     overflow: visible;
   }
 
   .tb-feature-button {
-    height: 100%;
+    height: 48.5px;
     display: flex;
     flex-direction: column;
     justify-content: center;

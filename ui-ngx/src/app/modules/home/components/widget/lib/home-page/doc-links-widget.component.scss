@@ -23,6 +23,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    align-items: flex-end;
   }
 
   .tb-title-link {
@@ -62,16 +63,20 @@
     padding: 4px;
   }
 
+  .tb-docs-list {
+    overflow: auto;
+  }
+
   .mat-grid-tile.tb-docs-tile {
     overflow: visible;
   }
 
   .tb-doc-button {
-    height: 100%;
+    height: 55px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 12px;
+    padding: 8px;
     background: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
@@ -102,14 +107,14 @@
   }
 
   .tb-add-doc-button {
-    height: 100%;
+    height: 55px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     background: #FFFFFF;
-    padding: 12px;
+    padding: 8px;
     border: 2px dashed rgba(0, 0, 0, 0.08);
     border-radius: 10px;
     .tb-add-icon {
