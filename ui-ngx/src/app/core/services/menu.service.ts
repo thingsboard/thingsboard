@@ -838,15 +838,6 @@ export class MenuService {
     sections.push(
       {
         id: guid(),
-        name: 'dashboard.dashboards',
-        type: 'link',
-        path: '/dashboards',
-        icon: 'dashboard'
-      }
-    );
-    sections.push(
-      {
-        id: guid(),
         name: 'notification.notification-center',
         type: 'link',
         path: '/notification',
