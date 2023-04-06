@@ -33,7 +33,7 @@
                     [displayWith]="displaySlackConversationFn"
                     >
     <mat-option *ngFor="let template of slackConversation$ | async" [value]="template" class="template-option">
-      <span [innerHTML]="template.name | highlight:slackSearchText"></span>
+      <span [innerHTML]="template.title | highlight:slackSearchText"></span>
     </mat-option>
     <mat-option *ngIf="!(slackConversation$ | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">

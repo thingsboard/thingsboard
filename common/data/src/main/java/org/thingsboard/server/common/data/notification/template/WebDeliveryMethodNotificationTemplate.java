@@ -15,14 +15,19 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 import javax.validation.constraints.NotEmpty;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
@@ -37,7 +42,44 @@ public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
     public WebDeliveryMethodNotificationTemplate(WebDeliveryMethodNotificationTemplate other) {
         super(other);
         this.subject = other.subject;
-        this.additionalConfig = other.additionalConfig;
+        this.additionalConfig = other.additionalConfig != null ? other.additionalConfig.deepCopy() : null;
+    }
+
+    @JsonIgnore
+    public String getButtonText() {
+        return getButtonConfigProperty("text");
+    }
+
+    @JsonIgnore
+    public void setButtonText(String buttonText) {
+        getButtonConfig().ifPresent(buttonConfig -> {
+            buttonConfig.set("text", new TextNode(buttonText));
+        });
+    }
+
+    @JsonIgnore
+    public String getButtonLink() {
+        return getButtonConfigProperty("link");
+    }
+
+    @JsonIgnore
+    public void setButtonLink(String buttonLink) {
+        getButtonConfig().ifPresent(buttonConfig -> {
+            buttonConfig.set("link", new TextNode(buttonLink));
+        });
+    }
+
+    private String getButtonConfigProperty(String property) {
+        return getButtonConfig()
+                .map(buttonConfig -> buttonConfig.get(property))
+                .filter(JsonNode::isTextual)
+                .map(JsonNode::asText).orElse(null);
+    }
+
+    private Optional<ObjectNode> getButtonConfig() {
+        return Optional.ofNullable(additionalConfig)
+                .map(config -> config.get("actionButtonConfig")).filter(JsonNode::isObject)
+                .map(config -> (ObjectNode) config);
     }
 
     @Override
@@ -48,6 +90,12 @@ public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
     @Override
     public WebDeliveryMethodNotificationTemplate copy() {
         return new WebDeliveryMethodNotificationTemplate(this);
+    }
+
+    @Override
+    public boolean containsAny(String... params) {
+        return super.containsAny(params) || StringUtils.containsAny(subject, params)
+                || StringUtils.containsAny(getButtonText(), params) || StringUtils.containsAny(getButtonLink(), params);
     }
 
 }

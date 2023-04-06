@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.ApiFeature;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.Set;
 
 @Data
-public class UserOriginatedNotificationInfo implements NotificationInfo {
+public class ApiUsageLimitNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    private String description;
+    private Set<ApiFeature> apiFeatures;
+    private Set<ApiUsageStateValue> notifyOn;
 
     @Override
-    public Map<String, String> getTemplateData() {
-        return Collections.emptyMap();
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.API_USAGE_LIMIT;
     }
 
 }

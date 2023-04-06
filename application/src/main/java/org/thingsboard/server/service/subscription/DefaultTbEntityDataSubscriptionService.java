@@ -94,8 +94,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private static final int DEFAULT_LIMIT = 100;
     private final Map<String, Map<Integer, TbAbstractSubCtx>> subscriptionsBySessionId = new ConcurrentHashMap<>();
 
-    @Autowired
-    @Lazy
+    @Autowired @Lazy
     private WebSocketService wsService;
 
     @Autowired

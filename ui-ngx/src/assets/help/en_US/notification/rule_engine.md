@@ -1,4 +1,4 @@
-#### Device activity notification templatization
+#### Rule engine notification templatization
 
 <div class="divider"></div>
 <br/>
@@ -8,17 +8,17 @@ See the available types and parameters below:
 
 Available template parameters:
 
+  * values from the incoming message metadata;
+  * values from the incoming message data;
+  * *originatorType* - type of the originator, e.g. 'Device';
+  * *originatorId* - id of the originator
+  * *msgType* - type of the message
   * *recipientEmail* - email of the recipient;
   * *recipientFirstName* - first name of the recipient;
   * *recipientLastName* - last name of the recipient;
-  * *deviceId* - the device id as uuid string;
-  * *deviceName* - the device name;    
-  * *deviceLabel* - the device label;    
-  * *deviceType* - the device type;
-  * *actionType* - one of: 'inactive', 'active';    
 
 Parameter names must be wrapped using `${...}`. For example: `${recipientFirstName}`. 
-You may also modify the value of the parameter with one of the sufixes:
+You may also modify the value of the parameter with one of the suffixes:
 
   * `upperCase`, for example - `${recipientFirstName:upperCase}`
   * `lowerCase`, for example - `${recipientFirstName:lowerCase}`
@@ -28,37 +28,27 @@ You may also modify the value of the parameter with one of the sufixes:
 
 ##### Examples
 
-Let's assume the notification about inactive thermometer device 'Sensor T1'. 
+Let's assume the incoming message to Rule node has the following data:
+```json
+{
+  "building_1": {
+    "temperature": 24
+  }
+}
+```
+
 The following template:
 
-Template message: ``
-
 ```text
-Device '${deviceName}' inactive
+Building 1: temperature is ${building_1.temperature} 
 {:copy-code}
 ```
 
 will be transformed to:
 
 ```text
-Device 'Sensor T1' inactive
-{:copy-code}
+Building 1: temperature is 24
 ```
 
-
-<br>
-The following template:
-
-```text
-${deviceType:capitalize} '${deviceName}' became inactive
-{:copy-code}
-```
-
-will be transformed to:
-
-```text
-Thermometer 'Sensor T1' became inactive
-{:copy-code}
-```
 <br>
 <br>

@@ -164,7 +164,7 @@ const routes: Routes = [
         component: SmsProviderComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
-          auth: [Authority.SYS_ADMIN],
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
           title: 'admin.notifications-settings',
           breadcrumb: {
             label: 'admin.notifications',
