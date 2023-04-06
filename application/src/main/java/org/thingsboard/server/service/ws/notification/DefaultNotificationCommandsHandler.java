@@ -120,17 +120,21 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     /* Notifications subscription update handling */
     private void handleNotificationsSubscriptionUpdate(NotificationsSubscription subscription, NotificationsSubscriptionUpdate subscriptionUpdate) {
-        if (subscriptionUpdate.getNotificationUpdate() != null) {
-            handleNotificationUpdate(subscription, subscriptionUpdate.getNotificationUpdate());
-        } else if (subscriptionUpdate.getNotificationRequestUpdate() != null) {
-            handleNotificationRequestUpdate(subscription, subscriptionUpdate.getNotificationRequestUpdate());
+        try {
+            if (subscriptionUpdate.getNotificationUpdate() != null) {
+                handleNotificationUpdate(subscription, subscriptionUpdate.getNotificationUpdate());
+            } else if (subscriptionUpdate.getNotificationRequestUpdate() != null) {
+                handleNotificationRequestUpdate(subscription, subscriptionUpdate.getNotificationRequestUpdate());
+            }
+        } catch (Exception e) {
+            log.error("[{}, subId: {}] Failed to handle update for notifications subscription: {}", subscription.getSessionId(), subscription.getSubscriptionId(), subscriptionUpdate, e);
         }
     }
 
     private void handleNotificationUpdate(NotificationsSubscription subscription, NotificationUpdate update) {
         log.trace("[{}, subId: {}] Handling notification update: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
         Notification notification = update.getNotification();
-        UUID notificationId = update.getNotificationId();
+        UUID notificationId = notification != null ? notification.getUuidId() : update.getNotificationId();
         if (update.isCreated()) {
             subscription.getLatestUnreadNotifications().put(notificationId, notification);
             subscription.getTotalUnreadCounter().incrementAndGet();
@@ -175,10 +179,14 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     /* Notifications count subscription update handling */
     private void handleNotificationsCountSubscriptionUpdate(NotificationsCountSubscription subscription, NotificationsSubscriptionUpdate subscriptionUpdate) {
-        if (subscriptionUpdate.getNotificationUpdate() != null) {
-            handleNotificationUpdate(subscription, subscriptionUpdate.getNotificationUpdate());
-        } else if (subscriptionUpdate.getNotificationRequestUpdate() != null) {
-            handleNotificationRequestUpdate(subscription, subscriptionUpdate.getNotificationRequestUpdate());
+        try {
+            if (subscriptionUpdate.getNotificationUpdate() != null) {
+                handleNotificationUpdate(subscription, subscriptionUpdate.getNotificationUpdate());
+            } else if (subscriptionUpdate.getNotificationRequestUpdate() != null) {
+                handleNotificationRequestUpdate(subscription, subscriptionUpdate.getNotificationRequestUpdate());
+            }
+        } catch (Exception e) {
+            log.error("[{}, subId: {}] Failed to handle update for notifications count subscription: {}", subscription.getSessionId(), subscription.getSubscriptionId(), subscriptionUpdate, e);
         }
     }
 

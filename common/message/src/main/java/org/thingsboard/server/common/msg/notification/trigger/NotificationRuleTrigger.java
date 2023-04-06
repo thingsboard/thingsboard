@@ -13,30 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.notification.trigger;
+package org.thingsboard.server.common.msg.notification.trigger;
 
-import lombok.Builder;
-import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.TbMsg;
 
-@Data
-@Builder
-public class RuleEngineMsgTrigger implements NotificationRuleTrigger {
+import java.io.Serializable;
 
-    private final TbMsg msg;
-    private final NotificationRuleTriggerType triggerType;
+public interface NotificationRuleTrigger extends Serializable {
 
-    @Override
-    public NotificationRuleTriggerType getType() {
-        return triggerType;
-    }
+    NotificationRuleTriggerType getType();
 
-    @Override
-    public EntityId getOriginatorEntityId() {
-        return msg.getOriginator();
-    }
+    TenantId getTenantId();
+
+    EntityId getOriginatorEntityId();
 
 }

@@ -25,9 +25,10 @@ import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
+import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -109,14 +110,12 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
 
             notificationExecutor.executeAsync(() -> {
                 try {
-                    notificationCenter.processNotificationRequest(tenantId, notificationRequest);
+                    notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
                 } catch (Exception e) {
                     log.error("Failed to process scheduled notification request {}", notificationRequest.getId(), e);
-                    UserId senderId = notificationRequest.getSenderId();
-                    if (senderId != null) {
-                        notificationCenter.sendBasicNotification(tenantId, senderId, "Notification failure",
-                                "Failed to process scheduled notification (request " + notificationRequest.getId() + "): " + e.getMessage());
-                    }
+                    NotificationRequestStats stats = new NotificationRequestStats();
+                    stats.setError(e.getMessage());
+                    notificationRequestService.updateNotificationRequest(tenantId, request.getId(), NotificationRequestStatus.SENT, stats);
                 }
             });
             scheduledNotificationRequests.remove(notificationRequest.getId());

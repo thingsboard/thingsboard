@@ -26,7 +26,7 @@
 </mat-toolbar>
 <div mat-dialog-content>
   <div *ngFor="let errorStat of errorStats | keyvalue; last as isLast">
-    <h6>{{ notificationDeliveryMethodErrorTranslateMap.get(errorStat.key) | translate }}</h6>
+    <h6>{{ notificationDeliveryMethodTranslateMap.get(errorStat.key) | translate }}</h6>
     <table class="tb-table-list">
       <tr *ngFor="let error of errorStat.value | keyvalue">
         <td>

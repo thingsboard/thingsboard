@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.alarm;
+package org.thingsboard.server.common.data.alarm;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.io.Serializable;
 import java.util.List;
 
 
 @Data
-public class AlarmApiCallResult {
+public class AlarmApiCallResult implements Serializable {
 
     private final boolean successful;
     private final boolean created;

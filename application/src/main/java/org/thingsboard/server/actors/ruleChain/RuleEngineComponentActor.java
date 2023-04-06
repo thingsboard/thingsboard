@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorStopReason;
-import org.thingsboard.server.dao.notification.trigger.RuleEngineComponentLifecycleEventTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.RuleEngineComponentLifecycleEventTrigger;
 
 public abstract class RuleEngineComponentActor<T extends EntityId, P extends ComponentMsgProcessor<T>> extends ComponentActor<T, P> {
 
@@ -50,7 +50,8 @@ public abstract class RuleEngineComponentActor<T extends EntityId, P extends Com
     }
 
     private void processNotificationRule(ComponentLifecycleEvent event, Throwable e) {
-        systemContext.getNotificationRuleProcessingService().process(tenantId, RuleEngineComponentLifecycleEventTrigger.builder()
+        systemContext.getNotificationRuleProcessor().process(RuleEngineComponentLifecycleEventTrigger.builder()
+                .tenantId(tenantId)
                 .ruleChainId(getRuleChainId())
                 .ruleChainName(getRuleChainName())
                 .componentId(id)

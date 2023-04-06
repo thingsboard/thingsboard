@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.common.msg.notification;
 
-import lombok.Data;
+import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
 
-import java.util.Set;
-import java.util.UUID;
+public interface NotificationRuleProcessor {
 
-@Data
-public class DeviceInactivityNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
-
-    private Set<UUID> devices;
-    private Set<UUID> deviceProfiles;
-    // set either devices or profiles
-
-    @Override
-    public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.DEVICE_INACTIVITY;
-    }
+    void process(NotificationRuleTrigger trigger);
 
 }

@@ -173,6 +173,8 @@ import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
 import { NotificationComponent } from '@shared/components/notification/notification.component';
+import { TemplateAutocompleteComponent } from '@shared/components/notification/template-autocomplete.component';
+import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
@@ -323,6 +325,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     PhoneInputComponent,
     TbScriptLangComponent,
     NotificationComponent,
+    TemplateAutocompleteComponent,
+    SlackConversationAutocompleteComponent,
     DateAgoPipe
   ],
   imports: [
@@ -535,6 +539,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     PhoneInputComponent,
     TbScriptLangComponent,
     NotificationComponent,
+    TemplateAutocompleteComponent,
+    SlackConversationAutocompleteComponent,
     DateAgoPipe
   ]
 })
