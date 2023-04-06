@@ -16,7 +16,7 @@
 :host {
 
   .notification {
-    padding: 10px;
+    padding: 10px 0 10px 10px;
     display: block;
     border: 1px solid;
     border-radius: 4px;
@@ -51,14 +51,11 @@
     min-width: 70px;
     color: rgba(0, 0, 0, 0.54);
 
-    .mark-read {
-      margin-bottom: 6px;
-    }
-
     .time {
       font-size: 12px;
       letter-spacing: 0.25px;
-      margin: 0 4px;
+      margin-right: 12px;
+      margin-top: 4px;
     }
 
     .alarm-severity {

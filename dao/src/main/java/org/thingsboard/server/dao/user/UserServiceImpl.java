@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -79,10 +80,10 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     private final UserDao userDao;
     private final UserCredentialsDao userCredentialsDao;
     private final UserAuthSettingsDao userAuthSettingsDao;
-    private final UserSettingsDao userSettingsDao;
     private final DataValidator<User> userValidator;
     private final DataValidator<UserCredentials> userCredentialsValidator;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityCountService countService;
 
     @Override
     public User findUserByEmail(TenantId tenantId, String email) {
@@ -126,6 +127,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
         User savedUser = userDao.save(user.getTenantId(), user);
         if (user.getId() == null) {
+            countService.publishCountEntityEvictEvent(savedUser.getTenantId(), EntityType.USER);
             UserCredentials userCredentials = new UserCredentials();
             userCredentials.setEnabled(false);
             userCredentials.setActivateToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
@@ -234,6 +236,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
+        countService.publishCountEntityEvictEvent(tenantId, EntityType.USER);
     }
 
     @Override
@@ -429,6 +432,11 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findUserById(tenantId, new UserId(entityId.getId())));
+    }
+
+    @Override
+    public long countByTenantId(TenantId tenantId) {
+        return userDao.countByTenantId(tenantId);
     }
 
     @Override

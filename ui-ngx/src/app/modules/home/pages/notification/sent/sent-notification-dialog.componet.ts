@@ -41,7 +41,7 @@ import { getCurrentTime } from '@shared/models/time/time.models';
 import {
   RecipientNotificationDialogComponent,
   RecipientNotificationDialogData
-} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
+} from '@home/pages/notification/recipient/recipient-notification-dialog.component';
 import { MatButton } from '@angular/material/button';
 import { TemplateConfiguration } from '@home/pages/notification/template/template-configuration';
 
@@ -136,6 +136,7 @@ export class SentNotificationDialogComponent extends
     if (data.request) {
       this.notificationRequestForm.reset({}, {emitEvent: false});
       this.notificationRequestForm.patchValue(this.data.request, {emitEvent: false});
+      this.notificationRequestForm.get('template.name').setValue(guid());
       let useTemplate = true;
       if (isDefinedAndNotNull(this.data.request.template)) {
         useTemplate = false;

@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 
 import java.util.Collections;
@@ -33,6 +32,7 @@ public class NotificationRequestStats {
 
     private final Map<NotificationDeliveryMethod, AtomicInteger> sent;
     private final Map<NotificationDeliveryMethod, Map<String, String>> errors;
+    private String error;
     @JsonIgnore
     private final Map<NotificationDeliveryMethod, Set<Object>> processedRecipients;
 
@@ -44,9 +44,11 @@ public class NotificationRequestStats {
 
     @JsonCreator
     public NotificationRequestStats(@JsonProperty("sent") Map<NotificationDeliveryMethod, AtomicInteger> sent,
-                                    @JsonProperty("errors") Map<NotificationDeliveryMethod, Map<String, String>> errors) {
+                                    @JsonProperty("errors") Map<NotificationDeliveryMethod, Map<String, String>> errors,
+                                    @JsonProperty("error") String error) {
         this.sent = sent;
         this.errors = errors;
+        this.error = error;
         this.processedRecipients = Collections.emptyMap();
     }
 
@@ -60,13 +62,7 @@ public class NotificationRequestStats {
             return;
         }
         String errorMessage = error.getMessage();
-        String key;
-        if (recipient instanceof User) {
-            key = ((User) recipient).getEmail();
-        } else {
-            key = "";
-        }
-        errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(key, errorMessage);
+        errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(recipient.getTitle(), errorMessage);
     }
 
     public boolean contains(NotificationDeliveryMethod deliveryMethod, Object recipientId) {

@@ -16,12 +16,14 @@
 package org.thingsboard.rule.engine.notification;
 
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.info.RuleEngineOriginatedNotificationInfo;
@@ -36,8 +38,10 @@ import java.util.concurrent.ExecutionException;
         name = "send notification",
         configClazz = TbNotificationNodeConfiguration.class,
         nodeDescription = "Sends notification to targets using the template",
-        nodeDetails = "Will send notification to the specified targets",
-        uiResources = {"static/rulenode/rulenode-core-config.js"}
+        nodeDetails = "Will send notification to the specified targets using the template",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbExternalNodeNotificationConfig",
+        icon = "notifications"
 )
 public class TbNotificationNode implements TbNode {
 
@@ -53,6 +57,7 @@ public class TbNotificationNode implements TbNode {
         RuleEngineOriginatedNotificationInfo notificationInfo = RuleEngineOriginatedNotificationInfo.builder()
                 .msgOriginator(msg.getOriginator())
                 .msgMetadata(msg.getMetaData().getData())
+                .msgData(JacksonUtil.toFlatMap(JacksonUtil.toJsonNode(msg.getData())))
                 .msgType(msg.getType())
                 .build();
 
@@ -66,16 +71,14 @@ public class TbNotificationNode implements TbNode {
                 .build();
 
         DonAsynchron.withCallback(ctx.getNotificationExecutor().executeAsync(() -> {
-                    return ctx.getNotificationCenter().processNotificationRequest(ctx.getTenantId(), notificationRequest);
+                    return ctx.getNotificationCenter().processNotificationRequest(ctx.getTenantId(), notificationRequest, stats -> {
+                        TbMsgMetaData metaData = msg.getMetaData().copy();
+                        metaData.putValue("notificationRequestResult", JacksonUtil.toString(stats));
+                        ctx.tellSuccess(TbMsg.transformMsg(msg, metaData));
+                    });
                 }),
-                r -> {
-                    TbMsgMetaData msgMetaData = msg.getMetaData().copy();
-                    msgMetaData.putValue("notificationRequestId", r.getUuidId().toString());
-                    ctx.tellSuccess(TbMsg.transformMsg(msg, msgMetaData));
-                },
-                e -> {
-                    ctx.tellFailure(msg, e);
-                });
+                r -> {},
+                e -> ctx.tellFailure(msg, e));
     }
 
 }

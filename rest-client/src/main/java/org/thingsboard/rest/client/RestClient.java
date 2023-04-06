@@ -63,6 +63,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.UpdateMessage;
+import org.thingsboard.server.common.data.UsageInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
@@ -122,6 +123,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -1649,6 +1651,10 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
+    public Long countAlarmsByQuery(AlarmCountQuery query) {
+        return restTemplate.postForObject(baseURL + "/api/alarmsQuery/count", query, Long.class);
+    }
+
     public void saveRelation(EntityRelation relation) {
         restTemplate.postForLocation(baseURL + "/api/relation", relation);
     }
@@ -2465,6 +2471,14 @@ public class RestClient implements Closeable {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<TenantInfo>>() {
                 }, params).getBody();
+    }
+
+    public UsageInfo getUsageInfo() {
+        return restTemplate.exchange(
+                baseURL + "/api/usage",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                UsageInfo.class).getBody();
     }
 
     public Optional<TenantProfile> getTenantProfileById(TenantProfileId tenantProfileId) {

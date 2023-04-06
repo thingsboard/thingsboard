@@ -21,7 +21,7 @@ Available template parameters:
   * *alarmOriginatorId* - the alarm originator entity id as uuid string;
 
 Parameter names must be wrapped using `${...}`. For example: `${action}`. 
-You may also modify the value of the parameter with one of the sufixes:
+You may also modify the value of the parameter with one of the suffixes:
 
   * `upperCase`, for example - `${recipientFirstName:upperCase}`
   * `lowerCase`, for example - `${recipientFirstName:lowerCase}`
@@ -55,7 +55,7 @@ ${alarmOriginatorEntityType:capitalize} '${alarmOriginatorName}'
 will be transformed to:
 
 ```text
-DEVICE - Sensor A
+Device - Sensor A
 {:copy-code}
 ```
 
