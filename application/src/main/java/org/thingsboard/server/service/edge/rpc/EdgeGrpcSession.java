@@ -423,6 +423,7 @@ public final class EdgeGrpcSession implements Closeable {
                     stopCurrentSendDownlinkMsgsTask(null);
                 }
             } catch (Exception e) {
+                log.warn("[{}] Failed to send downlink msgs. Error msg {}", this.sessionId, e.getMessage(), e);
                 stopCurrentSendDownlinkMsgsTask(e);
             }
         };
@@ -669,19 +670,18 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private void interruptPreviousSendDownlinkMsgsTask() {
-        String msg = String.format("[%s] Previous send downlink future was not properly completed, stopping it now!", this.sessionId);
-        stopCurrentSendDownlinkMsgsTask(new RuntimeException(msg));
+        log.info("[{}]Previous send downlink future was not properly completed, stopping it now!", this.sessionId);
+        stopCurrentSendDownlinkMsgsTask(new RuntimeException());
     }
 
     private void interruptGeneralProcessingOnSync(TenantId tenantId, EdgeId edgeId) {
-        String msg = String.format("[%s][%s] Sync process started. General processing interrupted!", tenantId, edgeId);
-        stopCurrentSendDownlinkMsgsTask(new RuntimeException(msg));
+        log.info("[{}][{}][{}] Sync process started. General processing interrupted!", this.sessionId, tenantId, edgeId);
+        stopCurrentSendDownlinkMsgsTask(new RuntimeException());
     }
 
     public void stopCurrentSendDownlinkMsgsTask(Exception e) {
         if (sessionState.getSendDownlinkMsgsFuture() != null && !sessionState.getSendDownlinkMsgsFuture().isDone()) {
             if (e != null) {
-                log.warn(e.getMessage(), e);
                 sessionState.getSendDownlinkMsgsFuture().setException(e);
             } else {
                 sessionState.getSendDownlinkMsgsFuture().set(null);

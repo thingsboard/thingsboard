@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.telemetry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
@@ -283,26 +284,31 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
     private ListenableFuture<Void> processAttributeDeleteMsg(TenantId tenantId, EntityId entityId, AttributeDeleteMsg attributeDeleteMsg,
                                                              String entityType) {
-        SettableFuture<Void> futureToSet = SettableFuture.create();
+
         String scope = attributeDeleteMsg.getScope();
         List<String> attributeKeys = attributeDeleteMsg.getAttributeNamesList();
-        attributesService.removeAll(tenantId, entityId, scope, attributeKeys);
-        if (EntityType.DEVICE.name().equals(entityType)) {
-            tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
-                    tenantId, (DeviceId) entityId, scope, attributeKeys), new TbQueueCallback() {
-                @Override
-                public void onSuccess(TbQueueMsgMetadata metadata) {
-                    futureToSet.set(null);
-                }
+        ListenableFuture<List<String>> removeAllFuture = attributesService.removeAll(tenantId, entityId, scope, attributeKeys);
+        return Futures.transformAsync(removeAllFuture, removeAttributes -> {
+            if (EntityType.DEVICE.name().equals(entityType)) {
+                SettableFuture<Void> futureToSet = SettableFuture.create();
+                tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(
+                        tenantId, (DeviceId) entityId, scope, attributeKeys), new TbQueueCallback() {
+                    @Override
+                    public void onSuccess(TbQueueMsgMetadata metadata) {
+                        futureToSet.set(null);
+                    }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    log.error("Can't process attribute delete msg [{}]", attributeDeleteMsg, t);
-                    futureToSet.setException(t);
-                }
-            });
-        }
-        return futureToSet;
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Can't process attribute delete msg [{}]", attributeDeleteMsg, t);
+                        futureToSet.setException(t);
+                    }
+                });
+                return futureToSet;
+            } else {
+                return Futures.immediateFuture(null);
+            }
+        }, dbCallbackExecutorService);
     }
 
     public EntityDataProto convertTelemetryEventToEntityDataProto(EntityType entityType,
