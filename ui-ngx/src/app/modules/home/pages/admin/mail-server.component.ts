@@ -24,7 +24,6 @@ import {
   AdminSettings,
   MailConfigTemplate,
   MailServerOauth2Provider,
-  mailServerOauth2ProvidersTranslations,
   MailServerSettings,
   smtpPortPattern,
   SmtpProtocol
@@ -56,7 +55,6 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   domainSchemaTranslations = domainSchemaTranslations;
 
   mailServerOauth2Provider = MailServerOauth2Provider;
-  mailServerOauth2ProvidersTranslations = mailServerOauth2ProvidersTranslations;
 
   tlsVersions = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
 
@@ -94,7 +92,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     changePassword: [false],
     password: [''],
     enableOauth2: [false],
-    providerId: ['', [Validators.required]],
+    providerId: ['CUSTOM', [Validators.required]],
     clientId: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(255)]],
     clientSecret: [{ value:'', disabled: true }, [Validators.required, Validators.maxLength(2048)]],
     providerTenantId: [{value: '', disabled: true}, [Validators.required]],
@@ -105,7 +103,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   });
 
   private defaultConfiguration = {
-    providerId: MailServerOauth2Provider.CUSTOM,
+    providerId: 'CUSTOM',
     smtpProtocol: SmtpProtocol.SMTP,
     smtpHost: '',
     smtpPort: null,
@@ -133,7 +131,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       Validators.pattern(this.DOMAIN_AND_PORT_REGEXP)]
     ],
     scheme: [DomainSchema.HTTPS, Validators.required]
-  }, {validators: this.uniqueDomainValidator});
+  });
 
   constructor(protected store: Store<AppState>,
               private router: Router,
@@ -164,6 +162,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.showChangePassword = isDefinedAndNotNull(this.adminSettings.jsonValue.showChangePassword)
         ? this.adminSettings.jsonValue.showChangePassword : true;
       delete this.adminSettings.jsonValue.showChangePassword;
+      this.adminSettings.jsonValue.providerId = 'CUSTOM';
       this.mailSettings.reset(this.adminSettings.jsonValue, {emitEvent: false});
       this.enableMailPassword(!this.showChangePassword);
       this.enableProxyChanged();
@@ -286,19 +285,6 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     ).subscribe(
       (value) => this.mailSettings.get('redirectUri').patchValue(this.redirectURI(value), {emitEvent: false})
     );
-  }
-
-  private uniqueDomainValidator(control: FormGroup): { [key: string]: boolean } | null {
-    if (control.parent?.value) {
-      const domain = control.value.name;
-      const listProtocols = control.parent.getRawValue()
-        .filter((domainInfo) => domainInfo.name === domain)
-        .map((domainInfo) => domainInfo.scheme);
-      if (listProtocols.length > 1 || new Set(listProtocols).size !== listProtocols.length) {
-        return {unique: true};
-      }
-    }
-    return null;
   }
 
   private enableOauth2(value: boolean): void {

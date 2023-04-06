@@ -61,19 +61,9 @@ export interface MailServerSettings {
 }
 
 export enum MailServerOauth2Provider {
-  GOOGLE = 'GOOGLE',
   OFFICE_365 = 'OFFICE_365',
-  SENDGRID = 'SENDGRID',
   CUSTOM = 'CUSTOM'
 }
-export const mailServerOauth2ProvidersTranslations = new Map<MailServerOauth2Provider, string>(
-  [
-    [MailServerOauth2Provider.GOOGLE, 'admin.oauth2.google-provider'],
-    [MailServerOauth2Provider.OFFICE_365, 'admin.oauth2.microsoft-provider'],
-    [MailServerOauth2Provider.SENDGRID, 'admin.oauth2.sendgrid-provider'],
-    [MailServerOauth2Provider.CUSTOM, 'admin.oauth2.custom-provider']
-  ]
-);
 
 export interface MailConfigTemplate {
   id: HasUUID;
