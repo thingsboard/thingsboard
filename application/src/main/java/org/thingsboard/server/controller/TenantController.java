@@ -79,12 +79,16 @@ public class TenantController extends BaseController {
             @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION)
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
-        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
-        Tenant tenant = checkTenantId(tenantId, Operation.READ);
-        if (!tenant.getAdditionalInfo().isNull()) {
-            processDashboardIdFromAdditionalInfo((ObjectNode) tenant.getAdditionalInfo(), HOME_DASHBOARD);
+        try {
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+            Tenant tenant = checkTenantId(tenantId, Operation.READ);
+            if (!tenant.getAdditionalInfo().isNull()) {
+                processDashboardIdFromAdditionalInfo((ObjectNode) tenant.getAdditionalInfo(), HOME_DASHBOARD);
+            }
+            return tenant;
+        } catch (Exception e) {
+            throw handleException(e);
         }
-        return tenant;
     }
 
     @ApiOperation(value = "Get Tenant Info (getTenantInfoById)",
@@ -97,8 +101,12 @@ public class TenantController extends BaseController {
             @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION)
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
-        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
-        return checkTenantInfoId(tenantId, Operation.READ);
+        try {
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+            return checkTenantInfoId(tenantId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Create Or update Tenant (saveTenant)",
@@ -146,8 +154,12 @@ public class TenantController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(tenantService.findTenants(pageLink));
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(tenantService.findTenants(pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Tenants Info (getTenants)", notes = "Returns a page of tenant info objects registered in the platform. "
@@ -167,8 +179,12 @@ public class TenantController extends BaseController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder
     ) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(tenantService.findTenantInfos(pageLink));
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(tenantService.findTenantInfos(pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
 }

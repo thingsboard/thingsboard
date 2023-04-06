@@ -64,7 +64,11 @@ public class Lwm2mController extends BaseController {
     public LwM2MServerSecurityConfigDefault getLwm2mBootstrapSecurityInfo(
         @ApiParam(value = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
         @PathVariable(IS_BOOTSTRAP_SERVER) boolean bootstrapServer) throws ThingsboardException {
-            return lwM2MService.getServerSecurityInfo(bootstrapServer);
+            try {
+                return lwM2MService.getServerSecurityInfo(bootstrapServer);
+            } catch (Exception e) {
+                throw handleException(e);
+            }
     }
 
     @ApiOperation(hidden = true, value = "Save device with credentials (Deprecated)")

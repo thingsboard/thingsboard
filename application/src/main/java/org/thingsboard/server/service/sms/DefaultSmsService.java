@@ -114,7 +114,11 @@ public class DefaultSmsService implements SmsService {
     @Override
     public void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException {
         SmsSender testSmsSender;
-        testSmsSender = this.smsSenderFactory.createSmsSender(testSmsRequest.getProviderConfiguration());
+        try {
+            testSmsSender = this.smsSenderFactory.createSmsSender(testSmsRequest.getProviderConfiguration());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
         this.sendSms(testSmsSender, testSmsRequest.getNumberTo(), testSmsRequest.getMessage());
         testSmsSender.destroy();
     }
@@ -125,7 +129,11 @@ public class DefaultSmsService implements SmsService {
     }
 
     private int sendSms(SmsSender smsSender, String numberTo, String message) throws ThingsboardException {
-        return smsSender.sendSms(numberTo, message);
+        try {
+            return smsSender.sendSms(numberTo, message);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     private ThingsboardException handleException(Exception exception) {

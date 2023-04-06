@@ -137,18 +137,22 @@ public class UserController extends BaseController {
             @ApiParam(value = USER_ID_PARAM_DESCRIPTION)
             @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
-        UserId userId = new UserId(toUUID(strUserId));
-        User user = checkUserId(userId, Operation.READ);
-        if (user.getAdditionalInfo().isObject()) {
-            ObjectNode additionalInfo = (ObjectNode) user.getAdditionalInfo();
-            processDashboardIdFromAdditionalInfo(additionalInfo, DEFAULT_DASHBOARD);
-            processDashboardIdFromAdditionalInfo(additionalInfo, HOME_DASHBOARD);
-            UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
-            if (userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
-                additionalInfo.put("userCredentialsEnabled", true);
+        try {
+            UserId userId = new UserId(toUUID(strUserId));
+            User user = checkUserId(userId, Operation.READ);
+            if (user.getAdditionalInfo().isObject()) {
+                ObjectNode additionalInfo = (ObjectNode) user.getAdditionalInfo();
+                processDashboardIdFromAdditionalInfo(additionalInfo, DEFAULT_DASHBOARD);
+                processDashboardIdFromAdditionalInfo(additionalInfo, HOME_DASHBOARD);
+                UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
+                if (userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
+                    additionalInfo.put("userCredentialsEnabled", true);
+                }
             }
+            return user;
+        } catch (Exception e) {
+            throw handleException(e);
         }
-        return user;
     }
 
     @ApiOperation(value = "Check Token Access Enabled (isUserTokenAccessEnabled)",
@@ -173,17 +177,21 @@ public class UserController extends BaseController {
             @ApiParam(value = USER_ID_PARAM_DESCRIPTION)
             @PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
-        if (!userTokenAccessEnabled) {
-            throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
-                    ThingsboardErrorCode.PERMISSION_DENIED);
+        try {
+            if (!userTokenAccessEnabled) {
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
+                        ThingsboardErrorCode.PERMISSION_DENIED);
+            }
+            UserId userId = new UserId(toUUID(strUserId));
+            SecurityUser authUser = getCurrentUser();
+            User user = checkUserId(userId, Operation.READ);
+            UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+            UserCredentials credentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), userId);
+            SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
+            return tokenFactory.createTokenPair(securityUser);
+        } catch (Exception e) {
+            throw handleException(e);
         }
-        UserId userId = new UserId(toUUID(strUserId));
-        SecurityUser authUser = getCurrentUser();
-        User user = checkUserId(userId, Operation.READ);
-        UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-        UserCredentials credentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), userId);
-        SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
-        return tokenFactory.createTokenPair(securityUser);
     }
 
     @ApiOperation(value = "Save Or update User (saveUser)",
@@ -218,19 +226,23 @@ public class UserController extends BaseController {
             @ApiParam(value = "Email of the user", required = true)
             @RequestParam(value = "email") String email,
             HttpServletRequest request) throws ThingsboardException {
-        User user = checkNotNull(userService.findUserByEmail(getCurrentUser().getTenantId(), email));
+        try {
+            User user = checkNotNull(userService.findUserByEmail(getCurrentUser().getTenantId(), email));
 
-        accessControlService.checkPermission(getCurrentUser(), Resource.USER, Operation.READ,
-                user.getId(), user);
+            accessControlService.checkPermission(getCurrentUser(), Resource.USER, Operation.READ,
+                    user.getId(), user);
 
-        UserCredentials userCredentials = userService.findUserCredentialsByUserId(getCurrentUser().getTenantId(), user.getId());
-        if (!userCredentials.isEnabled() && userCredentials.getActivateToken() != null) {
-            String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
-            String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
-                    userCredentials.getActivateToken());
-            mailService.sendActivationEmail(activateUrl, email);
-        } else {
-            throw new ThingsboardException("User is already activated!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            UserCredentials userCredentials = userService.findUserCredentialsByUserId(getCurrentUser().getTenantId(), user.getId());
+            if (!userCredentials.isEnabled() && userCredentials.getActivateToken() != null) {
+                String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
+                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
+                        userCredentials.getActivateToken());
+                mailService.sendActivationEmail(activateUrl, email);
+            } else {
+                throw new ThingsboardException("User is already activated!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+        } catch (Exception e) {
+            throw handleException(e);
         }
     }
 
@@ -245,17 +257,21 @@ public class UserController extends BaseController {
             @PathVariable(USER_ID) String strUserId,
             HttpServletRequest request) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
-        UserId userId = new UserId(toUUID(strUserId));
-        User user = checkUserId(userId, Operation.READ);
-        SecurityUser authUser = getCurrentUser();
-        UserCredentials userCredentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), user.getId());
-        if (!userCredentials.isEnabled() && userCredentials.getActivateToken() != null) {
-            String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
-            String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
-                    userCredentials.getActivateToken());
-            return activateUrl;
-        } else {
-            throw new ThingsboardException("User is already activated!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        try {
+            UserId userId = new UserId(toUUID(strUserId));
+            User user = checkUserId(userId, Operation.READ);
+            SecurityUser authUser = getCurrentUser();
+            UserCredentials userCredentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), user.getId());
+            if (!userCredentials.isEnabled() && userCredentials.getActivateToken() != null) {
+                String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
+                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
+                        userCredentials.getActivateToken());
+                return activateUrl;
+            } else {
+                throw new ThingsboardException("User is already activated!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+        } catch (Exception e) {
+            throw handleException(e);
         }
     }
 
@@ -294,12 +310,16 @@ public class UserController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        SecurityUser currentUser = getCurrentUser();
-        if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
-            return checkNotNull(userService.findUsersByTenantId(currentUser.getTenantId(), pageLink));
-        } else {
-            return checkNotNull(userService.findCustomerUsers(currentUser.getTenantId(), currentUser.getCustomerId(), pageLink));
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            SecurityUser currentUser = getCurrentUser();
+            if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
+                return checkNotNull(userService.findUsersByTenantId(currentUser.getTenantId(), pageLink));
+            } else {
+                return checkNotNull(userService.findCustomerUsers(currentUser.getTenantId(), currentUser.getCustomerId(), pageLink));
+            }
+        } catch (Exception e) {
+            throw handleException(e);
         }
     }
 
@@ -360,9 +380,13 @@ public class UserController extends BaseController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("tenantId", strTenantId);
-        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(userService.findTenantAdmins(tenantId, pageLink));
+        try {
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(userService.findTenantAdmins(tenantId, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Customer Users (getCustomerUsers)",
@@ -384,11 +408,15 @@ public class UserController extends BaseController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
-        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-        checkCustomerId(customerId, Operation.READ);
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        TenantId tenantId = getCurrentUser().getTenantId();
-        return checkNotNull(userService.findCustomerUsers(tenantId, customerId, pageLink));
+        try {
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            checkCustomerId(customerId, Operation.READ);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            TenantId tenantId = getCurrentUser().getTenantId();
+            return checkNotNull(userService.findCustomerUsers(tenantId, customerId, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Enable/Disable User credentials (setUserCredentialsEnabled)",
@@ -402,13 +430,17 @@ public class UserController extends BaseController {
             @ApiParam(value = "Disable (\"true\") or enable (\"false\") the credentials.", defaultValue = "true")
             @RequestParam(required = false, defaultValue = "true") boolean userCredentialsEnabled) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
-        UserId userId = new UserId(toUUID(strUserId));
-        User user = checkUserId(userId, Operation.WRITE);
-        TenantId tenantId = getCurrentUser().getTenantId();
-        userService.setUserCredentialsEnabled(tenantId, userId, userCredentialsEnabled);
+        try {
+            UserId userId = new UserId(toUUID(strUserId));
+            User user = checkUserId(userId, Operation.WRITE);
+            TenantId tenantId = getCurrentUser().getTenantId();
+            userService.setUserCredentialsEnabled(tenantId, userId, userCredentialsEnabled);
 
-        if (!userCredentialsEnabled) {
-            eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
+            if (!userCredentialsEnabled) {
+                eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
+            }
+        } catch (Exception e) {
+            throw handleException(e);
         }
     }
 

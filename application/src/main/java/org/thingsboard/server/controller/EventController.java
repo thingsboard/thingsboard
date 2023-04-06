@@ -248,10 +248,14 @@ public class EventController extends BaseController {
                             @RequestBody EventFilter eventFilter) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
-        EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-        checkEntityId(entityId, Operation.WRITE);
+        try {
+            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+            checkEntityId(entityId, Operation.WRITE);
 
-        eventService.removeEvents(getTenantId(), entityId, eventFilter, startTime, endTime);
+            eventService.removeEvents(getTenantId(), entityId, eventFilter, startTime, endTime);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     private static EventType resolveEventType(String eventType) throws ThingsboardException {

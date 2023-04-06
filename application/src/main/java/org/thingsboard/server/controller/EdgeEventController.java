@@ -81,10 +81,14 @@ public class EdgeEventController extends BaseController {
             @ApiParam(value = "Timestamp. Edge events with creation time after it won't be queried")
             @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
-        TenantId tenantId = getCurrentUser().getTenantId();
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        checkEdgeId(edgeId, Operation.READ);
-        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-        return checkNotNull(edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, false));
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            checkEdgeId(edgeId, Operation.READ);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+            return checkNotNull(edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, false));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 }

@@ -140,8 +140,12 @@ public class DashboardController extends BaseController {
             @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
-        DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-        return checkDashboardInfoId(dashboardId, Operation.READ);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            return checkDashboardInfoId(dashboardId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Dashboard (getDashboardById)",
@@ -155,8 +159,12 @@ public class DashboardController extends BaseController {
             @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
-        DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-        return checkDashboardId(dashboardId, Operation.READ);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            return checkDashboardId(dashboardId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Create Or Update Dashboard (saveDashboard)",
@@ -354,10 +362,14 @@ public class DashboardController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
-        checkTenantId(tenantId, Operation.READ);
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(dashboardService.findDashboardsByTenantId(tenantId, pageLink));
+        try {
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+            checkTenantId(tenantId, Operation.READ);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(dashboardService.findDashboardsByTenantId(tenantId, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Tenant Dashboards (getTenantDashboards)",
@@ -380,12 +392,16 @@ public class DashboardController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        TenantId tenantId = getCurrentUser().getTenantId();
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        if (mobile != null && mobile) {
-            return checkNotNull(dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink));
-        } else {
-            return checkNotNull(dashboardService.findDashboardsByTenantId(tenantId, pageLink));
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            if (mobile != null && mobile) {
+                return checkNotNull(dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink));
+            } else {
+                return checkNotNull(dashboardService.findDashboardsByTenantId(tenantId, pageLink));
+            }
+        } catch (Exception e) {
+            throw handleException(e);
         }
     }
 
@@ -412,14 +428,18 @@ public class DashboardController extends BaseController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
-        TenantId tenantId = getCurrentUser().getTenantId();
-        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-        checkCustomerId(customerId, Operation.READ);
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        if (mobile != null && mobile) {
-            return checkNotNull(dashboardService.findMobileDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
-        } else {
-            return checkNotNull(dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            checkCustomerId(customerId, Operation.READ);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            if (mobile != null && mobile) {
+                return checkNotNull(dashboardService.findMobileDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            } else {
+                return checkNotNull(dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            }
+        } catch (Exception e) {
+            throw handleException(e);
         }
     }
 
@@ -433,27 +453,31 @@ public class DashboardController extends BaseController {
     @RequestMapping(value = "/dashboard/home", method = RequestMethod.GET)
     @ResponseBody
     public HomeDashboard getHomeDashboard() throws ThingsboardException {
-        SecurityUser securityUser = getCurrentUser();
-        if (securityUser.isSystemAdmin()) {
-            return null;
-        }
-        User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        HomeDashboard homeDashboard;
-        homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
-        if (homeDashboard == null) {
-            if (securityUser.isCustomerUser()) {
-                Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
-                additionalInfo = customer.getAdditionalInfo();
-                homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+        try {
+            SecurityUser securityUser = getCurrentUser();
+            if (securityUser.isSystemAdmin()) {
+                return null;
             }
+            User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+            JsonNode additionalInfo = user.getAdditionalInfo();
+            HomeDashboard homeDashboard;
+            homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
             if (homeDashboard == null) {
-                Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
-                additionalInfo = tenant.getAdditionalInfo();
-                homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+                if (securityUser.isCustomerUser()) {
+                    Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
+                    additionalInfo = customer.getAdditionalInfo();
+                    homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+                }
+                if (homeDashboard == null) {
+                    Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
+                    additionalInfo = tenant.getAdditionalInfo();
+                    homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+                }
             }
+            return homeDashboard;
+        } catch (Exception e) {
+            throw handleException(e);
         }
-        return homeDashboard;
     }
 
     @ApiOperation(value = "Get Home Dashboard Info (getHomeDashboardInfo)",
@@ -466,27 +490,31 @@ public class DashboardController extends BaseController {
     @RequestMapping(value = "/dashboard/home/info", method = RequestMethod.GET)
     @ResponseBody
     public HomeDashboardInfo getHomeDashboardInfo() throws ThingsboardException {
-        SecurityUser securityUser = getCurrentUser();
-        if (securityUser.isSystemAdmin()) {
-            return null;
-        }
-        User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        HomeDashboardInfo homeDashboardInfo;
-        homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
-        if (homeDashboardInfo == null) {
-            if (securityUser.isCustomerUser()) {
-                Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
-                additionalInfo = customer.getAdditionalInfo();
-                homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
+        try {
+            SecurityUser securityUser = getCurrentUser();
+            if (securityUser.isSystemAdmin()) {
+                return null;
             }
+            User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+            JsonNode additionalInfo = user.getAdditionalInfo();
+            HomeDashboardInfo homeDashboardInfo;
+            homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
             if (homeDashboardInfo == null) {
-                Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
-                additionalInfo = tenant.getAdditionalInfo();
-                homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
+                if (securityUser.isCustomerUser()) {
+                    Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
+                    additionalInfo = customer.getAdditionalInfo();
+                    homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
+                }
+                if (homeDashboardInfo == null) {
+                    Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
+                    additionalInfo = tenant.getAdditionalInfo();
+                    homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
+                }
             }
+            return homeDashboardInfo;
+        } catch (Exception e) {
+            throw handleException(e);
         }
-        return homeDashboardInfo;
     }
 
     @ApiOperation(value = "Get Tenant Home Dashboard Info (getTenantHomeDashboardInfo)",
@@ -497,18 +525,22 @@ public class DashboardController extends BaseController {
     @RequestMapping(value = "/tenant/dashboard/home/info", method = RequestMethod.GET)
     @ResponseBody
     public HomeDashboardInfo getTenantHomeDashboardInfo() throws ThingsboardException {
-        Tenant tenant = tenantService.findTenantById(getTenantId());
-        JsonNode additionalInfo = tenant.getAdditionalInfo();
-        DashboardId dashboardId = null;
-        boolean hideDashboardToolbar = true;
-        if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
-            String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
-            dashboardId = new DashboardId(toUUID(strDashboardId));
-            if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
-                hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+        try {
+            Tenant tenant = tenantService.findTenantById(getTenantId());
+            JsonNode additionalInfo = tenant.getAdditionalInfo();
+            DashboardId dashboardId = null;
+            boolean hideDashboardToolbar = true;
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
+                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
+                dashboardId = new DashboardId(toUUID(strDashboardId));
+                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+                }
             }
+            return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
+        } catch (Exception e) {
+            throw handleException(e);
         }
-        return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
     }
 
     @ApiOperation(value = "Update Tenant Home Dashboard Info (getTenantHomeDashboardInfo)",
@@ -522,23 +554,27 @@ public class DashboardController extends BaseController {
             @ApiParam(value = "A JSON object that represents home dashboard id and other parameters", required = true)
             @RequestBody HomeDashboardInfo homeDashboardInfo) throws ThingsboardException {
 
-        if (homeDashboardInfo.getDashboardId() != null) {
-            checkDashboardId(homeDashboardInfo.getDashboardId(), Operation.READ);
+        try {
+            if (homeDashboardInfo.getDashboardId() != null) {
+                checkDashboardId(homeDashboardInfo.getDashboardId(), Operation.READ);
+            }
+            Tenant tenant = tenantService.findTenantById(getTenantId());
+            JsonNode additionalInfo = tenant.getAdditionalInfo();
+            if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
+                additionalInfo = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            }
+            if (homeDashboardInfo.getDashboardId() != null) {
+                ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_ID, homeDashboardInfo.getDashboardId().getId().toString());
+                ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_HIDE_TOOLBAR, homeDashboardInfo.isHideDashboardToolbar());
+            } else {
+                ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_ID);
+                ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_HIDE_TOOLBAR);
+            }
+            tenant.setAdditionalInfo(additionalInfo);
+            tenantService.saveTenant(tenant);
+        } catch (Exception e) {
+            throw handleException(e);
         }
-        Tenant tenant = tenantService.findTenantById(getTenantId());
-        JsonNode additionalInfo = tenant.getAdditionalInfo();
-        if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
-            additionalInfo = JacksonUtil.OBJECT_MAPPER.createObjectNode();
-        }
-        if (homeDashboardInfo.getDashboardId() != null) {
-            ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_ID, homeDashboardInfo.getDashboardId().getId().toString());
-            ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_HIDE_TOOLBAR, homeDashboardInfo.isHideDashboardToolbar());
-        } else {
-            ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_ID);
-            ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_HIDE_TOOLBAR);
-        }
-        tenant.setAdditionalInfo(additionalInfo);
-        tenantService.saveTenant(tenant);
     }
 
     private HomeDashboardInfo extractHomeDashboardInfoFromAdditionalInfo(JsonNode additionalInfo) {
@@ -645,24 +681,28 @@ public class DashboardController extends BaseController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
-        TenantId tenantId = getCurrentUser().getTenantId();
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        checkEdgeId(edgeId, Operation.READ);
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        PageData<DashboardInfo> nonFilteredResult = dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
-        List<DashboardInfo> filteredDashboards = nonFilteredResult.getData().stream().filter(dashboardInfo -> {
-            try {
-                accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, Operation.READ, dashboardInfo.getId(), dashboardInfo);
-                return true;
-            } catch (ThingsboardException e) {
-                return false;
-            }
-        }).collect(Collectors.toList());
-        PageData<DashboardInfo> filteredResult = new PageData<>(filteredDashboards,
-                nonFilteredResult.getTotalPages(),
-                nonFilteredResult.getTotalElements(),
-                nonFilteredResult.hasNext());
-        return checkNotNull(filteredResult);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            checkEdgeId(edgeId, Operation.READ);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            PageData<DashboardInfo> nonFilteredResult = dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
+            List<DashboardInfo> filteredDashboards = nonFilteredResult.getData().stream().filter(dashboardInfo -> {
+                try {
+                    accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, Operation.READ, dashboardInfo.getId(), dashboardInfo);
+                    return true;
+                } catch (ThingsboardException e) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+            PageData<DashboardInfo> filteredResult = new PageData<>(filteredDashboards,
+                    nonFilteredResult.getTotalPages(),
+                    nonFilteredResult.getTotalElements(),
+                    nonFilteredResult.hasNext());
+            return checkNotNull(filteredResult);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     private Set<CustomerId> customerIdFromStr(String[] strCustomerIds) {
