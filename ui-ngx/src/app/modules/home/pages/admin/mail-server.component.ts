@@ -162,7 +162,9 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.showChangePassword = isDefinedAndNotNull(this.adminSettings.jsonValue.showChangePassword)
         ? this.adminSettings.jsonValue.showChangePassword : true;
       delete this.adminSettings.jsonValue.showChangePassword;
-      this.adminSettings.jsonValue.providerId = 'CUSTOM';
+      if (!this.adminSettings.jsonValue.providerId) {
+        this.adminSettings.jsonValue.providerId = 'CUSTOM';
+      }
       this.mailSettings.reset(this.adminSettings.jsonValue, {emitEvent: false});
       this.enableMailPassword(!this.showChangePassword);
       this.enableProxyChanged();
