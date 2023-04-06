@@ -60,10 +60,6 @@ public class MqttTransportContext extends TransportContext {
     private boolean skipValidityCheckForClientCert;
 
     @Getter
-    @Value("${transport.mqtt.ssl.logging_enabled:false}")
-    private boolean sslLoggingEnabled;
-
-    @Getter
     @Setter
     private SslHandler sslHandler;
 

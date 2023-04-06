@@ -45,6 +45,7 @@ import javax.net.ssl.X509TrustManager;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -177,6 +178,7 @@ public class MqttSslHandlerProvider {
                 }
             }
             if (credentialsBody == null) {
+                log.error("Failed to find credentials for device certificate chain: {}", (Object) chain);
                 throw new CertificateException("Invalid Device Certificate");
             }
         }

@@ -51,7 +51,6 @@
     <!-- MQTT transport debug -->
     <!--    <logger name="org.thingsboard.server.transport.mqtt.MqttTransportHandler" level="DEBUG" /> -->
 
-    <logger name="io.netty.handler.logging.LoggingHandler" level="TRACE"/>
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 
     <root level="INFO">

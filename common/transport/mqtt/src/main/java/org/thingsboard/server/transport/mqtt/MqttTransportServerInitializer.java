@@ -49,9 +49,6 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
         } else {
             pipeline.addLast("ipFilter", new IpFilter(context));
         }
-        if (context.isSslLoggingEnabled()){
-            pipeline.addLast("logger", new LoggingHandler());
-        }
         if (sslEnabled && context.getSslHandlerProvider() != null) {
             sslHandler = context.getSslHandlerProvider().getSslHandler();
             pipeline.addLast(sslHandler);

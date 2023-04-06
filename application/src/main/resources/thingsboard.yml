@@ -741,7 +741,7 @@ transport:
     # MQTT SSL configuration
     ssl:
       # Enable/disable SSL support
-      enabled: "${MQTT_SSL_ENABLED:false}"
+      enabled: "${MQTT_SSL_ENABLED:true}"
       # MQTT SSL bind address
       bind_address: "${MQTT_SSL_BIND_ADDRESS:0.0.0.0}"
       # MQTT SSL bind port
@@ -755,9 +755,9 @@ transport:
         # PEM server credentials
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
-          cert_file: "${MQTT_SSL_PEM_CERT:mqttserver.pem}"
+          cert_file: "${MQTT_SSL_PEM_CERT:/etc/thingsboard/conf/server.pem}"
           # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
-          key_file: "${MQTT_SSL_PEM_KEY:mqttserver_key.pem}"
+          key_file: "${MQTT_SSL_PEM_KEY:/etc/thingsboard/conf/server_key.pem}"
           # Server certificate private key password (optional)
           key_password: "${MQTT_SSL_PEM_KEY_PASSWORD:server_key_password}"
         # Keystore server credentials
@@ -774,7 +774,6 @@ transport:
           key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
-      logging_enabled: "${MQTT_SSL_LOGGING_ENABLED:false}"
   # Local CoAP transport parameters
   coap:
     # Enable/disable coap transport protocol.
