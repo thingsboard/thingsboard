@@ -21,7 +21,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.haproxy.HAProxyMessageDecoder;
 import io.netty.handler.codec.mqtt.MqttDecoder;
 import io.netty.handler.codec.mqtt.MqttEncoder;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
 import org.thingsboard.server.transport.mqtt.limits.IpFilter;
 import org.thingsboard.server.transport.mqtt.limits.ProxyIpFilter;
