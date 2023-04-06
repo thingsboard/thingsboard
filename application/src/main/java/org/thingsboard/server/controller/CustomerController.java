@@ -79,12 +79,16 @@ public class CustomerController extends BaseController {
             @ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
-        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-        Customer customer = checkCustomerId(customerId, Operation.READ);
-        if (!customer.getAdditionalInfo().isNull()) {
-            processDashboardIdFromAdditionalInfo((ObjectNode) customer.getAdditionalInfo(), HOME_DASHBOARD);
+        try {
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            Customer customer = checkCustomerId(customerId, Operation.READ);
+            if (!customer.getAdditionalInfo().isNull()) {
+                processDashboardIdFromAdditionalInfo((ObjectNode) customer.getAdditionalInfo(), HOME_DASHBOARD);
+            }
+            return customer;
+        } catch (Exception e) {
+            throw handleException(e);
         }
-        return customer;
     }
 
 
@@ -98,13 +102,17 @@ public class CustomerController extends BaseController {
             @ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
-        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-        Customer customer = checkCustomerId(customerId, Operation.READ);
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode infoObject = objectMapper.createObjectNode();
-        infoObject.put("title", customer.getTitle());
-        infoObject.put(IS_PUBLIC, customer.isPublic());
-        return infoObject;
+        try {
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            Customer customer = checkCustomerId(customerId, Operation.READ);
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode infoObject = objectMapper.createObjectNode();
+            infoObject.put("title", customer.getTitle());
+            infoObject.put(IS_PUBLIC, customer.isPublic());
+            return infoObject;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Customer Title (getCustomerTitleById)",
@@ -117,9 +125,13 @@ public class CustomerController extends BaseController {
             @ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
-        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-        Customer customer = checkCustomerId(customerId, Operation.READ);
-        return customer.getTitle();
+        try {
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            Customer customer = checkCustomerId(customerId, Operation.READ);
+            return customer.getTitle();
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Create or update Customer (saveCustomer)",
@@ -170,9 +182,13 @@ public class CustomerController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        TenantId tenantId = getCurrentUser().getTenantId();
-        return checkNotNull(customerService.findCustomersByTenantId(tenantId, pageLink));
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            TenantId tenantId = getCurrentUser().getTenantId();
+            return checkNotNull(customerService.findCustomersByTenantId(tenantId, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Tenant Customer by Customer title (getTenantCustomer)",
@@ -183,7 +199,11 @@ public class CustomerController extends BaseController {
     public Customer getTenantCustomer(
             @ApiParam(value = "A string value representing the Customer title.")
             @RequestParam String customerTitle) throws ThingsboardException {
+        try {
             TenantId tenantId = getCurrentUser().getTenantId();
-        return checkNotNull(customerService.findCustomerByTenantIdAndTitle(tenantId, customerTitle), "Customer with title [" + customerTitle + "] is not found");
+            return checkNotNull(customerService.findCustomerByTenantIdAndTitle(tenantId, customerTitle), "Customer with title [" + customerTitle + "] is not found");
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 }

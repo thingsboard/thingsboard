@@ -87,8 +87,12 @@ public class DeviceProfileController extends BaseController {
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
-        DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-        return checkDeviceProfileId(deviceProfileId, Operation.READ);
+        try {
+            DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
+            return checkDeviceProfileId(deviceProfileId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Device Profile Info (getDeviceProfileInfoById)",
@@ -102,8 +106,12 @@ public class DeviceProfileController extends BaseController {
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
-        DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-        return new DeviceProfileInfo(checkDeviceProfileId(deviceProfileId, Operation.READ));
+        try {
+            DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
+            return new DeviceProfileInfo(checkDeviceProfileId(deviceProfileId, Operation.READ));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Default Device Profile (getDefaultDeviceProfileInfo)",
@@ -114,7 +122,11 @@ public class DeviceProfileController extends BaseController {
     @RequestMapping(value = "/deviceProfileInfo/default", method = RequestMethod.GET)
     @ResponseBody
     public DeviceProfileInfo getDefaultDeviceProfileInfo() throws ThingsboardException {
-        return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
+        try {
+            return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get time-series keys (getTimeseriesKeys)",
@@ -138,7 +150,11 @@ public class DeviceProfileController extends BaseController {
             deviceProfileId = null;
         }
 
-        return timeseriesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
+        try {
+            return timeseriesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get attribute keys (getAttributesKeys)",
@@ -162,7 +178,11 @@ public class DeviceProfileController extends BaseController {
             deviceProfileId = null;
         }
 
-        return attributesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
+        try {
+            return attributesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Create Or Update Device Profile (saveDeviceProfile)",
@@ -236,8 +256,12 @@ public class DeviceProfileController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(deviceProfileService.findDeviceProfiles(getTenantId(), pageLink));
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(deviceProfileService.findDeviceProfiles(getTenantId(), pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get Device Profiles for transport type (getDeviceProfileInfos)",
@@ -260,7 +284,11 @@ public class DeviceProfileController extends BaseController {
             @RequestParam(required = false) String sortOrder,
             @ApiParam(value = "Type of the transport", allowableValues = TRANSPORT_TYPE_ALLOWABLE_VALUES)
             @RequestParam(required = false) String transportType) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink, transportType));
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink, transportType));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 }
