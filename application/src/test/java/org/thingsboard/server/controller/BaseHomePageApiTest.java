@@ -330,7 +330,6 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isOauthEnabled());
     }
 
-
     private OAuth2Info createDefaultOAuth2Info() {
         return new OAuth2Info(true, Lists.newArrayList(
                 OAuth2ParamsInfo.builder()

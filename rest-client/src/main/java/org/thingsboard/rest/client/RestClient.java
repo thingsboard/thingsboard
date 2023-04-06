@@ -122,6 +122,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -1647,6 +1648,10 @@ public class RestClient implements Closeable {
                 HttpMethod.POST, new HttpEntity<>(query),
                 new ParameterizedTypeReference<PageData<AlarmData>>() {
                 }).getBody();
+    }
+
+    public Long countAlarmsByQuery(AlarmCountQuery query) {
+        return restTemplate.postForObject(baseURL + "/api/alarmsQuery/count", query, Long.class);
     }
 
     public void saveRelation(EntityRelation relation) {

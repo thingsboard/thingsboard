@@ -15,11 +15,20 @@
  */
 package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
-public enum CmdUpdateType {
-    ENTITY_DATA,
-    ALARM_DATA,
-    ALARM_COUNT_DATA,
-    COUNT_DATA,
-    NOTIFICATIONS,
-    NOTIFICATIONS_COUNT
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
+
+public class AlarmCountCmd extends DataCmd {
+
+    @Getter
+    private final AlarmCountQuery query;
+
+    @JsonCreator
+    public AlarmCountCmd(@JsonProperty("cmdId") int cmdId,
+                         @JsonProperty("query") AlarmCountQuery query) {
+        super(cmdId);
+        this.query = query;
+    }
 }

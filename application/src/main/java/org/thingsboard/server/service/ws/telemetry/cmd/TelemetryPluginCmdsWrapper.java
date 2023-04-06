@@ -19,6 +19,8 @@ import lombok.Data;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUnsubscribeCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUnsubscribeCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataUnsubscribeCmd;
@@ -51,5 +53,9 @@ public class TelemetryPluginCmdsWrapper {
     private List<EntityCountCmd> entityCountCmds;
 
     private List<EntityCountUnsubscribeCmd> entityCountUnsubscribeCmds;
+
+    private List<AlarmCountCmd> alarmCountCmds;
+
+    private List<AlarmCountUnsubscribeCmd> alarmCountUnsubscribeCmds;
 
 }
