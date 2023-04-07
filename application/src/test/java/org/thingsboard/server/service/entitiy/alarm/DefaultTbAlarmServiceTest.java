@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
-import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,8 +29,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
-import org.thingsboard.server.dao.alarm.AlarmCommentService;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -67,7 +65,7 @@ public class DefaultTbAlarmServiceTest {
     @MockBean
     protected AlarmService alarmService;
     @MockBean
-    protected AlarmCommentService alarmCommentService;
+    protected TbAlarmCommentService alarmCommentService;
     @MockBean
     protected AlarmSubscriptionService alarmSubscriptionService;
     @MockBean
@@ -101,7 +99,7 @@ public class DefaultTbAlarmServiceTest {
                 .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).build());
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
+        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
         verify(alarmSubscriptionService, times(1)).acknowledgeAlarm(any(), any(), anyLong());
     }
@@ -114,7 +112,7 @@ public class DefaultTbAlarmServiceTest {
                 .thenReturn(AlarmApiCallResult.builder().successful(true).cleared(true).build());
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
+        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
         verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), anyLong(), any());
     }

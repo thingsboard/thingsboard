@@ -399,7 +399,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case NBIRTH:
                     case NCMD:
                     case NDATA:
-                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoNode, deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopic);
+                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoNode, sparkplugTopic);
                         break;
                     default:
                 }
@@ -410,7 +410,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case DBIRTH:
                     case DCMD:
                     case DDATA:
-                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoDevice, sparkplugTopic.getDeviceId(), sparkplugTopic);
+                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoDevice, sparkplugTopic);
                         break;
                     case DDEATH:
                         sparkplugSessionHandler.onDeviceDisconnect(mqttMsg, sparkplugTopic.getDeviceId());
@@ -687,6 +687,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         for (MqttTopicSubscription subscription : mqttMsg.payload().topicSubscriptions()) {
             String topic = subscription.topicName();
             MqttQoS reqQoS = subscription.qualityOfService();
+            if (deviceSessionCtx.isDeviceSubscriptionAttributesTopic(topic)){
+                processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V1);
+                activityReported = true;
+                continue;
+            }
             try {
                 if (sparkplugSessionHandler != null) {
                     sparkplugSessionHandler.handleSparkplugSubscribeMsg(grantedQoSList, subscription, reqQoS);
@@ -1060,15 +1065,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void checkSparkplugNodeSession(MqttConnectMessage connectMessage, ChannelHandlerContext ctx) {
+    private void checkSparkplugNodeSession(MqttConnectMessage connectMessage, ChannelHandlerContext ctx, SessionMetaData sessionMetaData) {
         try {
             if (sparkplugSessionHandler == null) {
                 SparkplugTopic sparkplugTopicNode = validatedSparkplugTopicConnectedNode(connectMessage);
                 if (sparkplugTopicNode != null) {
                     SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
                     sparkplugSessionHandler = new SparkplugNodeSessionHandler(this, deviceSessionCtx, sessionId, sparkplugTopicNode);
-                    sparkplugSessionHandler.onAttributesTelemetryProto(0, sparkplugBProtoNode,
-                            deviceSessionCtx.getDeviceInfo().getDeviceName(), sparkplugTopicNode);
+                    sparkplugSessionHandler.onAttributesTelemetryProto(0, sparkplugBProtoNode, sparkplugTopicNode);
+                    sessionMetaData.setOverwriteActivityTime(true);
                 } else {
                     log.trace("[{}][{}] Failed to fetch sparkplugDevice connect:  sparkplugTopicName without SparkplugMessageType.NDEATH.", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName());
                     throw new ThingsboardException("Invalid request body", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -1145,7 +1150,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 public void onSuccess(Void msg) {
                     SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
                     if (deviceSessionCtx.isSparkplug()) {
-                        checkSparkplugNodeSession(connectMessage, ctx);
+                        checkSparkplugNodeSession(connectMessage, ctx, sessionMetaData);
                     } else {
                         checkGatewaySession(sessionMetaData);
                     }

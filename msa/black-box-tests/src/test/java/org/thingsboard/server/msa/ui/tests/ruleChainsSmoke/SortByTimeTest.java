@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -49,8 +51,10 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Sort rule chain by time")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Sort rule chain 'DOWN'")
     public void sortByTimeDown() {
         String ruleChain = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
@@ -65,8 +69,10 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
         Assert.assertNotNull(ruleChainsPage.createdTimeEntity(ruleChain, lastCreated));
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Sort rule chain by time")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Sort rule chain 'UP'")
     public void sortByTimeUp() {
         String ruleChain = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));

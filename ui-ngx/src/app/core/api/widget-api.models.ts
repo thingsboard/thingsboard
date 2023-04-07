@@ -160,7 +160,7 @@ export interface IStateController {
   openRightLayout(): void;
   preserveState(): void;
   cleanupPreservedStates(): void;
-  navigatePrevState(index: number): void;
+  navigatePrevState(index: number, params?: StateParams): void;
   getStateId(): string;
   getStateIndex(): number;
   getStateIdAtIndex(index: number): string;

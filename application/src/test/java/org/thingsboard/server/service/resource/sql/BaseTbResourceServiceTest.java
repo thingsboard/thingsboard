@@ -19,10 +19,8 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
-import org.junit.rules.ExpectedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.ResourceType;
@@ -46,6 +44,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -116,10 +115,6 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
     }
 
-    @SuppressWarnings("deprecation")
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void testSaveResourceWithMaxSumDataSizeOutOfLimit() throws Exception {
         loginSysAdmin();
@@ -138,9 +133,9 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assert.assertEquals(1, resourceService.sumDataSizeByTenantId(tenantId));
 
         try {
-            thrown.expect(DataValidationException.class);
-            thrown.expectMessage(String.format("Failed to create the tb resource, files size limit is exhausted %d bytes!", limit));
-            createResource("test1", 1 + DEFAULT_FILE_NAME);
+            assertThatThrownBy(() -> createResource("test1", 1 + DEFAULT_FILE_NAME))
+                    .isInstanceOf(DataValidationException.class)
+                    .hasMessageContaining("Failed to create the tb resource, files size limit is exhausted %d bytes!", limit);
         } finally {
             defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxResourcesInBytes(0).build());
             loginSysAdmin();

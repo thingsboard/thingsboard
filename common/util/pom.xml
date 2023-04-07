@@ -88,6 +88,10 @@
             <groupId>org.thingsboard.common</groupId>
             <artifactId>data</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.dblock</groupId>
+            <artifactId>oshi-core</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

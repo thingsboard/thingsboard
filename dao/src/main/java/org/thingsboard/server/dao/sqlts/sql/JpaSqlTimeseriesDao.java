@@ -99,14 +99,16 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
 
     @Override
     public void cleanup(long systemTtl) {
-        cleanupPartitions(systemTtl);
+        if (systemTtl > 0) {
+            cleanupPartitions(systemTtl);
+        }
         super.cleanup(systemTtl);
     }
 
     private void cleanupPartitions(long systemTtl) {
         log.info("Going to cleanup old timeseries data partitions using partition type: {} and ttl: {}s", partitioning, systemTtl);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement("call drop_partitions_by_max_ttl(?,?,?)")) {
+             PreparedStatement stmt = connection.prepareStatement("call drop_partitions_by_system_ttl(?,?,?)")) {
             stmt.setString(1, partitioning);
             stmt.setLong(2, systemTtl);
             stmt.setLong(3, 0);

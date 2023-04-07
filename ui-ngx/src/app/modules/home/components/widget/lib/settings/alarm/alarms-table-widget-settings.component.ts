@@ -74,7 +74,7 @@ export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent 
       allowAcknowledgment: [settings.allowAcknowledgment, []],
       allowClear: [settings.allowClear, []],
       allowAssign: [settings.allowAssign, []],
-      displayComments: [settings.displayComments, []],
+      displayActivity: [settings.displayActivity, []],
       displayPagination: [settings.displayPagination, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],
       defaultSortOrder: [settings.defaultSortOrder, []],

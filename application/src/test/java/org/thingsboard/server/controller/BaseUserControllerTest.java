@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -31,10 +32,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -42,6 +47,8 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.settings.StarredDashboardInfo;
+import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.user.UserDao;
 
@@ -53,7 +60,6 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -65,6 +71,8 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
     private IdComparator<User> idComparator = new IdComparator<>();
     private IdComparator<UserEmailInfo> userDataIdComparator = new IdComparator<>();
+
+    private EntityIdComparator<UserId> userIdComparator = new EntityIdComparator<>();
 
     private CustomerId customerNUULId = (CustomerId) createEntityId_NULL_UUID(new Customer());
 
@@ -356,7 +364,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         String userIdStr = savedUser.getId().getId().toString();
         doGet("/api/user/" + userIdStr)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString( msgErrorNoFound("User",userIdStr))));
+                .andExpect(statusReason(containsString(msgErrorNoFound("User", userIdStr))));
     }
 
     @Test
@@ -574,9 +582,9 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         String email1 = "testEmail1";
         String email2 = "testEmail2";
         List<User> customerUsersEmail1 = new ArrayList<>();
-        List<User> customerUsersEmail2= new ArrayList<>();
+        List<User> customerUsersEmail2 = new ArrayList<>();
         for (int i = 0; i < 45; i++) {
-            User customerUser = createCustomerUser( customerId);
+            User customerUser = createCustomerUser(customerId);
             customerUser.setEmail(email1 + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
             customerUsersEmail1.add(doPost("/api/user", customerUser, User.class));
 
@@ -648,6 +656,89 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetUsersForAssign() throws Exception {
+        loginTenantAdmin();
+
+        String email = "testEmail1";
+        List<UserId> expectedCustomerUserIds = new ArrayList<>();
+        expectedCustomerUserIds.add(customerUserId);
+        for (int i = 0; i < 45; i++) {
+            User customerUser = createCustomerUser( customerId);
+            customerUser.setEmail(email + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
+            User user = doPost("/api/user", customerUser, User.class);
+            expectedCustomerUserIds.add(user.getId());
+        }
+        List<UserId> expectedTenantUserIds = new ArrayList<>(List.copyOf(expectedCustomerUserIds));
+        expectedTenantUserIds.add(tenantAdminUserId);
+
+        Device device = new Device();
+        device.setName("testDevice");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Alarm alarm = createTestAlarm(savedDevice);
+
+        List<UserId> loadedTenantUserIds = new ArrayList<>();
+        PageLink pageLink = new PageLink(33, 0);
+        PageData<UserEmailInfo> pageData;
+        do {
+            pageData = doGetTypedWithPageLink("/api/users/assign/" + alarm.getId().getId().toString() + "?",
+                    new TypeReference<>() {}, pageLink);
+            loadedTenantUserIds.addAll(pageData.getData().stream().map(UserEmailInfo::getId)
+                    .collect(Collectors.toList()));
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Assert.assertEquals(1, loadedTenantUserIds.size());
+        Assert.assertEquals(tenantAdminUserId, loadedTenantUserIds.get(0));
+
+        doDelete("/api/alarm/" + alarm.getId().getId().toString());
+
+        savedDevice.setCustomerId(customerId);
+        savedDevice = doPost("/api/customer/" + customerId.getId()
+                + "/device/" + savedDevice.getId().getId(), Device.class);
+
+        alarm = createTestAlarm(savedDevice);
+
+        List<UserId> loadedUserIds = new ArrayList<>();
+        pageLink = new PageLink(16, 0);
+        do {
+            pageData = doGetTypedWithPageLink("/api/users/assign/" + alarm.getId().getId().toString() + "?",
+                    new TypeReference<>() {}, pageLink);
+            loadedUserIds.addAll(pageData.getData().stream().map(UserEmailInfo::getId)
+                    .collect(Collectors.toList()));
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        expectedTenantUserIds.sort(userIdComparator);
+        loadedUserIds.sort(userIdComparator);
+
+        Assert.assertEquals(expectedTenantUserIds, loadedUserIds);
+
+        loginCustomerUser();
+
+        loadedUserIds = new ArrayList<>();
+        pageLink = new PageLink(16, 0);
+        do {
+            pageData = doGetTypedWithPageLink("/api/users/assign/" + alarm.getId().getId().toString() + "?",
+                    new TypeReference<>() {}, pageLink);
+            loadedUserIds.addAll(pageData.getData().stream().map(UserEmailInfo::getId)
+                    .collect(Collectors.toList()));
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        expectedCustomerUserIds.sort(userIdComparator);
+        loadedUserIds.sort(userIdComparator);
+
+        Assert.assertEquals(expectedCustomerUserIds, loadedUserIds);
+    }
+
+    @Test
     public void testDeleteUserWithDeleteRelationsOk() throws Exception {
         loginSysAdmin();
         User tenantAdminUser = createTenantAdminUser();
@@ -685,7 +776,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         JsonNode retrievedSettings = doGet("/api/user/settings", JsonNode.class);
         Assert.assertEquals(retrievedSettings, userSettings);
-   }
+    }
 
     @Test
     public void testShouldNotSaveJsonWithRestrictedSymbols() throws Exception {
@@ -860,7 +951,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         List<UserEmailInfo> expectedUserInfos = customerUsersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
                 customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
-                        customerUser.getLastName() == null ? "" : customerUser.getLastName()))
+                customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
         usersInfo.sort(userDataIdComparator);
 
@@ -912,8 +1003,8 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
         List<UserEmailInfo> expectedUserInfos = usersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
-                        customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
-                        customerUser.getLastName() == null ? "" : customerUser.getLastName()))
+                customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
+                customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
         usersInfo.sort(userDataIdComparator);
 
@@ -922,7 +1013,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         // find user by full last name
         pageLink = new PageLink(10, 0, searchText + "3");
         usersInfo = getUsersInfo(pageLink);
-        Assert.assertEquals(2,  usersInfo.size());
+        Assert.assertEquals(2, usersInfo.size());
 
         //clear users
         doDelete("/api/customer/" + customerId.getId().toString())
@@ -941,6 +1032,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     private static User createCustomerUser(CustomerId customerId) {
         return createCustomerUser(null, null, customerId);
     }
+
     private static User createCustomerUser(String firstName, String lastName, CustomerId customerId) {
         String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
         return createCustomerUser(firstName, lastName, "testMail" + suffix + "@thingsboard.org", customerId);
@@ -959,6 +1051,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     private User createTenantAdminUser() {
         return createTenantAdminUser(null, null);
     }
+
     private User createTenantAdminUser(String firstName, String lastName) {
         String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
 
@@ -975,13 +1068,187 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         List<UserEmailInfo> loadedCustomerUsers = new ArrayList<>();
         PageData<UserEmailInfo> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/users/info?", new TypeReference<>() {}, pageLink);
+            pageData = doGetTypedWithPageLink("/api/users/info?", new TypeReference<>() {
+            }, pageLink);
             loadedCustomerUsers.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
         return loadedCustomerUsers;
+    }
+
+    private Alarm createTestAlarm(Device device) {
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(device.getId());
+        alarm.setCustomerId(device.getCustomerId());
+        alarm.setSeverity(AlarmSeverity.MAJOR);
+        alarm.setType("testAlarm");
+        alarm.setStartTs(System.currentTimeMillis());
+        return doPost("/api/alarm", alarm, Alarm.class);
+    }
+
+    @Test
+    public void testEmptyDashboardSettings() throws Exception {
+        loginCustomerUser();
+
+        UserDashboardsInfo retrievedSettings = doGet("/api/user/dashboards", UserDashboardsInfo.class);
+        Assert.assertNotNull(retrievedSettings);
+        Assert.assertNotNull(retrievedSettings.getLast());
+        Assert.assertTrue(retrievedSettings.getLast().isEmpty());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertTrue(retrievedSettings.getStarred().isEmpty());
+    }
+
+    @Test
+    public void testDashboardSettingsFlow() throws Exception {
+        loginTenantAdmin();
+
+        Dashboard dashboard1 = new Dashboard();
+        dashboard1.setTitle("My dashboard 1");
+        Dashboard savedDashboard1 = doPost("/api/dashboard", dashboard1, Dashboard.class);
+        Dashboard dashboard2 = new Dashboard();
+        dashboard2.setTitle("My dashboard 2");
+        Dashboard savedDashboard2 = doPost("/api/dashboard", dashboard2, Dashboard.class);
+
+        UserDashboardsInfo retrievedSettings = doGet("/api/user/dashboards", UserDashboardsInfo.class);
+        Assert.assertNotNull(retrievedSettings);
+        Assert.assertNotNull(retrievedSettings.getLast());
+        Assert.assertTrue(retrievedSettings.getLast().isEmpty());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertTrue(retrievedSettings.getStarred().isEmpty());
+
+        UserDashboardsInfo newSettings = doGet("/api/user/dashboards/" + savedDashboard1.getId().getId() + "/visit", UserDashboardsInfo.class);
+        Assert.assertNotNull(newSettings);
+        Assert.assertNotNull(newSettings.getLast());
+        Assert.assertEquals(1, newSettings.getLast().size());
+        var lastVisited = newSettings.getLast().get(0);
+        Assert.assertEquals(savedDashboard1.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard1.getTitle(), lastVisited.getTitle());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertTrue(retrievedSettings.getStarred().isEmpty());
+
+        newSettings = doGet("/api/user/dashboards/" + savedDashboard2.getId().getId() + "/visit", UserDashboardsInfo.class);
+        Assert.assertNotNull(newSettings);
+        Assert.assertNotNull(newSettings.getLast());
+        Assert.assertEquals(2, newSettings.getLast().size());
+        lastVisited = newSettings.getLast().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), lastVisited.getTitle());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertTrue(retrievedSettings.getStarred().isEmpty());
+
+        newSettings = doGet("/api/user/dashboards", UserDashboardsInfo.class);
+        Assert.assertNotNull(newSettings);
+        Assert.assertNotNull(newSettings.getLast());
+        Assert.assertEquals(2, newSettings.getLast().size());
+        lastVisited = newSettings.getLast().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), lastVisited.getTitle());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertTrue(retrievedSettings.getStarred().isEmpty());
+
+        newSettings = doGet("/api/user/dashboards/" + savedDashboard1.getId().getId() + "/star", UserDashboardsInfo.class);
+        Assert.assertNotNull(newSettings);
+        Assert.assertNotNull(newSettings.getLast());
+        Assert.assertEquals(2, newSettings.getLast().size());
+        lastVisited = newSettings.getLast().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), lastVisited.getTitle());
+        Assert.assertFalse(lastVisited.isStarred());
+        lastVisited = newSettings.getLast().get(1);
+        Assert.assertEquals(savedDashboard1.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard1.getTitle(), lastVisited.getTitle());
+        Assert.assertTrue(lastVisited.isStarred());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertEquals(1, newSettings.getStarred().size());
+        StarredDashboardInfo starred = newSettings.getStarred().get(0);
+        Assert.assertEquals(savedDashboard1.getId().getId(), starred.getId());
+        Assert.assertEquals(savedDashboard1.getTitle(), starred.getTitle());
+
+        newSettings = doGet("/api/user/dashboards/" + savedDashboard2.getId().getId() + "/star", UserDashboardsInfo.class);
+        Assert.assertNotNull(newSettings);
+        Assert.assertNotNull(newSettings.getLast());
+        Assert.assertEquals(2, newSettings.getLast().size());
+        lastVisited = newSettings.getLast().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), lastVisited.getTitle());
+        Assert.assertTrue(lastVisited.isStarred());
+        lastVisited = newSettings.getLast().get(1);
+        Assert.assertEquals(savedDashboard1.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard1.getTitle(), lastVisited.getTitle());
+        Assert.assertTrue(lastVisited.isStarred());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertEquals(2, newSettings.getStarred().size());
+        starred = newSettings.getStarred().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), starred.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), starred.getTitle());
+
+        newSettings = doGet("/api/user/dashboards/" + savedDashboard1.getId().getId() + "/unstar", UserDashboardsInfo.class);
+        Assert.assertNotNull(newSettings);
+        Assert.assertNotNull(newSettings.getLast());
+        Assert.assertEquals(2, newSettings.getLast().size());
+        lastVisited = newSettings.getLast().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), lastVisited.getTitle());
+        Assert.assertTrue(lastVisited.isStarred());
+        lastVisited = newSettings.getLast().get(1);
+        Assert.assertEquals(savedDashboard1.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard1.getTitle(), lastVisited.getTitle());
+        Assert.assertFalse(lastVisited.isStarred());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertEquals(1, newSettings.getStarred().size());
+        starred = newSettings.getStarred().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), starred.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), starred.getTitle());
+
+        //TEST renaming in the cache.
+        savedDashboard1.setTitle(RandomStringUtils.randomAlphanumeric(10));
+        savedDashboard1 = doPost("/api/dashboard", savedDashboard1, Dashboard.class);
+        savedDashboard2.setTitle(RandomStringUtils.randomAlphanumeric(10));
+        savedDashboard2 = doPost("/api/dashboard", savedDashboard2, Dashboard.class);
+
+        newSettings = doGet("/api/user/dashboards/" + savedDashboard1.getId().getId() + "/unstar", UserDashboardsInfo.class);
+        Assert.assertNotNull(newSettings);
+        Assert.assertNotNull(newSettings.getLast());
+        Assert.assertEquals(2, newSettings.getLast().size());
+        lastVisited = newSettings.getLast().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), lastVisited.getTitle());
+        Assert.assertTrue(lastVisited.isStarred());
+        lastVisited = newSettings.getLast().get(1);
+        Assert.assertEquals(savedDashboard1.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard1.getTitle(), lastVisited.getTitle());
+        Assert.assertFalse(lastVisited.isStarred());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertEquals(1, newSettings.getStarred().size());
+        starred = newSettings.getStarred().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), starred.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), starred.getTitle());
+
+        doDelete("/api/dashboard/" + savedDashboard1.getId().getId().toString()).andExpect(status().isOk());
+
+        newSettings = doGet("/api/user/dashboards", UserDashboardsInfo.class);
+        Assert.assertNotNull(newSettings);
+        Assert.assertNotNull(newSettings.getLast());
+        Assert.assertEquals(1, newSettings.getLast().size());
+        lastVisited = newSettings.getLast().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), lastVisited.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), lastVisited.getTitle());
+        Assert.assertTrue(lastVisited.isStarred());
+        Assert.assertEquals(1, newSettings.getStarred().size());
+        starred = newSettings.getStarred().get(0);
+        Assert.assertEquals(savedDashboard2.getId().getId(), starred.getId());
+        Assert.assertEquals(savedDashboard2.getTitle(), starred.getTitle());
+
+        doDelete("/api/dashboard/" + savedDashboard2.getId().getId().toString()).andExpect(status().isOk());
+
+        retrievedSettings = doGet("/api/user/dashboards", UserDashboardsInfo.class);
+        Assert.assertNotNull(retrievedSettings);
+        Assert.assertNotNull(retrievedSettings.getLast());
+        Assert.assertTrue(retrievedSettings.getLast().isEmpty());
+        Assert.assertNotNull(retrievedSettings.getStarred());
+        Assert.assertTrue(retrievedSettings.getStarred().isEmpty());
     }
 
 }
