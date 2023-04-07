@@ -43,7 +43,7 @@
         <spring-data.version>2.7.0</spring-data.version>
         <spring.version>5.3.20</spring.version>
         <spring-redis.version>5.5.12</spring-redis.version>
-        <spring-security.version>5.7.1</spring-security.version>
+        <spring-security.version>5.7.5</spring-security.version>
         <spring-data-redis.version>2.7.0</spring-data-redis.version>
         <jedis.version>3.7.1</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
