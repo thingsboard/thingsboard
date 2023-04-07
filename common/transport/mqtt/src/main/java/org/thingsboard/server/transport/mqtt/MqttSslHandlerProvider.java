@@ -165,6 +165,7 @@ public class MqttSslHandlerProvider {
                         });
                 latch.await(10, TimeUnit.SECONDS);
                 if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
+                    log.debug("Failed to find credentials for device certificate chain: {}", chain);
                     if (chain.length == 1) {
                         throw new CertificateException("Invalid Device Certificate");
                     } else {

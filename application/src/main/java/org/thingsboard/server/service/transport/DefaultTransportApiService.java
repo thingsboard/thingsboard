@@ -255,7 +255,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     return getEmptyTransportApiResponseFuture();
                 }
             } else if (deviceProfile != null) {
-                log.warn("[{}] Device Profile provision configuration mismatched: expected {},  actual {}", deviceProfile.getName(), X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
+                log.warn("[{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getId(), X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
             }
         }
         return getEmptyTransportApiResponseFuture();
