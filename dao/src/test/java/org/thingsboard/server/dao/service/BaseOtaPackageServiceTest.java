@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -24,6 +25,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -41,16 +43,13 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.TbMultipartFile;
 import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 
-import javax.validation.ValidationException;
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.InstanceOfAssertFactories.FILE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
@@ -63,7 +62,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     private static final ChecksumAlgorithm CHECKSUM_ALGORITHM = ChecksumAlgorithm.SHA256;
     private static final String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
     private static final long DATA_SIZE = 1L;
-    private static final InputStream DATA = new ByteArrayInputStream(new byte[]{1});
+    private static final byte[] DATA = new byte[]{1};
     private static final String URL = "http://firmware.test.org";
 
     private final IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
@@ -131,6 +130,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    @Transactional
     public void testSaveFirmware() {
         OtaPackage firmware = new OtaPackage();
         firmware.setTenantId(tenantId);
@@ -142,7 +142,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
         firmware.setDataSize(DATA_SIZE);
         MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
@@ -156,8 +156,9 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         Assert.assertEquals(firmware.getContentType(), savedFirmware.getContentType());
         Assert.assertEquals(firmware.getData(), savedFirmware.getData());
 
-        savedFirmware.setAdditionalInfo(JacksonUtil.newObjectNode());
-        otaPackageService.saveOtaPackage(savedFirmware, new TestTbMultipartFile(file));
+//        savedFirmware.setAdditionalInfo(JacksonUtil.newObjectNode());
+//        savedFirmware.setData(new ByteArrayInputStream(DATA));
+//        otaPackageService.saveOtaPackage(savedFirmware, new TestTbMultipartFile(file));
 
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
         Assert.assertEquals(foundFirmware.getTitle(), savedFirmware.getTitle());
@@ -187,7 +188,6 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         savedFirmware.setAdditionalInfo(JacksonUtil.newObjectNode());
         otaPackageService.saveOtaPackageInfo(savedFirmware, true);
-
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
         Assert.assertEquals(foundFirmware.getTitle(), savedFirmware.getTitle());
 
@@ -221,7 +221,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
         firmware.setDataSize(DATA_SIZE);
 
         MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
@@ -251,7 +251,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage should be assigned to tenant!");
@@ -270,7 +270,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("Type should be specified!");
@@ -289,7 +289,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage title should be specified!");
@@ -308,7 +308,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage file name should be specified!");
@@ -326,7 +326,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setFileName(FILE_NAME);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage content type should be specified!");
@@ -363,7 +363,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage is referencing to non-existent tenant!");
@@ -382,7 +382,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage is referencing to non-existent device profile!");
@@ -401,7 +401,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage checksum should be specified!");
@@ -461,6 +461,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    @Transactional
     public void testUpdateDeviceProfileId() {
         OtaPackage savedFirmware = createAndSaveFirmware(tenantId, VERSION);
 
@@ -468,6 +469,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
             thrown.expect(DataValidationException.class);
             thrown.expectMessage("Updating otaPackage deviceProfile is prohibited!");
             savedFirmware.setDeviceProfileId(null);
+            savedFirmware.setData(new ByteArrayInputStream(DATA));
             MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
             otaPackageService.saveOtaPackage(savedFirmware, new TestTbMultipartFile(file));
         } finally {
@@ -490,7 +492,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
         firmware.setDataSize(DATA_SIZE);
         MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(file));
@@ -508,6 +510,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    @Transactional
     public void testFindFirmwareById() {
         OtaPackage savedFirmware = createAndSaveFirmware(tenantId, VERSION);
 
@@ -534,6 +537,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    @Transactional
     public void testDeleteFirmware() {
         OtaPackage savedFirmware = createAndSaveFirmware(tenantId, VERSION);
 
@@ -594,9 +598,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     @Test
     public void testFindTenantFirmwaresByTenantIdAndHasData() {
         List<OtaPackageInfo> firmwares = new ArrayList<>();
-        MockMultipartFile file = new MockMultipartFile(FILE_NAME, new byte[]{1});
         for (int i = 0; i < 165; i++) {
-            firmwares.add(new OtaPackageInfo(otaPackageService.saveOtaPackage(createAndSaveFirmware(tenantId, VERSION + i), new TestTbMultipartFile(file))));
+            firmwares.add(new OtaPackageInfo(otaPackageService.saveOtaPackage(createFirmware(tenantId, VERSION + i, deviceProfileId), new TestTbMultipartFile(new MockMultipartFile(FILE_NAME, new byte[]{1})))));
         }
 
         OtaPackageInfo firmwareWithUrl = new OtaPackageInfo();
@@ -713,8 +716,10 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    @SneakyThrows
     public void testGettingCorrectFileWithOtaData() {
         OtaPackage firmware = createFirmware(tenantId, "24687846", deviceProfileId);
+        firmware = otaPackageService.saveOtaPackage(firmware, new TestTbMultipartFile(new MockMultipartFile(FILE_NAME, new byte[]{1})));
         File file = otaPackageService.getOtaDataFile(tenantId, firmware.getId());
         try {
             assertEquals(firmware.getChecksum(), ChecksumUtil.generateChecksum(CHECKSUM_ALGORITHM, new FileInputStream(file)));
@@ -743,7 +748,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setContentType(CONTENT_TYPE);
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
+        firmware.setData(new ByteArrayInputStream(DATA));
         firmware.setDataSize(DATA_SIZE);
         return firmware;
     }

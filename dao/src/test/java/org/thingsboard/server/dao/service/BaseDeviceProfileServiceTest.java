@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.hibernate.engine.jdbc.BlobProxy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,17 +39,16 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.TbMultipartFile;
 
+import javax.transaction.Transactional;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -274,7 +272,6 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         assertThat(otaPackageService.findOtaPackageById(tenantId, otaPackage.getId())).isNotNull();
 
         deviceProfileService.deleteDeviceProfile(tenantId, deviceProfile.getId());
-
         assertThat(deviceProfileService.findDeviceProfileById(tenantId, deviceProfile.getId())).isNull();
         assertThat(otaPackageService.findOtaPackageById(tenantId, otaPackage.getId())).isNull();
     }
