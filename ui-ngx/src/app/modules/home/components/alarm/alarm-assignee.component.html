@@ -16,14 +16,15 @@
 
 -->
 
-<div (click)="openAlarmAssigneePanel($event, alarm)">
-  <mat-form-field fxFlex class="mat-block">
-    <mat-label translate>alarm.assignee</mat-label>
-    <input matInput readonly [value]="getAssignee()">
-    <span *ngIf="alarm?.assigneeId" matPrefix class="user-avatar" [style.backgroundColor]="getAvatarBgColor(alarm.assignee)">
-      {{ getUserInitials(alarm.assignee) }}
-    </span>
-    <mat-icon *ngIf="!alarm?.assigneeId" matPrefix class="unassigned-icon">account_circle</mat-icon>
-    <mat-icon matSuffix>arrow_drop_down</mat-icon>
-  </mat-form-field>
-</div>
+<mat-form-field fxFlex class="mat-block" style="margin-bottom: 25px"
+                (click)="openAlarmAssigneePanel($event, alarm)"
+                subscriptSizing="dynamic">
+  <mat-label translate>alarm.assignee</mat-label>
+  <input matInput readonly [value]="getAssignee()">
+  <span *ngIf="alarm?.assigneeId" matPrefix class="user-avatar"
+        [style.backgroundColor]="getAvatarBgColor(alarm.assignee)">
+    {{ getUserInitials(alarm.assignee) }}
+  </span>
+  <mat-icon *ngIf="!alarm?.assigneeId" matPrefix class="unassigned-icon">account_circle</mat-icon>
+  <mat-icon matSuffix>arrow_drop_down</mat-icon>
+</mat-form-field>

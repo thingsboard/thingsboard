@@ -124,7 +124,7 @@ export class AlarmAssigneeComponent {
       config.hasBackdrop = true;
       const connectedPosition: ConnectedPosition = {
         originX: 'center',
-        originY: 'center',
+        originY: 'bottom',
         overlayX: 'center',
         overlayY: 'top'
       };

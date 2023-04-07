@@ -55,7 +55,7 @@
     <div class="comments-container" fxLayout="column" fxLayoutGap="12px" style="padding: 24px"
          [ngClass]="{'asc': isDirectionAscending(), 'activity-only': alarmActivityOnly}">
       <div fxFlex *ngFor="let displayDataElement of displayData; index as i">
-        <div *ngIf="displayDataElement.isSystemComment; else userComment" style="margin-left: 38px;">
+        <div class="system-comment" *ngIf="displayDataElement.isSystemComment; else userComment">
           <span class="system-text" style="margin-right: 8px">
             {{ displayDataElement.commentText }}
           </span>
@@ -70,8 +70,7 @@
                *ngIf="!displayDataElement.edit; else commentEditing"
                (mouseenter)="onCommentMouseEnter(displayDataElement.commentId, i)"
                (mouseleave)="onCommentMouseLeave(i)">
-            <div fxLayout="row" fxLayoutAlign="center center" fxFlexAlign="start"
-                 class="user-avatar"
+            <div class="user-avatar" fxLayout="row" fxLayoutAlign="center center" fxFlexAlign="start" fxHide.xs
                  [style.background-color]="displayDataElement.avatarBgColor">
               {{ getUserInitials(displayDataElement.displayName) }}
             </div>
@@ -91,7 +90,7 @@
               </div>
               <span class="text">{{ displayDataElement.commentText }}</span>
             </div>
-            <div fxLayout="row" class="action-buttons"
+            <div fxLayout="row" fxLayout.xs="column"  class="action-buttons"
                  [ngClass]="{ 'show-buttons': displayDataElement.showActions }">
               <button mat-icon-button
                       type="button"

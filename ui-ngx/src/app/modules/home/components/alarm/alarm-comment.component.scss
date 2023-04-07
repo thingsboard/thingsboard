@@ -166,6 +166,13 @@ $border: 1px solid mat.get-color-from-palette($tb-primary);
       }
     }
 
+    .system-comment {
+      margin-left: 38px;
+      @media #{$mat-xs} {
+        margin-left: 0;
+      }
+    }
+
     .system-text {
       font-weight: 500;
       font-size: 14px;
