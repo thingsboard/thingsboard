@@ -145,6 +145,15 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
 
     @Test
     public void testSysAdminCountEntitiesByQuery() throws Exception {
+        loginSysAdmin();
+
+        EntityTypeFilter allDeviceFilter = new EntityTypeFilter();
+        allDeviceFilter.setEntityType(EntityType.DEVICE);
+        EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
+        Long initialCount = doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
+
+        loginTenantAdmin();
+
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
@@ -184,13 +193,8 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
         Assert.assertEquals(97, count.longValue());
 
-        EntityTypeFilter filter2 = new EntityTypeFilter();
-        filter2.setEntityType(EntityType.DEVICE);
-
-        EntityCountQuery countQuery2 = new EntityCountQuery(filter2);
-
-        Long count2 = doPostWithResponse("/api/entitiesQuery/count", countQuery2, Long.class);
-        Assert.assertEquals(97, count2.longValue());
+        Long count2 = doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
+        Assert.assertEquals(initialCount + 97, count2.longValue());
     }
 
     @Test
