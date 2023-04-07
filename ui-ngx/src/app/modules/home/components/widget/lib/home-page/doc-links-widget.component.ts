@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
-import { map } from 'rxjs';
+import { map, Subscription } from 'rxjs';
 import { DocumentationLink, DocumentationLinks } from '@shared/models/user-settings.models';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -34,6 +34,8 @@ import {
   EditDocLinksDialogComponent,
   EditDocLinksDialogData
 } from '@home/components/widget/lib/home-page/edit-doc-links-dialog.component';
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { MediaBreakpoints } from '@shared/models/constants';
 
 const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
   [
@@ -100,28 +102,56 @@ interface DocLinksWidgetSettings {
   templateUrl: './doc-links-widget.component.html',
   styleUrls: ['./doc-links-widget.component.scss']
 })
-export class DocLinksWidgetComponent extends PageComponent implements OnInit {
+export class DocLinksWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
   @Input()
   ctx: WidgetContext;
 
   settings: DocLinksWidgetSettings;
   columns: number;
+  rowHeight = '55px';
+  gutterSize = '12px';
 
   documentationLinks: DocumentationLinks;
   authUser = getCurrentAuthUser(this.store);
 
+  private observeBreakpointSubscription: Subscription;
+
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private userSettingsService: UserSettingsService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private breakpointObserver: BreakpointObserver) {
     super(store);
   }
 
   ngOnInit() {
     this.settings = this.ctx.settings;
     this.columns = this.settings.columns || 3;
+    const isMdLg = this.breakpointObserver.isMatched('screen and (min-width: 960px) and (max-width: 1819px)');
+    this.rowHeight = isMdLg ? '18px' : '55px';
+    this.gutterSize = isMdLg ? '8px' : '12px';
+    this.observeBreakpointSubscription = this.breakpointObserver
+      .observe('screen and (min-width: 960px) and (max-width: 1819px)')
+      .subscribe((state: BreakpointState) => {
+          if (state.matches) {
+            this.rowHeight = '18px';
+            this.gutterSize = '8px';
+          } else {
+            this.rowHeight = '55px';
+            this.gutterSize = '12px';
+          }
+          this.cd.markForCheck();
+        }
+    );
     this.loadDocLinks();
+  }
+
+  ngOnDestroy() {
+    if (this.observeBreakpointSubscription) {
+      this.observeBreakpointSubscription.unsubscribe();
+    }
+    super.ngOnDestroy();
   }
 
   private loadDocLinks() {

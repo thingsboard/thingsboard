@@ -22,7 +22,7 @@
       matTooltipPosition="above"
       class="tb-info-icon">info</mat-icon>
   </div>
-  <mat-grid-list class="tb-features-list" fxFlex cols="6" rowHeight="48.5px" gutterSize="12px">
+  <mat-grid-list class="tb-features-list" fxFlex cols="6" [rowHeight]="rowHeight" [gutterSize]="gutterSize">
     <mat-grid-tile class="tb-feature-tile" colspan="3">
       <a class="tb-feature-button" fxFlex
          [matTooltip]="featureTooltip(featuresInfo?.emailEnabled)"

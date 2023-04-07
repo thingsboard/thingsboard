@@ -27,6 +27,10 @@
     line-height: 20px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.54);
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      font-size: 12px;
+      line-height: 16px;
+    }
   }
 
   .tb-info-icon {
@@ -49,6 +53,7 @@
   .tb-feature-button {
     height: 48.5px;
     display: flex;
+    overflow: hidden;
     flex-direction: column;
     justify-content: center;
     padding: 12px;
@@ -56,6 +61,10 @@
     border: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
     border-radius: 10px;
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      height: 21.5px;
+      padding: 0 8px;
+    }
     &:hover {
       border: 1px solid rgba(0, 0, 0, 0.12);
       box-shadow: 0 4px 10px rgba(23, 33, 90, 0.08);
@@ -65,20 +74,36 @@
       font-size: 14px;
       line-height: 20px;
       color: rgba(0, 0, 0, 0.87);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      @media screen and (min-width: 960px) and (max-width: 1819px) {
+        font-size: 11px;
+        line-height: 16px;
+      }
       &:before {
         content: "close";
+        display: inline-block;
         font-family: 'Material Icons Round';
         font-size: 20px;
-        line-height: 1;
+        line-height: 20px;
         color: rgba(0, 0, 0, 0.12);
         font-weight: 600;
         position: relative;
         background: #F4F4F4;
         border-radius: 4px;
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
+        padding: 2px;
         margin-right: 8px;
-        vertical-align: bottom;
+        vertical-align: middle;
+        @media screen and (min-width: 960px) and (max-width: 1819px) {
+          font-size: 14px;
+          line-height: 14px;
+          width: 14px;
+          height: 14px;
+          margin-right: 4px;
+        }
       }
     }
     &.configured {

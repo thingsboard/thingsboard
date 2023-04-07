@@ -71,9 +71,9 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-header\">\n    <div class=\"tb-card-title\">\n        <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/tenants\">{{ 'tenant.tenants' | translate }}</a>\n    </div>\n    <a class=\"tb-hide-md-lg\" mat-flat-button color=\"primary\" routerLink=\"/tenants\" [queryParams]=\"{action: 'add'}\">{{ 'tenant.add' | translate }}</a>\n    <a class=\"tb-hide-not-md-lg\" mat-icon-button color=\"primary\" routerLink=\"/tenants\" [queryParams]=\"{action: 'add'}\"\n        matTooltipPosition=\"above\"\n        matTooltip=\"{{ 'tenant.add' | translate }}\">\n        <mat-icon>add</mat-icon>\n    </a>\n</div>\n<div class=\"tb-card-content\">\n    <div class=\"tb-count\">${tenantsCount:0}</div>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/tenants\">{{ 'tenant.tenants' | translate }}</a>\n            </div>\n            <a class=\"tb-hide-md-lg\" mat-flat-button color=\"primary\" routerLink=\"/tenants\" [queryParams]=\"{action: 'add'}\">{{ 'tenant.add' | translate }}</a>\n        </div>\n        <div class=\"tb-count\">${tenantsCount:0}</div>\n    </div>\n    <div class=\"tb-small-button-container tb-hide-not-md-lg\">\n        <a class=\"tb-hide-not-md-lg\" mat-icon-button color=\"primary\" routerLink=\"/tenants\" [queryParams]=\"{action: 'add'}\"\n                matTooltipPosition=\"above\"\n                matTooltip=\"{{ 'tenant.add' | translate }}\">\n                <mat-icon>add</mat-icon>\n        </a>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-header {\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 28px;\n    line-height: 36px;\n}\n"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-small-button-container {\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 28px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}\n"
           },
           "title": "Tenants",
           "showTitleIcon": false,
@@ -162,9 +162,9 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-header\">\n    <div class=\"tb-card-title\">\n        <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/tenantProfiles\">{{ 'tenant-profile.tenant-profiles' | translate }}</a>\n    </div>\n    <a class=\"tb-hide-md-lg\" mat-stroked-button color=\"primary\" routerLink=\"/tenantProfiles\" [queryParams]=\"{action: 'add'}\">{{ 'tenant-profile.add-profile' | translate }}</a>\n    <a class=\"tb-hide-not-md-lg\" mat-icon-button color=\"primary\" routerLink=\"/tenantProfiles\" [queryParams]=\"{action: 'add'}\"\n        matTooltipPosition=\"above\"\n        matTooltip=\"{{ 'tenant-profile.add-profile' | translate }}\">\n        <mat-icon>add</mat-icon>\n    </a>\n</div>\n<div class=\"tb-card-content\">\n    <div class=\"tb-count\">${tenantProfilesCount:0}</div>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/tenantProfiles\">{{ 'tenant-profile.tenant-profiles' | translate }}</a>\n            </div>\n            <a class=\"tb-hide-md-lg\" mat-stroked-button color=\"primary\" routerLink=\"/tenantProfiles\" [queryParams]=\"{action: 'add'}\">{{ 'tenant-profile.add-profile' | translate }}</a>\n        </div>\n        <div class=\"tb-count\">${tenantProfilesCount:0}</div>\n    </div>\n    <div class=\"tb-small-button-container tb-hide-not-md-lg\">\n        <a class=\"tb-hide-not-md-lg\" mat-icon-button color=\"primary\" routerLink=\"/tenantProfiles\" [queryParams]=\"{action: 'add'}\"\n                matTooltipPosition=\"above\"\n                matTooltip=\"{{ 'tenant-profile.add-profile' | translate }}\">\n                <mat-icon>add</mat-icon>\n        </a>\n    </div>\n</div>\n",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-header {\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 28px;\n    line-height: 36px;\n\n}\n"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-small-button-container {\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 28px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}\n"
           },
           "title": "Tenant Profiles",
           "showTitleIcon": false,
@@ -255,7 +255,7 @@
             "useMarkdownTextFunction": false,
             "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'device.devices' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${devicesCount:0}</div>\n</div>",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}"
           },
           "title": "Devices",
           "showTitleIcon": false,
@@ -346,7 +346,7 @@
             "useMarkdownTextFunction": false,
             "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'asset.assets' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${assetsCount:0}</div>\n</div>",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}"
           },
           "title": "Assets",
           "showTitleIcon": false,
@@ -437,7 +437,7 @@
             "useMarkdownTextFunction": false,
             "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'user.users' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${usersCount:0}</div>\n</div>",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}\n"
           },
           "title": "Users",
           "showTitleIcon": false,
@@ -528,7 +528,7 @@
             "useMarkdownTextFunction": false,
             "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'customer.customers' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${customersCount:0}</div>\n</div>",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}"
           },
           "title": "Customers",
           "showTitleIcon": false,
@@ -596,7 +596,7 @@
             "useMarkdownTextFunction": false,
             "markdownTextPattern": "<div class=\"tb-title\">Get started</div>\n<mat-stepper #matStepper class=\"tb-get-started\" orientation=\"vertical\" [linear]=\"false\">\n    <ng-template matStepperIcon=\"edit\" let-index=\"index\">\n      {{ index + 1 }}\n    </ng-template>\n    <mat-step #step1 [completed]=\"step1.completed || matStepper.selectedIndex > -1\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                <div>Create Tenant and Tenant Administrator</div>\n                <a *ngIf=\"matStepper.selected === step1\" mat-button color=\"primary\" routerLink=\"/tenants\">{{ 'tenant.tenants' | translate }}</a>\n            </div>\n        </ng-template>\n        <p>\n            A tenant is an individual or organization that owns or produces devices and assets. Tenants can create Tenant administrator users.\n        </p>\n        <p>\n            Follow the documentation on how to do it: \n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/ui/tenants/#adding-a-tenant\" target=\"_blank\"><mat-icon>description</mat-icon>How to create Tenant</a>\n    </mat-step>\n    <mat-step #step2 [completed]=\"step2.completed || matStepper.selectedIndex > 0\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: Mail server</div>\n                    <a *ngIf=\"matStepper.selected === step2\" mat-button color=\"primary\" routerLink=\"/settings/outgoing-mail\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            Users will receive activation and password reset emails from the System Administrator via an SMTP server.\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/ui/mail-settings/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure Mail server</a>\n    </mat-step>\n    <mat-step #step3 [completed]=\"step3.completed || matStepper.selectedIndex > 1\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: SMS provider</div>\n                    <a *ngIf=\"matStepper.selected === step3\" mat-button color=\"primary\" routerLink=\"/settings/notifications\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            To distribute SMS messages about alarms, the System Administrator can configure SMS providers.\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/ui/sms-provider-settings/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure SMS provider</a>\n    </mat-step>\n    <mat-step #step4 [completed]=\"step4.completed || matStepper.selectedIndex > 2\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: 2FA</div>\n                    <a *ngIf=\"matStepper.selected === step4\" mat-button color=\"primary\" routerLink=\"/security-settings/2fa\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            Adding two-factor authentication to your account increases security and prevents malicious access.\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/two-factor-authentication/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure 2FA</a>\n    </mat-step>\n    <mat-step #step5 [completed]=\"step5.completed || matStepper.selectedIndex > 3\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: OAuth 2</div>\n                    <a *ngIf=\"matStepper.selected === step5\" mat-button color=\"primary\" routerLink=\"/security-settings/oauth2\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            You can provide your customers with Single Sign-On functionality and automatically create tenants, customers, or sub-customers by using external user management platforms that support OAuth 2.0.\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/oauth-2-support/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure OAuth 2</a>\n    </mat-step>\n    <mat-step #lastStep [completed]=\"lastStep.completed || matStepper.selectedIndex > 4\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: Notifications</div>\n                    <a *ngIf=\"matStepper.selected === lastStep\" mat-button color=\"primary\" routerLink=\"/notification/rules\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            Some text\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/to-do/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure Notifications</a>\n    </mat-step>\n</mat-stepper>\n<div *ngIf=\"lastStep.completed\" fxLayout=\"column\" fxLayoutAlign=\"center center\" style=\"padding-top: 24px;\">\n    <button id=\"getting-started-finish\" mat-flat-button color=\"primary\"><mat-icon>rocket_launch</mat-icon>Finish</button>\n</div>\n\n",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-title {\n    font-weight: 600;\n    font-size: 20px;\n    line-height: 24px;\n    letter-spacing: 0.1px;\n    color: rgba(0, 0, 0, 0.76);\n    padding-bottom: 24px;\n}\n"
+            "markdownCss": ".tb-title {\n    font-weight: 600;\n    font-size: 20px;\n    line-height: 24px;\n    letter-spacing: 0.1px;\n    color: rgba(0, 0, 0, 0.76);\n    padding-bottom: 24px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-title {\n        font-weight: 500;\n        font-size: 14px;\n        line-height: 20px;\n        letter-spacing: 0.25px;\n        padding-bottom: 20px;\n    }\n}\n"
           },
           "title": "Get started",
           "showTitleIcon": false,
@@ -611,7 +611,7 @@
             "fontWeight": 400
           },
           "showLegend": false,
-          "widgetCss": ".mat-stepper-vertical.tb-get-started {\n    /** border-radius: 12px; \n     background: rgba(0, 0, 0, 0.03); **/\n}\n\n.tb-get-started .mat-vertical-stepper-header:not([aria-selected=\"true\"]):not(:hover) {\n    /** background: #fff;**/\n}\n\n.tb-get-started .mat-vertical-stepper-header {\n    border-radius: 12px;\n    padding: 12px;\n}\n\n.tb-get-started .mat-vertical-stepper-header[aria-selected=\"true\"] {\n    background: rgba(0, 0, 0, 0.03);\n    border-bottom-right-radius: 0px;\n    border-bottom-left-radius: 0px;\n}\n\n.tb-get-started .mat-vertical-content-container {\n    margin-left: 0px;\n    border-bottom-left-radius: 12px;\n    border-bottom-right-radius: 12px;\n    background: rgba(0, 0, 0, 0.03);\n}\n\n.tb-get-started .mat-stepper-vertical-line::before {\n    content: none;\n}\n\n.tb-get-started .mat-step-label {\n    width: 100%;\n}\n\n.tb-get-started .mat-step-label {\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-get-started .mat-step-label.mat-step-label-selected {\n    font-weight: 500;\n    font-size: 16px;\n    line-height: 24px;\n    color: rgba(0, 0, 0, 0.87);\n}\n\n.tb-get-started .mat-vertical-content p {\n    font-style: normal;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.54);\n}\n",
+          "widgetCss": "\n.tb-get-started .mat-vertical-stepper-header {\n    border-radius: 12px;\n    padding: 12px;\n    height: auto;\n}\n\n.tb-get-started .mat-vertical-stepper-header[aria-selected=\"true\"] {\n    background: rgba(0, 0, 0, 0.03);\n    border-bottom-right-radius: 0px;\n    border-bottom-left-radius: 0px;\n}\n\n.tb-get-started .mat-vertical-content-container {\n    margin-left: 0px;\n    border-bottom-left-radius: 12px;\n    border-bottom-right-radius: 12px;\n    background: rgba(0, 0, 0, 0.03);\n}\n\n.tb-get-started .mat-stepper-vertical-line::before {\n    content: none;\n}\n\n.tb-get-started .mat-step-label {\n    width: 100%;\n    white-space: inherit;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-get-started .mat-step-label.mat-step-label-selected {\n    font-weight: 500;\n    font-size: 16px;\n    line-height: 24px;\n    color: rgba(0, 0, 0, 0.87);\n}\n\n.tb-get-started .mat-vertical-content p {\n    font-style: normal;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-get-started .mat-step-label {\n        font-size: 12px;\n        line-height: 16px;\n    }\n    .tb-get-started .mat-step-label.mat-step-label-selected {\n        font-size: 13px;\n        line-height: 16px;\n    }\n\n    .tb-get-started .mdc-button {\n        font-size: 12px;\n        line-height: 16px;\n    }\n    \n    .tb-get-started .mat-vertical-content p {\n        font-size: 12px;\n        line-height: 16px;\n        letter-spacing: 0.25px;\n    }\n    \n    .tb-get-started .mat-vertical-content {\n        padding: 0 16px 16px 16px;\n    }\n\n}\n",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
           "actions": {
@@ -767,7 +767,7 @@
           "showTitle": false,
           "backgroundColor": "#fff",
           "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "8px",
+          "padding": "0px",
           "settings": {
             "stack": true,
             "fontSize": 10,
@@ -819,7 +819,9 @@
             "fontSize": "16px",
             "fontWeight": 400
           },
-          "widgetStyle": {},
+          "widgetStyle": {
+            "padding": "0"
+          },
           "useDashboardTimewindow": false,
           "showLegend": false,
           "actions": {},
@@ -912,7 +914,7 @@
             "markdownTextFunction": "let html = '<div style=\"width: 100%; height: 100%;\">';\nlet clusterMode = data[0]['clusterMode'];\nif (clusterMode === 'true') {\n    html += '<tb-cluster-info-table></tb-cluster-info-table>';\n} else {\n    html += '<tb-dashboard-state stateId=\"monolith_system_info\" [ctx]=\"ctx\"></tb-dashboard-state>';\n}\nhtml += '</div>';\nreturn html;",
             "applyDefaultMarkdownStyle": false
           },
-          "title": "Transport messages",
+          "title": "System info",
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
@@ -1035,7 +1037,7 @@
             "useMarkdownTextFunction": false,
             "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">CPU</div>\n        <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n    </div>\n    <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n        <span class=\"tb-count\">${cpuUsage:0}%</span>\n        <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
           },
           "title": "CPU",
           "showTitleIcon": false,
@@ -1051,7 +1053,7 @@
           },
           "showLegend": false,
           "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n    margin-right: 6px;\n}",
+          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n}\n\n@media screen and (min-width: 960px) {\n    .tb-widget-container {\n        margin-right: 6px;\n    }\n}\n\n@media screen and (max-width: 959px) {\n    .tb-widget-container {\n        height: calc(100% - 12px);\n        margin-bottom: 12px;\n    }\n}",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
         },
@@ -1264,7 +1266,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {},
-          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: calc(100% - 12px);\n    margin-top: 12px;\n}\n\ntr.tb-legend-keys td .tb-legend-line {\n    height: 5px !important;\n    vertical-align: middle;\n}\n\ntr.tb-legend-keys td .tb-legend-label {\n\tcursor: pointer;\n\tuser-select: none;\n\tfont-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.54);\n}",
+          "widgetCss": "@media screen and (min-width: 960px) {\n    .tb-widget-container {\n        display: block;\n        height: calc(100% - 12px);\n        margin-top: 12px;\n    }\n}\n\n.tb-legend-keys td .tb-legend-line {\n    height: 5px !important;\n    vertical-align: middle;\n}\n",
           "pageSize": 1024,
           "units": "%",
           "noDataDisplayMessage": "",
@@ -1394,7 +1396,7 @@
             "useMarkdownTextFunction": true,
             "markdownTextFunction": "const memoryUsage = data[0]['memoryUsage'];\nconst totalMemory = data[0]['totalMemory'];\nconst usedMemory = (totalMemory * (memoryUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\">RAM</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedMemory +' / ${totalMemory:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${memoryUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalMemory:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
           },
           "title": "RAM",
           "showTitleIcon": false,
@@ -1410,7 +1412,7 @@
           },
           "showLegend": false,
           "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n    margin-right: 6px;\n    margin-left: 6px;\n}",
+          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n}\n\n@media screen and (min-width: 960px) {\n    .tb-widget-container {\n        margin-right: 6px;\n        margin-left: 6px;\n    }\n}\n\n@media screen and (max-width: 959px) {\n    .tb-widget-container {\n        height: calc(100% - 12px);\n        margin-bottom: 12px;\n    }\n}",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
         },
@@ -1527,7 +1529,7 @@
             "useMarkdownTextFunction": true,
             "markdownTextFunction": "const discUsage = data[0]['discUsage'];\nconst totalDiscSpace = data[0]['totalDiscSpace'];\nconst usedDisc = (totalDiscSpace * (discUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\">Disk</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedDisc +' / ${totalDiscSpace:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${discUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalDiscSpace:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
           },
           "title": "Disk",
           "showTitleIcon": false,
@@ -1543,7 +1545,7 @@
           },
           "showLegend": false,
           "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n    margin-left: 6px;\n}",
+          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n}\n\n@media screen and (min-width: 960px) {\n    .tb-widget-container {\n        margin-left: 6px;\n    }\n}\n\n@media screen and (max-width: 959px) {\n    .tb-widget-container {\n        height: calc(100% - 12px);\n        margin-bottom: 12px;\n    }\n}",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
         },
@@ -1593,9 +1595,9 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div style=\"height: 100%;\" fxLayout=\"column\">\n    <div class=\"tb-card-header\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\">Functions</div>\n        </div>\n        <a mat-stroked-button color=\"primary\" \n        href=\"https://thingsboard.io/pricing/?product=thingsboard-pe&solution=pe-pay-as-you-go\" target=\"_blank\">Switch to PE</a>\n    </div>\n    <div fxFlex class=\"tb-card-content\">\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\">Alarms</div>\n            <div class=\"feature\">Dashboards</div>\n            <div class=\"feature\">Entities & Relations</div>\n            <div class=\"feature\">Profiles</div>\n            <div class=\"feature\">Advanced features</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\">Notification center</div>\n            <div class=\"feature\">API usage</div>\n            <div class=\"feature\">Customers</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Customers hierarchy</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Roles & Permissions</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Groups</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Integrations</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Solution templates</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Scheduler</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">White-labeling</div>\n        </div>\n    </div>\n</div>",
+            "markdownTextPattern": "<div style=\"height: 100%;\" fxLayout=\"column\">\n    <div class=\"tb-card-header\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\">Functions</div>\n        </div>\n        <a mat-stroked-button color=\"primary\" class=\"tb-switch-to-pe\"\n        href=\"https://thingsboard.io/pricing/?product=thingsboard-pe&solution=pe-pay-as-you-go\" target=\"_blank\">Switch to PE</a>\n    </div>\n    <div fxFlex class=\"tb-card-content\">\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\">Alarms</div>\n            <div class=\"feature\">Dashboards</div>\n            <div class=\"feature\">Entities & Relations</div>\n            <div class=\"feature\">Profiles</div>\n            <div class=\"feature\">Advanced features</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\">Notification center</div>\n            <div class=\"feature\">API usage</div>\n            <div class=\"feature\">Customers</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Customers hierarchy</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Roles & Permissions</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Groups</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Integrations</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Solution templates</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Scheduler</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">White-labeling</div>\n        </div>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-header {\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n    align-items: center;\n}\n\n.tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    margin-top: 18px;\n    overflow: auto;\n}\n\n.feature {\n    position: relative;\n    cursor: default;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.76);\n}\n\n.feature:before {\n    content: \"check\";\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n    color: #198038;\n    font-weight: 600;\n    position: relative;\n    background: #F3F6FA;\n    border-radius: 4px;\n    width: 24px;\n    height: 24px;\n    margin-right: 8px;\n    vertical-align: middle;\n}\n\n.feature.pe:before {\n    content: \"close\";\n    background: #F4F4F4;\n    color: rgba(0, 0, 0, 0.12);\n}\n\n.feature.pe:after {\n    position: relative;\n    display: inline-block;\n    margin-left: 4px;\n    vertical-align: baseline;\n    top: -0.5em;\n    content: \"PE\";\n    color: #305680;\n    font-weight: 700;\n    font-size: 12px;\n    line-height: 12px;\n    letter-spacing: 0.0015em;\n}\n\n.feature+.feature {\n    margin-top: 8px;\n}\n"
+            "markdownCss": ".tb-card-header {\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n    align-items: center;\n}\n\n.tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    margin-top: 4px;\n    overflow: auto;\n}\n\n.feature {\n    position: relative;\n    cursor: default;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 28px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.76);\n    margin-left: 32px;\n}\n\n.feature:before {\n    content: \"check\";\n    font-family: 'Material Icons Round';\n    display: inline-block;\n    font-size: 20px;\n    line-height: 20px;\n    color: #198038;\n    font-weight: 600;\n    position: absolute;\n    left: -32px;\n    top: 2px;\n    background: #F3F6FA;\n    border-radius: 4px;\n    width: 20px;\n    height: 20px;\n    padding: 2px;\n    vertical-align: middle;\n}\n\n.feature.pe:before {\n    content: \"close\";\n    background: #F4F4F4;\n    color: rgba(0, 0, 0, 0.12);\n}\n\n.feature.pe:after {\n    position: relative;\n    display: inline-block;\n    margin-left: 4px;\n    vertical-align: baseline;\n    top: -0.5em;\n    content: \"PE\";\n    color: #305680;\n    font-weight: 700;\n    font-size: 12px;\n    line-height: 12px;\n    letter-spacing: 0.0015em;\n}\n\n.feature+.feature {\n    margin-top: 4px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-switch-to-pe {\n        height: 24px;\n        font-size: 12px;\n        padding: 0 4px;\n    }\n    \n    .feature+.feature {\n        margin-top: 2px;\n    }\n    \n    .feature {\n        font-size: 11px;\n        line-height: 18px;\n        margin-left: 22px;\n    }\n\n    .feature:before {\n      font-size: 14px;\n      line-height: 14px;\n      width: 14px;\n      height: 14px;\n      left: -22px;\n      top: 0;\n    }\n    .feature.pe:after {\n        margin-left: 2px;\n        top: -0.5em;\n        content: \"PE\";\n        font-size: 8px;\n        line-height: 8px;\n    }\n    \n}\n\n"
           },
           "title": "Functions",
           "showTitleIcon": false,
@@ -1802,79 +1804,102 @@
                 "sizeX": 22,
                 "sizeY": 8,
                 "row": 0,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 0,
+                "mobileHeight": 4
               },
               "cf1b7a07-2a16-cab7-2528-ef5caba4ac38": {
                 "sizeX": 22,
                 "sizeY": 8,
                 "row": 0,
-                "col": 22
+                "col": 22,
+                "mobileOrder": 1,
+                "mobileHeight": 4
               },
               "551a27a0-cd23-a70c-0de2-c97ab6673faa": {
                 "sizeX": 11,
                 "sizeY": 7,
                 "row": 8,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 2,
+                "mobileHeight": 4
               },
               "a41682b0-2f23-23e9-0807-e8b47c1c1795": {
                 "sizeX": 11,
                 "sizeY": 7,
                 "row": 8,
-                "col": 11
+                "col": 11,
+                "mobileOrder": 3,
+                "mobileHeight": 4
               },
               "1abf533c-aee7-080d-0274-d047e1d5dc63": {
                 "sizeX": 11,
                 "sizeY": 7,
                 "row": 8,
-                "col": 22
+                "col": 22,
+                "mobileOrder": 4,
+                "mobileHeight": 4
               },
               "5d02c63b-bcb1-aaf3-f35d-de4dbaca96c2": {
                 "sizeX": 11,
                 "sizeY": 7,
                 "row": 8,
-                "col": 33
+                "col": 33,
+                "mobileOrder": 5,
+                "mobileHeight": 4
               },
               "e70b51f8-04dd-985f-be81-d0c76c589d4a": {
                 "sizeX": 35,
                 "sizeY": 58,
                 "row": 0,
-                "col": 85
+                "col": 85,
+                "mobileHide": true
               },
               "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
                 "sizeX": 41,
                 "sizeY": 18,
                 "row": 24,
-                "col": 44
+                "col": 44,
+                "mobileOrder": 7,
+                "mobileHeight": 8
               },
               "4b5e47ed-c197-a937-d727-041ba8decec2": {
                 "sizeX": 41,
                 "sizeY": 24,
                 "row": 0,
-                "col": 44
+                "col": 44,
+                "mobileOrder": 6,
+                "mobileHeight": 20
               },
               "8acbf5df-f9fc-114d-216f-86f081aa4779": {
                 "sizeX": 61,
                 "sizeY": 16,
                 "row": 42,
-                "col": 24
+                "col": 24,
+                "mobileHide": true
               },
               "d2784f6c-0518-fd95-1d28-b21f70bdcb10": {
                 "sizeX": 44,
                 "sizeY": 13,
                 "row": 29,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 8,
+                "mobileHeight": 6
               },
               "66dcf1a2-9d83-6873-c693-d6a5d989b3f8": {
                 "sizeX": 24,
                 "sizeY": 16,
                 "row": 42,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 9,
+                "mobileHeight": 8
               },
               "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
                 "sizeX": 44,
                 "sizeY": 14,
                 "row": 15,
-                "col": 0
+                "col": 0,
+                "mobileHide": true
               }
             },
             "gridSettings": {
@@ -1885,7 +1910,7 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 20
             }
           }
         }
@@ -1926,25 +1951,33 @@
                 "sizeX": 8,
                 "sizeY": 3,
                 "row": 0,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 0,
+                "mobileHeight": 6
               },
               "eace9148-b02a-48fe-1a95-acd9928aa8c5": {
                 "sizeX": 24,
                 "sizeY": 8,
                 "row": 3,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 3,
+                "mobileHeight": 10
               },
               "d755208a-81cf-edb4-5db8-f4859f5359cc": {
                 "sizeX": 8,
                 "sizeY": 3,
                 "row": 0,
-                "col": 8
+                "col": 8,
+                "mobileOrder": 1,
+                "mobileHeight": 6
               },
               "6ab892b7-0cb8-cb1e-f5d3-679ef8f25bd7": {
                 "sizeX": 8,
                 "sizeY": 3,
                 "row": 0,
-                "col": 16
+                "col": 16,
+                "mobileOrder": 2,
+                "mobileHeight": 6
               }
             },
             "gridSettings": {
@@ -2070,7 +2103,7 @@
       "hideToolbar": true,
       "showFilters": true,
       "showUpdateDashboardImage": true,
-      "dashboardCss": ".tb-widget-container > .tb-widget {\n    border: 1px solid rgba(0, 0, 0, 0.05);\n    box-shadow: 0px 5px 16px rgba(0, 0, 0, 0.04);\n    border-radius: 12px;\n}\n\n.tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n    padding: 16px !important;\n}\n\n.tb-home-widget-title {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.25px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n.tb-home-widget-link {\n    position: relative;\n    border-bottom: none;\n}\n\n.tb-home-widget-link:hover {\n    border-bottom: none;\n}\n\n.tb-home-widget-link:focus {\n    border-bottom: none;\n}\n\n.tb-home-widget-link::after {\n    content: 'arrow_forward';\n    display: inline-block;\n    position: absolute;\n    top: -2px;\n    right: -28px;\n    transform: rotate(315deg);\n    font-family: 'Material Icons';\n    font-weight: normal;\n    font-style: normal;\n    font-size: 18px;\n    color: rgba(0, 0, 0, 0.12);\n}\n\n.tb-home-widget-link:hover::after {\n    color: inherit;\n}\n\n.tb-home-widget-info-icon {\n    color: rgba(0, 0, 0, 0.12);\n    font-size: 16px;\n    width: 16px;\n    height: 16px;\n    line-height: 15px;\n    vertical-align: middle;\n}\n\n.tb-widget-container > .tb-widget .tb-timewindow {\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.25px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1279px) {\n    .tb-widget-container > .tb-widget {\n        border-radius: 4px;\n    }\n    .tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n        padding: 2px !important;\n    }\n    .tb-hide-md {\n        display: none;\n    }\n}\n\n@media screen and (min-width: 1280px) and (max-width: 1819px) {\n    .tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n        padding: 8px !important;\n    }\n    .tb-hide-lg {\n        display: none;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-hide-md-lg {\n        display: none;\n    }\n}\n\n@media screen and (max-width: 959px), screen and (min-width: 1820px) {\n    .tb-hide-not-md-lg {\n        display: none;\n    }\n}\n"
+      "dashboardCss": ".tb-widget-container > .tb-widget {\n    border: 1px solid rgba(0, 0, 0, 0.05);\n    box-shadow: 0px 5px 16px rgba(0, 0, 0, 0.04);\n    border-radius: 12px;\n}\n\n.tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n    padding: 16px !important;\n}\n\n.tb-card-title {\n    display: grid;\n}\n\n.tb-home-widget-title {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.25px;\n    color: rgba(0, 0, 0, 0.54);\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n}\n\n.tb-home-widget-link {\n    position: relative;\n    border-bottom: none;\n}\n\n.tb-home-widget-link:hover {\n    border-bottom: none;\n}\n\n.tb-home-widget-link:focus {\n    border-bottom: none;\n}\n\n.tb-home-widget-link::after {\n    content: 'arrow_forward';\n    display: inline-block;\n    transform: rotate(315deg);\n    font-family: 'Material Icons';\n    font-weight: normal;\n    font-style: normal;\n    font-size: 18px;\n    color: rgba(0, 0, 0, 0.12);\n    vertical-align: bottom;\n    margin-left: 6px;    \n}\n\n.tb-home-widget-link:hover::after {\n    color: inherit;\n}\n\n.tb-home-widget-info-icon {\n    color: rgba(0, 0, 0, 0.12);\n    font-size: 16px;\n    width: 16px;\n    height: 16px;\n    line-height: 15px;\n    vertical-align: middle;\n}\n\n.tb-widget-container > .tb-widget .tb-timewindow {\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.25px;\n    color: rgba(0, 0, 0, 0.54);\n    padding: 0;\n}\n\n.tb-widget-container > .tb-widget .tb-legend-keys .tb-legend-label {\n    cursor: pointer;\n    user-select: none;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1279px) {\n    .tb-widget-container > .tb-widget {\n        border-radius: 4px;\n    }\n    .tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n        padding: 2px !important;\n    }\n    .tb-hide-md {\n        display: none;\n    }\n}\n\n@media screen and (min-width: 1280px) and (max-width: 1819px) {\n    .tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n        padding: 8px !important;\n    }\n    .tb-hide-lg {\n        display: none;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-hide-md-lg {\n        display: none;\n    }\n\n    .tb-home-widget-title {\n        font-size: 12px;\n        line-height: 16px;\n    }\n    \n    .tb-widget-container > .tb-widget .tb-widget-title {\n        padding: 0;\n    }\n\n    .tb-widget-container > .tb-widget .tb-timewindow {\n        font-size: 12px;\n        line-height: 16px;\n        min-height: 24px;\n        padding: 0;\n    }\n\n    .tb-widget-container > .tb-widget .tb-timewindow .mat-mdc-icon-button.tb-mat-32 {\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n    }\n\n    .tb-widget-container > .tb-widget .tb-timewindow .mat-mdc-icon-button.tb-mat-32 .mat-icon {\n        width: 18px;\n        height: 18px;\n        font-size: 18px;\n    }\n    \n    .tb-widget-container > .tb-widget tb-legend {\n        padding-bottom: 0 !important;\n    }\n    \n    .tb-widget-container > .tb-widget .tb-legend-keys .tb-legend-label {\n        font-size: 11px;\n        line-height: 16px;\n        letter-spacing: 0.25px;\n    }\n}\n\n@media screen and (max-width: 959px), screen and (min-width: 1820px) {\n    .tb-hide-not-md-lg {\n        display: none;\n    }\n}\n"
     }
   },
   "externalId": null,

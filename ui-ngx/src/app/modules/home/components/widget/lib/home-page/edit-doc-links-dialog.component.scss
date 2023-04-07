@@ -16,6 +16,9 @@
 :host {
   .tb-edit-doc-links-dialog {
     width: 480px;
+    .mat-mdc-dialog-content {
+      max-height: 50vh;
+    }
     .mat-toolbar-single-row {
       padding: 0 24px;
     }

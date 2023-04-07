@@ -510,7 +510,12 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   private updateMobileOpts(parentHeight?: number) {
-    this.isMobileSize = this.checkIsMobileSize();
+    let updateWidgetRowsAndSort = false;
+    const isMobileSize = this.checkIsMobileSize();
+    if (this.isMobileSize !== isMobileSize) {
+      this.isMobileSize = isMobileSize;
+      updateWidgetRowsAndSort = true;
+    }
     const autofillHeight = this.isAutofillHeight();
     if (autofillHeight) {
       this.gridsterOpts.gridType = this.isMobileSize ? GridType.Fixed : GridType.Fit;
@@ -522,6 +527,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     const rowSize = this.detectRowSize(this.isMobileSize, autofillHeight, parentHeight);
     if (this.gridsterOpts.fixedRowHeight !== rowSize) {
       this.gridsterOpts.fixedRowHeight = rowSize;
+    }
+    if (updateWidgetRowsAndSort) {
+      this.dashboardWidgets.updateRowsAndSort();
     }
   }
 

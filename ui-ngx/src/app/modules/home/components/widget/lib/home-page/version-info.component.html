@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
-  <div class="tb-card-header">
+<div class="tb-card-content" fxLayout="column">
+  <div class="tb-card-header tb-card-title">
     <div class="tb-title">Version</div>
-    <a mat-button color="primary" href="https://thingsboard.io/docs/contact-us/" target="_blank">Contact us</a>
+    <a mat-button color="primary" class="tb-contact-us" href="https://thingsboard.io/docs/contact-us/" target="_blank">Contact us</a>
   </div>
-  <div fxLayout="column" fxFlex fxLayoutGap="12px">
+  <div fxLayout="column" fxFlex>
     <div class="tb-version-info-container" fxFlex>
       <div class="tb-card-header">
         <a class="tb-version-link" [href]="updateMessage?.currentVersionReleaseNotesUrl" target="_blank">Current version</a>
@@ -30,7 +30,7 @@
     <div class="tb-version-info-container" fxFlex *ngIf="updateMessage?.updateAvailable; else versionUpToDate">
       <div class="tb-card-header">
         <a class="tb-version-link" [href]="updateMessage?.latestVersionReleaseNotesUrl" target="_blank">Available version</a>
-        <a mat-flat-button color="primary" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">Upgrade</a>
+        <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">Upgrade</a>
       </div>
       <div class="tb-version">{{ updateMessage?.latestVersion }}</div>
     </div>

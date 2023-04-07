@@ -35,21 +35,24 @@
     color: rgba(0, 0, 0, 0.54);
     position: relative;
     border-bottom: none;
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      font-size: 12px;
+      line-height: 16px;
+    }
     &:hover, &:focus {
       border-bottom: none;
     }
     &::after {
       content: 'arrow_forward';
       display: inline-block;
-      position: absolute;
-      top: -2px;
-      right: -28px;
       transform: rotate(315deg);
       font-family: 'Material Icons';
       font-weight: normal;
       font-style: normal;
       font-size: 18px;
       color: rgba(0, 0, 0, 0.12);
+      vertical-align: bottom;
+      margin-left: 6px;
     }
     &:hover::after {
       color: inherit;
@@ -74,6 +77,7 @@
   .tb-doc-button {
     height: 55px;
     display: flex;
+    overflow: hidden;
     flex-direction: column;
     justify-content: center;
     padding: 8px;
@@ -81,6 +85,10 @@
     border: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
     border-radius: 10px;
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      height: 18px;
+      padding: 0 8px;
+    }
     &:hover {
       border: 1px solid rgba(0, 0, 0, 0.12);
       box-shadow: 0 4px 10px rgba(23, 33, 90, 0.08);
@@ -95,6 +103,9 @@
         background: #F3F6FA;
         border-radius: 6px;
         margin-right: 8px;
+        @media screen and (min-width: 960px) and (max-width: 1819px) {
+          display: none;
+        }
       }
       .tb-doc-text {
         font-weight: 400;
@@ -102,6 +113,13 @@
         line-height: 20px;
         letter-spacing: 0.2px;
         color: rgba(0, 0, 0, 0.87);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        @media screen and (min-width: 960px) and (max-width: 1819px) {
+          font-size: 11px;
+          line-height: 16px;
+        }
       }
     }
   }
@@ -117,6 +135,15 @@
     padding: 8px;
     border: 2px dashed rgba(0, 0, 0, 0.08);
     border-radius: 10px;
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      height: 18px;
+      padding: 0 8px;
+      .tb-add-icon {
+        height: 12px;
+        width: 12px;
+        font-size: 12px;
+      }
+    }
     .tb-add-icon {
       color: rgba(0, 0, 0, 0.12);
     }

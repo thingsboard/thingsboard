@@ -26,7 +26,7 @@
       <mat-icon>edit</mat-icon>
     </button>
   </div>
-  <mat-grid-list class="tb-docs-list" fxFlex [cols]="columns" rowHeight="55px" gutterSize="12px">
+  <mat-grid-list class="tb-docs-list" fxFlex [cols]="columns" [rowHeight]="rowHeight" [gutterSize]="gutterSize">
     <mat-grid-tile class="tb-docs-tile" *ngFor="let docLink of documentationLinks?.links">
       <a fxFlex class="tb-doc-button"
          [href]="docLink.link" target="_blank">

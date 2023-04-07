@@ -26,6 +26,13 @@
     align-items: center;
   }
 
+  .tb-card-title {
+    margin-bottom: 8px;
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      margin-bottom: 4px;
+    }
+  }
+
   .tb-title {
     font-style: normal;
     font-weight: 500;
@@ -33,21 +40,42 @@
     line-height: 20px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.54);
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      font-size: 12px;
+      line-height: 16px;
+    }
+  }
+
+  .tb-contact-us {
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      height: 24px;
+      font-size: 12px;
+    }
   }
 
   .tb-version-info-container {
     border: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
     border-radius: 10px;
-    padding: 16px;
+    padding: 8px 16px 4px 16px;
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      padding: 4px;
+    }
     &.up-to-date {
       box-shadow: none;
       border: none;
       align-items: center;
       background: #F3F6FA;
+    }
+  }
+
+  .tb-version-info-container+.tb-version-info-container {
+    margin-top: 12px;
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      margin-top: 4px;
     }
   }
 
@@ -59,21 +87,24 @@
     color: rgba(0, 0, 0, 0.76);
     position: relative;
     border-bottom: none;
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      font-size: 11px;
+      line-height: 16px;
+    }
     &:hover, &:focus {
       border-bottom: none;
     }
     &::after {
       content: 'arrow_forward';
       display: inline-block;
-      position: absolute;
-      top: -2px;
-      right: -28px;
       transform: rotate(315deg);
       font-family: 'Material Icons';
       font-weight: normal;
       font-style: normal;
       font-size: 18px;
       color: rgba(0, 0, 0, 0.12);
+      vertical-align: bottom;
+      margin-left: 6px;
     }
     &:hover::after {
       color: inherit;
@@ -86,11 +117,26 @@
     line-height: 24px;
     letter-spacing: 0.15px;
     color: rgba(0, 0, 0, 0.87);
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      font-size: 12px;
+      line-height: 14px;
+    }
+  }
+
+  .tb-upgrade {
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      height: 24px;
+      font-size: 12px;
+      padding: 0;
+    }
   }
 
   .check-icon {
     color: #198038;
     font-weight: 600;
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      font-size: 20px;
+    }
   }
 
   .up-to-date-text {
@@ -99,5 +145,9 @@
     line-height: 20px;
     letter-spacing: 0.2px;
     color: rgba(0, 0, 0, 0.76);
+    @media screen and (min-width: 960px) and (max-width: 1819px) {
+      font-size: 11px;
+      line-height: 16px;
+    }
   }
 }
