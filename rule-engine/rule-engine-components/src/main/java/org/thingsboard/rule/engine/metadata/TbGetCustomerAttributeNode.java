@@ -45,7 +45,7 @@ public class TbGetCustomerAttributeNode extends TbAbstractGetEntityAttrNode<Cust
     @Override
     protected TbGetEntityAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
-        checkIfMappingIsNotEmptyOrThrow(config);
+        checkIfMappingIsNotEmptyOrElseThrow(config.getAttrMapping());
         return config;
     }
 

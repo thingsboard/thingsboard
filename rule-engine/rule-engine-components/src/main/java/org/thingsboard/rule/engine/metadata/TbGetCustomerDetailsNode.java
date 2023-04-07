@@ -24,7 +24,6 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.ContactBased;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
@@ -57,7 +56,7 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
     @Override
     protected TbGetCustomerDetailsNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbGetCustomerDetailsNodeConfiguration.class);
-        checkIfDetailsListIsNotEmptyOrThrow(config);
+        checkIfDetailsListIsNotEmptyOrElseThrow(config.getDetailsList());
         return config;
     }
 
@@ -67,7 +66,7 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
     }
 
     @Override
-    protected ListenableFuture<? extends ContactBased<CustomerId>> getContactBasedFuture(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<Customer> getContactBasedFuture(TbContext ctx, TbMsg msg) {
         switch (msg.getOriginator().getEntityType()) {
             case DEVICE:
                 return Futures.transformAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), new DeviceId(msg.getOriginator().getId())),

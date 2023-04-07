@@ -17,11 +17,13 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
@@ -53,7 +55,7 @@ import java.util.concurrent.Callable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -65,7 +67,7 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @ExtendWith(MockitoExtension.class)
 public class TbGetTenantAttributeNodeTest {
 
-    private static final EntityId DUMMY_ENTITY_ID = new DeviceId(UUID.randomUUID());
+    private static final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
     private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
         @Override
@@ -154,10 +156,9 @@ public class TbGetTenantAttributeNodeTest {
 
     @Test
     public void givenEmptyAttributesMapping_whenInit_thenException() {
-        // SETUP
+        // GIVEN
         var expectedExceptionMessage = "At least one attribute mapping should be specified!";
 
-        // GIVEN
         config.setAttrMapping(Collections.emptyMap());
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
@@ -173,7 +174,7 @@ public class TbGetTenantAttributeNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = FetchTo.DATA;
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_ENTITY_ID, new TbMsgMetaData(), "[]");
+        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "[]");
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
@@ -185,13 +186,12 @@ public class TbGetTenantAttributeNodeTest {
 
     @Test
     public void givenEntityThatDoesNotBelongToTheCurrentTenant_whenOnMsg_thenException() {
-        // SETUP
-        var expectedExceptionMessage = "Entity with id: '" + DUMMY_ENTITY_ID +
+        // GIVEN
+        var expectedExceptionMessage = "Entity with id: '" + DUMMY_DEVICE_ORIGINATOR +
                 "' specified in the configuration doesn't belong to the current tenant.";
 
-        // GIVEN
-        doThrow(new RuntimeException(expectedExceptionMessage)).when(ctxMock).checkTenantEntity(DUMMY_ENTITY_ID);
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_ENTITY_ID, new TbMsgMetaData(), "{}");
+        doThrow(new RuntimeException(expectedExceptionMessage)).when(ctxMock).checkTenantEntity(DUMMY_DEVICE_ORIGINATOR);
+        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "{}");
 
         // WHEN
         var exception = assertThrows(RuntimeException.class, () -> node.onMsg(ctxMock, msg));
@@ -208,15 +208,19 @@ public class TbGetTenantAttributeNodeTest {
 
         prepareMsgAndConfig(FetchTo.DATA, false, deviceId);
 
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
-        List<AttributeKvEntry> attributes = List.of(
+        List<AttributeKvEntry> attributesList = List.of(
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey1", "sourceValue1"), 1L),
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey2", "sourceValue2"), 2L),
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey3", "sourceValue3"), 3L)
         );
-        when(attributesServiceMock.find(eq(TENANT_ID), eq(TENANT_ID), eq(SERVER_SCOPE), anyList()))
-                .thenReturn(Futures.immediateFuture(attributes));
+        var expectedPatternProcessedKeysList = List.of("sourceKey1", "sourceKey2", "sourceKey3");
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+
+        when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
+        when(attributesServiceMock.find(eq(TENANT_ID), eq(TENANT_ID), eq(SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
+                .thenReturn(Futures.immediateFuture(attributesList));
+
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
@@ -224,6 +228,7 @@ public class TbGetTenantAttributeNodeTest {
 
         // THEN
         var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
         verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
         verify(ctxMock, never()).tellFailure(any(), any());
 
@@ -244,15 +249,19 @@ public class TbGetTenantAttributeNodeTest {
         // GIVEN
         prepareMsgAndConfig(FetchTo.METADATA, false, TENANT_ID);
 
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
-        List<AttributeKvEntry> attributes = List.of(
+        List<AttributeKvEntry> attributesList = List.of(
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey1", "sourceValue1"), 1L),
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey2", "sourceValue2"), 2L),
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey3", "sourceValue3"), 3L)
         );
-        when(attributesServiceMock.find(eq(TENANT_ID), eq(TENANT_ID), eq(SERVER_SCOPE), anyList()))
-                .thenReturn(Futures.immediateFuture(attributes));
+        var expectedPatternProcessedKeysList = List.of("sourceKey1", "sourceKey2", "sourceKey3");
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+
+        when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
+        when(attributesServiceMock.find(eq(TENANT_ID), eq(TENANT_ID), eq(SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
+                .thenReturn(Futures.immediateFuture(attributesList));
+
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
@@ -260,6 +269,7 @@ public class TbGetTenantAttributeNodeTest {
 
         // THEN
         var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
         verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
         verify(ctxMock, never()).tellFailure(any(), any());
 
@@ -282,15 +292,19 @@ public class TbGetTenantAttributeNodeTest {
 
         prepareMsgAndConfig(FetchTo.DATA, true, customerId);
 
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
         List<TsKvEntry> timeseries = List.of(
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey1", "sourceValue1")),
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey2", "sourceValue2")),
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey3", "sourceValue3"))
         );
-        when(timeseriesServiceMock.findLatest(eq(TENANT_ID), eq(TENANT_ID), anyList()))
+        var expectedPatternProcessedKeysList = List.of("sourceKey1", "sourceKey2", "sourceKey3");
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+
+        when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
+        when(timeseriesServiceMock.findLatest(eq(TENANT_ID), eq(TENANT_ID), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
                 .thenReturn(Futures.immediateFuture(timeseries));
+
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
@@ -298,6 +312,7 @@ public class TbGetTenantAttributeNodeTest {
 
         // THEN
         var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
         verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
         verify(ctxMock, never()).tellFailure(any(), any());
 
@@ -320,15 +335,19 @@ public class TbGetTenantAttributeNodeTest {
 
         prepareMsgAndConfig(FetchTo.METADATA, true, ruleChainId);
 
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
         List<TsKvEntry> timeseries = List.of(
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey1", "sourceValue1")),
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey2", "sourceValue2")),
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey3", "sourceValue3"))
         );
-        when(timeseriesServiceMock.findLatest(eq(TENANT_ID), eq(TENANT_ID), anyList()))
+        var expectedPatternProcessedKeysList = List.of("sourceKey1", "sourceKey2", "sourceKey3");
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+
+        when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
+        when(timeseriesServiceMock.findLatest(eq(TENANT_ID), eq(TENANT_ID), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
                 .thenReturn(Futures.immediateFuture(timeseries));
+
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
@@ -336,6 +355,7 @@ public class TbGetTenantAttributeNodeTest {
 
         // THEN
         var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
         verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
         verify(ctxMock, never()).tellFailure(any(), any());
 
@@ -351,7 +371,7 @@ public class TbGetTenantAttributeNodeTest {
         assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(expectedMsgMetaData);
     }
 
-    private void prepareMsgAndConfig(FetchTo fetchTo, boolean isTelemetry, EntityId entityId) {
+    private void prepareMsgAndConfig(FetchTo fetchTo, boolean isTelemetry, EntityId originator) {
         config.setAttrMapping(Map.of(
                 "sourceKey1", "targetKey1",
                 "${metaDataPattern1}", "$[messageBodyPattern1]",
@@ -361,11 +381,32 @@ public class TbGetTenantAttributeNodeTest {
 
         node.config = config;
         node.fetchTo = fetchTo;
+
         var msgMetaData = new TbMsgMetaData();
         msgMetaData.putValue("metaDataPattern1", "sourceKey2");
         msgMetaData.putValue("metaDataPattern2", "targetKey3");
+
         var msgData = "{\"temp\":42,\"humidity\":77,\"messageBodyPattern1\":\"targetKey2\",\"messageBodyPattern2\":\"sourceKey3\"}";
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", entityId, msgMetaData, msgData);
+
+        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", originator, msgMetaData, msgData);
+    }
+
+    @RequiredArgsConstructor
+    private static class ListMatcher<T> implements ArgumentMatcher<List<T>> {
+
+        private final List<T> expectedList;
+
+        @Override
+        public boolean matches(List<T> actualList) {
+            if (actualList == expectedList) {
+                return true;
+            }
+            if (actualList.size() != expectedList.size()) {
+                return false;
+            }
+            return actualList.containsAll(expectedList);
+        }
+
     }
 
 }

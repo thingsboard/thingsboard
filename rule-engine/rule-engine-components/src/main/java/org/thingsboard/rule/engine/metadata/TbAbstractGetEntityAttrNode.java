@@ -49,8 +49,8 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
 
     protected abstract ListenableFuture<T> findEntityAsync(TbContext ctx, EntityId originator);
 
-    protected void checkIfMappingIsNotEmptyOrThrow(TbGetEntityAttrNodeConfiguration config) throws TbNodeException {
-        if (config.getAttrMapping().isEmpty()) {
+    protected void checkIfMappingIsNotEmptyOrElseThrow(Map<String, String> attrMapping) throws TbNodeException {
+        if (attrMapping == null || attrMapping.isEmpty()) {
             throw new TbNodeException("At least one attribute mapping should be specified!");
         }
     }

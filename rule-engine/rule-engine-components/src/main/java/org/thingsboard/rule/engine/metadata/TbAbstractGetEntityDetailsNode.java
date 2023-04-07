@@ -22,10 +22,13 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.EntityDetails;
 import org.thingsboard.server.common.data.ContactBased;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+
+import java.util.List;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
@@ -45,8 +48,8 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     protected abstract ListenableFuture<? extends ContactBased<I>> getContactBasedFuture(TbContext ctx, TbMsg msg);
 
-    protected void checkIfDetailsListIsNotEmptyOrThrow(C configuration) throws TbNodeException {
-        if (configuration.getDetailsList().isEmpty()) {
+    protected void checkIfDetailsListIsNotEmptyOrElseThrow(List<EntityDetails> detailsList) throws TbNodeException {
+        if (detailsList == null || detailsList.isEmpty()) {
             throw new TbNodeException("No entity details selected!");
         }
     }

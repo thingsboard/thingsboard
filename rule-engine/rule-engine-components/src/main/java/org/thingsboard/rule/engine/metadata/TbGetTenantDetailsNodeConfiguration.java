@@ -18,8 +18,9 @@ package org.thingsboard.rule.engine.metadata;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.EntityDetails;
 
-import java.util.Collections;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -28,7 +29,7 @@ public class TbGetTenantDetailsNodeConfiguration extends TbAbstractGetEntityDeta
     @Override
     public TbGetTenantDetailsNodeConfiguration defaultConfiguration() {
         var configuration = new TbGetTenantDetailsNodeConfiguration();
-        configuration.setDetailsList(Collections.emptyList());
+        configuration.setDetailsList(List.of(EntityDetails.STATE, EntityDetails.TITLE));
         configuration.setFetchTo(FetchTo.DATA);
         return configuration;
     }
