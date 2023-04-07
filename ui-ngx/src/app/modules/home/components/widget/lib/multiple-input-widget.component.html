@@ -106,9 +106,7 @@
               </ng-container>
               <button [disabled]="key.settings.isEditable === 'disabled' || key.settings.isEditable === 'readonly'"
                       type="button"
-                      matSuffix
-                      mat-button
-                      mat-icon-button
+                      matSuffix mat-icon-button
                       (click)="openEditJSONDialog($event, key, source)">
                 <mat-icon>open_in_new</mat-icon>
               </button>
@@ -116,7 +114,7 @@
                 {{ getErrorMessageText(key.settings,'required') }}
               </mat-error>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('invalidJSON')">
-                {{ 'value.json-value-invalid' | translate }}
+                {{ getErrorMessageText(key.settings,'invalidJSON') | translate }}
               </mat-error>
             </mat-form-field>
           </div>

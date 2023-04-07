@@ -63,6 +63,11 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
       minValueErrorMessage: '',
       maxValueErrorMessage: '',
       invalidDateErrorMessage: '',
+      invalidJsonErrorMessage: '',
+
+      dialogTitle: '',
+      saveButtonLabel: '',
+      cancelButtonLabel: '',
 
       useCustomIcon: false,
       icon: '',
@@ -108,6 +113,13 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
       minValueErrorMessage: [settings.minValueErrorMessage, []],
       maxValueErrorMessage: [settings.maxValueErrorMessage, []],
       invalidDateErrorMessage: [settings.invalidDateErrorMessage, []],
+      invalidJsonErrorMessage: [settings.invalidJsonErrorMessage, []],
+
+      // Dialog settings
+
+      dialogTitle: [settings.dialogTitle, []],
+      saveButtonLabel: [settings.saveButtonLabel, []],
+      cancelButtonLabel: [settings.cancelButtonLabel, []],
 
       // Icon settings
 
@@ -131,7 +143,8 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
 
   protected updateValidators(emitEvent: boolean) {
     const dataKeyHidden: boolean = this.updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value;
-    const dataKeyValueType: MultipleInputWidgetDataKeyValueType = this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
+    const dataKeyValueType: MultipleInputWidgetDataKeyValueType =
+      this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
     const required: boolean = this.updateMultipleAttributesKeySettingsForm.get('required').value;
     const isEditable: string = this.updateMultipleAttributesKeySettingsForm.get('isEditable').value;
     const useCustomIcon: boolean = this.updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value;
@@ -166,6 +179,11 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
         this.updateMultipleAttributesKeySettingsForm.get('maxValueErrorMessage').enable({emitEvent: false});
       } else if (dataKeyValueType === 'dateTime' || dataKeyValueType === 'date' || dataKeyValueType === 'time') {
         this.updateMultipleAttributesKeySettingsForm.get('invalidDateErrorMessage').enable({emitEvent: false});
+      } else if (dataKeyValueType === 'JSON') {
+        this.updateMultipleAttributesKeySettingsForm.get('invalidJsonErrorMessage').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('dialogTitle').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('saveButtonLabel').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('cancelButtonLabel').enable({emitEvent: false});
       }
       if (required) {
         this.updateMultipleAttributesKeySettingsForm.get('requiredErrorMessage').enable({emitEvent: false});
@@ -244,7 +262,8 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
   displayErrorMessagesSection(): boolean {
     const dataKeyHidden: boolean = this.updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value;
     const required: boolean = this.updateMultipleAttributesKeySettingsForm.get('required').value;
-    const dataKeyValueType: string = this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
+    const dataKeyValueType: MultipleInputWidgetDataKeyValueType =
+      this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
     return !dataKeyHidden && (required || (['integer', 'double', 'dateTime', 'date', 'time', 'JSON'].includes(dataKeyValueType)));
   }
 }

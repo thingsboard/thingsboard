@@ -26,11 +26,10 @@ import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } fro
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import {
   createLabelFromDatasource,
-  isBoolean, isDefined,
+  isBoolean,
+  isDefined,
   isDefinedAndNotNull,
   isEqual,
-  isNotEmptyStr,
-  isString,
   isUndefined
 } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -43,7 +42,10 @@ import { forkJoin, Observable, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { takeUntil } from 'rxjs/operators';
-import { JsonObjectEditDialogComponent, JsonObjectEditDialogData } from '@shared/components/dialog/json-object-edit-dialog.component';
+import {
+  JsonObjectEditDialogComponent,
+  JsonObjectEditDialogData
+} from '@shared/components/dialog/json-object-edit-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
@@ -51,8 +53,8 @@ type FieldAlignment = 'row' | 'column';
 
 type MultipleInputWidgetDataKeyType = 'server' | 'shared' | 'timeseries';
 export type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
-                                           'JSON'| 'booleanCheckbox' | 'booleanSwitch' |
-                                           'dateTime' | 'date' | 'time' | 'select';
+                                                  'JSON' | 'booleanCheckbox' | 'booleanSwitch' |
+                                                  'dateTime' | 'date' | 'time' | 'select';
 type MultipleInputWidgetDataKeyEditableType = 'editable' | 'disabled' | 'readonly';
 
 type ConvertGetValueFunction = (value: any, ctx: WidgetContext) => any;
@@ -93,6 +95,7 @@ interface MultipleInputWidgetDataKeySettings {
   invalidDateErrorMessage?: string;
   minValueErrorMessage?: string;
   maxValueErrorMessage?: string;
+  invalidJsonErrorMessage?: string;
   useCustomIcon: boolean;
   icon: string;
   customIcon: string ;
@@ -106,9 +109,9 @@ interface MultipleInputWidgetDataKeySettings {
   useSetValueFunction?: boolean;
   setValueFunctionBody?: string;
   setValueFunction?: ConvertSetValueFunction;
+  dialogTitle?: string;
   saveButtonLabel?: string;
-  resetButtonLabel?: string;
-  dialogLabel?: string;
+  cancelButtonLabel?: string;
 }
 
 interface MultipleInputWidgetDataKey extends DataKey {
@@ -434,9 +437,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               break;
             case 'JSON':
               try {
-                value = JSON.parse(keyData[0][1]);
+                value = JSON.parse(keyValue);
               } catch (e) {
-                value = keyData[0][1] ? keyData[0][1] : null;
+                value = keyValue ? keyValue : null;
               }
               break;
             default:
@@ -533,6 +536,10 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       case 'invalidDate':
         errorMessage = keySettings.invalidDateErrorMessage;
         defaultMessage = 'widgets.input-widgets.invalid-date';
+        break;
+      case 'invalidJSON':
+        errorMessage = keySettings.invalidJsonErrorMessage;
+        defaultMessage = 'widgets.input-widgets.json-invalid';
         break;
       default:
         return '';
@@ -684,8 +691,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       }
     });
     if (tasks.length) {
-      forkJoin(tasks).subscribe(
-        () => {
+      forkJoin(tasks).subscribe({
+        next: () => {
           this.multipleInputFormGroup.markAsPristine();
           this.ctx.detectChanges();
           this.isSavingInProgress = false;
@@ -694,13 +701,13 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               1000, 'bottom', 'left', this.toastTargetId);
           }
         },
-        () => {
+        error: () => {
           this.isSavingInProgress = false;
           if (this.settings.showResultMessage) {
             this.ctx.showErrorToast(this.translate.instant('widgets.input-widgets.update-failed'),
               'bottom', 'left', this.toastTargetId);
           }
-        });
+        }});
     } else {
       this.multipleInputFormGroup.markAsPristine();
       this.ctx.detectChanges();
@@ -743,9 +750,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         jsonValue: formControl.value,
-        title:  key.settings.dialogLabel,
+        title:  key.settings.dialogTitle,
         saveLabel: key.settings.saveButtonLabel,
-        undoLabel: key.settings.saveButtonLabel
+        cancelLabel: key.settings.cancelButtonLabel
       }
     }).afterClosed().subscribe(
       (res) => {

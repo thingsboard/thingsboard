@@ -4617,6 +4617,7 @@
             "invalid-date-error-message": "'Invalid date' error message",
             "invalid-JSON-error-message": "'Invalid JSON' error message",
             "icon-settings": "Icon settings",
+            "dialog-editor-settings": "Dialog editor settings",
             "use-custom-icon": "Use custom icon",
             "input-cell-icon": "Icon to show before input cell",
             "value-conversion-settings": "Value conversion settings",
@@ -4625,7 +4626,10 @@
             "get-value-function": "getValue function",
             "set-value-settings": "Set value settings",
             "use-set-value-function": "Use setValue function",
-            "set-value-function": "setValue function"
+            "set-value-function": "setValue function",
+            "json-invalid": "JSON value has an invalid format",
+            "title": "Title",
+            "cancel-button-label": "'Cancel' button label"
         },
         "invalid-qr-code-text": "Invalid input text for QR code. Input should have a string type",
         "qr-code": {
