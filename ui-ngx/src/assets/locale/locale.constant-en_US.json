@@ -466,6 +466,7 @@
         "end-time": "End time",
         "ack-time": "Acknowledged time",
         "clear-time": "Cleared time",
+        "duration": "Duration",
         "alarm-severity-list": "Alarm severity list",
         "any-severity": "Any severity",
         "severity-critical": "Critical",
@@ -501,15 +502,24 @@
         "any-type": "Any type",
         "search-propagated-alarms": "Search propagated alarms",
         "comments": "Alarm comments",
-        "advanced-info": "Advanced info"
+        "show-more": "Show more",
+        "additional-info": "Additional info"
     },
-    "alarm-comment": {
+    "alarm-activity": {
         "add": "Add a comment...",
         "alarm-comment": "Alarm comment",
         "comments": "Comments",
         "delete-alarm-comment": "Do you want to delete this comment?",
         "refresh": "Refresh",
-        "sort-direction": "Sort direction"
+        "oldest-first": "Oldest first",
+        "newest-first": "Newest first",
+        "activity": "Activity",
+        "export":  "Export to CSV",
+        "author": "Author",
+        "created-date": "Created date",
+        "edited-date": "Edited date",
+        "text": "Text",
+        "system": "System"
     },
     "alias": {
         "add": "Add alias",
@@ -5042,7 +5052,7 @@
             "display-alarm-details": "Display alarm details",
             "allow-alarms-ack": "Allow alarms acknowledgment",
             "allow-alarms-clear": "Allow alarms clear",
-            "display-alarm-comments": "Display alarm comments",
+            "display-alarm-activity": "Display alarm activity",
             "allow-alarms-assign": "Allow alarms assignment"
         },
         "value-source": {
