@@ -249,7 +249,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 String updatedDeviceProvisionSecret = chain.get(0);
                 ProvisionRequest provisionRequest = createProvisionRequest(deviceProfile, updatedDeviceProvisionSecret);
                 ProvisionResponse provisionResponse = provisionDeviceRequestAndGetResponse(provisionRequest);
-                if (provisionResponse != null && provisionResponse.getResponseStatus().equals(ProvisionResponseStatus.SUCCESS)) {
+                if (provisionResponse != null && ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
                     return getDeviceInfo(provisionResponse.getDeviceCredentials());
                 } else {
                     return getEmptyTransportApiResponseFuture();
