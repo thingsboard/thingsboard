@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceIdInfo;
@@ -61,6 +62,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.sql.query.EntityQueryRepository;
@@ -85,6 +87,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -151,6 +154,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private final TbServiceInfoProvider serviceInfoProvider;
     private final EntityQueryRepository entityQueryRepository;
     private final DbTypeInfoComponent dbTypeInfoComponent;
+    private final TbApiUsageReportClient apiUsageReportClient;
     @Autowired @Lazy
     private TelemetrySubscriptionService tsSubService;
 
@@ -186,7 +190,8 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                                      TbClusterService clusterService, PartitionService partitionService,
                                      TbServiceInfoProvider serviceInfoProvider,
                                      EntityQueryRepository entityQueryRepository,
-                                     DbTypeInfoComponent dbTypeInfoComponent) {
+                                     DbTypeInfoComponent dbTypeInfoComponent,
+                                     TbApiUsageReportClient apiUsageReportClient) {
         this.tenantService = tenantService;
         this.deviceService = deviceService;
         this.attributesService = attributesService;
@@ -196,6 +201,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         this.serviceInfoProvider = serviceInfoProvider;
         this.entityQueryRepository = entityQueryRepository;
         this.dbTypeInfoComponent = dbTypeInfoComponent;
+        this.apiUsageReportClient = apiUsageReportClient;
     }
 
     @PostConstruct
@@ -203,7 +209,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         super.init();
         deviceStateExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
                 Math.max(4, Runtime.getRuntime().availableProcessors()), "device-state"));
-        scheduledExecutor.scheduleAtFixedRate(this::updateInactivityStateIfExpired, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleAtFixedRate(this::checkStates, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
     }
 
     @PreDestroy
@@ -428,27 +434,42 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
     }
 
-    void updateInactivityStateIfExpired() {
+    void checkStates() {
         try {
             final long ts = System.currentTimeMillis();
+            Map<TenantId, Map<Boolean, AtomicInteger>> devicesActivity = new HashMap<>();
             partitionedEntities.forEach((tpi, deviceIds) -> {
                 log.debug("Calculating state updates. tpi {} for {} devices", tpi.getFullTopicName(), deviceIds.size());
                 for (DeviceId deviceId : deviceIds) {
+                    DeviceStateData stateData;
                     try {
-                        updateInactivityStateIfExpired(ts, deviceId);
+                        stateData = getOrFetchDeviceStateData(deviceId);
+                    } catch (Exception e) {
+                        log.error("[{}] Failed to get or fetch device state data", deviceId, e);
+                        continue;
+                    }
+                    try {
+                        updateInactivityStateIfExpired(ts, deviceId, stateData);
                     } catch (Exception e) {
                         log.warn("[{}] Failed to update inactivity state", deviceId, e);
                     }
+                    devicesActivity.computeIfAbsent(stateData.getTenantId(), k -> new HashMap<>())
+                            .computeIfAbsent(stateData.getState().isActive(), k -> new AtomicInteger())
+                            .incrementAndGet();
+                }
+            });
+            devicesActivity.forEach((tenantId, countByActivityStatus) -> {
+                int active = Optional.ofNullable(countByActivityStatus.get(true)).map(AtomicInteger::get).orElse(0);
+                int inactive = Optional.ofNullable(countByActivityStatus.get(false)).map(AtomicInteger::get).orElse(0);
+                apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.ACTIVE_DEVICES, active);
+                apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.INACTIVE_DEVICES, inactive);
+                if (active > 0) {
+                    log.info("[{}] Active devices: {}, inactive devices: {}", tenantId, active, inactive);
                 }
             });
         } catch (Throwable t) {
-            log.warn("Failed to update inactivity states", t);
+            log.warn("Failed to check devices states", t);
         }
-    }
-
-    void updateInactivityStateIfExpired(long ts, DeviceId deviceId) {
-        DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
-        updateInactivityStateIfExpired(ts, deviceId, stateData);
     }
 
     void updateInactivityStateIfExpired(long ts, DeviceId deviceId, DeviceStateData stateData) {
