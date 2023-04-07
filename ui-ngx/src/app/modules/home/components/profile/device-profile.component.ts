@@ -105,7 +105,6 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
       type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
       provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret,
-      certificateValue: entity?.profileData?.provisionConfiguration?.certificateValue,
       certificateRegExPattern: entity?.profileData?.provisionConfiguration?.certificateRegExPattern,
       allowCreateNewDevicesByX509Certificate: entity?.profileData?.provisionConfiguration?.allowCreateNewDevicesByX509Certificate
     };
@@ -189,7 +188,6 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
       type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
       provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret,
-      certificateValue: entity?.profileData?.provisionConfiguration?.certificateValue,
       certificateRegExPattern: entity?.profileData?.provisionConfiguration?.certificateRegExPattern,
       allowCreateNewDevicesByX509Certificate: entity?.profileData?.provisionConfiguration?.allowCreateNewDevicesByX509Certificate
     };

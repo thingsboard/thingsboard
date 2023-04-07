@@ -62,7 +62,6 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
   deviceProvisionType = DeviceProvisionType;
   deviceProvisionTypes = Object.keys(DeviceProvisionType);
   deviceProvisionTypeTranslateMap = deviceProvisionTypeTranslationMap;
-  readMore: boolean;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -143,16 +142,16 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
   }
 
   writeValue(value: DeviceProvisionConfiguration | null): void {
-    if (isDefinedAndNotNull(value)){
+    if (isDefinedAndNotNull(value)) {
       this.provisionConfigurationFormGroup.patchValue(value, {emitEvent: false});
     } else {
       this.provisionConfigurationFormGroup.patchValue({type: DeviceProvisionType.DISABLED});
     }
   }
 
-  setDisabledState(isDisabled: boolean){
+  setDisabledState(isDisabled: boolean) {
     this.disabled = isDisabled;
-    if (this.disabled){
+    if (this.disabled) {
       this.provisionConfigurationFormGroup.disable({emitEvent: false});
     } else {
       if (this.provisionConfigurationFormGroup.get('type').value !== DeviceProvisionType.DISABLED) {
@@ -176,6 +175,9 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
     this.resetFormControls(this.provisionConfigurationFormGroup.value);
     if (this.provisionConfigurationFormGroup.valid) {
       deviceProvisionConfiguration = this.provisionConfigurationFormGroup.getRawValue();
+      if (deviceProvisionConfiguration.type === DeviceProvisionType.X509_CERTIFICATE_CHAIN) {
+        deviceProvisionConfiguration.provisionDeviceSecret = deviceProvisionConfiguration.certificateValue;
+      }
     }
     this.propagateChange(deviceProvisionConfiguration);
   }
