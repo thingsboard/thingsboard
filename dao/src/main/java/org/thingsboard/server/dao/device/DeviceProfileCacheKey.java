@@ -29,31 +29,31 @@ public class DeviceProfileCacheKey implements Serializable {
     private final TenantId tenantId;
     private final String name;
     private final DeviceProfileId deviceProfileId;
-    private final String provisionDeviceKey;
     private final boolean defaultProfile;
+    private final String provisionDeviceKey;
 
-    private DeviceProfileCacheKey(TenantId tenantId, String name, DeviceProfileId deviceProfileId, String provisionDeviceKey, boolean defaultProfile) {
+    private DeviceProfileCacheKey(TenantId tenantId, String name, DeviceProfileId deviceProfileId, boolean defaultProfile, String provisionDeviceKey) {
         this.tenantId = tenantId;
         this.name = name;
         this.deviceProfileId = deviceProfileId;
-        this.provisionDeviceKey = provisionDeviceKey;
         this.defaultProfile = defaultProfile;
+        this.provisionDeviceKey = provisionDeviceKey;
     }
 
     public static DeviceProfileCacheKey fromName(TenantId tenantId, String name) {
-        return new DeviceProfileCacheKey(tenantId, name, null, null, false);
+        return new DeviceProfileCacheKey(tenantId, name, null, false, null);
     }
 
     public static DeviceProfileCacheKey fromId(DeviceProfileId id) {
-        return new DeviceProfileCacheKey(null, null, id, null, false);
-    }
-
-    public static DeviceProfileCacheKey fromProvisionDeviceKey(String provisionDeviceKey) {
-        return new DeviceProfileCacheKey(null, null, null, provisionDeviceKey, false);
+        return new DeviceProfileCacheKey(null, null, id, false, null);
     }
 
     public static DeviceProfileCacheKey defaultProfile(TenantId tenantId) {
-        return new DeviceProfileCacheKey(tenantId, null, null, null, true);
+        return new DeviceProfileCacheKey(tenantId, null, null, true, null);
+    }
+
+    public static DeviceProfileCacheKey fromProvisionDeviceKey(String provisionDeviceKey) {
+        return new DeviceProfileCacheKey(null, null, null, false, provisionDeviceKey);
     }
 
     /**

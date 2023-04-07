@@ -424,7 +424,6 @@ $$;
 
 -- ALARM FUNCTIONS END
 
-
 -- TTL DROP PARTITIONS FUNCTIONS UPDATE START
 
 DROP PROCEDURE IF EXISTS drop_partitions_by_max_ttl(character varying, bigint, bigint);

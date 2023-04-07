@@ -89,7 +89,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private final AuditLogService auditLogService;
     private final PartitionService partitionService;
 
-    public DeviceProvisionServiceImpl(TbQueueProducerProvider producerProvider, TbClusterService clusterService, DeviceDao deviceDao, DeviceProfileDao deviceProfileDao, DeviceProfileService deviceProfileService, DeviceService deviceService, DeviceCredentialsService deviceCredentialsService, AttributesService attributesService, DeviceStateService deviceStateService, AuditLogService auditLogService, PartitionService partitionService) {
+    public DeviceProvisionServiceImpl(TbQueueProducerProvider producerProvider, TbClusterService clusterService, DeviceProfileService deviceProfileService, DeviceService deviceService, DeviceCredentialsService deviceCredentialsService, AttributesService attributesService, AuditLogService auditLogService, PartitionService partitionService) {
         ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
         this.clusterService = clusterService;
         this.deviceProfileService = deviceProfileService;
