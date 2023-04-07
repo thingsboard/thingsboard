@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -46,8 +45,6 @@ import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
-import org.thingsboard.server.dao.device.DeviceDao;
-import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -63,12 +60,13 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Service
@@ -102,6 +100,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     @Override
     public ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) {
+        fetchAndApplyDeviceNameForX509ProvisionRequestWithRegEx(provisionRequest);
         String provisionRequestKey = provisionRequest.getCredentials().getProvisionDeviceKey();
         String provisionRequestSecret = provisionRequest.getCredentials().getProvisionDeviceSecret();
         if (!StringUtils.isEmpty(provisionRequest.getDeviceName())) {
@@ -160,7 +159,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 } else if (x509Configuration.isAllowCreateNewDevicesByX509Certificate()) {
                     return createDevice(provisionRequest, targetProfile);
                 } else {
-                    log.info("Device doesn't exist and cannot be created due incorrect configuration for X509CertificateChainProvisionConfiguration");
+                    log.warn("Device with name {} doesn't exist and cannot be created due incorrect configuration for X509CertificateChainProvisionConfiguration", provisionRequest.getDeviceName());
                     throw new ProvisionFailedException(ProvisionResponseStatus.NOT_FOUND.name());
                 }
         }
@@ -272,5 +271,35 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private void logAction(TenantId tenantId, CustomerId customerId, Device device, boolean success, ProvisionRequest provisionRequest) {
         ActionType actionType = success ? ActionType.PROVISION_SUCCESS : ActionType.PROVISION_FAILURE;
         auditLogService.logEntityAction(tenantId, customerId, new UserId(UserId.NULL_UUID), device.getName(), device.getId(), device, actionType, null, provisionRequest);
+    }
+
+    private void fetchAndApplyDeviceNameForX509ProvisionRequestWithRegEx(ProvisionRequest provisionRequest) {
+        DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(provisionRequest.getCredentials().getProvisionDeviceKey());
+        X509CertificateChainProvisionConfiguration configuration;
+        if (deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
+            configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
+            String certificateValue = provisionRequest.getCredentialsData().getX509CertHash();
+            String certificateRegEx = configuration.getCertificateRegExPattern();
+            String deviceName = extractDeviceNameFromCertificateCNByRegEx(certificateValue, certificateRegEx);
+            if (deviceName == null) {
+                log.warn("Device name cannot be extracted using regex [{}] for certificate [{}]",certificateRegEx, certificateValue);
+                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            }
+            provisionRequest.setDeviceName(deviceName);
+        }
+    }
+
+    private String extractDeviceNameFromCertificateCNByRegEx(String x509Value, String regex) {
+        try {
+            String commonName = SslUtil.parseCommonName(SslUtil.readCertFile(x509Value));
+            log.trace("Extract CN [{}] by regex pattern [{}]", commonName, regex);
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(commonName);
+            if (matcher.find()) {
+                return matcher.group(0);
+            }
+            return null;
+        } catch (Exception ignored) {}
+        return null;
     }
 }

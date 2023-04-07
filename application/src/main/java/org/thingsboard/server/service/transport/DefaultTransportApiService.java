@@ -47,9 +47,7 @@ import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
-import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -67,7 +65,6 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
@@ -118,6 +115,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.PASSWORD_MISMATCH;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.VALID;
 
@@ -247,13 +245,17 @@ public class DefaultTransportApiService implements TransportApiService {
                 return getDeviceInfo(credentials);
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
-            if (deviceProfile != null) {
+            if (deviceProfile != null && deviceProfile.getProvisionType() == X509_CERTIFICATE_CHAIN) {
                 String updatedDeviceProvisionSecret = chain.get(0);
                 ProvisionRequest provisionRequest = createProvisionRequest(deviceProfile, updatedDeviceProvisionSecret);
-                ProvisionResponse provisionResponse = deviceProvisionService.provisionDevice(provisionRequest);
-                if (provisionResponse.getResponseStatus().equals(ProvisionResponseStatus.SUCCESS)) {
+                ProvisionResponse provisionResponse = provisionDeviceRequestAndGetResponse(provisionRequest);
+                if (provisionResponse != null && provisionResponse.getResponseStatus().equals(ProvisionResponseStatus.SUCCESS)) {
                     return getDeviceInfo(provisionResponse.getDeviceCredentials());
+                } else {
+                    return getEmptyTransportApiResponseFuture();
                 }
+            } else if (deviceProfile != null) {
+                log.warn("[{}] Device Profile provision configuration mismatched: expected {},  actual {}", deviceProfile.getName(), X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
             }
         }
         return getEmptyTransportApiResponseFuture();
@@ -700,44 +702,21 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     private ProvisionRequest createProvisionRequest(DeviceProfile deviceProfile, String certificateValue) {
-        String deviceName = getDeviceName(deviceProfile, certificateValue);
-
         ProvisionDeviceProfileCredentials provisionDeviceProfileCredentials = new ProvisionDeviceProfileCredentials(
                 deviceProfile.getProvisionDeviceKey(),
                 deviceProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret()
         );
         ProvisionDeviceCredentialsData provisionDeviceCredentialsData = new ProvisionDeviceCredentialsData(null, null, null, null, certificateValue);
 
-        return new ProvisionRequest(deviceName, DeviceCredentialsType.X509_CERTIFICATE, provisionDeviceCredentialsData, provisionDeviceProfileCredentials);
+        return new ProvisionRequest(null, DeviceCredentialsType.X509_CERTIFICATE, provisionDeviceCredentialsData, provisionDeviceProfileCredentials);
     }
 
-
-    private String getDeviceName(DeviceProfile deviceProfile, String certificateValue) {
-        X509CertificateChainProvisionConfiguration configuration = new X509CertificateChainProvisionConfiguration();
-        String deviceName = null;
-        if (deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
-            configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
-            deviceName = extractDeviceNameFromCertificateCNByRegEx(certificateValue, configuration.getCertificateRegExPattern());
-            if (deviceName == null) {
-                log.warn("Cannot extract device name from device's CN using regex [{}]", configuration.getCertificateRegExPattern());
-            }
-        } else {
-            log.warn("Device Profile configuration: expected [{}],  actual [{}]", configuration.getType(), deviceProfile.getProvisionType());
-        }
-        return deviceName;
-    }
-
-    private String extractDeviceNameFromCertificateCNByRegEx(String x509Value, String regex) {
+    private ProvisionResponse provisionDeviceRequestAndGetResponse(ProvisionRequest provisionRequest) {
+        ProvisionResponse provisionResponse = null;
         try {
-            String commonName = SslUtil.parseCommonName(SslUtil.readCertFile(x509Value));
-            log.trace("Extract CN [{}] by regex pattern [{}]", commonName, regex);
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(commonName);
-            if (matcher.find()) {
-                return matcher.group(0);
-            }
-        } catch (Exception ignored) {}
-        return null;
+            provisionResponse = deviceProvisionService.provisionDevice(provisionRequest);
+        } catch (ProvisionFailedException ignored) {}
+        return provisionResponse;
     }
 
     private List<String> convertX509CertificateChainToList(String certificateChain) {
