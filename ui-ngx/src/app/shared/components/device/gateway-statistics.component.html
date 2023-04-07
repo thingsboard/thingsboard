@@ -1,0 +1,81 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<div class="statistics-container" fxLayout="row">
+  <mat-card [formGroup]="statisticForm" *ngIf="!general">
+    <mat-form-field class="mat-block">
+      <mat-label>{{'gateway.statistics.statistic' | translate}}</mat-label>
+      <mat-select formControlName="statisticKey">
+        <mat-option *ngFor="let key of statisticsKeys" [value]="key">
+          {{key}}
+        </mat-option>
+        <mat-option *ngFor="let command of commands" [value]="command.attributeOnGateway">
+          {{command.attributeOnGateway}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <!--    <mat-form-field class="mat-block" *ngIf="commandObj">-->
+    <!--      <mat-label>Timeout</mat-label>-->
+    <!--      <input matInput [value]="commandObj.timeout" disabled>-->
+    <!--    </mat-form-field>-->
+    <mat-form-field class="mat-block" *ngIf="commandObj">
+      <mat-label>{{'gateway.statistics.command' | translate}}</mat-label>
+      <input matInput [value]="commandObj.command" disabled>
+    </mat-form-field>
+  </mat-card>
+  <div class="chart-box" fxLayout="column">
+        <div class="chart-container" #statisticChart [fxShow]="isNumericData">
+
+        </div>
+    <table [fxShow]="!isNumericData" mat-table [dataSource]="dataSource"
+           matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
+           matSortDisableClear>
+      <ng-container matColumnDef="0">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
+        <mat-cell *matCellDef="let row; let rowIndex = index">
+          {{row[0]| date:'yyyy-MM-dd HH:mm:ss' }}
+        </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="1">
+        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 70%">Message</mat-header-cell>
+        <mat-cell *matCellDef="let row">
+          {{ row[1] }}
+        </mat-cell>
+      </ng-container>
+      <mat-header-row [ngClass]="{'mat-row-select': true}"
+                      *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+      <mat-row [ngClass]="{'mat-row-select': true}"
+               *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </table>
+    <span [fxShow]="dataSource.data.length === 0 && !isNumericData"
+          fxLayoutAlign="center center"
+          class="no-data-found">{{'attribute.no-telemetry-text' | translate}}</span>
+    <div fxFlex class="legend" fxLayout="row" fxLayoutAlign="center center" [fxShow]="isNumericData">
+      <div class="legend-keys" *ngFor="let legendKey of legendData?.keys" fxLayout="row"
+           fxLayoutAlign="center center">
+        <span class="legend-line" [ngStyle]="{backgroundColor: legendKey.dataKey.color}"></span>
+        <div class="legend-label"
+             (click)="onLegendKeyHiddenChange(legendKey.dataIndex)"
+             [ngClass]="{ 'hidden-label': legendData.keys[legendKey.dataIndex].dataKey.hidden }"
+             [innerHTML]="legendKey.dataKey.label">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

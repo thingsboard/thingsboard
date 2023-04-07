@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,4 +15,12 @@
     limitations under the License.
 
 -->
-<tb-entities-table [entitiesTableConfig]="gatewayListTableConfig"></tb-entities-table>
+<section class="tb-widget-settings" [formGroup]="GatewayLogSettingForm" fxLayout="column">
+  <mat-slide-toggle class="mat-slide" formControlName="isConnectorLog">
+    Is Connector
+  </mat-slide-toggle>
+  <mat-form-field fxFlex class="mat-block" *ngIf="GatewayLogSettingForm.get('isConnectorLog').value">
+    <mat-label translate>State parameter connector name</mat-label>
+    <input matInput formControlName="connectorLogState">
+  </mat-form-field>
+</section>

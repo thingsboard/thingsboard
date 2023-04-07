@@ -1,0 +1,90 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+
+  .connector-container {
+    width: 100%;
+
+    &>mat-card, &>div {
+      min-width: 50%;
+    }
+
+    mat-card {
+      margin: 10px;
+      padding: 10px;
+      max-width: 100%;
+    }
+  }
+
+  .tb-entity-table {
+    .tb-entity-table-content {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      overflow: hidden;
+    }
+  }
+
+  .mat-toolbar {
+    background: transparent;
+    color: rgba(0, 0, 0, .87) !important;
+  }
+
+  .mat-mdc-form-field {
+    flex-grow: 1;
+    //min-width: 200px;
+    //flex-shrink: 1;
+  }
+
+  mat-expansion-panel {
+    border: 1px solid #305680;
+  }
+
+  mat-card {
+    padding-left: 10px;
+    background: transparent;
+  }
+
+  .mat-card-selected {
+    background-color: rgba(48, 86, 128, 0.1);
+  }
+
+  .mat-mdc-slide-toggle {
+    margin: 15px;
+  }
+
+  ::ng-deep tb-json-object-edit > div {
+    flex-grow: 1;
+  }
+
+  .mat-accordion .mat-expansion-panel {
+    border-radius: 5px;
+  }
+
+  .action-btns {
+    margin: 10px 10px 0;
+  }
+
+  mat-row {
+    cursor: pointer;
+  }
+}
+

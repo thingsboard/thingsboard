@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
 /// limitations under the License.
 ///
 
-import {Component, Input, OnInit} from '@angular/core';
-import {
-  FormControl,
-} from '@angular/forms';
-import {Router} from "@angular/router";
-import {Store} from "@ngrx/store";
-import {AppState} from "@core/core.state";
-import {TranslateService} from "@ngx-translate/core";
-import {ActionNotificationShow} from "@core/notification/notification.actions";
-import {DeviceService} from "@core/http/device.service";
-import {helpBaseUrl} from "@shared/models/constants";
+import { Component, Input, OnInit } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { DeviceService } from '@core/http/device.service';
+import { helpBaseUrl } from '@shared/models/constants';
 
 enum OsType {
   linux = 'linux',
@@ -48,7 +46,7 @@ export class DeviceGatewayCommandComponent implements OnInit {
 
   linuxCode: string;
   windowsCode: string;
-  selectedOSControll: FormControl;
+  selectedOSCControl: FormControl;
   osTypes = OsType;
   helpLink: string = helpBaseUrl + '/docs/iot-gateway/install/docker-installation/';
 
@@ -62,44 +60,40 @@ export class DeviceGatewayCommandComponent implements OnInit {
   ngOnInit(): void {
     const HOST = window.location.hostname;
     if (this.deviceId) {
-      this.deviceService.getDeviceCredentials(this.deviceId).subscribe(credentials=>{
+      this.deviceService.getDeviceCredentials(this.deviceId).subscribe(credentials => {
         this.token = credentials.credentialsId;
         this.createRunCode(HOST);
-      })
+      });
     }
-    this.selectedOSControll = new FormControl('');
+    this.selectedOSCControl = new FormControl('');
     // @ts-ignore
     const platform = window.navigator?.userAgentData?.platform || window.navigator.platform,
       macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
       windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
     if (macosPlatforms.indexOf(platform) !== -1) {
-      this.selectedOSControll.setValue(OsType.macos);
+      this.selectedOSCControl.setValue(OsType.linux);
     } else if (windowsPlatforms.indexOf(platform) !== -1) {
-      this.selectedOSControll.setValue(OsType.windows);
+      this.selectedOSCControl.setValue(OsType.windows);
     } else if (/Linux/.test(platform)) {
-      this.selectedOSControll.setValue(OsType.linux);
+      this.selectedOSCControl.setValue(OsType.linux);
     }
     this.createRunCode(HOST);
   }
 
   createRunCode(HOST) {
-    this.linuxCode = "docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v " +
-      "~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tb-gateway -e host=" +
+    this.linuxCode = 'docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ' +
+      '~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tb-gateway -e host=' +
       HOST +
-      " -e port=1883 -e accessToken=" +
+      ' -e port=1883 -e accessToken=' +
       this.token +
-      " --restart always thingsboard/tb-gateway";
-    this.windowsCode = "docker run -it -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config -v " +
-      "%HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs " +
-      "--name tb-gateway -e host=" +
+      ' --restart always thingsboard/tb-gateway';
+    this.windowsCode = 'docker run -it -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config -v ' +
+      '%HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs ' +
+      '--name tb-gateway -e host=' +
       HOST +
-      " -e port=1883 -e accessToken=" +
+      ' -e port=1883 -e accessToken=' +
       this.token +
-      " --restart always thingsboard/tb-gateway";
-  }
-
-  goToDocumentationPage() {
-    window.open(this.helpLink, '_blank');
+      ' --restart always thingsboard/tb-gateway';
   }
 
   onDockerCodeCopied() {

@@ -22,7 +22,7 @@ import { DeviceCredentialsComponent } from '@home/components/device/device-crede
 import { DeviceCredentialsLwm2mComponent } from '@home/components/device/device-credentials-lwm2m.component';
 import { DeviceCredentialsLwm2mServerComponent } from '@home/components/device/device-credentials-lwm2m-server.component';
 import { DeviceCredentialsMqttBasicComponent } from '@home/components/device/device-credentials-mqtt-basic.component';
-import {DeviceGatewayCommandComponent} from "@home/components/device/device-gateway-command.component";
+import { DeviceExampleCommandComponent } from '@home/components/device/device-example-command.component';
 
 @NgModule({
   declarations: [
@@ -31,7 +31,7 @@ import {DeviceGatewayCommandComponent} from "@home/components/device/device-gate
     DeviceCredentialsLwm2mComponent,
     DeviceCredentialsLwm2mServerComponent,
     DeviceCredentialsMqttBasicComponent,
-    DeviceGatewayCommandComponent
+    DeviceExampleCommandComponent
   ],
   imports: [
     CommonModule,
@@ -43,7 +43,7 @@ import {DeviceGatewayCommandComponent} from "@home/components/device/device-gate
     DeviceCredentialsLwm2mComponent,
     DeviceCredentialsLwm2mServerComponent,
     DeviceCredentialsMqttBasicComponent,
-    DeviceGatewayCommandComponent
+    DeviceExampleCommandComponent
   ]
 })
 export class DeviceCredentialsModule { }

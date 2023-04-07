@@ -176,10 +176,16 @@ import { NotificationComponent } from '@shared/components/notification/notificat
 import { TemplateAutocompleteComponent } from '@shared/components/notification/template-autocomplete.component';
 import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import { DeviceGatewayCommandComponent } from '@shared/components/device/device-gateway-command.component';
+import { GatewayConfigurationComponent } from '@shared/components/device/gateway-configuration.component';
+import { GatewayRemoteConfigurationDialogComponent } from '@shared/components/dialog/gateway-remote-configuration-dialog';
+import { GatewayConnectorComponent } from '@shared/components/device/gateway-connectors.component';
+import { GatewayLogsComponent } from '@shared/components/device/gateway-logs.component';
+import { GatewayStatisticsComponent } from '@shared/components/device/gateway-statistics.component';
+import { GatewayServiceRPCComponent } from '@shared/components/device/gateway-service-rpc.component';
 
-export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
-  return markedOptionsService;
-}
+export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService) => markedOptionsService;
+
 
 @NgModule({
   providers: [
@@ -241,6 +247,13 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HelpComponent,
     HelpMarkdownComponent,
     HelpPopupComponent,
+    DeviceGatewayCommandComponent,
+    GatewayConfigurationComponent,
+    GatewayConnectorComponent,
+    GatewayLogsComponent,
+    GatewayStatisticsComponent,
+    GatewayServiceRPCComponent,
+    GatewayRemoteConfigurationDialogComponent,
     TbCheckboxComponent,
     TbSnackBarComponent,
     TbErrorComponent,
@@ -407,6 +420,13 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HelpComponent,
     HelpMarkdownComponent,
     HelpPopupComponent,
+    DeviceGatewayCommandComponent,
+    GatewayConfigurationComponent,
+    GatewayConnectorComponent,
+    GatewayLogsComponent,
+    GatewayStatisticsComponent,
+    GatewayServiceRPCComponent,
+    GatewayRemoteConfigurationDialogComponent,
     TbCheckboxComponent,
     TbErrorComponent,
     TbCheatSheetComponent,

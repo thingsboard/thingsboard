@@ -93,4 +93,8 @@ $previewSize: 100px !default;
       padding: 0 16px;
     }
   }
+
+  .pe {
+    pointer-events: auto;
+  }
 }

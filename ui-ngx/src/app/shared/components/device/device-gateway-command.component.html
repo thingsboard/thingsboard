@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 -->
 <div mat-dialog-content tb-toast fxLayout="column" toastTarget="dockerCommandDialogContent">
-  <span style="padding-bottom: 15px;">In order to run ThingsBoard IoT gateway (<a [href]="helpLink" target="_blank">ThingsBoard IoT gateway</a>) in docker with credentials for this device you can use the following commands.</span>
-  <div fxFlex fxLayout="row" style="justify-content: space-between">
-    <mat-button-toggle-group [formControl]="selectedOSControll" aria-label="Favorite Color" style="width: max-content">
+  <span style="padding-bottom: 15px;">In order to run ThingsBoard IoT gateway in docker with credentials for this device you can use the following commands.</span>
+  <div fxFlex fxLayout="row" style="justify-content: space-between; flex-grow: 0">
+    <mat-button-toggle-group [formControl]="selectedOSCControl" aria-label="Favorite Color" style="width: max-content; flex-grow: 0">
       <mat-button-toggle [value]="osTypes.windows"><span translate>gateway.windows </span></mat-button-toggle>
       <mat-button-toggle [value]="osTypes.linux"><span translate>gateway.linux-macos </span></mat-button-toggle>
     </mat-button-toggle-group>
     <div class="tb-help" [tb-help]="helpLink"></div>
   </div>
-  <div class="mat-content" fxLayout="column" *ngIf="selectedOSControll.value !== osTypes.windows">
+  <div class="mat-content" fxLayout="column" *ngIf="selectedOSCControl.value !== osTypes.windows">
     <div fxLayout="row" fxLayoutAlign="start center">
       <pre class="tb-highlight" fxFlex><code style="white-space: pre-wrap;">{{ linuxCode }}</code></pre>
       <button mat-icon-button
@@ -38,7 +38,7 @@
       </button>
     </div>
   </div>
-  <div class="mat-content" fxLayout="column" *ngIf="selectedOSControll.value === osTypes.windows">
+  <div class="mat-content" fxLayout="column" *ngIf="selectedOSCControl.value === osTypes.windows">
     <div fxLayout="row" fxLayoutAlign="start center">
       <pre class="tb-highlight" fxFlex><code style="white-space: pre-wrap;">{{ windowsCode }}</code></pre>
       <button mat-icon-button

@@ -55,6 +55,9 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   label: string;
 
   @Input()
+  hint: string;
+
+  @Input()
   accept = '*/*';
 
   @Input()
