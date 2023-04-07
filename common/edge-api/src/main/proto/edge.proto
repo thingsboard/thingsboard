@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ message ConnectResponseMsg {
 
 message SyncRequestMsg {
   bool syncRequired = 1;
+  optional bool fullSync = 2;
 }
 
 message SyncCompletedMsg {
@@ -110,7 +111,7 @@ enum UpdateMsgType {
   ENTITY_DELETED_RPC_MESSAGE = 2;
   ALARM_ACK_RPC_MESSAGE = 3;
   ALARM_CLEAR_RPC_MESSAGE = 4;
-  ENTITY_MERGE_RPC_MESSAGE = 5;
+  ENTITY_MERGE_RPC_MESSAGE = 5; // deprecated
 }
 
 message EntityDataProto {
@@ -183,6 +184,7 @@ message DashboardUpdateMsg {
   optional int64 customerIdLSB = 5;
   string title = 6;
   string configuration = 7;
+  optional string assignedCustomers = 8;
 }
 
 message DeviceUpdateMsg {
@@ -197,10 +199,12 @@ message DeviceUpdateMsg {
   string type = 9;
   optional string label = 10;
   optional string additionalInfo = 11;
-  optional string conflictName = 12;
+  optional string conflictName = 12; // deprecated
   optional int64 firmwareIdMSB = 13;
   optional int64 firmwareIdLSB = 14;
   optional bytes deviceDataBytes = 15;
+  optional int64 softwareIdMSB = 16;
+  optional int64 softwareIdLSB = 17;
 }
 
 message DeviceProfileUpdateMsg {
@@ -221,6 +225,10 @@ message DeviceProfileUpdateMsg {
   optional bytes image = 15;
   optional int64 firmwareIdMSB = 16;
   optional int64 firmwareIdLSB = 17;
+  optional int64 softwareIdMSB = 18;
+  optional int64 softwareIdLSB = 19;
+  optional int64 defaultDashboardIdMSB = 20;
+  optional int64 defaultDashboardIdLSB = 21;
 }
 
 message AssetProfileUpdateMsg {
@@ -232,8 +240,10 @@ message AssetProfileUpdateMsg {
   bool default = 6;
   int64 defaultRuleChainIdMSB = 7;
   int64 defaultRuleChainIdLSB = 8;
-  string defaultQueueName = 9;
-  optional bytes image = 10;
+  int64 defaultDashboardIdMSB = 9;
+  int64 defaultDashboardIdLSB = 10;
+  optional string defaultQueueName = 11;
+  optional bytes image = 12;
 }
 
 message DeviceCredentialsUpdateMsg {
@@ -250,12 +260,12 @@ message AssetUpdateMsg {
   int64 idLSB = 3;
   optional int64 customerIdMSB = 4;
   optional int64 customerIdLSB = 5;
-  optional int64 assetProfileIdMSB = 6;
-  optional int64 assetProfileIdLSB = 7;
-  string name = 8;
-  string type = 9;
-  optional string label = 10;
-  optional string additionalInfo = 11;
+  string name = 6;
+  string type = 7;
+  optional string label = 8;
+  optional string additionalInfo = 9;
+  optional int64 assetProfileIdMSB = 10;
+  optional int64 assetProfileIdLSB = 11;
 }
 
 message EntityViewUpdateMsg {
@@ -399,14 +409,10 @@ message DeviceCredentialsRequestMsg {
   int64 deviceIdLSB = 2;
 }
 
+// deprecated
 message DeviceProfileDevicesRequestMsg {
   int64 deviceProfileIdMSB = 1;
   int64 deviceProfileIdLSB = 2;
-}
-
-message AssetProfileAssetsRequestMsg {
-  int64 assetProfileIdMSB = 1;
-  int64 assetProfileIdLSB = 2;
 }
 
 message WidgetBundleTypesRequestMsg {
@@ -430,6 +436,11 @@ message DeviceRpcCallMsg {
   bool oneway = 7;
   RpcRequestMsg requestMsg = 8;
   RpcResponseMsg responseMsg = 9;
+  optional bool persisted = 10;
+  optional int32 retries = 11;
+  optional string additionalInfo = 12;
+  optional string serviceId = 13;
+  optional string sessionId = 14;
 }
 
 message RpcRequestMsg {
@@ -513,10 +524,9 @@ message UplinkMsg {
   repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 12;
-  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13;
+  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13; // deprecated
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
-  repeated AssetProfileAssetsRequestMsg assetProfileAssetsRequestMsg = 16;
 }
 
 message UplinkResponseMsg {
@@ -556,5 +566,6 @@ message DownlinkMsg {
   repeated OtaPackageUpdateMsg otaPackageUpdateMsg = 22;
   repeated QueueUpdateMsg queueUpdateMsg = 23;
   repeated AssetProfileUpdateMsg assetProfileUpdateMsg = 24;
+  EdgeConfiguration edgeConfiguration = 25;
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,20 @@
  */
 package org.thingsboard.server.common.data.security;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
+
+import java.util.Arrays;
+import java.util.Objects;
+
+import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.getJson;
+import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.setJson;
 
 @EqualsAndHashCode(callSuper = true)
 public class UserCredentials extends BaseData<UserCredentialsId> {
@@ -30,6 +40,20 @@ public class UserCredentials extends BaseData<UserCredentialsId> {
     private String password;
     private String activateToken;
     private String resetToken;
+
+    @NoXss
+    private transient JsonNode additionalInfo;
+
+    @JsonIgnore
+    private byte[] additionalInfoBytes;
+
+    public JsonNode getAdditionalInfo() {
+        return getJson(() -> additionalInfo, () -> additionalInfoBytes);
+    }
+
+    public void setAdditionalInfo(JsonNode settings) {
+        setJson(settings, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
+    }
     
     public UserCredentials() {
         super();
@@ -46,6 +70,7 @@ public class UserCredentials extends BaseData<UserCredentialsId> {
         this.enabled = userCredentials.isEnabled();
         this.activateToken = userCredentials.getActivateToken();
         this.resetToken = userCredentials.getResetToken();
+        setAdditionalInfo(userCredentials.getAdditionalInfo());
     }
 
     public UserId getUserId() {

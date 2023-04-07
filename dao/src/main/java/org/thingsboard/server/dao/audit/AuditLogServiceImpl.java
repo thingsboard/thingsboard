@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,14 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -121,13 +122,13 @@ public class AuditLogServiceImpl implements AuditLogService {
             JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
             ActionStatus actionStatus = ActionStatus.SUCCESS;
             String failureDetails = "";
-            String entityName = "";
+            String entityName = "N/A";
             if (entity != null) {
                 entityName = entity.getName();
             } else {
                 try {
-                    entityName = entityService.fetchEntityNameAsync(tenantId, entityId).get();
-                } catch (Exception ex) {
+                    entityName = entityService.fetchEntityName(tenantId, entityId).orElse(entityName);
+                } catch (Exception ignored) {
                 }
             }
             if (e != null) {
@@ -165,6 +166,8 @@ public class AuditLogServiceImpl implements AuditLogService {
             case UPDATED:
             case ALARM_ACK:
             case ALARM_CLEAR:
+            case ALARM_ASSIGN:
+            case ALARM_UNASSIGN:
             case RELATIONS_DELETED:
             case ASSIGNED_TO_TENANT:
                 if (entity != null) {
@@ -181,6 +184,12 @@ public class AuditLogServiceImpl implements AuditLogService {
                         actionData.set("metadata", ruleChainMetaDataNode);
                     }
                 }
+                break;
+            case ADDED_COMMENT:
+            case UPDATED_COMMENT:
+            case DELETED_COMMENT:
+                AlarmComment comment = extractParameter(AlarmComment.class, additionalInfo);
+                actionData.set("comment", comment.getComment());
                 break;
             case DELETED:
             case ACTIVATED:
@@ -257,10 +266,14 @@ public class AuditLogServiceImpl implements AuditLogService {
                 String browser = extractParameter(String.class, 1, additionalInfo);
                 String os = extractParameter(String.class, 2, additionalInfo);
                 String device = extractParameter(String.class, 3, additionalInfo);
+                String provider = extractParameter(String.class, 4, additionalInfo);
                 actionData.put("clientAddress", clientAddress);
                 actionData.put("browser", browser);
                 actionData.put("os", os);
                 actionData.put("device", device);
+                if (StringUtils.hasText(provider)) {
+                    actionData.put("provider", provider);
+                }
                 break;
             case PROVISION_SUCCESS:
             case PROVISION_FAILURE:
@@ -385,7 +398,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         try {
             auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
         } catch (Exception e) {
-            if (StringUtils.contains(e.getMessage(), "value is malformed")) {
+            if (StringUtils.contains(e.getMessage(), "is malformed")) {
                 auditLogEntry.setEntityName("MALFORMED");
             } else {
                 return Futures.immediateFailedFuture(e);

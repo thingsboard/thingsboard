@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,12 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
+import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
@@ -105,7 +107,7 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     @Override
-    public void destroy() {
+    public void destroy(TbActorStopReason stopReason, Throwable cause) {
         log.info("[{}] Stopping tenant actor.", tenantId);
     }
 
@@ -208,6 +210,10 @@ public class TenantActor extends RuleChainManagerActor {
             log.trace("[{}] Ack message because Rule Engine is disabled", tenantId);
             tbMsg.getCallback().onSuccess();
         }
+        systemContext.getNotificationRuleProcessor().process(RuleEngineMsgTrigger.builder()
+                .tenantId(tenantId)
+                .msg(tbMsg)
+                .build());
     }
 
     private void onRuleChainMsg(RuleChainAwareMsg msg) {
@@ -244,11 +250,9 @@ public class TenantActor extends RuleChainManagerActor {
             EdgeRpcService edgeRpcService = systemContext.getEdgeRpcService();
             if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
                 edgeRpcService.deleteEdge(tenantId, edgeId);
-            } else {
+            } else if (msg.getEvent() == ComponentLifecycleEvent.UPDATED) {
                 Edge edge = systemContext.getEdgeService().findEdgeById(tenantId, edgeId);
-                if (msg.getEvent() == ComponentLifecycleEvent.UPDATED) {
-                    edgeRpcService.updateEdge(tenantId, edge);
-                }
+                edgeRpcService.updateEdge(tenantId, edge);
             }
         } else if (isRuleEngine) {
             TbActorRef target = getEntityActorRef(msg.getEntityId());

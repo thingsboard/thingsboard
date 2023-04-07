@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     @Value("${sql.ts_latest.batch_threads:4}")
     private int tsLatestBatchThreads;
 
-    @Value("${sql.batch_sort:false}")
+    @Value("${sql.batch_sort:true}")
     protected boolean batchSortEnabled;
 
     @Autowired
@@ -228,7 +228,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
 
         long ts = latest.getTs();
         ListenableFuture<Boolean> removedLatestFuture;
-        if (ts > query.getStartTs() && ts <= query.getEndTs()) {
+        if (ts >= query.getStartTs() && ts < query.getEndTs()) {
             TsKvLatestEntity latestEntity = new TsKvLatestEntity();
             latestEntity.setEntityId(entityId.getId());
             latestEntity.setKey(getOrSaveKeyId(query.getKey()));

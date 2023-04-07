@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -45,7 +43,7 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 @ToString(exclude = {"image", "profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, ExportableEntity<DeviceProfileId> {
+public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId> {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
@@ -93,6 +91,11 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     @ApiModelProperty(position = 10, value = "Reference to the software OTA package. If present, the specified package will be used as default device software. ")
     private OtaPackageId softwareId;
 
+    @ApiModelProperty(position = 17, value = "Reference to the edge rule chain. " +
+            "If present, the specified edge rule chain will be used on the edge to process all messages related to device, including telemetry, attribute updates, etc. " +
+            "Otherwise, the edge root rule chain will be used to process those messages.")
+    private RuleChainId defaultEdgeRuleChainId;
+
     private DeviceProfileId externalId;
 
     public DeviceProfile() {
@@ -117,6 +120,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
         this.firmwareId = deviceProfile.getFirmwareId();
         this.softwareId = deviceProfile.getSoftwareId();
+        this.defaultEdgeRuleChainId = deviceProfile.getDefaultEdgeRuleChainId();
         this.externalId = deviceProfile.getExternalId();
     }
 
@@ -141,7 +145,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     }
 
     @ApiModelProperty(position = 5, value = "Used to mark the default profile. Default profile is used when the device profile is not specified during device creation.")
-    public boolean isDefault(){
+    public boolean isDefault() {
         return isDefault;
     }
 

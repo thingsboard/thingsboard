@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -208,6 +209,49 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
                 unassignedDashboard.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
+
+        Assert.assertTrue(unassignedDashboard.getAssignedCustomers() == null || unassignedDashboard.getAssignedCustomers().isEmpty());
+
+        foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+
+        Assert.assertTrue(foundDashboard.getAssignedCustomers() == null || foundDashboard.getAssignedCustomers().isEmpty());
+    }
+
+    @Test
+    public void testAssignUnassignDashboardToPublicCustomer() throws Exception {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Dashboard assignedDashboard = doPost("/api/customer/public/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+
+        CustomerId publicCustomerId = null;
+        for (ShortCustomerInfo assignedCustomer : assignedDashboard.getAssignedCustomers()) {
+            if (assignedCustomer.isPublic()) {
+                publicCustomerId = assignedCustomer.getCustomerId();
+            }
+        }
+        Assert.assertNotNull(publicCustomerId);
+        Customer publicCustomer = doGet("/api/customer/" + publicCustomerId, Customer.class);
+        Assert.assertTrue(publicCustomer.isPublic());
+
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
+                savedTenant.getId(),  publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
+                assignedDashboard .getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
+
+        Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+        Assert.assertTrue(foundDashboard.getAssignedCustomers().contains(publicCustomer.toShortCustomerInfo()));
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Dashboard unassignedDashboard =
+                doDelete("/api/customer/public/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
+                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
+                unassignedDashboard.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
 
         Assert.assertTrue(unassignedDashboard.getAssignedCustomers() == null || unassignedDashboard.getAssignedCustomers().isEmpty());
 

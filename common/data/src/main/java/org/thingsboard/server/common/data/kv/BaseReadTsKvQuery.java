@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,14 @@ public class BaseReadTsKvQuery extends BaseTsKvQuery implements ReadTsKvQuery {
 
     public BaseReadTsKvQuery(String key, long startTs, long endTs, int limit, String order) {
         this(key, startTs, endTs, endTs - startTs, limit, Aggregation.NONE, order);
+    }
+
+    public BaseReadTsKvQuery(ReadTsKvQuery query, long startTs, long endTs) {
+        super(query.getId(), query.getKey(), startTs, endTs);
+        this.interval = query.getInterval();
+        this.limit = query.getLimit();
+        this.aggregation = query.getAggregation();
+        this.order = query.getOrder();
     }
 
 }

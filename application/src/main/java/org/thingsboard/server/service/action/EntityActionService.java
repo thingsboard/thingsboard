@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
@@ -28,14 +29,13 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -87,8 +87,20 @@ public class EntityActionService {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
+            case ALARM_ASSIGN:
+                msgType = DataConstants.ALARM_ASSIGN;
+                break;
+            case ALARM_UNASSIGN:
+                msgType = DataConstants.ALARM_UNASSIGN;
+                break;
             case ALARM_DELETE:
                 msgType = DataConstants.ALARM_DELETE;
+                break;
+            case ADDED_COMMENT:
+                msgType = DataConstants.COMMENT_CREATED;
+                break;
+            case UPDATED_COMMENT:
+                msgType = DataConstants.COMMENT_UPDATED;
                 break;
             case ASSIGNED_FROM_TENANT:
                 msgType = DataConstants.ENTITY_ASSIGNED_FROM_TENANT;
@@ -130,6 +142,13 @@ public class EntityActionService {
                 if (user != null) {
                     metaData.putValue("userId", user.getId().toString());
                     metaData.putValue("userName", user.getName());
+                    metaData.putValue("userEmail", user.getEmail());
+                    if (user.getFirstName() != null) {
+                        metaData.putValue("userFirstName", user.getFirstName());
+                    }
+                    if (user.getLastName() != null) {
+                        metaData.putValue("userLastName", user.getLastName());
+                    }
                 }
                 if (customerId != null && !customerId.isNullUid()) {
                     metaData.putValue("customerId", customerId.toString());
@@ -164,6 +183,9 @@ public class EntityActionService {
                     String strEdgeName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedEdgeId", strEdgeId);
                     metaData.putValue("unassignedEdgeName", strEdgeName);
+                } else if (actionType == ActionType.ADDED_COMMENT || actionType == ActionType.UPDATED_COMMENT) {
+                    AlarmComment comment = extractParameter(AlarmComment.class, 0, additionalInfo);
+                    metaData.putValue("comment", json.writeValueAsString(comment));
                 }
                 ObjectNode entityNode;
                 if (entity != null) {
@@ -171,6 +193,8 @@ public class EntityActionService {
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {
                         entityNode.put("configuration", "");
                     }
+                    metaData.putValue("entityName", entity.getName());
+                    metaData.putValue("entityType", entityId.getEntityType().toString());
                 } else {
                     entityNode = json.createObjectNode();
                     if (actionType == ActionType.ATTRIBUTES_UPDATED) {
@@ -180,7 +204,7 @@ public class EntityActionService {
                         metaData.putValue(DataConstants.SCOPE, scope);
                         if (attributes != null) {
                             for (AttributeKvEntry attr : attributes) {
-                                addKvEntry(entityNode, attr);
+                                JacksonUtil.addKvEntry(entityNode, attr);
                             }
                         }
                     } else if (actionType == ActionType.ATTRIBUTES_DELETED) {
@@ -258,26 +282,10 @@ public class EntityActionService {
                 element.put("ts", entry.getKey());
                 ObjectNode values = element.putObject("values");
                 for (TsKvEntry tsKvEntry : entry.getValue()) {
-                    addKvEntry(values, tsKvEntry);
+                    JacksonUtil.addKvEntry(values, tsKvEntry);
                 }
                 result.add(element);
             }
-        }
-    }
-
-    private void addKvEntry(ObjectNode entityNode, KvEntry kvEntry) throws Exception {
-        if (kvEntry.getDataType() == DataType.BOOLEAN) {
-            kvEntry.getBooleanValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
-        } else if (kvEntry.getDataType() == DataType.DOUBLE) {
-            kvEntry.getDoubleValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
-        } else if (kvEntry.getDataType() == DataType.LONG) {
-            kvEntry.getLongValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
-        } else if (kvEntry.getDataType() == DataType.JSON) {
-            if (kvEntry.getJsonValue().isPresent()) {
-                entityNode.set(kvEntry.getKey(), json.readTree(kvEntry.getJsonValue().get()));
-            }
-        } else {
-            entityNode.put(kvEntry.getKey(), kvEntry.getValueAsString());
         }
     }
 

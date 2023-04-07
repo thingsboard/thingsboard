@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,10 +220,10 @@ public class TbMathNode implements TbNode {
     private TbMsg addToBodyAndMeta(TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result, TbMathResult mathResultDef) {
         TbMsg tmpMsg = msg;
         if (mathResultDef.isAddToBody()) {
-            tmpMsg = addToBody(msg, mathResultDef, msgBodyOpt, result);
+            tmpMsg = addToBody(tmpMsg, mathResultDef, msgBodyOpt, result);
         }
         if (mathResultDef.isAddToMetadata()) {
-            tmpMsg = addToMeta(msg, mathResultDef, result);
+            tmpMsg = addToMeta(tmpMsg, mathResultDef, result);
         }
         return tmpMsg;
     }

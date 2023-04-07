@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +38,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.script.api.js.JsInvokeService;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.EventInfo;
@@ -59,14 +62,15 @@ import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rule.TbRuleChainService;
-import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
+import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -117,10 +121,10 @@ public class RuleChainController extends BaseController {
     private static final String RULE_CHAIN_DESCRIPTION = "The rule chain object is lightweight and contains general information about the rule chain. " +
             "List of rule nodes and their connection is stored in a separate 'metadata' object.";
     private static final String RULE_CHAIN_METADATA_DESCRIPTION = "The metadata object contains information about the rule nodes and their connections.";
-    private static final String TEST_JS_FUNCTION = "Execute the JavaScript function and return the result. The format of request: \n\n"
+    private static final String TEST_SCRIPT_FUNCTION = "Execute the Script function and return the result. The format of request: \n\n"
             + MARKDOWN_CODE_BLOCK_START
             + "{\n" +
-            "  \"script\": \"Your JS Function as String\",\n" +
+            "  \"script\": \"Your Function as String\",\n" +
             "  \"scriptType\": \"One of: update, generate, filter, switch, json, string\",\n" +
             "  \"argNames\": [\"msg\", \"metadata\", \"type\"],\n" +
             "  \"msg\": \"{\\\"temperature\\\": 42}\", \n" +
@@ -143,10 +147,16 @@ public class RuleChainController extends BaseController {
     private JsInvokeService jsInvokeService;
 
     @Autowired(required = false)
+    private TbelInvokeService tbelInvokeService;
+
+    @Autowired(required = false)
     private ActorSystemContext actorContext;
 
     @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.enabled}")
     private boolean debugPerTenantEnabled;
+
+    @Value("${tbel.enabled:true}")
+    private boolean tbelEnabled;
 
     @ApiOperation(value = "Get Rule Chain (getRuleChainById)",
             notes = "Fetch the Rule Chain object based on the provided Rule Chain Id. " + RULE_CHAIN_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
@@ -157,12 +167,8 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        try {
-            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            return checkRuleChain(ruleChainId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+        return checkRuleChain(ruleChainId, Operation.READ);
     }
 
     @ApiOperation(value = "Get Rule Chain output labels (getRuleChainOutputLabels)",
@@ -175,13 +181,9 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        try {
-            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            checkRuleChain(ruleChainId, Operation.READ);
-            return tbRuleChainService.getRuleChainOutputLabels(getTenantId(), ruleChainId);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+        checkRuleChain(ruleChainId, Operation.READ);
+        return tbRuleChainService.getRuleChainOutputLabels(getTenantId(), ruleChainId);
     }
 
     @ApiOperation(value = "Get output labels usage (getRuleChainOutputLabelsUsage)",
@@ -194,13 +196,9 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        try {
-            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            checkRuleChain(ruleChainId, Operation.READ);
-            return tbRuleChainService.getOutputLabelUsage(getCurrentUser().getTenantId(), ruleChainId);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+        checkRuleChain(ruleChainId, Operation.READ);
+        return tbRuleChainService.getOutputLabelUsage(getCurrentUser().getTenantId(), ruleChainId);
     }
 
     @ApiOperation(value = "Get Rule Chain (getRuleChainById)",
@@ -212,13 +210,9 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        try {
-            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            checkRuleChain(ruleChainId, Operation.READ);
-            return ruleChainService.loadRuleChainMetaData(getTenantId(), ruleChainId);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+        checkRuleChain(ruleChainId, Operation.READ);
+        return ruleChainService.loadRuleChainMetaData(getTenantId(), ruleChainId);
     }
 
     @ApiOperation(value = "Create Or Update Rule Chain (saveRuleChain)",
@@ -310,17 +304,13 @@ public class RuleChainController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            RuleChainType type = RuleChainType.CORE;
-            if (typeStr != null && typeStr.trim().length() > 0) {
-                type = RuleChainType.valueOf(typeStr);
-            }
-            return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, type, pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        RuleChainType type = RuleChainType.CORE;
+        if (typeStr != null && typeStr.trim().length() > 0) {
+            type = RuleChainType.valueOf(typeStr);
         }
+        return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, type, pageLink));
     }
 
     @ApiOperation(value = "Delete rule chain (deleteRuleChain)",
@@ -348,93 +338,105 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = RULE_NODE_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_NODE_ID) String strRuleNodeId) throws ThingsboardException {
         checkParameter(RULE_NODE_ID, strRuleNodeId);
-        try {
-            RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
-            checkRuleNode(ruleNodeId, Operation.READ);
-            TenantId tenantId = getCurrentUser().getTenantId();
-            List<EventInfo> events = eventService.findLatestEvents(tenantId, ruleNodeId, EventType.DEBUG_RULE_NODE, 2);
-            JsonNode result = null;
-            if (events != null) {
-                for (EventInfo event : events) {
-                    JsonNode body = event.getBody();
-                    if (body.has("type") && body.get("type").asText().equals("IN")) {
-                        result = body;
-                        break;
-                    }
+        RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
+        checkRuleNode(ruleNodeId, Operation.READ);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<EventInfo> events = eventService.findLatestEvents(tenantId, ruleNodeId, EventType.DEBUG_RULE_NODE, 2);
+        JsonNode result = null;
+        if (events != null) {
+            for (EventInfo event : events) {
+                JsonNode body = event.getBody();
+                if (body.has("type") && body.get("type").asText().equals("IN")) {
+                    result = body;
+                    break;
                 }
             }
-            return result;
-        } catch (Exception e) {
-            throw handleException(e);
         }
+        return result;
     }
 
+    @ApiOperation(value = "Is TBEL script executor enabled",
+            notes = "Returns 'True' if the TBEL script execution is enabled" + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleChain/tbelEnabled", method = RequestMethod.GET)
+    @ResponseBody
+    public Boolean isTbelEnabled() {
+        return tbelEnabled;
+    }
 
-    @ApiOperation(value = "Test JavaScript function",
-            notes = TEST_JS_FUNCTION + TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Test Script function",
+            notes = TEST_SCRIPT_FUNCTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/testScript", method = RequestMethod.POST)
     @ResponseBody
     public JsonNode testScript(
+            @ApiParam(value = "Script language: JS or TBEL")
+            @RequestParam(required = false) ScriptLanguage scriptLang,
             @ApiParam(value = "Test JS request. See API call description above.")
-            @RequestBody JsonNode inputParams) throws ThingsboardException {
-        try {
-            String script = inputParams.get("script").asText();
-            String scriptType = inputParams.get("scriptType").asText();
-            JsonNode argNamesJson = inputParams.get("argNames");
-            String[] argNames = objectMapper.treeToValue(argNamesJson, String[].class);
+            @RequestBody JsonNode inputParams) throws ThingsboardException, JsonProcessingException {
+        String script = inputParams.get("script").asText();
+        String scriptType = inputParams.get("scriptType").asText();
+        JsonNode argNamesJson = inputParams.get("argNames");
+        String[] argNames = objectMapper.treeToValue(argNamesJson, String[].class);
 
-            String data = inputParams.get("msg").asText();
-            JsonNode metadataJson = inputParams.get("metadata");
-            Map<String, String> metadata = objectMapper.convertValue(metadataJson, new TypeReference<Map<String, String>>() {
-            });
-            String msgType = inputParams.get("msgType").asText();
-            String output = "";
-            String errorText = "";
-            ScriptEngine engine = null;
-            try {
-                engine = new RuleNodeJsScriptEngine(getTenantId(), jsInvokeService, getCurrentUser().getId(), script, argNames);
-                TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
-                switch (scriptType) {
-                    case "update":
-                        output = msgToOutput(engine.executeUpdateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
-                        break;
-                    case "generate":
-                        output = msgToOutput(engine.executeGenerateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
-                        break;
-                    case "filter":
-                        boolean result = engine.executeFilterAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
-                        output = Boolean.toString(result);
-                        break;
-                    case "switch":
-                        Set<String> states = engine.executeSwitchAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
-                        output = objectMapper.writeValueAsString(states);
-                        break;
-                    case "json":
-                        JsonNode json = engine.executeJsonAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
-                        output = objectMapper.writeValueAsString(json);
-                        break;
-                    case "string":
-                        output = engine.executeToStringAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unsupported script type: " + scriptType);
-                }
-            } catch (Exception e) {
-                log.error("Error evaluating JS function", e);
-                errorText = e.getMessage();
-            } finally {
-                if (engine != null) {
-                    engine.destroy();
-                }
+        String data = inputParams.get("msg").asText();
+        JsonNode metadataJson = inputParams.get("metadata");
+        Map<String, String> metadata = objectMapper.convertValue(metadataJson, new TypeReference<Map<String, String>>() {
+        });
+        String msgType = inputParams.get("msgType").asText();
+        String output = "";
+        String errorText = "";
+        ScriptEngine engine = null;
+        try {
+            if (scriptLang == null) {
+                scriptLang = ScriptLanguage.JS;
             }
-            ObjectNode result = objectMapper.createObjectNode();
-            result.put("output", output);
-            result.put("error", errorText);
-            return result;
+            if (ScriptLanguage.JS.equals(scriptLang)) {
+                engine = new RuleNodeJsScriptEngine(getTenantId(), jsInvokeService, script, argNames);
+            } else {
+                if (tbelInvokeService == null) {
+                    throw new IllegalArgumentException("TBEL script engine is disabled!");
+                }
+                engine = new RuleNodeTbelScriptEngine(getTenantId(), tbelInvokeService, script, argNames);
+            }
+            TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
+            switch (scriptType) {
+                case "update":
+                    output = msgToOutput(engine.executeUpdateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
+                    break;
+                case "generate":
+                    output = msgToOutput(engine.executeGenerateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
+                    break;
+                case "filter":
+                    boolean result = engine.executeFilterAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
+                    output = Boolean.toString(result);
+                    break;
+                case "switch":
+                    Set<String> states = engine.executeSwitchAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
+                    output = objectMapper.writeValueAsString(states);
+                    break;
+                case "json":
+                    JsonNode json = engine.executeJsonAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
+                    output = objectMapper.writeValueAsString(json);
+                    break;
+                case "string":
+                    output = engine.executeToStringAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported script type: " + scriptType);
+            }
         } catch (Exception e) {
-            throw handleException(e);
+            log.error("Error evaluating JS function", e);
+            errorText = e.getMessage();
+        } finally {
+            if (engine != null) {
+                engine.destroy();
+            }
         }
+        ObjectNode result = objectMapper.createObjectNode();
+        result.put("output", output);
+        result.put("error", errorText);
+        return result;
     }
 
     @ApiOperation(value = "Export Rule Chains", notes = "Exports all tenant rule chains as one JSON." + TENANT_AUTHORITY_PARAGRAPH)
@@ -444,13 +446,9 @@ public class RuleChainController extends BaseController {
     public RuleChainData exportRuleChains(
             @ApiParam(value = "A limit of rule chains to export.", required = true)
             @RequestParam("limit") int limit) throws ThingsboardException {
-        try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            PageLink pageLink = new PageLink(limit);
-            return checkNotNull(ruleChainService.exportTenantRuleChains(tenantId, pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        TenantId tenantId = getCurrentUser().getTenantId();
+        PageLink pageLink = new PageLink(limit);
+        return checkNotNull(ruleChainService.exportTenantRuleChains(tenantId, pageLink));
     }
 
     @ApiOperation(value = "Import Rule Chains", notes = "Imports all tenant rule chains as one JSON." + TENANT_AUTHORITY_PARAGRAPH)
@@ -462,19 +460,15 @@ public class RuleChainController extends BaseController {
             @RequestBody RuleChainData ruleChainData,
             @ApiParam(value = "Enables overwrite for existing rule chains with the same name.")
             @RequestParam(required = false, defaultValue = "false") boolean overwrite) throws ThingsboardException {
-        try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            List<RuleChainImportResult> importResults = ruleChainService.importTenantRuleChains(tenantId, ruleChainData, overwrite);
-            for (RuleChainImportResult importResult : importResults) {
-                if (importResult.getError() == null) {
-                    tbClusterService.broadcastEntityStateChangeEvent(importResult.getTenantId(), importResult.getRuleChainId(),
-                            importResult.isUpdated() ? ComponentLifecycleEvent.UPDATED : ComponentLifecycleEvent.CREATED);
-                }
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<RuleChainImportResult> importResults = ruleChainService.importTenantRuleChains(tenantId, ruleChainData, overwrite);
+        for (RuleChainImportResult importResult : importResults) {
+            if (importResult.getError() == null) {
+                tbClusterService.broadcastEntityStateChangeEvent(importResult.getTenantId(), importResult.getRuleChainId(),
+                        importResult.isUpdated() ? ComponentLifecycleEvent.UPDATED : ComponentLifecycleEvent.CREATED);
             }
-            return importResults;
-        } catch (Exception e) {
-            throw handleException(e);
         }
+        return importResults;
     }
 
     private String msgToOutput(TbMsg msg) throws Exception {
@@ -572,15 +566,11 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
-        try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            checkEdgeId(edgeId, Operation.READ);
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        TenantId tenantId = getCurrentUser().getTenantId();
+        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+        checkEdgeId(edgeId, Operation.READ);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return checkNotNull(ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
     }
 
     @ApiOperation(value = "Set Edge Template Root Rule Chain (setEdgeTemplateRootRuleChain)",
@@ -632,17 +622,13 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/autoAssignToEdgeRuleChains", method = RequestMethod.GET)
     @ResponseBody
     public List<RuleChain> getAutoAssignToEdgeRuleChains() throws ThingsboardException {
-        try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            List<RuleChain> result = new ArrayList<>();
-            PageDataIterableByTenant<RuleChain> autoAssignRuleChainsIterator =
-                    new PageDataIterableByTenant<>(ruleChainService::findAutoAssignToEdgeRuleChainsByTenantId, tenantId, DEFAULT_PAGE_SIZE);
-            for (RuleChain ruleChain : autoAssignRuleChainsIterator) {
-                result.add(ruleChain);
-            }
-            return checkNotNull(result);
-        } catch (Exception e) {
-            throw handleException(e);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<RuleChain> result = new ArrayList<>();
+        PageDataIterableByTenant<RuleChain> autoAssignRuleChainsIterator =
+                new PageDataIterableByTenant<>(ruleChainService::findAutoAssignToEdgeRuleChainsByTenantId, tenantId, DEFAULT_PAGE_SIZE);
+        for (RuleChain ruleChain : autoAssignRuleChainsIterator) {
+            result.add(ruleChain);
         }
+        return checkNotNull(result);
     }
 }

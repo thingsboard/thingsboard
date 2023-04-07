@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -55,8 +56,6 @@ public class TbJsSwitchNodeTest {
 
     @Mock
     private TbContext ctx;
-    @Mock
-    private ListeningExecutor executor;
     @Mock
     private ScriptEngine scriptEngine;
 
@@ -80,22 +79,14 @@ public class TbJsSwitchNodeTest {
 
     private void initWithScript() throws TbNodeException {
         TbJsSwitchNodeConfiguration config = new TbJsSwitchNodeConfiguration();
+        config.setScriptLang(ScriptLanguage.JS);
         config.setJsScript("scr");
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
-        when(ctx.createJsScriptEngine("scr")).thenReturn(scriptEngine);
+        when(ctx.createScriptEngine(ScriptLanguage.JS, "scr")).thenReturn(scriptEngine);
 
         node = new TbJsSwitchNode();
         node.init(ctx, nodeConfiguration);
-    }
-
-    private void verifyError(TbMsg msg, String message, Class expectedClass) {
-        ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellFailure(same(msg), captor.capture());
-
-        Throwable value = captor.getValue();
-        assertEquals(expectedClass, value.getClass());
-        assertEquals(message, value.getMessage());
     }
 }

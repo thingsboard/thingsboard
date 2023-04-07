@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-d
 import { ComplexVersionCreateComponent } from '@home/components/vc/complex-version-create.component';
 import { ComplexVersionLoadComponent } from '@home/components/vc/complex-version-load.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { AdminService } from "@core/http/admin.service";
 
 @Component({
   selector: 'tb-entity-versions-table',
@@ -86,6 +87,8 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   externalEntityIdValue: EntityId;
 
   viewsInited = false;
+
+  isReadOnly: Observable<boolean>;
 
   private componentResize$: ResizeObserver;
 
@@ -129,6 +132,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
 
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
+              private adminService: AdminService,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef,
@@ -150,6 +154,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       }
     });
     this.componentResize$.observe(this.elementRef.nativeElement);
+    this.isReadOnly = this.adminService.getRepositorySettingsInfo().pipe(map(settings => settings.readOnly));
   }
 
   ngOnDestroy() {

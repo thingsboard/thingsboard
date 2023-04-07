@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 import { Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -56,16 +56,16 @@ import { isDefinedAndNotNull } from '@core/utils';
 
 export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Validator, OnDestroy {
 
-  lwm2mConfigFormGroup: FormGroup;
+  lwm2mConfigFormGroup: UntypedFormGroup;
   securityConfigLwM2MType = Lwm2mSecurityType;
   securityConfigLwM2MTypes = Object.keys(Lwm2mSecurityType);
   credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
   clientKeyTooltipNamesMap = Lwm2mClientKeyTooltipTranslationsMap;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
     this.lwm2mConfigFormGroup = this.initLwm2mConfigForm();
   }
 
@@ -161,7 +161,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
     this.lwm2mConfigFormGroup.get('client.cert').disable({emitEvent: false});
   }
 
-  private initLwm2mConfigForm = (): FormGroup => {
+  private initLwm2mConfigForm = (): UntypedFormGroup => {
     const formGroup =  this.fb.group({
       client: this.fb.group({
         endpoint: ['', Validators.required],

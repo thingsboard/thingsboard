@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,25 +17,32 @@
 -->
 <div fxFlex class="tb-breadcrumb" fxLayout="row">
   <h1 fxFlex fxHide.gt-sm *ngIf="lastBreadcrumb$ | async; let breadcrumb">
-    {{ breadcrumb.ignoreTranslate ? (breadcrumb.labelFunction ? breadcrumb.labelFunction() : breadcrumb.label) : (breadcrumb.label | translate) }}
+    {{ breadcrumb.ignoreTranslate
+    ? (breadcrumb.labelFunction ? breadcrumb.labelFunction() : utils.customTranslation(breadcrumb.label, breadcrumb.label))
+    : (breadcrumb.label | translate) }}
   </h1>
   <span fxHide.lt-md fxLayout="row" *ngFor="let breadcrumb of breadcrumbs$ | async; trackBy: trackByBreadcrumbs; last as isLast;" [ngSwitch]="isLast">
 	    <a *ngSwitchCase="false" [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
-        <mat-icon *ngIf="breadcrumb.isMdiIcon" [svgIcon]="breadcrumb.icon">
-	    	</mat-icon>
-        <mat-icon *ngIf="!breadcrumb.isMdiIcon" class="material-icons">
-          {{ breadcrumb.icon }}
-        </mat-icon>
-        {{ breadcrumb.ignoreTranslate ? (breadcrumb.labelFunction ? breadcrumb.labelFunction() : breadcrumb.label) : (breadcrumb.label | translate) }}
+        <ng-container
+          *ngTemplateOutlet="breadcrumbWithIcon;context:{breadcrumb: breadcrumb}">
+        </ng-container>
 	    </a>
 	    <span *ngSwitchCase="true">
-        <mat-icon *ngIf="breadcrumb.isMdiIcon" [svgIcon]="breadcrumb.icon">
-	    	</mat-icon>
-	    	<mat-icon *ngIf="!breadcrumb.isMdiIcon" class="material-icons">
-	    	  {{ breadcrumb.icon }}
-	    	</mat-icon>
-        {{ breadcrumb.ignoreTranslate ? (breadcrumb.labelFunction ? breadcrumb.labelFunction() : breadcrumb.label) : (breadcrumb.label | translate) }}
+        <ng-container
+          *ngTemplateOutlet="breadcrumbWithIcon;context:{breadcrumb: breadcrumb}">
+        </ng-container>
       </span>
 	    <span class="divider" [fxHide]="isLast"> > </span>
 	</span>
 </div>
+<ng-template #breadcrumbWithIcon let-breadcrumb="breadcrumb">
+  <img *ngIf="breadcrumb.iconUrl" [src]="breadcrumb.iconUrl"/>
+  <mat-icon *ngIf="!breadcrumb.iconUrl && breadcrumb.isMdiIcon" [svgIcon]="breadcrumb.icon">
+  </mat-icon>
+  <mat-icon *ngIf="!breadcrumb.iconUrl && !breadcrumb.isMdiIcon">
+    {{ breadcrumb.icon }}
+  </mat-icon>
+  {{ breadcrumb.ignoreTranslate
+  ? (breadcrumb.labelFunction ? breadcrumb.labelFunction() : utils.customTranslation(breadcrumb.label, breadcrumb.label))
+  : (breadcrumb.label | translate) }}
+</ng-template>

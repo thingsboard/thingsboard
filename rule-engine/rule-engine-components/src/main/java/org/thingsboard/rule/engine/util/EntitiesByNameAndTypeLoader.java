@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,75 +16,52 @@
 package org.thingsboard.rule.engine.util;
 
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.Optional;
+import java.util.List;
 
 public class EntitiesByNameAndTypeLoader {
 
+    private static final List<EntityType> AVAILABLE_ENTITY_TYPES = List.of(
+            EntityType.DEVICE,
+            EntityType.ASSET,
+            EntityType.ENTITY_VIEW,
+            EntityType.EDGE,
+            EntityType.USER);
+
     public static EntityId findEntityId(TbContext ctx, EntityType entityType, String entityName) {
-        EntityId targetEntityId = null;
+        SearchTextBasedWithAdditionalInfo<? extends EntityId> targetEntity;
         switch (entityType) {
             case DEVICE:
-                Device device = ctx.getDeviceService().findDeviceByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (device != null) {
-                    targetEntityId = device.getId();
-                }
+                targetEntity = ctx.getDeviceService().findDeviceByTenantIdAndName(ctx.getTenantId(), entityName);
                 break;
             case ASSET:
-                Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (asset != null) {
-                    targetEntityId = asset.getId();
-                }
-                break;
-            case CUSTOMER:
-                Optional<Customer> customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(ctx.getTenantId(), entityName);
-                if (customerOptional.isPresent()) {
-                    targetEntityId = customerOptional.get().getId();
-                }
-                break;
-            case TENANT:
-                targetEntityId = ctx.getTenantId();
+                targetEntity = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), entityName);
                 break;
             case ENTITY_VIEW:
-                EntityView entityView = ctx.getEntityViewService().findEntityViewByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (entityView != null) {
-                    targetEntityId = entityView.getId();
-                }
+                targetEntity = ctx.getEntityViewService().findEntityViewByTenantIdAndName(ctx.getTenantId(), entityName);
                 break;
             case EDGE:
-                Edge edge = ctx.getEdgeService().findEdgeByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (edge != null) {
-                    targetEntityId = edge.getId();
-                }
-                break;
-            case DASHBOARD:
-                DashboardInfo dashboardInfo = ctx.getDashboardService().findFirstDashboardInfoByTenantIdAndName(ctx.getTenantId(), entityName);
-                if (dashboardInfo != null) {
-                    targetEntityId = dashboardInfo.getId();
-                }
+                targetEntity = ctx.getEdgeService().findEdgeByTenantIdAndName(ctx.getTenantId(), entityName);
                 break;
             case USER:
-                User user = ctx.getUserService().findUserByEmail(ctx.getTenantId(), entityName);
-                if (user != null) {
-                    targetEntityId = user.getId();
-                }
+                targetEntity = ctx.getUserService().findUserByTenantIdAndEmail(ctx.getTenantId(), entityName);
                 break;
             default:
                 throw new IllegalStateException("Unexpected entity type " + entityType.name());
         }
-        if (targetEntityId == null) {
+        if (targetEntity == null) {
             throw new IllegalStateException("Failed to found " + entityType.name() + "  entity by name: '" + entityName + "'!");
         }
-        return targetEntityId;
+        return targetEntity.getId();
+    }
+
+    public static void checkEntityType(EntityType entityType) {
+        if (!AVAILABLE_ENTITY_TYPES.contains(entityType)) {
+            throw new IllegalStateException("Unexpected entity type " + entityType.name());
+        }
     }
 
 }

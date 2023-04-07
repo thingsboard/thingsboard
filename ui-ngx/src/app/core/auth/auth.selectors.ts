@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@ import { AppState } from '../core.state';
 import { AuthState } from './auth.models';
 import { take } from 'rxjs/operators';
 import { AuthUser } from '@shared/models/user.model';
+import { UserSettings } from '@shared/models/user-settings.models';
 
-export const selectAuthState = createFeatureSelector<AppState, AuthState>(
+export const selectAuthState = createFeatureSelector< AuthState>(
   'auth'
 );
 
@@ -60,18 +61,50 @@ export const selectHasRepository = createSelector(
   (state: AuthState) => state.hasRepository
 );
 
-export function getCurrentAuthState(store: Store<AppState>): AuthState {
+export const selectTbelEnabled = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.tbelEnabled
+);
+
+export const selectUserSettings = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.userSettings
+);
+
+export const selectOpenedMenuSections = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.userSettings.openedMenuSections
+);
+
+
+export const getCurrentAuthState = (store: Store<AppState>): AuthState => {
   let state: AuthState;
   store.pipe(select(selectAuth), take(1)).subscribe(
     val => state = val
   );
   return state;
-}
+};
 
-export function getCurrentAuthUser(store: Store<AppState>): AuthUser {
+export const getCurrentAuthUser = (store: Store<AppState>): AuthUser => {
   let authUser: AuthUser;
   store.pipe(select(selectAuthUser), take(1)).subscribe(
     val => authUser = val
   );
   return authUser;
-}
+};
+
+export const getCurrentUserSettings = (store: Store<AppState>): UserSettings => {
+  let userSettings: UserSettings;
+  store.pipe(select(selectUserSettings), take(1)).subscribe(
+    val => userSettings = val
+  );
+  return userSettings;
+};
+
+export const getCurrentOpenedMenuSections = (store: Store<AppState>): string[] => {
+  let openedMenuSections: string[];
+  store.pipe(select(selectOpenedMenuSections), take(1)).subscribe(
+    val => openedMenuSections = val
+  );
+  return openedMenuSections;
+};

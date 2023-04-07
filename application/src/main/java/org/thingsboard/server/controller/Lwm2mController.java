@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,11 +64,7 @@ public class Lwm2mController extends BaseController {
     public LwM2MServerSecurityConfigDefault getLwm2mBootstrapSecurityInfo(
         @ApiParam(value = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
         @PathVariable(IS_BOOTSTRAP_SERVER) boolean bootstrapServer) throws ThingsboardException {
-            try {
-                return lwM2MService.getServerSecurityInfo(bootstrapServer);
-            } catch (Exception e) {
-                throw handleException(e);
-            }
+            return lwM2MService.getServerSecurityInfo(bootstrapServer);
     }
 
     @ApiOperation(hidden = true, value = "Save device with credentials (Deprecated)")

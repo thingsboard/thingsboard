@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ public class DataConstants {
     public static final String CLIENT_SCOPE = "CLIENT_SCOPE";
     public static final String SERVER_SCOPE = "SERVER_SCOPE";
     public static final String SHARED_SCOPE = "SHARED_SCOPE";
+    public static final String NOTIFY_DEVICE_METADATA_KEY = "notifyDevice";
     public static final String LATEST_TS = "LATEST_TS";
     public static final String IS_NEW_ALARM = "isNewAlarm";
     public static final String IS_EXISTING_ALARM = "isExistingAlarm";
@@ -40,6 +41,8 @@ public class DataConstants {
     public static final String EXPIRATION_TIME = "expirationTime";
     public static final String ADDITIONAL_INFO = "additionalInfo";
     public static final String RETRIES = "retries";
+    public static final String EDGE_ID = "edgeId";
+    public static final String DEVICE_ID = "deviceId";
     public static final String COAP_TRANSPORT_NAME = "COAP";
     public static final String LWM2M_TRANSPORT_NAME = "LWM2M";
     public static final String MQTT_TRANSPORT_NAME = "MQTT";
@@ -71,7 +74,11 @@ public class DataConstants {
     public static final String TIMESERIES_DELETED = "TIMESERIES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
+    public static final String ALARM_ASSIGN = "ALARM_ASSIGN";
+    public static final String ALARM_UNASSIGN = "ALARM_UNASSIGN";
     public static final String ALARM_DELETE = "ALARM_DELETE";
+    public static final String COMMENT_CREATED = "COMMENT_CREATED";
+    public static final String COMMENT_UPDATED = "COMMENT_UPDATED";
     public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";
     public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
     public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
@@ -115,4 +122,12 @@ public class DataConstants {
     public static final String MSG_SOURCE_KEY = "source";
 
     public static final String LAST_CONNECTED_GATEWAY = "lastConnectedGateway";
+
+    public static final String MAIN_QUEUE_NAME = "Main";
+    public static final String MAIN_QUEUE_TOPIC = "tb_rule_engine.main";
+    public static final String HP_QUEUE_NAME = "HighPriority";
+    public static final String HP_QUEUE_TOPIC = "tb_rule_engine.hp";
+    public static final String SQ_QUEUE_NAME = "SequentialByOriginator";
+    public static final String SQ_QUEUE_TOPIC = "tb_rule_engine.sq";
+
 }

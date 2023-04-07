@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -75,9 +75,10 @@ import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { AuthService } from '@core/auth/auth.service';
 import { ResourceService } from '@core/http/resource.service';
+import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { PageLink } from '@shared/models/page/page-link';
+import { PageLink, TimePageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -86,6 +87,10 @@ import * as RxJS from 'rxjs';
 import * as RxJSOperators from 'rxjs/operators';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityId } from '@shared/models/id/entity-id';
+import { AlarmQuery, AlarmSearchStatus, AlarmStatus} from '@app/shared/models/alarm.models';
+import { MillisecondsToTimeStringPipe, TelemetrySubscriber } from '@app/shared/public-api';
+import { UserId } from '@shared/models/id/user-id';
+import { UserSettingsService } from '@core/http/user-settings.service';
 
 export interface IWidgetAction {
   name: string;
@@ -176,7 +181,11 @@ export class WidgetContext {
   dialogs: DialogService;
   customDialog: CustomDialogService;
   resourceService: ResourceService;
+  userSettingsService: UserSettingsService;
+  telemetryWsService: TelemetryWebsocketService;
+  telemetrySubscribers?: TelemetrySubscriber[];
   date: DatePipe;
+  milliSecondsToTimeString: MillisecondsToTimeStringPipe;
   translate: TranslateService;
   http: HttpClient;
   sanitizer: DomSanitizer;
@@ -394,8 +403,23 @@ export class WidgetContext {
     this.widgetActions = undefined;
   }
 
+  closeDialog(resultData: any = null) {
+    const dialogRef = this.$scope.dialogRef || this.stateController.dashboardCtrl.dashboardCtx.getDashboard().dialogRef;
+    if (dialogRef) {
+      dialogRef.close(resultData);
+    }
+  }
+
   pageLink(pageSize: number, page: number = 0, textSearch: string = null, sortOrder: SortOrder = null): PageLink {
     return new PageLink(pageSize, page, textSearch, sortOrder);
+  }
+
+  timePageLink(startTime: number, endTime: number, pageSize: number, page: number = 0, textSearch: string = null, sortOrder: SortOrder = null) {
+    return new TimePageLink(pageSize, page, textSearch, sortOrder, startTime, endTime);
+  }
+
+  alarmQuery(entityId: EntityId, pageLink: TimePageLink, searchStatus: AlarmSearchStatus, status: AlarmStatus, fetchOriginator: boolean, assigneeId: UserId) {
+    return new AlarmQuery(entityId, pageLink, searchStatus, status, fetchOriginator, assigneeId);
   }
 }
 

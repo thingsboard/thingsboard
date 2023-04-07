@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
+import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
@@ -53,6 +57,12 @@ public class DefaultUpdateService implements UpdateService {
     @Value("${updates.enabled}")
     private boolean updatesEnabled;
 
+    @Autowired(required = false)
+    private BuildProperties buildProperties;
+
+    @Autowired
+    private NotificationRuleProcessor notificationRuleProcessor;
+
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-update-service"));
 
     private ScheduledFuture checkUpdatesFuture = null;
@@ -66,14 +76,11 @@ public class DefaultUpdateService implements UpdateService {
 
     @PostConstruct
     private void init() {
-        updateMessage = new UpdateMessage("", false);
+        version = buildProperties != null ? buildProperties.getVersion() : "unknown";
+        updateMessage = new UpdateMessage(false, version, "", "", "", "");
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");
-                version = getClass().getPackage().getImplementationVersion();
-                if (version == null) {
-                    version = "unknown";
-                }
                 instanceId = parseInstanceId();
                 checkUpdatesFuture = scheduler.scheduleAtFixedRate(checkUpdatesRunnable, 0, 1, TimeUnit.HOURS);
             } catch (Exception e) {
@@ -121,11 +128,13 @@ public class DefaultUpdateService implements UpdateService {
             request.put(PLATFORM_PARAM, platform);
             request.put(VERSION_PARAM, version);
             request.put(INSTANCE_ID_PARAM, instanceId.toString());
-            JsonNode response = restClient.postForObject(UPDATE_SERVER_BASE_URL+"/api/thingsboard/updates", request, JsonNode.class);
-            updateMessage = new UpdateMessage(
-                    response.get("message").asText(),
-                    response.get("updateAvailable").asBoolean()
-            );
+            UpdateMessage prevUpdateMessage = updateMessage;
+            updateMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v2/thingsboard/updates", request, UpdateMessage.class);
+            if (updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
+                notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
+                        .message(updateMessage)
+                        .build());
+            }
         } catch (Exception e) {
             log.trace(e.getMessage());
         }

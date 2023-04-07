@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,22 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.JsonParseException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -41,7 +38,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +71,6 @@ public class TbGetTelemetryNode implements TbNode {
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private int limit;
-    private ObjectMapper mapper;
     private String fetchMode;
     private String orderByFetchAll;
     private Aggregation aggregation;
@@ -91,10 +86,6 @@ public class TbGetTelemetryNode implements TbNode {
             orderByFetchAll = ASC_ORDER;
         }
         aggregation = parseAggregationConfig(config.getAggregation());
-
-        mapper = new ObjectMapper();
-        mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
     Aggregation parseAggregationConfig(String aggName) {
@@ -146,7 +137,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
-        ObjectNode resultNode = mapper.createObjectNode();
+        ObjectNode resultNode = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
         if (FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
@@ -169,36 +160,16 @@ public class TbGetTelemetryNode implements TbNode {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
             arrayNode.add(buildNode(entry));
         } else {
-            ArrayNode arrayNode = mapper.createArrayNode();
+            ArrayNode arrayNode = JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER.createArrayNode();
             arrayNode.add(buildNode(entry));
             node.set(entry.getKey(), arrayNode);
         }
     }
 
     private ObjectNode buildNode(TsKvEntry entry) {
-        ObjectNode obj = mapper.createObjectNode()
-                .put("ts", entry.getTs());
-        switch (entry.getDataType()) {
-            case STRING:
-                obj.put("value", entry.getValueAsString());
-                break;
-            case LONG:
-                obj.put("value", entry.getLongValue().get());
-                break;
-            case BOOLEAN:
-                obj.put("value", entry.getBooleanValue().get());
-                break;
-            case DOUBLE:
-                obj.put("value", entry.getDoubleValue().get());
-                break;
-            case JSON:
-                try {
-                    obj.set("value", mapper.readTree(entry.getJsonValue().get()));
-                } catch (IOException e) {
-                    throw new JsonParseException("Can't parse jsonValue: " + entry.getJsonValue().get(), e);
-                }
-                break;
-        }
+        ObjectNode obj = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
+        obj.put("ts", entry.getTs());
+        JacksonUtil.addKvEntry(obj, entry, "value", JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
         return obj;
     }
 

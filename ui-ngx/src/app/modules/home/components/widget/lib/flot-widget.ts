@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -341,6 +341,7 @@ export class TbFlot {
 
   private init($element: JQuery<any>, subscription: IWidgetSubscription) {
     this.$element = $element;
+    this.$element.css('letter-spacing', 'normal');
     this.subscription = subscription;
     this.comparisonEnabled = this.subscription ? this.subscription.comparisonEnabled : this.settings.comparisonEnabled;
     if (this.comparisonEnabled) {
@@ -909,39 +910,50 @@ export class TbFlot {
                                        isLatest = false): TbFlotThresholdMarking[] {
     const thresholds: TbFlotThresholdMarking[] = [];
     data.forEach((keyData) => {
-      let skip = false;
-      let latestSettings: TbFlotLatestKeySettings;
-      if (isLatest) {
-        latestSettings = keyData.dataKey.settings;
-        if (!latestSettings.useAsThreshold) {
-          skip = true;
-        }
-      }
+      const skip = isLatest && !keyData.dataKey.settings.useAsThreshold;
       if (!skip && keyData && keyData.data && keyData.data[0]) {
-        const attrValue = keyData.data[0][1];
-        if (isNumeric(attrValue) && isFinite(attrValue)) {
-          let yaxis: number;
-          let lineWidth: number;
-          let color: string;
-          if (isLatest) {
-            yaxis = 1;
-            lineWidth = latestSettings.thresholdLineWidth;
-            color = latestSettings.thresholdColor || keyData.dataKey.color;
-          } else {
-            const settings: TbFlotThresholdKeySettings = keyData.dataKey.settings;
-            yaxis = settings.yaxis;
-            lineWidth = settings.lineWidth;
-            color = settings.color || keyData.dataKey.color;
-          }
-          const colorIndex = this.subscription.data.length + existingThresholds.length;
-          const threshold = this.generateThreshold(existingThresholds, yaxis, lineWidth, color, colorIndex, attrValue);
+        const values = this.parseThresholdData(keyData.data[0][1]);
+        values.forEach(v => {
+          const threshold = this.processSingleDataValue(v, keyData, keyData.dataKey.settings, existingThresholds, isLatest);
           if (threshold != null) {
             thresholds.push(threshold);
           }
-        }
+        });
       }
     });
     return thresholds;
+  }
+
+  private parseThresholdData(value: any): Array<any> {
+    let values;
+    try {
+      const parsedData = JSON.parse(value);
+      values = Array.isArray(parsedData) ? parsedData : [parsedData];
+    } catch (e) {
+      values = [value];
+    }
+    return values;
+  }
+
+  private processSingleDataValue(attrValue: number, keyData: DatasourceData, latestSettings: TbFlotLatestKeySettings,
+                                 existingThresholds: TbFlotThresholdMarking[], isLatest = false) {
+    if (isNumeric(attrValue) && isFinite(attrValue)) {
+      let yaxis: number;
+      let lineWidth: number;
+      let color: string;
+      if (isLatest) {
+        yaxis = 1;
+        lineWidth = latestSettings.thresholdLineWidth;
+        color = latestSettings.thresholdColor || keyData.dataKey.color;
+      } else {
+        const settings: TbFlotThresholdKeySettings = keyData.dataKey.settings;
+        yaxis = settings.yaxis;
+        lineWidth = settings.lineWidth;
+        color = settings.color || keyData.dataKey.color;
+      }
+      const colorIndex = this.subscription.data.length + existingThresholds.length;
+      return this.generateThreshold(existingThresholds, yaxis, lineWidth, color, colorIndex, attrValue);
+    }
   }
 
   private generateThreshold(existingThresholds: TbFlotThresholdMarking[], yaxis: number, lineWidth: number,

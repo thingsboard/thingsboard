@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
 package org.thingsboard.server.dao.sqlts.insert.sql;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.timeseries.SqlPartition;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +35,6 @@ import java.util.concurrent.locks.ReentrantLock;
 @Repository
 @Slf4j
 public class SqlPartitioningRepository {
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -50,33 +47,31 @@ public class SqlPartitioningRepository {
     private final Map<String, Map<Long, SqlPartition>> tablesPartitions = new ConcurrentHashMap<>();
     private final ReentrantLock partitionCreationLock = new ReentrantLock();
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void save(SqlPartition partition) {
-        entityManager.createNativeQuery(partition.getQuery()).executeUpdate();
+        jdbcTemplate.execute(partition.getQuery());
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED) // executing non-transactionally, so that parent transaction is not aborted on partition save error
     public void createPartitionIfNotExists(String table, long entityTs, long partitionDurationMs) {
         long partitionStartTs = calculatePartitionStartTime(entityTs, partitionDurationMs);
         Map<Long, SqlPartition> partitions = tablesPartitions.computeIfAbsent(table, t -> new ConcurrentHashMap<>());
         if (!partitions.containsKey(partitionStartTs)) {
-            SqlPartition partition = new SqlPartition(table, partitionStartTs, partitionStartTs + partitionDurationMs, Long.toString(partitionStartTs));
+            SqlPartition partition = new SqlPartition(table, partitionStartTs, getPartitionEndTime(partitionStartTs, partitionDurationMs), Long.toString(partitionStartTs));
             partitionCreationLock.lock();
             try {
                 if (partitions.containsKey(partitionStartTs)) return;
-                log.trace("Saving partition: {}", partition);
+                log.info("Saving partition {}-{} for table {}", partition.getStart(), partition.getEnd(), table);
                 save(partition);
                 log.trace("Adding partition to map: {}", partition);
                 partitions.put(partition.getStart(), partition);
-            } catch (RuntimeException e) {
-                log.trace("Error occurred during partition save:", e);
-                String msg = ExceptionUtils.getRootCauseMessage(e);
-                if (msg.contains("would overlap partition")) {
-                    log.warn("Couldn't save {} partition for {}, data will be saved to the default partition. SQL error: {}",
-                            partition.getPartitionDate(), table, msg);
+            } catch (Exception e) {
+                String error = ExceptionUtils.getRootCauseMessage(e);
+                if (StringUtils.containsAny(error, "would overlap partition", "already exists")) {
                     partitions.put(partition.getStart(), partition);
+                    log.debug("Couldn't save partition {}-{} for table {}: {}", partition.getStart(), partition.getEnd(), table, error);
                 } else {
-                    throw e;
+                    log.warn("Couldn't save partition {}-{} for table {}: {}", partition.getStart(), partition.getEnd(), table, error);
                 }
             } finally {
                 partitionCreationLock.unlock();
@@ -84,26 +79,29 @@ public class SqlPartitioningRepository {
         }
     }
 
-    public void dropPartitionsBefore(String table, long ts, long partitionDurationMs) {
+    public long dropPartitionsBefore(String table, long ts, long partitionDurationMs) {
         List<Long> partitions = fetchPartitions(table);
+        long lastDroppedPartitionEndTime = -1;
         for (Long partitionStartTime : partitions) {
-            long partitionEndTime = partitionStartTime + partitionDurationMs;
+            long partitionEndTime = getPartitionEndTime(partitionStartTime, partitionDurationMs);
             if (partitionEndTime < ts) {
                 log.info("[{}] Detaching expired partition: [{}-{}]", table, partitionStartTime, partitionEndTime);
                 boolean success = detachAndDropPartition(table, partitionStartTime);
                 if (success) {
                     log.info("[{}] Detached expired partition: {}", table, partitionStartTime);
+                    lastDroppedPartitionEndTime = Math.max(partitionEndTime, lastDroppedPartitionEndTime);
                 }
             } else {
                 log.debug("[{}] Skipping valid partition: {}", table, partitionStartTime);
             }
         }
+        return lastDroppedPartitionEndTime;
     }
 
     public void cleanupPartitionsCache(String table, long expTime, long partitionDurationMs) {
         Map<Long, SqlPartition> partitions = tablesPartitions.get(table);
         if (partitions == null) return;
-        partitions.keySet().removeIf(startTime -> (startTime + partitionDurationMs) < expTime);
+        partitions.keySet().removeIf(startTime -> getPartitionEndTime(startTime, partitionDurationMs) < expTime);
     }
 
     private boolean detachAndDropPartition(String table, long partitionTs) {
@@ -125,6 +123,10 @@ public class SqlPartitioningRepository {
             log.error("[{}] Error occurred trying to detach and drop the partition {} ", table, partitionTs, e);
         }
         return false;
+    }
+
+    private static long getPartitionEndTime(long startTime, long partitionDurationMs) {
+        return startTime + partitionDurationMs;
     }
 
     public List<Long> fetchPartitions(String table) {

@@ -1,0 +1,47 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section fxLayout="row" fxLayoutAlign="space-between center" style="margin: 0 10px 4px; min-height: 36px">
+  <div style="font-weight: 500; letter-spacing: .25px" translate>notification.notification</div>
+  <button mat-button color="primary"
+          *ngIf="(notifications$ | async).length"
+          (click)="markAsAllRead($event)">
+    {{ 'notification.mark-all-as-read' | translate }}
+  </button>
+</section>
+<mat-divider></mat-divider>
+<div *ngIf="(notifications$ | async).length; else emptyNotification" style="overflow: auto">
+  <section style="min-height: 100px; overflow: auto; padding: 10px 0;">
+   <div *ngFor="let notification of (notifications$ | async); let last = last; trackBy: trackById">
+     <tb-notification [notification]="notification"
+                      [onClose]="onClose"
+                      (markAsRead)="markAsRead($event)">
+     </tb-notification>
+     <mat-divider *ngIf="!last" style="margin-bottom: 4px"></mat-divider>
+   </div>
+  </section>
+</div>
+<mat-divider *ngIf="(notifications$ | async).length"></mat-divider>
+<section fxLayoutAlign="center center" *ngIf="(notifications$ | async).length">
+  <button fxFlex mat-button color="primary" (click)="viewAll($event)">
+    {{ 'notification.view-all' | translate }}
+  </button>
+</section>
+<ng-template #emptyNotification>
+  <img src="assets/notification-bell.svg" alt="empty notification" style="margin: 20px 24%">
+  <span style="text-align: center; margin-bottom: 12px" translate>notification.no-notifications-yet</span>
+</ng-template>

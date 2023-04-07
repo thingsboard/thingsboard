@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Ace } from 'ace-builds';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -32,13 +32,15 @@ import { getAce } from '@shared/models/ace/ace.models';
     }
   ]
 })
-export class MarkdownEditorComponent implements OnInit, ControlValueAccessor {
+export class MarkdownEditorComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
   @Input() label: string;
 
   @Input() disabled: boolean;
 
   @Input() readonly: boolean;
+
+  @Input() helpId: string;
 
   @ViewChild('markdownEditor', {static: true})
   markdownEditorElmRef: ElementRef;
@@ -101,6 +103,12 @@ export class MarkdownEditorComponent implements OnInit, ControlValueAccessor {
         }
       );
 
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.markdownEditor) {
+      this.markdownEditor.destroy();
     }
   }
 

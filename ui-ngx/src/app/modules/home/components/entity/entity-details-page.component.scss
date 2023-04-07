@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,6 @@
     .tb-header-button {
       .tb-btn-header {
         position: relative !important;
-        display: inline-block !important;
         animation: tbMoveFromTopFade .3s ease both;
 
         &.tb-hide {
@@ -92,25 +91,25 @@
 
 :host ::ng-deep {
   .tb-help {
-    .mat-icon-button.mat-primary {
+    .mat-mdc-icon-button.mat-primary {
       color: rgba(0, 0, 0, 0.52);
     }
   }
 
-  .mat-card-content {
+  .mat-mdc-card-content {
     position: relative;
     overflow: hidden;
 
-    > .mat-tab-group {
-      > .mat-tab-body-wrapper {
+    > .mat-mdc-tab-group {
+      > .mat-mdc-tab-body-wrapper {
         position: absolute;
         top: 49px;
         left: 0;
         right: 0;
         bottom: 0;
       }
-      > .mat-tab-header {
-        .mat-tab-label {
+      > .mat-mdc-tab-header {
+        .mat-mdc-tab {
           min-width: 40px;
         }
       }

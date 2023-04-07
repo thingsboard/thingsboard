@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,13 +37,14 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.sync.ThrowingRunnable;
+import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
@@ -69,6 +70,7 @@ import org.thingsboard.server.common.data.sync.vc.request.load.SingleEntityVersi
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
@@ -112,6 +114,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
     private final TbNotificationEntityService entityNotificationService;
+    private final EdgeService edgeService;
     private final TransactionTemplate transactionTemplate;
     private final TbTransactionalCache<UUID, VersionControlTaskCacheEntry> taskCache;
 
@@ -427,11 +430,12 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             return exportableEntitiesService.findEntitiesByTenantId(ctx.getTenantId(), entityType, pageLink);
         }, 100, entity -> {
             if (ctx.getImportedEntities().get(entityType) == null || !ctx.getImportedEntities().get(entityType).contains(entity.getId())) {
+                List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(ctx.getTenantId(), entity.getId());
                 exportableEntitiesService.removeById(ctx.getTenantId(), entity.getId());
 
                 ctx.addEventCallback(() -> {
                     entityNotificationService.notifyDeleteEntity(ctx.getTenantId(), entity.getId(),
-                            entity, null, ActionType.DELETED, null, ctx.getUser());
+                            entity, null, ActionType.DELETED, relatedEdgeIds, ctx.getUser());
                 });
                 ctx.registerDeleted(entityType);
             }
@@ -533,7 +537,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     @Override
     public ListenableFuture<UUID> autoCommit(User user, EntityId entityId) throws Exception {
         var repositorySettings = repositorySettingsService.get(user.getTenantId());
-        if (repositorySettings == null) {
+        if (repositorySettings == null || repositorySettings.isReadOnly()) {
             return Futures.immediateFuture(null);
         }
         var autoCommitSettings = autoCommitSettingsService.get(user.getTenantId());
@@ -560,7 +564,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     @Override
     public ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) throws Exception {
         var repositorySettings = repositorySettingsService.get(user.getTenantId());
-        if (repositorySettings == null) {
+        if (repositorySettings == null || repositorySettings.isReadOnly()) {
             return Futures.immediateFuture(null);
         }
         var autoCommitSettings = autoCommitSettingsService.get(user.getTenantId());

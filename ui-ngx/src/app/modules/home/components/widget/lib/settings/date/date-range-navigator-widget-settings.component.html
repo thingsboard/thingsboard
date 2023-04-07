@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <section fxLayout="column" fxFlex>
-          <mat-checkbox formControlName="onePanel" style="margin-bottom: 16px;">
+          <mat-checkbox formControlName="onePanel">
             {{ 'widgets.date-range-navigator.picker-one-panel' | translate }}
           </mat-checkbox>
-          <mat-checkbox formControlName="autoConfirm" style="margin-bottom: 16px;">
+          <mat-checkbox formControlName="autoConfirm">
             {{ 'widgets.date-range-navigator.picker-auto-confirm' | translate }}
           </mat-checkbox>
-          <mat-checkbox formControlName="showTemplate" style="margin-bottom: 16px;">
+          <mat-checkbox formControlName="showTemplate">
             {{ 'widgets.date-range-navigator.picker-show-template' | translate }}
           </mat-checkbox>
           <mat-form-field fxFlex class="mat-block">

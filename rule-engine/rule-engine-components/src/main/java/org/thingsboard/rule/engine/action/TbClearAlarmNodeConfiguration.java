@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 
 @Data
 public class TbClearAlarmNodeConfiguration extends TbAbstractAlarmNodeConfiguration implements NodeConfiguration<TbClearAlarmNodeConfiguration> {
@@ -25,7 +25,9 @@ public class TbClearAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigurat
     @Override
     public TbClearAlarmNodeConfiguration defaultConfiguration() {
         TbClearAlarmNodeConfiguration configuration = new TbClearAlarmNodeConfiguration();
+        configuration.setScriptLang(ScriptLanguage.TBEL);
         configuration.setAlarmDetailsBuildJs(ALARM_DETAILS_BUILD_JS_TEMPLATE);
+        configuration.setAlarmDetailsBuildTbel(ALARM_DETAILS_BUILD_TBEL_TEMPLATE);
         configuration.setAlarmType("General Alarm");
         return configuration;
     }

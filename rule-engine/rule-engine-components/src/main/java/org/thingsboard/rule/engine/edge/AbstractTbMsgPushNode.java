@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,8 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     protected S buildEvent(TbMsg msg, TbContext ctx) {
         String msgType = msg.getType();
         if (DataConstants.ALARM.equals(msgType)) {
-            return buildEvent(ctx.getTenantId(), EdgeEventActionType.ADDED, getUUIDFromMsgData(msg), getAlarmEventType(), null);
+            EdgeEventActionType actionType = getAlarmActionType(msg);
+            return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
         } else {
             EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msgType);
             Map<String, Object> entityBody = new HashMap<>();
@@ -105,6 +106,20 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                     getEventTypeByEntityType(msg.getOriginator().getEntityType()),
                     JacksonUtil.valueToTree(entityBody));
         }
+    }
+
+    private static EdgeEventActionType getAlarmActionType(TbMsg msg) {
+        boolean isNewAlarm = Boolean.parseBoolean(msg.getMetaData().getValue(DataConstants.IS_NEW_ALARM));
+        boolean isClearedAlarm = Boolean.parseBoolean(msg.getMetaData().getValue(DataConstants.IS_CLEARED_ALARM));
+        EdgeEventActionType eventAction;
+        if (isNewAlarm) {
+            eventAction = EdgeEventActionType.ADDED;
+        } else if (isClearedAlarm) {
+            eventAction = EdgeEventActionType.ALARM_CLEAR;
+        } else {
+            eventAction = EdgeEventActionType.UPDATED;
+        }
+        return eventAction;
     }
 
     abstract S buildEvent(TenantId tenantId, EdgeEventActionType eventAction, UUID entityId, U eventType, JsonNode entityBody);
@@ -142,8 +157,11 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
         } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
             actionType = EdgeEventActionType.POST_ATTRIBUTES;
-        } else {
+        } else if (DataConstants.ATTRIBUTES_DELETED.equals(msgType)) {
             actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
+        } else {
+            log.warn("Unsupported msg type [{}]", msgType);
+            throw new IllegalArgumentException("Unsupported msg type: " + msgType);
         }
         return actionType;
     }
@@ -165,6 +183,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             case DASHBOARD:
             case TENANT:
             case CUSTOMER:
+            case USER:
             case EDGE:
                 return true;
             default:

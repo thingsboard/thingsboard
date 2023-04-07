@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,10 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.dao.user.UserService;
@@ -50,20 +48,31 @@ public class UserDataValidator extends DataValidator<User> {
 
     @Autowired
     @Lazy
-    private TbTenantProfileCache tenantProfileCache;
-
-    @Autowired
-    @Lazy
     private TenantService tenantService;
 
     @Override
     protected void validateCreate(TenantId tenantId, User user) {
         if (!user.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-            DefaultTenantProfileConfiguration profileConfiguration =
-                    (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
-            long maxUsers = profileConfiguration.getMaxUsers();
-            validateNumberOfEntitiesPerTenant(tenantId, userDao, maxUsers, EntityType.USER);
+            validateNumberOfEntitiesPerTenant(tenantId, EntityType.USER);
         }
+    }
+
+    @Override
+    protected User validateUpdate(TenantId tenantId, User user) {
+        User old = userDao.findById(user.getTenantId(), user.getId().getId());
+        if (old == null) {
+            throw new DataValidationException("Can't update non existing user!");
+        }
+        if (!old.getTenantId().equals(user.getTenantId())) {
+            throw new DataValidationException("Can't update user tenant id!");
+        }
+        if (!old.getAuthority().equals(user.getAuthority())) {
+            throw new DataValidationException("Can't update user authority!");
+        }
+        if (!old.getCustomerId().equals(user.getCustomerId())) {
+            throw new DataValidationException("Can't update user customer id!");
+        }
+        return old;
     }
 
     @Override

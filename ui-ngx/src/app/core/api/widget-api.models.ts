@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import { AlarmDataService } from '@core/api/alarm-data.service';
 import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { PersistentRpc } from '@shared/models/rpc.models';
+import { EventEmitter } from '@angular/core';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -159,7 +160,7 @@ export interface IStateController {
   openRightLayout(): void;
   preserveState(): void;
   cleanupPreservedStates(): void;
-  navigatePrevState(index: number): void;
+  navigatePrevState(index: number, params?: StateParams): void;
   getStateId(): string;
   getStateIndex(): number;
   getStateIdAtIndex(index: number): string;
@@ -252,6 +253,7 @@ export interface WidgetSubscriptionOptions {
   displayTimewindow?: boolean;
   timeWindowConfig?: Timewindow;
   dashboardTimewindow?: Timewindow;
+  onTimewindowChangeFunction?: (timewindow: Timewindow) => Timewindow;
   legendConfig?: LegendConfig;
   comparisonEnabled?: boolean;
   timeForComparison?: moment_.unitOfTime.DurationConstructor;
@@ -290,6 +292,7 @@ export interface IWidgetSubscription {
   hiddenData?: Array<{data: DataSet}>;
   timeWindowConfig?: Timewindow;
   timeWindow?: WidgetTimewindow;
+  onTimewindowChangeFunction?: (timewindow: Timewindow) => Timewindow;
   widgetTimewindowChanged$: Observable<WidgetTimewindow>;
   comparisonEnabled?: boolean;
   comparisonTimeWindow?: WidgetTimewindow;
@@ -335,6 +338,8 @@ export interface IWidgetSubscription {
   subscribeForPaginatedData(datasourceIndex: number,
                             pageLink: EntityDataPageLink,
                             keyFilters: KeyFilter[]): Observable<any>;
+
+  paginatedDataSubscriptionUpdated: EventEmitter<void>;
 
   subscribeForAlarms(pageLink: AlarmDataPageLink,
                      keyFilters: KeyFilter[]): void;

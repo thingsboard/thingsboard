@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -64,6 +65,7 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfi
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.audit.AuditLogDao;
+import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
@@ -142,6 +144,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private AuditLogDao auditLogDao;
 
+    @Autowired
+    private EdgeEventDao edgeEventDao;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -181,13 +186,21 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
                 break;
             case "3.4.1":
+                log.info("Updating data from version 3.4.1 to 3.4.2 ...");
+                systemDataLoaderService.saveLegacyYmlSettings();
                 boolean skipAuditLogsMigration = getEnv("TB_SKIP_AUDIT_LOGS_MIGRATION", false);
                 if (!skipAuditLogsMigration) {
-                    log.info("Updating data from version 3.4.1 to 3.4.2 ...");
                     log.info("Starting audit logs migration. Can be skipped with TB_SKIP_AUDIT_LOGS_MIGRATION env variable set to true");
                     auditLogDao.migrateAuditLogs();
                 } else {
                     log.info("Skipping audit logs migration");
+                }
+                boolean skipEdgeEventsMigration = getEnv("TB_SKIP_EDGE_EVENTS_MIGRATION", false);
+                if (!skipEdgeEventsMigration) {
+                    log.info("Starting edge events migration. Can be skipped with TB_SKIP_EDGE_EVENTS_MIGRATION env variable set to true");
+                    edgeEventDao.migrateEdgeEvents();
+                } else {
+                    log.info("Skipping edge events migration");
                 }
                 break;
             default:
@@ -543,13 +556,13 @@ public class DefaultDataUpdateService implements DataUpdateService {
             };
 
     private void updateTenantAlarmsCustomer(TenantId tenantId, String name, AtomicLong processed) {
-        AlarmQuery alarmQuery = new AlarmQuery(null, new TimePageLink(1000), null, null, false);
+        AlarmQuery alarmQuery = new AlarmQuery(null, new TimePageLink(1000), null, null, null, false);
         PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, alarmQuery);
         boolean hasNext = true;
         while (hasNext) {
             for (Alarm alarm : alarms.getData()) {
                 if (alarm.getCustomerId() == null && alarm.getOriginator() != null) {
-                    alarm.setCustomerId(entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()));
+                    alarm.setCustomerId(entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()).get());
                     alarmDao.save(tenantId, alarm);
                 }
                 if (processed.incrementAndGet() % 1000 == 0) {
@@ -639,8 +652,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     private TenantProfileQueueConfiguration getMainQueueConfiguration() {
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
-        mainQueueConfiguration.setName("Main");
-        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setName(DataConstants.MAIN_QUEUE_NAME);
+        mainQueueConfiguration.setTopic(DataConstants.MAIN_QUEUE_TOPIC);
         mainQueueConfiguration.setPollInterval(25);
         mainQueueConfiguration.setPartitions(10);
         mainQueueConfiguration.setConsumerPerPartition(true);
@@ -659,7 +672,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
         return mainQueueConfiguration;
     }
 
-    private boolean getEnv(String name, boolean defaultValue) {
+    public static boolean getEnv(String name, boolean defaultValue) {
         String env = System.getenv(name);
         if (env == null) {
             return defaultValue;

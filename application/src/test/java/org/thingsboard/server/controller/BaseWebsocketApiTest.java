@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -23,13 +24,20 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -41,12 +49,16 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.TsValue;
+import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,6 +66,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
@@ -78,6 +92,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
 
     @After
     public void tearDown() throws Exception {
+        loginTenantAdmin();
         doDelete("/api/device/" + device.getId().getId())
                 .andExpect(status().isOk());
     }
@@ -225,6 +240,74 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         EntityCountUpdate update4 = getWsClient().parseCountReply(getWsClient().waitForReply());
         Assert.assertEquals(4, update4.getCmdId());
         Assert.assertEquals(0, update4.getCount());
+    }
+
+    @Test
+    public void testAlarmCountWsCmd() throws Exception {
+        loginTenantAdmin();
+
+        AlarmCountCmd cmd1 = new AlarmCountCmd(1, new AlarmCountQuery());
+
+        getWsClient().send(cmd1);
+
+        AlarmCountUpdate update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(tenantId);
+        alarm.setType("TEST ALARM");
+        alarm.setSeverity(AlarmSeverity.WARNING);
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmCountCmd cmd2 = new AlarmCountCmd(2, new AlarmCountQuery());
+
+        getWsClient().send(cmd2);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(2, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        AlarmCountCmd cmd3 = new AlarmCountCmd(3, AlarmCountQuery.builder().assigneeId(tenantAdminUserId).build());
+
+        getWsClient().send(cmd3);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(3, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        alarm.setAssigneeId(tenantAdminUserId);
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmCountCmd cmd4 = new AlarmCountCmd(4, AlarmCountQuery.builder().assigneeId(tenantAdminUserId).build());
+
+        getWsClient().send(cmd4);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(4, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        AlarmCountCmd cmd5 = new AlarmCountCmd(5,
+                AlarmCountQuery.builder().severityList(Collections.singletonList(AlarmSeverity.CRITICAL)).build());
+
+        getWsClient().send(cmd5);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(5, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmCountCmd cmd6 = new AlarmCountCmd(6,
+                AlarmCountQuery.builder().severityList(Collections.singletonList(AlarmSeverity.CRITICAL)).build());
+
+        getWsClient().send(cmd6);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(6, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
     }
 
     @Test
@@ -532,35 +615,65 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         Assert.assertEquals(new TsValue(dataPoint5.getLastUpdateTs(), dataPoint5.getValueAsString()), attrValue);
     }
 
+    @Test
+    public void testAttributesSubscription_sysAdmin() throws Exception {
+        loginSysAdmin();
+        SingleEntityFilter entityFilter = new SingleEntityFilter();
+        entityFilter.setSingleEntity(tenantId);
+
+        assertThatNoException().as("subscribeForAttributes").isThrownBy(() -> {
+            JsonNode update = getWsClient().subscribeForAttributes(tenantId, TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("attr"));
+            assertThat(update.get("errorMsg").isNull()).isTrue();
+            assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.NO_ERROR.getCode());
+        });
+
+        getWsClient().registerWaitForUpdate();
+        String expectedAttrValue = "42";
+        sendAttributes(TenantId.SYS_TENANT_ID, tenantId, TbAttributeSubscriptionScope.SERVER_SCOPE, List.of(
+                new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry("attr", expectedAttrValue))
+        ));
+        JsonNode update = JacksonUtil.toJsonNode(getWsClient().waitForUpdate());
+        assertThat(update).as("waitForUpdate").isNotNull();
+        assertThat(update.get("data").get("attr").get(0).get(1).asText()).isEqualTo(expectedAttrValue);
+    }
+
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         tsService.saveAndNotify(device.getTenantId(), null, device.getId(), tsData, 0, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
+                log.debug("sendTelemetry callback onSuccess");
                 latch.countDown();
             }
 
             @Override
             public void onFailure(Throwable t) {
+                log.error("Failed to send telemetry", t);
                 latch.countDown();
             }
         });
-        latch.await(3, TimeUnit.SECONDS);
+        assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendTelemetry callback");
     }
 
     private void sendAttributes(Device device, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
+        sendAttributes(device.getTenantId(), device.getId(), scope, attrData);
+    }
+
+    private void sendAttributes(TenantId tenantId, EntityId entityId, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.saveAndNotify(device.getTenantId(), device.getId(), scope.name(), attrData, new FutureCallback<Void>() {
+        tsService.saveAndNotify(tenantId, entityId, scope.name(), attrData, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
+                log.debug("sendAttributes callback onSuccess");
                 latch.countDown();
             }
 
             @Override
             public void onFailure(Throwable t) {
+                log.error("Failed to sendAttributes", t);
                 latch.countDown();
             }
         });
-        latch.await(3, TimeUnit.SECONDS);
+        assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendAttributes callback").isTrue();
     }
 }

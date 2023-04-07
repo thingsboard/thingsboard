@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -88,6 +88,9 @@ import { WidgetService } from '@core/http/widget.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { QueueService } from '@core/http/queue.service';
 import { AssetProfileService } from '@core/http/asset-profile.service';
+import { NotificationService } from '@core/http/notification.service';
+import { TenantProfileService } from '@core/http/tenant-profile.service';
+import { NotificationType } from '@shared/models/notification.models';
 
 @Injectable({
   providedIn: 'root'
@@ -111,9 +114,11 @@ export class EntityService {
     private otaPackageService: OtaPackageService,
     private widgetService: WidgetService,
     private deviceProfileService: DeviceProfileService,
+    private tenantProfileService: TenantProfileService,
     private assetProfileService: AssetProfileService,
     private utils: UtilsService,
-    private queueService: QueueService
+    private queueService: QueueService,
+    private notificationService: NotificationService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -239,10 +244,21 @@ export class EntityService {
           (id) => this.deviceProfileService.getDeviceProfileInfo(id, config),
           entityIds);
         break;
+      case EntityType.TENANT_PROFILE:
+        observable = this.tenantProfileService.getTenantProfilesByIds(entityIds, config);
+        break;
       case EntityType.ASSET_PROFILE:
         observable = this.getEntitiesByIdsObservable(
           (id) => this.assetProfileService.getAssetProfileInfo(id, config),
           entityIds);
+        break;
+      case EntityType.WIDGETS_BUNDLE:
+        observable = this.getEntitiesByIdsObservable(
+          (id) => this.widgetService.getWidgetsBundle(id, config),
+          entityIds);
+        break;
+      case EntityType.NOTIFICATION_TARGET:
+        observable = this.notificationService.getNotificationTargetsByIds(entityIds, config);
         break;
     }
     return observable;
@@ -389,9 +405,21 @@ export class EntityService {
         pageLink.sortOrder.property = 'name';
         entitiesObservable = this.deviceProfileService.getDeviceProfileInfos(pageLink, null, config);
         break;
+      case EntityType.TENANT_PROFILE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.tenantProfileService.getTenantProfiles(pageLink, config);
+        break;
       case EntityType.ASSET_PROFILE:
         pageLink.sortOrder.property = 'name';
         entitiesObservable = this.assetProfileService.getAssetProfileInfos(pageLink, config);
+        break;
+      case EntityType.WIDGETS_BUNDLE:
+        pageLink.sortOrder.property = 'title';
+        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, config);
+        break;
+      case EntityType.NOTIFICATION_TARGET:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.notificationService.getNotificationTargets(pageLink, subType as NotificationType, config);
         break;
     }
     return entitiesObservable;
@@ -709,6 +737,7 @@ export class EntityService {
         entityFieldKeys.push(entityFields.email.keyName);
         entityFieldKeys.push(entityFields.firstName.keyName);
         entityFieldKeys.push(entityFields.lastName.keyName);
+        entityFieldKeys.push(entityFields.phone.keyName);
         break;
       case EntityType.TENANT:
       case EntityType.CUSTOMER:
@@ -860,8 +889,26 @@ export class EntityService {
         };
         aliasInfo.currentEntity = null;
         if (!aliasInfo.resolveMultiple && aliasInfo.entityFilter) {
-          return this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
-            {ignoreLoading: true, ignoreErrors: true}).pipe(
+          let currentEntity: EntityInfo = null;
+          if (result.stateEntity && aliasInfo.entityFilter.type === AliasFilterType.singleEntity) {
+            if (stateParams) {
+              let targetParams = stateParams;
+              if (result.entityParamName && result.entityParamName.length) {
+                targetParams = stateParams[result.entityParamName];
+              }
+              if (targetParams && targetParams.entityId && targetParams.entityName) {
+                currentEntity = {
+                  id: targetParams.entityId.id,
+                  entityType: targetParams.entityId.entityType as EntityType,
+                  name: targetParams.entityName,
+                  label: targetParams.entityLabel
+                };
+              }
+            }
+          }
+          const entityInfoObservable = currentEntity ? of(currentEntity) : this.findSingleEntityInfoByEntityFilter(aliasInfo.entityFilter,
+            {ignoreLoading: true, ignoreErrors: true});
+          return entityInfoObservable.pipe(
             map((entity) => {
               aliasInfo.currentEntity = entity;
               return aliasInfo;

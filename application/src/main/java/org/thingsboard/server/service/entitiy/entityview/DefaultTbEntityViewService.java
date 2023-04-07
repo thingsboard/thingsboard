@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         TenantId tenantId = entityView.getTenantId();
         EntityViewId entityViewId = entityView.getId();
         try {
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, entityViewId);
+            List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, entityViewId);
             entityViewService.deleteEntityView(tenantId, entityViewId);
             notificationEntityService.notifyDeleteEntity(tenantId, entityViewId, entityView, entityView.getCustomerId(), ActionType.DELETED,
                     relatedEdgeIds, user, entityViewId.toString());
@@ -149,7 +149,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId, entityViewId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
-                    ActionType.ASSIGNED_TO_CUSTOMER, user, true, entityViewId.toString(), customerId.toString(), customer.getName());
+                    ActionType.ASSIGNED_TO_CUSTOMER, user, entityViewId.toString(), customerId.toString(), customer.getName());
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
@@ -159,18 +159,19 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     }
 
     @Override
-    public EntityView assignEntityViewToPublicCustomer(TenantId tenantId, CustomerId customerId, Customer publicCustomer,
-                                                       EntityViewId entityViewId, User user) throws ThingsboardException {
+    public EntityView assignEntityViewToPublicCustomer(TenantId tenantId, EntityViewId entityViewId, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
+        Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId,
                     entityViewId, publicCustomer.getId()));
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
-                    ActionType.ASSIGNED_TO_CUSTOMER, user, false, savedEntityView.getEntityId().toString(),
+            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, savedEntityView.getCustomerId(), savedEntityView,
+                    actionType, user, savedEntityView.getId().toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
-                    ActionType.ASSIGNED_TO_CUSTOMER, user, e, entityViewId.toString());
+                    actionType, user, e, entityViewId.toString());
             throw e;
         }
     }
@@ -211,14 +212,17 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
     @Override
     public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(tenantId, entityViewId));
+
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customer.getId(), savedEntityView,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, user, true, customer.getId().toString(), customer.getName());
+                    actionType, user, savedEntityView.getId().toString(), customer.getId().toString(), customer.getName());
+
             return savedEntityView;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, user, e, entityViewId.toString());
+                    actionType, user, e, entityViewId.toString());
             throw e;
         }
     }

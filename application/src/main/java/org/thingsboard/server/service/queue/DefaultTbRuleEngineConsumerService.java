@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.service.queue;
 import com.google.protobuf.ProtocolStringList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -70,6 +71,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -125,8 +127,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbAssetProfileCache assetProfileCache,
                                               TbTenantProfileCache tenantProfileCache,
                                               TbApiUsageStateService apiUsageStateService,
-                                              PartitionService partitionService, TbServiceInfoProvider serviceInfoProvider, QueueService queueService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
+                                              PartitionService partitionService, ApplicationEventPublisher eventPublisher,
+                                              TbServiceInfoProvider serviceInfoProvider, QueueService queueService) {
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), Optional.empty());
         this.statisticsService = statisticsService;
         this.tbRuleEngineQueueFactory = tbRuleEngineQueueFactory;
         this.submitStrategyFactory = submitStrategyFactory;

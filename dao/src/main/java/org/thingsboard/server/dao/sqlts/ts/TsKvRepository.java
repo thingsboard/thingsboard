@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,15 @@ import java.util.UUID;
 
 public interface TsKvRepository extends JpaRepository<TsKvEntity, TsKvCompositeKey> {
 
-    @Query("SELECT tskv FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
+    /*
+    * Using native query to avoid adding 'nulls first' or 'nulls last' (ignoring spring.jpa.properties.hibernate.order_by.default_null_ordering)
+    * to the order so that index scan is done instead of full scan.
+    *
+    * Note: even when setting custom NullHandling for the Sort.Order for non-native queries,
+    * it will be ignored and default_null_ordering will be used
+    * */
+    @Query(value = "SELECT * FROM ts_kv WHERE entity_id = :entityId " +
+            "AND key = :entityKey AND ts >= :startTs AND ts < :endTs ", nativeQuery = true)
     List<TsKvEntity> findAllWithLimit(@Param("entityId") UUID entityId,
                                       @Param("entityKey") int key,
                                       @Param("startTs") long startTs,

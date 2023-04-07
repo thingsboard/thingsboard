@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2022 The Thingsboard Authors
+-- Copyright © 2016-2023 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -37,9 +37,10 @@ CREATE OR REPLACE PROCEDURE update_asset_profiles()
     LANGUAGE plpgsql AS
 $$
 BEGIN
-UPDATE asset as a SET asset_profile_id = p.id
-    FROM
-           (SELECT id, tenant_id, name from asset_profile) as p
-WHERE a.asset_profile_id IS NULL AND p.tenant_id = a.tenant_id AND a.type = p.name;
+    UPDATE asset a SET asset_profile_id = COALESCE(
+            (SELECT id from asset_profile p WHERE p.tenant_id = a.tenant_id AND a.type = p.name),
+            (SELECT id from asset_profile p WHERE p.tenant_id = a.tenant_id AND p.name = 'default')
+        )
+    WHERE a.asset_profile_id IS NULL;
 END;
 $$;

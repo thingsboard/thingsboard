@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-detail
 import { GatewayCommandDialogComponent } from "@home/components/gateway/gateway-command-dialog.component";
 import { SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { DeviceCredentialsModule } from "@home/components/device/device-credentials.module";
+import { AlarmCommentComponent } from '@home/components/alarm/alarm-comment.component';
+import { AlarmCommentDialogComponent } from '@home/components/alarm/alarm-comment-dialog.component';
+import { AlarmAssigneeComponent } from '@home/components/alarm/alarm-assignee.component';
 
 @NgModule({
   providers: [
@@ -29,6 +32,9 @@ import { DeviceCredentialsModule } from "@home/components/device/device-credenti
   declarations:
     [
       AlarmDetailsDialogComponent,
+      AlarmCommentComponent,
+      AlarmCommentDialogComponent,
+      AlarmAssigneeComponent
       GatewayCommandDialogComponent
     ],
   imports: [
@@ -38,6 +44,9 @@ import { DeviceCredentialsModule } from "@home/components/device/device-credenti
   ],
   exports: [
     AlarmDetailsDialogComponent,
+    AlarmCommentComponent,
+    AlarmCommentDialogComponent,
+    AlarmAssigneeComponent
     GatewayCommandDialogComponent
   ]
 })

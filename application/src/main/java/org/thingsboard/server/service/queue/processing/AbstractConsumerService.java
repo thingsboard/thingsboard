@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.service.queue.processing;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -74,13 +76,17 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbAssetProfileCache assetProfileCache;
     protected final TbApiUsageStateService apiUsageStateService;
     protected final PartitionService partitionService;
+    protected final ApplicationEventPublisher eventPublisher;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
+    protected final Optional<JwtSettingsService> jwtSettingsService;
+
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                    TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
                                    TbAssetProfileCache assetProfileCache, TbApiUsageStateService apiUsageStateService,
-                                   PartitionService partitionService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+                                   PartitionService partitionService, ApplicationEventPublisher eventPublisher,
+                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, Optional<JwtSettingsService> jwtSettingsService) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
@@ -88,7 +94,9 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.assetProfileCache = assetProfileCache;
         this.apiUsageStateService = apiUsageStateService;
         this.partitionService = partitionService;
+        this.eventPublisher = eventPublisher;
         this.nfConsumer = nfConsumer;
+        this.jwtSettingsService = jwtSettingsService;
     }
 
     public void init(String mainConsumerThreadName, String nfConsumerThreadName) {
@@ -172,12 +180,17 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                         apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
                     }
                 } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
-                    partitionService.removeTenant(componentLifecycleMsg.getTenantId());
-                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
-                        apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
-                    } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
-                        apiUsageStateService.onTenantDelete((TenantId) componentLifecycleMsg.getEntityId());
+                    if (TenantId.SYS_TENANT_ID.equals(componentLifecycleMsg.getTenantId())) {
+                        jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
+                        return;
+                    } else {
+                        tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
+                        partitionService.removeTenant(componentLifecycleMsg.getTenantId());
+                        if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                            apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
+                        } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
+                            apiUsageStateService.onTenantDelete((TenantId) componentLifecycleMsg.getEntityId());
+                        }
                     }
                 } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
@@ -196,6 +209,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                         apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
                     }
                 }
+                eventPublisher.publishEvent(componentLifecycleMsg);
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
             actorContext.tellWithHighPriority(actorMsg);

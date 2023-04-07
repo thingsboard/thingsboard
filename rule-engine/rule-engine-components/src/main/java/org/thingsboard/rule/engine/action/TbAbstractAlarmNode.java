@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.common.util.JacksonUtil;
@@ -41,12 +42,13 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
     private final ObjectMapper mapper = new ObjectMapper();
 
     protected C config;
-    private ScriptEngine buildDetailsJsEngine;
+    private ScriptEngine scriptEngine;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadAlarmNodeConfig(configuration);
-        this.buildDetailsJsEngine = ctx.createJsScriptEngine(config.getAlarmDetailsBuildJs());
+        scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
+                ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getAlarmDetailsBuildTbel() : config.getAlarmDetailsBuildJs());
     }
 
     protected abstract C loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException;
@@ -80,7 +82,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                 metaData.putValue(PREV_ALARM_DETAILS, mapper.writeValueAsString(previousDetails));
                 dummyMsg = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msg.getData());
             }
-            return buildDetailsJsEngine.executeJsonAsync(dummyMsg);
+            return scriptEngine.executeJsonAsync(dummyMsg);
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
@@ -102,8 +104,8 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
 
     @Override
     public void destroy() {
-        if (buildDetailsJsEngine != null) {
-            buildDetailsJsEngine.destroy();
+        if (scriptEngine != null) {
+            scriptEngine.destroy();
         }
     }
 

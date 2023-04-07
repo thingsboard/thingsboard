@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,8 +47,13 @@ export class AppComponent implements OnInit {
 
     console.log(`ThingsBoard Version: ${env.tbVersion}`);
 
-    this.matIconRegistry.addSvgIconSetInNamespace('mdi',
-      this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/mdi.svg'));
+    this.matIconRegistry.addSvgIconResolver((name, namespace) => {
+      if (namespace === 'mdi') {
+        return this.domSanitizer.bypassSecurityTrustResourceUrl(`./assets/mdi/${name}.svg`);
+      } else {
+        return null;
+      }
+    });
 
     this.matIconRegistry.addSvgIconLiteral(
       'google-logo',

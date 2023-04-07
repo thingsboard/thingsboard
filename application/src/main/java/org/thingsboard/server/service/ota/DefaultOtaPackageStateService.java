@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,10 +181,11 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
     private void update(TenantId tenantId, DeviceProfile deviceProfile, OtaPackageType otaPackageType) {
         Consumer<Device> updateConsumer;
+        OtaPackageId packageId = OtaPackageUtil.getOtaPackageId(deviceProfile, otaPackageType);
 
-        if (deviceProfile.getFirmwareId() != null) {
+        if (packageId != null) {
             long ts = System.currentTimeMillis();
-            updateConsumer = d -> send(d.getTenantId(), d.getId(), deviceProfile.getFirmwareId(), ts, otaPackageType);
+            updateConsumer = d -> send(d.getTenantId(), d.getId(), packageId, ts, otaPackageType);
         } else {
             updateConsumer = d -> remove(d, otaPackageType);
         }
@@ -360,9 +361,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         log.trace("[{}] Success remove target {} attributes!", device.getId(), otaPackageType);
-                        Set<AttributeKey> keysToNotify = new HashSet<>();
-                        attributesKeys.forEach(key -> keysToNotify.add(new AttributeKey(DataConstants.SHARED_SCOPE, key)));
-                        tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(device.getTenantId(), device.getId(), keysToNotify), null);
+                        tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(device.getTenantId(), device.getId(), DataConstants.SHARED_SCOPE, attributesKeys), null);
                     }
 
                     @Override

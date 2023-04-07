@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
 <section class="tb-widget-settings" [formGroup]="mapEditorSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.editor-settings</legend>
-    <mat-slide-toggle formControlName="snappable" class="flex-gap-xs mat-slider-multiline">
+    <mat-slide-toggle formControlName="snappable" class="flex-gap-xs">
       {{ 'widgets.maps.enable-snapping' | translate }}
     </mat-slide-toggle>
-    <mat-slide-toggle formControlName="initDragMode" class="flex-gap-xs mat-slider-multiline">
+    <mat-slide-toggle formControlName="initDragMode" class="flex-gap-xs">
       {{ 'widgets.maps.init-draggable-mode' | translate }}
     </mat-slide-toggle>
     <mat-expansion-panel class="tb-settings" [expanded]="!mapEditorSettingsFormGroup.get('hideAllControlButton').value">
