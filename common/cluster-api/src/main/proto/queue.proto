@@ -968,7 +968,6 @@ message ToCoreMsg {
   EdgeNotificationMsgProto edgeNotificationMsg = 5;
   DeviceActivityProto deviceActivityMsg = 6;
   NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 7;
-  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 8;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -983,6 +982,7 @@ message ToCoreNotificationMsg {
   bytes toEdgeSyncRequestMsg = 8;
   bytes fromEdgeSyncResponseMsg = 9;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 10;
+  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 11;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

@@ -42,8 +42,7 @@ public class DefaultNotificationRuleService extends AbstractEntityService implem
 
     @Override
     public NotificationRule saveNotificationRule(TenantId tenantId, NotificationRule notificationRule) {
-        boolean created = notificationRule.getId() == null;
-        if (!created) {
+        if (notificationRule.getId() != null) {
             NotificationRule oldNotificationRule = findNotificationRuleById(tenantId, notificationRule.getId());
             if (notificationRule.getTriggerType() != oldNotificationRule.getTriggerType()) {
                 throw new IllegalArgumentException("Notification rule trigger type cannot be updated");
