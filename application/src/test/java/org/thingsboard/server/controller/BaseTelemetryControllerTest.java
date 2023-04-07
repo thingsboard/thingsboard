@@ -16,8 +16,6 @@
 package org.thingsboard.server.controller;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -25,11 +23,11 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
 public class BaseTelemetryControllerTest extends AbstractControllerTest {
 
     @Test
     public void testConstraintValidatorCalledAtLeastOnce() throws Exception {
+        loginTenantAdmin();
         Device device = createDevice();
         String requestBody = "{\"data\": \"<object data=\\\"data:text/html,<script>alert(document)</script>\\\"></object>\"}";
         doPost("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", requestBody, String.class, status().isOk());
@@ -38,7 +36,6 @@ public class BaseTelemetryControllerTest extends AbstractControllerTest {
     }
 
     private Device createDevice() throws Exception {
-        loginTenantAdmin();
         String testToken = "TEST_TOKEN";
 
         Device device = new Device();
