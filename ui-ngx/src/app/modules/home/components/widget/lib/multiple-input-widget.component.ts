@@ -30,6 +30,7 @@ import {
   isDefinedAndNotNull,
   isEqual,
   isNotEmptyStr,
+  isString,
   isUndefined
 } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -42,13 +43,15 @@ import { forkJoin, Observable, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { takeUntil } from 'rxjs/operators';
+import { JsonObjectEditDialogComponent, JsonObjectEditDialogData } from '@shared/components/dialog/json-object-edit-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 type FieldAlignment = 'row' | 'column';
 
 type MultipleInputWidgetDataKeyType = 'server' | 'shared' | 'timeseries';
-type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
-                                           'booleanCheckbox' | 'booleanSwitch' |
+export type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
+                                           'JSON'| 'booleanCheckbox' | 'booleanSwitch' |
                                            'dateTime' | 'date' | 'time' | 'select';
 type MultipleInputWidgetDataKeyEditableType = 'editable' | 'disabled' | 'readonly';
 
@@ -103,6 +106,9 @@ interface MultipleInputWidgetDataKeySettings {
   useSetValueFunction?: boolean;
   setValueFunctionBody?: string;
   setValueFunction?: ConvertSetValueFunction;
+  saveButtonLabel?: string;
+  resetButtonLabel?: string;
+  dialogLabel?: string;
 }
 
 interface MultipleInputWidgetDataKey extends DataKey {
@@ -161,7 +167,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               private fb: UntypedFormBuilder,
               private attributeService: AttributeService,
               private translate: TranslateService,
-              private sanitizer: DomSanitizer) {
+              private sanitizer: DomSanitizer,
+              private dialog: MatDialog) {
     super(store);
   }
 
@@ -424,6 +431,13 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               break;
             case 'select':
               value = keyValue !== null ? keyValue.toString() : null;
+              break;
+            case 'JSON':
+              try {
+                value = JSON.parse(keyData[0][1]);
+              } catch (e) {
+                value = keyData[0][1] ? keyData[0][1] : null;
+              }
               break;
             default:
               value = keyValue;
@@ -717,5 +731,32 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       }
     });
     this.multipleInputFormGroup.markAsPristine();
+  }
+
+  openEditJSONDialog($event: Event, key: MultipleInputWidgetDataKey, source: MultipleInputWidgetSource) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const formControl = this.multipleInputFormGroup.controls[key.formId];
+    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, object>(JsonObjectEditDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        jsonValue: formControl.value,
+        title:  key.settings.dialogLabel,
+        saveLabel: key.settings.saveButtonLabel,
+        undoLabel: key.settings.saveButtonLabel
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (!isEqual(res, formControl.value)) {
+          formControl.patchValue(res);
+          formControl.markAsDirty();
+          if(!this.settings.showActionButtons) {
+            this.inputChanged(source, key);
+          }
+        }
+      }
+    );
   }
 }

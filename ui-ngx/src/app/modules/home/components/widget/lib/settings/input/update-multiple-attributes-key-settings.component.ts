@@ -24,6 +24,7 @@ import {
   dataKeySelectOptionValidator
 } from '@home/components/widget/lib/settings/input/datakey-select-option.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { MultipleInputWidgetDataKeyValueType } from '@home/components/widget/lib/multiple-input-widget.component';
 
 @Component({
   selector: 'tb-update-multiple-attributes-key-settings',
@@ -130,7 +131,7 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
 
   protected updateValidators(emitEvent: boolean) {
     const dataKeyHidden: boolean = this.updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value;
-    const dataKeyValueType: string = this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
+    const dataKeyValueType: MultipleInputWidgetDataKeyValueType = this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
     const required: boolean = this.updateMultipleAttributesKeySettingsForm.get('required').value;
     const isEditable: string = this.updateMultipleAttributesKeySettingsForm.get('isEditable').value;
     const useCustomIcon: boolean = this.updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value;
@@ -244,7 +245,7 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
     const dataKeyHidden: boolean = this.updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value;
     const required: boolean = this.updateMultipleAttributesKeySettingsForm.get('required').value;
     const dataKeyValueType: string = this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
-    return !dataKeyHidden && (required || (['integer', 'double', 'dateTime', 'date', 'time'].includes(dataKeyValueType)));
+    return !dataKeyHidden && (required || (['integer', 'double', 'dateTime', 'date', 'time', 'JSON'].includes(dataKeyValueType)));
   }
 }
 
