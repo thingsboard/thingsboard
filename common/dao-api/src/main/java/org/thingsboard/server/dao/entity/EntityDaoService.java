@@ -26,6 +26,10 @@ public interface EntityDaoService {
 
     Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId);
 
+    default long countByTenantId(TenantId tenantId) {
+        throw new IllegalArgumentException("Not implemented for " + getEntityType());
+    }
+
     EntityType getEntityType();
 
 }

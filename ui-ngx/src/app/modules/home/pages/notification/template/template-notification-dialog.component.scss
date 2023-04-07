@@ -38,8 +38,10 @@
     background-color: rgba(48, 86, 128, 0.04);
     margin-bottom: 8px;
     padding: 8px 16px;
-    display: flex;
-    align-items: center;
+
+    .content {
+      vertical-align: middle;
+    }
   }
 
   .delivery-method-container {

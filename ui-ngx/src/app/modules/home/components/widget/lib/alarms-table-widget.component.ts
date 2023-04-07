@@ -143,7 +143,7 @@ interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   enableSelection: boolean;
   enableStatusFilter?: boolean;
   enableFilter: boolean;
-  displayComments: boolean;
+  displayActivity: boolean;
   displayDetails: boolean;
   allowAcknowledgment: boolean;
   allowClear: boolean;
@@ -154,7 +154,7 @@ interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
   details?: boolean;
   acknowledge?: boolean;
   clear?: boolean;
-  comments?: boolean;
+  activity?: boolean;
 }
 
 @Component({
@@ -197,7 +197,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   private alarmsTitlePattern: string;
 
-  private displayComments = false;
+  private displayActivity = false;
   private displayDetails = true;
   public allowAcknowledgment = true;
   private allowClear = true;
@@ -335,7 +335,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private initializeConfig() {
     this.ctx.widgetActions = [this.searchAction, this.alarmFilterAction, this.columnDisplayAction];
 
-    this.displayComments = isDefined(this.settings.displayComments) ? this.settings.displayComments : false;
+    this.displayActivity = isDefined(this.settings.displayActivity) ? this.settings.displayActivity : false;
     this.displayDetails = isDefined(this.settings.displayDetails) ? this.settings.displayDetails : true;
     this.allowAcknowledgment = isDefined(this.settings.allowAcknowledgment) ? this.settings.allowAcknowledgment : true;
     this.allowClear = isDefined(this.settings.allowClear) ? this.settings.allowClear : true;
@@ -464,12 +464,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.sortOrderProperty = sortColumn ? sortColumn.def : null;
 
     const actionCellDescriptors: AlarmWidgetActionDescriptor[] = [];
-    if (this.displayComments) {
+    if (this.displayActivity) {
       actionCellDescriptors.push(
         {
-          displayName: this.translate.instant('alarm-comment.comments'),
+          displayName: this.translate.instant('alarm-activity.activity'),
           icon: 'comment',
-          comments: true
+          activity: true
         } as AlarmWidgetActionDescriptor
       );
     }
@@ -821,8 +821,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.ackAlarm($event, alarm);
     } else if (actionDescriptor.clear) {
       this.clearAlarm($event, alarm);
-    } else if (actionDescriptor.comments) {
-      this.openAlarmComments($event, alarm);
+    } else if (actionDescriptor.activity) {
+      this.openAlarmActivity($event, alarm);
     } else {
       if ($event) {
         $event.stopPropagation();
@@ -864,7 +864,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
             alarmId: alarm.id.id,
             allowAcknowledgment: this.allowAcknowledgment,
             allowClear: this.allowClear,
-            displayDetails: true
+            displayDetails: true,
+            allowAssign: this.allowAssign
           }
         }).afterClosed().subscribe(
         (res) => {
@@ -988,7 +989,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
-  private openAlarmComments($event: Event, alarm: AlarmDataInfo) {
+  private openAlarmActivity($event: Event, alarm: AlarmDataInfo) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -999,8 +1000,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           disableClose: true,
           panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
-            alarmId: alarm.id.id,
-            commentsHeaderEnabled: false
+            alarmId: alarm.id.id
           }
         }).afterClosed()
     }

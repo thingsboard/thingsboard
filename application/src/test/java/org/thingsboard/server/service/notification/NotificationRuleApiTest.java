@@ -123,7 +123,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationRuleProcessing_entityActionTrigger() throws Exception {
         String notificationSubject = "${actionType}: ${entityType} [${entityId}]";
-        String notificationText = "User: ${originatorUserName}";
+        String notificationText = "User: ${userEmail}";
         NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.GENERAL, notificationSubject, notificationText, NotificationDeliveryMethod.WEB);
 
         NotificationRule notificationRule = new NotificationRule();
@@ -132,7 +132,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
 
         EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
-        triggerConfig.setEntityType(EntityType.DEVICE);
+        triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
         triggerConfig.setCreated(true);
         triggerConfig.setUpdated(true);
         triggerConfig.setDeleted(true);

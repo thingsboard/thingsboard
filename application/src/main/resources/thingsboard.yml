@@ -474,6 +474,12 @@ cache:
     userSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_USER_SETTINGS_TTL:1440}"
       maxSize: "${CACHE_SPECS_USER_SETTINGS_MAX_SIZE:100000}"
+    dashboardTitles:
+      timeToLiveInMinutes: "${CACHE_SPECS_DASHBOARD_TITLES_TTL:1440}"
+      maxSize: "${CACHE_SPECS_DASHBOARD_TITLES_MAX_SIZE:100000}"
+    entityCount:
+      timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
+      maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
 
 #Disable this because it is not required.
 spring.data.redis.repositories.enabled: false

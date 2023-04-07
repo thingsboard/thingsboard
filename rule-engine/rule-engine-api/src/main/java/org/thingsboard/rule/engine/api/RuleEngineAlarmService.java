@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 
 import java.util.Collection;

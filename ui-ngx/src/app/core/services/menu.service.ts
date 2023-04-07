@@ -575,6 +575,14 @@ export class MenuService {
           },
           {
             id: guid(),
+            name: 'admin.notifications',
+            type: 'link',
+            path: '/settings/notifications',
+            icon: 'mdi:message-badge',
+            isMdiIcon: true
+          },
+          {
+            id: guid(),
             name: 'admin.repository',
             type: 'link',
             path: '/settings/repository',
@@ -835,15 +843,6 @@ export class MenuService {
         }
       );
     }
-    sections.push(
-      {
-        id: guid(),
-        name: 'dashboard.dashboards',
-        type: 'link',
-        path: '/dashboards',
-        icon: 'dashboard'
-      }
-    );
     sections.push(
       {
         id: guid(),

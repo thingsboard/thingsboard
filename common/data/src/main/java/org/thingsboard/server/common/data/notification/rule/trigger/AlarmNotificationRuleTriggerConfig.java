@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
 import javax.validation.constraints.NotEmpty;
+import java.io.Serializable;
 import java.util.Set;
 
 @Data
@@ -38,7 +39,7 @@ public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTrigg
     }
 
     @Data
-    public static class ClearRule {
+    public static class ClearRule implements Serializable {
         private Set<AlarmSearchStatus> alarmStatuses;
     }
 
