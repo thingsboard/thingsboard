@@ -687,6 +687,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         for (MqttTopicSubscription subscription : mqttMsg.payload().topicSubscriptions()) {
             String topic = subscription.topicName();
             MqttQoS reqQoS = subscription.qualityOfService();
+            if (deviceSessionCtx.isDeviceSubscriptionAttributesTopic(topic)){
+                processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V1);
+                activityReported = true;
+                continue;
+            }
             try {
                 if (sparkplugSessionHandler != null) {
                     sparkplugSessionHandler.handleSparkplugSubscribeMsg(grantedQoSList, subscription, reqQoS);
