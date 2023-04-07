@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import lombok.Getter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -27,15 +28,17 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
-import org.thingsboard.server.service.telemetry.cmd.v1.AttributesSubscriptionCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityHistoryCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.TimeSeriesCmd;
 
 import java.net.URI;
 import java.nio.channels.NotYetConnectedException;
@@ -47,6 +50,9 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbTestWebSocketClient extends WebSocketClient {
 
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+
+    @Getter
     private volatile String lastMsg;
     private volatile CountDownLatch reply;
     private volatile CountDownLatch update;
@@ -87,12 +93,14 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public void registerWaitForUpdate(int count) {
+        log.debug("registerWaitForUpdate [{}]", count);
         lastMsg = null;
         update = new CountDownLatch(count);
     }
 
     @Override
     public void send(String text) throws NotYetConnectedException {
+        log.debug("send [{}]", text);
         reply = new CountDownLatch(1);
         super.send(text);
     }
@@ -109,26 +117,66 @@ public class TbTestWebSocketClient extends WebSocketClient {
         this.send(JacksonUtil.toString(wrapper));
     }
 
+    public void send(AlarmCountCmd cmd) throws NotYetConnectedException {
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setAlarmCountCmds(Collections.singletonList(cmd));
+        this.send(JacksonUtil.toString(wrapper));
+    }
+
     public String waitForUpdate() {
-        return waitForUpdate(TimeUnit.SECONDS.toMillis(3));
+        return waitForUpdate(false);
+    }
+
+    public String waitForUpdate(boolean throwExceptionOnTimeout) {
+        return waitForUpdate(TIMEOUT, throwExceptionOnTimeout);
     }
 
     public String waitForUpdate(long ms) {
+        return waitForUpdate(ms, false);
+    }
+
+    public String waitForUpdate(long ms, boolean throwExceptionOnTimeout) {
+        log.debug("waitForUpdate [{}]", ms);
         try {
-            update.await(ms, TimeUnit.MILLISECONDS);
+            if (update.await(ms, TimeUnit.MILLISECONDS)) {
+                return lastMsg;
+            } else {
+                log.warn("Failed to await update (waiting time [{}]ms elapsed)", ms, new RuntimeException("stacktrace"));
+            }
         } catch (InterruptedException e) {
-            log.warn("Failed to await reply", e);
+            log.warn("Failed to await update", e);
         }
-        return lastMsg;
+        if (throwExceptionOnTimeout) {
+            throw new AssertionError("Waited for update for " + ms + " ms but none arrived");
+        } else {
+            return null;
+        }
     }
 
     public String waitForReply() {
+        return waitForReply(false);
+    }
+
+    public String waitForReply(boolean throwExceptionOnTimeout) {
+        return waitForReply(TIMEOUT, throwExceptionOnTimeout);
+    }
+
+    public String waitForReply(long ms, boolean throwExceptionOnTimeout) {
+        log.debug("waitForReply [{}]", ms);
         try {
-            reply.await(3, TimeUnit.SECONDS);
+            if (reply.await(ms, TimeUnit.MILLISECONDS)) {
+                return lastMsg;
+            } else {
+                log.warn("Failed to await reply (waiting time [{}]ms elapsed)", ms, new RuntimeException("stacktrace"));
+            }
         } catch (InterruptedException e) {
             log.warn("Failed to await reply", e);
         }
-        return lastMsg;
+        if (throwExceptionOnTimeout) {
+            throw new AssertionError("Waited for reply for " + ms + " ms but none arrived");
+        } else {
+            return null;
+        }
     }
 
     public EntityDataUpdate parseDataReply(String msg) {
@@ -137,6 +185,10 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     public EntityCountUpdate parseCountReply(String msg) {
         return JacksonUtil.fromString(msg, EntityCountUpdate.class);
+    }
+
+    public AlarmCountUpdate parseAlarmCountReply(String msg) {
+        return JacksonUtil.fromString(msg, AlarmCountUpdate.class);
     }
 
     public EntityDataUpdate subscribeLatestUpdate(List<EntityKey> keys, EntityFilter entityFilter) {

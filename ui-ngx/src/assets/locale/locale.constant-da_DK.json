@@ -3130,7 +3130,6 @@
     "maximum-scheduler-events": "Maks. antal planlægningsbegivenheder (0 – ubegrænset)",
     "maximum-scheduler-events-required": "Maks. antal planlægningsbegivenheder er påkrævet.",
     "maximum-scheduler-events-range": "Maks. antal planlægningsbegivenheder kan ikke være negativt",
-    "transport-tenant-msg-rate-limit": "Hastighedsgrænse for transport af lejermeddelelser.",
     "transport-tenant-telemetry-msg-rate-limit": "Hastighedsgrænse for transport af lejertelemetrimeddelelser.",
     "transport-tenant-telemetry-data-points-rate-limit": "Hastighedsgrænse for transport af lejertelemetridatapunkter.",
     "transport-device-msg-rate-limit": "Hastighedsgrænse for transport af enhedsmeddelelser.",
@@ -3165,10 +3164,10 @@
     "max-sms-range": "Maks. antal sendte SMS'er kan ikke være negativt"
   },
   "timeinterval": {
-    "seconds-interval": "{ seconds, plural, 1 {1 sekund} other {# sekunder} }",
-    "minutes-interval": "{ minutes, plural, 1 {1 minut} other {# minutter} }",
-    "hours-interval": "{ hours, plural, 1 {1 time} other {# timer} }",
-    "days-interval": "{ days, plural, 1 {1 dag} other {# dage} }",
+    "seconds-interval": "{ seconds, plural, =1 {1 sekund} other {# sekunder} }",
+    "minutes-interval": "{ minutes, plural, =1 {1 minut} other {# minutter} }",
+    "hours-interval": "{ hours, plural, =1 {1 time} other {# timer} }",
+    "days-interval": "{ days, plural, =1 {1 dag} other {# dage} }",
     "days": "Dage",
     "hours": "Timer",
     "minutes": "Minutter",
@@ -3202,10 +3201,10 @@
     "days": "Dage"
   },
   "timewindow": {
-    "days": "{ days, plural, 1 { dag } other {# dage } }",
-    "hours": "{ hours, plural, 0 { time } 1 {1 time } other {# timer } }",
-    "minutes": "{ minutes, plural, 0 { minut } 1 {1 minut } other {# minutter } }",
-    "seconds": "{ seconds, plural, 0 { sekund } 1 {1 sekund } other {# sekunder } }",
+    "days": "{ days, plural, =1 { dag } other {# dage } }",
+    "hours": "{ hours, plural, =0 { time } =1 {1 time } other {# timer } }",
+    "minutes": "{ minutes, plural, =0 { minut } =1 {1 minut } other {# minutter } }",
+    "seconds": "{ seconds, plural, =0 { sekund } =1 {1 sekund } other {# sekunder } }",
     "realtime": "Realtid",
     "history": "Historie",
     "last-prefix": "sidst",

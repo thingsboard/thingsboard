@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.4.3-SNAPSHOT</version>
+        <version>3.5.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>application</artifactId>
@@ -143,21 +143,6 @@
         <dependency>
             <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.cassandraunit</groupId>
-            <artifactId>cassandra-unit</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.hibernate</groupId>
-                    <artifactId>hibernate-validator</artifactId>
-                </exclusion>
-            </exclusions>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
@@ -331,6 +316,11 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
+            <artifactId>cassandra</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
@@ -359,6 +349,10 @@
         <dependency>
             <groupId>org.jboss.aerogear</groupId>
             <artifactId>aerogear-otp-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.slack.api</groupId>
+            <artifactId>slack-api-client</artifactId>
         </dependency>
     </dependencies>
 

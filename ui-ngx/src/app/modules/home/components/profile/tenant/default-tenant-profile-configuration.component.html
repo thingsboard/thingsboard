@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -474,6 +474,11 @@
           </tb-rate-limits>
           <tb-rate-limits fxFlex formControlName="cassandraQueryTenantRateLimitsConfiguration"
                           [type]="rateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION">
+          </tb-rate-limits>
+        </div>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex="50" formControlName="tenantNotificationRequestsRateLimit"
+                          [type]="rateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT">
           </tb-rate-limits>
         </div>
       </ng-template>

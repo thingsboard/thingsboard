@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.msa.ui.pages;
 
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
@@ -30,7 +31,7 @@ public class CustomerPageHelper extends CustomerPageElements {
     private String country;
     private String dashboard;
     private String dashboardFromView;
-
+    private String description;
     private String customerEmail;
     private String customerCountry;
     private String customerCity;
@@ -63,12 +64,21 @@ public class CustomerPageHelper extends CustomerPageElements {
         this.dashboardFromView = editMenuDashboardField().getAttribute("value");
     }
 
+    public void setDescription() {
+        scrollToElement(descriptionEntityView());
+        this.description = descriptionEntityView().getAttribute("value");
+    }
+
     public String getDashboard() {
         return dashboard;
     }
 
     public String getDashboardFromView() {
         return dashboardFromView;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public void setCustomerEmail(String title) {
@@ -96,16 +106,15 @@ public class CustomerPageHelper extends CustomerPageElements {
     }
 
     public void changeTitleEditMenu(String newTitle) {
+        titleFieldEntityView().click();
         titleFieldEntityView().clear();
         wait.until(ExpectedConditions.textToBe(By.xpath(String.format(INPUT_FIELD, INPUT_FIELD_NAME_TITLE)), ""));
         titleFieldEntityView().sendKeys(newTitle);
     }
 
-    public void chooseDashboard() {
+    public void chooseDashboard(String dashboardName) {
         editMenuDashboardField().click();
-        sleep(0.5);
-        editMenuDashboard().click();
-        sleep(0.5);
+        editMenuDashboard(dashboardName).click();
     }
 
     public void createCustomersUser() {
@@ -132,6 +141,7 @@ public class CustomerPageHelper extends CustomerPageElements {
         assignedField().click();
         setDashboard();
         listOfEntity().get(0).click();
+        assignedField().sendKeys(Keys.ESCAPE);
         submitAssignedBtn().click();
     }
 
@@ -141,5 +151,14 @@ public class CustomerPageHelper extends CustomerPageElements {
 
     public void sortByNameDown() {
         doubleClick(sortByTitleBtn());
+    }
+
+    public void addCustomerViewEnterName(CharSequence keysToEnter) {
+        enterText(titleFieldAddEntityView(), keysToEnter);
+    }
+
+    public void enterPhoneNumber(String number) {
+        phoneNumberEntityView().sendKeys(number);
+        phoneNumberEntityView().sendKeys(Keys.TAB);
     }
 }

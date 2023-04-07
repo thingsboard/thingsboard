@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,20 +22,20 @@
   </mat-form-field>
   <mat-form-field fxFlex class="mat-block" floatLabel="always">
     <mat-label translate>widgets.gateway.events-filter</mat-label>
-    <mat-chip-list #chipList formControlName="eventsReg">
-      <mat-chip
+    <mat-chip-grid #chipList formControlName="eventsReg">
+      <mat-chip-row
         *ngFor="let eventFilter of gatewayEventsWidgetSettingsForm.get('eventsReg').value"
         [removable]="true"
         (removed)="removeEventFilter(eventFilter)">
         {{eventFilter}}
         <mat-icon matChipRemove>cancel</mat-icon>
-      </mat-chip>
+      </mat-chip-row>
       <input
         placeholder="{{ 'widgets.gateway.event-key-contains' | translate }}"
         [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
         [matChipInputFor]="chipList"
         matChipInputAddOnBlur
         (matChipInputTokenEnd)="addEventFilterFromInput($event)">
-    </mat-chip-list>
+    </mat-chip-grid>
   </mat-form-field>
 </section>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,23 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
+import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
+import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumber;
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_RULE_CHAIN_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
 
 public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
@@ -37,11 +41,9 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
     private RuleChainsPageHelper ruleChainsPage;
     private String ruleChainName;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
-        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
-        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
         ruleChainsPage = new RuleChainsPageHelper(driver);
     }
@@ -54,11 +56,13 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Change name by edit menu")
     public void changeName() {
-        String newRuleChainName = "Changed";
-        String ruleChainName = ENTITY_NAME;
+        String newRuleChainName = "Changed" + getRandomNumber();
+        String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
 
@@ -77,10 +81,12 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(newRuleChainName, nameAfter);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Delete name and save")
     public void deleteName() {
-        String ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
 
@@ -92,10 +98,12 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertFalse(ruleChainsPage.doneBtnEditViewVisible().isEnabled());
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Save only with space")
     public void saveOnlyWithSpace() {
-        String ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME +random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
 
@@ -110,37 +118,31 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(ruleChainsPage.warningMessage().getText(), EMPTY_RULE_CHAIN_MESSAGE);
     }
 
-    @Test(priority = 20, groups = "smoke")
-    @Description
-    public void editDescription() {
-        String ruleChainName = ENTITY_NAME;
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
-        this.ruleChainName = ruleChainName;
-        String description = "Description";
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
+    @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "editMenuDescription")
+    @Description("Write the description and save the changes/Change the description and save the changes/Delete the description and save the changes")
+    public void editDescription(String description, String newDescription, String finalDescription) {
+        String name = ENTITY_NAME + random();
+        testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(name, description));
+        ruleChainName = name;
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.detailsBtn(ruleChainName).click();
+        ruleChainsPage.detailsBtn(name).click();
         ruleChainsPage.editPencilBtn().click();
-        ruleChainsPage.descriptionEntityView().sendKeys(description);
+        ruleChainsPage.descriptionEntityView().sendKeys(newDescription);
         ruleChainsPage.doneBtnEditView().click();
-        String description1 = ruleChainsPage.descriptionEntityView().getAttribute("value");
-        ruleChainsPage.editPencilBtn().click();
-        ruleChainsPage.descriptionEntityView().sendKeys(description);
-        ruleChainsPage.doneBtnEditView().click();
-        String description2 = ruleChainsPage.descriptionEntityView().getAttribute("value");
-        ruleChainsPage.editPencilBtn().click();
-        ruleChainsPage.changeDescription("");
-        ruleChainsPage.doneBtnEditView().click();
+        ruleChainsPage.setDescription();
 
-        Assert.assertTrue(ruleChainsPage.descriptionEntityView().getAttribute("value").isEmpty());
-        Assert.assertEquals(description, description1);
-        Assert.assertEquals(description + description, description2);
+        Assert.assertEquals(ruleChainsPage.getDescription(), finalDescription);
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Edit rule chain")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Enable debug mode/Disable debug mode")
     public void debugMode() {
-        String ruleChainName = ENTITY_NAME;
+        String ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
         this.ruleChainName = ruleChainName;
 

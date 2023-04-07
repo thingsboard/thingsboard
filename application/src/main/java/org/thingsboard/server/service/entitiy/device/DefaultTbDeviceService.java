@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         try {
             Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(tenantId, deviceId, customerId));
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, customerId, savedDevice,
-                    actionType, user, true, deviceId.toString(), customerId.toString(), customer.getName());
+                    actionType, user, deviceId.toString(), customerId.toString(), customer.getName());
 
             return savedDevice;
         } catch (Exception e) {
@@ -137,7 +137,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             CustomerId customerId = customer.getId();
 
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, customerId, savedDevice,
-                    actionType, user, true, deviceId.toString(), customerId.toString(), customer.getName());
+                    actionType, user, deviceId.toString(), customerId.toString(), customer.getName());
 
             return savedDevice;
         } catch (Exception e) {
@@ -155,7 +155,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(tenantId, deviceId, publicCustomer.getId()));
 
             notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, deviceId, savedDevice.getCustomerId(), savedDevice,
-                    actionType, user, false, deviceId.toString(),
+                    actionType, user, deviceId.toString(),
                     publicCustomer.getId().toString(), publicCustomer.getName());
 
             return savedDevice;

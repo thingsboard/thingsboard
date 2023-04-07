@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -63,6 +63,15 @@
                   matTooltip="{{ 'filter.edit' | translate }}"
                   matTooltipPosition="above">
             <mat-icon>edit</mat-icon>
+          </button>
+          <button [disabled]="isLoading$ | async"
+                  mat-icon-button color="primary"
+                  style="min-width: 48px;"
+                  type="button"
+                  (click)="duplicateFilter($index)"
+                  matTooltip="{{ 'filter.duplicate-filter' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>content_copy</mat-icon>
           </button>
           <button [disabled]="isLoading$ | async"
                   mat-icon-button color="primary"

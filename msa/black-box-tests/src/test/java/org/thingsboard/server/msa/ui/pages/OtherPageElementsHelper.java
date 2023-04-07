@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,59 +49,35 @@ public class OtherPageElementsHelper extends OtherPageElements {
         }
     }
 
-    public void changeNameEditMenu(String newName) {
-        nameFieldEditMenu().sendKeys(Keys.CONTROL + "a" + Keys.BACK_SPACE);
-        nameFieldEditMenu().sendKeys(newName);
+    public void changeNameEditMenu(CharSequence keysToSend) {
+        nameFieldEditMenu().click();
+        nameFieldEditMenu().clear();
+        nameFieldEditMenu().sendKeys(keysToSend);
     }
 
     public void changeDescription(String newDescription) {
-        descriptionEntityView().sendKeys(Keys.CONTROL + "a" + Keys.BACK_SPACE);
+        descriptionEntityView().click();
+        descriptionEntityView().clear();
         descriptionEntityView().sendKeys(newDescription);
     }
 
     public String deleteRuleChainTrash(String entityName) {
-        String s = "";
-        if (deleteBtn(entityName) != null) {
-            deleteBtn(entityName).click();
-            warningPopUpYesBtn().click();
-            return entityName;
-        } else {
-            for (int i = 0; i < deleteBtns().size(); i++) {
-                if (deleteBtns().get(i).isEnabled()) {
-                    deleteBtns().get(i).click();
-                    warningPopUpYesBtn().click();
-                    if (elementIsNotPresent(getWarningMessage())) {
-                        s = driver.findElements(By.xpath(getDeleteBtns()
-                                + "/../../../mat-cell/following-sibling::mat-cell/following-sibling::mat-cell[contains(@class,'cdk-column-name')]/span")).get(i).getText();
-                        break;
-                    }
-                }
-            }
-            return s;
-        }
+        deleteBtn(entityName).click();
+        warningPopUpYesBtn().click();
+        return entityName;
     }
 
     public String deleteSelected(String entityName) {
-        String s = "";
-        if (deleteBtn(entityName) != null) {
-            checkBox(entityName).click();
-            deleteSelectedBtn().click();
-            warningPopUpYesBtn().click();
-            return entityName;
-        } else {
-            for (int i = 0; i < checkBoxes().size(); i++) {
-                if (checkBoxes().get(i).isDisplayed()) {
-                    s = driver.findElements(By.xpath(getCheckboxes() + "/../../mat-cell/following-sibling::mat-cell/following-sibling::mat-cell[contains(@class,'cdk-column-name')]/span")).get(i).getText();
-                    checkBox(s).click();
-                    deleteSelectedBtn().click();
-                    warningPopUpYesBtn().click();
-                    if (elementIsNotPresent(getWarningMessage())) {
-                        break;
-                    }
-                }
-            }
-            return s;
-        }
+        checkBox(entityName).click();
+        jsClick(deleteSelectedBtn());
+        warningPopUpYesBtn().click();
+        return entityName;
+    }
+
+    public void deleteSelected(int countOfCheckBoxes) {
+        clickOnCheckBoxes(countOfCheckBoxes);
+        jsClick(deleteSelectedBtn());
+        warningPopUpYesBtn().click();
     }
 
     public void searchEntity(String namePath) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public final class TbActorMailbox implements TbActorCtx {
             if (strategy.isStop() || (settings.getMaxActorInitAttempts() > 0 && attemptIdx > settings.getMaxActorInitAttempts())) {
                 log.info("[{}] Failed to init actor, attempt {}, going to stop attempts.", selfId, attempt, t);
                 stopReason = TbActorStopReason.INIT_FAILED;
-                destroy();
+                destroy(t.getCause());
             } else if (strategy.getRetryDelay() > 0) {
                 log.info("[{}] Failed to init actor, attempt {}, going to retry in attempts in {}ms", selfId, attempt, strategy.getRetryDelay());
                 log.debug("[{}] Error", selfId, t);
@@ -142,7 +142,7 @@ public final class TbActorMailbox implements TbActorCtx {
                     actor.process(msg);
                 } catch (TbRuleNodeUpdateException updateException) {
                     stopReason = TbActorStopReason.INIT_FAILED;
-                    destroy();
+                    destroy(updateException.getCause());
                 } catch (Throwable t) {
                     log.debug("[{}] Failed to process message: {}", selfId, msg, t);
                     ProcessFailureStrategy strategy = actor.onProcessFailure(t);
@@ -208,7 +208,7 @@ public final class TbActorMailbox implements TbActorCtx {
         }
     }
 
-    public void destroy() {
+    public void destroy(Throwable cause) {
         if (stopReason == null) {
             stopReason = TbActorStopReason.STOPPED;
         }
@@ -216,7 +216,7 @@ public final class TbActorMailbox implements TbActorCtx {
         dispatcher.getExecutor().execute(() -> {
             try {
                 ready.set(NOT_READY);
-                actor.destroy();
+                actor.destroy(stopReason, cause);
                 highPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
                 normalPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
             } catch (Throwable t) {

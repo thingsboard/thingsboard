@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,13 @@
       width: 100%;
       height: 100%;
       background: #fff;
+      overflow: hidden;
+
+      &.tb-outlined-border {
+        box-shadow: 0 0 0 0 rgb(0 0 0 / 20%), 0 0 0 0 rgb(0 0 0 / 14%), 0 0 0 0 rgb(0 0 0 / 12%);
+        border: solid 1px #e0e0e0;
+        border-radius: 4px;
+      }
 
       .tb-entity-table-title {
         padding-right: 20px;

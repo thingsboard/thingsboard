@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,11 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.resource.ResourceService;
@@ -124,6 +129,21 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     private AdminSettingsService adminSettingsService;
 
     @Autowired
+    private NotificationSettingsService notificationSettingsService;
+
+    @Autowired
+    private NotificationRequestService notificationRequestService;
+
+    @Autowired
+    private NotificationRuleService notificationRuleService;
+
+    @Autowired
+    private NotificationTemplateService notificationTemplateService;
+
+    @Autowired
+    private NotificationTargetService notificationTargetService;
+
+    @Autowired
     protected TbTransactionalCache<TenantId, Boolean> existsTenantCache;
 
     @TransactionalEventListener(classes = TenantEvictEvent.class)
@@ -175,6 +195,11 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
             assetProfileService.createDefaultAssetProfile(savedTenant.getId());
             apiUsageStateService.createDefaultApiUsageState(savedTenant.getId(), null);
+            try {
+                notificationSettingsService.createDefaultNotificationConfigs(savedTenant.getId());
+            } catch (Throwable e) {
+                log.error("Failed to create default notification configs for tenant {}", savedTenant.getId(), e);
+            }
         }
         return savedTenant;
     }
@@ -204,6 +229,10 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
         rpcService.deleteAllRpcByTenantId(tenantId);
         queueService.deleteQueuesByTenantId(tenantId);
+        notificationRequestService.deleteNotificationRequestsByTenantId(tenantId);
+        notificationRuleService.deleteNotificationRulesByTenantId(tenantId);
+        notificationTemplateService.deleteNotificationTemplatesByTenantId(tenantId);
+        notificationTargetService.deleteNotificationTargetsByTenantId(tenantId);
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));

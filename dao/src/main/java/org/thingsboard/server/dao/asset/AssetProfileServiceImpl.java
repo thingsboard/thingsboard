@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -293,7 +293,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
             };
 
     private AssetProfileInfo toAssetProfileInfo(AssetProfile profile) {
-        return profile == null ? null : new AssetProfileInfo(profile.getId(), profile.getName(), profile.getImage(),
+        return profile == null ? null : new AssetProfileInfo(profile.getId(), profile.getTenantId(), profile.getName(), profile.getImage(),
                 profile.getDefaultDashboardId());
     }
 

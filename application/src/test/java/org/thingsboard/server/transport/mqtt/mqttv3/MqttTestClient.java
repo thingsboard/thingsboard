@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class MqttTestClient {
 
     private static final String MQTT_URL = "tcp://localhost:1883";
     private static final int TIMEOUT = 30; // seconds
-    private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(TIMEOUT);
+    public static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(TIMEOUT);
 
     private final MqttAsyncClient client;
 

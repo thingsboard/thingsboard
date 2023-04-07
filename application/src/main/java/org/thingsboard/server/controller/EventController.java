@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,14 +248,10 @@ public class EventController extends BaseController {
                             @RequestBody EventFilter eventFilter) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-            checkEntityId(entityId, Operation.WRITE);
+        EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+        checkEntityId(entityId, Operation.WRITE);
 
-            eventService.removeEvents(getTenantId(), entityId, eventFilter, startTime, endTime);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        eventService.removeEvents(getTenantId(), entityId, eventFilter, startTime, endTime);
     }
 
     private static EventType resolveEventType(String eventType) throws ThingsboardException {

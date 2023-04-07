@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
@@ -25,9 +27,8 @@ import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
+import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustomerPrototype;
 
 public class DeleteCustomerTest extends AbstractDriverBaseTest {
@@ -36,20 +37,20 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
     private CustomerPageHelper customerPage;
     private RuleChainsPageHelper ruleChainsPage;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
-        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
-        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
         customerPage = new CustomerPageHelper(driver);
         ruleChainsPage = new RuleChainsPageHelper(driver);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove the customer by clicking on the trash icon in the right side of refresh")
     public void removeCustomerByRightSideBtn() {
-        String customer = ENTITY_NAME;
+        String customer = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customer));
 
         sideBarMenuView.customerBtn().click();
@@ -59,10 +60,12 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         Assert.assertTrue(customerPage.entityIsNotPresent(deletedCustomer));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove customer by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedCustomer() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
 
         sideBarMenuView.customerBtn().click();
@@ -72,25 +75,29 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedCustomer));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the customer by clicking on the 'Delete customer' btn in the entity view")
     public void removeFromCustomerView() {
-        String customerName = ENTITY_NAME;
+        String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
 
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        customerPage.customerViewDeleteBtn().click();
+        jsClick(customerPage.customerViewDeleteBtn());
         customerPage.warningPopUpYesBtn().click();
-        customerPage.refreshBtn().click();
+        jsClick(customerPage.refreshBtn());
 
         Assert.assertTrue(customerPage.entityIsNotPresent(customerName));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the customer by clicking on the trash icon in the right side of customer without refresh")
     public void removeCustomerByRightSideBtnWithoutRefresh() {
-        String customer = ENTITY_NAME;
+        String customer = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customer));
 
         sideBarMenuView.customerBtn().click();

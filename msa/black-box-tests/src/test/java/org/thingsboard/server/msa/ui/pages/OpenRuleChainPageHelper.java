@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
 public class OpenRuleChainPageHelper extends OpenRuleChainPageElements {
     public OpenRuleChainPageHelper(WebDriver driver) {
@@ -32,7 +33,7 @@ public class OpenRuleChainPageHelper extends OpenRuleChainPageElements {
         return headName;
     }
 
-    public void waitUntilDoneBtnDisable() {
-        waitUntilVisibilityOfElementLocated(getDoneBtnDisable());
+    public void waitUntilBtnDisable(WebElement element) {
+        waitUntilAttributeContains(element, "disabled", "true");
     }
 }

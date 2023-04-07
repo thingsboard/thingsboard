@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { ActionAuthUpdateUserDetails } from '@core/auth/auth.actions';
 import { environment as env } from '@env/environment';
@@ -39,7 +39,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 export class ProfileComponent extends PageComponent implements OnInit, HasConfirmForm {
 
   authorities = Authority;
-  profile: FormGroup;
+  profile: UntypedFormGroup;
   user: User;
   languageList = env.supportedLangs;
   private readonly authUser: AuthUser;
@@ -48,7 +48,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               private route: ActivatedRoute,
               private userService: UserService,
               private translate: TranslateService,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store);
     this.authUser = getCurrentAuthUser(this.store);
   }
@@ -63,6 +63,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
       email: ['', [Validators.required, Validators.email]],
       firstName: [''],
       lastName: [''],
+      phone: [''],
       language: [''],
       homeDashboardId: [null],
       homeDashboardHideToolbar: [true]
@@ -87,6 +88,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
             tenantId: user.tenantId,
             customerId: user.customerId,
             email: user.email,
+            phone: user.phone,
             firstName: user.firstName,
             id: user.id,
             lastName: user.lastName,
@@ -119,7 +121,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
     this.profile.get('homeDashboardHideToolbar').setValue(homeDashboardHideToolbar);
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.profile;
   }
 

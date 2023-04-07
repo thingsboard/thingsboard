@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 -->
 <div class="tb-login-content mat-app-background tb-dark" fxFlex fxLayoutAlign="center center">
-  <mat-card style="max-height: 80vh; overflow-y: auto;">
+  <mat-card appearance="raised" style="max-height: 80vh; overflow-y: auto;">
     <mat-card-content>
       <form class="tb-login-form" [formGroup]="loginFormGroup" (ngSubmit)="login()">
-        <fieldset [disabled]="isLoading$ | async" fxLayout="column">
+        <fieldset fxLayout="column">
           <div fxLayout="column" fxLayoutAlign="start center" style="padding: 15px 0;">
             <tb-logo class="login-logo"></tb-logo>
           </div>
@@ -41,7 +41,7 @@
                 <div class="line"><mat-divider></mat-divider></div>
               </div>
             </div>
-            <mat-form-field>
+            <mat-form-field class="tb-appearance-transparent">
               <mat-label translate>login.username</mat-label>
               <input id="username-input" matInput type="email" autofocus formControlName="username" email required/>
               <mat-icon matPrefix>email</mat-icon>
@@ -49,7 +49,7 @@
                 {{ 'user.invalid-email-format' | translate }}
               </mat-error>
             </mat-form-field>
-            <mat-form-field>
+            <mat-form-field class="tb-appearance-transparent">
               <mat-label translate>common.password</mat-label>
               <input id="password-input" matInput type="password" formControlName="password"/>
               <tb-toggle-password matSuffix></tb-toggle-password>

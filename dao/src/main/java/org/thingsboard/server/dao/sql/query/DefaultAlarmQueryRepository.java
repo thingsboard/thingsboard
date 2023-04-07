@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -35,14 +37,13 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -51,46 +52,44 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
     private static final Map<String, String> alarmFieldColumnMap = new HashMap<>();
 
+    private static final String ASSIGNEE_EMAIL_KEY = "assigneeEmail";
+    private static final String ASSIGNEE_LAST_NAME_KEY = "assigneeLastName";
+    private static final String ASSIGNEE_FIRST_NAME_KEY = "assigneeFirstName";
+    private static final String ASSIGNEE_ID_KEY = "assigneeId";
+    private static final String ASSIGNEE_KEY = "assignee";
+
     static {
         alarmFieldColumnMap.put("createdTime", ModelConstants.CREATED_TIME_PROPERTY);
         alarmFieldColumnMap.put("ackTs", ModelConstants.ALARM_ACK_TS_PROPERTY);
         alarmFieldColumnMap.put("ackTime", ModelConstants.ALARM_ACK_TS_PROPERTY);
         alarmFieldColumnMap.put("clearTs", ModelConstants.ALARM_CLEAR_TS_PROPERTY);
         alarmFieldColumnMap.put("clearTime", ModelConstants.ALARM_CLEAR_TS_PROPERTY);
+        alarmFieldColumnMap.put("assignTime", ModelConstants.ALARM_ASSIGN_TS_PROPERTY);
         alarmFieldColumnMap.put("details", ModelConstants.ADDITIONAL_INFO_PROPERTY);
         alarmFieldColumnMap.put("endTs", ModelConstants.ALARM_END_TS_PROPERTY);
         alarmFieldColumnMap.put("endTime", ModelConstants.ALARM_END_TS_PROPERTY);
         alarmFieldColumnMap.put("startTs", ModelConstants.ALARM_START_TS_PROPERTY);
         alarmFieldColumnMap.put("startTime", ModelConstants.ALARM_START_TS_PROPERTY);
-        alarmFieldColumnMap.put("status", ModelConstants.ALARM_STATUS_PROPERTY);
+        alarmFieldColumnMap.put("acknowledged", ModelConstants.ALARM_ACKNOWLEDGED_PROPERTY);
+        alarmFieldColumnMap.put("cleared", ModelConstants.ALARM_CLEARED_PROPERTY);
         alarmFieldColumnMap.put("type", ModelConstants.ALARM_TYPE_PROPERTY);
         alarmFieldColumnMap.put("severity", ModelConstants.ALARM_SEVERITY_PROPERTY);
         alarmFieldColumnMap.put("originatorId", ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);
         alarmFieldColumnMap.put("originatorType", ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY);
-        alarmFieldColumnMap.put("originator", "originator_name");
+        alarmFieldColumnMap.put(ASSIGNEE_ID_KEY, ModelConstants.ALARM_ASSIGNEE_ID_PROPERTY);
+        alarmFieldColumnMap.put("originator", ModelConstants.ALARM_ORIGINATOR_NAME_PROPERTY);
+        alarmFieldColumnMap.put("originatorLabel", ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);
+        alarmFieldColumnMap.put(ASSIGNEE_FIRST_NAME_KEY, ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY);
+        alarmFieldColumnMap.put(ASSIGNEE_LAST_NAME_KEY, ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY);
+        alarmFieldColumnMap.put(ASSIGNEE_EMAIL_KEY, ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY);
     }
-
-    private static final String SELECT_ORIGINATOR_NAME = " COALESCE(CASE" +
-            " WHEN a.originator_type = " + EntityType.TENANT.ordinal() +
-            " THEN (select title from tenant where id = a.originator_id)" +
-            " WHEN a.originator_type = " + EntityType.CUSTOMER.ordinal() +
-            " THEN (select title from customer where id = a.originator_id)" +
-            " WHEN a.originator_type = " + EntityType.USER.ordinal() +
-            " THEN (select email from tb_user where id = a.originator_id)" +
-            " WHEN a.originator_type = " + EntityType.DASHBOARD.ordinal() +
-            " THEN (select title from dashboard where id = a.originator_id)" +
-            " WHEN a.originator_type = " + EntityType.ASSET.ordinal() +
-            " THEN (select name from asset where id = a.originator_id)" +
-            " WHEN a.originator_type = " + EntityType.DEVICE.ordinal() +
-            " THEN (select name from device where id = a.originator_id)" +
-            " WHEN a.originator_type = " + EntityType.ENTITY_VIEW.ordinal() +
-            " THEN (select name from entity_view where id = a.originator_id)" +
-            " END, 'Deleted') as originator_name";
 
     private static final String FIELDS_SELECTION = "select a.id as id," +
             " a.created_time as created_time," +
             " a.ack_ts as ack_ts," +
             " a.clear_ts as clear_ts," +
+            " a.assign_ts as assign_ts," +
+            " a.assignee_id as assignee_id," +
             " a.additional_info as additional_info," +
             " a.end_ts as end_ts," +
             " a.originator_id as originator_id," +
@@ -100,13 +99,19 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.propagate_to_tenant as propagate_to_tenant," +
             " a.severity as severity," +
             " a.start_ts as start_ts," +
-            " a.status as status, " +
             " a.tenant_id as tenant_id, " +
             " a.customer_id as customer_id, " +
             " a.propagate_relation_types as propagate_relation_types, " +
-            " a.type as type," + SELECT_ORIGINATOR_NAME + ", ";
+            " a.type as type, " +
+            " a.originator_name as originator_name, " +
+            " a.originator_label as originator_label, " +
+            " a.assignee_first_name as assignee_first_name, " +
+            " a.assignee_last_name as assignee_last_name, " +
+            " a.assignee_email as assignee_email, " +
+            " a.cleared as cleared, " +
+            " a.acknowledged as acknowledged, ";
 
-    private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id";
+    private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id ";
 
     protected final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -121,12 +126,12 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
     @Override
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
-        return transactionTemplate.execute(status -> {
+        return transactionTemplate.execute(trStatus -> {
             AlarmDataPageLink pageLink = query.getPageLink();
             QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
             ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
-            StringBuilder fromPart = new StringBuilder(" from alarm a ");
+            StringBuilder fromPart = new StringBuilder(" from alarm_info a ");
             StringBuilder wherePart = new StringBuilder(" where ");
             StringBuilder sortPart = new StringBuilder(" order by ");
             StringBuilder joinPart = new StringBuilder();
@@ -140,9 +145,29 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 selectPart.append(" a.originator_id as entity_id ");
             }
             EntityDataSortOrder sortOrder = pageLink.getSortOrder();
-            String textSearchQuery = buildTextSearchQuery(ctx, query.getAlarmFields(), pageLink.getTextSearch());
+
+            if (sortOrder != null && EntityKeyType.ALARM_FIELD.equals(sortOrder.getKey().getType()) && ASSIGNEE_KEY.equalsIgnoreCase(sortOrder.getKey().getKey())) {
+                sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_EMAIL_KEY), sortOrder.getDirection());
+            }
+
+            List<EntityKey> alarmFields = new ArrayList<>();
+            for (EntityKey key : query.getAlarmFields()) {
+                if (EntityKeyType.ALARM_FIELD.equals(key.getType()) && ASSIGNEE_KEY.equalsIgnoreCase(key.getKey())) {
+                    alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_ID_KEY));
+                    alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_FIRST_NAME_KEY));
+                    alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_LAST_NAME_KEY));
+                    alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, ASSIGNEE_EMAIL_KEY));
+                } else {
+                    alarmFields.add(key);
+                }
+            }
+
+            String textSearchQuery = buildTextSearchQuery(ctx, alarmFields, pageLink.getTextSearch());
             if (sortOrder != null && sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
                 String sortOrderKey = sortOrder.getKey().getKey();
+                if ("status".equalsIgnoreCase(sortOrderKey)) {
+                    selectPart.append(", a.status as status ");
+                }
                 sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
                         .append(" ").append(sortOrder.getDirection().name());
                 if (pageLink.isSearchPropagatedAlarms()) {
@@ -225,14 +250,27 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 wherePart.append("a.severity in (:alarmSeverities)");
             }
 
-            if (pageLink.getStatusList() != null && !pageLink.getStatusList().isEmpty()) {
-                Set<AlarmStatus> statusSet = toStatusSet(pageLink.getStatusList());
-                if (!statusSet.isEmpty()) {
+            AlarmStatusFilter asf = AlarmStatusFilter.from(pageLink.getStatusList());
+            if (asf.hasAnyFilter()) {
+                if (asf.hasAckFilter()) {
                     addAndIfNeeded(wherePart, addAnd);
                     addAnd = true;
-                    ctx.addStringListParameter("alarmStatuses", statusSet.stream().map(AlarmStatus::name).collect(Collectors.toList()));
-                    wherePart.append(" a.status in (:alarmStatuses)");
+                    ctx.addBooleanParameter("ackStatus", asf.getAckFilter());
+                    wherePart.append(" a.acknowledged = :ackStatus");
                 }
+                if (asf.hasClearFilter()) {
+                    addAndIfNeeded(wherePart, addAnd);
+                    // addAnd = true; // not needed but stored as an example if someone adds new conditions
+                    ctx.addBooleanParameter("clearStatus", asf.getClearFilter());
+                    wherePart.append(" a.cleared = :clearStatus");
+                }
+            }
+
+            if (pageLink.getAssigneeId() != null) {
+                addAndIfNeeded(wherePart, addAnd);
+                addAnd = true;
+                ctx.addUuidParameter("assigneeId", pageLink.getAssigneeId().getId());
+                wherePart.append(" a.assignee_id = :assigneeId");
             }
 
             String mainQuery = String.format("%s%s", selectPart, fromPart);
@@ -270,6 +308,95 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         });
     }
 
+    @Override
+    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
+        QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
+
+        ctx.append("select count(id) from alarm_info a ");
+
+        if (query.isSearchPropagatedAlarms()) {
+            ctx.append(JOIN_ENTITY_ALARMS);
+            ctx.append("where a.tenant_id = :tenantId and ea.tenant_id = :tenantId");
+            ctx.addUuidParameter("tenantId", tenantId.getId());
+            if (customerId != null && !customerId.isNullUid()) {
+                ctx.append(" and a.customer_id = :customerId and ea.customer_id = :customerId");
+                ctx.addUuidParameter("customerId", customerId.getId());
+            }
+        } else {
+            ctx.append("where a.tenant_id = :tenantId");
+            ctx.addUuidParameter("tenantId", tenantId.getId());
+            if (customerId != null && !customerId.isNullUid()) {
+                ctx.append(" and a.customer_id = :customerId");
+                ctx.addUuidParameter("customerId", customerId.getId());
+            }
+        }
+
+        long startTs;
+        long endTs;
+        if (query.getTimeWindow() > 0) {
+            endTs = System.currentTimeMillis();
+            startTs = endTs - query.getTimeWindow();
+        } else {
+            startTs = query.getStartTs();
+            endTs = query.getEndTs();
+        }
+
+        if (startTs > 0) {
+            ctx.append(" and a.created_time >= :startTime");
+            ctx.addLongParameter("startTime", startTs);
+            if (query.isSearchPropagatedAlarms()) {
+                ctx.append(" and ea.created_time >= :startTime");
+            }
+        }
+
+        if (endTs > 0) {
+            ctx.append(" and a.created_time <= :endTime");
+            ctx.addLongParameter("endTime", endTs);
+            if (query.isSearchPropagatedAlarms()) {
+                ctx.append(" and ea.created_time <= :endTime");
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(query.getTypeList())) {
+            ctx.append(" and a.type in (:alarmTypes)");
+            ctx.addStringListParameter("alarmTypes", query.getTypeList());
+            if (query.isSearchPropagatedAlarms()) {
+                ctx.append(" and ea.alarm_type in (:alarmTypes)");
+            }
+        }
+
+        if (query.getSeverityList() != null && !query.getSeverityList().isEmpty()) {
+            ctx.append(" and a.severity in (:alarmSeverities)");
+            ctx.addStringListParameter("alarmSeverities", query.getSeverityList().stream().map(AlarmSeverity::name).collect(Collectors.toList()));
+        }
+
+        AlarmStatusFilter asf = AlarmStatusFilter.from(query.getStatusList());
+        if (asf.hasAnyFilter()) {
+            if (asf.hasAckFilter()) {
+                ctx.append(" and a.acknowledged = :ackStatus");
+                ctx.addBooleanParameter("ackStatus", asf.getAckFilter());
+            }
+            if (asf.hasClearFilter()) {
+                ctx.append(" and a.cleared = :clearStatus");
+                ctx.addBooleanParameter("clearStatus", asf.getClearFilter());
+            }
+        }
+
+        if (query.getAssigneeId() != null) {
+            ctx.addUuidParameter("assigneeId", query.getAssigneeId().getId());
+            ctx.append(" and a.assignee_id = :assigneeId");
+        }
+
+        return transactionTemplate.execute(trStatus -> {
+            long queryTs = System.currentTimeMillis();
+            try {
+                return jdbcTemplate.queryForObject(ctx.getQuery(), ctx, Long.class);
+            } finally {
+                queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - queryTs);
+            }
+        });
+    }
+
     private String buildTextSearchQuery(QueryContext ctx, List<EntityKey> selectionMapping, String searchText) {
         if (!StringUtils.isEmpty(searchText) && selectionMapping != null && !selectionMapping.isEmpty()) {
             String lowerSearchText = searchText.toLowerCase() + "%";
@@ -293,37 +420,6 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
         permissionsQuery.append(" a.tenant_id = :permissions_tenant_id and ea.tenant_id = :permissions_tenant_id ");
         return permissionsQuery.toString();
-    }
-
-    private Set<AlarmStatus> toStatusSet(List<AlarmSearchStatus> statusList) {
-        Set<AlarmStatus> result = new HashSet<>();
-        for (AlarmSearchStatus searchStatus : statusList) {
-            switch (searchStatus) {
-                case ACK:
-                    result.add(AlarmStatus.ACTIVE_ACK);
-                    result.add(AlarmStatus.CLEARED_ACK);
-                    break;
-                case UNACK:
-                    result.add(AlarmStatus.ACTIVE_UNACK);
-                    result.add(AlarmStatus.CLEARED_UNACK);
-                    break;
-                case CLEARED:
-                    result.add(AlarmStatus.CLEARED_ACK);
-                    result.add(AlarmStatus.CLEARED_UNACK);
-                    break;
-                case ACTIVE:
-                    result.add(AlarmStatus.ACTIVE_ACK);
-                    result.add(AlarmStatus.ACTIVE_UNACK);
-                    break;
-                default:
-                    break;
-            }
-            if (searchStatus == AlarmSearchStatus.ANY || result.size() == AlarmStatus.values().length) {
-                result.clear();
-                return result;
-            }
-        }
-        return result;
     }
 
     private void addAndIfNeeded(StringBuilder wherePart, boolean addAnd) {

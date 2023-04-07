@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.StringUtils;
@@ -30,6 +30,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -40,23 +42,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseAssetServiceTest extends AbstractServiceTest {
 
+    @Autowired
+    AssetService assetService;
+    @Autowired
+    CustomerService customerService;
+
     private IdComparator<Asset> idComparator = new IdComparator<>();
-
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
 
     @Test
     public void testSaveAsset() {
@@ -83,63 +74,73 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         assetService.deleteAsset(tenantId, savedAsset.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveAssetWithEmptyName() {
         Asset asset = new Asset();
         asset.setTenantId(tenantId);
         asset.setType("default");
-        assetService.saveAsset(asset);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            assetService.saveAsset(asset);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveAssetWithEmptyTenant() {
         Asset asset = new Asset();
         asset.setName("My asset");
         asset.setType("default");
-        assetService.saveAsset(asset);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            assetService.saveAsset(asset);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveAssetWithInvalidTenant() {
         Asset asset = new Asset();
         asset.setName("My asset");
         asset.setType("default");
         asset.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
-        assetService.saveAsset(asset);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            assetService.saveAsset(asset);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testAssignAssetToNonExistentCustomer() {
         Asset asset = new Asset();
         asset.setName("My asset");
         asset.setType("default");
         asset.setTenantId(tenantId);
-        asset = assetService.saveAsset(asset);
+        Asset savedAsset = assetService.saveAsset(asset);
         try {
-            assetService.assignAssetToCustomer(tenantId, asset.getId(), new CustomerId(Uuids.timeBased()));
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                assetService.assignAssetToCustomer(tenantId, savedAsset.getId(), new CustomerId(Uuids.timeBased()));
+            });
         } finally {
-            assetService.deleteAsset(tenantId, asset.getId());
+            assetService.deleteAsset(tenantId, savedAsset.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testAssignAssetToCustomerFromDifferentTenant() {
         Asset asset = new Asset();
         asset.setName("My asset");
         asset.setType("default");
         asset.setTenantId(tenantId);
-        asset = assetService.saveAsset(asset);
+        Asset savedAsset = assetService.saveAsset(asset);
         Tenant tenant = new Tenant();
         tenant.setTitle("Test different tenant");
         tenant = tenantService.saveTenant(tenant);
         Customer customer = new Customer();
         customer.setTenantId(tenant.getId());
         customer.setTitle("Test different customer");
-        customer = customerService.saveCustomer(customer);
+        Customer savedCustomer = customerService.saveCustomer(customer);
         try {
-            assetService.assignAssetToCustomer(tenantId, asset.getId(), customer.getId());
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                assetService.assignAssetToCustomer(tenantId, savedAsset.getId(), savedCustomer.getId());
+            });
         } finally {
-            assetService.deleteAsset(tenantId, asset.getId());
+            assetService.deleteAsset(tenantId, savedAsset.getId());
             tenantService.deleteTenant(tenant.getId());
         }
     }
@@ -209,12 +210,6 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAssetsByTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         List<Asset> assets = new ArrayList<>();
         for (int i=0;i<178;i++) {
             Asset asset = new Asset();
@@ -246,8 +241,6 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         pageData = assetService.findAssetsByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -408,12 +401,6 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAssetsByTenantIdAndCustomerId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
-
         Customer customer = new Customer();
         customer.setTitle("Test customer");
         customer.setTenantId(tenantId);
@@ -452,8 +439,6 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         pageData = assetService.findAssetInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,12 +36,19 @@ import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseQueueServiceTest extends AbstractServiceTest {
+
+    @Autowired
+    TenantProfileService tenantProfileService;
+    @Autowired
+    QueueService queueService;
 
     private IdComparator<Queue> idComparator = new IdComparator<>();
 
@@ -54,8 +64,8 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         tenantProfile.setIsolatedTbRuleEngine(true);
 
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
-        mainQueueConfiguration.setName("Main");
-        mainQueueConfiguration.setTopic("tb_rule_engine.main");
+        mainQueueConfiguration.setName(DataConstants.MAIN_QUEUE_NAME);
+        mainQueueConfiguration.setTopic(DataConstants.MAIN_QUEUE_TOPIC);
         mainQueueConfiguration.setPollInterval(25);
         mainQueueConfiguration.setPartitions(10);
         mainQueueConfiguration.setConsumerPerPartition(true);
@@ -81,7 +91,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        tenant.setTenantProfileId(tenantProfileId);
+        tenant.setTenantProfileId(tenantProfileId); //custom profile
         Tenant savedTenant = tenantService.saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();
@@ -138,7 +148,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queueService.deleteQueue(tenantId, foundQueue.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptyName() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -148,10 +158,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setPackProcessingTimeout(2000);
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithInvalidName() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -162,10 +174,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setPackProcessingTimeout(2000);
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptyTopic() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -175,10 +189,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setPackProcessingTimeout(2000);
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithInvalidTopic() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -189,10 +205,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setPackProcessingTimeout(2000);
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptyPollInterval() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -202,10 +220,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setPackProcessingTimeout(2000);
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptyPartitions() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -215,10 +235,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setPackProcessingTimeout(2000);
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptyPackProcessingTimeout() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -228,10 +250,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setPartitions(1);
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptySubmitStrategy() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -241,10 +265,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setPartitions(1);
         queue.setPackProcessingTimeout(2000);
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptyProcessingStrategy() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -254,10 +280,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setPartitions(1);
         queue.setPackProcessingTimeout(2000);
         queue.setSubmitStrategy(createTestSubmitStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptySubmitStrategyType() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -269,10 +297,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.getSubmitStrategy().setType(null);
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptySubmitStrategyBatchSize() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -285,10 +315,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.getSubmitStrategy().setType(SubmitStrategyType.BATCH);
         queue.getSubmitStrategy().setBatchSize(0);
         queue.setProcessingStrategy(createTestProcessingStrategy());
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithEmptyProcessingStrategyType() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -300,10 +332,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
         queue.getProcessingStrategy().setType(null);
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithNegativeProcessingStrategyRetries() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -315,10 +349,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
         queue.getProcessingStrategy().setRetries(-1);
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithNegativeProcessingStrategyFailurePercentage() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -330,10 +366,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
         queue.getProcessingStrategy().setFailurePercentage(-1);
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithNegativeProcessingStrategyPauseBetweenRetries() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -345,10 +383,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
         queue.getProcessingStrategy().setPauseBetweenRetries(-1);
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithProcessingStrategyPauseBetweenRetriesBiggerThenMaxPauseBetweenRetries() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
@@ -360,10 +400,12 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
         queue.getProcessingStrategy().setPauseBetweenRetries(100);
-        queueService.saveQueue(queue);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            queueService.saveQueue(queue);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveQueueWithNotIsolatedTenant() {
         Tenant tenant = new Tenant();
         tenant.setTitle("Not isolated tenant");
@@ -380,7 +422,9 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
         queue.setSubmitStrategy(createTestSubmitStrategy());
         queue.setProcessingStrategy(createTestProcessingStrategy());
         try {
-            queueService.saveQueue(queue);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                queueService.saveQueue(queue);
+            });
         } finally {
             tenantService.deleteTenant(savedTenant.getId());
         }
@@ -495,7 +539,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
         for (int i = 0; i < loadedQueues.size(); i++) {
             Queue queue = loadedQueues.get(i);
-            if (queue.getName().equals("Main")) {
+            if (queue.getName().equals(DataConstants.MAIN_QUEUE_NAME)) {
                 loadedQueues.remove(queue);
                 break;
             }

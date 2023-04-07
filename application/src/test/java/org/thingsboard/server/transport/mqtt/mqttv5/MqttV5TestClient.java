@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,9 @@ public class MqttV5TestClient { // We should copy part of MqttV3TestClient, due 
         if (client == null) {
             throw new RuntimeException("Failed to connect! MqttAsyncClient is not initialized!");
         }
-        return client.connect(options);
+        IMqttToken connect = client.connect(options);
+        connect.waitForCompletion(TIMEOUT_MS);
+        return connect;
     }
 
     public void disconnectAndWait() throws MqttException {

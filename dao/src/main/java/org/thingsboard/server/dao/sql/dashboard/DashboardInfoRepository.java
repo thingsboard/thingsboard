@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,4 +72,6 @@ public interface DashboardInfoRepository extends JpaRepository<DashboardInfoEnti
                                                       @Param("searchText") String searchText,
                                                       Pageable pageable);
 
+    @Query("SELECT di.title FROM DashboardInfoEntity di WHERE di.tenantId = :tenantId AND di.id = :dashboardId")
+    String findTitleByTenantIdAndId(@Param("tenantId") UUID tenantId, @Param("dashboardId") UUID dashboardId);
 }

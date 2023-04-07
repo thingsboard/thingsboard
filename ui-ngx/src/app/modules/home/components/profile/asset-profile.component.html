@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -69,14 +69,20 @@
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
       <tb-dashboard-autocomplete
-        placeholder="{{'asset-profile.mobile-dashboard' | translate}}"
+        label="{{'asset-profile.mobile-dashboard' | translate}}"
         formControlName="defaultDashboardId">
-        <div tb-hint>{{'asset-profile.mobile-dashboard-hint' | translate}}</div>
+        <span tb-hint>{{'asset-profile.mobile-dashboard-hint' | translate}}</span>
       </tb-dashboard-autocomplete>
       <tb-queue-autocomplete
         [queueType]="serviceType"
         formControlName="defaultQueueName">
       </tb-queue-autocomplete>
+      <tb-rule-chain-autocomplete
+        labelText="asset-profile.default-edge-rule-chain"
+        formControlName="defaultEdgeRuleChainId"
+        [ruleChainType]="edgeRuleChainType">
+        <span tb-hint>{{'asset-profile.default-edge-rule-chain-hint' | translate}}</span>
+      </tb-rule-chain-autocomplete>
       <tb-image-input fxFlex
                       label="{{'asset-profile.image' | translate}}"
                       maxSizeByte="524288"

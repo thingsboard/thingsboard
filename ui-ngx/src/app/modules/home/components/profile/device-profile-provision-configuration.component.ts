@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -57,7 +57,7 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class DeviceProfileProvisionConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 
-  provisionConfigurationFormGroup: FormGroup;
+  provisionConfigurationFormGroup: UntypedFormGroup;
 
   deviceProvisionType = DeviceProvisionType;
   deviceProvisionTypes = Object.keys(DeviceProvisionType);
@@ -78,7 +78,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
   private propagateChange = (v: any) => { };
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private translate: TranslateService) {
   }
 
@@ -140,7 +140,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
     }
   }
 
-  validate(c: FormControl): ValidationErrors | null {
+  validate(c: UntypedFormControl): ValidationErrors | null {
     return (this.provisionConfigurationFormGroup.valid) ? null : {
       provisionConfiguration: {
         valid: false,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package org.thingsboard.server.dao.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -118,5 +118,4 @@ public interface DeviceService extends EntityDaoService {
 
     PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
 
-    long countByTenantId(TenantId tenantId);
 }

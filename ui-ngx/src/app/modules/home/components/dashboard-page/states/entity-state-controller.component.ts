@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -195,11 +195,14 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
     }
   }
 
-  public navigatePrevState(index: number): void {
+  public navigatePrevState(index: number, params?: StateParams): void {
     if (index < this.stateObject.length - 1) {
       this.stateObject.splice(index + 1, this.stateObject.length - index - 1);
       this.selectedStateIndex = this.stateObject.length - 1;
-      this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
+      if (params) {
+        this.stateObject[this.selectedStateIndex].params = params;
+      }
+      this.gotoState(this.stateObject[this.selectedStateIndex].id, true);
     }
   }
 

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,8 +37,7 @@
       <form [formGroup]="emailConfigForm" (ngSubmit)="nextStep()">
         <p class="mat-body step-description input" translate>security.2fa.dialog.email-step-description</p>
         <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="8px">
-          <mat-form-field fxFlex class="mat-block input-container" hideRequiredMarker floatLabel="always">
-            <mat-label></mat-label>
+          <mat-form-field fxFlex class="mat-block input-container">
             <input matInput formControlName="email"
                    type="email" required
                    placeholder="{{ 'security.2fa.dialog.email-step-label' | translate }}" />
@@ -65,8 +64,7 @@
           {{ 'security.2fa.dialog.verification-step-description' | translate : {address: emailConfigForm.get('email').value} }}
         </p>
         <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="space-between center" fxLayoutAlign.xs="start end">
-          <mat-form-field fxFlex class="mat-block code-container full-width-xs" hideRequiredMarker floatLabel="always">
-            <mat-label></mat-label>
+          <mat-form-field fxFlex class="mat-block code-container full-width-xs">
             <input matInput formControlName="verificationCode"
                    maxlength="6" type="text" required
                    inputmode="numeric" pattern="[0-9]*"

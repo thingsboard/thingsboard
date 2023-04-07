@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasEmail;
+import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTitle;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -34,6 +39,7 @@ import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
@@ -77,35 +83,67 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Override
     public Optional<String> fetchEntityName(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityName [{}]", entityId);
-        EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
-        Optional<HasId<?>> hasIdOpt = entityDaoService.findEntity(tenantId, entityId);
-        if (hasIdOpt.isPresent()) {
-            HasId<?> hasId = hasIdOpt.get();
-            if (hasId instanceof HasName) {
-                HasName hasName = (HasName) hasId;
-                return Optional.ofNullable(hasName.getName());
-            }
-        }
-        return Optional.empty();
+        return fetchAndConvert(tenantId, entityId, this::getName);
+    }
+
+    @Override
+    public Optional<String> fetchEntityLabel(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing fetchEntityLabel [{}]", entityId);
+        return fetchAndConvert(tenantId, entityId, this::getLabel);
     }
 
     @Override
     public Optional<CustomerId> fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchEntityCustomerId [{}]", entityId);
+        return fetchAndConvert(tenantId, entityId, this::getCustomerId);
+    }
+
+    @Override
+    public Optional<NameLabelAndCustomerDetails> fetchNameLabelAndCustomerDetails(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing fetchNameLabelAndCustomerDetails [{}]", entityId);
+        return fetchAndConvert(tenantId, entityId, this::getNameLabelAndCustomerDetails);
+    }
+
+    private <T> Optional<T> fetchAndConvert(TenantId tenantId, EntityId entityId, Function<HasId<?>, T> converter) {
         EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
-        Optional<HasId<?>> hasIdOpt = entityDaoService.findEntity(tenantId, entityId);
-        if (hasIdOpt.isPresent()) {
-            HasId<?> hasId = hasIdOpt.get();
-            if (hasId instanceof HasCustomerId) {
-                HasCustomerId hasCustomerId = (HasCustomerId) hasId;
-                CustomerId customerId = hasCustomerId.getCustomerId();
-                if (customerId == null) {
-                    customerId = NULL_CUSTOMER_ID;
-                }
-                return Optional.of(customerId);
-            }
+        Optional<HasId<?>> entityOpt = entityDaoService.findEntity(tenantId, entityId);
+        return entityOpt.map(converter);
+    }
+
+    private String getName(HasId<?> entity) {
+        return entity instanceof HasName ? ((HasName) entity).getName() : null;
+    }
+
+    private String getLabel(HasId<?> entity) {
+        if (entity instanceof HasTitle && StringUtils.isNotEmpty(((HasTitle) entity).getTitle())) {
+            return ((HasTitle) entity).getTitle();
         }
-        return Optional.of(NULL_CUSTOMER_ID);
+        if (entity instanceof HasLabel && StringUtils.isNotEmpty(((HasLabel) entity).getLabel())) {
+            return ((HasLabel) entity).getLabel();
+        }
+        if (entity instanceof HasEmail && StringUtils.isNotEmpty(((HasEmail) entity).getEmail())) {
+            return ((HasEmail) entity).getEmail();
+        }
+        if (entity instanceof HasName && StringUtils.isNotEmpty(((HasName) entity).getName())) {
+            return ((HasName) entity).getName();
+        }
+        return null;
+    }
+
+    private CustomerId getCustomerId(HasId<?> entity) {
+        if (entity instanceof HasCustomerId) {
+            HasCustomerId hasCustomerId = (HasCustomerId) entity;
+            CustomerId customerId = hasCustomerId.getCustomerId();
+            if (customerId == null) {
+                customerId = NULL_CUSTOMER_ID;
+            }
+            return customerId;
+        }
+        return NULL_CUSTOMER_ID;
+    }
+
+    private NameLabelAndCustomerDetails getNameLabelAndCustomerDetails(HasId<?> entity) {
+        return new NameLabelAndCustomerDetails(getName(entity), getLabel(entity), getCustomerId(entity));
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {
@@ -126,7 +164,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     private static void validateRelationQuery(RelationsQueryFilter queryFilter) {
-        if (queryFilter.isMultiRoot() && queryFilter.getMultiRootEntitiesType() ==null){
+        if (queryFilter.isMultiRoot() && queryFilter.getMultiRootEntitiesType() == null) {
             throw new IncorrectParameterException("Multi-root relation query filter should contain 'multiRootEntitiesType'");
         }
         if (queryFilter.isMultiRoot() && CollectionUtils.isEmpty(queryFilter.getMultiRootEntityIds())) {

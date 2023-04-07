@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TimeInterval, TimeService } from '@core/services/time.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { coerceNumberProperty } from '@angular/cdk/coercion';
+import { SubscriptSizing } from '@angular/material/form-field';
+import { coerceBoolean } from '@shared/decorators/coerce-boolean';
 
 @Component({
   selector: 'tb-timeinterval',
@@ -38,8 +40,9 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   set min(min: number) {
-    if (typeof min !== 'undefined' && min !== this.minValue) {
-      this.minValue = min;
+    const minValueData = coerceNumberProperty(min);
+    if (typeof minValueData !== 'undefined' && minValueData !== this.minValue) {
+      this.minValue = minValueData;
       this.maxValue = Math.max(this.maxValue, this.minValue);
       this.updateView();
     }
@@ -47,8 +50,9 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   set max(max: number) {
-    if (typeof max !== 'undefined' && max !== this.maxValue) {
-      this.maxValue = max;
+    const maxValueData = coerceNumberProperty(max);
+    if (typeof maxValueData !== 'undefined' && maxValueData !== this.maxValue) {
+      this.maxValue = maxValueData;
       this.minValue = Math.min(this.minValue, this.maxValue);
       this.updateView();
     }
@@ -56,31 +60,26 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   @Input() predefinedName: string;
 
-  isEditValue = false;
-
   @Input()
-  set isEdit(val) {
-    this.isEditValue = coerceBooleanProperty(val);
-  }
-
-  get isEdit() {
-    return this.isEditValue;
-  }
+  @coerceBoolean()
+  isEdit = false;
 
   hideFlagValue = false;
 
   @Input()
-  get hideFlag() {
-    return this.hideFlagValue;
-  }
+  @coerceBoolean()
+  hideFlag = false;
 
-  set hideFlag(val) {
-    this.hideFlagValue = val;
-  }
+  @Input()
+  @coerceBoolean()
+  disabledAdvanced = false;
 
   @Output() hideFlagChange = new EventEmitter<boolean>();
 
   @Input() disabled: boolean;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   days = 0;
   hours = 0;

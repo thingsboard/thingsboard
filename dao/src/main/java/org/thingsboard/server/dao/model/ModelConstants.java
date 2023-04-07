@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,10 @@ public class ModelConstants {
     public static final String USER_ID_PROPERTY = "user_id";
     public static final String TENANT_ID_PROPERTY = "tenant_id";
     public static final String CUSTOMER_ID_PROPERTY = "customer_id";
+    public static final String ASSIGNEE_ID_PROPERTY = "assignee_id";
     public static final String DEVICE_ID_PROPERTY = "device_id";
     public static final String TITLE_PROPERTY = "title";
+    public static final String NAME_PROPERTY = "name";
     public static final String ALIAS_PROPERTY = "alias";
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
@@ -81,10 +83,19 @@ public class ModelConstants {
     public static final String USER_CREDENTIALS_PASSWORD_PROPERTY = "password"; //NOSONAR, the constant used to identify password column name (not password value itself)
     public static final String USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY = "activate_token";
     public static final String USER_CREDENTIALS_RESET_TOKEN_PROPERTY = "reset_token";
+    public static final String USER_CREDENTIALS_ADDITIONAL_PROPERTY = "additional_info";
 
     public static final String USER_CREDENTIALS_BY_USER_COLUMN_FAMILY_NAME = "user_credentials_by_user";
     public static final String USER_CREDENTIALS_BY_ACTIVATE_TOKEN_COLUMN_FAMILY_NAME = "user_credentials_by_activate_token";
     public static final String USER_CREDENTIALS_BY_RESET_TOKEN_COLUMN_FAMILY_NAME = "user_credentials_by_reset_token";
+
+    /**
+     * User settings constants.
+     */
+    public static final String USER_SETTINGS_COLUMN_FAMILY_NAME = "user_settings";
+    public static final String USER_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
+    public static final String USER_SETTINGS_TYPE_PROPERTY = "type";
+    public static final String USER_SETTINGS_SETTINGS = "settings";
 
     /**
      * Cassandra admin_settings constants.
@@ -185,6 +196,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
     public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
     public static final String DEVICE_PROFILE_SOFTWARE_ID_PROPERTY = "software_id";
+    public static final String DEVICE_PROFILE_DEFAULT_EDGE_RULE_CHAIN_ID_PROPERTY = "default_edge_rule_chain_id";
 
     /**
      * Asset profile constants.
@@ -198,6 +210,7 @@ public class ModelConstants {
     public static final String ASSET_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
     public static final String ASSET_PROFILE_DEFAULT_DASHBOARD_ID_PROPERTY = "default_dashboard_id";
     public static final String ASSET_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
+    public static final String ASSET_PROFILE_DEFAULT_EDGE_RULE_CHAIN_ID_PROPERTY = "default_edge_rule_chain_id";
 
     /**
      * Cassandra entityView constants.
@@ -277,25 +290,44 @@ public class ModelConstants {
      */
     public static final String ENTITY_ALARM_COLUMN_FAMILY_NAME = "entity_alarm";
     public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
+    public static final String ALARM_VIEW_NAME = "alarm_info";
     public static final String ALARM_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ALARM_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ALARM_TYPE_PROPERTY = "type";
-    public static final String ALARM_DETAILS_PROPERTY = "details";
+    public static final String ALARM_DETAILS_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String ALARM_STATUS_PROPERTY = "status";
     public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
     public static final String ALARM_ORIGINATOR_NAME_PROPERTY = "originator_name";
+    public static final String ALARM_ORIGINATOR_LABEL_PROPERTY = "originator_label";
     public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
     public static final String ALARM_SEVERITY_PROPERTY = "severity";
-    public static final String ALARM_STATUS_PROPERTY = "status";
+    public static final String ALARM_ASSIGNEE_ID_PROPERTY = "assignee_id";
+    public static final String ALARM_ASSIGNEE_FIRST_NAME_PROPERTY = "assignee_first_name";
+    public static final String ALARM_ASSIGNEE_LAST_NAME_PROPERTY = "assignee_last_name";
+    public static final String ALARM_ASSIGNEE_EMAIL_PROPERTY = "assignee_email";
     public static final String ALARM_START_TS_PROPERTY = "start_ts";
     public static final String ALARM_END_TS_PROPERTY = "end_ts";
+    public static final String ALARM_ACKNOWLEDGED_PROPERTY = "acknowledged";
     public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";
+    public static final String ALARM_CLEARED_PROPERTY = "cleared";
     public static final String ALARM_CLEAR_TS_PROPERTY = "clear_ts";
+    public static final String ALARM_ASSIGN_TS_PROPERTY = "assign_ts";
     public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
     public static final String ALARM_PROPAGATE_TO_OWNER_PROPERTY = "propagate_to_owner";
     public static final String ALARM_PROPAGATE_TO_TENANT_PROPERTY = "propagate_to_tenant";
     public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
 
+    public static final String ALARM_OPERATION_RESULT_PROPERTY = "operation_result";
+
     public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
+
+    public static final String ALARM_COMMENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ALARM_COMMENT_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String ALARM_COMMENT_COLUMN_FAMILY_NAME = "alarm_comment";
+    public static final String ALARM_COMMENT_ALARM_ID = "alarm_id";
+    public static final String ALARM_COMMENT_USER_ID = USER_ID_PROPERTY;
+    public static final String ALARM_COMMENT_TYPE = "type";
+    public static final String ALARM_COMMENT_COMMENT = "comment";
 
     /**
      * Cassandra entity relation constants.
@@ -644,6 +676,45 @@ public class ModelConstants {
     public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
 
+    /**
+     * Notification constants
+     * */
+
+    public static final String NOTIFICATION_TARGET_TABLE_NAME = "notification_target";
+    public static final String NOTIFICATION_TARGET_CONFIGURATION_PROPERTY = "configuration";
+
+    public static final String NOTIFICATION_TABLE_NAME = "notification";
+    public static final String NOTIFICATION_REQUEST_ID_PROPERTY = "request_id";
+    public static final String NOTIFICATION_RECIPIENT_ID_PROPERTY = "recipient_id";
+    public static final String NOTIFICATION_TYPE_PROPERTY = "type";
+    public static final String NOTIFICATION_SUBJECT_PROPERTY = "subject";
+    public static final String NOTIFICATION_TEXT_PROPERTY = "body";
+    public static final String NOTIFICATION_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
+    public static final String NOTIFICATION_STATUS_PROPERTY = "status";
+
+    public static final String NOTIFICATION_REQUEST_TABLE_NAME = "notification_request";
+    public static final String NOTIFICATION_REQUEST_TARGETS_PROPERTY = "targets";
+    public static final String NOTIFICATION_REQUEST_TEMPLATE_ID_PROPERTY = "template_id";
+    public static final String NOTIFICATION_REQUEST_TEMPLATE_PROPERTY = "template";
+    public static final String NOTIFICATION_REQUEST_INFO_PROPERTY = "info";
+    public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_ID_PROPERTY = "originator_entity_id";
+    public static final String NOTIFICATION_REQUEST_ORIGINATOR_ENTITY_TYPE_PROPERTY = "originator_entity_type";
+    public static final String NOTIFICATION_REQUEST_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
+    public static final String NOTIFICATION_REQUEST_STATUS_PROPERTY = "status";
+    public static final String NOTIFICATION_REQUEST_RULE_ID_PROPERTY = "rule_id";
+    public static final String NOTIFICATION_REQUEST_STATS_PROPERTY = "stats";
+
+    public static final String NOTIFICATION_RULE_TABLE_NAME = "notification_rule";
+    public static final String NOTIFICATION_RULE_TEMPLATE_ID_PROPERTY = "template_id";
+    public static final String NOTIFICATION_RULE_TRIGGER_TYPE_PROPERTY = "trigger_type";
+    public static final String NOTIFICATION_RULE_TRIGGER_CONFIG_PROPERTY = "trigger_config";
+    public static final String NOTIFICATION_RULE_RECIPIENTS_CONFIG_PROPERTY = "recipients_config";
+    public static final String NOTIFICATION_RULE_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
+
+    public static final String NOTIFICATION_TEMPLATE_TABLE_NAME = "notification_template";
+    public static final String NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY = "notification_type";
+    public static final String NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY = "configuration";
+
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
     protected static final String[] COUNT_AGGREGATION_COLUMNS = new String[]{count(LONG_VALUE_COLUMN), count(DOUBLE_VALUE_COLUMN), count(BOOLEAN_VALUE_COLUMN), count(STRING_VALUE_COLUMN), count(JSON_VALUE_COLUMN), max(TS_COLUMN)};
@@ -690,4 +761,5 @@ public class ModelConstants {
                 throw new RuntimeException("Aggregation type: " + aggregation + " is not supported!");
         }
     }
+
 }
