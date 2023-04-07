@@ -164,12 +164,10 @@ public class MqttSslHandlerProvider {
                             }
                         });
                 latch.await(10, TimeUnit.SECONDS);
-                if (chain.length == 1) {
-                    if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
+                if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
+                    if (chain.length == 1) {
                         throw new CertificateException("Invalid Device Certificate");
-                    }
-                } else {
-                    if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
+                    } else {
                         throw new CertificateException("Invalid Chain of X509 Certificates");
                     }
                 }
@@ -177,6 +175,5 @@ public class MqttSslHandlerProvider {
                 log.error(e.getMessage(), e);
             }
         }
-
     }
 }

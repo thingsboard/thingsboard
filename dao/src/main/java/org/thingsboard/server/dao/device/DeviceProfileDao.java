@@ -46,5 +46,4 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
 
     DeviceProfile findByName(TenantId tenantId, String profileName);
 
-    DeviceProfile findByCertificateHash(String certificateHash);
 }

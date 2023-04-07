@@ -24,15 +24,9 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 @NoArgsConstructor
 public class X509CertificateChainProvisionConfiguration implements DeviceProfileProvisionConfiguration {
 
-    private String certificateValue;
+    private String provisionDeviceSecret;
     private String certificateRegExPattern;
     private boolean allowCreateNewDevicesByX509Certificate;
-
-    @Override
-    public String getProvisionDeviceSecret() {
-        // ignore device secret for this strategy
-        return null;
-    }
 
     @Override
     public DeviceProfileProvisionType getType() {

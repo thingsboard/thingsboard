@@ -29,14 +29,14 @@ public class DeviceProfileCacheKey implements Serializable {
     private final TenantId tenantId;
     private final String name;
     private final DeviceProfileId deviceProfileId;
-    private final String certificateHash;
+    private final String provisionDeviceKey;
     private final boolean defaultProfile;
 
-    private DeviceProfileCacheKey(TenantId tenantId, String name, DeviceProfileId deviceProfileId, String certificateHash, boolean defaultProfile) {
+    private DeviceProfileCacheKey(TenantId tenantId, String name, DeviceProfileId deviceProfileId, String provisionDeviceKey, boolean defaultProfile) {
         this.tenantId = tenantId;
         this.name = name;
         this.deviceProfileId = deviceProfileId;
-        this.certificateHash = certificateHash;
+        this.provisionDeviceKey = provisionDeviceKey;
         this.defaultProfile = defaultProfile;
     }
 
@@ -48,8 +48,8 @@ public class DeviceProfileCacheKey implements Serializable {
         return new DeviceProfileCacheKey(null, null, id, null, false);
     }
 
-    public static DeviceProfileCacheKey fromCertificateHash(String certificateHash) {
-        return new DeviceProfileCacheKey(null, null, null, certificateHash, false);
+    public static DeviceProfileCacheKey fromProvisionDeviceKey(String provisionDeviceKey) {
+        return new DeviceProfileCacheKey(null, null, null, provisionDeviceKey, false);
     }
 
     public static DeviceProfileCacheKey defaultProfile(TenantId tenantId) {
@@ -65,8 +65,8 @@ public class DeviceProfileCacheKey implements Serializable {
             return deviceProfileId.toString();
         } else if (defaultProfile) {
             return tenantId.toString();
-        } else if (certificateHash != null) {
-            return certificateHash;
+        } else if (provisionDeviceKey != null) {
+            return provisionDeviceKey;
         }
         return tenantId + "_" + name;
     }

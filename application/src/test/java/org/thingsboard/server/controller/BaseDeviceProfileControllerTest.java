@@ -302,14 +302,17 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     @Test
     public void testSaveDeviceProfileWithSameCertificateHash() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
-        deviceProfile.setCertificateHash("Certificate Hash");
-        doPost("/api/deviceProfile", deviceProfile).andExpect(status().isOk());
+        deviceProfile.setProvisionDeviceKey("Certificate hash");
+
+        doPost("/api/deviceProfile", deviceProfile)
+                .andExpect(status().isOk());
+
         DeviceProfile deviceProfile2 = this.createDeviceProfile("Device Profile 2");
-        deviceProfile2.setCertificateHash("Certificate Hash");
+        deviceProfile2.setProvisionDeviceKey("Certificate hash");
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Device profile with such certificate hash already exists";
+        String msgError = "Device profile with such provision device key already exists!";
         doPost("/api/deviceProfile", deviceProfile2)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));

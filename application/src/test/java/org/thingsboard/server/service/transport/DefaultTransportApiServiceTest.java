@@ -40,6 +40,8 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.device.provision.ProvisionResponse;
+import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -130,43 +132,42 @@ public class DefaultTransportApiServiceTest {
     }
 
     @Test
-    public void updateExistingDeviceX509Certificate() {
+    public void provisionDeviceX509Certificate() {
         var deviceProfile = createDeviceProfile(chain[1]);
-        when(deviceProfileService.findDeviceProfileByCertificateHash(any())).thenReturn(deviceProfile);
+        when(deviceProfileService.findDeviceProfileByProvisionDeviceKey(any())).thenReturn(deviceProfile);
 
         var device = createDevice();
         when(deviceService.findDeviceByTenantIdAndName(any(), any())).thenReturn(device);
         when(deviceService.findDeviceByIdAsync(any(), any())).thenReturn(Futures.immediateFuture(device));
 
         var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
-        when(deviceCredentialsService.findDeviceCredentialsByDeviceId(any(), any())).thenReturn(deviceCredentials);
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(null);
         when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
 
+        var provisionResponse = createProvisionResponse(deviceCredentials);
+        when(deviceProvisionService.provisionDevice(any())).thenReturn(provisionResponse);
+
         service.validateOrCreateDeviceX509Certificate(certificateChain);
-        verify(deviceProfileService, times(1)).findDeviceProfileByCertificateHash(any());
-        verify(deviceService, times(1)).findDeviceByTenantIdAndName(any(), any());
-        verify(deviceCredentialsService, times(1)).findDeviceCredentialsByDeviceId(any(), any());
-        verify(deviceCredentialsService, times(1)).updateDeviceCredentials(any(), any());
+        verify(deviceProfileService, times(1)).findDeviceProfileByProvisionDeviceKey(any());
+        verify(deviceService, times(1)).findDeviceByIdAsync(any(), any());
+        verify(deviceCredentialsService, times(1)).findDeviceCredentialsByCredentialsId(any());
+        verify(deviceProvisionService, times(1)).provisionDevice(any());
     }
 
-    @Test
-    public void createDeviceByX509Provision() {
-        var deviceProfile = createDeviceProfile(chain[1]);
-        when(deviceProfileService.findDeviceProfileByCertificateHash(any())).thenReturn(deviceProfile);
+    private DeviceProfile createDeviceProfile(String certificateValue) {
+        X509CertificateChainProvisionConfiguration provision = new X509CertificateChainProvisionConfiguration();
+        provision.setProvisionDeviceSecret(certificateValue);
+        provision.setCertificateRegExPattern("([^@]+)");
+        provision.setAllowCreateNewDevicesByX509Certificate(true);
 
-        var device = createDevice();
-        when(deviceService.saveDevice(any())).thenReturn(device);
-        when(deviceService.findDeviceByIdAsync(any(), any())).thenReturn(Futures.immediateFuture(device));
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        deviceProfileData.setProvisionConfiguration(provision);
 
-        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
-        when(deviceCredentialsService.findDeviceCredentialsByDeviceId(any(), any())).thenReturn(deviceCredentials);
-        when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
-
-        service.validateOrCreateDeviceX509Certificate(certificateChain);
-        verify(deviceProfileService, times(1)).findDeviceProfileByCertificateHash(any());
-        verify(deviceService, times(1)).findDeviceByTenantIdAndName(any(), any());
-        verify(deviceCredentialsService, times(1)).findDeviceCredentialsByDeviceId(any(), any());
-        verify(deviceCredentialsService, times(1)).updateDeviceCredentials(any(), any());
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setProvisionDeviceKey(EncryptionUtil.getSha3Hash(certificateValue));
+        deviceProfile.setProvisionType(DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN);
+        return deviceProfile;
     }
 
     private DeviceCredentials createDeviceCredentials(String certificateValue, DeviceId deviceId) {
@@ -178,24 +179,14 @@ public class DefaultTransportApiServiceTest {
         return deviceCredentials;
     }
 
-    private DeviceProfile createDeviceProfile(String certificateValue) {
-        DeviceProfile deviceProfile = new DeviceProfile();
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        X509CertificateChainProvisionConfiguration provision = new X509CertificateChainProvisionConfiguration();
-        provision.setCertificateValue(certificateValue);
-        provision.setCertificateRegExPattern("([^@]+)");
-        provision.setAllowCreateNewDevicesByX509Certificate(true);
-        deviceProfileData.setProvisionConfiguration(provision);
-        deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setCertificateHash(EncryptionUtil.getSha3Hash(certificateValue));
-        deviceProfile.setProvisionType(DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN);
-        return deviceProfile;
-    }
-
     private Device createDevice() {
         Device device = new Device();
         device.setId(new DeviceId(UUID.randomUUID()));
         return device;
+    }
+
+    private ProvisionResponse createProvisionResponse(DeviceCredentials deviceCredentials) {
+        return new ProvisionResponse(deviceCredentials, ProvisionResponseStatus.SUCCESS);
     }
 
     public static String certTrimNewLinesForChainInDeviceProfile(String input) {

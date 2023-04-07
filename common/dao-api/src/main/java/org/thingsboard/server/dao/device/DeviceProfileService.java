@@ -39,7 +39,7 @@ public interface DeviceProfileService extends EntityDaoService {
 
     PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType);
 
-    DeviceProfile findDeviceProfileByCertificateHash(String credentialsId);
+    DeviceProfile findDeviceProfileByProvisionDeviceKey(String provisionDeviceKey);
 
     DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String profileName);
 

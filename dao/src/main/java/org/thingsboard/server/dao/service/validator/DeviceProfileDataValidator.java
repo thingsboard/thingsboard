@@ -132,14 +132,14 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         if (deviceProfile.getProvisionType() == null) {
             deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         }
-        if (deviceProfile.getCertificateHash() != null) {
-            if (getRootCAFromJavaCacerts(deviceProfile.getCertificateHash())) {
+        if (deviceProfile.getProvisionDeviceKey() != null) {
+            if (getRootCAFromJavaCacerts(deviceProfile.getProvisionDeviceKey())) {
                 throw new DataValidationException("Device profile certificate cannot be well known root CA!");
             }
-            DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByCertificateHash(deviceProfile.getCertificateHash());
-            if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(deviceProfile.getId())) {
-                throw new DataValidationException("Device profile with such certificate hash already exists!");
-            }
+//            DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByProvisionDeviceKey(deviceProfile.getProvisionDeviceKey());
+//            if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(deviceProfile.getId())) {
+//                throw new DataValidationException("Device profile with such certificate hash already exists!");
+//            }
         }
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         transportConfiguration.validate();
@@ -234,14 +234,14 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DataValidationException(message);
             }
         }
-        if (deviceProfile.getCertificateHash() != null) {
-            if (getRootCAFromJavaCacerts(deviceProfile.getCertificateHash())) {
+        if (deviceProfile.getProvisionDeviceKey() != null) {
+            if (getRootCAFromJavaCacerts(deviceProfile.getProvisionDeviceKey())) {
                 throw new DataValidationException("Device profile certificate cannot be well known root CA!");
             }
-            DeviceProfile existingDeviceProfileCertificate = deviceProfileDao.findByCertificateHash(deviceProfile.getCertificateHash());
-            if (existingDeviceProfileCertificate != null && !existingDeviceProfileCertificate.getId().equals(old.getId())) {
-                throw new DataValidationException("Device profile with such certificate hash already exists!");
-            }
+//            DeviceProfile existingDeviceProfileWithDeviceKey = deviceProfileDao.findByProvisionDeviceKey(deviceProfile.getProvisionDeviceKey());
+//            if (existingDeviceProfileWithDeviceKey != null && !existingDeviceProfileWithDeviceKey.getId().equals(old.getId())) {
+//                throw new DataValidationException("Device profile with such certificate hash already exists!");
+//            }
         }
         return old;
     }

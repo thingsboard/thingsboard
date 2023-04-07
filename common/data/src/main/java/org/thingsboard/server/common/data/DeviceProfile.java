@@ -66,10 +66,6 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private DeviceTransportType transportType;
     @ApiModelProperty(position = 15, value = "Provisioning strategy.")
     private DeviceProfileProvisionType provisionType;
-    @ApiModelProperty(position = 18, value = "CA certificate hash. ")
-    private String certificateHash;
-
-
     @ApiModelProperty(position = 7, value = "Reference to the rule chain. " +
             "If present, the specified rule chain will be used to process all messages related to device, including telemetry, attribute updates, etc. " +
             "Otherwise, the root rule chain will be used to process those messages.")
@@ -125,7 +121,6 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.firmwareId = deviceProfile.getFirmwareId();
         this.softwareId = deviceProfile.getSoftwareId();
         this.defaultEdgeRuleChainId = deviceProfile.getDefaultEdgeRuleChainId();
-        this.certificateHash = deviceProfile.getCertificateHash();
         this.externalId = deviceProfile.getExternalId();
     }
 
