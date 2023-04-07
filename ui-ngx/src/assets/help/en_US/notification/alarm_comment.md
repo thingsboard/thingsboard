@@ -19,11 +19,13 @@ Available template parameters:
   * *alarmOriginatorName* - the name of the alarm originator, e.g. 'Sensor T1';
   * *alarmOriginatorId* - the alarm originator entity id as uuid string;
   * *comment* - text of the comment;
-  * *userName* - name of the user who made the comment;
   * *action* - one of: 'added', 'updated';
+  * *userEmail* - email of the user who made the action;
+  * *userFirstName* - first name of the user who made the action;
+  * *userLastName* - last name of the user who made the action;
 
 Parameter names must be wrapped using `${...}`. For example: `${action}`. 
-You may also modify the value of the parameter with one of the sufixes:
+You may also modify the value of the parameter with one of the suffixes:
 
   * `upperCase`, for example - `${recipientFirstName:upperCase}`
   * `lowerCase`, for example - `${recipientFirstName:lowerCase}`

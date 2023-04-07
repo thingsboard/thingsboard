@@ -20,14 +20,13 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.UserSettings;
-import org.thingsboard.server.dao.asset.AssetCacheKey;
+import org.thingsboard.server.common.data.settings.UserSettings;
+import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
 @Service("UserSettingsCache")
-public class UserSettingsCaffeineCache extends CaffeineTbTransactionalCache<UserId, UserSettings> {
+public class UserSettingsCaffeineCache extends CaffeineTbTransactionalCache<UserSettingsCompositeKey, UserSettings> {
 
     public UserSettingsCaffeineCache(CacheManager cacheManager) {
         super(cacheManager, CacheConstants.USER_SETTINGS_CACHE);

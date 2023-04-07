@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -136,16 +137,20 @@ public class NotificationTemplateController extends BaseController {
     @GetMapping("/slack/conversations")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public List<SlackConversation> listSlackConversations(@RequestParam SlackConversationType type,
+                                                          @RequestParam(required = false) String token,
                                                           @AuthenticationPrincipal SecurityUser user) {
         // generic permission
-        NotificationSettings settings = notificationSettingsService.findNotificationSettings(user.getTenantId());
-        SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)
-                settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.SLACK);
-        if (slackConfig == null) {
-            throw new IllegalArgumentException("Slack is not configured");
+        if (StringUtils.isEmpty(token)) {
+            NotificationSettings settings = notificationSettingsService.findNotificationSettings(user.getTenantId());
+            SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)
+                    settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.SLACK);
+            if (slackConfig == null) {
+                throw new IllegalArgumentException("Slack is not configured");
+            }
+            token = slackConfig.getBotToken();
         }
 
-        return slackService.listConversations(user.getTenantId(), slackConfig.getBotToken(), type);
+        return slackService.listConversations(user.getTenantId(), token, type);
     }
 
 }
