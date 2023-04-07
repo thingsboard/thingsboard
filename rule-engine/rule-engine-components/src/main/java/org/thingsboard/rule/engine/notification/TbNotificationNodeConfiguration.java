@@ -17,9 +17,7 @@ package org.thingsboard.rule.engine.notification;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
-import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -33,13 +31,10 @@ public class TbNotificationNodeConfiguration implements NodeConfiguration<TbNoti
     private List<UUID> targets;
     @NotNull
     private NotificationTemplateId templateId;
-    private NotificationRequestConfig additionalConfig;
 
     @Override
     public TbNotificationNodeConfiguration defaultConfiguration() {
-        TbNotificationNodeConfiguration config = new TbNotificationNodeConfiguration();
-        config.setAdditionalConfig(new NotificationRequestConfig());
-        return config;
+        return new TbNotificationNodeConfiguration();
     }
 
 }

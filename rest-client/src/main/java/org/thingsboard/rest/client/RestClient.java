@@ -63,7 +63,9 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.UpdateMessage;
+import org.thingsboard.server.common.data.UsageInfo;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserEmailInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
@@ -122,6 +124,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -1649,6 +1652,10 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
+    public Long countAlarmsByQuery(AlarmCountQuery query) {
+        return restTemplate.postForObject(baseURL + "/api/alarmsQuery/count", query, Long.class);
+    }
+
     public void saveRelation(EntityRelation relation) {
         restTemplate.postForLocation(baseURL + "/api/relation", relation);
     }
@@ -2467,6 +2474,14 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
+    public UsageInfo getUsageInfo() {
+        return restTemplate.exchange(
+                baseURL + "/api/usage",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                UsageInfo.class).getBody();
+    }
+
     public Optional<TenantProfile> getTenantProfileById(TenantProfileId tenantProfileId) {
         try {
             ResponseEntity<TenantProfile> tenantProfile = restTemplate.getForEntity(baseURL + "/api/tenantProfile/{tenantProfileId}", TenantProfile.class, tenantProfileId);
@@ -2611,6 +2626,19 @@ public class RestClient implements Closeable {
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<User>>() {
+                }, params).getBody();
+    }
+
+    public PageData<UserEmailInfo> getUsersForAssign(AlarmId alarmId, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("alarmId", alarmId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + "/users/assign/{alarmId}" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<UserEmailInfo>>() {
                 }, params).getBody();
     }
 

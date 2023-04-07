@@ -94,6 +94,7 @@ public class ModelConstants {
      */
     public static final String USER_SETTINGS_COLUMN_FAMILY_NAME = "user_settings";
     public static final String USER_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
+    public static final String USER_SETTINGS_TYPE_PROPERTY = "type";
     public static final String USER_SETTINGS_SETTINGS = "settings";
 
     /**

@@ -20,16 +20,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
@@ -78,27 +71,6 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
         } catch (Exception e) {
             log.error("[{}] Failed to process relation update msg [{}]", tenantId, relationUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
-        }
-    }
-
-    private boolean isEntityExists(TenantId tenantId, EntityId entityId) {
-        switch (entityId.getEntityType()) {
-            case DEVICE:
-                return deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId())) != null;
-            case ASSET:
-                return assetService.findAssetById(tenantId, new AssetId(entityId.getId())) != null;
-            case ENTITY_VIEW:
-                return entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
-            case CUSTOMER:
-                return customerService.findCustomerById(tenantId, new CustomerId(entityId.getId())) != null;
-            case USER:
-                return userService.findUserById(tenantId, new UserId(entityId.getId())) != null;
-            case DASHBOARD:
-                return dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId())) != null;
-            case EDGE:
-                return edgeService.findEdgeById(tenantId, new EdgeId(entityId.getId())) != null;
-            default:
-                return false;
         }
     }
 }

@@ -19,7 +19,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
@@ -31,6 +34,7 @@ import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 public class SlackNotificationChannel implements NotificationChannel<SlackConversation, SlackDeliveryMethodNotificationTemplate> {
 
     private final SlackService slackService;
+    private final NotificationSettingsService notificationSettingsService;
     private final ExternalCallExecutorService executor;
 
     @Override
@@ -40,6 +44,12 @@ public class SlackNotificationChannel implements NotificationChannel<SlackConver
             slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), conversation.getId(), processedTemplate.getBody());
             return null;
         });
+    }
+
+    @Override
+    public boolean check(TenantId tenantId) {
+        NotificationSettings notificationSettings = notificationSettingsService.findNotificationSettings(tenantId);
+        return notificationSettings.getDeliveryMethodsConfigs().containsKey(NotificationDeliveryMethod.SLACK);
     }
 
     @Override

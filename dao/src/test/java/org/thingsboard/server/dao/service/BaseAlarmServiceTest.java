@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -47,7 +48,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -697,6 +698,69 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
+    }
+
+    @Test
+    public void testCountAlarmsUsingAlarmDataQuery() throws ExecutionException, InterruptedException {
+        AssetId childId = new AssetId(Uuids.timeBased());
+
+        long ts = System.currentTimeMillis();
+        AlarmApiCallResult result = alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.builder()
+                .tenantId(tenantId)
+                .originator(childId)
+                .type(TEST_ALARM)
+                .severity(AlarmSeverity.CRITICAL)
+                .startTs(ts).build());
+        AlarmInfo created = result.getAlarm();
+
+        AlarmCountQuery countQuery = AlarmCountQuery.builder()
+                .startTs(0L)
+                .endTs(System.currentTimeMillis())
+                .searchPropagatedAlarms(false)
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING))
+                .statusList(List.of(AlarmSearchStatus.ACTIVE))
+                .build();
+
+        long alarmsCount = alarmService.countAlarmsByQuery(tenantId, null, countQuery);
+
+        Assert.assertEquals(1, alarmsCount);
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(0L)
+                .endTs(System.currentTimeMillis())
+                .searchPropagatedAlarms(true)
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING))
+                .statusList(List.of(AlarmSearchStatus.ACTIVE))
+                .build();
+
+        alarmsCount = alarmService.countAlarmsByQuery(tenantId, null, countQuery);
+
+        Assert.assertEquals(1, alarmsCount);
+
+        created = alarmService.acknowledgeAlarm(tenantId, created.getId(), System.currentTimeMillis()).getAlarm();
+
+        alarmsCount = alarmService.countAlarmsByQuery(tenantId, null, countQuery);
+
+        Assert.assertEquals(1, alarmsCount);
+
+        alarmService.clearAlarm(tenantId, created.getId(), System.currentTimeMillis(), null);
+        created = alarmService.findAlarmInfoById(tenantId, created.getId());
+
+        alarmsCount = alarmService.countAlarmsByQuery(tenantId, null, countQuery);
+
+        Assert.assertEquals(0, alarmsCount);
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(0L)
+                .endTs(System.currentTimeMillis())
+                .searchPropagatedAlarms(true)
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING))
+                .statusList(List.of(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.CLEARED))
+                .build();
+
+        alarmsCount = alarmService.countAlarmsByQuery(tenantId, null, countQuery);
+
+        Assert.assertEquals(1, alarmsCount);
     }
 
     @Test

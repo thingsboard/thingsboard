@@ -29,9 +29,12 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
@@ -52,6 +55,7 @@ import org.thingsboard.server.common.data.security.Authority;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -141,6 +145,15 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
 
     @Test
     public void testSysAdminCountEntitiesByQuery() throws Exception {
+        loginSysAdmin();
+
+        EntityTypeFilter allDeviceFilter = new EntityTypeFilter();
+        allDeviceFilter.setEntityType(EntityType.DEVICE);
+        EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
+        Long initialCount = doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
+
+        loginTenantAdmin();
+
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
@@ -180,13 +193,139 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
         Assert.assertEquals(97, count.longValue());
 
-        EntityTypeFilter filter2 = new EntityTypeFilter();
-        filter2.setEntityType(EntityType.DEVICE);
+        Long count2 = doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
+        Assert.assertEquals(initialCount + 97, count2.longValue());
+    }
 
-        EntityCountQuery countQuery2 = new EntityCountQuery(filter2);
+    @Test
+    public void testTenantCountAlarmsByQuery() throws Exception {
+        loginTenantAdmin();
+        List<Device> devices = new ArrayList<>();
+        List<Alarm> alarms = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Device device = new Device();
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
+        }
 
-        Long count2 = doPostWithResponse("/api/entitiesQuery/count", countQuery2, Long.class);
-        Assert.assertEquals(97, count2.longValue());
+        for (int i = 0; i < devices.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setOriginator(devices.get(i).getId());
+            alarm.setType("alarm" + i);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            alarms.add(doPost("/api/alarm", alarm, Alarm.class));
+            Thread.sleep(1);
+        }
+        testCountAlarmsByQuery(alarms);
+    }
+
+    @Test
+    public void testCustomerCountAlarmsByQuery() throws Exception {
+        loginTenantAdmin();
+        List<Device> devices = new ArrayList<>();
+        List<Alarm> alarms = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Device device = new Device();
+            device.setCustomerId(customerId);
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
+        }
+
+        loginCustomerUser();
+
+        for (int i = 0; i < devices.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setCustomerId(customerId);
+            alarm.setOriginator(devices.get(i).getId());
+            alarm.setType("alarm" + i);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            alarms.add(doPost("/api/alarm", alarm, Alarm.class));
+            Thread.sleep(1);
+        }
+        testCountAlarmsByQuery(alarms);
+    }
+
+    private void testCountAlarmsByQuery(List<Alarm> alarms) throws Exception {
+        AlarmCountQuery countQuery = new AlarmCountQuery();
+
+        Long count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .typeList(List.of("unknown"))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(0, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .typeList(List.of("alarm1", "alarm2", "alarm3"))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(3, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .typeList(alarms.stream().map(Alarm::getType).collect(Collectors.toList()))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .severityList(List.of(AlarmSeverity.CRITICAL))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(0, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .severityList(List.of(AlarmSeverity.WARNING))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        long startTs = alarms.stream().map(Alarm::getCreatedTime).min(Long::compareTo).get();
+        long endTs = alarms.stream().map(Alarm::getCreatedTime).max(Long::compareTo).get();
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(startTs - 1)
+                .endTs(endTs + 1)
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(0)
+                .endTs(endTs + 1)
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(0)
+                .endTs(System.currentTimeMillis())
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(endTs + 1)
+                .endTs(System.currentTimeMillis())
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(0, count.longValue());
     }
 
     @Test

@@ -322,7 +322,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 int msgId = ((MqttPubAckMessage) msg).variableHeader().messageId();
                 TransportProtos.ToDeviceRpcRequestMsg rpcRequest = rpcAwaitingAck.remove(msgId);
                 if (rpcRequest != null) {
-                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, true, TransportServiceCallback.EMPTY);
                 }
                 break;
             default:
@@ -687,6 +687,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         for (MqttTopicSubscription subscription : mqttMsg.payload().topicSubscriptions()) {
             String topic = subscription.topicName();
             MqttQoS reqQoS = subscription.qualityOfService();
+            if (deviceSessionCtx.isDeviceSubscriptionAttributesTopic(topic)){
+                processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V1);
+                activityReported = true;
+                continue;
+            }
             try {
                 if (sparkplugSessionHandler != null) {
                     sparkplugSessionHandler.handleSparkplugSubscribeMsg(grantedQoSList, subscription, reqQoS);

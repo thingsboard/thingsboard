@@ -96,16 +96,12 @@ public class AdminController extends BaseController {
     public AdminSettings getAdminSettings(
             @ApiParam(value = "A string value of the key (e.g. 'general' or 'mail').")
             @PathVariable("key") String key) throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-            AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key), "No Administration settings found for key: " + key);
-            if (adminSettings.getKey().equals("mail")) {
-                ((ObjectNode) adminSettings.getJsonValue()).remove("password");
-            }
-            return adminSettings;
-        } catch (Exception e) {
-            throw handleException(e);
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key), "No Administration settings found for key: " + key);
+        if (adminSettings.getKey().equals("mail")) {
+            ((ObjectNode) adminSettings.getJsonValue()).remove("password");
         }
+        return adminSettings;
     }
 
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
@@ -118,20 +114,16 @@ public class AdminController extends BaseController {
     public AdminSettings saveAdminSettings(
             @ApiParam(value = "A JSON value representing the Administration Settings.")
             @RequestBody AdminSettings adminSettings) throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
-            adminSettings.setTenantId(getTenantId());
-            adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
-            if (adminSettings.getKey().equals("mail")) {
-                mailService.updateMailConfiguration();
-                ((ObjectNode) adminSettings.getJsonValue()).remove("password");
-            } else if (adminSettings.getKey().equals("sms")) {
-                smsService.updateSmsConfiguration();
-            }
-            return adminSettings;
-        } catch (Exception e) {
-            throw handleException(e);
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
+        adminSettings.setTenantId(getTenantId());
+        adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
+        if (adminSettings.getKey().equals("mail")) {
+            mailService.updateMailConfiguration();
+            ((ObjectNode) adminSettings.getJsonValue()).remove("password");
+        } else if (adminSettings.getKey().equals("sms")) {
+            smsService.updateSmsConfiguration();
         }
+        return adminSettings;
     }
 
     @ApiOperation(value = "Get the Security Settings object",
@@ -140,12 +132,8 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/securitySettings", method = RequestMethod.GET)
     @ResponseBody
     public SecuritySettings getSecuritySettings() throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-            return checkNotNull(systemSecurityService.getSecuritySettings(TenantId.SYS_TENANT_ID));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+        return checkNotNull(systemSecurityService.getSecuritySettings(TenantId.SYS_TENANT_ID));
     }
 
     @ApiOperation(value = "Update Security Settings (saveSecuritySettings)",
@@ -156,13 +144,9 @@ public class AdminController extends BaseController {
     public SecuritySettings saveSecuritySettings(
             @ApiParam(value = "A JSON value representing the Security Settings.")
             @RequestBody SecuritySettings securitySettings) throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
-            securitySettings = checkNotNull(systemSecurityService.saveSecuritySettings(TenantId.SYS_TENANT_ID, securitySettings));
-            return securitySettings;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
+        securitySettings = checkNotNull(systemSecurityService.saveSecuritySettings(TenantId.SYS_TENANT_ID, securitySettings));
+        return securitySettings;
     }
 
     @ApiOperation(value = "Get the JWT Settings object (getJwtSettings)",
@@ -172,12 +156,8 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/jwtSettings", method = RequestMethod.GET)
     @ResponseBody
     public JwtSettings getJwtSettings() throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-            return checkNotNull(jwtSettingsService.getJwtSettings());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+        return checkNotNull(jwtSettingsService.getJwtSettings());
     }
 
     @ApiOperation(value = "Update JWT Settings (saveJwtSettings)",
@@ -189,14 +169,10 @@ public class AdminController extends BaseController {
     public JwtPair saveJwtSettings(
             @ApiParam(value = "A JSON value representing the JWT Settings.")
             @RequestBody JwtSettings jwtSettings) throws ThingsboardException {
-        try {
-            SecurityUser securityUser = getCurrentUser();
-            accessControlService.checkPermission(securityUser, Resource.ADMIN_SETTINGS, Operation.WRITE);
-            checkNotNull(jwtSettingsService.saveJwtSettings(jwtSettings));
-            return tokenFactory.createTokenPair(securityUser);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        SecurityUser securityUser = getCurrentUser();
+        accessControlService.checkPermission(securityUser, Resource.ADMIN_SETTINGS, Operation.WRITE);
+        checkNotNull(jwtSettingsService.saveJwtSettings(jwtSettings));
+        return tokenFactory.createTokenPair(securityUser);
     }
 
     @ApiOperation(value = "Send test email (sendTestMail)",
@@ -207,19 +183,15 @@ public class AdminController extends BaseController {
     public void sendTestMail(
             @ApiParam(value = "A JSON value representing the Mail Settings.")
             @RequestBody AdminSettings adminSettings) throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-            adminSettings = checkNotNull(adminSettings);
-            if (adminSettings.getKey().equals("mail")) {
-                if (!adminSettings.getJsonValue().has("password")) {
-                    AdminSettings mailSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
-                    ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
-                }
-                String email = getCurrentUser().getEmail();
-                mailService.sendTestMail(adminSettings.getJsonValue(), email);
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+        adminSettings = checkNotNull(adminSettings);
+        if (adminSettings.getKey().equals("mail")) {
+            if (!adminSettings.getJsonValue().has("password")) {
+                AdminSettings mailSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
+                ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
             }
-        } catch (Exception e) {
-            throw handleException(e);
+            String email = getCurrentUser().getEmail();
+            mailService.sendTestMail(adminSettings.getJsonValue(), email);
         }
     }
 
@@ -231,12 +203,8 @@ public class AdminController extends BaseController {
     public void sendTestSms(
             @ApiParam(value = "A JSON value representing the Test SMS request.")
             @RequestBody TestSmsRequest testSmsRequest) throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-            smsService.sendTestSms(testSmsRequest);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+        smsService.sendTestSms(testSmsRequest);
     }
 
     @ApiOperation(value = "Get repository settings (getRepositorySettings)",
@@ -244,16 +212,12 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/repositorySettings")
     public RepositorySettings getRepositorySettings() throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-            RepositorySettings versionControlSettings = checkNotNull(versionControlService.getVersionControlSettings(getTenantId()));
-            versionControlSettings.setPassword(null);
-            versionControlSettings.setPrivateKey(null);
-            versionControlSettings.setPrivateKeyPassword(null);
-            return versionControlSettings;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        RepositorySettings versionControlSettings = checkNotNull(versionControlService.getVersionControlSettings(getTenantId()));
+        versionControlSettings.setPassword(null);
+        versionControlSettings.setPrivateKey(null);
+        versionControlSettings.setPrivateKeyPassword(null);
+        return versionControlSettings;
     }
 
     @ApiOperation(value = "Check repository settings exists (repositorySettingsExists)",
@@ -261,12 +225,8 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/repositorySettings/exists")
     public Boolean repositorySettingsExists() throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-            return versionControlService.getVersionControlSettings(getTenantId()) != null;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        return versionControlService.getVersionControlSettings(getTenantId()) != null;
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -307,13 +267,9 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/repositorySettings", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public DeferredResult<Void> deleteRepositorySettings() throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.DELETE);
-            return wrapFuture(versionControlService.deleteVersionControlSettings(getTenantId()));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+    public DeferredResult<Void> deleteRepositorySettings() throws Exception {
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.DELETE);
+        return wrapFuture(versionControlService.deleteVersionControlSettings(getTenantId()));
     }
 
     @ApiOperation(value = "Check repository access (checkRepositoryAccess)",
@@ -322,14 +278,10 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/repositorySettings/checkAccess", method = RequestMethod.POST)
     public DeferredResult<Void> checkRepositoryAccess(
             @ApiParam(value = "A JSON value representing the Repository Settings.")
-            @RequestBody RepositorySettings settings) throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-            settings = checkNotNull(settings);
-            return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+            @RequestBody RepositorySettings settings) throws Exception {
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        settings = checkNotNull(settings);
+        return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings));
     }
 
     @ApiOperation(value = "Get auto commit settings (getAutoCommitSettings)",
@@ -337,12 +289,8 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/autoCommitSettings")
     public AutoCommitSettings getAutoCommitSettings() throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-            return checkNotNull(autoCommitSettingsService.get(getTenantId()));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        return checkNotNull(autoCommitSettingsService.get(getTenantId()));
     }
 
     @ApiOperation(value = "Check auto commit settings exists (autoCommitSettingsExists)",
@@ -350,12 +298,8 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/autoCommitSettings/exists")
     public Boolean autoCommitSettingsExists() throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-            return autoCommitSettingsService.get(getTenantId()) != null;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
+        return autoCommitSettingsService.get(getTenantId()) != null;
     }
 
     @ApiOperation(value = "Creates or Updates the auto commit settings (saveAutoCommitSettings)",
@@ -374,12 +318,8 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/autoCommitSettings", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteAutoCommitSettings() throws ThingsboardException {
-        try {
-            accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.DELETE);
-            autoCommitSettingsService.delete(getTenantId());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.DELETE);
+        autoCommitSettingsService.delete(getTenantId());
     }
 
     @ApiOperation(value = "Check for new Platform Releases (checkUpdates)",
@@ -389,11 +329,7 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/updates", method = RequestMethod.GET)
     @ResponseBody
     public UpdateMessage checkUpdates() throws ThingsboardException {
-        try {
-            return updateService.checkUpdates();
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return updateService.checkUpdates();
     }
 
     @ApiOperation(value = "Get system info (getSystemInfo)",

@@ -76,6 +76,7 @@ export const HelpLinks = {
   linksMap: {
     outgoingMailSettings: helpBaseUrl + '/docs/user-guide/ui/mail-settings',
     smsProviderSettings: helpBaseUrl + '/docs/user-guide/ui/sms-provider-settings',
+    slackSettings: helpBaseUrl + '/docs/user-guide/ui/slack-settings',
     securitySettings: helpBaseUrl + '/docs/user-guide/ui/security-settings',
     oauth2Settings: helpBaseUrl + '/docs/user-guide/oauth-2-support/',
     twoFactorAuthSettings: helpBaseUrl + '/docs/',
