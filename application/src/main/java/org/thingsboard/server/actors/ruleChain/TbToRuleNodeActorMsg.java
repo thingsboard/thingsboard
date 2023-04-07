@@ -37,6 +37,6 @@ public abstract class TbToRuleNodeActorMsg extends TbRuleEngineActorMsg {
     @Override
     public void onTbActorStopped(TbActorStopReason reason) {
         String message = reason == TbActorStopReason.STOPPED ? "Rule node stopped" : "Failed to initialize rule node!";
-        msg.getCallback().onFailure(new RuleNodeException(message, ctx.getRuleChainName(), ctx.getSelf()));
+        msg.getCallback().onFailure(new RuleNodeException(message, ctx.getRuleChainName(), ctx.getSelf(), msg.getData(), msg.getMetaData()));
     }
 }

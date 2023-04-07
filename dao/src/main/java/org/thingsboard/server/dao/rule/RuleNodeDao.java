@@ -36,5 +36,7 @@ public interface RuleNodeDao extends Dao<RuleNode> {
 
     List<RuleNode> findByExternalIds(RuleChainId ruleChainId, List<RuleNodeId> externalIds);
 
+    List<RuleNode> findAllRuleNodesByRuleChainId(RuleChainId ruleChainId);
+
     void deleteByIdIn(List<RuleNodeId> ruleNodeIds);
 }

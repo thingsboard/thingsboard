@@ -151,4 +151,15 @@
       background-color: #000;
     }
   }
+
+  .fc-error-icon {
+    position: absolute;
+    top: -19px;
+    left: 86%;
+    cursor: pointer;
+  }
+
+  .fc-error-icon-readonly {
+    cursor: default;
+  }
 }

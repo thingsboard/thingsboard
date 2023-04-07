@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.plugin.RuleNodeUpdatedMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
@@ -310,7 +311,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 if (relationTypes.contains(TbRelationTypes.FAILURE)) {
                     RuleNodeCtx ruleNodeCtx = nodeActors.get(originatorNodeId);
                     if (ruleNodeCtx != null) {
-                        msg.getCallback().onFailure(new RuleNodeException(failureMessage, ruleChainName, ruleNodeCtx.getSelf()));
+                        msg.getCallback().onFailure(new RuleNodeException(failureMessage, ruleChainName, ruleNodeCtx.getSelf(), msg.getData(), msg.getMetaData()));
                     } else {
                         log.debug("[{}] Failure during message processing by Rule Node [{}]. Enable and see debug events for more info", entityId, originatorNodeId.getId());
                         msg.getCallback().onFailure(new RuleEngineException("Failure during message processing by Rule Node [" + originatorNodeId.getId().toString() + "]"));
@@ -396,9 +397,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     @Override
-    protected RuleNodeException getInactiveException() {
+    protected RuleNodeException getInactiveException(String data, TbMsgMetaData metaData) {
         RuleNode firstRuleNode = firstNode != null ? firstNode.getSelf() : null;
-        return new RuleNodeException("Rule Chain is not active!  Failed to initialize.", ruleChainName, firstRuleNode);
+        return new RuleNodeException("Rule Chain is not active!  Failed to initialize.", ruleChainName, firstRuleNode, data, metaData);
     }
-
 }

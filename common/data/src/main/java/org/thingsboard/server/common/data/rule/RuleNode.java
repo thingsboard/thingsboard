@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -52,6 +53,9 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
     private transient JsonNode configuration;
     @JsonIgnore
     private byte[] configurationBytes;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private transient RuleNodeStats stats;
 
     private RuleNodeId externalId;
 

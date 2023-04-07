@@ -21,6 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+
+import static org.thingsboard.common.util.JacksonUtil.OBJECT_MAPPER;
 
 @Slf4j
 public class RuleNodeException extends RuleEngineException {
@@ -36,11 +39,17 @@ public class RuleNodeException extends RuleEngineException {
     private final RuleChainId ruleChainId;
     @Getter
     private final RuleNodeId ruleNodeId;
+    @Getter
+    private final String data;
+    @Getter
+    private final TbMsgMetaData msgMetaData;
 
 
-    public RuleNodeException(String message, String ruleChainName, RuleNode ruleNode) {
+    public RuleNodeException(String message, String ruleChainName, RuleNode ruleNode, String data, TbMsgMetaData msgMetaData) {
         super(message);
         this.ruleChainName = ruleChainName;
+        this.data = data;
+        this.msgMetaData = msgMetaData;
         if (ruleNode != null) {
             this.ruleNodeName = ruleNode.getName();
             this.ruleChainId = ruleNode.getRuleChainId();
@@ -54,11 +63,13 @@ public class RuleNodeException extends RuleEngineException {
 
     public String toJsonString() {
         try {
-            return mapper.writeValueAsString(mapper.createObjectNode()
+            return OBJECT_MAPPER.writeValueAsString(OBJECT_MAPPER.createObjectNode()
                     .put("ruleNodeId", ruleNodeId.toString())
                     .put("ruleChainId", ruleChainId.toString())
                     .put("ruleNodeName", ruleNodeName)
                     .put("ruleChainName", ruleChainName)
+                    .put("data", data)
+                    .put("metadata", msgMetaData.getData().toString())
                     .put("message", getMessage()));
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize exception ", e);

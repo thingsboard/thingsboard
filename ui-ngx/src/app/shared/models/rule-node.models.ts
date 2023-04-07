@@ -37,6 +37,7 @@ export interface RuleNode extends BaseData<RuleNodeId> {
   name: string;
   debugMode: boolean;
   configuration: RuleNodeConfiguration;
+  stats?: RuleNodeErrorStats;
   additionalInfo?: any;
 }
 
@@ -322,6 +323,19 @@ export interface FcRuleNode extends FcRuleNodeType {
   highlighted?: boolean;
   componentClazz?: string;
   ruleChainType?: RuleChainType;
+  stats?: RuleNodeErrorStats;
+}
+
+export interface RuleNodeErrorStats {
+  errorsCount: number;
+  lastErrorMsg: string | null;
+  msgData: string | null;
+  msgMetadata: RuleNodeErrorMsgMetadata | null;
+}
+
+export interface RuleNodeErrorMsgMetadata {
+  data: any;
+  error: string;
 }
 
 export interface FcRuleEdge extends FcEdge {

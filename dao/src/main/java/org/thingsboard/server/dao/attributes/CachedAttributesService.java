@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributeKvEntryEntityId;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
@@ -207,6 +208,11 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
         return attributesDao.findAllKeysByEntityIds(tenantId, entityType, entityIds);
+    }
+
+    @Override
+    public List<AttributeKvEntryEntityId> findAllValuesByKeyAndEntityIds(TenantId tenantId, String attributeKey, List<EntityId> entityIds) {
+        return attributesDao.findAllValuesByKeyAndEntityIds(tenantId, attributeKey, entityIds);
     }
 
     @Override

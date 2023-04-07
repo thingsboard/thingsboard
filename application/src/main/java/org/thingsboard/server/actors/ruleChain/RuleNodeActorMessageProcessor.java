@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
 import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
@@ -107,16 +108,18 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         int maxRuleNodeExecutionsPerMessage = getTenantProfileConfiguration().getMaxRuleNodeExecsPerMessage();
         if (maxRuleNodeExecutionsPerMessage == 0 || ruleNodeCount < maxRuleNodeExecutionsPerMessage) {
             apiUsageClient.report(tenantId, tbMsg.getCustomerId(), ApiUsageRecordKey.RE_EXEC_COUNT);
-            if (ruleNode.isDebugMode()) {
-                systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self");
-            }
+            try {
+                if (ruleNode.isDebugMode()) {
+                    systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self");
+                }
+            } catch (Exception ignored) {}
             try {
                 tbNode.onMsg(defaultCtx, msg.getMsg());
             } catch (Exception e) {
                 defaultCtx.tellFailure(msg.getMsg(), e);
             }
         } else {
-            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
+            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode, msg.getMsg().getData(), msg.getMsg().getMetaData()));
         }
     }
 
@@ -128,16 +131,18 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         int maxRuleNodeExecutionsPerMessage = getTenantProfileConfiguration().getMaxRuleNodeExecsPerMessage();
         if (maxRuleNodeExecutionsPerMessage == 0 || ruleNodeCount < maxRuleNodeExecutionsPerMessage) {
             apiUsageClient.report(tenantId, tbMsg.getCustomerId(), ApiUsageRecordKey.RE_EXEC_COUNT);
-            if (ruleNode.isDebugMode()) {
-                systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());
-            }
+            try {
+                if (ruleNode.isDebugMode()) {
+                    systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());
+                }
+            } catch (Exception ignored) {}
             try {
                 tbNode.onMsg(msg.getCtx(), msg.getMsg());
             } catch (Exception e) {
                 msg.getCtx().tellFailure(msg.getMsg(), e);
             }
         } else {
-            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
+            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode, msg.getMsg().getData(), msg.getMsg().getMetaData()));
         }
     }
 
@@ -157,7 +162,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    protected RuleNodeException getInactiveException() {
-        return new RuleNodeException("Rule Node is not active! Failed to initialize.", ruleChainName, ruleNode);
+    protected RuleNodeException getInactiveException(String data, TbMsgMetaData metaData) {
+        return new RuleNodeException("Rule Node is not active! Failed to initialize.", ruleChainName, ruleNode, data, metaData);
     }
 }
