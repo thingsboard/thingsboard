@@ -251,10 +251,6 @@ public class AdminController extends BaseController {
                 }
                 ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
                 settings.put("refreshToken", refreshToken.asText());
-                if (settings.has("providerTenantId")){
-                    settings.put("authUri", String.format(settings.get("authUri").asText(), settings.get("providerTenantId").asText()));
-                    settings.put("tokenUri", String.format(settings.get("tokenUri").asText(), settings.get("providerTenantId").asText()));
-                }
             }
             else {
                 if (!adminSettings.getJsonValue().has("password")) {

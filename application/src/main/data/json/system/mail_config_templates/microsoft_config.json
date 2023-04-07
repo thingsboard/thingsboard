@@ -3,7 +3,7 @@
   "smtpProtocol": "SMTP",
   "smtpHost": "smtp.office365.com",
   "smtpPort":587,
-  "timeout": 1000,
+  "timeout": 10000,
   "enableTls": true,
   "tlsVersion":"TLSv1.2",
   "accessTokenUri": "https://login.microsoftonline.com/%s/oauth2/v2.0/token",

@@ -3,7 +3,7 @@
   "smtpProtocol": "SMTPS",
   "smtpHost": "smtp.gmail.com",
   "smtpPort": 465,
-  "timeout": 1000,
+  "timeout": 10000,
   "enableTls": true,
   "tlsVersion":"TLSv1.2",
   "accessTokenUri": "https://oauth2.googleapis.com/token",
