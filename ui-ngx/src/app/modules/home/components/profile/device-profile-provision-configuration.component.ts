@@ -143,6 +143,9 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
 
   writeValue(value: DeviceProvisionConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
+      if (value.type === DeviceProvisionType.X509_CERTIFICATE_CHAIN) {
+        value.certificateValue = value.provisionDeviceSecret;
+      }
       this.provisionConfigurationFormGroup.patchValue(value, {emitEvent: false});
     } else {
       this.provisionConfigurationFormGroup.patchValue({type: DeviceProvisionType.DISABLED});
