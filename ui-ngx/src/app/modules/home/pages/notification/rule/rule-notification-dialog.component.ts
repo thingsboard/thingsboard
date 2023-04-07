@@ -313,6 +313,8 @@ export class RuleNotificationDialogComponent extends
     if (this.ruleNotification) {
       if (this.data.isCopy) {
         this.ruleNotification.name += ` (${this.translate.instant('action.copy')})`;
+      } else {
+        this.ruleNotificationForm.get('triggerType').disable({emitEvent: false});
       }
       this.ruleNotificationForm.reset({}, {emitEvent: false});
       this.ruleNotificationForm.patchValue(this.ruleNotification, {emitEvent: false});
