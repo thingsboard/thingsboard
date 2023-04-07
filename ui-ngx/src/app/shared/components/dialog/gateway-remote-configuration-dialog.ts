@@ -29,36 +29,48 @@
 /// OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
 ///
 
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { SharedModule } from '@shared/shared.module';
-import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
-import { DeviceCredentialsComponent } from '@home/components/device/device-credentials.component';
-import { DeviceCredentialsLwm2mComponent } from '@home/components/device/device-credentials-lwm2m.component';
-import { DeviceCredentialsLwm2mServerComponent } from '@home/components/device/device-credentials-lwm2m-server.component';
-import { DeviceCredentialsMqttBasicComponent } from '@home/components/device/device-credentials-mqtt-basic.component';
-import { DeviceExampleCommandComponent } from '@home/components/device/device-example-command.component';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
+import { FormBuilder, FormControl } from '@angular/forms';
 
-@NgModule({
-  declarations: [
-    CopyDeviceCredentialsComponent,
-    DeviceCredentialsComponent,
-    DeviceCredentialsLwm2mComponent,
-    DeviceCredentialsLwm2mServerComponent,
-    DeviceCredentialsMqttBasicComponent,
-    DeviceExampleCommandComponent
-  ],
-  imports: [
-    CommonModule,
-    SharedModule
-  ],
-  exports: [
-    CopyDeviceCredentialsComponent,
-    DeviceCredentialsComponent,
-    DeviceCredentialsLwm2mComponent,
-    DeviceCredentialsLwm2mServerComponent,
-    DeviceCredentialsMqttBasicComponent,
-    DeviceExampleCommandComponent
-  ]
+export interface GatewayRemoteConfigurationDialogData {
+  gatewayName: string;
+}
+
+@Component({
+  selector: 'tb-activation-link-dialog',
+  templateUrl: './gateway-remote-configuration-dialog.html'
 })
-export class DeviceCredentialsModule { }
+
+export class GatewayRemoteConfigurationDialogComponent extends DialogComponent<GatewayRemoteConfigurationDialogComponent,
+  boolean> implements OnInit {
+
+  gatewayName: string;
+
+  gatewayForm: FormControl;
+
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              @Inject(MAT_DIALOG_DATA) public data: GatewayRemoteConfigurationDialogData,
+              public dialogRef: MatDialogRef<GatewayRemoteConfigurationDialogComponent, boolean>,
+              private fb: FormBuilder) {
+    super(store, router, dialogRef);
+    this.gatewayName = this.data.gatewayName;
+    this.gatewayForm = this.fb.control(null);
+  }
+
+  ngOnInit(): void {
+  }
+
+  close(): void {
+    this.dialogRef.close();
+  }
+
+  turnOff(): void {
+    this.dialogRef.close(true);
+  }
+}

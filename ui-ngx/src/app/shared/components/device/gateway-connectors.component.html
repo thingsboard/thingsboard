@@ -1,0 +1,143 @@
+<!--
+
+    ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+
+    Copyright © 2016-2023 ThingsBoard, Inc. All Rights Reserved.
+
+    NOTICE: All information contained herein is, and remains
+    the property of ThingsBoard, Inc. and its suppliers,
+    if any.  The intellectual and technical concepts contained
+    herein are proprietary to ThingsBoard, Inc.
+    and its suppliers and may be covered by U.S. and Foreign Patents,
+    patents in process, and are protected by trade secret or copyright law.
+
+    Dissemination of this information or reproduction of this material is strictly forbidden
+    unless prior written permission is obtained from COMPANY.
+
+    Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+    managers or contractors who have executed Confidentiality and Non-disclosure agreements
+    explicitly covering such access.
+
+    The copyright notice above does not evidence any actual or intended publication
+    or disclosure  of  this source code, which includes
+    information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+    ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+    OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+    THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+    AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+    THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+    DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+    OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+
+-->
+<form style="height: 100%" fxLayout="column" [formGroup]="gatewayConnectorsGroup">
+  <mat-toolbar color="primary">
+    <h2 translate>gateway.connectors</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            type="button"
+            (click)="cancel()"
+            *ngIf="dialogRef">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div fxLayout="row" fxLayoutGap="15px" fxFlex style="height: calc(100% - 35px)">
+    <div fxFlex="30" fxLayout="column" style="overflow: auto">
+      <mat-accordion multi>
+        <mat-expansion-panel expanded="true"
+                             formArrayName="connectors"
+                             *ngFor="let connectorControl of connectorsFormArray().controls; let $index = index"
+                             [ngClass]="{'mat-card-selected': $index === selectedConnector}">
+          <mat-expansion-panel-header>
+            <mat-panel-title class="expansion-panel-header">
+              {{generatePanelTitle(connectorControl)}}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div fxLayout="row">
+            <mat-card fxLayout="row wrap" style="margin-bottom: 15px" [formGroupName]="$index">
+              <mat-slide-toggle color="primary" fxFlex="100" formControlName="active">
+                {{ (connectorControl.get('active').value ? 'gateway.connectors-active' : 'gateway.connectors-inactive') | translate }}
+              </mat-slide-toggle>
+              <mat-form-field fxFlex="calc(50%-15px)">
+                <mat-label translate>gateway.connector-name</mat-label>
+                <input matInput formControlName="name" required/>
+                <mat-error
+                  *ngIf="connectorControl.get('name').hasError('required')">
+                  {{'gateway.connector-name-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field fxFlex="calc(50%-15px)">
+                <mat-label translate>gateway.connector-configuration</mat-label>
+                <input matInput formControlName="configuration" required/>
+                <mat-error
+                  *ngIf="connectorControl.get('configuration').hasError('required')">
+                  {{'gateway.connector-configuration-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field fxFlex="calc(50%-15px)">
+                <mat-label translate>gateway.connector-type</mat-label>
+                <mat-select formControlName="type" required>
+                  <mat-option *ngFor="let type of gatewayConnectorDefaultTypes" [value]="type">{{type}}</mat-option>
+                </mat-select>
+                <mat-error
+                  *ngIf="connectorControl.get('type').hasError('required')">
+                  {{'gateway.connector-type-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field fxFlex="calc(50%-15px)">
+                <mat-label translate>gateway.connector-key</mat-label>
+                <input matInput formControlName="key" required/>
+                <mat-error
+                  *ngIf="connectorControl.get('key').hasError('required')">
+                  {{'gateway.connector-key-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </mat-card>
+            <div fxLayout="column">
+              <button mat-icon-button (click)="removeConnector($index)"
+                      matTooltip="{{ 'gateway.statistics.remove' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>close</mat-icon>
+              </button>
+              <button mat-icon-button (click)="selectConnector($index)"
+                      matTooltip="{{ 'gateway.select-connector' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>code</mat-icon>
+              </button>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+      <button mat-raised-button color="primary"
+              style="margin-top: 15px"
+              type="button"
+              (click)="addConnector(true)">
+        {{ 'gateway.connector-add' | translate }}
+      </button>
+    </div>
+    <tb-json-object-edit
+      fxFlex
+      fxLayout="column"
+      required
+      *ngIf="selectedConnector !== undefined"
+      label="{{ 'gateway.connector-json' | translate }}"
+      [formControl]="getJsonControl(selectedConnector)">
+    </tb-json-object-edit>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="primary"
+            class="action-btns"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            class="action-btns"
+            type="button"
+            [disabled]="gatewayConnectorsGroup.invalid || !gatewayConnectorsGroup.dirty"
+            (click)="saveConnectors()">
+      {{ 'action.save' | translate }}
+    </button>
+
+  </div>
+</form>

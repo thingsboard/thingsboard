@@ -1,0 +1,166 @@
+/**
+ * ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+ *
+ * Copyright © 2016-2023 ThingsBoard, Inc. All Rights Reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of ThingsBoard, Inc. and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to ThingsBoard, Inc.
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ *
+ * Dissemination of this information or reproduction of this material is strictly forbidden
+ * unless prior written permission is obtained from COMPANY.
+ *
+ * Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+ * managers or contractors who have executed Confidentiality and Non-disclosure agreements
+ * explicitly covering such access.
+ *
+ * The copyright notice above does not evidence any actual or intended publication
+ * or disclosure  of  this source code, which includes
+ * information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+ * ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+ * OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+ * THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+ * AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+ * THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+ * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+ * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+ */
+:host {
+  width: 100%;
+  height: 100%;
+  display: block;
+
+  .mat-toolbar {
+    background: transparent;
+    color: rgba(0, 0, 0, .87) !important;
+  }
+
+  .mat-content {
+    .expansion-panel-header {
+      font-weight: 600;
+      color: rgba(0, 0, 0, .87) !important;
+    }
+
+    mat-slide-toggle {
+      margin-bottom: 16px;
+    }
+
+    mat-form-field {
+      margin-right: 15px;
+    }
+
+    .block-title {
+      font-size: 20px;
+      font-weight: 400;
+      padding-top: 16px;
+    }
+
+    .hover-cursor {
+      cursor: pointer;
+    }
+  }
+
+  .security-toggle-group {
+    padding-bottom: 0;
+    background: transparent !important;
+    margin-bottom: 15px;
+    border: none;
+
+    .mat-button-toggle {
+      border-radius: 15px;
+      border: 1px solid rgba(0, 0, 0, 0);
+      background: rgba(0, 0, 0, .05);
+      margin: 5px;
+      color: rgba(0, 0, 0, .2);
+      font-weight: 500;
+    }
+
+    .mat-button-toggle-checked {
+      border-radius: 15px;
+      border: 1px solid #305680;
+      background: white;
+      color: #305680;
+    }
+
+    ::ng-deep span {
+      text-transform: capitalize;
+      line-height: 20px;
+      font-size: 13px;
+      padding: 5px 25px;
+    }
+
+    ::ng-deep .mat-button-toggle-ripple {
+      border-radius: 15px;
+    }
+
+    ::ng-deep .mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
+      opacity: 0 !important;
+    }
+  }
+
+  .logs-label {
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+
+  .logs-toggle-group {
+    border: none;
+    border-radius: 15px;
+    background: rgba(0, 0, 0, .05);
+    color: rgba(0, 0, 0, .2);
+    font-weight: 500;
+
+    .mat-button-toggle {
+      border: none;
+      background: rgba(0, 0, 0, .0);
+      color: rgba(0, 0, 0, .2);
+      font-weight: 500;
+    }
+
+    .mat-button-toggle-checked {
+      border-radius: 15px;
+      color: white;
+      background: #305680;
+    }
+
+    ::ng-deep span {
+      line-height: 20px;
+      font-size: 13px;
+      padding: 5px 25px;
+    }
+
+    ::ng-deep .mat-button-toggle-ripple {
+      border-radius: 15px;
+    }
+
+    ::ng-deep .mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
+      opacity: 0 !important;
+    }
+  }
+
+  .first-capital {
+    text-transform: capitalize;
+  }
+
+  ::ng-deep.mat-tab-label-active {
+    color: white;
+    opacity: 1;
+  }
+
+  ::ng-deep.mat-tab-label, ::ng-deep.mat-tab-label-active {
+    min-width: 50px !important;
+    padding: 3px !important;
+    margin: 3px !important;
+    flex-grow: 1;
+  }
+
+  ::ng-deep.mat-ink-bar {
+    height: 100%;
+    z-index: -10;
+    border-radius: 5px;
+  }
+}
+

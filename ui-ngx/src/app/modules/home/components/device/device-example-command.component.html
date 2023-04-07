@@ -1,0 +1,101 @@
+<!--
+
+    ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+
+    Copyright © 2016-2023 ThingsBoard, Inc. All Rights Reserved.
+
+    NOTICE: All information contained herein is, and remains
+    the property of ThingsBoard, Inc. and its suppliers,
+    if any.  The intellectual and technical concepts contained
+    herein are proprietary to ThingsBoard, Inc.
+    and its suppliers and may be covered by U.S. and Foreign Patents,
+    patents in process, and are protected by trade secret or copyright law.
+
+    Dissemination of this information or reproduction of this material is strictly forbidden
+    unless prior written permission is obtained from COMPANY.
+
+    Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+    managers or contractors who have executed Confidentiality and Non-disclosure agreements
+    explicitly covering such access.
+
+    The copyright notice above does not evidence any actual or intended publication
+    or disclosure  of  this source code, which includes
+    information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+    ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+    OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+    THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+    AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+    THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+    DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+    OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+
+-->
+<div mat-dialog-content tb-toast fxLayout="column" toastTarget="dockerCommandDialogContent">
+  <mat-button-toggle-group [formControl]="protocolCtrl" class="protocol-toggle">
+    <mat-button-toggle value="mqtt" aria-label="mqtt">
+      MQTT
+    </mat-button-toggle>
+    <mat-button-toggle value="coap" aria-label="coap">
+      COAP
+    </mat-button-toggle>
+    <mat-button-toggle value="http" aria-label="html">
+      HTTP
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+  <span  class="help-title">In order to publish telemetry data to (<a [href]="helpLink" target="_blank">ThingsBoard device</a>) with credentials of the current device you can use the following commands.</span>
+  <div class="mat-content" fxLayout="column">
+    <div class="mat-content" fxLayout="column" *ngIf="protocolCtrl.value === 'mqtt'">
+      <span>MQTT </span>
+      <span>1. Setup: <span [innerHTML]="mqttSetup"></span></span>
+      <span class="protocol-send-command">2. Send command:</span>
+      <div fxLayout="row wrap" fxLayoutAlign="start center">
+        <pre class="tb-highlight" fxFlex><code class="pre-wrap">{{ mqttCode }}</code></pre>
+        <button mat-icon-button
+                color="primary"
+                ngxClipboard
+                cbContent="{{ mqttCode }}"
+                (cbOnSuccess)="onDockerCodeCopied()"
+                matTooltip="{{ 'device.transportCommandCopiedMessage' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        </button>
+      </div>
+    </div>
+    <div class="mat-content" fxLayout="column" *ngIf="protocolCtrl.value === 'coap'">
+      <span>COAP </span>
+      <span>1. Setup: <span [innerHTML]="coapSetup"></span></span>
+      <span class="protocol-send-command">2. Send command:  (based on CoAP cli)</span>
+      <div fxLayout="row wrap" fxLayoutAlign="start center">
+        <pre class="tb-highlight" fxFlex><code class="pre-wrap">{{ coapCode }}</code></pre>
+        <button mat-icon-button
+                color="primary"
+                ngxClipboard
+                cbContent="{{ coapCode }}"
+                (cbOnSuccess)="onDockerCodeCopied()"
+                matTooltip="{{ 'device.transportCommandCopiedMessage' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        </button>
+        <pre class="tb-highlight" fxFlex="100"><code
+          class="pre-wrap">JSON example: {{'[{"temperature": 40}, {"isRainy": true}]'}}</code></pre>
+      </div>
+    </div>
+    <div class="mat-content" fxLayout="column" *ngIf="protocolCtrl.value === 'http'">
+      <span>HTTP </span>
+      <span>1. Setup: <span [innerHTML]="httpSetup"></span></span>
+      <span class="protocol-send-command">2. Send command:</span>
+      <div fxLayout="row wrpa"fxLayoutAlign="start center">
+        <pre class="tb-highlight" fxFlex><code class="pre-wrap">{{ httpCode }}</code></pre>
+        <button mat-icon-button
+                color="primary"
+                ngxClipboard
+                cbContent="{{ httpCode }}"
+                (cbOnSuccess)="onDockerCodeCopied()"
+                matTooltip="{{ 'device.transportCommandCopiedMessage' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

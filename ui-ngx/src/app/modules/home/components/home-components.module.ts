@@ -178,7 +178,6 @@ import { modulesMap } from '@modules/common/modules-map';
 import { AlarmAssigneePanelComponent } from '@home/components/alarm/alarm-assignee-panel.component';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { SendNotificationButtonComponent } from '@home/components/notification/send-notification-button.component';
-import { GatewayListComponent } from "@home/components/gateway/gateway-list.component";
 
 @NgModule({
   declarations:
@@ -203,7 +202,6 @@ import { GatewayListComponent } from "@home/components/gateway/gateway-list.comp
       AlarmTableHeaderComponent,
       AlarmTableComponent,
       AlarmAssigneePanelComponent,
-      GatewayListComponent,
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
@@ -354,7 +352,6 @@ import { GatewayListComponent } from "@home/components/gateway/gateway-list.comp
     RelationFiltersComponent,
     AlarmTableComponent,
     AlarmAssigneePanelComponent,
-    GatewayListComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
     AliasesEntityAutocompleteComponent,

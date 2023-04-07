@@ -1,0 +1,72 @@
+<!--
+
+    ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+
+    Copyright © 2016-2023 ThingsBoard, Inc. All Rights Reserved.
+
+    NOTICE: All information contained herein is, and remains
+    the property of ThingsBoard, Inc. and its suppliers,
+    if any.  The intellectual and technical concepts contained
+    herein are proprietary to ThingsBoard, Inc.
+    and its suppliers and may be covered by U.S. and Foreign Patents,
+    patents in process, and are protected by trade secret or copyright law.
+
+    Dissemination of this information or reproduction of this material is strictly forbidden
+    unless prior written permission is obtained from COMPANY.
+
+    Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+    managers or contractors who have executed Confidentiality and Non-disclosure agreements
+    explicitly covering such access.
+
+    The copyright notice above does not evidence any actual or intended publication
+    or disclosure  of  this source code, which includes
+    information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+    ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+    OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+    THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+    AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+    THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+    DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+    OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+
+-->
+<form style="width: 600px; position: relative;">
+  <mat-toolbar color="warn">
+    <mat-icon>warning</mat-icon>
+    <h2 translate>gateway.configuration-delete-dialog-header</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            (click)="close()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content tb-toast toastTarget="activationLinkDialogContent">
+    <div class="mat-content" fxLayout="column">
+      <span innerHTML="{{'gateway.configuration-delete-dialog-body' | translate}}" > </span>
+      <mat-form-field  class="mat-block tb-value-type" style="flex-grow: 0">
+        <mat-label translate>gateway.configuration-delete-dialog-input</mat-label>
+        <input matInput [formControl]="gatewayForm" required/>
+        <mat-error
+          *ngIf="gatewayForm.hasError('required')">
+          {{'gateway.configuration-delete-dialog-input-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="warn"
+            type="button"
+            cdkFocusInitial
+            (click)="close()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-button color="warn"
+            type="button"
+            cdkFocusInitial
+            [disabled]="gatewayForm.value !== gatewayName"
+            (click)="turnOff()">
+      {{ 'gateway.configuration-delete-dialog-confirm' | translate }}
+    </button>
+  </div>
+</form>
