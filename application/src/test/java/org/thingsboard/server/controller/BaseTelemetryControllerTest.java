@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class BaseTelemetryControllerTest extends AbstractControllerTest {
+public abstract class BaseTelemetryControllerTest extends AbstractControllerTest {
 
     @Test
     public void testConstraintValidatorCalledAtLeastOnce() throws Exception {
