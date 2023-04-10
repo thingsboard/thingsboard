@@ -153,7 +153,11 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)
                 || DataConstants.TIMESERIES_UPDATED.equals(msgType)) {
             actionType = EdgeEventActionType.TIMESERIES_UPDATED;
-        } else if (DataConstants.ATTRIBUTES_UPDATED.equals(msgType)) {
+        } else if (DataConstants.ATTRIBUTES_UPDATED.equals(msgType)
+                || DataConstants.CONNECT_EVENT.equals(msgType)
+                || DataConstants.DISCONNECT_EVENT.equals(msgType)
+                || DataConstants.ACTIVITY_EVENT.equals(msgType)
+                || DataConstants.INACTIVITY_EVENT.equals(msgType)) {
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
         } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
             actionType = EdgeEventActionType.POST_ATTRIBUTES;
@@ -172,7 +176,11 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                 || DataConstants.ATTRIBUTES_UPDATED.equals(msgType)
                 || DataConstants.ATTRIBUTES_DELETED.equals(msgType)
                 || DataConstants.TIMESERIES_UPDATED.equals(msgType)
-                || DataConstants.ALARM.equals(msgType);
+                || DataConstants.ALARM.equals(msgType)
+                || DataConstants.CONNECT_EVENT.equals(msgType)
+                || DataConstants.DISCONNECT_EVENT.equals(msgType)
+                || DataConstants.ACTIVITY_EVENT.equals(msgType)
+                || DataConstants.INACTIVITY_EVENT.equals(msgType);
     }
 
     protected boolean isSupportedOriginator(EntityType entityType) {
