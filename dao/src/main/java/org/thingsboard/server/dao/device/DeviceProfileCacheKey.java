@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.device;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -65,7 +66,7 @@ public class DeviceProfileCacheKey implements Serializable {
             return deviceProfileId.toString();
         } else if (defaultProfile) {
             return tenantId.toString();
-        } else if (provisionDeviceKey != null) {
+        } else if (StringUtils.isNotEmpty(provisionDeviceKey)) {
             return provisionDeviceKey;
         }
         return tenantId + "_" + name;
