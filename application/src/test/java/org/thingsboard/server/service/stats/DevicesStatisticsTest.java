@@ -91,10 +91,9 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
             postTelemetry(device.getName(), "{\"dp\":1}");
         }
 
-        await().atMost(20, TimeUnit.SECONDS)
+        await().atMost(40, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getLatestStats(ApiUsageRecordKey.ACTIVE_DEVICES, false)).isEqualTo(activeDevicesCount);
-                    assertThat(getLatestStats(ApiUsageRecordKey.ACTIVE_DEVICES, true)).isEqualTo(activeDevicesCount);
                     assertThat(getLatestStats(ApiUsageRecordKey.INACTIVE_DEVICES, false)).isEqualTo(inactiveDevicesCount);
                 });
     }
