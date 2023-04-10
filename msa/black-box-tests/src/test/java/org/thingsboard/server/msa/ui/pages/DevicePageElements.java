@@ -9,7 +9,8 @@ public class DevicePageElements extends OtherPageElements{
     }
 
     private static final String DEVICE = "//table//span[text()='%s']";
-    private static final String DEVICE_DETAILS_ALARMS = "//tb-details-panel//span[text()='Alarms']";
+    private static final String DEVICE_DETAILS_VIEW = "//tb-details-panel";
+    private static final String DEVICE_DETAILS_ALARMS = DEVICE_DETAILS_VIEW + "//span[text()='Alarms']";
 
     public WebElement device(String deviceName) {
         return waitUntilElementToBeClickable(String.format(DEVICE, deviceName));
@@ -17,5 +18,9 @@ public class DevicePageElements extends OtherPageElements{
 
     public WebElement deviceDetailsAlarmsBtn() {
         return waitUntilElementToBeClickable(DEVICE_DETAILS_ALARMS);
+    }
+
+    public WebElement deviceDetailsView() {
+        return waitUntilPresenceOfElementLocated(DEVICE_DETAILS_VIEW);
     }
 }

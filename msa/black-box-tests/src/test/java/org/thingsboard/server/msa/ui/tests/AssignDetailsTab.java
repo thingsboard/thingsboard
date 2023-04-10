@@ -1,7 +1,6 @@
 package org.thingsboard.server.msa.ui.tests;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -16,6 +15,8 @@ import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class AssignDetailsTab extends AbstractDriverBaseTest {
 
@@ -54,12 +55,13 @@ public class AssignDetailsTab extends AbstractDriverBaseTest {
         devicePage.openDeviceAlarms(deviceName);
         alarmPage.assignTo(user);
 
-        Assert.assertTrue(alarmPage.assignUserDisplayName(user).isDisplayed());
+        Assert.assertTrue(alarmPage.assignedUser(user).isDisplayed());
     }
 
     @Test
     public void reassignAlarm() {
-        userId = testRestClient.postUser(EntityPrototypes.defaultUser(getCustomerByName("Customer A").getId())).getId();
+        testRestClient.postCustomer(EntityPrototypes.defaultCustomerPrototype("TestCustomer"));
+        userId = testRestClient.postUser(EntityPrototypes.defaultUser(getCustomerByName("TestCustomer").getId())).getId();
         deviceName = testRestClient.postDevice("", DevicePrototypes.defaultDevicePrototype("")).getName();
         deviceId = testRestClient.getDeviceByName(deviceName).getId();
         alarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId, userId)).getId();
@@ -68,6 +70,41 @@ public class AssignDetailsTab extends AbstractDriverBaseTest {
         devicePage.openDeviceAlarms(deviceName);
         alarmPage.assignTo("customer@thingsboard.org");
 
-        Assert.assertTrue(alarmPage.assignUserDisplayName("customer@thingsboard.org").isDisplayed());
+        Assert.assertTrue(alarmPage.assignedUser("customer@thingsboard.org").isDisplayed());
+    }
+
+    @Test
+    public void searchByEmail() {
+        deviceName = testRestClient.postDevice("", DevicePrototypes.defaultDevicePrototype("")).getName();
+        deviceId = testRestClient.getDeviceByName(deviceName).getId();
+        alarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId)).getId();
+
+        sideBarMenuView.goToDevicesPage();
+        devicePage.openDeviceAlarms(deviceName);
+        alarmPage.assignBtn().click();
+        alarmPage.searchUserField().sendKeys("customer@thingsboard.org");
+        alarmPage.setUsers();
+
+        assertThat(alarmPage.getUsers()).contains("customer@thingsboard.org");
+        alarmPage.assignUsers().forEach(u -> assertThat(u.isDisplayed()).isTrue());
+    }
+
+    @Test
+    public void searchByName() {
+        String name = "usik";
+
+        userId = testRestClient.postUser(EntityPrototypes.defaultUser(getCustomerByName("Customer A").getId(), name)).getId();
+        deviceName = testRestClient.postDevice("", DevicePrototypes.defaultDevicePrototype("")).getName();
+        deviceId = testRestClient.getDeviceByName(deviceName).getId();
+        alarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId)).getId();
+
+        sideBarMenuView.goToDevicesPage();
+        devicePage.openDeviceAlarms(deviceName);
+        alarmPage.assignBtn().click();
+        alarmPage.searchUserField().sendKeys(name);
+        alarmPage.setUsers();
+
+        assertThat(alarmPage.getUsers()).contains(name);
+        alarmPage.assignUsers().forEach(u -> assertThat(u.isDisplayed()).isTrue());
     }
 }

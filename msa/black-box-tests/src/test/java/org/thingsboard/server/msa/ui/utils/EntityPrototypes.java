@@ -129,4 +129,13 @@ public class EntityPrototypes {
         user.setAuthority(Authority.CUSTOMER_USER);
         return user;
     }
+
+    public static User defaultUser(CustomerId customerId, String name) {
+        User user = new User();
+        user.setEmail("test@thingsboard.org");
+        user.setFirstName(name);
+        user.setCustomerId(customerId);
+        user.setAuthority(Authority.CUSTOMER_USER);
+        return user;
+    }
 }
