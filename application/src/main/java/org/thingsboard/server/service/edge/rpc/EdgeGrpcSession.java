@@ -417,10 +417,10 @@ public final class EdgeGrpcSession implements Closeable {
                     log.trace("[{}] [{}] downlink msg(s) are going to be send.", this.sessionId, copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
                         if (this.clientMaxInboundMessageSize != 0 && downlinkMsg.getSerializedSize() > this.clientMaxInboundMessageSize) {
-                            log.error("[{}] Downlink msg size [{}] exceeds client max inbound message size [{}]. Skipping this message. " +
+                            log.error("[{}][{}][{}] Downlink msg size [{}] exceeds client max inbound message size [{}]. Skipping this message. " +
                                             "Please increase value of CLOUD_RPC_MAX_INBOUND_MESSAGE_SIZE env variable on the edge and restart it." +
-                                            "Message {}",
-                                    this.sessionId, downlinkMsg.getSerializedSize(), this.clientMaxInboundMessageSize, downlinkMsg);
+                                            "Message {}", edge.getTenantId(), edge.getId(), this.sessionId, downlinkMsg.getSerializedSize(),
+                                    this.clientMaxInboundMessageSize, downlinkMsg);
                             sessionState.getPendingMsgsMap().remove(downlinkMsg.getDownlinkMsgId());
                         } else {
                             sendDownlinkMsg(ResponseMsg.newBuilder()
