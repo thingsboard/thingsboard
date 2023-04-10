@@ -115,23 +115,38 @@ public class TbMsgPushToEdgeNodeTest {
         List<String> miscEvents = List.of(DataConstants.CONNECT_EVENT, DataConstants.DISCONNECT_EVENT,
                 DataConstants.ACTIVITY_EVENT, DataConstants.INACTIVITY_EVENT);
         for (String event : miscEvents) {
-            Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
-            Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
-            Mockito.when(ctx.getEdgeEventService()).thenReturn(edgeEventService);
-            Mockito.when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
-            Mockito.when(edgeEventService.saveAsync(any())).thenReturn(SettableFuture.create());
-
-            TbMsg msg = TbMsg.newMsg(event, new EdgeId(UUID.randomUUID()), new TbMsgMetaData(),
-                    TbMsgDataType.JSON, "{\"lastConnectTs\":1}", null, null);
-
-            node.onMsg(ctx, msg);
-
-            ArgumentMatcher<EdgeEvent> eventArgumentMatcher = edgeEvent ->
-                    edgeEvent.getAction().equals(EdgeEventActionType.ATTRIBUTES_UPDATED)
-                            && edgeEvent.getBody().get("kv").get("lastConnectTs").asInt() == 1;
-            verify(edgeEventService).saveAsync(Mockito.argThat(eventArgumentMatcher));
-
-            Mockito.reset(ctx, edgeEventService);
+            TbMsgMetaData metaData = new TbMsgMetaData();
+            metaData.putValue(DataConstants.SCOPE, DataConstants.SERVER_SCOPE);
+            testEvent(event, metaData, EdgeEventActionType.ATTRIBUTES_UPDATED, "kv");
         }
+    }
+
+    @Test
+    public void testMiscEventsProcessedAsTimeseriesUpdated() {
+        List<String> miscEvents = List.of(DataConstants.CONNECT_EVENT, DataConstants.DISCONNECT_EVENT,
+                DataConstants.ACTIVITY_EVENT, DataConstants.INACTIVITY_EVENT);
+        for (String event : miscEvents) {
+            testEvent(event, new TbMsgMetaData(), EdgeEventActionType.TIMESERIES_UPDATED, "data");
+        }
+    }
+
+    private void testEvent(String event, TbMsgMetaData metaData, EdgeEventActionType expectedType, String dataKey) {
+        Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
+        Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
+        Mockito.when(ctx.getEdgeEventService()).thenReturn(edgeEventService);
+        Mockito.when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
+        Mockito.when(edgeEventService.saveAsync(any())).thenReturn(SettableFuture.create());
+
+        TbMsg msg = TbMsg.newMsg(event, new EdgeId(UUID.randomUUID()), metaData,
+                TbMsgDataType.JSON, "{\"lastConnectTs\":1}", null, null);
+
+        node.onMsg(ctx, msg);
+
+        ArgumentMatcher<EdgeEvent> eventArgumentMatcher = edgeEvent ->
+                edgeEvent.getAction().equals(expectedType)
+                        && edgeEvent.getBody().get(dataKey).get("lastConnectTs").asInt() == 1;
+        verify(edgeEventService).saveAsync(Mockito.argThat(eventArgumentMatcher));
+
+        Mockito.reset(ctx, edgeEventService);
     }
 }
