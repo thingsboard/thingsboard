@@ -21,6 +21,4 @@ public interface NotificationChannel {
 
     void sendNotification(Notification notification);
 
-    void sendNotification(String message);
-
 }

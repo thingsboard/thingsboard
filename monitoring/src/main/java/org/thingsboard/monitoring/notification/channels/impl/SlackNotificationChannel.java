@@ -51,8 +51,7 @@ public class SlackNotificationChannel implements NotificationChannel {
         sendNotification(notification.getText());
     }
 
-    @Override
-    public void sendNotification(String message) {
+    private void sendNotification(String message) {
         restTemplate.postForObject(webhookUrl, Map.of("text", message), String.class);
     }
 

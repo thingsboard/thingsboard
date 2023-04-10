@@ -29,10 +29,11 @@ monitoring:
   ws:
     # WebSocket url, wss://DOMAIN by default
     base_url: '${WS_BASE_URL:wss://${monitoring.domain}}'
-    # Maximum time between request to transport and WebSocket update
-    check_timeout_ms: '${WS_CHECK_TIMEOUT_MS:5000}'
     # WebSocket request timeout
     request_timeout_ms: '${WS_REQUEST_TIMEOUT_MS:3000}'
+
+  # Maximum time between request to transport and WebSocket update
+  check_timeout_ms: '${CHECK_TIMEOUT_MS:5000}'
 
   # Failures threshold for notifying
   failures_threshold: '${FAILURES_THRESHOLD:2}'

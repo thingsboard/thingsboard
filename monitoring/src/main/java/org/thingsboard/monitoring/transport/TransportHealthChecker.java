@@ -18,11 +18,11 @@ package org.thingsboard.monitoring.transport;
 import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.client.WsClient;
 import org.thingsboard.monitoring.config.MonitoringTargetConfig;
 import org.thingsboard.monitoring.config.TransportType;
-import org.thingsboard.monitoring.config.WsConfig;
 import org.thingsboard.monitoring.config.service.TransportMonitoringConfig;
 import org.thingsboard.monitoring.data.Latencies;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
@@ -41,13 +41,13 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
     protected final C config;
     protected final MonitoringTargetConfig target;
     private TransportInfo transportInfo;
-    @Autowired
-    private WsConfig wsConfig;
 
     @Autowired
     private MonitoringReporter reporter;
     @Autowired
     private TbStopWatch stopWatch;
+    @Value("${monitoring.check_timeout_ms}")
+    private int resultCheckTimeoutMs;
 
     public static final String TEST_TELEMETRY_KEY = "testData";
 
@@ -96,11 +96,11 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
     private void checkWsUpdate(WsClient wsClient, String testValue) {
         stopWatch.start();
-        wsClient.waitForUpdate(wsConfig.getResultCheckTimeoutMs());
+        wsClient.waitForUpdate(resultCheckTimeoutMs);
         log.trace("[{}] Waited for WS update. Last WS msg: {}", transportInfo, wsClient.lastMsg);
         Object update = wsClient.getTelemetryUpdate(target.getDevice().getId(), TEST_TELEMETRY_KEY);
         if (update == null) {
-            throw new TransportFailureException("No WS update arrived within " + wsConfig.getResultCheckTimeoutMs() + " ms");
+            throw new TransportFailureException("No WS update arrived within " + resultCheckTimeoutMs + " ms");
         } else if (!update.toString().equals(testValue)) {
             throw new TransportFailureException("Was expecting value " + testValue + " but got " + update);
         }

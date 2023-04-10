@@ -16,29 +16,26 @@
 package org.thingsboard.monitoring.util;
 
 import org.apache.commons.lang3.time.StopWatch;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class TbStopWatch {
 
-    private final ThreadLocal<StopWatch> internal = ThreadLocal.withInitial(StopWatch::new);
+    private final StopWatch internal = new StopWatch();
 
     public void start() {
-        StopWatch internal = getInternal();
         internal.reset();
         internal.start();
     }
 
     public long getTime() {
-        StopWatch internal = getInternal();
         internal.stop();
         long nanoTime = internal.getNanoTime();
         internal.reset();
         return nanoTime;
-    }
-
-    private StopWatch getInternal() {
-        return this.internal.get();
     }
 
 }

@@ -22,10 +22,8 @@ public class Latencies {
     public static final String WS_UPDATE = "wsUpdate";
     public static final String WS_CONNECT = "wsConnect";
     public static final String LOG_IN = "logIn";
-    public static final String WEB_UI_LOAD = "webUiLoad";
 
     public static String transportRequest(TransportType transportType) {
-        int a = 2;
         return String.format("%sTransportRequest", transportType.name().toLowerCase());
     }
 
