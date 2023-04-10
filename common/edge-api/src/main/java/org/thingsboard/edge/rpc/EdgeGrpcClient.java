@@ -124,8 +124,10 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 if (responseMsg.hasConnectResponseMsg()) {
                     ConnectResponseMsg connectResponseMsg = responseMsg.getConnectResponseMsg();
                     if (connectResponseMsg.getResponseCode().equals(ConnectResponseCode.ACCEPTED)) {
-                        log.debug("[{}] Server max inbound message size: {}", edgeKey, connectResponseMsg.getMaxInboundMessageSize());
-                        serverMaxInboundMessageSize = connectResponseMsg.getMaxInboundMessageSize();
+                        if (connectResponseMsg.hasMaxInboundMessageSize()) {
+                            log.debug("[{}] Server max inbound message size: {}", edgeKey, connectResponseMsg.getMaxInboundMessageSize());
+                            serverMaxInboundMessageSize = connectResponseMsg.getMaxInboundMessageSize();
+                        }
                         log.info("[{}] Configuration received: {}", edgeKey, connectResponseMsg.getConfiguration());
                         onEdgeUpdate.accept(connectResponseMsg.getConfiguration());
                     } else {

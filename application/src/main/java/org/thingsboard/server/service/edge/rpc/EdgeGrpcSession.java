@@ -134,8 +134,10 @@ public final class EdgeGrpcSession implements Closeable {
                     if (ConnectResponseCode.ACCEPTED != responseMsg.getResponseCode()) {
                         outputStream.onError(new RuntimeException(responseMsg.getErrorMsg()));
                     } else {
-                        log.debug("[{}] Client max inbound message size: {}", sessionId, requestMsg.getConnectRequestMsg().getMaxInboundMessageSize());
-                        clientMaxInboundMessageSize = requestMsg.getConnectRequestMsg().getMaxInboundMessageSize();
+                        if (requestMsg.getConnectRequestMsg().hasMaxInboundMessageSize()) {
+                            log.debug("[{}] Client max inbound message size: {}", sessionId, requestMsg.getConnectRequestMsg().getMaxInboundMessageSize());
+                            clientMaxInboundMessageSize = requestMsg.getConnectRequestMsg().getMaxInboundMessageSize();
+                        }
                         connected = true;
                     }
                 }

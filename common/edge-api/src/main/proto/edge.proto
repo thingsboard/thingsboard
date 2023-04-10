@@ -68,7 +68,7 @@ message ConnectRequestMsg {
   string edgeRoutingKey = 1;
   string edgeSecret = 2;
   EdgeVersion edgeVersion = 3;
-  int32 maxInboundMessageSize = 4;
+  optional int32 maxInboundMessageSize = 4;
 }
 
 enum ConnectResponseCode {
@@ -81,7 +81,7 @@ message ConnectResponseMsg {
   ConnectResponseCode responseCode = 1;
   string errorMsg = 2;
   EdgeConfiguration configuration = 3;
-  int32 maxInboundMessageSize = 4;
+  optional int32 maxInboundMessageSize = 4;
 }
 
 message SyncRequestMsg {
