@@ -146,7 +146,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         AdminSettings mailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (mailSettings != null) {
             JsonNode mailFrom = mailSettings.getJsonValue().get("mailFrom");
-            return StringUtils.isNotEmpty(mailFrom.asText());
+            return StringUtils.isNotEmpty(mailFrom.asText()) && !"ThingsBoard <sysadmin@localhost.localdomain>".equalsIgnoreCase(mailFrom.asText());
         }
         return false;
     }
