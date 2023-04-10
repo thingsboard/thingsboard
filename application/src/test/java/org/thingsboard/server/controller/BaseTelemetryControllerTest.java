@@ -26,13 +26,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public abstract class BaseTelemetryControllerTest extends AbstractControllerTest {
 
     @Test
-    public void testConstraintValidatorCalledAtLeastOnce() throws Exception {
+    public void testConstraintValidator() throws Exception {
         loginTenantAdmin();
         Device device = createDevice();
         String requestBody = "{\"data\": \"<object data=\\\"data:text/html,<script>alert(document)</script>\\\"></object>\"}";
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", requestBody, String.class, status().isOk());
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", requestBody, String.class, status().isOk());
         requestBody = "{\"<object data=\\\"data:text/html,<script>alert(document)</script>\\\"></object>\": \"data\"}";
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", requestBody, String.class, status().isBadRequest());
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", requestBody, String.class, status().isBadRequest());
     }
 
     private Device createDevice() throws Exception {

@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.dao.service.ConstraintValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +71,6 @@ public class TbMsgAttributesNode implements TbNode {
         }
         String src = msg.getData();
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(JsonParser.parseString(src)));
-        attributes.forEach(ConstraintValidator::validateFields);
         if (attributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;

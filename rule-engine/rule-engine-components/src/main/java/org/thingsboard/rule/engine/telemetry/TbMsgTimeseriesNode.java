@@ -33,7 +33,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.dao.service.ConstraintValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,7 +95,6 @@ public class TbMsgTimeseriesNode implements TbNode {
         List<TsKvEntry> tsKvEntryList = new ArrayList<>();
         for (Map.Entry<Long, List<KvEntry>> tsKvEntry : tsKvMap.entrySet()) {
             for (KvEntry kvEntry : tsKvEntry.getValue()) {
-                ConstraintValidator.validateFields(kvEntry);
                 tsKvEntryList.add(new BasicTsKvEntry(tsKvEntry.getKey(), kvEntry));
             }
         }
