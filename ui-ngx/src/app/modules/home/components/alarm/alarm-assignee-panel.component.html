@@ -25,8 +25,7 @@
   <mat-autocomplete class="tb-assignee-autocomplete"
                     #userAutocomplete="matAutocomplete"
                     [displayWith]="displayUserFn"
-                    (optionSelected)="selected($event)"
-                    panelWidth="260px">
+                    (optionSelected)="selected($event)">
     <mat-option [fxHide]="!assigneeId" [value]="null">
       <mat-icon class="unassigned-icon">account_circle</mat-icon>
       <span translate>alarm.unassigned</span>

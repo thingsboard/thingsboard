@@ -670,18 +670,19 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private void interruptPreviousSendDownlinkMsgsTask() {
-        log.info("[{}]Previous send downlink future was not properly completed, stopping it now!", this.sessionId);
-        stopCurrentSendDownlinkMsgsTask(new RuntimeException());
+        String msg = String.format("[%s] Previous send downlink future was not properly completed, stopping it now!", this.sessionId);
+        stopCurrentSendDownlinkMsgsTask(new RuntimeException(msg));
     }
 
     private void interruptGeneralProcessingOnSync(TenantId tenantId, EdgeId edgeId) {
-        log.info("[{}][{}][{}] Sync process started. General processing interrupted!", this.sessionId, tenantId, edgeId);
-        stopCurrentSendDownlinkMsgsTask(new RuntimeException());
+        String msg = String.format("[%s][%s] Sync process started. General processing interrupted!", tenantId, edgeId);
+        stopCurrentSendDownlinkMsgsTask(new RuntimeException(msg));
     }
 
     public void stopCurrentSendDownlinkMsgsTask(Exception e) {
         if (sessionState.getSendDownlinkMsgsFuture() != null && !sessionState.getSendDownlinkMsgsFuture().isDone()) {
             if (e != null) {
+                log.debug(e.getMessage());
                 sessionState.getSendDownlinkMsgsFuture().setException(e);
             } else {
                 sessionState.getSendDownlinkMsgsFuture().set(null);
