@@ -437,9 +437,6 @@ cache:
     assetProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_ASSET_PROFILES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ASSET_PROFILES_MAX_SIZE:10000}"
-    notificationRules:
-      timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:1440}"
-      maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:10000}"
     notificationSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_SETTINGS_TTL:10}"
       maxSize: "${CACHE_SPECS_NOTIFICATION_SETTINGS_MAX_SIZE:1000}"
@@ -480,6 +477,10 @@ cache:
     entityCount:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
       maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+  # deliberately placed outside 'specs' group above
+  notificationRules:
+    timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:30}"
+    maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:1000}"
 
 #Disable this because it is not required.
 spring.data.redis.repositories.enabled: false
@@ -960,7 +961,6 @@ edges:
   scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:1}"
   send_scheduler_pool_size: "${EDGES_SEND_SCHEDULER_POOL_SIZE:1}"
   grpc_callback_thread_pool_size: "${EDGES_GRPC_CALLBACK_POOL_SIZE:1}"
-  edge_events_ttl: "${EDGES_EDGE_EVENTS_TTL:0}"
   state:
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 

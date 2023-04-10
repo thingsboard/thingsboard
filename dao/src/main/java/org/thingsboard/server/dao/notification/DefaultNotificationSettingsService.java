@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivi
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
@@ -144,6 +145,14 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             apiUsageLimitRuleTriggerConfig.setNotifyOn(Set.of(ApiUsageStateValue.WARNING, ApiUsageStateValue.DISABLED));
             createRule(tenantId, "API usage limit", apiUsageLimitNotificationTemplate.getId(), apiUsageLimitRuleTriggerConfig,
                     List.of(affectedTenantAdmins.getId(), sysAdmins.getId()), "Send notification to tenant admins and system admins when API feature usage state changed");
+
+            NotificationTemplate newPlatformVersionNotificationTemplate = createTemplate(tenantId, "New platform version notification", NotificationType.NEW_PLATFORM_VERSION,
+                    "New version <b>${latestVersion}</b> is available",
+                    "Current platform version is ${currentVersion}",
+                    null, "Open release notes", "${latestVersionReleaseNotesUrl}");
+            NewPlatformVersionNotificationRuleTriggerConfig newPlatformVersionRuleTriggerConfig = new NewPlatformVersionNotificationRuleTriggerConfig();
+            createRule(tenantId, "New platform version", newPlatformVersionNotificationTemplate.getId(), newPlatformVersionRuleTriggerConfig,
+                    List.of(sysAdmins.getId(), tenantAdmins.getId()), "Send notification to system admins and tenant admins when new platform version is available");
             return;
         }
 
