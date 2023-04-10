@@ -26,6 +26,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
@@ -147,21 +148,24 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 }
                 break;
             case X509_CERTIFICATE_CHAIN:
-                X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
-                if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())) {
-                    DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(targetDevice.getTenantId(), targetDevice.getId());
-                    if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
-                        String updatedDeviceCertificateValue = provisionRequest.getCredentialsData().getX509CertHash();
-                        deviceCredentials = updateDeviceCredentials(targetDevice.getTenantId(), deviceCredentials,
-                                updatedDeviceCertificateValue, DeviceCredentialsType.X509_CERTIFICATE);
+                if (targetProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret().equals(provisionRequestSecret)) {
+                    X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
+                    if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())) {
+                        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(targetDevice.getTenantId(), targetDevice.getId());
+                        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
+                            String updatedDeviceCertificateValue = provisionRequest.getCredentialsData().getX509CertHash();
+                            deviceCredentials = updateDeviceCredentials(targetDevice.getTenantId(), deviceCredentials,
+                                    updatedDeviceCertificateValue, DeviceCredentialsType.X509_CERTIFICATE);
+                        }
+                        return new ProvisionResponse(deviceCredentials, ProvisionResponseStatus.SUCCESS);
+                    } else if (x509Configuration.isAllowCreateNewDevicesByX509Certificate()) {
+                        return createDevice(provisionRequest, targetProfile);
+                    } else {
+                        log.warn("Device with name {} doesn't exist and cannot be created due incorrect configuration for X509CertificateChainProvisionConfiguration", provisionRequest.getDeviceName());
+                        throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
                     }
-                    return new ProvisionResponse(deviceCredentials, ProvisionResponseStatus.SUCCESS);
-                } else if (x509Configuration.isAllowCreateNewDevicesByX509Certificate()) {
-                    return createDevice(provisionRequest, targetProfile);
-                } else {
-                    log.warn("Device with name {} doesn't exist and cannot be created due incorrect configuration for X509CertificateChainProvisionConfiguration", provisionRequest.getDeviceName());
-                    throw new ProvisionFailedException(ProvisionResponseStatus.NOT_FOUND.name());
                 }
+                break;
         }
         throw new ProvisionFailedException(ProvisionResponseStatus.NOT_FOUND.name());
     }
@@ -275,7 +279,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     private void fetchAndApplyDeviceNameForX509ProvisionRequestWithRegEx(ProvisionRequest provisionRequest) {
         DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(provisionRequest.getCredentials().getProvisionDeviceKey());
-        if (deviceProfile != null && deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
+        if (deviceProfile != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProfileData().getProvisionConfiguration().getType())) {
             X509CertificateChainProvisionConfiguration configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
             String certificateValue = provisionRequest.getCredentialsData().getX509CertHash();
             String certificateRegEx = configuration.getCertificateRegExPattern();
