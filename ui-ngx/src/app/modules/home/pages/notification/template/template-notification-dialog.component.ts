@@ -177,11 +177,15 @@ export class TemplateNotificationDialogComponent
   }
 
   private allowNotificationType(): NotificationType[] {
+    const sysAdminAllowNotificationTypes = new Set([
+      NotificationType.ENTITIES_LIMIT,
+      NotificationType.API_USAGE_LIMIT,
+      NotificationType.NEW_PLATFORM_VERSION,
+    ]);
+
     if (this.isSysAdmin()) {
-      return [NotificationType.GENERAL, NotificationType.ENTITIES_LIMIT, NotificationType.API_USAGE_LIMIT, NotificationType.NEW_PLATFORM_VERSION];
+      return [NotificationType.GENERAL, ...sysAdminAllowNotificationTypes];
     }
-    return Object.values(NotificationType)
-      .filter(type => type !== NotificationType.ENTITIES_LIMIT && type !== NotificationType.API_USAGE_LIMIT
-        && type !== NotificationType.NEW_PLATFORM_VERSION);
+    return Object.values(NotificationType).filter(type => !sysAdminAllowNotificationTypes.has(type));
   }
 }

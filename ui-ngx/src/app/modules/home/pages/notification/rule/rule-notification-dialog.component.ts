@@ -442,11 +442,16 @@ export class RuleNotificationDialogComponent extends
   }
 
   private allowTriggerTypes(): TriggerType[] {
+    const sysAdminAllowTriggerTypes = new Set([
+      TriggerType.ENTITIES_LIMIT,
+      TriggerType.API_USAGE_LIMIT,
+      TriggerType.NEW_PLATFORM_VERSION,
+    ]);
+
     if (this.isSysAdmin()) {
-      return [TriggerType.ENTITIES_LIMIT, TriggerType.API_USAGE_LIMIT, TriggerType.NEW_PLATFORM_VERSION];
+      return Array.from(sysAdminAllowTriggerTypes);
     }
-    return Object.values(TriggerType).filter(type => type !== TriggerType.ENTITIES_LIMIT && type !== TriggerType.API_USAGE_LIMIT
-      && type !== TriggerType.NEW_PLATFORM_VERSION);
+    return Object.values(TriggerType).filter(type => !sysAdminAllowTriggerTypes.has(type));
   }
 
   get allowEntityTypeForEntityAction(): EntityType[] {
