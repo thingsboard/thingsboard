@@ -461,7 +461,7 @@ export class GatewayConfigurationComponent implements OnInit {
     const attributes = [];
     attributes.push({
       key: 'RemoteLoggingLevel',
-      value: value.logs.remote.logLevel
+      value: value.logs.remote.enabled ? value.logs.remote.logLevel : GatewayLogLevel.none
     });
     delete value.connectors;
     value.logs = stringToBase64(this.generateLogsFile(value.logs));

@@ -157,6 +157,11 @@ export class GatewayConnectorComponent implements OnInit {
 
   removeConnector(index: number): void {
     this.connectorsFormArray().removeAt(index);
+    if (index !== 0) {
+      this.selectedConnector = index - 1;
+    } else {
+      this.selectedConnector = undefined;
+    }
   }
 
   selectConnector(index: number): void {

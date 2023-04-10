@@ -2600,6 +2600,7 @@
         "security-type": "Security type",
         "security-types": {
             "access-token": "Access Token",
+            "username-password": "Username and Password",
             "tls": "TLS",
             "tls-access-token": "TLS + Access Token",
             "tls-private-key": "TLS + Private Key"

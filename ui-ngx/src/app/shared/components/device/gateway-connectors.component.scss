@@ -33,10 +33,11 @@
 
   mat-card {
     padding-left: 10px;
+    background: transparent;
   }
 
   .mat-card-selected {
-    background-color: white;
+    background-color: rgba(48, 86, 128, 0.1);
   }
 
   .mat-mdc-slide-toggle {
