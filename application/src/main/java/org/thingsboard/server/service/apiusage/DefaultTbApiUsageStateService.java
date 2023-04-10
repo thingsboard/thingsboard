@@ -48,12 +48,12 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.notification.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.common.msg.notification.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -128,6 +128,9 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
 
     @Value("${usage.stats.check.cycle:60000}")
     private long nextCycleCheckInterval;
+
+    @Value("${usage.stats.gauge_report_interval:180000}")
+    private long gaugeReportInterval;
 
     private final Lock updateLock = new ReentrantLock();
 
@@ -476,6 +479,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                     }
                 }
             }
+            state.setGaugeReportInterval(gaugeReportInterval);
             log.debug("[{}] Initialized state: {}", ownerId, storedState);
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, ownerId);
             if (tpi.isMyPartition()) {

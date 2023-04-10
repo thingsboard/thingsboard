@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -437,7 +438,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     void checkStates() {
         try {
             final long ts = System.currentTimeMillis();
-            Map<TenantId, Map<Boolean, AtomicInteger>> devicesActivity = new HashMap<>();
+            Map<TenantId, Pair<AtomicInteger, AtomicInteger>> devicesActivity = new HashMap<>();
             partitionedEntities.forEach((tpi, deviceIds) -> {
                 log.debug("Calculating state updates. tpi {} for {} devices", tpi.getFullTopicName(), deviceIds.size());
                 for (DeviceId deviceId : deviceIds) {
@@ -453,14 +454,18 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     } catch (Exception e) {
                         log.warn("[{}] Failed to update inactivity state", deviceId, e);
                     }
-                    devicesActivity.computeIfAbsent(stateData.getTenantId(), k -> new HashMap<>())
-                            .computeIfAbsent(stateData.getState().isActive(), k -> new AtomicInteger())
-                            .incrementAndGet();
+                    Pair<AtomicInteger, AtomicInteger> tenantDevicesActivity = devicesActivity.computeIfAbsent(stateData.getTenantId(),
+                            tenantId -> Pair.of(new AtomicInteger(), new AtomicInteger()));
+                    if (stateData.getState().isActive()) {
+                        tenantDevicesActivity.getLeft().incrementAndGet();
+                    } else {
+                        tenantDevicesActivity.getRight().incrementAndGet();
+                    }
                 }
             });
-            devicesActivity.forEach((tenantId, countByActivityStatus) -> {
-                int active = Optional.ofNullable(countByActivityStatus.get(true)).map(AtomicInteger::get).orElse(0);
-                int inactive = Optional.ofNullable(countByActivityStatus.get(false)).map(AtomicInteger::get).orElse(0);
+            devicesActivity.forEach((tenantId, tenantDevicesActivity) -> {
+                int active = tenantDevicesActivity.getLeft().get();
+                int inactive = tenantDevicesActivity.getRight().get();
                 apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.ACTIVE_DEVICES, active);
                 apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.INACTIVE_DEVICES, inactive);
                 if (active > 0) {

@@ -140,6 +140,7 @@ usage:
       interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
     check:
       cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
+    gauge_report_interval: "${USAGE_STATS_GAUGE_REPORT_INTERVAL:180000}"
 
 # UI parameters
 ui:

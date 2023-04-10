@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.service.apiusage.BaseApiUsageState;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import java.util.ArrayList;
@@ -43,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "usage.stats.report.enabled=true",
         "transport.http.enabled=true",
         "usage.stats.report.interval=2",
+        "usage.stats.gauge_report_interval=1",
         "state.defaultStateCheckIntervalInSec=3",
         "state.defaultInactivityTimeoutInSec=10"
 
@@ -64,8 +64,6 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
 
     @Test
     public void testDevicesActivityStats() throws Exception {
-        setStaticFieldValue(BaseApiUsageState.class, "gaugeReportInterval", 1);
-
         int activeDevicesCount = 5;
         List<Device> activeDevices = new ArrayList<>();
         for (int i = 1; i <= activeDevicesCount; i++) {

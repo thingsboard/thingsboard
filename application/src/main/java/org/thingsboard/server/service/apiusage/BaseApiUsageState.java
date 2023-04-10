@@ -17,6 +17,7 @@ package org.thingsboard.server.service.apiusage;
 
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -29,7 +30,6 @@ import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 public abstract class BaseApiUsageState {
     private final Map<ApiUsageRecordKey, Long> currentCycleValues = new ConcurrentHashMap<>();
@@ -37,7 +37,6 @@ public abstract class BaseApiUsageState {
 
     private final Map<ApiUsageRecordKey, Map<String, Long>> lastGaugesByServiceId = new HashMap<>();
     private final Map<ApiUsageRecordKey, Long> gaugesReportCycles = new HashMap<>();
-    private static long gaugeReportInterval = TimeUnit.MINUTES.toMillis(3);
 
     @Getter
     private final ApiUsageState apiUsageState;
@@ -47,6 +46,9 @@ public abstract class BaseApiUsageState {
     private volatile long nextCycleTs;
     @Getter
     private volatile long currentHourTs;
+
+    @Setter
+    private long gaugeReportInterval;
 
     public BaseApiUsageState(ApiUsageState apiUsageState) {
         this.apiUsageState = apiUsageState;
