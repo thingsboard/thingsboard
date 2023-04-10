@@ -103,7 +103,6 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -111,7 +110,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -129,6 +127,8 @@ import static org.thingsboard.server.service.transport.BasicCredentialsValidatio
 public class DefaultTransportApiService implements TransportApiService {
 
     private static final ObjectMapper mapper = new ObjectMapper();
+
+    private static final Pattern X509_CERTIFICATE_TRIM_CHAIN_PATTERN = Pattern.compile("-----BEGIN CERTIFICATE-----\\s*.*?\\s*-----END CERTIFICATE-----");
 
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbTenantProfileCache tenantProfileCache;
@@ -236,8 +236,9 @@ public class DefaultTransportApiService implements TransportApiService {
         }
     }
 
-    protected ListenableFuture<TransportApiResponseMsg> validateOrCreateDeviceX509Certificate(String certChain) {
-        List<String> chain = convertX509CertificateChainToList(certChain);
+    protected ListenableFuture<TransportApiResponseMsg> validateOrCreateDeviceX509Certificate(String certificateChain) {
+        List<String> chain = X509_CERTIFICATE_TRIM_CHAIN_PATTERN.matcher(certificateChain).results().map(match ->
+                EncryptionUtil.certTrimNewLines(match.group())).collect(Collectors.toList());
         for (String certificateValue : chain) {
             String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
             DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
@@ -720,14 +721,4 @@ public class DefaultTransportApiService implements TransportApiService {
         return null;
     }
 
-    private List<String> convertX509CertificateChainToList(String certificateChain) {
-        List<String> chain = new ArrayList<>();
-        String regex = "-----BEGIN CERTIFICATE-----\\s*.*?\\s*-----END CERTIFICATE-----";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(certificateChain);
-        while (matcher.find()) {
-            chain.add(EncryptionUtil.certTrimNewLines(matcher.group()));
-        }
-        return chain;
-    }
 }
