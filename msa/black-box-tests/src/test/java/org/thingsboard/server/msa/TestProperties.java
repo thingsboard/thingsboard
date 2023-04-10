@@ -16,11 +16,6 @@
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.DockerClientFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 
 @Slf4j
 public class TestProperties {
@@ -30,8 +25,6 @@ public class TestProperties {
     private static final String WSS_URL = "wss://localhost";
 
     private static final ContainerTestSuite instance = ContainerTestSuite.getInstance();
-
-    private static Properties properties;
 
     public static String getBaseUrl() {
         if (instance.isActive()) {
