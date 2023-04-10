@@ -221,7 +221,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
 
     @Override
     public DeviceProfile findDeviceProfileByProvisionDeviceKey(String provisionDeviceKey) {
-        log.trace("Executing findDeviceProfileIdByCredentialsId credentialId [{}]", provisionDeviceKey);
+        log.trace("Executing findDeviceProfileByProvisionDeviceKey provisionKey [{}]", provisionDeviceKey);
         validateString(provisionDeviceKey, INCORRECT_PROVISION_DEVICE_KEY + provisionDeviceKey);
         return cache.getAndPutInTransaction(DeviceProfileCacheKey.fromProvisionDeviceKey(provisionDeviceKey),
                 () -> deviceProfileDao.findByProvisionDeviceKey(provisionDeviceKey), true);

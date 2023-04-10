@@ -275,9 +275,8 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     private void fetchAndApplyDeviceNameForX509ProvisionRequestWithRegEx(ProvisionRequest provisionRequest) {
         DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(provisionRequest.getCredentials().getProvisionDeviceKey());
-        X509CertificateChainProvisionConfiguration configuration;
-        if (deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
-            configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
+        if (deviceProfile != null && deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
+            X509CertificateChainProvisionConfiguration configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
             String certificateValue = provisionRequest.getCredentialsData().getX509CertHash();
             String certificateRegEx = configuration.getCertificateRegExPattern();
             String deviceName = extractDeviceNameFromCertificateCNByRegEx(certificateValue, certificateRegEx);
@@ -298,7 +297,6 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             if (matcher.find()) {
                 return matcher.group(0);
             }
-            return null;
         } catch (Exception ignored) {}
         return null;
     }

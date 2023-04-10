@@ -712,11 +712,12 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     private ProvisionResponse provisionDeviceRequestAndGetResponse(ProvisionRequest provisionRequest) {
-        ProvisionResponse provisionResponse = null;
         try {
-            provisionResponse = deviceProvisionService.provisionDevice(provisionRequest);
-        } catch (ProvisionFailedException ignored) {}
-        return provisionResponse;
+            return deviceProvisionService.provisionDevice(provisionRequest);
+        } catch (ProvisionFailedException e) {
+            log.error(e.getMessage());
+        }
+        return null;
     }
 
     private List<String> convertX509CertificateChainToList(String certificateChain) {
