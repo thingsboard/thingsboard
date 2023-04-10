@@ -72,6 +72,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.SubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.TelemetryPluginCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
@@ -166,10 +167,11 @@ public class DefaultWebSocketService implements WebSocketService {
                 newCmdsHandler(TelemetryPluginCmdsWrapper::getEntityDataCmds, this::handleWsEntityDataCmd),
                 newCmdsHandler(TelemetryPluginCmdsWrapper::getAlarmDataCmds, this::handleWsAlarmDataCmd),
                 newCmdsHandler(TelemetryPluginCmdsWrapper::getEntityCountCmds, this::handleWsEntityCountCmd),
+                newCmdsHandler(TelemetryPluginCmdsWrapper::getAlarmCountCmds, this::handleWsAlarmCountCmd),
                 newCmdsHandler(TelemetryPluginCmdsWrapper::getEntityDataUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
                 newCmdsHandler(TelemetryPluginCmdsWrapper::getAlarmDataUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
-                newCmdsHandler(TelemetryPluginCmdsWrapper::getAlarmDataUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
-                newCmdsHandler(TelemetryPluginCmdsWrapper::getEntityCountUnsubscribeCmds, this::handleWsDataUnsubscribeCmd)
+                newCmdsHandler(TelemetryPluginCmdsWrapper::getEntityCountUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
+                newCmdsHandler(TelemetryPluginCmdsWrapper::getAlarmCountUnsubscribeCmds, this::handleWsDataUnsubscribeCmd)
         );
         notificationCmdsHandlers = List.of(
                 newCmdHandler(NotificationCmdsWrapper::getUnreadSubCmd, notificationCmdsHandler::handleUnreadNotificationsSubCmd),
@@ -299,6 +301,16 @@ public class DefaultWebSocketService implements WebSocketService {
 
         if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)) {
             entityDataSubService.cancelSubscription(sessionRef.getSessionId(), cmd);
+        }
+    }
+
+    private void handleWsAlarmCountCmd(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
+        String sessionId = sessionRef.getSessionId();
+        log.debug("[{}] Processing: {}", sessionId, cmd);
+
+        if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)
+                && validateSubscriptionCmd(sessionRef, cmd)) {
+            entityDataSubService.handleCmd(sessionRef, cmd);
         }
     }
 
@@ -864,6 +876,16 @@ public class DefaultWebSocketService implements WebSocketService {
         } else {
             return true;
         }
+    }
+
+    private boolean validateSubscriptionCmd(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
+        if (cmd.getCmdId() < 0) {
+            TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "Cmd id is negative value!");
+            sendWsMsg(sessionRef, update);
+            return false;
+        }
+        return true;
     }
 
     private void sendWsMsg(WebSocketSessionRef sessionRef, EntityDataUpdate update) {

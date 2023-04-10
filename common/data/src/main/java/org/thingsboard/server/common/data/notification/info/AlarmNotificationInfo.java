@@ -59,7 +59,7 @@ public class AlarmNotificationInfo implements RuleOriginatedNotificationInfo {
     }
 
     @Override
-    public CustomerId getOriginatorEntityCustomerId() {
+    public CustomerId getAffectedCustomerId() {
         return alarmCustomerId;
     }
 

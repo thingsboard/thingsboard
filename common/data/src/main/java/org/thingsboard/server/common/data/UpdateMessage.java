@@ -19,9 +19,11 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @ApiModel
 @Data
-public class UpdateMessage {
+public class UpdateMessage implements Serializable {
 
     @ApiModelProperty(position = 1, value = "'True' if new platform update is available.")
     private final boolean updateAvailable;

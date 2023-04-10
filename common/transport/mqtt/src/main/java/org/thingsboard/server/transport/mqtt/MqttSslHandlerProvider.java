@@ -177,6 +177,7 @@ public class MqttSslHandlerProvider {
                 }
             }
             if (credentialsBody == null) {
+                log.debug("Failed to find credentials for device certificate chain: {}", chain);
                 throw new CertificateException("Invalid Device Certificate");
             }
         }

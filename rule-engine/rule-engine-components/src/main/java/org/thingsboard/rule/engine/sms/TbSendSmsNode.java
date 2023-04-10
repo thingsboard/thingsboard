@@ -37,7 +37,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         nodeDescription = "Sends SMS message via SMS provider.",
         nodeDetails = "Will send SMS message by populating target phone numbers and sms message fields using values derived from message metadata.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeSendSmsConfig",
+        configDirective = "tbExternalNodeSendSmsConfig",
         icon = "sms"
 )
 public class TbSendSmsNode implements TbNode {

@@ -115,12 +115,12 @@
               [stepControl]="webTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.web' | translate }}</ng-template>
       <div class="tb-hint-available-params mat-body-2">
-        {{ 'notification.input-fields-support-templatization' | translate}}
-        <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
-             tb-help-popup-placement="bottom"
-             trigger-style="letter-spacing:0.25px"
-             [tb-help-popup-style]="{maxWidth: '820px'}"
-             trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
+        <span class="content">{{ 'notification.input-fields-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
       </div>
       <form [formGroup]="webTemplateForm">
         <mat-form-field class="mat-block">
@@ -213,12 +213,12 @@
       <ng-template matStepLabel>{{ 'notification.delivery-method.email' | translate }}</ng-template>
       <ng-template matStepContent>
         <div class="tb-hint-available-params mat-body-2">
-          {{ 'notification.input-fields-support-templatization' | translate}}
-          <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
-               tb-help-popup-placement="bottom"
-               trigger-style="letter-spacing:0.25px"
-               [tb-help-popup-style]="{maxWidth: '820px'}"
-               trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
+          <span class="content">{{ 'notification.input-fields-support-templatization' | translate}}</span>
+          <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+                tb-help-popup-placement="bottom"
+                trigger-style="letter-spacing:0.25px"
+                [tb-help-popup-style]="{maxWidth: '820px'}"
+                trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
         </div>
         <form [formGroup]="emailTemplateForm">
           <mat-form-field class="mat-block">
@@ -238,12 +238,12 @@
               [stepControl]="smsTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.sms' | translate }}</ng-template>
       <div class="tb-hint-available-params mat-body-2">
-        {{ 'notification.input-field-support-templatization' | translate}}
-        <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
-             tb-help-popup-placement="bottom"
-             trigger-style="letter-spacing:0.25px"
-             [tb-help-popup-style]="{maxWidth: '820px'}"
-             trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
+        <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
       </div>
       <form [formGroup]="smsTemplateForm">
         <mat-form-field class="mat-block">
@@ -265,12 +265,12 @@
               [stepControl]="slackTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.slack' | translate }}</ng-template>
       <div class="tb-hint-available-params mat-body-2">
-        {{ 'notification.input-field-support-templatization' | translate}}
-        <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
-             tb-help-popup-placement="bottom"
-             trigger-style="letter-spacing:0.25px"
-             [tb-help-popup-style]="{maxWidth: '820px'}"
-             trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
+        <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
       </div>
       <form [formGroup]="slackTemplateForm" fxLayoutGap="8px">
         <mat-form-field class="mat-block">
@@ -342,14 +342,11 @@
             </div>
           </div>
           <mat-divider class="divider"></mat-divider>
-          <div class="details-recipients">
-            <div *ngFor="let user of preview.recipientsPreview" class="details-recipient">
-              <span *ngIf="(user.firstName || user.lastName); else email">{{ user.firstName }}&nbsp;{{ user.lastName }} ({{ user.email }})</span>
-              <ng-template #email>
-                {{ user.email }}
-              </ng-template>
-            </div>
-          </div>
+          <mat-chip-listbox>
+            <mat-chip *ngFor="let recipientTitle of preview.recipientsPreview">
+              <span>{{ recipientTitle }}</span>
+            </mat-chip>
+          </mat-chip-listbox>
         </section>
       </div>
     </mat-step>

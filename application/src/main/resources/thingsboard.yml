@@ -437,9 +437,6 @@ cache:
     assetProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_ASSET_PROFILES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ASSET_PROFILES_MAX_SIZE:10000}"
-    notificationRules:
-      timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:1440}"
-      maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:10000}"
     notificationSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_SETTINGS_TTL:10}"
       maxSize: "${CACHE_SPECS_NOTIFICATION_SETTINGS_MAX_SIZE:1000}"
@@ -477,7 +474,13 @@ cache:
     dashboardTitles:
       timeToLiveInMinutes: "${CACHE_SPECS_DASHBOARD_TITLES_TTL:1440}"
       maxSize: "${CACHE_SPECS_DASHBOARD_TITLES_MAX_SIZE:100000}"
-
+    entityCount:
+      timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
+      maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+  # deliberately placed outside 'specs' group above
+  notificationRules:
+    timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:30}"
+    maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:1000}"
 
 #Disable this because it is not required.
 spring.data.redis.repositories.enabled: false

@@ -30,6 +30,8 @@ import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
@@ -115,6 +117,12 @@ public class TbTestWebSocketClient extends WebSocketClient {
         this.send(JacksonUtil.toString(wrapper));
     }
 
+    public void send(AlarmCountCmd cmd) throws NotYetConnectedException {
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setAlarmCountCmds(Collections.singletonList(cmd));
+        this.send(JacksonUtil.toString(wrapper));
+    }
+
     public String waitForUpdate() {
         return waitForUpdate(false);
     }
@@ -177,6 +185,10 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     public EntityCountUpdate parseCountReply(String msg) {
         return JacksonUtil.fromString(msg, EntityCountUpdate.class);
+    }
+
+    public AlarmCountUpdate parseAlarmCountReply(String msg) {
+        return JacksonUtil.fromString(msg, AlarmCountUpdate.class);
     }
 
     public EntityDataUpdate subscribeLatestUpdate(List<EntityKey> keys, EntityFilter entityFilter) {

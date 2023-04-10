@@ -15,16 +15,15 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.NewPlatformVersionNotificationInfo;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.PartitionService;
 
@@ -36,17 +35,21 @@ public class NewPlatformVersionTriggerProcessor implements NotificationRuleTrigg
 
     @Override
     public boolean matchesFilter(NewPlatformVersionTrigger trigger, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
-         // todo: don't send repetitive notification after platform restart?
-        if (!partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
+        if (!partitionService.isMyPartition(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID)) {
             return false;
         }
-        return trigger.getMessage().isUpdateAvailable();
+        return trigger.getUpdateInfo().isUpdateAvailable();
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(NewPlatformVersionTrigger trigger, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
+    public RuleOriginatedNotificationInfo constructNotificationInfo(NewPlatformVersionTrigger trigger) {
+        UpdateMessage updateInfo = trigger.getUpdateInfo();
         return NewPlatformVersionNotificationInfo.builder()
-                .message(JacksonUtil.convertValue(trigger.getMessage(), new TypeReference<>() {}))
+                .latestVersion(updateInfo.getLatestVersion())
+                .latestVersionReleaseNotesUrl(updateInfo.getLatestVersionReleaseNotesUrl())
+                .upgradeInstructionsUrl(updateInfo.getUpgradeInstructionsUrl())
+                .currentVersion(updateInfo.getCurrentVersion())
+                .currentVersionReleaseNotesUrl(updateInfo.getCurrentVersionReleaseNotesUrl())
                 .build();
     }
 

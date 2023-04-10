@@ -982,6 +982,7 @@ message ToCoreNotificationMsg {
   bytes toEdgeSyncRequestMsg = 8;
   bytes fromEdgeSyncResponseMsg = 9;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 10;
+  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 11;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -1052,4 +1053,8 @@ message NotificationSchedulerServiceMsg {
   int64 requestIdMSB = 3;
   int64 requestIdLSB = 4;
   int64 ts = 5;
+}
+
+message NotificationRuleProcessorMsg {
+  bytes trigger = 1;
 }

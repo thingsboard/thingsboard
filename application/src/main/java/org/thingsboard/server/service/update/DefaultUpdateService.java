@@ -25,9 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
-import org.thingsboard.server.dao.notification.NotificationRuleProcessingService;
+import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
@@ -61,7 +61,7 @@ public class DefaultUpdateService implements UpdateService {
     private BuildProperties buildProperties;
 
     @Autowired
-    private NotificationRuleProcessingService notificationRuleProcessingService;
+    private NotificationRuleProcessor notificationRuleProcessor;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-update-service"));
 
@@ -74,8 +74,8 @@ public class DefaultUpdateService implements UpdateService {
     private String version;
     private UUID instanceId = null;
 
-    @PostConstruct
-    private void init() {
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
+    public void init() {
         version = buildProperties != null ? buildProperties.getVersion() : "unknown";
         updateMessage = new UpdateMessage(false, version, "", "",
                 "https://thingsboard.io/docs/reference/releases",
@@ -133,8 +133,8 @@ public class DefaultUpdateService implements UpdateService {
             UpdateMessage prevUpdateMessage = updateMessage;
             updateMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v2/thingsboard/updates", request, UpdateMessage.class);
             if (updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
-                notificationRuleProcessingService.process(TenantId.SYS_TENANT_ID, NewPlatformVersionTrigger.builder()
-                        .message(updateMessage)
+                notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
+                        .updateInfo(updateMessage)
                         .build());
             }
         } catch (Exception e) {
