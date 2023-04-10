@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2022 The Thingsboard Authors
+# Copyright © 2016-2023 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,57 +14,93 @@
 # limitations under the License.
 #
 
-server:
-  port: '${SERVER_PORT:8990}'
-
 monitoring:
-  auth:
-    base_url: '${AUTH_BASE_URL:http://localhost:8080}'
-    username: '${AUTH_USERNAME:tenant@thingsboard.org}'
-    password: '${AUTH_PASSWORD:tenant}'
+  # Monitored server domain
+  domain: "${DOMAIN:localhost}"
+  rest:
+    # Base REST API url, https://DOMAIN by default
+    base_url: '${REST_BASE_URL:https://${monitoring.domain}}'
+    # Authentication username
+    username: '${REST_AUTH_USERNAME:tenant@thingsboard.org}'
+    # Authentication password
+    password: '${REST_AUTH_PASSWORD:tenant}'
+    # REST request timeout in milliseconds
+    request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:5000}'
   ws:
-    base_url: '${WS_BASE_URL:ws://localhost:8080}'
+    # WebSocket url, wss://DOMAIN by default
+    base_url: '${WS_BASE_URL:wss://${monitoring.domain}}'
+    # Maximum time between request to transport and WebSocket update
     check_timeout_ms: '${WS_CHECK_TIMEOUT_MS:5000}'
+    # WebSocket request timeout
     request_timeout_ms: '${WS_REQUEST_TIMEOUT_MS:3000}'
-  rest_request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:5000}'
 
+  # Failures threshold for notifying
   failures_threshold: '${FAILURES_THRESHOLD:2}'
+  # Whether to notify about next failures after first notification (will notify after each FAILURES_THRESHOLD failures)
   send_repeated_failure_notification: '${SEND_REPEATED_FAILURE_NOTIFICATION:true}'
 
   transports:
+    # Transports check frequency in milliseconds
     monitoring_rate_ms: '${TRANSPORTS_MONITORING_RATE_MS:10000}'
 
     mqtt:
-      enabled: '${MQTT_TRANSPORT_MONITORING_ENABLED:false}'
+      # Enable MQTT checks
+      enabled: '${MQTT_TRANSPORT_MONITORING_ENABLED:true}'
+      # MQTT request timeout in milliseconds
       request_timeout_ms: '${MQTT_REQUEST_TIMEOUT_MS:4000}'
+      # MQTT QoS
       qos: '${MQTT_QOS_LEVEL:1}'
       targets:
-        - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://localhost:1883}'
+          # MQTT base url, tcp://DOMAIN:1883 by default
+        - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://${monitoring.domain}:1883}'
           device:
+            # MQTT device to push telemetry for. If not set - device will be found or created automatically
             id: '${MQTT_TRANSPORT_TARGET_DEVICE_ID:}'
+        # To add more targets, use following environment variables:
+        # monitoring.transports.mqtt.targets[1].base_url, monitoring.transports.mqtt.targets[1].device.id,
+        # monitoring.transports.mqtt.targets[2].base_url, monitoring.transports.mqtt.targets[2].device.id, etc.
 
     coap:
-      enabled: '${COAP_TRANSPORT_MONITORING_ENABLED:false}'
+      # Enable CoAP checks
+      enabled: '${COAP_TRANSPORT_MONITORING_ENABLED:true}'
+      # CoAP request timeout in milliseconds
       request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        - base_url: '${COAP_TRANSPORT_BASE_URL:coap://localhost}'
+        # CoAP base url, coap://DOMAIN by default
+        - base_url: '${COAP_TRANSPORT_BASE_URL:coap://${monitoring.domain}}'
+          # CoAP device to push telemetry for. If not set - device will be found or created automatically
           device:
             id: '${COAP_TRANSPORT_TARGET_DEVICE_ID:}'
+        # To add more targets, use following environment variables:
+        # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[1].device.id,
+        # monitoring.transports.coap.targets[2].base_url, monitoring.transports.coap.targets[2].device.id, etc.
 
     http:
-      enabled: '${HTTP_TRANSPORT_MONITORING_ENABLED:false}'
+      # Enable HTTP checks
+      enabled: '${HTTP_TRANSPORT_MONITORING_ENABLED:true}'
+      # HTTP request timeout in milliseconds
       request_timeout_ms: '${HTTP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        - base_url: '${HTTP_TRANSPORT_BASE_URL:http://localhost:8080}'
+        # HTTP base url, https://DOMAIN by default
+        - base_url: '${HTTP_TRANSPORT_BASE_URL:https://${monitoring.domain}}'
           device:
+            # HTTP device to push telemetry for. If not set - device will be found or created automatically
             id: '${HTTP_TRANSPORT_TARGET_DEVICE_ID:}'
+        # To add more targets, use following environment variables:
+        # monitoring.transports.http.targets[1].base_url, monitoring.transports.http.targets[1].device.id,
+        # monitoring.transports.http.targets[2].base_url, monitoring.transports.http.targets[2].device.id, etc.
 
   notification_channels:
     slack:
+      # Enable notifying via Slack
       enabled: '${SLACK_NOTIFICATION_CHANNEL_ENABLED:false}'
+      # Slack webhook url
       webhook_url: '${SLACK_WEBHOOK_URL:}'
 
   latency:
+    # Enable latencies reporting
+    enabled: "${LATENCY_REPORTING_ENABLED:true}"
+    # Latency threshold for notifying
     threshold_ms: '${LATENCY_THRESHOLD:2000}'
-    reporting_entity_type: '${LATENCY_REPORTING_ENTITY_TYPE:ASSET}'
-    reporting_entity_id: '${LATENCY_REPORTING_ENTITY_ID:}'
+    # ID of the asset to save latencies to. If not set and latencies reporting is enabled - asset will be found or created automatically
+    reporting_asset_id: '${LATENCY_REPORTING_ASSET_ID:}'

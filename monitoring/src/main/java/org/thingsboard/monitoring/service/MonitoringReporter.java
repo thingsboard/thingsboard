@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,12 @@ import org.thingsboard.monitoring.data.notification.HighLatencyNotification;
 import org.thingsboard.monitoring.data.notification.ServiceFailureNotification;
 import org.thingsboard.monitoring.data.notification.ServiceRecoveryNotification;
 import org.thingsboard.monitoring.notification.NotificationService;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.AssetId;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -52,14 +52,15 @@ public class MonitoringReporter {
 
     @Value("${monitoring.failures_threshold}")
     private int failuresThreshold;
-    @Value("${monitoring.latency.threshold_ms}")
-    private int latencyThresholdMs;
     @Value("${monitoring.send_repeated_failure_notification}")
     private boolean sendRepeatedFailureNotification;
-    @Value("${monitoring.latency.reporting_entity_type}")
-    private EntityType reportingEntityType;
-    @Value("${monitoring.latency.reporting_entity_id}")
-    private String reportingEntityId;
+
+    @Value("${monitoring.latency.enabled}")
+    private boolean latencyReportingEnabled;
+    @Value("${monitoring.latency.threshold_ms}")
+    private int latencyThresholdMs;
+    @Value("${monitoring.latency.reporting_asset_id}")
+    private String reportingAssetId;
 
     public void reportLatencies(TbClient tbClient) {
         List<Latency> latencies = this.latencies.values().stream()
@@ -75,27 +76,35 @@ public class MonitoringReporter {
         }
         log.info("Latencies:\n{}", latencies.stream().map(latency -> latency.getKey() + ": " + latency.getAvg() + " ms")
                 .collect(Collectors.joining("\n")));
+
+        if (!latencyReportingEnabled) return;
+
         if (latencies.stream().anyMatch(latency -> latency.getAvg() >= (double) latencyThresholdMs)) {
             HighLatencyNotification highLatencyNotification = new HighLatencyNotification(latencies, latencyThresholdMs);
             notificationService.sendNotification(highLatencyNotification);
         }
 
-        if (reportingEntityType != null && StringUtils.isNotBlank(reportingEntityId)) {
-            try {
-                EntityId entityId;
-                try {
-                    entityId = EntityIdFactory.getByTypeAndUuid(reportingEntityType, reportingEntityId);
-                } catch (Exception e) {
-                    return;
-                }
-                ObjectNode msg = JacksonUtil.newObjectNode();
-                latencies.forEach(latency -> {
-                    msg.set(latency.getKey(), new DoubleNode(latency.getAvg()));
+        try {
+            if (StringUtils.isBlank(reportingAssetId)) {
+                String assetName = "Monitoring";
+                Asset monitoringAsset = tbClient.findAsset(assetName).orElseGet(() -> {
+                    Asset asset = new Asset();
+                    asset.setType("Monitoring");
+                    asset.setName(assetName);
+                    asset = tbClient.saveAsset(asset);
+                    log.info("Created monitoring asset {}", asset.getId());
+                    return asset;
                 });
-                tbClient.saveEntityTelemetry(entityId, "time", msg);
-            } catch (Exception e) {
-                log.error("Failed to report latencies: {}", e.getMessage());
+                reportingAssetId = monitoringAsset.getId().toString();
             }
+
+            ObjectNode msg = JacksonUtil.newObjectNode();
+            latencies.forEach(latency -> {
+                msg.set(latency.getKey(), new DoubleNode(latency.getAvg()));
+            });
+            tbClient.saveEntityTelemetry(new AssetId(UUID.fromString(reportingAssetId)), "time", msg);
+        } catch (Exception e) {
+            log.error("Failed to report latencies: {}", e.getMessage());
         }
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ public final class TransportMonitoringService {
             deviceId = new DeviceId(deviceConfig.getId());
         }
 
-        log.debug("Loading credentials for device {}", deviceId);
+        log.info("Loading credentials for device {}", deviceId);
         DeviceCredentials credentials = tbClient.getDeviceCredentialsByDeviceId(deviceId)
                 .orElseThrow(() -> new IllegalArgumentException("No credentials found for device " + deviceId));
         target.getDevice().setCredentials(credentials);

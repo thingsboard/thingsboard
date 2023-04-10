@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import java.time.Duration;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class TbClient extends RestClient {
 
-    @Value("${monitoring.auth.username}")
+    @Value("${monitoring.rest.username}")
     private String username;
-    @Value("${monitoring.auth.password}")
+    @Value("${monitoring.rest.password}")
     private String password;
 
-    public TbClient(@Value("${monitoring.auth.base_url}") String baseUrl,
-                    @Value("${monitoring.rest_request_timeout_ms}") int requestTimeoutMs) {
+    public TbClient(@Value("${monitoring.rest.base_url}") String baseUrl,
+                    @Value("${monitoring.rest.request_timeout_ms}") int requestTimeoutMs) {
         super(new RestTemplateBuilder()
                 .setConnectTimeout(Duration.ofMillis(requestTimeoutMs))
                 .setReadTimeout(Duration.ofMillis(requestTimeoutMs))
