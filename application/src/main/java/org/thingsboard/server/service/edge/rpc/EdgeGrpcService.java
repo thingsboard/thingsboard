@@ -89,11 +89,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private String privateKeyResource;
     @Value("${edges.state.persistToTelemetry:false}")
     private boolean persistToTelemetry;
-    @Value("${edges.rpc.client_max_keep_alive_time_sec}")
+    @Value("${edges.rpc.client_max_keep_alive_time_sec:1}")
     private int clientMaxKeepAliveTimeSec;
     @Value("${edges.rpc.max_inbound_message_size:4194304}")
     private int maxInboundMessageSize;
-
+    @Value("${edges.rpc.keep_alive_time_sec:10}")
+    private int keepAliveTimeSec;
+    @Value("${edges.rpc.keep_alive_timeout_sec:5}")
+    private int keepAliveTimeoutSec;
     @Value("${edges.scheduler_pool_size}")
     private int schedulerPoolSize;
 
@@ -122,6 +125,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         log.info("Initializing Edge RPC service!");
         NettyServerBuilder builder = NettyServerBuilder.forPort(rpcPort)
                 .permitKeepAliveTime(clientMaxKeepAliveTimeSec, TimeUnit.SECONDS)
+                .keepAliveTime(keepAliveTimeSec, TimeUnit.SECONDS)
+                .keepAliveTimeout(keepAliveTimeoutSec, TimeUnit.SECONDS)
+                .permitKeepAliveWithoutCalls(true)
                 .maxInboundMessageSize(maxInboundMessageSize)
                 .addService(this);
         if (sslEnabled) {
