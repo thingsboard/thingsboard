@@ -66,6 +66,21 @@
             {{ 'device-profile.not-valid-multi-character' | translate}}
           </mat-error>
         </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-label translate>device-profile.attributes-subscribe-topic-filter</mat-label>
+          <input matInput required
+                 formControlName="deviceAttributesSubscribeTopic"
+                 type="text">
+          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesSubscribeTopic').hasError('required')">
+            {{ 'device-profile.attributes-subscribe-topic-filter-required' | translate}}
+          </mat-error>
+          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesSubscribeTopic').hasError('invalidSingleTopicCharacter')">
+            {{ 'device-profile.not-valid-single-character' | translate}}
+          </mat-error>
+          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesSubscribeTopic').hasError('invalidMultiTopicCharacter')">
+            {{ 'device-profile.not-valid-multi-character' | translate}}
+          </mat-error>
+        </mat-form-field>
       </div>
       <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.hasError('unique')">
         {{ 'device-profile.mqtt-device-topic-filters-unique' | translate }}

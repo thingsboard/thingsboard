@@ -20,7 +20,11 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { NotificationDeliveryMethod, NotificationRequest } from '@shared/models/notification.models';
+import {
+  NotificationDeliveryMethod,
+  NotificationDeliveryMethodTranslateMap,
+  NotificationRequest
+} from '@shared/models/notification.models';
 
 export interface NotificationRequestErrorDialogData {
   notificationRequest: NotificationRequest;
@@ -35,12 +39,7 @@ export class SentErrorDialogComponent extends DialogComponent<SentErrorDialogCom
 
   errorStats: { [key in NotificationDeliveryMethod]: {[errorKey in string]: string}};
 
-  notificationDeliveryMethodErrorTranslateMap = new Map<NotificationDeliveryMethod, string>([
-    [NotificationDeliveryMethod.WEB, 'notification.delivery-method.web-failed-sent'],
-    [NotificationDeliveryMethod.SMS, 'notification.delivery-method.sms-failed-sent'],
-    [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method.email-failed-sent'],
-    [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack-failed-sent'],
-  ]);
+  notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,

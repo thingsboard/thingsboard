@@ -151,9 +151,9 @@
       </form>
     </mat-step>
 
-    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.DEVICE_INACTIVITY"
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.DEVICE_ACTIVITY"
               [stepControl]="deviceInactivityTemplateForm">
-      <ng-template matStepLabel>{{ 'notification.device-inactivity-trigger-settings' | translate }}</ng-template>
+      <ng-template matStepLabel>{{ 'notification.device-activity-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="deviceInactivityTemplateForm">
         <section formGroupName="triggerConfig">
           <div fxFlex fxLayoutAlign="center center">
@@ -184,6 +184,17 @@
               [entityType]="entityType.DEVICE_PROFILE">
             </tb-entity-list>
           </ng-template>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>notification.notify-on</mat-label>
+            <mat-select formControlName="notifyOn" multiple>
+              <mat-option *ngFor="let deviceEvent of deviceEvents" [value]="deviceEvent">
+                {{ deviceEventTranslationMap.get(deviceEvent) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="deviceInactivityTemplateForm.get('triggerConfig.notifyOn').hasError('required')">
+              {{ 'notification.notify-on-required' | translate }}
+            </mat-error>
+          </mat-form-field>
         </section>
       </form>
       <form [formGroup]="ruleNotificationForm">
@@ -202,11 +213,11 @@
       <form [formGroup]="entityActionTemplateForm">
         <fieldset class="fields-group tb-margin" formGroupName="triggerConfig">
           <legend translate>notification.filter</legend>
-          <tb-entity-type-select required
-                                 showLabel
-                                 [allowedEntityTypes]="entityTypes"
-                                 formControlName="entityType">
-          </tb-entity-type-select>
+          <tb-entity-type-list required
+                               ignoreAuthorityFilter
+                               [allowedEntityTypes]="allowEntityTypeForEntityAction"
+                               formControlName="entityTypes">
+          </tb-entity-type-list>
           <section fxLayout="column" fxLayoutGap="8px">
             <span fxFlex translate>notification.status</span>
             <mat-slide-toggle formControlName="created">{{ 'notification.created' | translate }}</mat-slide-toggle>
@@ -402,7 +413,7 @@
           <legend translate>notification.filter</legend>
           <tb-entity-type-list formControlName="entityTypes"
                                ignoreAuthorityFilter
-                               [allowedEntityTypes]="entityTypes">
+                               [allowedEntityTypes]="allowEntityTypeForEntitiesLimit">
           </tb-entity-type-list>
           <div class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center"
                fxLayout.xs="column"  fxLayoutAlign.xs="stretch">
@@ -431,6 +442,42 @@
       </form>
     </mat-step>
 
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.API_USAGE_LIMIT"
+              [stepControl]="apiUsageLimitTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.api-usage-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="apiUsageLimitTemplateForm">
+        <section formGroupName="triggerConfig">
+          <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
+            <mat-label translate>api-usage.api-features</mat-label>
+            <mat-select formControlName="apiFeatures" multiple>
+              <mat-option *ngFor="let apiFeature of apiFeatures" [value]="apiFeature">
+                {{ apiFeatureTranslationMap.get(apiFeature) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>{{ 'notification.api-feature-hint' | translate }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>notification.notify-on</mat-label>
+            <mat-select formControlName="notifyOn" multiple>
+              <mat-option *ngFor="let apiUsageStateValue of apiUsageStateValues" [value]="apiUsageStateValue">
+                {{ apiUsageStateValueTranslationMap.get(apiUsageStateValue) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="apiUsageLimitTemplateForm.get('triggerConfig.notifyOn').hasError('required')">
+              {{ 'notification.notify-on-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
   </mat-horizontal-stepper>
 </div>
 <mat-divider></mat-divider>

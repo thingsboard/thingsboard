@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -91,6 +90,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -176,6 +176,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private NotificationSettingsService notificationSettingsService;
+
+    @Autowired
+    private NotificationTargetService notificationTargetService;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -679,27 +682,15 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void createDefaultNotificationConfigs() {
-        try {
-            log.info("Creating default notification configs for system admin");
+        log.info("Creating default notification configs for system admin");
+        if (notificationTargetService.findNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID, new PageLink(1)).getTotalElements() == 0) {
             notificationSettingsService.createDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
-        } catch (Exception e) {
-            if (StringUtils.contains(e.getMessage(), "already exists")) {
-                log.info("Default notification configs are already present for system admin, skipping");
-            } else {
-                throw e;
-            }
         }
         PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
         log.info("Creating default notification configs for all tenants");
         for (TenantId tenantId : tenants) {
-            try {
+            if (notificationTargetService.findNotificationTargetsByTenantId(tenantId, new PageLink(1)).getTotalElements() == 0) {
                 notificationSettingsService.createDefaultNotificationConfigs(tenantId);
-            } catch (Exception e) {
-                if (StringUtils.contains(e.getMessage(), "already exists")) {
-                    log.info("Default notification configs are already present for tenant {}, skipping", tenantId);
-                } else {
-                    throw e;
-                }
             }
         }
     }

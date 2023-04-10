@@ -192,6 +192,11 @@ public class HashPartitionService implements PartitionService {
         return resolve(serviceType, null, tenantId, entityId);
     }
 
+    @Override
+    public boolean isMyPartition(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
+        return resolve(serviceType, tenantId, entityId).isMyPartition();
+    }
+
     private TopicPartitionInfo resolve(QueueKey queueKey, EntityId entityId) {
         int hash = hashFunction.newHasher()
                 .putLong(entityId.getId().getMostSignificantBits())

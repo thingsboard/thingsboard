@@ -296,6 +296,8 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.loadSystemWidgets();
                 systemDataLoaderService.createOAuth2Templates();
                 systemDataLoaderService.createQueues();
+                systemDataLoaderService.createDefaultNotificationConfigs();
+
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
                 installScripts.loadSystemLwm2mResources();

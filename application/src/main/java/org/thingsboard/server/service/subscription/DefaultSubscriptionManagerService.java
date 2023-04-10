@@ -316,20 +316,11 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         Set<TbSubscription> subscriptions = subscriptionsByEntityId.get(recipientId);
         if (subscriptions != null) {
             NotificationsSubscriptionUpdate subscriptionUpdate = new NotificationsSubscriptionUpdate(notificationUpdate);
+            log.trace("Handling notificationUpdate for user {}: {}", recipientId, notificationUpdate);
             subscriptions.stream()
                     .filter(subscription -> subscription.getType() == TbSubscriptionType.NOTIFICATIONS
                             || subscription.getType() == TbSubscriptionType.NOTIFICATIONS_COUNT)
-                    .forEach(subscription -> {
-                        if (serviceId.equals(subscription.getServiceId())) {
-                            localSubscriptionService.onSubscriptionUpdate(subscription.getSessionId(),
-                                    subscription.getSubscriptionId(), subscriptionUpdate, TbCallback.EMPTY);
-                        } else {
-                            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
-                            ToCoreNotificationMsg updateProto = TbSubscriptionUtils.notificationsSubUpdateToProto(subscription, subscriptionUpdate);
-                            TbProtoQueueMsg<ToCoreNotificationMsg> queueMsg = new TbProtoQueueMsg<>(subscription.getEntityId().getId(), updateProto);
-                            toCoreNotificationsProducer.send(tpi, queueMsg, null);
-                        }
-                    });
+                    .forEach(subscription -> onNotificationsSubUpdate(subscriptionUpdate, subscription));
         }
         callback.onSuccess();
     }
@@ -341,19 +332,35 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
             if (entityId.getEntityType() != EntityType.USER) {
                 return;
             }
+            log.trace("Handling notificationRequestUpdate for user {}: {}", entityId, notificationRequestUpdate);
             subscriptions.forEach(subscription -> {
                 if (subscription.getType() != TbSubscriptionType.NOTIFICATIONS &&
                         subscription.getType() != TbSubscriptionType.NOTIFICATIONS_COUNT) {
                     return;
                 }
-                if (!subscription.getTenantId().equals(tenantId) || !subscription.getServiceId().equals(serviceId)) {
+                if (!subscription.getTenantId().equals(tenantId)) {
                     return;
                 }
-                localSubscriptionService.onSubscriptionUpdate(subscription.getSessionId(), subscription.getSubscriptionId(),
-                        subscriptionUpdate, TbCallback.EMPTY);
+                onNotificationsSubUpdate(subscriptionUpdate, subscription);
             });
         });
         callback.onSuccess();
+    }
+
+    private void onNotificationsSubUpdate(NotificationsSubscriptionUpdate subscriptionUpdate, TbSubscription subscription) {
+        if (serviceId.equals(subscription.getServiceId())) {
+            log.trace("[{}][{}][{}] Subscription session is managed by current service, forwarding to localSubscriptionService (update: {})",
+                    subscription.getServiceId(), subscription.getEntityId(), subscription.getSessionId(), subscriptionUpdate);
+            localSubscriptionService.onSubscriptionUpdate(subscription.getSessionId(),
+                    subscription.getSubscriptionId(), subscriptionUpdate, TbCallback.EMPTY);
+        } else {
+            log.trace("[{}][{}][{}] Subscription session is not managed by current service (update: {})",
+                    subscription.getServiceId(), subscription.getEntityId(), subscription.getSessionId(), subscriptionUpdate);
+            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
+            ToCoreNotificationMsg updateProto = TbSubscriptionUtils.notificationsSubUpdateToProto(subscription, subscriptionUpdate);
+            TbProtoQueueMsg<ToCoreNotificationMsg> queueMsg = new TbProtoQueueMsg<>(subscription.getEntityId().getId(), updateProto);
+            toCoreNotificationsProducer.send(tpi, queueMsg, null);
+        }
     }
 
     @Override

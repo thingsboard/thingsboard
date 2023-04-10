@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.dashboard;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -57,6 +59,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("DashboardDaoService")
 @Slf4j
+@RequiredArgsConstructor
 public class DashboardServiceImpl extends AbstractEntityService implements DashboardService {
 
     public static final String INCORRECT_DASHBOARD_ID = "Incorrect dashboardId ";
@@ -78,6 +81,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     protected TbTransactionalCache<DashboardId, String> cache;
+
+    @Autowired
+    private EntityCountService countService;
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -136,6 +142,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         try {
             var saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
+            if (dashboard.getId() == null) {
+                countService.publishCountEntityEvictEvent(saved.getTenantId(), EntityType.DASHBOARD);
+            }
             return saved;
         } catch (Exception e) {
             if (dashboard.getId() != null) {
@@ -207,6 +216,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         try {
             dashboardDao.removeById(tenantId, dashboardId.getId());
             publishEvictEvent(new DashboardTitleEvictEvent(dashboardId));
+            countService.publishCountEntityEvictEvent(tenantId, EntityType.DASHBOARD);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_dashboard_device_profile")) {
@@ -351,6 +361,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findDashboardById(tenantId, new DashboardId(entityId.getId())));
+    }
+
+    @Override
+    public long countByTenantId(TenantId tenantId) {
+        return dashboardDao.countByTenantId(tenantId);
     }
 
     @Override

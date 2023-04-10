@@ -32,7 +32,10 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
@@ -234,6 +237,25 @@ public class JacksonUtil {
                     }
                 }
             }
+        }
+    }
+
+    public static Map<String, String> toFlatMap(JsonNode node) {
+        HashMap<String, String> map = new HashMap<>();
+        toFlatMap(node, "", map);
+        return map;
+    }
+
+    private static void toFlatMap(JsonNode node, String currentPath, Map<String, String> map) {
+        if (node.isObject()) {
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            currentPath = currentPath.isEmpty() ? "" : currentPath + ".";
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                toFlatMap(entry.getValue(), currentPath + entry.getKey(), map);
+            }
+        } else if (node.isValueNode()) {
+            map.put(currentPath, node.asText());
         }
     }
 

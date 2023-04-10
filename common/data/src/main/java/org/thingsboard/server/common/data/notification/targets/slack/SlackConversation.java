@@ -15,21 +15,47 @@
  */
 package org.thingsboard.server.common.data.notification.targets.slack;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 
 import javax.validation.constraints.NotEmpty;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class SlackConversation implements NotificationRecipient {
 
     @NotEmpty
     private String id;
     @NotEmpty
-    private String name;
+    private String title;
+
+    private String shortName;
+    private String wholeName;
+    private String email;
+
+    @JsonIgnore
+    @Override
+    public String getFirstName() {
+        String firstName = StringUtils.contains(wholeName, " ") ? wholeName.split(" ")[0] : wholeName;
+        if (isEmpty(firstName)) {
+            firstName = shortName;
+        }
+        return firstName;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getLastName() {
+        return StringUtils.contains(wholeName, " ") ? wholeName.split(" ")[1] : null;
+    }
 
 }
