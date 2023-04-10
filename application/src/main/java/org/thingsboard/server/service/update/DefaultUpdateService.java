@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.update;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +27,7 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
@@ -74,8 +74,8 @@ public class DefaultUpdateService implements UpdateService {
     private String version;
     private UUID instanceId = null;
 
-    @PostConstruct
-    private void init() {
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
+    public void init() {
         version = buildProperties != null ? buildProperties.getVersion() : "unknown";
         updateMessage = new UpdateMessage(false, version, "", "", "", "");
         if (updatesEnabled) {
@@ -132,7 +132,7 @@ public class DefaultUpdateService implements UpdateService {
             updateMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v2/thingsboard/updates", request, UpdateMessage.class);
             if (updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
                 notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
-                        .message(updateMessage)
+                        .updateInfo(updateMessage)
                         .build());
             }
         } catch (Exception e) {

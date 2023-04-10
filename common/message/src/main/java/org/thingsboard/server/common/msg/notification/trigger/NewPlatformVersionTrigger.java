@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 @Builder
 public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
 
-    private final UpdateMessage message;
+    private final UpdateMessage updateInfo;
 
     @Override
     public NotificationRuleTriggerType getType() {

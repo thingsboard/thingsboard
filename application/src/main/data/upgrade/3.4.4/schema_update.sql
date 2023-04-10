@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS notification_template (
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
     notification_type VARCHAR(50) NOT NULL,
-    configuration VARCHAR(10000) NOT NULL,
+    configuration VARCHAR(10000000) NOT NULL,
     CONSTRAINT uq_notification_template_name UNIQUE (tenant_id, name)
 );
 CREATE INDEX IF NOT EXISTS idx_notification_template_tenant_id_created_time ON notification_template(tenant_id, created_time DESC);
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     tenant_id UUID NOT NULL,
     targets VARCHAR(10000) NOT NULL,
     template_id UUID,
-    template VARCHAR(10000),
+    template VARCHAR(10000000),
     info VARCHAR(1000),
     additional_config VARCHAR(1000),
     originator_entity_id UUID,
