@@ -29,6 +29,7 @@ import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service'
 import { EntityDataUpdate, TelemetrySubscriber } from '@shared/models/telemetry/telemetry.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { EntityKeyType } from '@shared/models/query/query.models';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface SystemInfoData {
   serviceId: string;
@@ -58,6 +59,7 @@ export class ClusterInfoTableComponent extends PageComponent implements OnInit, 
 
   constructor(protected store: Store<AppState>,
               private telemetryWsService: TelemetryWebsocketService,
+              private translate: TranslateService,
               private zone: NgZone) {
     super(store);
   }
@@ -118,25 +120,25 @@ export class ClusterInfoTableComponent extends PageComponent implements OnInit, 
     if (value > 85) {
       switch (type) {
         case 'cpu':
-          tooltip += '\n\nCritically high CPU usage. To avoid system failure, optimize system performance.';
+          tooltip += '\n\n' + this.translate.instant('widgets.system-info.cpu-critical-text');
           break;
         case 'ram':
-          tooltip += '\n\nCritically low reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.';
+          tooltip += '\n\n' + this.translate.instant('widgets.system-info.ram-critical-text');
           break;
         case 'disc':
-          tooltip += '\n\nCritically low disk space. To avoid data loss, free up or expand the disk space.';
+          tooltip += '\n\n' + this.translate.instant('widgets.system-info.disk-critical-text');
           break;
       }
     } else if (value > 75) {
       switch (type) {
         case 'cpu':
-          tooltip += '\n\nRunning high on CPU usage. To avoid system failure, optimize system performance.';
+          tooltip += '\n\n' + this.translate.instant('widgets.system-info.cpu-warning-text');
           break;
         case 'ram':
-          tooltip += '\n\nRunning low on reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.';
+          tooltip += '\n\n' + this.translate.instant('widgets.system-info.ram-warning-text');
           break;
         case 'disc':
-          tooltip += '\n\nRunning low on disk space. To avoid data loss, free up or expand the disk space.';
+          tooltip += '\n\n' + this.translate.instant('widgets.system-info.disk-warning-text');
           break;
       }
     }

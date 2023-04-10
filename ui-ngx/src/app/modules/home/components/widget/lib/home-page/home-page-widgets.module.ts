@@ -24,6 +24,10 @@ import { DocLinksWidgetComponent } from '@home/components/widget/lib/home-page/d
 import { DocLinkComponent } from '@home/components/widget/lib/home-page/doc-link.component';
 import { AddDocLinkDialogComponent } from '@home/components/widget/lib/home-page/add-doc-link-dialog.component';
 import { EditDocLinksDialogComponent } from '@home/components/widget/lib/home-page/edit-doc-links-dialog.component';
+import { GettingStartedWidgetComponent } from '@home/components/widget/lib/home-page/getting-started-widget.component';
+import {
+  GettingStartedCompletedDialogComponent
+} from '@home/components/widget/lib/home-page/getting-started-completed-dialog.component';
 
 @NgModule({
   declarations:
@@ -34,7 +38,9 @@ import { EditDocLinksDialogComponent } from '@home/components/widget/lib/home-pa
       DocLinksWidgetComponent,
       DocLinkComponent,
       AddDocLinkDialogComponent,
-      EditDocLinksDialogComponent
+      EditDocLinksDialogComponent,
+      GettingStartedWidgetComponent,
+      GettingStartedCompletedDialogComponent
     ],
   imports: [
     CommonModule,
@@ -47,7 +53,9 @@ import { EditDocLinksDialogComponent } from '@home/components/widget/lib/home-pa
     DocLinksWidgetComponent,
     DocLinkComponent,
     AddDocLinkDialogComponent,
-    EditDocLinksDialogComponent
+    EditDocLinksDialogComponent,
+    GettingStartedWidgetComponent,
+    GettingStartedCompletedDialogComponent
   ]
 })
 export class HomePageWidgetsModule { }

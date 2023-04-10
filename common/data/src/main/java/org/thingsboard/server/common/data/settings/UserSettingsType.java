@@ -19,7 +19,7 @@ import lombok.Getter;
 
 public enum UserSettingsType {
 
-    GENERAL, VISITED_DASHBOARDS(true), QUICK_LINKS, DOC_LINKS, DASHBOARDS;
+    GENERAL, VISITED_DASHBOARDS(true), QUICK_LINKS, DOC_LINKS, DASHBOARDS, GETTING_STARTED;
 
     @Getter
     private final boolean reserved;

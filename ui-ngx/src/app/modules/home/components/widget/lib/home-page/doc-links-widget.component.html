@@ -17,9 +17,9 @@
 -->
 <div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
   <div class="tb-card-header">
-    <a class="tb-title-link" href="https://thingsboard.io/docs/" target="_blank">Documentation</a>
+    <a class="tb-title-link" href="https://thingsboard.io/docs/" target="_blank">{{ 'widgets.documentation.title' | translate }}</a>
     <button class="tb-title-icon"
-            matTooltip="Edit"
+            matTooltip="{{ 'action.edit' | translate }}"
             matTooltipPosition="above"
             mat-icon-button
             (click)="edit()">
@@ -40,7 +40,7 @@
     </mat-grid-tile>
     <mat-grid-tile class="tb-docs-tile">
       <div fxFlex class="tb-add-doc-button"
-           matTooltip="Add link"
+           matTooltip="{{ 'widgets.documentation.add-link' | translate }}"
            matTooltipPosition="above"
            (click)="addLink()">
         <mat-icon class="tb-add-icon">add</mat-icon>

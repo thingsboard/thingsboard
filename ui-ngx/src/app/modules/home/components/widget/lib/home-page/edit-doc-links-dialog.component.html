@@ -17,7 +17,7 @@
 -->
 <form class="tb-edit-doc-links-dialog" [formGroup]="editDocLinksFormGroup">
   <mat-toolbar style="background: transparent;">
-    <h2>Documentation</h2>
+    <h2 translate>widgets.documentation.title</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="close()"
@@ -49,7 +49,7 @@
   </div>
   <div mat-dialog-actions>
     <div *ngIf="!editMode && !addMode" fxFlex class="tb-add-doc-button"
-         matTooltip="Add link"
+         matTooltip="{{ 'widgets.documentation.add-link' | translate }}"
          matTooltipPosition="above"
          (click)="addLink()">
       <mat-icon class="tb-add-icon">add</mat-icon>

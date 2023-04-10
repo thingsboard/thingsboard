@@ -24,6 +24,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { of, Subscription } from 'rxjs';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-configured-features',
@@ -42,6 +43,7 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private adminService: AdminService,
+              private translate: TranslateService,
               private breakpointObserver: BreakpointObserver) {
     super(store);
   }
@@ -81,9 +83,9 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
 
   featureTooltip(configured: boolean): string {
     if (configured) {
-      return 'Feature is configured.\nClick to setup';
+      return this.translate.instant('widgets.configured-features.feature-configured');
     } else {
-      return 'Feature is not configured.\nClick to setup';
+      return this.translate.instant('widgets.configured-features.feature-not-configured');
     }
   }
 }

@@ -26,7 +26,8 @@ export enum UserSettingsType {
   GENERAL = 'GENERAL',
   QUICK_LINKS = 'QUICK_LINKS',
   DOC_LINKS = 'DOC_LINKS',
-  DASHBOARDS = 'DASHBOARDS'
+  DASHBOARDS = 'DASHBOARDS',
+  GETTING_STARTED = 'GETTING_STARTED'
 }
 
 export interface DocumentationLink {
@@ -37,4 +38,9 @@ export interface DocumentationLink {
 
 export interface DocumentationLinks {
   links?: DocumentationLink[];
+}
+
+export interface GettingStarted {
+  maxSelectedIndex?: number;
+  lastSelectedIndex?: number;
 }

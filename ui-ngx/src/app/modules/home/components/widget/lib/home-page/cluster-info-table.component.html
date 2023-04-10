@@ -19,7 +19,7 @@
        [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
   <ng-container matColumnDef="serviceId">
     <mat-header-cell *matHeaderCellDef style="width: 35%;" mat-sort-header>
-      Service id
+      {{ 'widgets.cluster-info.service-id' | translate }}
     </mat-header-cell>
     <mat-cell *matCellDef="let serviceData">
       {{ serviceData.serviceId }}
@@ -27,7 +27,7 @@
   </ng-container>
   <ng-container matColumnDef="serviceType">
     <mat-header-cell *matHeaderCellDef style="width: 35%;" mat-sort-header>
-      Service type
+      {{ 'widgets.cluster-info.service-type' | translate }}
     </mat-header-cell>
     <mat-cell *matCellDef="let serviceData">
       {{ serviceData.serviceType }}
@@ -35,7 +35,7 @@
   </ng-container>
   <ng-container matColumnDef="cpuUsage">
     <mat-header-cell *matHeaderCellDef style="width: 10%;" mat-sort-header>
-      CPU
+      {{ 'widgets.system-info.cpu' | translate }}
     </mat-header-cell>
     <mat-cell *matCellDef="let serviceData"
               [matTooltip]="infoTooltip(serviceData, 'cpu')"
@@ -47,7 +47,7 @@
   </ng-container>
   <ng-container matColumnDef="memoryUsage">
     <mat-header-cell *matHeaderCellDef style="width: 10%;" mat-sort-header>
-      RAM
+      {{ 'widgets.system-info.ram' | translate }}
     </mat-header-cell>
     <mat-cell *matCellDef="let serviceData"
               [matTooltip]="infoTooltip(serviceData, 'ram')"
@@ -59,7 +59,7 @@
   </ng-container>
   <ng-container matColumnDef="discUsage">
     <mat-header-cell *matHeaderCellDef style="width: 10%;" mat-sort-header>
-      Disk
+      {{ 'widgets.system-info.disk' | translate }}
     </mat-header-cell>
     <mat-cell *matCellDef="let serviceData"
               [matTooltip]="infoTooltip(serviceData, 'disc')"
@@ -74,4 +74,4 @@
 </table>
 <span [fxShow]="dataSource.isEmpty() | async"
       fxLayoutAlign="center center"
-      class="no-data-found">No data</span>
+      class="no-data-found" translate>widgets.cluster-info.no-data</span>

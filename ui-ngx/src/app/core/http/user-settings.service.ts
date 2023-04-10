@@ -18,6 +18,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   DocumentationLink, DocumentationLinks,
+  GettingStarted,
   initialUserSettings,
   UserSettings,
   UserSettingsType
@@ -63,6 +64,16 @@ export class UserSettingsService {
 
   public updateDocumentationLinks(documentationLinks: DocumentationLinks, config?: RequestConfig): Observable<void> {
     return this.http.put<void>(`/api/user/settings/${UserSettingsType.DOC_LINKS}`, documentationLinks,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getGettingStarted(config?: RequestConfig): Observable<GettingStarted> {
+    return this.http.get<GettingStarted>(`/api/user/settings/${UserSettingsType.GETTING_STARTED}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public updateGettingStarted(gettingStarted: GettingStarted, config?: RequestConfig): Observable<void> {
+    return this.http.put<void>(`/api/user/settings/${UserSettingsType.GETTING_STARTED}`, gettingStarted,
       defaultHttpOptionsFromConfig(config));
   }
 

@@ -16,9 +16,9 @@
 
 -->
 <div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
-  <div class="tb-title">Configured features
+  <div class="tb-title">{{ 'widgets.configured-features.title' | translate }}
     <mat-icon
-      matTooltip="Status of features that require configuration"
+      matTooltip="{{ 'widgets.configured-features.info' | translate }}"
       matTooltipPosition="above"
       class="tb-info-icon">info</mat-icon>
   </div>
@@ -29,7 +29,7 @@
          matTooltipPosition="above"
          [ngClass]="{'configured': featuresInfo?.emailEnabled}"
          routerLink="/settings/outgoing-mail">
-        <div class="tb-feature-text">Email</div>
+        <div class="tb-feature-text" translate>widgets.configured-features.email-feature</div>
       </a>
     </mat-grid-tile>
     <mat-grid-tile class="tb-feature-tile" colspan="3">
@@ -38,7 +38,7 @@
          matTooltipPosition="above"
          [ngClass]="{'configured': featuresInfo?.smsEnabled}"
          routerLink="/settings/notifications">
-        <div class="tb-feature-text">SMS</div>
+        <div class="tb-feature-text" translate>widgets.configured-features.sms-feature</div>
       </a>
     </mat-grid-tile>
     <mat-grid-tile class="tb-feature-tile" colspan="2">
@@ -47,7 +47,7 @@
          matTooltipPosition="above"
          [ngClass]="{'configured': featuresInfo?.notificationEnabled}"
          routerLink="/settings/notifications">
-        <div class="tb-feature-text">Slack</div>
+        <div class="tb-feature-text" translate>widgets.configured-features.slack-feature</div>
       </a>
     </mat-grid-tile>
     <mat-grid-tile class="tb-feature-tile" colspan="2">
@@ -56,7 +56,7 @@
          matTooltipPosition="above"
          [ngClass]="{'configured': featuresInfo?.oauthEnabled}"
          routerLink="/security-settings/oauth2">
-        <div class="tb-feature-text">OAuth 2</div>
+        <div class="tb-feature-text" translate>widgets.configured-features.oauth2-feature</div>
       </a>
     </mat-grid-tile>
     <mat-grid-tile class="tb-feature-tile" colspan="2">
@@ -65,7 +65,7 @@
          matTooltipPosition="above"
          [ngClass]="{'configured': featuresInfo?.twoFaEnabled}"
          routerLink="/security-settings/2fa">
-        <div class="tb-feature-text">2FA</div>
+        <div class="tb-feature-text" translate>widgets.configured-features.2fa-feature</div>
       </a>
     </mat-grid-tile>
   </mat-grid-list>

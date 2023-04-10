@@ -19,17 +19,17 @@
   <div fxFlex class="tb-edit-doc-link" [ngClass]="{'edit-mode': editMode}" [formGroup]="editDocLinkFormGroup" fxLayout="column">
     <tb-material-icon-select required formControlName="icon"></tb-material-icon-select>
     <mat-form-field fxFlex class="mat-block">
-      <mat-label>Name</mat-label>
+      <mat-label translate>widgets.documentation.name</mat-label>
       <input required matInput formControlName="name">
       <mat-error *ngIf="editDocLinkFormGroup.get('name').hasError('required')">
-        Name is required.
+        {{ 'widgets.documentation.name-required' | translate }}
       </mat-error>
     </mat-form-field>
     <mat-form-field fxFlex class="mat-block">
-      <mat-label>Link</mat-label>
+      <mat-label translate>widgets.documentation.link</mat-label>
       <input required matInput formControlName="link">
       <mat-error *ngIf="editDocLinkFormGroup.get('link').hasError('required')">
-        Link is required.
+        {{ 'widgets.documentation.link-required' | translate }}
       </mat-error>
     </mat-form-field>
     <div *ngIf="addMode" fxLayout="row" fxLayoutAlign="end" fxLayoutGap="8px">

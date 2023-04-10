@@ -552,91 +552,6 @@
         "col": 0,
         "id": "5d02c63b-bcb1-aaf3-f35d-de4dbaca96c2"
       },
-      "e70b51f8-04dd-985f-be81-d0c76c589d4a": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680183320196,
-                "endTimeMs": 1680269720196
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-title\">Get started</div>\n<mat-stepper #matStepper class=\"tb-get-started\" orientation=\"vertical\" [linear]=\"false\">\n    <ng-template matStepperIcon=\"edit\" let-index=\"index\">\n      {{ index + 1 }}\n    </ng-template>\n    <mat-step #step1 [completed]=\"step1.completed || matStepper.selectedIndex > -1\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                <div>Create Tenant and Tenant Administrator</div>\n                <a *ngIf=\"matStepper.selected === step1\" mat-button color=\"primary\" routerLink=\"/tenants\">{{ 'tenant.tenants' | translate }}</a>\n            </div>\n        </ng-template>\n        <p>\n            A tenant is an individual or organization that owns or produces devices and assets. Tenants can create Tenant administrator users.\n        </p>\n        <p>\n            Follow the documentation on how to do it: \n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/ui/tenants/#adding-a-tenant\" target=\"_blank\"><mat-icon>description</mat-icon>How to create Tenant</a>\n    </mat-step>\n    <mat-step #step2 [completed]=\"step2.completed || matStepper.selectedIndex > 0\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: Mail server</div>\n                    <a *ngIf=\"matStepper.selected === step2\" mat-button color=\"primary\" routerLink=\"/settings/outgoing-mail\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            Users will receive activation and password reset emails from the System Administrator via an SMTP server.\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/ui/mail-settings/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure Mail server</a>\n    </mat-step>\n    <mat-step #step3 [completed]=\"step3.completed || matStepper.selectedIndex > 1\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: SMS provider</div>\n                    <a *ngIf=\"matStepper.selected === step3\" mat-button color=\"primary\" routerLink=\"/settings/notifications\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            To distribute SMS messages about alarms, the System Administrator can configure SMS providers.\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/ui/sms-provider-settings/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure SMS provider</a>\n    </mat-step>\n    <mat-step #step4 [completed]=\"step4.completed || matStepper.selectedIndex > 2\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: 2FA</div>\n                    <a *ngIf=\"matStepper.selected === step4\" mat-button color=\"primary\" routerLink=\"/security-settings/2fa\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            Adding two-factor authentication to your account increases security and prevents malicious access.\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/two-factor-authentication/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure 2FA</a>\n    </mat-step>\n    <mat-step #step5 [completed]=\"step5.completed || matStepper.selectedIndex > 3\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: OAuth 2</div>\n                    <a *ngIf=\"matStepper.selected === step5\" mat-button color=\"primary\" routerLink=\"/security-settings/oauth2\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            You can provide your customers with Single Sign-On functionality and automatically create tenants, customers, or sub-customers by using external user management platforms that support OAuth 2.0.\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/oauth-2-support/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure OAuth 2</a>\n    </mat-step>\n    <mat-step #lastStep [completed]=\"lastStep.completed || matStepper.selectedIndex > 4\">\n        <ng-template matStepLabel>\n            <div style=\"width: 100%;\" fxLayout=\"row\" fxLayoutAlign=\"space-between center\">\n                    <div>Configure feature: Notifications</div>\n                    <a *ngIf=\"matStepper.selected === lastStep\" mat-button color=\"primary\" routerLink=\"/notification/rules\">{{ 'admin.settings' | translate }}</a>\n            </div>\n        </ng-template> \n        <p>\n            Some text\n        </p>\n        <p>\n            Follow the documentation on how to do it:\n        </p>\n        <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs/user-guide/to-do/\" target=\"_blank\"><mat-icon>description</mat-icon>How to configure Notifications</a>\n    </mat-step>\n</mat-stepper>\n<div *ngIf=\"lastStep.completed\" fxLayout=\"column\" fxLayoutAlign=\"center center\" style=\"padding-top: 24px;\">\n    <button id=\"getting-started-finish\" mat-flat-button color=\"primary\"><mat-icon>rocket_launch</mat-icon>Finish</button>\n</div>\n\n",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-title {\n    font-weight: 600;\n    font-size: 20px;\n    line-height: 24px;\n    letter-spacing: 0.1px;\n    color: rgba(0, 0, 0, 0.76);\n    padding-bottom: 24px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-title {\n        font-weight: 500;\n        font-size: 14px;\n        line-height: 20px;\n        letter-spacing: 0.25px;\n        padding-bottom: 20px;\n    }\n}\n"
-          },
-          "title": "Get started",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "widgetCss": "\n.tb-get-started .mat-vertical-stepper-header {\n    border-radius: 12px;\n    padding: 12px;\n    height: auto;\n}\n\n.tb-get-started .mat-vertical-stepper-header[aria-selected=\"true\"] {\n    background: rgba(0, 0, 0, 0.03);\n    border-bottom-right-radius: 0px;\n    border-bottom-left-radius: 0px;\n}\n\n.tb-get-started .mat-vertical-content-container {\n    margin-left: 0px;\n    border-bottom-left-radius: 12px;\n    border-bottom-right-radius: 12px;\n    background: rgba(0, 0, 0, 0.03);\n}\n\n.tb-get-started .mat-stepper-vertical-line::before {\n    content: none;\n}\n\n.tb-get-started .mat-step-label {\n    width: 100%;\n    white-space: inherit;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-get-started .mat-step-label.mat-step-label-selected {\n    font-weight: 500;\n    font-size: 16px;\n    line-height: 24px;\n    color: rgba(0, 0, 0, 0.87);\n}\n\n.tb-get-started .mat-vertical-content p {\n    font-style: normal;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-get-started .mat-step-label {\n        font-size: 12px;\n        line-height: 16px;\n    }\n    .tb-get-started .mat-step-label.mat-step-label-selected {\n        font-size: 13px;\n        line-height: 16px;\n    }\n\n    .tb-get-started .mdc-button {\n        font-size: 12px;\n        line-height: 16px;\n    }\n    \n    .tb-get-started .mat-vertical-content p {\n        font-size: 12px;\n        line-height: 16px;\n        letter-spacing: 0.25px;\n    }\n    \n    .tb-get-started .mat-vertical-content {\n        padding: 0 16px 16px 16px;\n    }\n\n}\n",
-          "pageSize": 1024,
-          "noDataDisplayMessage": "",
-          "actions": {
-            "elementClick": [
-              {
-                "name": "getting-started-finish",
-                "icon": "more_horiz",
-                "useShowWidgetActionFunction": null,
-                "showWidgetActionFunction": "return true;",
-                "type": "customPretty",
-                "customHtml": "<div class=\"tb-congrat-dialog-container\" fxLayout=\"column\">\n    <div fxLayout=\"row\" fxLayoutAlign=\"start center\" style=\"height: 64px; padding: 8px;\">\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"close()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </div>\n    <div fxLayout=\"row\" fxLayoutAlign=\"center center\" style=\"height: 70px;\">\n        <div class=\"tb-done-container\" fxLayout=\"row\" fxLayoutAlign=\"center center\">\n            <mat-icon class=\"tb-done-icon\" color=\"primary\">done</mat-icon>\n        </div>\n    </div>\n    <div fxLayout=\"column\" fxLayoutAlign=\"start center\" style=\"padding-top: 30px;\">\n        <div class=\"tb-done-welcome-title\">Welcome on board</div>\n        <div class=\"tb-done-welcome-text\">You did great with it!</div>\n    </div>    \n</div>\n",
-                "customCss": ".tb-congrat-dialog .mat-mdc-dialog-container .mdc-dialog__surface {\n    border-radius: 8px;\n    background-image: url(/assets/home/greetings_bg.svg);\n    background-repeat: no-repeat;\n}\n\n.tb-congrat-dialog-container {\n    width: 500px;\n    height: 290px;\n}\n\n.tb-done-container {\n    width: 70px;\n    height: 70px;\n    border-radius: 50%;\n    background: rgba(0, 0, 0, 0.05);\n}\n\n.tb-done-icon {\n    width: 62px;\n    height: 62px;\n    line-height: 56px;\n    font-size: 36px;\n    text-align: center;\n    border-radius: 50%;\n    border: 2px solid #305680;\n    background: #FFFFFF;\n}\n\n.tb-done-welcome-title {\n    font-weight: 600;\n    font-size: 20px;\n    line-height: 24px;\n    letter-spacing: 0.1px;\n    color: rgba(0, 0, 0, 0.87);\n    padding-bottom: 8px;\n}\n\n.tb-done-welcome-text {\n    font-weight: 400;\n    font-size: 16px;\n    line-height: 24px;\n    letter-spacing: 0.15px;\n    color: rgba(0, 0, 0, 0.54);\n}",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\n\nopenGreetingDialog();\n\nfunction openGreetingDialog() {\n    customDialog.customDialog(htmlTemplate, GreetingDialogController, null, {autoFocus: false}).subscribe();\n}\n\nfunction GreetingDialogController(instance) {\n    let vm = instance;\n    vm.dialogRef.addPanelClass(\"tb-congrat-dialog\");\n    \n    vm.close = function() {\n        vm.dialogRef.close(null);\n    };\n}\n\n",
-                "customResources": [],
-                "openInSeparateDialog": false,
-                "openInPopover": false,
-                "id": "d7d0b8a5-ead7-a29c-2c10-5c9704fb3739"
-              }
-            ]
-          }
-        },
-        "row": 0,
-        "col": 0,
-        "id": "e70b51f8-04dd-985f-be81-d0c76c589d4a"
-      },
       "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
         "isSystemType": true,
         "bundleAlias": "cards",
@@ -679,7 +594,7 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">Transport messages\n            <mat-icon\n                matTooltip=\"All the messages that came from devices\"\n                matTooltipPosition=\"above\"\n                class=\"tb-home-widget-info-icon\">info</mat-icon>\n        </div>\n    </div>\n    <tb-dashboard-state fxFlex stateId=\"transport_messages\" [ctx]=\"ctx\"></tb-dashboard-state>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'widgets.transport-messages.title' | translate }}\n            <mat-icon\n                matTooltip=\"{{ 'widgets.transport-messages.info' | translate }}\"\n                matTooltipPosition=\"above\"\n                class=\"tb-home-widget-info-icon\">info</mat-icon>\n        </div>\n    </div>\n    <tb-dashboard-state fxFlex stateId=\"transport_messages\" [ctx]=\"ctx\"></tb-dashboard-state>\n</div>",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n"
           },
@@ -726,7 +641,7 @@
                 {
                   "name": "transportMsgCountHourly",
                   "type": "timeseries",
-                  "label": "Transport messages",
+                  "label": "{i18n:widgets.transport-messages.title}",
                   "color": "#305680",
                   "settings": {},
                   "_hash": 0.2880464219129071,
@@ -1000,7 +915,7 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = 'Critically high CPU usage. To avoid system failure, optimize system performance.';\n} else if (value > 75) {\n    text = 'Running high on CPU usage. To avoid system failure, optimize system performance.';\n}\nreturn text;"
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.cpu-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.cpu-warning-text\\' | translate }}';\n}\nreturn text;\n"
                 }
               ]
             }
@@ -1035,7 +950,7 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">CPU</div>\n        <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n    </div>\n    <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n        <span class=\"tb-count\">${cpuUsage:0}%</span>\n        <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n    </div>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>\n        <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n    </div>\n    <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n        <span class=\"tb-count\">${cpuUsage:0}%</span>\n        <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
           },
@@ -1082,7 +997,7 @@
                 {
                   "name": "cpuUsage",
                   "type": "timeseries",
-                  "label": "CPU",
+                  "label": "{i18n:widgets.system-info.cpu}",
                   "color": "#305680",
                   "settings": {
                     "hideDataByDefault": false,
@@ -1117,7 +1032,7 @@
                 {
                   "name": "memoryUsage",
                   "type": "timeseries",
-                  "label": "RAM",
+                  "label": "{i18n:widgets.system-info.ram}",
                   "color": "#ac3bc9",
                   "settings": {
                     "hideDataByDefault": false,
@@ -1152,7 +1067,7 @@
                 {
                   "name": "discUsage",
                   "type": "timeseries",
-                  "label": "Disk",
+                  "label": "{i18n:widgets.system-info.disk}",
                   "color": "#40d0ae",
                   "settings": {
                     "hideDataByDefault": false,
@@ -1359,7 +1274,7 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = 'Critically low reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.';\n} else if (value > 75) {\n    text = 'Running low on reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.';\n}\nreturn text;"
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.ram-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.ram-warning-text\\' | translate }}';\n}\nreturn text;\n"
                 }
               ]
             }
@@ -1394,7 +1309,7 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": true,
-            "markdownTextFunction": "const memoryUsage = data[0]['memoryUsage'];\nconst totalMemory = data[0]['totalMemory'];\nconst usedMemory = (totalMemory * (memoryUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\">RAM</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedMemory +' / ${totalMemory:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${memoryUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalMemory:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
+            "markdownTextFunction": "const memoryUsage = data[0]['memoryUsage'];\nconst totalMemory = data[0]['totalMemory'];\nconst usedMemory = (totalMemory * (memoryUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\" translate>widgets.system-info.ram</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedMemory +' / ${totalMemory:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${memoryUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalMemory:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
           },
@@ -1492,7 +1407,7 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = 'Critically low disk space. To avoid data loss, free up or expand the disk space.';\n} else if (value > 75) {\n    text = 'Running low on disk space. To avoid data loss, free up or expand the disk space.';\n}\nreturn text;"
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.disk-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.disk-warning-text\\' | translate }}';\n}\nreturn text;"
                 }
               ]
             }
@@ -1527,7 +1442,7 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": true,
-            "markdownTextFunction": "const discUsage = data[0]['discUsage'];\nconst totalDiscSpace = data[0]['totalDiscSpace'];\nconst usedDisc = (totalDiscSpace * (discUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\">Disk</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedDisc +' / ${totalDiscSpace:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${discUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalDiscSpace:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
+            "markdownTextFunction": "const discUsage = data[0]['discUsage'];\nconst totalDiscSpace = data[0]['totalDiscSpace'];\nconst usedDisc = (totalDiscSpace * (discUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\" translate>widgets.system-info.disk</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedDisc +' / ${totalDiscSpace:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${discUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalDiscSpace:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
           },
@@ -1595,7 +1510,7 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div style=\"height: 100%;\" fxLayout=\"column\">\n    <div class=\"tb-card-header\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\">Functions</div>\n        </div>\n        <a mat-stroked-button color=\"primary\" class=\"tb-switch-to-pe\"\n        href=\"https://thingsboard.io/pricing/?product=thingsboard-pe&solution=pe-pay-as-you-go\" target=\"_blank\">Switch to PE</a>\n    </div>\n    <div fxFlex class=\"tb-card-content\">\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\">Alarms</div>\n            <div class=\"feature\">Dashboards</div>\n            <div class=\"feature\">Entities & Relations</div>\n            <div class=\"feature\">Profiles</div>\n            <div class=\"feature\">Advanced features</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\">Notification center</div>\n            <div class=\"feature\">API usage</div>\n            <div class=\"feature\">Customers</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Customers hierarchy</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Roles & Permissions</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Groups</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Integrations</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Solution templates</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">Scheduler</div>\n            <div [matTooltip]=\"'Only on ThingsBoard\\nProfessional Edition'\" matTooltipPosition=\"above\" class=\"feature pe\">White-labeling</div>\n        </div>\n    </div>\n</div>",
+            "markdownTextPattern": "<div style=\"height: 100%;\" fxLayout=\"column\">\n    <div class=\"tb-card-header\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\" translate>widgets.functions.title</div>\n        </div>\n        <a mat-stroked-button color=\"primary\" class=\"tb-switch-to-pe\"\n        href=\"https://thingsboard.io/pricing/?product=thingsboard-pe&solution=pe-pay-as-you-go\" target=\"_blank\">{{ 'widgets.functions.switch-to-pe' | translate }}</a>\n    </div>\n    <div fxFlex class=\"tb-card-content\">\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\" translate>widgets.functions.alarms</div>\n            <div class=\"feature\" translate>widgets.functions.dashboards</div>\n            <div class=\"feature\" translate>widgets.functions.entities-and-relations</div>\n            <div class=\"feature\" translate>widgets.functions.profiles</div>\n            <div class=\"feature\" translate>widgets.functions.advanced-features</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\" translate>widgets.functions.notification-center</div>\n            <div class=\"feature\" translate>widgets.functions.api-usage</div>\n            <div class=\"feature\" translate>widgets.functions.customers</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.customers-hierarchy</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.roles-and-permissions</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.groups</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.integrations</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.solution-templates</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.scheduler</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.white-labeling</div>\n        </div>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-header {\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n    align-items: center;\n}\n\n.tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    margin-top: 4px;\n    overflow: auto;\n}\n\n.feature {\n    position: relative;\n    cursor: default;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 28px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.76);\n    margin-left: 32px;\n}\n\n.feature:before {\n    content: \"check\";\n    font-family: 'Material Icons Round';\n    display: inline-block;\n    font-size: 20px;\n    line-height: 20px;\n    color: #198038;\n    font-weight: 600;\n    position: absolute;\n    left: -32px;\n    top: 2px;\n    background: #F3F6FA;\n    border-radius: 4px;\n    width: 20px;\n    height: 20px;\n    padding: 2px;\n    vertical-align: middle;\n}\n\n.feature.pe:before {\n    content: \"close\";\n    background: #F4F4F4;\n    color: rgba(0, 0, 0, 0.12);\n}\n\n.feature.pe:after {\n    position: relative;\n    display: inline-block;\n    margin-left: 4px;\n    vertical-align: baseline;\n    top: -0.5em;\n    content: \"PE\";\n    color: #305680;\n    font-weight: 700;\n    font-size: 12px;\n    line-height: 12px;\n    letter-spacing: 0.0015em;\n}\n\n.feature+.feature {\n    margin-top: 4px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-switch-to-pe {\n        height: 24px;\n        font-size: 12px;\n        padding: 0 4px;\n    }\n    \n    .feature+.feature {\n        margin-top: 2px;\n    }\n    \n    .feature {\n        font-size: 11px;\n        line-height: 18px;\n        margin-left: 22px;\n    }\n\n    .feature:before {\n      font-size: 14px;\n      line-height: 14px;\n      width: 14px;\n      height: 14px;\n      left: -22px;\n      top: 0;\n    }\n    .feature.pe:after {\n        margin-left: 2px;\n        top: -0.5em;\n        content: \"PE\";\n        font-size: 8px;\n        line-height: 8px;\n    }\n    \n}\n\n"
           },
@@ -1791,6 +1706,43 @@
         "row": 0,
         "col": 0,
         "id": "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4"
+      },
+      "a23185ad-dc46-806c-0e50-5b21fb080ace": {
+        "isSystemType": true,
+        "bundleAlias": "home_page_widgets",
+        "typeAlias": "getting_started",
+        "type": "static",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "columns": 3
+          },
+          "title": "Getting started",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false
+        },
+        "row": 0,
+        "col": 0,
+        "id": "a23185ad-dc46-806c-0e50-5b21fb080ace"
       }
     },
     "states": {
@@ -1848,13 +1800,6 @@
                 "mobileOrder": 5,
                 "mobileHeight": 4
               },
-              "e70b51f8-04dd-985f-be81-d0c76c589d4a": {
-                "sizeX": 35,
-                "sizeY": 58,
-                "row": 0,
-                "col": 85,
-                "mobileHide": true
-              },
               "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
                 "sizeX": 41,
                 "sizeY": 18,
@@ -1899,6 +1844,13 @@
                 "sizeY": 14,
                 "row": 15,
                 "col": 0,
+                "mobileHide": true
+              },
+              "a23185ad-dc46-806c-0e50-5b21fb080ace": {
+                "sizeX": 35,
+                "sizeY": 58,
+                "row": 0,
+                "col": 85,
                 "mobileHide": true
               }
             },
@@ -2010,7 +1962,7 @@
         "filter": {
           "type": "entityType",
           "resolveMultiple": true,
-          "entityType": "TENANT"
+          "entityType": "TENANT_PROFILE"
         }
       },
       "a1ddb8fa-90ff-5598-e7f2-e254194d055d": {

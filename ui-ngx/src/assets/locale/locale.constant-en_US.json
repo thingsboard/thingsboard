@@ -2385,7 +2385,7 @@
          "ignore-case": "ignore case",
          "value": "Value",
          "remove-filter": "Remove filter",
-         "duplicate-filter": "Duplicate filter",
+         "duplicate-filter-action": "Duplicate filter",
          "preview": "Filter preview",
          "no-filters": "No filters configured",
          "add-filter": "Add filter",
@@ -5060,6 +5060,113 @@
             "font-weight-lighter": "Lighter",
             "color": "Color",
             "shadow-color": "Shadow color"
+        },
+        "system-info": {
+            "cpu": "CPU",
+            "ram": "RAM",
+            "disk": "Disk",
+            "cpu-warning-text": "Running high on CPU usage. To avoid system failure, optimize system performance.",
+            "cpu-critical-text": "Critically high CPU usage. To avoid system failure, optimize system performance.",
+            "ram-warning-text": "Running low on reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.",
+            "ram-critical-text": "Critically low reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.",
+            "disk-warning-text": "Running low on disk space. To avoid data loss, free up or expand the disk space.",
+            "disk-critical-text": "Critically low disk space. To avoid data loss, free up or expand the disk space."
+        },
+        "cluster-info": {
+            "service-id": "Service id",
+            "service-type": "Service type",
+            "no-data": "No data"
+        },
+        "transport-messages": {
+            "title": "Transport messages",
+            "info": "All the messages that came from devices"
+        },
+        "documentation": {
+            "title": "Documentation",
+            "add-link": "Add link",
+            "add-link-title": "Add documentation link",
+            "name": "Name",
+            "name-required": "Name is required.",
+            "link": "Link",
+            "link-required": "Link is required.",
+            "columns": "Columns"
+        },
+        "configured-features": {
+            "title": "Configured features",
+            "info": "Status of features that require configuration",
+            "email-feature": "Email",
+            "sms-feature": "SMS",
+            "slack-feature": "Slack",
+            "oauth2-feature": "OAuth 2",
+            "2fa-feature": "2FA",
+            "feature-configured": "Feature is configured.\nClick to setup",
+            "feature-not-configured": "Feature is not configured.\nClick to setup"
+        },
+        "version-info": {
+            "title": "Version",
+            "contact-us": "Contact us",
+            "current-version": "Current version",
+            "available-version": "Available version",
+            "upgrade": "Upgrade",
+            "version-is-up-to-date": "Version is up to date"
+        },
+        "functions": {
+            "title": "Functions",
+            "pe-feature-tooltip": "Only on ThingsBoard\nProfessional Edition",
+            "switch-to-pe": "Switch to PE",
+            "alarms": "Alarms",
+            "dashboards": "Dashboards",
+            "entities-and-relations": "Entities & Relations",
+            "profiles": "Profiles",
+            "advanced-features": "Advanced features",
+            "notification-center": "Notification center",
+            "api-usage": "API usage",
+            "customers": "Customers",
+            "customers-hierarchy": "Customers hierarchy",
+            "roles-and-permissions": "Roles & Permissions",
+            "groups": "Groups",
+            "integrations": "Integrations",
+            "solution-templates": "Solution templates",
+            "scheduler": "Scheduler",
+            "white-labeling": "White-labeling"
+        },
+        "getting-started": {
+            "get-started": "Get started",
+            "finish": "Finish",
+            "done-welcome-title": "Welcome on board",
+            "done-welcome-text": "You did great with it!",
+            "sys-admin": {
+                "step1": {
+                    "title": "Create Tenant and Tenant Administrator",
+                    "content": "<p>A tenant is an individual or organization that owns or produces devices and assets. Tenants can create Tenant administrator users.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-create-tenant": "How to create Tenant"
+                },
+                "step2": {
+                    "title": "Configure feature: Mail server",
+                    "content": "<p>Users will receive activation and password reset emails from the System Administrator via an SMTP server.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-mail-server": "How to configure Mail server"
+                },
+                "step3": {
+                    "title": "Configure feature: SMS provider",
+                    "content": "<p>To distribute SMS messages about alarms, the System Administrator can configure SMS providers.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-sms-provider": "How to configure SMS provider"
+                },
+                "step4": {
+                    "title": "Configure feature: 2FA",
+                    "content": "<p>Adding two-factor authentication to your account increases security and prevents malicious access.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-2fa": "How to configure 2FA"
+                },
+                "step5": {
+                    "title": "Configure feature: OAuth 2",
+                    "content": "<p>You can provide your customers with Single Sign-On functionality and automatically create tenants, customers, or sub-customers by using external user management platforms that support OAuth 2.0.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-oauth2": "How to configure OAuth 2"
+                },
+                "step6": {
+                    "title": "Configure feature: Notifications",
+                    "content": "<p>Some text</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-notifications": "How to configure Notifications"
+                }
+            }
         }
     },
     "icon": {
