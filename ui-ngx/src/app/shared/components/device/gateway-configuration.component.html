@@ -653,6 +653,7 @@
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial
+            *ngIf="dialogRef"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>

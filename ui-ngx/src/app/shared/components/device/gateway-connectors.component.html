@@ -113,6 +113,7 @@
     <button mat-button color="primary"
             class="action-btns"
             type="button"
+            *ngIf="dialogRef"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>

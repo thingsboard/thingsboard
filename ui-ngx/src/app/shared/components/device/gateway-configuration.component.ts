@@ -473,6 +473,8 @@ export class GatewayConfigurationComponent implements OnInit {
     this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributes).subscribe(_ => {
       if (this.dialogRef) {
         this.dialogRef.close();
+      } else {
+        this.gatewayConfigGroup.markAsPristine();
       }
     });
   }
