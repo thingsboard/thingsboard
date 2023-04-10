@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,12 +17,20 @@
 -->
 <div class="tb-custom-action-pretty mat-elevation-z1" tb-fullscreen [fullscreen]="fullscreen">
   <div fxLayout="row" fxLayoutAlign="end center" class="tb-action-expand-button" [ngClass]="{'tb-fullscreen-editor': fullscreen}">
-    <button mat-button fxHide.lt-md
+    <button *ngIf="!fullscreen"
+            mat-icon-button fxHide.lt-md
             matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
             matTooltipPosition="above"
-            (click)="fullscreen = !fullscreen">
-      <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-      <span *ngIf="fullscreen" translate>widget.toggle-fullscreen</span>
+            (click)="fullscreen = true">
+      <mat-icon>fullscreen</mat-icon>
+    </button>
+    <button *ngIf="fullscreen"
+            mat-button
+            matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
+            matTooltipPosition="above"
+            (click)="fullscreen = false">
+      <mat-icon>fullscreen_exit</mat-icon>
+      <span translate>widget.toggle-fullscreen</span>
     </button>
   </div>
   <div class="tb-custom-action-editor" [ngClass]="{'tb-fullscreen-editor': fullscreen}">

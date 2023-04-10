@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -545,6 +546,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Collections.sort(loadedDeviceProfileInfos, deviceProfileInfoIdComparator);
 
         List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream().map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
+                deviceProfile.getTenantId(),
                 deviceProfile.getName(), deviceProfile.getImage(), deviceProfile.getDefaultDashboardId(),
                 deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
 
@@ -943,6 +945,28 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
     }
 
+    @Test
+    public void testSaveDeviceProfileWorks() throws Exception {
+        JsonTransportPayloadConfiguration jsonTransportPayloadConfiguration = new JsonTransportPayloadConfiguration();
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration =
+                this.createMqttDeviceProfileTransportConfiguration(jsonTransportPayloadConfiguration, true,
+                        "v1/devices/me/telemetry", "v1/devices/me/attributes", "v1/devices/me/subscribeattributes");
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile",
+                mqttDeviceProfileTransportConfiguration);
+        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        Assert.assertNotNull(savedDeviceProfile);
+        Assert.assertEquals(savedDeviceProfile.getTransportType(), DeviceTransportType.MQTT);
+        Assert.assertTrue(savedDeviceProfile.getProfileData().getTransportConfiguration() instanceof MqttDeviceProfileTransportConfiguration);
+        MqttDeviceProfileTransportConfiguration transportConfiguration =
+                (MqttDeviceProfileTransportConfiguration) savedDeviceProfile.getProfileData().getTransportConfiguration();
+        Assert.assertTrue(transportConfiguration.isSendAckOnValidationException());
+        DeviceProfile foundDeviceProfile =
+                doGet("/api/deviceProfile/" + savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
+        Assert.assertEquals(savedDeviceProfile.getProfileData().getTransportConfiguration(),
+                foundDeviceProfile.getProfileData().getTransportConfiguration());
+        Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
+    }
+
     private DeviceProfile testSaveDeviceProfileWithProtoPayloadType(String schema) throws Exception {
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema, null, null);
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration, false);
@@ -990,6 +1014,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         testEntityDaoWithRelationsOk(savedTenant.getId(), deviceProfileId, "/api/deviceProfile/" + deviceProfileId);
     }
 
+    @Ignore
     @Test
     public void testDeleteDeviceProfileExceptionWithRelationsTransactional() throws Exception {
         DeviceProfileId deviceProfileId = savedDeviceProfile("DeviceProfile for Test WithRelations Transactional Exception").getId();

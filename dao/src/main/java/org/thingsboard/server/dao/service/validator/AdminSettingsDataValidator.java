@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ public class AdminSettingsDataValidator extends DataValidator<AdminSettings> {
 
     @Override
     protected void validateCreate(TenantId tenantId, AdminSettings adminSettings) {
-        AdminSettings existentAdminSettingsWithKey = adminSettingsService.findAdminSettingsByKey(tenantId, adminSettings.getKey());
-        if (existentAdminSettingsWithKey != null) {
+        AdminSettings existingSettings = adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, adminSettings.getKey());
+        if (existingSettings != null) {
             throw new DataValidationException("Admin settings with such name already exists!");
         }
     }

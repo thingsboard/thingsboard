@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -98,7 +98,6 @@ import * as LogoComponent from '@shared/components/logo.component';
 import * as FooterFabButtonsComponent from '@shared/components/footer-fab-buttons.component';
 import * as FullscreenDirective from '@shared/components/fullscreen.directive';
 import * as CircularProgressDirective from '@shared/components/circular-progress.directive';
-import * as MatChipDraggableDirective from '@shared/components/mat-chip-draggable.directive';
 import * as TbHotkeysDirective from '@shared/components/hotkeys.directive';
 import * as TbAnchorComponent from '@shared/components/tb-anchor.component';
 import * as TbPopoverComponent from '@shared/components/popover.component';
@@ -154,6 +153,8 @@ import * as ColorInputComponent from '@shared/components/color-input.component';
 import * as MaterialIconSelectComponent from '@shared/components/material-icon-select.component';
 import * as NodeScriptTestDialogComponent from '@shared/components/dialog/node-script-test-dialog.component';
 import * as JsonFormComponent from '@shared/components/json-form/json-form.component';
+import * as NotificationComponent from '@shared/components/notification/notification.component';
+import * as TemplateAutocompleteComponent from '@shared/components/notification/template-autocomplete.component';
 import * as ImageInputComponent from '@shared/components/image-input.component';
 import * as FileInputComponent from '@shared/components/file-input.component';
 import * as MessageTypeAutocompleteComponent from '@shared/components/message-type-autocomplete.component';
@@ -171,6 +172,7 @@ import * as WidgetsBundleSearchComponent from '@shared/components/widgets-bundle
 import * as CopyButtonComponent from '@shared/components/button/copy-button.component';
 import * as TogglePasswordComponent from '@shared/components/button/toggle-password.component';
 import * as ProtobufContentComponent from '@shared/components/protobuf-content.component';
+import * as SlackConversationAutocompleteComponent from '@shared/components/slack-conversation-autocomplete.component';
 
 import * as AddEntityDialogComponent from '@home/components/entity/add-entity-dialog.component';
 import * as EntitiesTableComponent from '@home/components/entity/entities-table.component';
@@ -241,7 +243,7 @@ import * as FilterPredicateValueComponent from '@home/components/filter/filter-p
 import * as TenantProfileComponent from '@home/components/profile/tenant-profile.component';
 import * as TenantProfileDialogComponent from '@home/components/profile/tenant-profile-dialog.component';
 import * as TenantProfileDataComponent from '@home/components/profile/tenant-profile-data.component';
-// tslint:disable-next-line:max-line-length
+// eslint-disable-next-line max-len
 import * as DefaultDeviceProfileConfigurationComponent from '@home/components/profile/device/default-device-profile-configuration.component';
 import * as DeviceProfileConfigurationComponent from '@home/components/profile/device/device-profile-configuration.component';
 import * as DeviceProfileComponent from '@home/components/profile/device-profile.component';
@@ -266,7 +268,7 @@ import * as AlarmScheduleInfoComponent from '@home/components/profile/alarm/alar
 import * as AlarmScheduleDialogComponent from '@home/components/profile/alarm/alarm-schedule-dialog.component';
 import * as EditAlarmDetailsDialogComponent from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
 import * as AlarmRuleConditionDialogComponent from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
-// tslint:disable-next-line:max-line-length
+// eslint-disable-next-line max-len
 import * as DefaultTenantProfileConfigurationComponent from '@home/components/profile/tenant/default-tenant-profile-configuration.component';
 import * as TenantProfileConfigurationComponent from '@home/components/profile/tenant/tenant-profile-configuration.component';
 import * as SmsProviderConfigurationComponent from '@home/components/sms/sms-provider-configuration.component';
@@ -387,7 +389,6 @@ class ModulesMap implements IModulesMap {
     '@shared/components/footer-fab-buttons.component': FooterFabButtonsComponent,
     '@shared/components/fullscreen.directive': FullscreenDirective,
     '@shared/components/circular-progress.directive': CircularProgressDirective,
-    '@shared/components/mat-chip-draggable.directive': MatChipDraggableDirective,
     '@shared/components/hotkeys.directive': TbHotkeysDirective,
     '@shared/components/tb-anchor.component': TbAnchorComponent,
     '@shared/components/popover.component': TbPopoverComponent,
@@ -443,6 +444,8 @@ class ModulesMap implements IModulesMap {
     '@shared/components/material-icon-select.component': MaterialIconSelectComponent,
     '@shared/components/dialog/node-script-test-dialog.component': NodeScriptTestDialogComponent,
     '@shared/components/json-form/json-form.component': JsonFormComponent,
+    '@shared/components/notification/notification.component': NotificationComponent,
+    '@shared/components/notification/template-autocomplete.component': TemplateAutocompleteComponent,
     '@shared/components/image-input.component': ImageInputComponent,
     '@shared/components/file-input.component': FileInputComponent,
     '@shared/components/message-type-autocomplete.component': MessageTypeAutocompleteComponent,
@@ -460,6 +463,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/button/copy-button.component': CopyButtonComponent,
     '@shared/components/button/toggle-password.component': TogglePasswordComponent,
     '@shared/components/protobuf-content.component': ProtobufContentComponent,
+    '@shared/components/slack-conversation-autocomplete.component': SlackConversationAutocompleteComponent,
 
     '@home/components/entity/add-entity-dialog.component': AddEntityDialogComponent,
     '@home/components/entity/entities-table.component': EntitiesTableComponent,

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -36,13 +36,14 @@ import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipList } from '@angular/material/chips';
+import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-list',
   templateUrl: './entity-list.component.html',
-  styleUrls: ['./entity-list.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -53,7 +54,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 })
 export class EntityListComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnChanges {
 
-  entityListFormGroup: FormGroup;
+  entityListFormGroup: UntypedFormGroup;
 
   modelValue: Array<string> | null;
 
@@ -62,6 +63,15 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   @Input()
   subType: string;
+
+  @Input()
+  labelText: string;
+
+  @Input()
+  placeholderText = this.translate.instant('entity.entity-list');
+
+  @Input()
+  requiredText = this.translate.instant('entity.entity-list-empty');
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -79,9 +89,15 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   @Input()
   disabled: boolean;
 
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  hint: string;
+
   @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
 
   entities: Array<BaseData<EntityId>> = [];
   filteredEntities: Observable<Array<BaseData<EntityId>>>;
@@ -95,7 +111,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private entityService: EntityService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.entityListFormGroup = this.fb.group({
       entities: [this.entities, this.required ? [Validators.required] : []],
       entity: [null]

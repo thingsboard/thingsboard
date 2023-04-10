@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,11 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.Collections;
+import java.util.List;
 
 @Service
 @ConditionalOnProperty(prefix = "zk", value = "enabled", havingValue = "false", matchIfMissing = true)
@@ -46,4 +48,13 @@ public class DummyDiscoveryService implements DiscoveryService {
         partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), Collections.emptyList());
     }
 
+    @Override
+    public List<TransportProtos.ServiceInfo> getOtherServers() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean isMonolith() {
+        return true;
+    }
 }

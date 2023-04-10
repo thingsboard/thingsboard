@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,22 @@
   width: 100%;
   height: 100%;
 
-  .mat-tab-group.tb-rulenode-details {
-    > .mat-tab-body-wrapper {
+  .mat-mdc-tab-group.tb-rulenode-details {
+    > .mat-mdc-tab-body-wrapper {
       position: absolute;
       top: 49px;
       left: 0;
       right: 0;
       bottom: 0;
     }
-    > .mat-tab-header {
-      .mat-tab-label {
+    > .mat-mdc-tab-header {
+      .mat-mdc-tab {
         min-width: 40px;
       }
     }
   }
 
-  button.mat-button.mat-icon-button.tb-fullscreen-button {
+  button.mdc-icon-button.tb-fullscreen-button {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -45,18 +45,13 @@
     z-index: 2;
   }
 
-  button.mat-button.mat-icon-button.version-control-button {
+  button.mdc-fab.version-control-button {
     position: absolute;
     top: 10px;
     right: 60px;
     opacity: .85;
     margin: 0 6px;
     z-index: 2;
-    &.mat-fab {
-      .mat-button-wrapper {
-        padding: 0;
-      }
-    }
   }
 
   section.tb-header-buttons.tb-library-open {
@@ -65,14 +60,7 @@
     left: 0;
     z-index: 2;
     pointer-events: none;
-
-    .mat-fab {
-      .mat-button-wrapper {
-        padding: 0;
-      }
-    }
-
-    .mat-button.tb-btn-open-library {
+    .mdc-fab.tb-btn-open-library {
       top: 0;
       left: 0;
       width: 36px;
@@ -98,13 +86,7 @@
         padding: 0 6px;
         font-size: 14px;
 
-        .mat-form-field {
-          .mat-form-field-infix {
-            width: auto;
-          }
-        }
-
-        .mat-button.mat-icon-button {
+        .mat-mdc-icon-button {
           margin: 0;
 
           &.tb-small {
@@ -339,17 +321,16 @@
   }
 }
 
-.tb-rule-chain-context-menu {
+.tb-rule-chain-context-menu.mat-mdc-menu-panel.mdc-menu-surface {
   min-width: 320px;
   max-height: 404px;
   border-radius: 8px;
   margin-left: -20px;
-
   &.mat-menu-below {
     margin-top: -60px;
   }
 
-  .mat-menu-content {
+  .mat-mdc-menu-content {
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -382,17 +363,17 @@
     }
 
     .mat-icon {
-      padding-right: 10px;
-      padding-left: 2px;
-      margin: auto;
+      margin: auto 10px auto 2px;
     }
 
     .tb-context-menu-title {
       font-weight: 500;
+      line-height: normal;
     }
 
     .tb-context-menu-subtitle {
       font-size: 12px;
+      line-height: normal;
     }
   }
 }

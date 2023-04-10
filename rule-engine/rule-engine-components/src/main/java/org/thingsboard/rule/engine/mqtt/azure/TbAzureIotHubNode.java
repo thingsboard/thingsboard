@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import javax.net.ssl.SSLException;
         nodeDescription = "Publish messages to the Azure IoT Hub",
         nodeDetails = "Will publish message payload to the Azure IoT Hub with QoS <b>AT_LEAST_ONCE</b>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeAzureIotHubConfig"
+        configDirective = "tbExternalNodeAzureIotHubConfig"
 )
 public class TbAzureIotHubNode extends TbMqttNode {
     @Override

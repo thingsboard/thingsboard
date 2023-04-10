@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -48,6 +48,8 @@ import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
 import { isMobileApp } from '@core/utils';
 import { TwoFactorAuthProviderType, TwoFaProviderInfo } from '@shared/models/two-factor-auth.models';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
+import { UserSettings } from '@shared/models/user-settings.models';
+import { UserSettingsService } from '@core/http/user-settings.service';
 
 @Injectable({
     providedIn: 'root'
@@ -66,6 +68,7 @@ export class AuthService {
     private dashboardService: DashboardService,
     private adminService: AdminService,
     private translate: TranslateService,
+    private userSettingsService: UserSettingsService,
     private dialog: MatDialog
   ) {
   }
@@ -127,7 +130,8 @@ export class AuthService {
   }
 
   public checkTwoFaVerificationCode(providerType: TwoFactorAuthProviderType, verificationCode: number): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`/api/auth/2fa/verification/check?providerType=${providerType}&verificationCode=${verificationCode}`,
+    return this.http.post<LoginResponse>
+    (`/api/auth/2fa/verification/check?providerType=${providerType}&verificationCode=${verificationCode}`,
       null, defaultHttpOptions(false, true)).pipe(
       tap((loginResponse: LoginResponse) => {
           this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
@@ -490,12 +494,17 @@ export class AuthService {
     }
   }
 
+  private loadUserSettings(): Observable<UserSettings> {
+    return this.userSettingsService.loadUserSettings();
+  }
+
   private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
     const sources = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
                      this.fetchAllowedDashboardIds(authPayload),
                      this.loadIsEdgesSupportEnabled(),
                      this.loadHasRepository(authPayload.authUser),
                      this.loadTbelEnabled(authPayload.authUser),
+                     this.loadUserSettings(),
                      this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
@@ -504,10 +513,9 @@ export class AuthService {
         const edgesSupportEnabled: boolean = data[2] as boolean;
         const hasRepository: boolean = data[3] as boolean;
         const tbelEnabled: boolean = data[4] as boolean;
-        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository, tbelEnabled};
-      }, catchError((err) => {
-        return of({});
-      })));
+        const userSettings = data[5] as UserSettings;
+        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository, tbelEnabled, userSettings};
+      }, catchError((err) => of({}))));
   }
 
   public refreshJwtToken(loadUserElseStoreJwtToken = true): Observable<LoginResponse> {

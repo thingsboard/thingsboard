@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -59,33 +59,33 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-checkbox formControlName="propagate" style="display: block; padding-bottom: 16px;">
+        <mat-checkbox formControlName="propagate" style="display: block;">
           {{ 'device-profile.propagate-alarm' | translate }}
         </mat-checkbox>
-        <section *ngIf="alarmFormGroup.get('propagate').value === true" style="padding-bottom: 1em;">
+        <section *ngIf="alarmFormGroup.get('propagate').value === true">
           <mat-form-field floatLabel="always" class="mat-block">
             <mat-label translate>device-profile.alarm-rule-relation-types-list</mat-label>
-            <mat-chip-list #relationTypesChipList [disabled]="disabled">
-              <mat-chip
+            <mat-chip-grid #relationTypesChipList [disabled]="disabled">
+              <mat-chip-row
                 *ngFor="let key of alarmFormGroup.get('propagateRelationTypes').value;"
                 (removed)="removeRelationType(key)">
                 {{key}}
                 <mat-icon matChipRemove>close</mat-icon>
-              </mat-chip>
+              </mat-chip-row>
               <input matInput type="text" placeholder="{{'device-profile.alarm-rule-relation-types-list' | translate}}"
                      style="max-width: 200px;"
                      [matChipInputFor]="relationTypesChipList"
                      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                      matChipInputAddOnBlur
                      (matChipInputTokenEnd)="addRelationType($event)">
-            </mat-chip-list>
+            </mat-chip-grid>
             <mat-hint innerHTML="{{ 'device-profile.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
           </mat-form-field>
         </section>
-        <mat-checkbox formControlName="propagateToOwner" style="display: block; padding-bottom: 16px;">
+        <mat-checkbox formControlName="propagateToOwner" style="display: block;">
           {{ 'device-profile.propagate-alarm-to-owner' | translate }}
         </mat-checkbox>
-        <mat-checkbox formControlName="propagateToTenant" style="display: block; padding-bottom: 16px;">
+        <mat-checkbox formControlName="propagateToTenant" style="display: block;">
           {{ 'device-profile.propagate-alarm-to-tenant' | translate }}
         </mat-checkbox>
       </ng-template>

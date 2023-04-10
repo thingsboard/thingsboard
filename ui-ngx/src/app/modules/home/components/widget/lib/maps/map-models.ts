@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -48,8 +48,10 @@ export interface CircleData {
 }
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
-export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => MarkerImageInfo;
-export type PosFuncton = (origXPos, origYPos) => { x, y };
+export type MarkerImageFunction = (data: FormattedData, markerImages: string[],
+                                   dsData: FormattedData[], dsIndex: number) => MarkerImageInfo;
+export type PosFunction = (origXPos, origYPos, data: FormattedData,
+                           dsData: FormattedData[], dsIndex: number, aspect: number) => { x: number, y: number };
 export type MarkerIconReadyFunction = (icon: MarkerIconInfo) => void;
 
 export enum GoogleMapType {
@@ -131,16 +133,20 @@ export const hereMapProviderTranslationMap = new Map<HereMapProvider, string>(
 export interface HereMapProviderSettings {
   mapProviderHere: HereMapProvider;
   credentials: {
+    useV3: boolean;
     app_id: string;
     app_code: string;
+    apiKey: string;
   };
 }
 
 export const defaultHereMapProviderSettings: HereMapProviderSettings = {
   mapProviderHere: HereMapProvider.hereNormalDay,
   credentials: {
+    useV3: true,
     app_id: 'AhM6TzD9ThyK78CT3ptx',
-    app_code: 'p6NPiITB3Vv0GMUFnkLOOg'
+    app_code: 'p6NPiITB3Vv0GMUFnkLOOg',
+    apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
   }
 };
 

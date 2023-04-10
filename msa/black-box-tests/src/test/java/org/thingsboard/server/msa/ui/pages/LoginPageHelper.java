@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.thingsboard.server.msa.ui.utils.Const;
 
 public class LoginPageHelper extends LoginPageElements {
@@ -27,5 +29,6 @@ public class LoginPageHelper extends LoginPageElements {
         emailField().sendKeys(Const.TENANT_EMAIL);
         passwordField().sendKeys(Const.TENANT_PASSWORD);
         submitBtn().click();
+        waitUntilUrlContainsText("/home");
     }
 }

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="commonMapSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.common-map-settings</legend>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
+    <section  fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <tb-datasources-key-autocomplete fxFlex
                                        [fxShow]="provider === mapProvider.image"
                                        required
@@ -55,7 +55,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <section [fxShow]="provider !== mapProvider.image" fxLayout="row" fxLayoutGap="8px">
+        <section [fxShow]="provider !== mapProvider.image" fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>widgets.maps.default-map-zoom-level</mat-label>
             <input matInput type="number" min="0" max="20" step="1" formControlName="defaultZoomLevel">
@@ -65,7 +65,7 @@
             <input matInput formControlName="defaultCenterPosition">
           </mat-form-field>
         </section>
-        <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" style="margin-bottom: 15px;">
+        <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" style="margin-bottom: 15px;">
           <section fxFlex fxLayout="column">
             <mat-slide-toggle formControlName="disableScrollZooming" class="slide-block">
               {{ 'widgets.maps.disable-scroll-zooming' | translate }}

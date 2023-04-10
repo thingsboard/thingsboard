@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -26,8 +28,6 @@ import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
 import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
-import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
 
 public class SortByTimeTest extends AbstractDriverBaseTest {
@@ -36,11 +36,9 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
     private RuleChainsPageHelper ruleChainsPage;
     private String ruleChainName;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
-        openLocalhost();
         new LoginPageHelper(driver).authorizationTenant();
-        testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         sideBarMenuView = new SideBarMenuViewElements(driver);
         ruleChainsPage = new RuleChainsPageHelper(driver);
     }
@@ -53,8 +51,10 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Sort rule chain by time")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Sort rule chain 'DOWN'")
     public void sortByTimeDown() {
         String ruleChain = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
@@ -69,8 +69,10 @@ public class SortByTimeTest extends AbstractDriverBaseTest {
         Assert.assertNotNull(ruleChainsPage.createdTimeEntity(ruleChain, lastCreated));
     }
 
+    @Epic("Rule chains smoke tests")
+    @Feature("Sort rule chain by time")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Sort rule chain 'UP'")
     public void sortByTimeUp() {
         String ruleChain = ENTITY_NAME;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
