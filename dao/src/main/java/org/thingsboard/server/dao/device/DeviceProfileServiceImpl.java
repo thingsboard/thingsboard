@@ -103,7 +103,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         if (StringUtils.isNotEmpty(event.getOldName()) && !event.getOldName().equals(event.getNewName())) {
             keys.add(DeviceProfileCacheKey.fromName(event.getTenantId(), event.getOldName()));
         }
-        if (StringUtils.isNotEmpty(event.getOldProvisionDeviceKey()) && !event.getOldProvisionDeviceKey().equals(event.getNewProvisionDeviceKey())) {
+        if (StringUtils.isNotEmpty(event.getOldProvisionDeviceKey())) {
             keys.add(DeviceProfileCacheKey.fromProvisionDeviceKey(event.getOldProvisionDeviceKey()));
         }
         cache.evict(keys);
