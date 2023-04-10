@@ -111,7 +111,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxWsSessionsPerCustomer: 0,
           maxWsSessionsPerRegularUser: 0,
           maxWsSessionsPerPublicUser: 0,
-          wsMsgQueueLimitPerSession: 1000,
+          wsMsgQueueLimitPerSession: 0,
           maxWsSubscriptionsPerTenant: 0,
           maxWsSubscriptionsPerCustomer: 0,
           maxWsSubscriptionsPerRegularUser: 0,
