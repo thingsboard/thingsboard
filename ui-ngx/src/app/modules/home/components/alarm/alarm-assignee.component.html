@@ -16,28 +16,15 @@
 
 -->
 
-<div class="tb-assignee" fxLayout="row" fxLayoutAlign="start center"
-     (click)="openAlarmAssigneePanel($event, alarm)">
-  <span *ngIf="alarm?.assigneeId" class="assigned-container">
-    <span class="user-avatar" [style.backgroundColor]="getAvatarBgColor(alarm.assignee)">
-      {{ getUserInitials(alarm.assignee) }}
-    </span>
-    <span [matTooltip]="getUserDisplayName(alarm.assignee)"
-          matTooltipPosition="above"
-          style="text-overflow: ellipsis">
-      {{ getUserDisplayName(alarm.assignee) }}
-    </span>
+<mat-form-field fxFlex class="mat-block" style="margin-bottom: 25px"
+                (click)="openAlarmAssigneePanel($event, alarm)"
+                subscriptSizing="dynamic">
+  <mat-label translate>alarm.assignee</mat-label>
+  <input matInput readonly [value]="getAssignee()">
+  <span *ngIf="alarm?.assigneeId" matPrefix class="user-avatar"
+        [style.backgroundColor]="getAvatarBgColor(alarm.assignee)">
+    {{ getUserInitials(alarm.assignee) }}
   </span>
-  <span *ngIf="!alarm?.assigneeId" class="unassigned-container" fxLayout="row" fxLayoutAlign="start center">
-    <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
-    <span translate>alarm.unassigned</span>
-  </span>
-  <button fxFlexAlign="flex-end"
-          mat-icon-button
-          matTooltip="{{ 'alarm.assign' | translate }}"
-          matTooltipPosition="above">
-    <mat-icon>
-      keyboard_arrow_down
-    </mat-icon>
-  </button>
-</div>
+  <mat-icon *ngIf="!alarm?.assigneeId" matPrefix class="unassigned-icon">account_circle</mat-icon>
+  <mat-icon matSuffix>arrow_drop_down</mat-icon>
+</mat-form-field>

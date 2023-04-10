@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.mqtt.sparkplug.AbstractMqttV5ClientSparkplugTest;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 
@@ -45,6 +46,7 @@ public abstract class AbstractMqttV5RpcSparkplugTest  extends AbstractMqttV5Clie
         connectionWithNBirth(metricBirthDataType_Int32, metricBirthName_Int32, nextInt32());
         Assert.assertTrue("Connection node is failed", client.isConnected());
         client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.RPC, 1);
         String expected = "{\"result\":\"Success: " + SparkplugMessageType.NCMD.name() + "\"}";
         String actual = sendRPCSparkplug(NCMD.name(), sparkplugRpcRequest, savedGateway);
         await(alias + SparkplugMessageType.NCMD.name())
@@ -79,6 +81,7 @@ public abstract class AbstractMqttV5RpcSparkplugTest  extends AbstractMqttV5Clie
         connectionWithNBirth(metricBirthDataType_Int32, metricBirthName_Int32, nextInt32());
         Assert.assertTrue("Connection node is failed", client.isConnected());
         client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.RPC, 1);
         String invalidateTypeMessageName = "RCMD";
         String expected = "{\"result\":\"" + INVALID_ARGUMENTS + "\",\"error\":\"Failed to convert device RPC command to MQTT msg: " +
                 invalidateTypeMessageName + "{\\\"metricName\\\":\\\"" + metricBirthName_Int32 + "\\\",\\\"value\\\":" + metricBirthValue_Int32 + "}\"}";
@@ -92,6 +95,7 @@ public abstract class AbstractMqttV5RpcSparkplugTest  extends AbstractMqttV5Clie
         connectionWithNBirth(metricBirthDataType_Int32, metricBirthName_Int32, nextInt32());
         Assert.assertTrue("Connection node is failed", client.isConnected());
         client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.RPC, 1);
         String metricNameBad = metricBirthName_Int32 + "_Bad";
         String sparkplugRpcRequestBad = "{\"metricName\":\"" + metricNameBad + "\",\"value\":" + metricBirthValue_Int32 + "}";
         String expected = "{\"result\":\"BAD_REQUEST_PARAMS\",\"error\":\"Failed send To Node Rpc Request: " +

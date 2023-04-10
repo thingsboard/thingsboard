@@ -25,7 +25,6 @@ import { AlarmInfo } from '@shared/models/alarm.models';
 export interface AlarmCommentDialogData {
   alarmId?: string;
   alarm?: AlarmInfo;
-  commentsHeaderEnabled: boolean;
 }
 
 @Component({
@@ -37,14 +36,11 @@ export class AlarmCommentDialogComponent extends DialogComponent<AlarmCommentDia
 
   alarmId: string;
 
-  commentsHeaderEnabled: boolean = false;
-
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AlarmCommentDialogData,
               public dialogRef: MatDialogRef<AlarmCommentDialogComponent, void>) {
     super(store, router, dialogRef);
-    this.commentsHeaderEnabled = this.data.commentsHeaderEnabled
     this.alarmId = this.data.alarmId;
   }
 

@@ -582,12 +582,9 @@ export class WidgetSubscription implements IWidgetSubscription {
         const data = this.alarms.data[0];
         entityId = data.originator;
         entityName = data.originatorName;
+        entityLabel = data.originatorLabel;
         if (data.latest && data.latest[EntityKeyType.ENTITY_FIELD]) {
           const entityFields = data.latest[EntityKeyType.ENTITY_FIELD];
-          const labelValue = entityFields.label;
-          if (labelValue) {
-            entityLabel = labelValue.value;
-          }
           const additionalInfoValue = entityFields.additionalInfo;
           if (additionalInfoValue) {
             const additionalInfo = additionalInfoValue.value;

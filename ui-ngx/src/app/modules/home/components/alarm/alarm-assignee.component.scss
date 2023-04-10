@@ -14,36 +14,29 @@
  * limitations under the License.
  */
 
-:host {
-  .tb-assignee {
-    cursor: pointer;
-    max-width: 273px;
+.user-avatar {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  margin-left: 12px;
+  margin-right: 20px;
+}
 
-    .assigned-container {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-
-      .user-avatar {
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 50%;
-        width: 28px;
-        height: 28px;
-        min-width: 28px;
-        min-height: 28px;
-        color: white;
-        font-size: 13px;
-        font-weight: 700;
-      }
-    }
-    .material-icons.unassigned-icon {
-      width: 28px;
-      height: 28px;
-      font-size: 28px;
-      color: rgba(0, 0, 0, 0.38);
-      overflow: visible;
-    }
-  }
+.unassigned-icon {
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
+  color: rgba(0, 0, 0, 0.38);
+  overflow: visible;
+  margin-left: 12px;
+  margin-right: 20px;
+  padding: 0;
 }

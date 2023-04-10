@@ -18,8 +18,10 @@ package org.thingsboard.server.dao.service;
 import com.fasterxml.jackson.databind.node.NullNode;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -36,6 +38,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,8 +47,19 @@ import java.util.stream.Collectors;
 
 public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
 
+    @Autowired
+    TenantProfileService tenantProfileService;
+
     private IdComparator<TenantProfile> idComparator = new IdComparator<>();
     private IdComparator<EntityInfo> tenantProfileInfoIdComparator = new IdComparator<>();
+
+    @Before
+    public void before() {
+        //this test requires no Tenants in the database
+        tenantId = null;
+        tenantService.deleteTenants();
+        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
+    }
 
     @After
     public void after() {

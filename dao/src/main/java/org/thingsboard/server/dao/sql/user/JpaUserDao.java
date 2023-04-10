@@ -20,7 +20,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -30,6 +32,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -98,6 +101,38 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
                                 Authority.CUSTOMER_USER,
                                 DaoUtil.toPageable(pageLink)));
 
+    }
+
+    @Override
+    public PageData<User> findUsersByCustomerIds(UUID tenantId, List<CustomerId> customerIds, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                userRepository
+                        .findTenantAndCustomerUsers(
+                                tenantId,
+                                DaoUtil.toUUIDs(customerIds),
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<User> findAll(PageLink pageLink) {
+        return DaoUtil.toPageData(userRepository.findAll(DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<User> findAllByAuthority(Authority authority, PageLink pageLink) {
+        return DaoUtil.toPageData(userRepository.findAllByAuthority(authority, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<User> findByAuthorityAndTenantsIds(Authority authority, List<TenantId> tenantsIds, PageLink pageLink) {
+        return DaoUtil.toPageData(userRepository.findByAuthorityAndTenantIdIn(authority, DaoUtil.toUUIDs(tenantsIds), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<User> findByAuthorityAndTenantProfilesIds(Authority authority, List<TenantProfileId> tenantProfilesIds, PageLink pageLink) {
+        return DaoUtil.toPageData(userRepository.findByAuthorityAndTenantProfilesIds(authority, DaoUtil.toUUIDs(tenantProfilesIds),
+                DaoUtil.toPageable(pageLink)));
     }
 
     @Override

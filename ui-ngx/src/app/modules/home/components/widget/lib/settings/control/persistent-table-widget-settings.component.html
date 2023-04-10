@@ -33,7 +33,7 @@
         </mat-checkbox>
       </section>
     </section>
-    <section fxLayout="column" fxLayoutGap="8px">
+    <section fxLayout="column" fxLayoutGap.gt-xs="8px">
       <mat-slide-toggle fxFlex formControlName="displayDetails">
         {{ 'widgets.persistent-table.display-request-details' | translate }}
       </mat-slide-toggle>

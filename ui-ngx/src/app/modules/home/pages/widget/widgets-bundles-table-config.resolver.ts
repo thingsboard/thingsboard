@@ -160,7 +160,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`widgets-bundles/${widgetsBundle.id.id}/widgetTypes`);
+    this.router.navigateByUrl(`resources/widgets-bundles/${widgetsBundle.id.id}/widgetTypes`);
   }
 
   exportWidgetsBundle($event: Event, widgetsBundle: WidgetsBundle) {

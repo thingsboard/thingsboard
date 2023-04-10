@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -63,13 +65,15 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
 
     @BeforeMethod
     public void reLogin() {
-        if (getUrl().contains("/login")) {
+        if (getJwtTokenFromLocalStorage() == null) {
             loginPage.authorizationTenant();
         }
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Change title by edit menu")
     public void changeTitle() {
         String customerName = "Changed" + getRandomNumber();
         testRestClient.postCustomer(defaultCustomerPrototype(ENTITY_NAME + random()));
@@ -89,8 +93,10 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(titleAfter, customerName);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Delete title and save")
     public void deleteTitle() {
         sideBarMenuView.customerBtn().click();
         customerPage.entityTitles().get(0).click();
@@ -100,8 +106,10 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertFalse(customerPage.doneBtnEditViewVisible().isEnabled());
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Save only with space in title")
     public void saveOnlyWithSpace() {
         sideBarMenuView.customerBtn().click();
         customerPage.setCustomerName();
@@ -117,8 +125,10 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(customerPage.getCustomerName(), customerPage.getHeaderName());
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "editMenuDescription")
-    @Description
+    @Description("Write the description and save the changes/Change the description and save the changes/Delete the description and save the changes")
     public void editDescription(String description, String newDescription, String finalDescription) {
         String name = ENTITY_NAME + random();
         testRestClient.postCustomer(EntityPrototypes.defaultCustomerPrototype(name, description));
@@ -134,8 +144,10 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(customerPage.getDescription(), finalDescription);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Assigned dashboard from dashboards page")
     public void assignedDashboardFromDashboard() {
         String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
@@ -147,22 +159,24 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         dashboardPage.assignedCustomer(customerName);
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        customerPage.editPencilBtn().click();
-        customerPage.chooseDashboard();
+        jsClick(customerPage.editPencilBtn());
+        customerPage.chooseDashboard(dashboardPage.getDashboardTitle());
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
-        customerPage.manageCustomersUserBtn(customerName).click();
+        jsClick(customerPage.manageCustomersUserBtn(customerName));
         customerPage.createCustomersUser();
-        customerPage.userLoginBtn().click();
+        jsClick(customerPage.userLoginBtn());
 
         Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
         Assert.assertEquals(customerPage.getDashboardFromView(), dashboardPage.getDashboardTitle());
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Assigned dashboard")
     public void assignedDashboard() {
         String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
@@ -173,22 +187,24 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         customerPage.assignedDashboard();
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        customerPage.editPencilBtn().click();
-        customerPage.chooseDashboard();
+        jsClick(customerPage.editPencilBtn());
+        customerPage.chooseDashboard(customerPage.getDashboard());
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
-        customerPage.manageCustomersUserBtn(customerName).click();
+        jsClick(customerPage.manageCustomersUserBtn(customerName));
         customerPage.createCustomersUser();
-        customerPage.userLoginBtn().click();
+        jsClick(customerPage.userLoginBtn());
 
         Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
         Assert.assertEquals(customerPage.getDashboard(), customerPage.getDashboardFromView());
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Assigned dashboard without hide")
     public void assignedDashboardWithoutHide() {
         String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
@@ -199,15 +215,15 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         customerPage.assignedDashboard();
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        customerPage.editPencilBtn().click();
-        customerPage.chooseDashboard();
+        jsClick(customerPage.editPencilBtn());
+        customerPage.chooseDashboard(customerPage.getDashboard());
         customerPage.hideHomeDashboardToolbarCheckbox().click();
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
-        customerPage.manageCustomersUserBtn(customerName).click();
+        jsClick(customerPage.manageCustomersUserBtn(customerName));
         customerPage.createCustomersUser();
-        customerPage.userLoginBtn().click();
+        jsClick(customerPage.userLoginBtn());
 
         Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
@@ -220,8 +236,10 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertTrue(customerPage.timeBtn().isDisplayed());
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Add phone number")
     public void addPhoneNumber() {
         String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
@@ -237,24 +255,26 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertTrue(customerPage.phoneNumberEntityView().getAttribute("value").contains(number));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "incorrectPhoneNumber")
-    @Description
+    @Description("Add incorrect phone number")
     public void addIncorrectPhoneNumber(String number) {
         sideBarMenuView.customerBtn().click();
         customerPage.entityTitles().get(0).click();
         customerPage.editPencilBtn().click();
-        customerPage.phoneNumberEntityView().sendKeys(number);
-        boolean doneBtnIsEnable = customerPage.doneBtnEditViewVisible().isEnabled();
-        customerPage.doneBtnEditViewVisible().click();
+        customerPage.enterPhoneNumber(number);
 
-        Assert.assertFalse(doneBtnIsEnable);
+        Assert.assertFalse(customerPage.doneBtnEditViewVisible().isEnabled());
         Assert.assertNotNull(customerPage.errorMessage());
         Assert.assertTrue(customerPage.errorMessage().isDisplayed());
         Assert.assertEquals(customerPage.errorMessage().getText(), PHONE_NUMBER_ERROR_MESSAGE);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Add all information")
     public void addAllInformation() {
         String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));

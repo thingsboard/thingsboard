@@ -35,6 +35,7 @@ import {
   AlarmSearchStatus,
   alarmSeverityColors,
   alarmSeverityTranslations,
+  AlarmsMode,
   alarmStatusTranslations
 } from '@app/shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
@@ -52,7 +53,8 @@ import { Authority } from '@shared/models/authority.enum';
 import { ChangeDetectorRef, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import {
-  ALARM_ASSIGNEE_PANEL_DATA, AlarmAssigneePanelComponent,
+  ALARM_ASSIGNEE_PANEL_DATA,
+  AlarmAssigneePanelComponent,
   AlarmAssigneePanelData
 } from '@home/components/alarm/alarm-assignee-panel.component';
 import { ComponentPortal } from '@angular/cdk/portal';
@@ -70,18 +72,20 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
+              private alarmsMode: AlarmsMode = AlarmsMode.ALL,
               public entityId: EntityId = null,
               private defaultSearchStatus: AlarmSearchStatus = AlarmSearchStatus.ANY,
               private store: Store<AppState>,
               private viewContainerRef: ViewContainerRef,
               private overlay: Overlay,
               private cd: ChangeDetectorRef,
-              private utilsService: UtilsService) {
+              private utilsService: UtilsService,
+              pageMode = false) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
     this.useTimePageLink = true;
-    this.pageMode = false;
+    this.pageMode = pageMode;
     this.defaultTimewindowInterval = historyInterval(DAY * 30);
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
@@ -156,11 +160,16 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
 
   fetchAlarms(pageLink: TimePageLink): Observable<PageData<AlarmInfo>> {
     const query = new AlarmQuery(this.entityId, pageLink, this.searchStatus, null, true, null);
-    return this.alarmService.getAlarms(query);
+    switch (this.alarmsMode) {
+      case AlarmsMode.ALL:
+        return this.alarmService.getAllAlarms(query);
+      case AlarmsMode.ENTITY:
+        return this.alarmService.getAlarms(query);
+    }
   }
 
   showAlarmDetails(entity: AlarmInfo) {
-    const isPermissionWrite = this.authUser.authority !== Authority.CUSTOMER_USER || entity.customerId.id === this.authUser.customerId;
+    const isPermissionWrite = this.authUser.authority !== Authority.CUSTOMER_USER || entity.customerId?.id === this.authUser.customerId;
     this.dialog.open<AlarmDetailsDialogComponent, AlarmDetailsDialogData, boolean>
     (AlarmDetailsDialogComponent,
       {
@@ -171,7 +180,8 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           alarm: entity,
           allowAcknowledgment: isPermissionWrite,
           allowClear: isPermissionWrite,
-          displayDetails: true
+          displayDetails: true,
+          allowAssign: true
         }
       }).afterClosed().subscribe(
       (res) => {
@@ -273,8 +283,13 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
       }
     ];
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    overlayRef.attach(new ComponentPortal(AlarmAssigneePanelComponent,
-      this.viewContainerRef, injector)).onDestroy(() => this.updateData());
+    const componentRef = overlayRef.attach(new ComponentPortal(AlarmAssigneePanelComponent,
+      this.viewContainerRef, injector));
+    componentRef.onDestroy(() => {
+      if (componentRef.instance.reassigned) {
+        this.updateData()
+      }
+    });
   }
 
 }

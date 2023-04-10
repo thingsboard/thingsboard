@@ -3130,7 +3130,6 @@
     "maximum-scheduler-events": "Maks. antal planlægningsbegivenheder (0 – ubegrænset)",
     "maximum-scheduler-events-required": "Maks. antal planlægningsbegivenheder er påkrævet.",
     "maximum-scheduler-events-range": "Maks. antal planlægningsbegivenheder kan ikke være negativt",
-    "transport-tenant-msg-rate-limit": "Hastighedsgrænse for transport af lejermeddelelser.",
     "transport-tenant-telemetry-msg-rate-limit": "Hastighedsgrænse for transport af lejertelemetrimeddelelser.",
     "transport-tenant-telemetry-data-points-rate-limit": "Hastighedsgrænse for transport af lejertelemetridatapunkter.",
     "transport-device-msg-rate-limit": "Hastighedsgrænse for transport af enhedsmeddelelser.",
