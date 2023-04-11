@@ -18,8 +18,9 @@ package org.thingsboard.rule.engine.metadata;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.EntityDetails;
 
-import java.util.Collections;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -28,7 +29,7 @@ public class TbGetCustomerDetailsNodeConfiguration extends TbAbstractGetEntityDe
     @Override
     public TbGetCustomerDetailsNodeConfiguration defaultConfiguration() {
         var configuration = new TbGetCustomerDetailsNodeConfiguration();
-        configuration.setDetailsList(Collections.emptyList());
+        configuration.setDetailsList(List.of(EntityDetails.STATE, EntityDetails.CITY));
         configuration.setFetchTo(FetchTo.DATA);
         return configuration;
     }

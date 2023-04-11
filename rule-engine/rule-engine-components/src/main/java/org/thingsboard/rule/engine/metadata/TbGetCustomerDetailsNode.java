@@ -92,7 +92,7 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
         if (hasCustomerId == null) {
             return Futures.immediateFuture(null);
         } else {
-            if (hasCustomerId.getCustomerId().isNullUid()) {
+            if (hasCustomerId.getCustomerId() == null || hasCustomerId.getCustomerId().isNullUid()) {
                 if (hasCustomerId instanceof HasName) {
                     var hasName = (HasName) hasCustomerId;
                     throw new RuntimeException(originator.getEntityType().getNormalName() + " with name '" + hasName.getName() + "' is not assigned to Customer.");

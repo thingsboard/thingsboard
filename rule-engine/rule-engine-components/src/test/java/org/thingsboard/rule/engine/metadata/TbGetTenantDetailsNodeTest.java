@@ -27,7 +27,6 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.EntityDetails;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -61,12 +60,25 @@ public class TbGetTenantDetailsNodeTest {
     private TbGetTenantDetailsNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
     private TbMsg msg;
+    private Tenant tenant;
 
     @BeforeEach
     public void setUp() {
         node = new TbGetTenantDetailsNode();
         config = new TbGetTenantDetailsNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        tenant = new Tenant();
+        tenant.setId(new TenantId(UUID.randomUUID()));
+        tenant.setTitle("Tenant title");
+        tenant.setCountry("Tenant country");
+        tenant.setCity("Tenant city");
+        tenant.setState("Tenant state");
+        tenant.setZip("123456");
+        tenant.setAddress("Tenant address 1");
+        tenant.setAddress2("Tenant address 2");
+        tenant.setPhone("+123456789");
+        tenant.setEmail("email@tenant.com");
+        tenant.setAdditionalInfo(JacksonUtil.toJsonNode("{\"someProperty\":\"someValue\",\"description\":\"Tenant description\"}"));
     }
 
     @Test
@@ -84,10 +96,24 @@ public class TbGetTenantDetailsNodeTest {
     }
 
     @Test
-    public void givenDefaultConfig_whenInit_thenOK() throws TbNodeException {
+    public void givenNoEntityDetailsSelected_whenInit_thenException() {
         // GIVEN
+        var expectedExceptionMessage = "No entity details selected!";
+
+        config.setDetailsList(Collections.emptyList());
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
+        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
+
+        // THEN
+        assertThat(exception.getMessage()).isEqualTo(expectedExceptionMessage);
+        verify(ctxMock, never()).tellSuccess(any());
+    }
+
+    @Test
+    public void givenDefaultConfig_whenInit_thenOK() throws TbNodeException {
+        // GIVEN-WHEN
         node.init(ctxMock, nodeConfiguration);
 
         // THEN
@@ -130,11 +156,10 @@ public class TbGetTenantDetailsNodeTest {
 
     @Test
     public void givenEntityThatDoesNotBelongToTheCurrentTenant_whenOnMsg_thenException() {
-        // SETUP
+        // GIVEN
         var expectedExceptionMessage = "Entity with id: '" + DUMMY_DEVICE_ORIGINATOR +
                 "' specified in the configuration doesn't belong to the current tenant.";
 
-        // GIVEN
         doThrow(new RuntimeException(expectedExceptionMessage)).when(ctxMock).checkTenantEntity(DUMMY_DEVICE_ORIGINATOR);
         msg = TbMsg.newMsg("SOME_MESSAGE_TYPE", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "{}");
 
@@ -149,43 +174,9 @@ public class TbGetTenantDetailsNodeTest {
     @Test
     public void givenAllEntityDetailsAndFetchToData_whenOnMsg_thenShouldTellSuccessAndFetchAllToData() {
         // GIVEN
-        var tenant = new Tenant();
-        tenant.setId(new TenantId(UUID.randomUUID()));
-        tenant.setTitle("Tenant title");
-        tenant.setCountry("Tenant country");
-        tenant.setCity("Tenant city");
-        tenant.setState("Tenant state");
-        tenant.setZip("123456");
-        tenant.setAddress("Tenant address 1");
-        tenant.setAddress2("Tenant address 2");
-        tenant.setPhone("+123456789");
-        tenant.setEmail("email@tenant.com");
-        tenant.setAdditionalInfo(JacksonUtil.toJsonNode("{\"someProperty\":\"someValue\",\"description\":\"Tenant description\"}"));
+        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.values()));
 
-        var device = new Device();
-        device.setId(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenant.getId());
-        device.setName("Test device");
-        device.setType("Test device type");
-
-        config.setDetailsList(List.of(EntityDetails.values()));
-        config.setFetchTo(FetchTo.DATA);
-
-        node.config = config;
-        node.fetchTo = FetchTo.DATA;
-
-        var msgMetaData = new TbMsgMetaData();
-        msgMetaData.putValue("metaKey1", "metaValue1");
-        msgMetaData.putValue("metaKey2", "metaValue2");
-
-        var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
-
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", device.getId(), msgMetaData, msgData);
-
-        when(ctxMock.getTenantId()).thenReturn(tenant.getId());
-
-        when(ctxMock.getTenantService()).thenReturn(tenantServiceMock);
-        when(tenantServiceMock.findTenantByIdAsync(eq(tenant.getId()), eq(tenant.getId()))).thenReturn(Futures.immediateFuture(tenant));
+        mockFindTenant();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -210,49 +201,15 @@ public class TbGetTenantDetailsNodeTest {
                 "\"tenant_additionalInfo\":\"" + tenant.getAdditionalInfo().get("description").asText() + "\"}";
 
         assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(expectedMsgData);
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msgMetaData);
+        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
     }
 
     @Test
     public void givenSomeEntityDetailsAndFetchToMetadata_whenOnMsg_thenShouldTellSuccessAndFetchSomeToMetaData() {
         // GIVEN
-        var tenant = new Tenant();
-        tenant.setId(new TenantId(UUID.randomUUID()));
-        tenant.setTitle("Tenant title");
-        tenant.setCountry("Tenant country");
-        tenant.setCity("Tenant city");
-        tenant.setState("Tenant state");
-        tenant.setZip("123456");
-        tenant.setAddress("Tenant address 1");
-        tenant.setAddress2("Tenant address 2");
-        tenant.setPhone("+123456789");
-        tenant.setEmail("email@tenant.com");
-        tenant.setAdditionalInfo(JacksonUtil.toJsonNode("{\"someProperty\":\"someValue\",\"description\":\"Tenant description\"}"));
+        prepareMsgAndConfig(FetchTo.METADATA, List.of(EntityDetails.ID, EntityDetails.TITLE, EntityDetails.PHONE));
 
-        var device = new Device();
-        device.setId(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenant.getId());
-        device.setName("Test device");
-        device.setType("Test device type");
-
-        config.setDetailsList(List.of(EntityDetails.ID, EntityDetails.TITLE, EntityDetails.PHONE));
-        config.setFetchTo(FetchTo.METADATA);
-
-        node.config = config;
-        node.fetchTo = FetchTo.METADATA;
-
-        var msgMetaData = new TbMsgMetaData();
-        msgMetaData.putValue("metaKey1", "metaValue1");
-        msgMetaData.putValue("metaKey2", "metaValue2");
-
-        var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
-
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", device.getId(), msgMetaData, msgData);
-
-        when(ctxMock.getTenantId()).thenReturn(tenant.getId());
-
-        when(ctxMock.getTenantService()).thenReturn(tenantServiceMock);
-        when(tenantServiceMock.findTenantByIdAsync(eq(tenant.getId()), eq(tenant.getId()))).thenReturn(Futures.immediateFuture(tenant));
+        mockFindTenant();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -263,55 +220,21 @@ public class TbGetTenantDetailsNodeTest {
         verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
         verify(ctxMock, never()).tellFailure(any(), any());
 
-        var expectedMsgMetaData = new TbMsgMetaData(msgMetaData.getData());
+        var expectedMsgMetaData = new TbMsgMetaData(msg.getMetaData().getData());
         expectedMsgMetaData.putValue("tenant_id", tenant.getId().getId().toString());
         expectedMsgMetaData.putValue("tenant_title", tenant.getTitle());
         expectedMsgMetaData.putValue("tenant_phone", tenant.getPhone());
 
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msgData);
+        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
         assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(expectedMsgMetaData);
     }
 
     @Test
     public void givenNoEntityDetailsAndFetchToMetadata_whenOnMsg_thenShouldTellSuccessAndFetchNothingToMetaData() {
         // GIVEN
-        var tenant = new Tenant();
-        tenant.setId(new TenantId(UUID.randomUUID()));
-        tenant.setTitle("Tenant title");
-        tenant.setCountry("Tenant country");
-        tenant.setCity("Tenant city");
-        tenant.setState("Tenant state");
-        tenant.setZip("123456");
-        tenant.setAddress("Tenant address 1");
-        tenant.setAddress2("Tenant address 2");
-        tenant.setPhone("+123456789");
-        tenant.setEmail("email@tenant.com");
-        tenant.setAdditionalInfo(JacksonUtil.toJsonNode("{\"someProperty\":\"someValue\",\"description\":\"Tenant description\"}"));
+        prepareMsgAndConfig(FetchTo.METADATA, Collections.emptyList());
 
-        var device = new Device();
-        device.setId(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenant.getId());
-        device.setName("Test device");
-        device.setType("Test device type");
-
-        config.setDetailsList(Collections.emptyList());
-        config.setFetchTo(FetchTo.METADATA);
-
-        node.config = config;
-        node.fetchTo = FetchTo.METADATA;
-
-        var msgMetaData = new TbMsgMetaData();
-        msgMetaData.putValue("metaKey1", "metaValue1");
-        msgMetaData.putValue("metaKey2", "metaValue2");
-
-        var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
-
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", device.getId(), msgMetaData, msgData);
-
-        when(ctxMock.getTenantId()).thenReturn(tenant.getId());
-
-        when(ctxMock.getTenantService()).thenReturn(tenantServiceMock);
-        when(tenantServiceMock.findTenantByIdAsync(eq(tenant.getId()), eq(tenant.getId()))).thenReturn(Futures.immediateFuture(tenant));
+        mockFindTenant();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -322,47 +245,20 @@ public class TbGetTenantDetailsNodeTest {
         verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
         verify(ctxMock, never()).tellFailure(any(), any());
 
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msgData);
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msgMetaData);
+        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
+        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
     }
 
     @Test
     public void givenNotPresentEntityDetailsAndFetchToData_whenOnMsg_thenShouldTellSuccessAndFetchNothingToData() {
         // GIVEN
-        var tenant = new Tenant();
-        tenant.setId(new TenantId(UUID.randomUUID()));
-        tenant.setTitle("Tenant title");
-        tenant.setCountry("Tenant country");
-        tenant.setCity("Tenant city");
-        tenant.setState("Tenant state");
-        tenant.setPhone("+123456789");
-        tenant.setEmail("email@tenant.com");
-        tenant.setAdditionalInfo(JacksonUtil.toJsonNode("{\"someProperty\":\"someValue\",\"description\":\"Tenant description\"}"));
+        tenant.setZip(null);
+        tenant.setAddress(null);
+        tenant.setAddress2(null);
 
-        var device = new Device();
-        device.setId(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenant.getId());
-        device.setName("Test device");
-        device.setType("Test device type");
+        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2));
 
-        config.setDetailsList(List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2));
-        config.setFetchTo(FetchTo.DATA);
-
-        node.config = config;
-        node.fetchTo = FetchTo.DATA;
-
-        var msgMetaData = new TbMsgMetaData();
-        msgMetaData.putValue("metaKey1", "metaValue1");
-        msgMetaData.putValue("metaKey2", "metaValue2");
-
-        var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
-
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", device.getId(), msgMetaData, msgData);
-
-        when(ctxMock.getTenantId()).thenReturn(tenant.getId());
-
-        when(ctxMock.getTenantService()).thenReturn(tenantServiceMock);
-        when(tenantServiceMock.findTenantByIdAsync(eq(tenant.getId()), eq(tenant.getId()))).thenReturn(Futures.immediateFuture(tenant));
+        mockFindTenant();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -373,45 +269,16 @@ public class TbGetTenantDetailsNodeTest {
         verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
         verify(ctxMock, never()).tellFailure(any(), any());
 
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msgData);
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msgMetaData);
+        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
+        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
     }
 
     @Test
     public void givenDidNotFindTenant_whenOnMsg_thenShouldTellSuccessAndFetchNothingToData() {
         // GIVEN
-        var tenant = new Tenant();
-        tenant.setId(new TenantId(UUID.randomUUID()));
-        tenant.setTitle("Tenant title");
-        tenant.setCountry("Tenant country");
-        tenant.setCity("Tenant city");
-        tenant.setState("Tenant state");
-        tenant.setPhone("+123456789");
-        tenant.setEmail("email@tenant.com");
-        tenant.setAdditionalInfo(JacksonUtil.toJsonNode("{\"someProperty\":\"someValue\",\"description\":\"Tenant description\"}"));
-
-        var device = new Device();
-        device.setId(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenant.getId());
-        device.setName("Test device");
-        device.setType("Test device type");
-
-        config.setDetailsList(List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2));
-        config.setFetchTo(FetchTo.DATA);
-
-        node.config = config;
-        node.fetchTo = FetchTo.DATA;
-
-        var msgMetaData = new TbMsgMetaData();
-        msgMetaData.putValue("metaKey1", "metaValue1");
-        msgMetaData.putValue("metaKey2", "metaValue2");
-
-        var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
-
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", device.getId(), msgMetaData, msgData);
+        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2));
 
         when(ctxMock.getTenantId()).thenReturn(tenant.getId());
-
         when(ctxMock.getTenantService()).thenReturn(tenantServiceMock);
         when(tenantServiceMock.findTenantByIdAsync(eq(tenant.getId()), eq(tenant.getId()))).thenReturn(Futures.immediateFuture(null));
 
@@ -424,47 +291,18 @@ public class TbGetTenantDetailsNodeTest {
         verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
         verify(ctxMock, never()).tellFailure(any(), any());
 
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msgData);
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msgMetaData);
+        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
+        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
     }
 
     @Test
-    public void givenNullDescription_whenOnMsg_thenShouldTellSuccessAndFetchNothingToData() {
+    public void givenNullDescriptionAndAddInfoEntityDetails_whenOnMsg_thenShouldTellSuccessAndFetchNothingToData() {
         // GIVEN
-        var tenant = new Tenant();
-        tenant.setId(new TenantId(UUID.randomUUID()));
-        tenant.setTitle("Tenant title");
-        tenant.setCountry("Tenant country");
-        tenant.setCity("Tenant city");
-        tenant.setState("Tenant state");
-        tenant.setPhone("+123456789");
-        tenant.setEmail("email@tenant.com");
         tenant.setAdditionalInfo(JacksonUtil.toJsonNode("{\"someProperty\":\"someValue\",\"description\":null}"));
 
-        var device = new Device();
-        device.setId(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenant.getId());
-        device.setName("Test device");
-        device.setType("Test device type");
+        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ADDITIONAL_INFO));
 
-        config.setDetailsList(List.of(EntityDetails.ADDITIONAL_INFO));
-        config.setFetchTo(FetchTo.DATA);
-
-        node.config = config;
-        node.fetchTo = FetchTo.DATA;
-
-        var msgMetaData = new TbMsgMetaData();
-        msgMetaData.putValue("metaKey1", "metaValue1");
-        msgMetaData.putValue("metaKey2", "metaValue2");
-
-        var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
-
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", device.getId(), msgMetaData, msgData);
-
-        when(ctxMock.getTenantId()).thenReturn(tenant.getId());
-
-        when(ctxMock.getTenantService()).thenReturn(tenantServiceMock);
-        when(tenantServiceMock.findTenantByIdAsync(eq(tenant.getId()), eq(tenant.getId()))).thenReturn(Futures.immediateFuture(tenant));
+        mockFindTenant();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -475,8 +313,30 @@ public class TbGetTenantDetailsNodeTest {
         verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
         verify(ctxMock, never()).tellFailure(any(), any());
 
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msgData);
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msgMetaData);
+        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
+        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
+    }
+
+    private void prepareMsgAndConfig(FetchTo fetchTo, List<EntityDetails> detailsList) {
+        config.setDetailsList(detailsList);
+        config.setFetchTo(fetchTo);
+
+        node.config = config;
+        node.fetchTo = fetchTo;
+
+        var msgMetaData = new TbMsgMetaData();
+        msgMetaData.putValue("metaKey1", "metaValue1");
+        msgMetaData.putValue("metaKey2", "metaValue2");
+
+        var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
+
+        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+    }
+
+    private void mockFindTenant() {
+        when(ctxMock.getTenantId()).thenReturn(tenant.getId());
+        when(ctxMock.getTenantService()).thenReturn(tenantServiceMock);
+        when(tenantServiceMock.findTenantByIdAsync(eq(tenant.getId()), eq(tenant.getId()))).thenReturn(Futures.immediateFuture(tenant));
     }
 
 }
