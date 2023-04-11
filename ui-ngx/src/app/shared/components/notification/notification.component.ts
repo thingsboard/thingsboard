@@ -26,7 +26,7 @@ import {
 import { UtilsService } from '@core/services/utils.service';
 import { Router } from '@angular/router';
 import { alarmSeverityTranslations } from '@shared/models/alarm.models';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { StateObject } from '@core/api/widget-api.models';
 import { objToBase64URI } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coerce-boolean';
@@ -55,8 +55,6 @@ export class NotificationComponent implements OnInit {
   showButton = false;
   buttonLabel = '';
   hideMarkAsReadButton = false;
-
-  tinycolor = tinycolor_;
 
   notificationType = NotificationType;
   notificationTypeIcons = NotificationTypeIcons;
@@ -129,7 +127,7 @@ export class NotificationComponent implements OnInit {
   }
 
   alarmColorSeverity(alpha: number) {
-    return this.tinycolor(AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
+    return tinycolor(AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
   }
 
   notificationColor(): string {
