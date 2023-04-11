@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -82,6 +83,9 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     @Autowired
     private DataValidator<Asset> assetValidator;
+
+    @Autowired
+    private EntityCountService countService;
 
     @TransactionalEventListener(classes = AssetCacheEvictEvent.class)
     @Override
@@ -151,6 +155,9 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             asset.setType(assetProfile.getName());
             savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
+            if (asset.getId() == null) {
+                countService.publishCountEntityEvictEvent(savedAsset.getTenantId(), EntityType.ASSET);
+            }
         } catch (Exception t) {
             handleEvictEvent(evictEvent);
             checkConstraintViolation(t,
@@ -189,6 +196,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         }
 
         publishEvictEvent(new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), null));
+        countService.publishCountEntityEvictEvent(tenantId, EntityType.ASSET);
 
         assetDao.removeById(tenantId, assetId.getId());
     }
@@ -435,6 +443,11 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findAssetById(tenantId, new AssetId(entityId.getId())));
+    }
+
+    @Override
+    public long countByTenantId(TenantId tenantId) {
+        return assetDao.countByTenantId(tenantId);
     }
 
     @Override

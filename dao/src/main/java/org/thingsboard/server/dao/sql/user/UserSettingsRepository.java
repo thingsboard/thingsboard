@@ -16,10 +16,11 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 import org.thingsboard.server.dao.model.sql.UserSettingsEntity;
 
 import java.util.UUID;
 
-public interface UserSettingsRepository extends JpaRepository<UserSettingsEntity, UUID> {
+public interface UserSettingsRepository extends JpaRepository<UserSettingsEntity, UserSettingsCompositeKey> {
 
 }

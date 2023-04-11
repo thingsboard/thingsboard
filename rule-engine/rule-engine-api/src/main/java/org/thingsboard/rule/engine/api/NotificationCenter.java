@@ -21,12 +21,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 public interface NotificationCenter {
 
-    NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest);
+    NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest, Consumer<NotificationRequestStats> callback);
 
     void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
 

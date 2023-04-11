@@ -423,6 +423,7 @@ public final class EdgeGrpcSession implements Closeable {
                     stopCurrentSendDownlinkMsgsTask(null);
                 }
             } catch (Exception e) {
+                log.warn("[{}] Failed to send downlink msgs. Error msg {}", this.sessionId, e.getMessage(), e);
                 stopCurrentSendDownlinkMsgsTask(e);
             }
         };
@@ -681,7 +682,7 @@ public final class EdgeGrpcSession implements Closeable {
     public void stopCurrentSendDownlinkMsgsTask(Exception e) {
         if (sessionState.getSendDownlinkMsgsFuture() != null && !sessionState.getSendDownlinkMsgsFuture().isDone()) {
             if (e != null) {
-                log.warn(e.getMessage(), e);
+                log.debug(e.getMessage());
                 sessionState.getSendDownlinkMsgsFuture().setException(e);
             } else {
                 sessionState.getSendDownlinkMsgsFuture().set(null);

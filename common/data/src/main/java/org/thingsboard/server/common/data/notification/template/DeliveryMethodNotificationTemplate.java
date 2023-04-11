@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
-import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -54,5 +53,9 @@ public abstract class DeliveryMethodNotificationTemplate {
 
     @JsonIgnore
     public abstract DeliveryMethodNotificationTemplate copy();
+
+    public boolean containsAny(String... params) {
+        return StringUtils.containsAny(body, params);
+    }
 
 }

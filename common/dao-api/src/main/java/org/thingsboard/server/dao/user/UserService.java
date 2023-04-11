@@ -77,6 +77,8 @@ public interface UserService extends EntityDaoService {
 
     PageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
+    PageData<User> findUsersByCustomerIds(TenantId tenantId, List<CustomerId> customerIds, PageLink pageLink);
+
     void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
 
     void setUserCredentialsEnabled(TenantId tenantId, UserId userId, boolean enabled);

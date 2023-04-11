@@ -93,9 +93,12 @@ export class NotificationService {
     return this.http.post<NotificationSettings>('/api/notification/settings', notificationSettings, defaultHttpOptionsFromConfig(config));
   }
 
-  public listSlackConversations(type: SlackChanelType, config?: RequestConfig): Observable<Array<SlackConversation>> {
-    return this.http.get<Array<SlackConversation>>(`/api/notification/slack/conversations?type=${type}`,
-      defaultHttpOptionsFromConfig(config));
+  public listSlackConversations(type: SlackChanelType, token?: string, config?: RequestConfig): Observable<Array<SlackConversation>> {
+    let url = `/api/notification/slack/conversations?type=${type}`;
+    if (isNotEmptyStr(token)) {
+      url += `&token=${token}`;
+    }
+    return this.http.get<Array<SlackConversation>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public saveNotificationRule(notificationRule: NotificationRule, config?: RequestConfig): Observable<NotificationRule> {
