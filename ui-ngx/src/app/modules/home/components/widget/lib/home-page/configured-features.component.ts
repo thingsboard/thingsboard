@@ -25,6 +25,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { of, Subscription } from 'rxjs';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { TranslateService } from '@ngx-translate/core';
+import { MediaBreakpoints } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-configured-features',
@@ -35,7 +36,7 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
 
   authUser = getCurrentAuthUser(this.store);
   featuresInfo: FeaturesInfo;
-  rowHeight = '48.5px';
+  rowHeight = '50px';
   gutterSize = '12px';
 
   private observeBreakpointSubscription: Subscription;
@@ -49,17 +50,17 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
   }
 
   ngOnInit() {
-    const isMdLg = this.breakpointObserver.isMatched('screen and (min-width: 960px) and (max-width: 1819px)');
-    this.rowHeight = isMdLg ? '21.5px' : '48.5px';
+    const isMdLg = this.breakpointObserver.isMatched(MediaBreakpoints['md-lg']);
+    this.rowHeight = isMdLg ? '22px' : '50px';
     this.gutterSize = isMdLg ? '8px' : '12px';
     this.observeBreakpointSubscription = this.breakpointObserver
-      .observe('screen and (min-width: 960px) and (max-width: 1819px)')
+      .observe(MediaBreakpoints['md-lg'])
       .subscribe((state: BreakpointState) => {
           if (state.matches) {
-            this.rowHeight = '21.5px';
+            this.rowHeight = '22px';
             this.gutterSize = '8px';
           } else {
-            this.rowHeight = '48.5px';
+            this.rowHeight = '50px';
             this.gutterSize = '12px';
           }
           this.cd.markForCheck();

@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import "../../../../../../../scss/constants";
+
 :host {
   .tb-card-content {
     width: 100%;
@@ -25,7 +28,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       margin-bottom: 4px;
     }
   }
@@ -37,14 +40,14 @@
     line-height: 20px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.54);
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       font-size: 12px;
       line-height: 16px;
     }
   }
 
   .tb-contact-us {
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       height: 24px;
       font-size: 12px;
     }
@@ -58,7 +61,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       padding: 4px;
     }
     &.up-to-date {
@@ -71,7 +74,7 @@
 
   .tb-version-info-container+.tb-version-info-container {
     margin-top: 12px;
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       margin-top: 4px;
     }
   }
@@ -84,7 +87,7 @@
     color: rgba(0, 0, 0, 0.76);
     position: relative;
     border-bottom: none;
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       font-size: 11px;
       line-height: 16px;
     }
@@ -114,14 +117,14 @@
     line-height: 24px;
     letter-spacing: 0.15px;
     color: rgba(0, 0, 0, 0.87);
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       font-size: 12px;
       line-height: 14px;
     }
   }
 
   .tb-upgrade {
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       height: 24px;
       font-size: 12px;
       padding: 0;
@@ -131,7 +134,7 @@
   .check-icon {
     color: #198038;
     font-weight: 600;
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       font-size: 20px;
     }
   }
@@ -142,7 +145,7 @@
     line-height: 20px;
     letter-spacing: 0.2px;
     color: rgba(0, 0, 0, 0.76);
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       font-size: 11px;
       line-height: 16px;
     }

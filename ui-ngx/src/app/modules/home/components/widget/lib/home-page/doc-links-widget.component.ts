@@ -128,11 +128,11 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
   ngOnInit() {
     this.settings = this.ctx.settings;
     this.columns = this.settings.columns || 3;
-    const isMdLg = this.breakpointObserver.isMatched('screen and (min-width: 960px) and (max-width: 1819px)');
+    const isMdLg = this.breakpointObserver.isMatched(MediaBreakpoints['md-lg']);
     this.rowHeight = isMdLg ? '18px' : '55px';
     this.gutterSize = isMdLg ? '8px' : '12px';
     this.observeBreakpointSubscription = this.breakpointObserver
-      .observe('screen and (min-width: 960px) and (max-width: 1819px)')
+      .observe(MediaBreakpoints['md-lg'])
       .subscribe((state: BreakpointState) => {
           if (state.matches) {
             this.rowHeight = '18px';

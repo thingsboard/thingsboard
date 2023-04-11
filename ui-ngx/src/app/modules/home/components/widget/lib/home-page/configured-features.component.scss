@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import "../../../../../../../scss/constants";
+
 :host {
   .tb-card-content {
     width: 100%;
@@ -27,7 +30,7 @@
     line-height: 20px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.54);
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
+    @media #{$mat-md-lg} {
       font-size: 12px;
       line-height: 16px;
     }
@@ -51,7 +54,7 @@
   }
 
   .tb-feature-button {
-    height: 48.5px;
+    height: 50px;
     display: flex;
     overflow: hidden;
     flex-direction: column;
@@ -61,8 +64,8 @@
     border: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
     border-radius: 10px;
-    @media screen and (min-width: 960px) and (max-width: 1819px) {
-      height: 21.5px;
+    @media #{$mat-md-lg} {
+      height: 22px;
       padding: 0 8px;
     }
     &:hover {
@@ -77,12 +80,11 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      @media screen and (min-width: 960px) and (max-width: 1819px) {
+      @media #{$mat-md-lg} {
         font-size: 11px;
         line-height: 16px;
       }
-      &:before {
-        content: "close";
+      .tb-feature-status {
         display: inline-block;
         font-family: 'Material Icons Round';
         font-size: 20px;
@@ -92,27 +94,24 @@
         position: relative;
         background: #F4F4F4;
         border-radius: 4px;
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         padding: 2px;
         margin-right: 8px;
         vertical-align: middle;
-        @media screen and (min-width: 960px) and (max-width: 1819px) {
+        @media #{$mat-md-lg} {
           font-size: 14px;
           line-height: 14px;
-          width: 14px;
-          height: 14px;
+          width: 18px;
+          height: 18px;
           margin-right: 4px;
         }
       }
     }
     &.configured {
-      .tb-feature-text {
-        &:before {
-          content: "check";
-          color: #198038;
-          background: #F3F6FA;
-        }
+      .tb-feature-status {
+        color: #198038;
+        background: #F3F6FA;
       }
     }
   }
