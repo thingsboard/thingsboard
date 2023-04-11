@@ -38,10 +38,7 @@ public class AssetTypeFilter implements EntityFilter {
     private List<String> assetTypes;
 
     public List<String> getAssetTypes() {
-        if (assetType != null) {
-            assetTypes = Collections.singletonList(assetType);
-        }
-        return assetTypes;
+        return !CollectionUtils.isEmpty(assetTypes) ? assetTypes : Collections.singletonList(assetType);
     }
 
     @Getter

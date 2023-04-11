@@ -38,10 +38,7 @@ public class EdgeTypeFilter implements EntityFilter {
     private List<String> edgeTypes;
 
     public List<String> getEdgeTypes() {
-        if (edgeType != null) {
-            edgeTypes = Collections.singletonList(edgeType);
-        }
-        return edgeTypes;
+        return !CollectionUtils.isEmpty(edgeTypes) ? edgeTypes : Collections.singletonList(edgeType);
     }
 
     @Getter

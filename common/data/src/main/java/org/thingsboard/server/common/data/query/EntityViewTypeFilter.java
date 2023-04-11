@@ -38,10 +38,7 @@ public class EntityViewTypeFilter implements EntityFilter {
     private List<String> entityViewTypes;
 
     public List<String> getEntityViewTypes() {
-        if (entityViewType != null) {
-            entityViewTypes = Collections.singletonList(entityViewType);
-        }
-        return entityViewTypes;
+        return !CollectionUtils.isEmpty(entityViewTypes) ? entityViewTypes : Collections.singletonList(entityViewType);
     }
 
     @Getter
