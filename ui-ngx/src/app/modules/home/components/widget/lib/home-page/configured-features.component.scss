@@ -84,28 +84,28 @@
         font-size: 11px;
         line-height: 16px;
       }
-      .tb-feature-status {
-        display: inline-block;
-        font-family: 'Material Icons Round';
-        font-size: 20px;
-        line-height: 20px;
-        color: rgba(0, 0, 0, 0.12);
-        font-weight: 600;
-        position: relative;
-        background: #F4F4F4;
-        border-radius: 4px;
-        width: 24px;
-        height: 24px;
-        padding: 2px;
-        margin-right: 8px;
-        vertical-align: middle;
-        @media #{$mat-md-lg} {
-          font-size: 14px;
-          line-height: 14px;
-          width: 18px;
-          height: 18px;
-          margin-right: 4px;
-        }
+    }
+    .tb-feature-status {
+      display: inline-block;
+      font-family: 'Material Icons Round';
+      font-size: 20px;
+      line-height: 20px;
+      color: rgba(0, 0, 0, 0.12);
+      font-weight: 600;
+      position: relative;
+      background: #F4F4F4;
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
+      padding: 2px;
+      margin-right: 8px;
+      vertical-align: middle;
+      @media #{$mat-md-lg} {
+        font-size: 14px;
+        line-height: 14px;
+        width: 18px;
+        height: 18px;
+        margin-right: 4px;
       }
     }
     &.configured {
