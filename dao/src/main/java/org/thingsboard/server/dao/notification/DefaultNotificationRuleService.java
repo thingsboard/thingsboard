@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.notification;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -28,43 +27,35 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityDaoService;
-import org.thingsboard.server.dao.notification.cache.NotificationRuleCacheKey;
-import org.thingsboard.server.dao.notification.cache.NotificationRuleCacheValue;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultNotificationRuleService extends AbstractCachedEntityService<NotificationRuleCacheKey, NotificationRuleCacheValue, NotificationRule> implements NotificationRuleService, EntityDaoService {
+public class DefaultNotificationRuleService extends AbstractEntityService implements NotificationRuleService, EntityDaoService {
 
     private final NotificationRuleDao notificationRuleDao;
 
     @Override
     public NotificationRule saveNotificationRule(TenantId tenantId, NotificationRule notificationRule) {
-        boolean created = notificationRule.getId() == null;
-        if (!created) {
+        if (notificationRule.getId() != null) {
             NotificationRule oldNotificationRule = findNotificationRuleById(tenantId, notificationRule.getId());
             if (notificationRule.getTriggerType() != oldNotificationRule.getTriggerType()) {
                 throw new IllegalArgumentException("Notification rule trigger type cannot be updated");
             }
         }
         try {
-            notificationRule = notificationRuleDao.saveAndFlush(tenantId, notificationRule);
-            publishEvictEvent(notificationRule);
+            return notificationRuleDao.saveAndFlush(tenantId, notificationRule);
         } catch (Exception e) {
-            handleEvictEvent(notificationRule);
             checkConstraintViolation(e, Map.of(
                     "uq_notification_rule_name", "Notification rule with such name already exists"
             ));
             throw e;
         }
-        return notificationRule;
     }
 
     @Override
@@ -89,44 +80,17 @@ public class DefaultNotificationRuleService extends AbstractCachedEntityService<
 
     @Override
     public List<NotificationRule> findNotificationRulesByTenantIdAndTriggerType(TenantId tenantId, NotificationRuleTriggerType triggerType) {
-        NotificationRuleCacheKey cacheKey = NotificationRuleCacheKey.builder()
-                .tenantId(tenantId)
-                .triggerType(triggerType)
-                .build();
-        return cache.getAndPutInTransaction(cacheKey, () -> NotificationRuleCacheValue.builder()
-                        .notificationRules(notificationRuleDao.findByTenantIdAndTriggerType(tenantId, triggerType))
-                        .build(), false)
-                .getNotificationRules();
+        return notificationRuleDao.findByTenantIdAndTriggerType(tenantId, triggerType);
     }
 
-    @Transactional
     @Override
     public void deleteNotificationRuleById(TenantId tenantId, NotificationRuleId id) {
-        NotificationRule notificationRule = findNotificationRuleById(tenantId, id);
-        publishEvictEvent(notificationRule);
         notificationRuleDao.removeById(tenantId, id.getId());
     }
 
     @Override
     public void deleteNotificationRulesByTenantId(TenantId tenantId) {
         notificationRuleDao.removeByTenantId(tenantId);
-
-        List<NotificationRuleCacheKey> cacheKeys = Arrays.stream(NotificationRuleTriggerType.values())
-                .map(triggerType -> NotificationRuleCacheKey.builder()
-                        .tenantId(tenantId)
-                        .triggerType(triggerType)
-                        .build())
-                .collect(Collectors.toList());
-        cache.evict(cacheKeys);
-    }
-
-    @Override
-    public void handleEvictEvent(NotificationRule notificationRule) {
-        NotificationRuleCacheKey cacheKey = NotificationRuleCacheKey.builder()
-                .tenantId(notificationRule.getTenantId())
-                .triggerType(notificationRule.getTriggerType())
-                .build();
-        cache.evict(cacheKey);
     }
 
     @Override

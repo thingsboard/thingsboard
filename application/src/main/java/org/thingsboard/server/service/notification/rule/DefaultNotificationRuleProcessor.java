@@ -35,12 +35,14 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
-import org.thingsboard.server.dao.notification.NotificationRuleService;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.service.notification.rule.cache.NotificationRulesCache;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.rule.trigger.NotificationRuleTriggerProcessor;
 import org.thingsboard.server.service.notification.rule.trigger.RuleEngineMsgNotificationRuleTriggerProcessor;
@@ -60,8 +62,9 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class DefaultNotificationRuleProcessor implements NotificationRuleProcessor {
 
-    private final NotificationRuleService notificationRuleService;
+    private final NotificationRulesCache notificationRulesCache;
     private final NotificationRequestService notificationRequestService;
+    private final PartitionService partitionService;
     @Autowired @Lazy
     private NotificationCenter notificationCenter;
     private final NotificationExecutorService notificationExecutor;
@@ -74,15 +77,19 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
         if (triggerType == null) return;
         TenantId tenantId = triggerType.isTenantLevel() ? trigger.getTenantId() : TenantId.SYS_TENANT_ID;
 
-        List<NotificationRule> rules = notificationRuleService.findNotificationRulesByTenantIdAndTriggerType(tenantId, triggerType);
-        for (NotificationRule rule : rules) {
-            notificationExecutor.submit(() -> {
-                try {
-                    processNotificationRule(rule, trigger);
-                } catch (Throwable e) {
-                    log.error("Failed to process notification rule {} for trigger type {} with trigger object {}", rule.getId(), rule.getTriggerType(), trigger, e);
-                }
-            });
+        try {
+            List<NotificationRule> rules = notificationRulesCache.get(tenantId, triggerType);
+            for (NotificationRule rule : rules) {
+                notificationExecutor.submit(() -> {
+                    try {
+                        processNotificationRule(rule, trigger);
+                    } catch (Throwable e) {
+                        log.error("Failed to process notification rule {} for trigger type {} with trigger object {}", rule.getId(), rule.getTriggerType(), trigger, e);
+                    }
+                });
+            }
+        } catch (Throwable e) {
+            log.error("Failed to process notification rules for trigger: {}", trigger, e);
         }
     }
 
@@ -169,12 +176,14 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
 
         TenantId tenantId = componentLifecycleMsg.getTenantId();
         NotificationRuleId notificationRuleId = (NotificationRuleId) componentLifecycleMsg.getEntityId();
-        notificationExecutor.submit(() -> {
-            List<NotificationRequestId> scheduledForRule = notificationRequestService.findNotificationRequestsIdsByStatusAndRuleId(tenantId, NotificationRequestStatus.SCHEDULED, notificationRuleId);
-            for (NotificationRequestId notificationRequestId : scheduledForRule) {
-                notificationCenter.deleteNotificationRequest(tenantId, notificationRequestId);
-            }
-        });
+        if (partitionService.isMyPartition(ServiceType.TB_CORE, tenantId, notificationRuleId)) {
+            notificationExecutor.submit(() -> {
+                List<NotificationRequestId> scheduledForRule = notificationRequestService.findNotificationRequestsIdsByStatusAndRuleId(tenantId, NotificationRequestStatus.SCHEDULED, notificationRuleId);
+                for (NotificationRequestId notificationRequestId : scheduledForRule) {
+                    notificationCenter.deleteNotificationRequest(tenantId, notificationRequestId);
+                }
+            });
+        }
     }
 
     @Autowired

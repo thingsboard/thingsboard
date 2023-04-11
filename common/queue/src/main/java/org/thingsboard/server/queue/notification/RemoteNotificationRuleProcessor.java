@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.notification;
 
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
@@ -25,6 +26,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
@@ -32,24 +34,33 @@ import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import java.util.UUID;
 
 @Service
-@ConditionalOnMissingBean(NotificationRuleProcessor.class)
+@ConditionalOnMissingBean(value = NotificationRuleProcessor.class, ignored = RemoteNotificationRuleProcessor.class)
 @RequiredArgsConstructor
+@Slf4j
 public class RemoteNotificationRuleProcessor implements NotificationRuleProcessor {
 
     private final TbQueueProducerProvider producerProvider;
+    private final NotificationsTopicService notificationsTopicService;
     private final PartitionService partitionService;
     private final DataDecodingEncodingService encodingService;
 
     @Override
     public void process(NotificationRuleTrigger trigger) {
-        TransportProtos.NotificationRuleProcessorMsg.Builder msg = TransportProtos.NotificationRuleProcessorMsg.newBuilder()
-                .setTrigger(ByteString.copyFrom(encodingService.encode(trigger)));
+        try {
+            log.trace("Submitting notification rule trigger: {}", trigger);
+            TransportProtos.NotificationRuleProcessorMsg.Builder msg = TransportProtos.NotificationRuleProcessorMsg.newBuilder()
+                    .setTrigger(ByteString.copyFrom(encodingService.encode(trigger)));
 
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, trigger.getTenantId(), trigger.getOriginatorEntityId());
-        producerProvider.getTbCoreMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(),
-                TransportProtos.ToCoreMsg.newBuilder()
-                        .setNotificationRuleProcessorMsg(msg)
-                        .build()), null);
+            partitionService.getAllServiceIds(ServiceType.TB_CORE).stream().findAny().ifPresent(serviceId -> {
+                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+                producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(),
+                        TransportProtos.ToCoreNotificationMsg.newBuilder()
+                                .setNotificationRuleProcessorMsg(msg)
+                                .build()), null);
+            });
+        } catch (Exception e) {
+            log.error("Failed to submit notification rule trigger: {}", trigger, e);
+        }
     }
 
 }
