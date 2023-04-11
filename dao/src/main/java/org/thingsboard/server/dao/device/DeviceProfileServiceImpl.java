@@ -103,8 +103,8 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         if (StringUtils.isNotEmpty(event.getOldName()) && !event.getOldName().equals(event.getNewName())) {
             keys.add(DeviceProfileCacheKey.fromName(event.getTenantId(), event.getOldName()));
         }
-        if (StringUtils.isNotEmpty(event.getNewProvisionDeviceKey())) {
-            keys.add(DeviceProfileCacheKey.fromProvisionDeviceKey(event.getNewProvisionDeviceKey()));
+        if (StringUtils.isNotEmpty(event.getProvisionDeviceKey())) {
+            keys.add(DeviceProfileCacheKey.fromProvisionDeviceKey(event.getProvisionDeviceKey()));
         }
         cache.evict(keys);
     }
@@ -155,11 +155,11 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
             publishEvictEvent(new DeviceProfileEvictEvent(savedDeviceProfile.getTenantId(), savedDeviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault(),
-                    savedDeviceProfile.getProvisionDeviceKey()));
+                    oldDeviceProfile != null ? oldDeviceProfile.getProvisionDeviceKey() : null));
         } catch (Exception t) {
             handleEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, null, deviceProfile.isDefault(),
-                    deviceProfile.getProvisionDeviceKey()));
+                    oldDeviceProfile != null ? oldDeviceProfile.getProvisionDeviceKey() : null));
             checkConstraintViolation(t,
                     Map.of("device_profile_name_unq_key", DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS,
                             "device_provision_key_unq_key", "Device profile with such provision device key already exists!",
