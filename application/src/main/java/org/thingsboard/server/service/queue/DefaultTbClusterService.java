@@ -414,7 +414,8 @@ public class DefaultTbClusterService implements TbClusterService {
                 || entityType.equals(EntityType.API_USAGE_STATE)
                 || (entityType.equals(EntityType.DEVICE) && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
                 || entityType.equals(EntityType.ENTITY_VIEW)
-                || entityType.equals(EntityType.EDGE)) {
+                || entityType.equals(EntityType.EDGE)
+                || entityType.equals(EntityType.NOTIFICATION_RULE)) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
             for (String serviceId : tbCoreServices) {
