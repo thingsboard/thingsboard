@@ -107,7 +107,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
             Thread.sleep(1);
         }
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
@@ -115,11 +115,11 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         Long count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
         Assert.assertEquals(97, count.longValue());
 
-        filter.setDeviceType("unknown");
+        filter.setDeviceTypes(List.of("unknown"));
         count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
         Assert.assertEquals(0, count.longValue());
 
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("Device1");
 
         count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
@@ -341,7 +341,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -442,7 +442,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         Thread.sleep(1000);
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -521,7 +521,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
 
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         KeyFilter highTemperatureFilter = new KeyFilter();
@@ -576,7 +576,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
     @Test
     public void givenInvalidEntityDataPageLink_thenReturnError() throws Exception {
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         String invalidSortProperty = "created(Time)";
