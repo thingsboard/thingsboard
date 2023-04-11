@@ -22,26 +22,40 @@
       width: 100%;
     }
 
-    .header {
-      padding: 0 5px 5px;
-
-      .cell {
-        padding-right: 5px;
-        padding-left: 5px;
-        font-size: 12px;
-        font-weight: 700;
-        color: rgba(0, 0, 0, .54);
-        white-space: nowrap;
-      }
+    .map-label {
+      font-weight: 400;
+      font-size: 12px;
     }
 
+
+    //.header {
+    //  padding: 0 5px 5px;
+    //
+    //  .cell {
+    //    padding-right: 5px;
+    //    padding-left: 5px;
+    //    font-size: 12px;
+    //    font-weight: 700;
+    //    color: rgba(0, 0, 0, .54);
+    //    white-space: nowrap;
+    //  }
+    //}
+
     .body {
-      padding: 0 5px 20px;
+      //padding: 0 5px 20px;
       max-height: 300px;
       overflow: auto;
 
       .row {
         padding-top: 5px;
+
+        .input-block {
+          border: 1px solid #E0E0E0;
+          border-radius: 6px;
+          padding: 24px 24px 2px 24px;
+          align-items: center;
+          margin: 0px 8px 15px 0px;
+        }
       }
 
       .cell {

@@ -1922,6 +1922,7 @@
         "device-name-starts-with": "Devices whose names start with '{{prefix}}'",
         "type-device-profile": "Device profile",
         "type-device-profiles": "Device profiles",
+        "clear-selected-profiles": "Clear selected profiles",
         "list-of-device-profiles": "{ count, plural, =1 {One device profile} other {List of # device profiles} }",
         "device-profile-name-starts-with": "Device profiles whose names start with '{{prefix}}'",
         "type-asset-profile": "Asset profile",
@@ -3107,6 +3108,7 @@
     "relation": {
         "relations": "Relations",
         "direction": "Direction",
+        "clear-relation-type": "Clear relation type",
         "search-direction": {
             "FROM": "From",
             "TO": "To"
