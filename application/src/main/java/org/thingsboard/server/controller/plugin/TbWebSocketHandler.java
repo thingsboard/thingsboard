@@ -145,10 +145,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 return;
             }
             var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
+            int wsTenantProfileQueueLimit = tenantProfileConfiguration != null ?
+                    tenantProfileConfiguration.getWsMsgQueueLimitPerSession() : wsMaxQueueMessagesPerSession;
             internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef,
-                    tenantProfileConfiguration != null && tenantProfileConfiguration.getWsMsgQueueLimitPerSession() > 0 &&
-                            tenantProfileConfiguration.getWsMsgQueueLimitPerSession() < wsMaxQueueMessagesPerSession ?
-                    tenantProfileConfiguration.getWsMsgQueueLimitPerSession() : wsMaxQueueMessagesPerSession));
+                    (wsTenantProfileQueueLimit > 0 && wsTenantProfileQueueLimit < wsMaxQueueMessagesPerSession) ?
+                            wsTenantProfileQueueLimit : wsMaxQueueMessagesPerSession));
 
             externalSessionMap.put(externalSessionId, internalSessionId);
             processInWebSocketService(sessionRef, SessionEvent.onEstablished());
