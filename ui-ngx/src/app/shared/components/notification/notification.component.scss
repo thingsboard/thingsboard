@@ -20,6 +20,7 @@
     display: block;
     border: 1px solid;
     border-radius: 4px;
+    margin: 4px;
   }
 
   .icon {
@@ -61,6 +62,7 @@
     .alarm-severity {
       padding: 5px;
       border-radius: 8px;
+      margin-right: 7px;
 
       .severity {
         font-weight: 500;
