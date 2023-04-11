@@ -30,8 +30,10 @@ public abstract class BaseTelemetryControllerTest extends AbstractControllerTest
         loginTenantAdmin();
         Device device = createDevice();
         String requestBody = "{\"data\": \"<object data=\\\"data:text/html,<script>alert(document)</script>\\\"></object>\"}";
+        doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SHARED_SCOPE", requestBody, String.class, status().isOk());
         doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", requestBody, String.class, status().isOk());
         requestBody = "{\"<object data=\\\"data:text/html,<script>alert(document)</script>\\\"></object>\": \"data\"}";
+        doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SHARED_SCOPE", requestBody, String.class, status().isBadRequest());
         doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", requestBody, String.class, status().isBadRequest());
     }
 
