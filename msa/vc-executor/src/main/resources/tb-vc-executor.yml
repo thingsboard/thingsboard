@@ -167,6 +167,14 @@ vc:
     io_pool_size: "${TB_VC_GIT_POOL_SIZE:3}"
     repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
 
+# Usage statistics parameters
+usage:
+  stats:
+    report:
+      enabled: "${USAGE_STATS_REPORT_ENABLED:true}"
+      enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
+      interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
+
 metrics:
   # Enable/disable actuator metrics.
   enabled: "${METRICS_ENABLED:false}"
