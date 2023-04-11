@@ -45,7 +45,7 @@
         <spring-redis.version>5.5.17</spring-redis.version>
         <spring-security.version>5.7.7</spring-security.version>
         <spring-data-redis.version>2.7.10</spring-data-redis.version>
-        <jedis.version>3.7.1</jedis.version>
+        <jedis.version>3.8.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
         <slf4j.version>1.7.32</slf4j.version>
         <log4j.version>2.17.1</log4j.version>
