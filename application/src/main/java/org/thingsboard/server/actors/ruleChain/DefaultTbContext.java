@@ -161,7 +161,8 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void tellSelf(TbMsg msg, long delayMs) {
-        //TODO: add persistence layer
+        //TODO: fix all nodes that use this method to use ruleNodeCacheService for message persistence.
+        // See the example in the TbAbstractCacheBasedRuleNode.
         mainCtx.scheduleMsgWithDelay(nodeCtx.getSelfActor(), new RuleNodeToSelfMsg(this, msg), delayMs);
     }
 

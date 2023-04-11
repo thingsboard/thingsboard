@@ -98,7 +98,7 @@ public abstract class TbAbstractCacheBasedRuleNode<C, K> implements TbNode {
             Integer partition = entry.getKey();
             boolean remove = !newPartitions.contains(partition);
             if (remove) {
-                log.trace("[{}] Removed odd partition: [{}] from the partitions map!", ruleNodeId, partition);
+                log.trace("[{}] Removed old partition: [{}] from the partitions map!", ruleNodeId, partition);
                 Set<EntityId> entityIds = entry.getValue();
                 entityIdValuesMap.keySet().removeAll(entityIds);
                 if (log.isTraceEnabled()) {

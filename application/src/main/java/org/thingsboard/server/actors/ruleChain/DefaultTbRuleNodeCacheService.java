@@ -101,7 +101,8 @@ public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
 
     @Override
     public void evict(String key) {
-        cache.evict(key.getBytes());
+        byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
+        cache.evict(cacheKey);
     }
 
     private byte[][] stringListToBytes(List<String> values) {

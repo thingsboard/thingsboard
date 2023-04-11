@@ -174,7 +174,7 @@ public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeC
                         pendingMsg.getData()
                 ), SUCCESS,
                 () -> log.trace("[{}][{}] Successfully enqueue delayed message!", ctx.getSelfId(), originator),
-                throwable -> log.trace("[{}][{}][{}] Failed to enqueue delayed message due to: ", ctx.getSelfId(), originator, throwable));
+                throwable -> log.trace("[{}][{}] Failed to enqueue delayed message due to: ", ctx.getSelfId(), originator, throwable));
         getCacheIfPresentAndExecute(ctx, cache -> cache.removeTbMsgList(originator, partition, Collections.singletonList(pendingMsg)));
     }
 
