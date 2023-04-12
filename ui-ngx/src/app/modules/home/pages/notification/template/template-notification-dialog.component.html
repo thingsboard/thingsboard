@@ -203,7 +203,7 @@
               trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
       </div>
       <form [formGroup]="smsTemplateForm">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic">
           <mat-label translate>notification.message</mat-label>
           <textarea matInput
                     cdkTextareaAutosize
@@ -213,6 +213,11 @@
           </textarea>
           <mat-error *ngIf="smsTemplateForm.get('body').hasError('required')">
             {{ 'notification.message-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="smsTemplateForm.get('body').hasError('maxlength')">
+            {{ 'notification.message-max-length' | translate :
+            {length: smsTemplateForm.get('body').getError('maxlength').requiredLength}
+            }}
           </mat-error>
         </mat-form-field>
       </form>

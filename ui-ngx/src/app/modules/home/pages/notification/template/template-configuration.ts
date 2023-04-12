@@ -156,7 +156,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
     });
 
     this.smsTemplateForm = this.fb.group({
-      body: ['', Validators.required]
+      body: ['', [Validators.required, Validators.maxLength(320)]]
     });
 
     this.slackTemplateForm = this.fb.group({

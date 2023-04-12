@@ -2840,6 +2840,7 @@
         "mark-as-read": "Mark as read",
         "message": "Message",
         "message-required": "Message is required",
+        "message-max-length": "Message should be less than or equal to {{ length }} characters",
         "name": "Name",
         "name-required": "Name is required",
         "new-notification": "New notification",
