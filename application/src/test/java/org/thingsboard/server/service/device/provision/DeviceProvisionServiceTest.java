@@ -74,7 +74,6 @@ import static org.mockito.Mockito.when;
 @ContextConfiguration(classes = DeviceProvisionServiceImpl.class)
 public class DeviceProvisionServiceTest {
 
-
     @MockBean
     protected TbQueueProducerProvider producerProvider;
     @MockBean
