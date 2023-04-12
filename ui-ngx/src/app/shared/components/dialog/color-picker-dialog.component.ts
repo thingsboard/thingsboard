@@ -30,8 +30,6 @@ import {
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { ColorPickerControl } from '@iplab/ngx-color-picker';
-import { ColorType } from '@shared/components/color-picker/color-picker.component';
-import * as tinycolor_ from 'tinycolor2';
 
 export interface ColorPickerDialogData {
   color: string;
@@ -49,8 +47,6 @@ export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialo
   colorPickerFormGroup: UntypedFormGroup;
 
   submitted = false;
-
-  colorType: ColorType = ColorType.rgba;
 
   sketchControl = new ColorPickerControl().setValueFrom(this.data.color);
 

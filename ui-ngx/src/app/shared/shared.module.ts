@@ -170,7 +170,6 @@ import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { ColorPickerComponent } from '@shared/components/color-picker/color-picker.component';
-import { ColorPickerInputComponent } from '@shared/components/color-picker/color-picker-input.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -312,8 +311,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     PhoneInputComponent,
     TbScriptLangComponent,
     DateAgoPipe,
-    ColorPickerComponent,
-    ColorPickerInputComponent
+    ColorPickerComponent
   ],
   imports: [
     CommonModule,

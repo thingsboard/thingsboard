@@ -15,14 +15,8 @@
     limitations under the License.
 
 -->
-<form [formGroup]="colorPickerFormGroup" (ngSubmit)="select()">
+<form [formGroup]="colorPickerFormGroup" (ngSubmit)="select()" style="width: 320px;">
   <div mat-dialog-content style="padding: 16px" fxLayout="row" fxLayoutAlign="center">
-<!--    <span [style.background]="colorPickerFormGroup.get('color').value"-->
-<!--          [cpToggle]="true"-->
-<!--          [cpDialogDisplay]="'inline'"-->
-<!--          [colorPicker]="colorPickerFormGroup.get('color').value"-->
-<!--          (colorPickerChange)="onColorChange($event)">-->
-<!--    </span>-->
     <tb-color-picker [control]="sketchControl" (colorChange)="onColorChange($event)"></tb-color-picker>
   </div>
   <div mat-dialog-actions fxLayout="row">

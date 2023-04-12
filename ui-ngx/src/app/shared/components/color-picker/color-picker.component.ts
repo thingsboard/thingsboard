@@ -23,10 +23,12 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
-  Output, SimpleChanges
+  Output,
+  SimpleChanges
 } from '@angular/core';
 import { Color, ColorPickerControl } from '@iplab/ngx-color-picker';
 import { Subscription } from 'rxjs';
+
 export enum ColorType {
   hex = 'hex',
   hexa = 'hexa',
@@ -46,7 +48,7 @@ export enum ColorType {
 export class ColorPickerComponent implements OnInit, OnChanges, OnDestroy {
 
   public selectedPresentation = 0;
-  public presentations = [ColorType.hex, ColorType.hexa, ColorType.rgb, ColorType.rgba, ColorType.hsl, ColorType.hsla];
+  public presentations = [ColorType.hex, ColorType.rgb, ColorType.rgba, ColorType.hsla, ColorType.hsl];
 
   @Input()
   public color: string;
@@ -67,6 +69,12 @@ export class ColorPickerComponent implements OnInit, OnChanges, OnDestroy {
       this.control = new ColorPickerControl();
     }
 
+    if (this.control.initType === ColorType.hexa) {
+      this.control.initType = ColorType.hex;
+    }
+
+    this.selectedPresentation = this.presentations.indexOf(this.control.initType);
+
     if (this.color) {
       this.control.setValueFrom(this.color);
     }
@@ -74,13 +82,13 @@ export class ColorPickerComponent implements OnInit, OnChanges, OnDestroy {
     this.subscriptions.push(
       this.control.valueChanges.subscribe((value) => {
         this.cdr.markForCheck();
-        this.colorChange.emit(this.getValueByType(value, this.control.initType));
+        this.colorChange.emit(this.getValueByType(value, this.presentations[this.selectedPresentation]));
       })
     );
   }
 
   changeColorFormat(event: Event) {
-    this.colorChange.emit(this.getValueByType(this.control.value, this.control.initType));
+    this.colorChange.emit(this.getValueByType(this.control.value, this.presentations[this.selectedPresentation]));
   }
 
   public ngOnDestroy(): void {
@@ -90,7 +98,8 @@ export class ColorPickerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
-    if (this.color && this.control && this.getValueByType(this.control.value, this.control.initType) !== this.color) {
+    if (this.color && this.control &&
+      this.getValueByType(this.control.value, this.presentations[this.selectedPresentation]) !== this.color) {
       this.control.setValueFrom(this.color);
     }
   }
@@ -98,14 +107,14 @@ export class ColorPickerComponent implements OnInit, OnChanges, OnDestroy {
   public changePresentation(): void {
     this.selectedPresentation =
       this.selectedPresentation === this.presentations.length - 1 ? 0 : this.selectedPresentation + 1;
+    this.colorChange.emit(this.getValueByType(this.control.value, this.presentations[this.selectedPresentation]));
+    this.cdr.markForCheck();
   }
 
   getValueByType(color: Color, type: ColorType): string {
     switch (type) {
-      case ColorType.hex:
-        return color.toHexString();
-      case ColorType.hexa:
-        return color.toHexString(true);
+      case ColorType.hex || ColorType.hexa:
+        return color.toHexString(this.control.value.getRgba().getAlpha() !== 1);
       case ColorType.rgb:
         return color.toRgbString();
       case ColorType.rgba:
