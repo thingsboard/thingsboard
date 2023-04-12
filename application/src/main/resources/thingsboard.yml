@@ -255,11 +255,13 @@ sql:
     batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_ATTRIBUTES_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    noxss_validation_enabled: "${SQL_ATTRIBUTES_NOXSS_VALIDATION_ENABLED:true}"
   ts:
     batch_size: "${SQL_TS_BATCH_SIZE:10000}"
     batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_TS_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    noxss_validation_enabled: "${SQL_TS_NOXSS_VALIDATION_ENABLED:true}"
   ts_latest:
     batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
     batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"

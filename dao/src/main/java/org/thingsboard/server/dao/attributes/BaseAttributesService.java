@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.attributes;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,9 @@ import static org.thingsboard.server.dao.attributes.AttributeUtils.validate;
 @Slf4j
 public class BaseAttributesService implements AttributesService {
     private final AttributesDao attributesDao;
+
+    @Value("${sql.attributes.noxss_validation_enabled:true}")
+    private boolean noxssValidationEnabled;
 
     public BaseAttributesService(AttributesDao attributesDao) {
         this.attributesDao = attributesDao;
@@ -82,14 +86,14 @@ public class BaseAttributesService implements AttributesService {
     @Override
     public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
         validate(entityId, scope);
-        AttributeUtils.validate(attribute);
+        AttributeUtils.validate(attribute, noxssValidationEnabled);
         return attributesDao.save(tenantId, entityId, scope, attribute);
     }
 
     @Override
     public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
-        attributes.forEach(AttributeUtils::validate);
+        AttributeUtils.validate(attributes, noxssValidationEnabled);
         List<ListenableFuture<String>> saveFutures = attributes.stream().map(attribute -> attributesDao.save(tenantId, entityId, scope, attribute)).collect(Collectors.toList());
         return Futures.allAsList(saveFutures);
     }

@@ -21,6 +21,8 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.util.KvUtils;
 
+import java.util.List;
+
 public class AttributeUtils {
 
     public static void validate(EntityId id, String scope) {
@@ -28,8 +30,12 @@ public class AttributeUtils {
         Validator.validateString(scope, "Incorrect scope " + scope);
     }
 
-    public static void validate(AttributeKvEntry kvEntry) {
-        KvUtils.validate(kvEntry);
+    public static void validate(List<AttributeKvEntry> kvEntries, boolean validateNoxss) {
+        kvEntries.forEach(kv -> validate(kv, validateNoxss));
+    }
+
+    public static void validate(AttributeKvEntry kvEntry, boolean validateNoxss) {
+        KvUtils.validate(kvEntry, validateNoxss);
         if (kvEntry.getDataType() == null) {
             throw new IncorrectParameterException("Incorrect kvEntry. Data type can't be null");
         } else {
