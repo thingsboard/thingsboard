@@ -5130,7 +5130,9 @@
             "title": "Version",
             "contact-us": "Contact us",
             "current-version": "Current version",
+            "current": "Current",
             "available-version": "Available version",
+            "available": "Available",
             "upgrade": "Upgrade",
             "version-is-up-to-date": "Version is up to date"
         },

@@ -22,24 +22,41 @@
     </div>
     <a mat-button color="primary" class="tb-contact-us" href="https://thingsboard.io/docs/contact-us/" target="_blank">{{ 'widgets.version-info.contact-us' | translate }}</a>
   </div>
-  <div fxLayout="column" fxFlex>
-    <div class="tb-version-info-container" fxFlex>
-      <div class="tb-card-header">
-        <a class="tb-version-link" [href]="updateMessage?.currentVersionReleaseNotesUrl" target="_blank">{{ 'widgets.version-info.current-version' | translate }}</a>
+  <div fxLayout="row" fxLayoutGap="8px" fxLayout.gt-md-lg="column" fxFlex>
+    <div class="tb-version-info-container" fxLayout="row" fxFlex>
+      <div fxFlex fxLayout="column" fxLayoutAlign="space-evenly stretch">
+        <div class="tb-card-header">
+          <a class="tb-version-link" [href]="updateMessage?.currentVersionReleaseNotesUrl" target="_blank">
+            <span fxHide.md-lg translate>widgets.version-info.current-version</span>
+            <span fxHide.lt-md fxHide.gt-md-lg translate>widgets.version-info.current</span>
+          </a>
+        </div>
+        <div class="tb-version">{{ updateMessage?.currentVersion }}</div>
+        <div fxHide.gt-md-lg style="height: 24px;">
+        </div>
       </div>
-      <div class="tb-version">{{ updateMessage?.currentVersion }}</div>
     </div>
-    <div class="tb-version-info-container" fxFlex *ngIf="updateMessage?.updateAvailable; else versionUpToDate">
-      <div class="tb-card-header">
-        <a class="tb-version-link" [href]="updateMessage?.latestVersionReleaseNotesUrl" target="_blank">{{ 'widgets.version-info.available-version' | translate }}</a>
+    <div class="tb-version-info-container" fxLayout="row" fxFlex *ngIf="updateMessage?.updateAvailable; else versionUpToDate">
+      <div fxFlex fxLayout="column" fxLayoutAlign="space-evenly stretch">
+        <div class="tb-card-header">
+          <a class="tb-version-link" [href]="updateMessage?.latestVersionReleaseNotesUrl" target="_blank">
+            <span fxHide.md-lg translate>widgets.version-info.available-version</span>
+            <span fxHide.lt-md fxHide.gt-md-lg translate>widgets.version-info.available</span>
+          </a>
+        </div>
+        <div class="tb-version">{{ updateMessage?.latestVersion }}</div>
+        <div fxHide.gt-md-lg fxLayout="row" fxLayoutAlign="end end">
+          <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">{{ 'widgets.version-info.upgrade' | translate }}</a>
+        </div>
+      </div>
+      <div fxHide.lt-md fxHide.md-lg fxLayout="column" fxLayoutAlign="center">
         <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">{{ 'widgets.version-info.upgrade' | translate }}</a>
       </div>
-      <div class="tb-version">{{ updateMessage?.latestVersion }}</div>
     </div>
   </div>
 </div>
 <ng-template #versionUpToDate>
-  <div class="tb-version-info-container up-to-date" fxFlex>
+  <div class="tb-version-info-container up-to-date" fxFlex fxLayout="column" fxLayoutAlign="space-evenly center">
     <div class="material-icons-round check-icon">check</div>
     <div class="up-to-date-text" translate>widgets.version-info.version-is-up-to-date</div>
   </div>

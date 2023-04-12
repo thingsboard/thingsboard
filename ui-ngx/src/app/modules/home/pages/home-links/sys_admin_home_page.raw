@@ -847,134 +847,13 @@
           },
           "showLegend": false,
           "useDashboardTimewindow": true,
-          "widgetCss": "",
+          "widgetCss": "gridster.mobile {\n    overflow-y: hidden;\n}\n",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
         },
         "row": 0,
         "col": 0,
         "id": "4b5e47ed-c197-a937-d727-041ba8decec2"
-      },
-      "76607897-dfd0-8946-7451-3de6a39e4bbf": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entity",
-              "name": null,
-              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "cpuUsage",
-                  "type": "timeseries",
-                  "label": "cpuUsage",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.659021918423117
-                },
-                {
-                  "name": "cpuCount",
-                  "type": "timeseries",
-                  "label": "cpuCount",
-                  "color": "#4caf50",
-                  "settings": {},
-                  "_hash": 0.5332753234169949
-                },
-                {
-                  "name": "cpuUsage",
-                  "type": "timeseries",
-                  "label": "status",
-                  "color": "#f44336",
-                  "settings": {},
-                  "_hash": 0.025084892962804473,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
-                },
-                {
-                  "name": "cpuUsage",
-                  "type": "timeseries",
-                  "label": "statusTooltip",
-                  "color": "#ffc107",
-                  "settings": {},
-                  "_hash": 0.8542003006820891,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.cpu-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.cpu-warning-text\\' | translate }}';\n}\nreturn text;\n"
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>\n        <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n    </div>\n    <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n        <span class=\"tb-count\">${cpuUsage:0}%</span>\n        <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n    </div>\n</div>",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
-          },
-          "title": "CPU",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n}\n\n@media screen and (min-width: 960px) {\n    .tb-widget-container {\n        margin-right: 6px;\n    }\n}\n\n@media screen and (max-width: 959px) {\n    .tb-widget-container {\n        height: calc(100% - 12px);\n        margin-bottom: 12px;\n    }\n}",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "76607897-dfd0-8946-7451-3de6a39e4bbf"
       },
       "eace9148-b02a-48fe-1a95-acd9928aa8c5": {
         "isSystemType": true,
@@ -1181,7 +1060,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {},
-          "widgetCss": "@media screen and (min-width: 960px) {\n    .tb-widget-container {\n        display: block;\n        height: calc(100% - 12px);\n        margin-top: 12px;\n    }\n}\n\n.tb-legend-keys td .tb-legend-line {\n    height: 5px !important;\n    vertical-align: middle;\n}\n",
+          "widgetCss": ".tb-widget-container {\n  display: block;\n  height: calc(100% - 12px);\n  margin-top: 12px;\n}\n\n.tb-legend-keys td .tb-legend-line {\n    height: 5px !important;\n    vertical-align: middle;\n}\n",
           "pageSize": 1024,
           "units": "%",
           "noDataDisplayMessage": "",
@@ -1201,272 +1080,6 @@
         "row": 0,
         "col": 0,
         "id": "eace9148-b02a-48fe-1a95-acd9928aa8c5"
-      },
-      "d755208a-81cf-edb4-5db8-f4859f5359cc": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entity",
-              "name": null,
-              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "memoryUsage",
-                  "type": "timeseries",
-                  "label": "memoryUsage",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.659021918423117,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                },
-                {
-                  "name": "totalMemory",
-                  "type": "timeseries",
-                  "label": "totalMemory",
-                  "color": "#4caf50",
-                  "settings": {},
-                  "_hash": 0.5332753234169949,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "return value / 1073741824;"
-                },
-                {
-                  "name": "memoryUsage",
-                  "type": "timeseries",
-                  "label": "status",
-                  "color": "#f44336",
-                  "settings": {},
-                  "_hash": 0.025084892962804473,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
-                },
-                {
-                  "name": "memoryUsage",
-                  "type": "timeseries",
-                  "label": "statusTooltip",
-                  "color": "#ffc107",
-                  "settings": {},
-                  "_hash": 0.8542003006820891,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.ram-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.ram-warning-text\\' | translate }}';\n}\nreturn text;\n"
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": true,
-            "markdownTextFunction": "const memoryUsage = data[0]['memoryUsage'];\nconst totalMemory = data[0]['totalMemory'];\nconst usedMemory = (totalMemory * (memoryUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\" translate>widgets.system-info.ram</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedMemory +' / ${totalMemory:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${memoryUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalMemory:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
-          },
-          "title": "RAM",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n}\n\n@media screen and (min-width: 960px) {\n    .tb-widget-container {\n        margin-right: 6px;\n        margin-left: 6px;\n    }\n}\n\n@media screen and (max-width: 959px) {\n    .tb-widget-container {\n        height: calc(100% - 12px);\n        margin-bottom: 12px;\n    }\n}",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "d755208a-81cf-edb4-5db8-f4859f5359cc"
-      },
-      "6ab892b7-0cb8-cb1e-f5d3-679ef8f25bd7": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entity",
-              "name": null,
-              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "discUsage",
-                  "type": "timeseries",
-                  "label": "discUsage",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.659021918423117,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                },
-                {
-                  "name": "totalDiscSpace",
-                  "type": "timeseries",
-                  "label": "totalDiscSpace",
-                  "color": "#4caf50",
-                  "settings": {},
-                  "_hash": 0.5332753234169949,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "return value / 1073741824;"
-                },
-                {
-                  "name": "discUsage",
-                  "type": "timeseries",
-                  "label": "status",
-                  "color": "#f44336",
-                  "settings": {},
-                  "_hash": 0.025084892962804473,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
-                },
-                {
-                  "name": "discUsage",
-                  "type": "timeseries",
-                  "label": "statusTooltip",
-                  "color": "#ffc107",
-                  "settings": {},
-                  "_hash": 0.8542003006820891,
-                  "aggregationType": "NONE",
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.disk-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.disk-warning-text\\' | translate }}';\n}\nreturn text;"
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": true,
-            "markdownTextFunction": "const discUsage = data[0]['discUsage'];\nconst totalDiscSpace = data[0]['totalDiscSpace'];\nconst usedDisc = (totalDiscSpace * (discUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\" translate>widgets.system-info.disk</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedDisc +' / ${totalDiscSpace:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${discUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalDiscSpace:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
-          },
-          "title": "Disk",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n    display: block;\n    height: 100%;\n}\n\n@media screen and (min-width: 960px) {\n    .tb-widget-container {\n        margin-left: 6px;\n    }\n}\n\n@media screen and (max-width: 959px) {\n    .tb-widget-container {\n        height: calc(100% - 12px);\n        margin-bottom: 12px;\n    }\n}",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "6ab892b7-0cb8-cb1e-f5d3-679ef8f25bd7"
       },
       "8acbf5df-f9fc-114d-216f-86f081aa4779": {
         "isSystemType": true,
@@ -1510,9 +1123,9 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div style=\"height: 100%;\" fxLayout=\"column\">\n    <div class=\"tb-card-header\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\" translate>widgets.functions.title</div>\n        </div>\n        <a mat-stroked-button color=\"primary\" class=\"tb-switch-to-pe\"\n        href=\"https://thingsboard.io/pricing/?product=thingsboard-pe&solution=pe-pay-as-you-go\" target=\"_blank\">{{ 'widgets.functions.switch-to-pe' | translate }}</a>\n    </div>\n    <div fxFlex class=\"tb-card-content\">\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\" translate>widgets.functions.alarms</div>\n            <div class=\"feature\" translate>widgets.functions.dashboards</div>\n            <div class=\"feature\" translate>widgets.functions.entities-and-relations</div>\n            <div class=\"feature\" translate>widgets.functions.profiles</div>\n            <div class=\"feature\" translate>widgets.functions.advanced-features</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div class=\"feature\" translate>widgets.functions.notification-center</div>\n            <div class=\"feature\" translate>widgets.functions.api-usage</div>\n            <div class=\"feature\" translate>widgets.functions.customers</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.customers-hierarchy</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.roles-and-permissions</div>\n        </div>\n        <div fxFlex fxLayout=\"column\">\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.groups</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.integrations</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.solution-templates</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.scheduler</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.white-labeling</div>\n        </div>\n    </div>\n</div>",
+            "markdownTextPattern": "<div style=\"height: 100%;\" fxLayout=\"column\">\n    <div class=\"tb-card-header\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\" translate>widgets.functions.title</div>\n        </div>\n        <a mat-stroked-button color=\"primary\" class=\"tb-switch-to-pe\"\n        href=\"https://thingsboard.io/pricing/?product=thingsboard-pe&solution=pe-pay-as-you-go\" target=\"_blank\">{{ 'widgets.functions.switch-to-pe' | translate }}</a>\n    </div>\n    <div fxFlex class=\"tb-card-content\">\n        <div class=\"tb-card-column\">\n            <div class=\"feature\" translate>widgets.functions.alarms</div>\n            <div class=\"feature\" translate>widgets.functions.dashboards</div>\n            <div class=\"feature\" translate>widgets.functions.entities-and-relations</div>\n            <div class=\"feature\" translate>widgets.functions.profiles</div>\n            <div class=\"feature\" translate>widgets.functions.advanced-features</div>\n        </div>\n        <div class=\"tb-card-column\">\n            <div class=\"feature\" translate>widgets.functions.notification-center</div>\n            <div class=\"feature\" translate>widgets.functions.api-usage</div>\n            <div class=\"feature\" translate>widgets.functions.customers</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.customers-hierarchy</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.roles-and-permissions</div>\n        </div>\n        <div class=\"tb-card-column\">\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.groups</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.integrations</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.solution-templates</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.scheduler</div>\n            <div matTooltip=\"{{ 'widgets.functions.pe-feature-tooltip' | translate }}\" matTooltipPosition=\"above\" class=\"feature pe\" translate>widgets.functions.white-labeling</div>\n        </div>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-header {\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n    align-items: center;\n}\n\n.tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    margin-top: 4px;\n    overflow: auto;\n}\n\n.feature {\n    position: relative;\n    cursor: default;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 28px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.76);\n    margin-left: 32px;\n}\n\n.feature:before {\n    content: \"check\";\n    font-family: 'Material Icons Round';\n    display: inline-block;\n    font-size: 20px;\n    line-height: 20px;\n    color: #198038;\n    font-weight: 600;\n    position: absolute;\n    left: -32px;\n    top: 2px;\n    background: #F3F6FA;\n    border-radius: 4px;\n    width: 20px;\n    height: 20px;\n    padding: 2px;\n    vertical-align: middle;\n}\n\n.feature.pe:before {\n    content: \"close\";\n    background: #F4F4F4;\n    color: rgba(0, 0, 0, 0.12);\n}\n\n.feature.pe:after {\n    position: relative;\n    display: inline-block;\n    margin-left: 4px;\n    vertical-align: baseline;\n    top: -0.5em;\n    content: \"PE\";\n    color: #305680;\n    font-weight: 700;\n    font-size: 12px;\n    line-height: 12px;\n    letter-spacing: 0.0015em;\n}\n\n.feature+.feature {\n    margin-top: 4px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-switch-to-pe {\n        height: 24px;\n        font-size: 12px;\n        padding: 0 4px;\n    }\n    \n    .feature+.feature {\n        margin-top: 2px;\n    }\n    \n    .feature {\n        font-size: 11px;\n        line-height: 18px;\n        margin-left: 22px;\n    }\n\n    .feature:before {\n      font-size: 14px;\n      line-height: 14px;\n      width: 14px;\n      height: 14px;\n      left: -22px;\n      top: 0;\n    }\n    .feature.pe:after {\n        margin-left: 2px;\n        top: -0.5em;\n        content: \"PE\";\n        font-size: 8px;\n        line-height: 8px;\n    }\n    \n}\n\n"
+            "markdownCss": ".tb-card-header {\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n    align-items: center;\n}\n\n.tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    margin-top: 4px;\n    overflow: auto;\n}\n\n.tb-card-column {\n    min-width: 0px;\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n}\n\n.feature {\n    position: relative;\n    cursor: default;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 28px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.76);\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n}\n\n.feature:before {\n    content: \"check\";\n    font-family: 'Material Icons Round';\n    display: inline-block;\n    font-size: 20px;\n    line-height: 20px;\n    color: #198038;\n    font-weight: 600;\n    position: relative;\n    background: #F3F6FA;\n    border-radius: 4px;\n    width: 20px;\n    height: 20px;\n    padding: 2px;\n    vertical-align: sub;\n    margin-right: 8px;\n}\n\n.feature.pe:before {\n    content: \"close\";\n    background: #F4F4F4;\n    color: rgba(0, 0, 0, 0.12);\n}\n\n.feature.pe:after {\n    position: relative;\n    display: inline-block;\n    margin-left: 4px;\n    vertical-align: baseline;\n    top: -0.5em;\n    content: \"PE\";\n    color: #305680;\n    font-weight: 700;\n    font-size: 12px;\n    line-height: 12px;\n    letter-spacing: 0.0015em;\n}\n\n.feature+.feature {\n    margin-top: 4px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-switch-to-pe {\n        height: 24px;\n        font-size: 12px;\n        padding: 0 4px;\n    }\n    \n    .feature+.feature {\n        margin-top: 2px;\n    }\n    \n    .feature {\n        font-size: 11px;\n        line-height: 18px;\n    }\n\n    .feature:before {\n      font-size: 14px;\n      line-height: 14px;\n      width: 14px;\n      height: 14px;\n      margin-right: 4px;\n    }\n    .feature.pe:after {\n        margin-left: 2px;\n        top: -0.5em;\n        content: \"PE\";\n        font-size: 8px;\n        line-height: 8px;\n    }\n    \n}\n\n"
           },
           "title": "Functions",
           "showTitleIcon": false,
@@ -1743,6 +1356,585 @@
         "row": 0,
         "col": 0,
         "id": "a23185ad-dc46-806c-0e50-5b21fb080ace"
+      },
+      "b35fa1b0-7f95-0b23-fade-d066653a40e1": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "cpuUsage",
+                  "type": "timeseries",
+                  "label": "cpuUsage",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.659021918423117
+                },
+                {
+                  "name": "cpuCount",
+                  "type": "timeseries",
+                  "label": "cpuCount",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5332753234169949
+                },
+                {
+                  "name": "cpuUsage",
+                  "type": "timeseries",
+                  "label": "status",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.025084892962804473,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
+                },
+                {
+                  "name": "cpuUsage",
+                  "type": "timeseries",
+                  "label": "statusTooltip",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8542003006820891,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.cpu-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.cpu-warning-text\\' | translate }}';\n}\nreturn text;\n"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>\n        <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n    </div>\n    <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n        <span class=\"tb-count\">${cpuUsage:0}%</span>\n        <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n    </div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
+          },
+          "title": "CPU",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": ".tb-widget-container {\n  display: block;\n  height: 100%;\n  margin-right: 6px;\n}\n",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "b35fa1b0-7f95-0b23-fade-d066653a40e1"
+      },
+      "5eabde4c-095f-defc-dd09-6c0afb9b9f7b": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "memoryUsage",
+                  "type": "timeseries",
+                  "label": "memoryUsage",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.659021918423117,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "totalMemory",
+                  "type": "timeseries",
+                  "label": "totalMemory",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5332753234169949,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value / 1073741824;"
+                },
+                {
+                  "name": "memoryUsage",
+                  "type": "timeseries",
+                  "label": "status",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.025084892962804473,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
+                },
+                {
+                  "name": "memoryUsage",
+                  "type": "timeseries",
+                  "label": "statusTooltip",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8542003006820891,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.ram-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.ram-warning-text\\' | translate }}';\n}\nreturn text;\n"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": true,
+            "markdownTextFunction": "const memoryUsage = data[0]['memoryUsage'];\nconst totalMemory = data[0]['totalMemory'];\nconst usedMemory = (totalMemory * (memoryUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\" translate>widgets.system-info.ram</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedMemory +' / ${totalMemory:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${memoryUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalMemory:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
+          },
+          "title": "RAM",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": ".tb-widget-container {\n  display: block;\n  height: 100%;\n  margin-right: 6px;\n  margin-left: 6px;\n}\n",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "5eabde4c-095f-defc-dd09-6c0afb9b9f7b"
+      },
+      "451e2588-80b8-cd08-2199-1263ed4dc12c": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "discUsage",
+                  "type": "timeseries",
+                  "label": "discUsage",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.659021918423117,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "totalDiscSpace",
+                  "type": "timeseries",
+                  "label": "totalDiscSpace",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5332753234169949,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value / 1073741824;"
+                },
+                {
+                  "name": "discUsage",
+                  "type": "timeseries",
+                  "label": "status",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.025084892962804473,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
+                },
+                {
+                  "name": "discUsage",
+                  "type": "timeseries",
+                  "label": "statusTooltip",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8542003006820891,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.disk-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.disk-warning-text\\' | translate }}';\n}\nreturn text;"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": true,
+            "markdownTextFunction": "const discUsage = data[0]['discUsage'];\nconst totalDiscSpace = data[0]['totalDiscSpace'];\nconst usedDisc = (totalDiscSpace * (discUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-title\">' +\n                '<div class=\"tb-home-widget-title\" translate>widgets.system-info.disk</div>' +\n                '<div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>' +\n            '</div>' +\n            '<div class=\"tb-value-container\" matTooltip=\"' + usedDisc +' / ${totalDiscSpace:0} Gb\" matTooltipPosition=\"above\">' +\n                '<span class=\"tb-count\">${discUsage:0}%</span>' +\n                '<span class=\"tb-total\">| ${totalDiscSpace:0} Gb</span>' +\n            '</div>' +\n        '</div>';",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
+          },
+          "title": "Disk",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": ".tb-widget-container {\n  display: block;\n  height: 100%;\n  margin-left: 6px;\n}\n",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "451e2588-80b8-cd08-2199-1263ed4dc12c"
+      },
+      "01b94c17-84eb-4e49-6a92-c3f108ecff8e": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "cpuUsage",
+                  "type": "timeseries",
+                  "label": "cpuUsage",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.659021918423117
+                },
+                {
+                  "name": "cpuCount",
+                  "type": "timeseries",
+                  "label": "cpuCount",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5332753234169949
+                },
+                {
+                  "name": "cpuUsage",
+                  "type": "timeseries",
+                  "label": "status",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.025084892962804473,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
+                },
+                {
+                  "name": "cpuUsage",
+                  "type": "timeseries",
+                  "label": "statusTooltip",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8542003006820891,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.cpu-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.cpu-warning-text\\' | translate }}';\n}\nreturn text;\n"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-section\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>\n            <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n        </div>\n        <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n            <span class=\"tb-count\">${cpuUsage:0}%</span>\n            <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n        </div>\n    </div>    \n    <div class=\"tb-card-section\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>\n            <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n        </div>\n        <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n            <span class=\"tb-count\">${cpuUsage:0}%</span>\n            <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n        </div>\n    </div>\n    <div class=\"tb-card-section\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>\n            <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n        </div>\n        <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n            <span class=\"tb-count\">${cpuUsage:0}%</span>\n            <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n        </div>\n    </div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-start;\n    align-items: stretch;\n}\n\n.tb-card-section {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
+          },
+          "title": "Mobile system info cards",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "01b94c17-84eb-4e49-6a92-c3f108ecff8e"
+      },
+      "f0479b00-ed47-0a30-0c36-bde7847aae00": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgba(0,0,0,0)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div style=\"width: 100%; height: 100%;\">\n    <tb-dashboard-state *ngIf=\"!ctx.isMobile; else mobile\" stateId=\"system_info_desktop\" [ctx]=\"ctx\"></tb-dashboard-state>\n    <ng-template #mobile>\n        <tb-dashboard-state stateId=\"system_info_mobile\" [ctx]=\"ctx\"></tb-dashboard-state>\n    </ng-template>    \n</div>",
+            "applyDefaultMarkdownStyle": false
+          },
+          "title": "System info cards",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {
+            "border": "none",
+            "boxShadow": "none",
+            "padding": "0"
+          },
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "f0479b00-ed47-0a30-0c36-bde7847aae00"
       }
     },
     "states": {
@@ -1814,13 +2006,13 @@
                 "row": 0,
                 "col": 44,
                 "mobileOrder": 6,
-                "mobileHeight": 20
+                "mobileHeight": 16
               },
               "8acbf5df-f9fc-114d-216f-86f081aa4779": {
-                "sizeX": 61,
+                "sizeX": 52,
                 "sizeY": 16,
                 "row": 42,
-                "col": 24,
+                "col": 33,
                 "mobileHide": true
               },
               "d2784f6c-0518-fd95-1d28-b21f70bdcb10": {
@@ -1829,15 +2021,15 @@
                 "row": 29,
                 "col": 0,
                 "mobileOrder": 8,
-                "mobileHeight": 6
+                "mobileHeight": 8
               },
               "66dcf1a2-9d83-6873-c693-d6a5d989b3f8": {
-                "sizeX": 24,
+                "sizeX": 33,
                 "sizeY": 16,
                 "row": 42,
                 "col": 0,
                 "mobileOrder": 9,
-                "mobileHeight": 8
+                "mobileHeight": 7
               },
               "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
                 "sizeX": 44,
@@ -1899,37 +2091,85 @@
         "layouts": {
           "main": {
             "widgets": {
-              "76607897-dfd0-8946-7451-3de6a39e4bbf": {
-                "sizeX": 8,
-                "sizeY": 3,
-                "row": 0,
-                "col": 0,
-                "mobileOrder": 0,
-                "mobileHeight": 6
-              },
               "eace9148-b02a-48fe-1a95-acd9928aa8c5": {
-                "sizeX": 24,
-                "sizeY": 8,
-                "row": 3,
+                "sizeX": 48,
+                "sizeY": 21,
+                "row": 7,
                 "col": 0,
-                "mobileOrder": 3,
+                "mobileOrder": 1,
                 "mobileHeight": 10
               },
-              "d755208a-81cf-edb4-5db8-f4859f5359cc": {
+              "f0479b00-ed47-0a30-0c36-bde7847aae00": {
+                "sizeX": 48,
+                "sizeY": 7,
+                "mobileOrder": 0,
+                "mobileHeight": 4,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "rgba(0,0,0,0)",
+              "columns": 48,
+              "margin": 0,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": true,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "system_info_desktop": {
+        "name": "System Info Desktop",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "b35fa1b0-7f95-0b23-fade-d066653a40e1": {
                 "sizeX": 8,
                 "sizeY": 3,
                 "row": 0,
-                "col": 8,
-                "mobileOrder": 1,
-                "mobileHeight": 6
+                "col": 0
               },
-              "6ab892b7-0cb8-cb1e-f5d3-679ef8f25bd7": {
+              "5eabde4c-095f-defc-dd09-6c0afb9b9f7b": {
                 "sizeX": 8,
                 "sizeY": 3,
                 "row": 0,
-                "col": 16,
-                "mobileOrder": 2,
-                "mobileHeight": 6
+                "col": 8
+              },
+              "451e2588-80b8-cd08-2199-1263ed4dc12c": {
+                "sizeX": 8,
+                "sizeY": 3,
+                "row": 0,
+                "col": 16
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "rgba(0,0,0,0)",
+              "columns": 24,
+              "margin": 0,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": true,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "system_info_mobile": {
+        "name": "System Info Mobile",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "01b94c17-84eb-4e49-6a92-c3f108ecff8e": {
+                "sizeX": 24,
+                "sizeY": 3,
+                "row": 0,
+                "col": 0
               }
             },
             "gridSettings": {

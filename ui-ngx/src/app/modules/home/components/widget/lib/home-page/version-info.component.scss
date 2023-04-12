@@ -58,24 +58,20 @@
     box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
     border-radius: 10px;
     padding: 8px 16px 4px 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
+    overflow: hidden;
+    white-space: nowrap;
+    @media #{$mat-lt-md} {
+      padding: 16px;
+    }
     @media #{$mat-md-lg} {
       padding: 4px;
     }
     &.up-to-date {
       box-shadow: none;
       border: none;
-      align-items: center;
       background: #F3F6FA;
-    }
-  }
-
-  .tb-version-info-container+.tb-version-info-container {
-    margin-top: 12px;
-    @media #{$mat-md-lg} {
-      margin-top: 4px;
+      white-space: initial;
+      text-align: center;
     }
   }
 
@@ -128,6 +124,7 @@
       height: 24px;
       font-size: 12px;
       padding: 0;
+      overflow: hidden;
     }
   }
 

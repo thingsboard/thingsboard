@@ -18,8 +18,7 @@
 <div class="tb-title" translate>widgets.getting-started.get-started</div>
 <div class="tb-get-started-container">
   <mat-stepper #matStepper class="tb-get-started" orientation="vertical" [linear]="false"
-               [selectedIndex]="gettingStarted.lastSelectedIndex"
-                (selectionChange)="updateSelectedIndex($event)">
+               (selectionChange)="updateSelectedIndex($event)">
     <ng-template matStepperIcon="edit" let-index="index">
       {{ index + 1 }}
     </ng-template>
