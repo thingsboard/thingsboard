@@ -3600,6 +3600,7 @@
         "incorrect-pattern-for-rate-limits": "The format is comma separated pairs of capacity and period (in seconds) with a colon between, e.g. 100:1,2000:60",
         "too-small-value-zero": "The value must be bigger than 0",
         "too-small-value-one": "The value must be bigger than 1",
+        "queue-size-is-limited-by-system-configuration": "The size of the queue is also limited by the system configuration.",
         "cassandra-tenant-limits-configuration": "Cassandra query for tenant",
         "ws-limit-max-sessions-per-tenant": "Sessions per tenant maximum number",
         "ws-limit-max-sessions-per-customer": "Sessions per customer maximum number",
