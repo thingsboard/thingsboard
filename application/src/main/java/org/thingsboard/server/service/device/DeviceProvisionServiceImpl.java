@@ -100,8 +100,43 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     }
 
     @Override
+    public ProvisionResponse provisionDeviceViaX509Chain(DeviceProfile targetProfile, ProvisionRequest provisionRequest) {
+        if (targetProfile == null) {
+            throw new ProvisionFailedException("Device profile is not specified!");
+        }
+        if (!DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(targetProfile.getProfileData().getProvisionConfiguration().getType())) {
+            throw new ProvisionFailedException("Device profile provision strategy is not X509_CERTIFICATE_CHAIN!");
+        }
+        X509CertificateChainProvisionConfiguration configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
+        String certificateValue = provisionRequest.getCredentialsData().getX509CertHash();
+        String certificateRegEx = configuration.getCertificateRegExPattern();
+        String deviceName = extractDeviceNameFromCertificateCNByRegEx(targetProfile, certificateValue, certificateRegEx);
+        if (StringUtils.isBlank(deviceName)) {
+            log.warn("Device name cannot be extracted using regex [{}] for certificate [{}]", certificateRegEx, certificateValue);
+            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+        }
+        provisionRequest.setDeviceName(deviceName);
+        Device targetDevice = deviceService.findDeviceByTenantIdAndName(targetProfile.getTenantId(), provisionRequest.getDeviceName());
+        X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
+        if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())) {
+            DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(targetDevice.getTenantId(), targetDevice.getId());
+            if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
+                String updatedDeviceCertificateValue = provisionRequest.getCredentialsData().getX509CertHash();
+                deviceCredentials = updateDeviceCredentials(targetDevice.getTenantId(), deviceCredentials,
+                        updatedDeviceCertificateValue, DeviceCredentialsType.X509_CERTIFICATE);
+            }
+            return new ProvisionResponse(deviceCredentials, ProvisionResponseStatus.SUCCESS);
+        } else if (x509Configuration.isAllowCreateNewDevicesByX509Certificate()) {
+            return createDevice(provisionRequest, targetProfile);
+        } else {
+            log.warn("[{}][{}] Device with name {} doesn't exist and cannot be created due incorrect configuration for X509CertificateChainProvisionConfiguration",
+                    targetProfile.getTenantId(), targetProfile.getId(), provisionRequest.getDeviceName());
+            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+        }
+    }
+
+    @Override
     public ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) {
-        fetchAndApplyDeviceNameForX509ProvisionRequestWithRegEx(provisionRequest);
         String provisionRequestKey = provisionRequest.getCredentials().getProvisionDeviceKey();
         String provisionRequestSecret = provisionRequest.getCredentials().getProvisionDeviceSecret();
         if (!StringUtils.isEmpty(provisionRequest.getDeviceName())) {
@@ -148,24 +183,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 }
                 break;
             case X509_CERTIFICATE_CHAIN:
-                if (targetProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret().equals(provisionRequestSecret)) {
-                    X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
-                    if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())) {
-                        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(targetDevice.getTenantId(), targetDevice.getId());
-                        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
-                            String updatedDeviceCertificateValue = provisionRequest.getCredentialsData().getX509CertHash();
-                            deviceCredentials = updateDeviceCredentials(targetDevice.getTenantId(), deviceCredentials,
-                                    updatedDeviceCertificateValue, DeviceCredentialsType.X509_CERTIFICATE);
-                        }
-                        return new ProvisionResponse(deviceCredentials, ProvisionResponseStatus.SUCCESS);
-                    } else if (x509Configuration.isAllowCreateNewDevicesByX509Certificate()) {
-                        return createDevice(provisionRequest, targetProfile);
-                    } else {
-                        log.warn("Device with name {} doesn't exist and cannot be created due incorrect configuration for X509CertificateChainProvisionConfiguration", provisionRequest.getDeviceName());
-                        throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
-                    }
-                }
-                break;
+                throw new ProvisionFailedException("Invalid provision strategy type!");
         }
         throw new ProvisionFailedException(ProvisionResponseStatus.NOT_FOUND.name());
     }
@@ -277,31 +295,21 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         auditLogService.logEntityAction(tenantId, customerId, new UserId(UserId.NULL_UUID), device.getName(), device.getId(), device, actionType, null, provisionRequest);
     }
 
-    private void fetchAndApplyDeviceNameForX509ProvisionRequestWithRegEx(ProvisionRequest provisionRequest) {
-        DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(provisionRequest.getCredentials().getProvisionDeviceKey());
-        if (deviceProfile != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProfileData().getProvisionConfiguration().getType())) {
-            X509CertificateChainProvisionConfiguration configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
-            String certificateValue = provisionRequest.getCredentialsData().getX509CertHash();
-            String certificateRegEx = configuration.getCertificateRegExPattern();
-            String deviceName = extractDeviceNameFromCertificateCNByRegEx(certificateValue, certificateRegEx);
-            if (deviceName == null) {
-                log.warn("Device name cannot be extracted using regex [{}] for certificate [{}]",certificateRegEx, certificateValue);
-                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
-            }
-            provisionRequest.setDeviceName(deviceName);
-        }
-    }
-
-    private String extractDeviceNameFromCertificateCNByRegEx(String x509Value, String regex) {
+    private String extractDeviceNameFromCertificateCNByRegEx(DeviceProfile profile, String x509Value, String regex) {
         try {
             String commonName = SslUtil.parseCommonName(SslUtil.readCertFile(x509Value));
             log.trace("Extract CN [{}] by regex pattern [{}]", commonName, regex);
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(commonName);
             if (matcher.find()) {
-                return matcher.group(0);
+                return matcher.group(1);
+            } else {
+                return null;
             }
-        } catch (Exception ignored) {}
-        return null;
+        } catch (Exception ignored) {
+            log.trace("[{}][{}] Failed to extract device name using [{}] and certificate: [{}]", profile.getTenantId(), profile.getId(), regex, x509Value);
+            return null;
+        }
     }
+
 }

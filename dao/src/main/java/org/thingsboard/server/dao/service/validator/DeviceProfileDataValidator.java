@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service.validator;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,6 +73,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Component
 public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<DeviceProfile> {
 
@@ -98,10 +100,10 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     @Autowired
     private DashboardService dashboardService;
 
-    @Value("${security.java_cacerts.path}")
+    @Value("${security.java_cacerts.path:}")
     private String javaCacertsPath;
 
-    @Value("${security.java_cacerts.password}")
+    @Value("${security.java_cacerts.password:}")
     private String javaCacertsPassword;
 
     @Override
@@ -343,13 +345,13 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             if (!uris.add(uri)) {
                 throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = " + uri + ". This value must be a unique value for all servers!");
             }
-            Integer port;
+            int port;
             if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
                 port = serverConfig.isBootstrapServerIs() ? 5687 : 5685;
             } else {
                 port = serverConfig.isBootstrapServerIs() ? 5688 : 5686;
             }
-            if (serverConfig.getPort() == null || serverConfig.getPort().intValue() != port) {
+            if (serverConfig.getPort() == null || serverConfig.getPort() != port) {
                 throw new DeviceCredentialsValidationException(server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
             }
         }
@@ -406,8 +408,8 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                     return true;
                 }
             }
-        } catch (CertificateException | KeyStoreException | NoSuchAlgorithmException |
-                 InvalidAlgorithmParameterException | IOException ignored) {
+        } catch (Exception ignored) {
+            log.trace("Failed to validate certificate due to: ", ignored);
         }
         return false;
     }

@@ -242,17 +242,20 @@ public class DefaultTransportApiService implements TransportApiService {
         for (String certificateValue : chain) {
             String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
             DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
-            if (credentials != null && credentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
+            if (credentials != null && DeviceCredentialsType.X509_CERTIFICATE.equals(credentials.getCredentialsType())) {
                 return getDeviceInfo(credentials);
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
-            if (deviceProfile != null && deviceProfile.getProvisionType() == X509_CERTIFICATE_CHAIN) {
+            if (deviceProfile != null && X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
                 String updatedDeviceProvisionSecret = chain.get(0);
-                ProvisionRequest provisionRequest = createProvisionRequest(deviceProfile, updatedDeviceProvisionSecret);
-                ProvisionResponse provisionResponse = provisionDeviceRequestAndGetResponse(provisionRequest);
-                if (provisionResponse != null && ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
-                    return getDeviceInfo(provisionResponse.getDeviceCredentials());
-                } else {
+                ProvisionRequest provisionRequest = createProvisionRequest(updatedDeviceProvisionSecret);
+                try {
+                    ProvisionResponse provisionResponse = deviceProvisionService.provisionDeviceViaX509Chain(deviceProfile, provisionRequest);
+                    if (ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
+                        return getDeviceInfo(provisionResponse.getDeviceCredentials());
+                    }
+                } catch (ProvisionFailedException e) {
+                    log.debug("[{}][{}] Failed to provision device with cert chain: {}", deviceProfile.getTenantId(), deviceProfile.getId(), provisionRequest, e);
                     return getEmptyTransportApiResponseFuture();
                 }
             } else if (deviceProfile != null) {
@@ -702,23 +705,10 @@ public class DefaultTransportApiService implements TransportApiService {
         return l != null ? l : 0;
     }
 
-    private ProvisionRequest createProvisionRequest(DeviceProfile deviceProfile, String certificateValue) {
-        ProvisionDeviceProfileCredentials provisionDeviceProfileCredentials = new ProvisionDeviceProfileCredentials(
-                deviceProfile.getProvisionDeviceKey(),
-                deviceProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret()
-        );
-        ProvisionDeviceCredentialsData provisionDeviceCredentialsData = new ProvisionDeviceCredentialsData(null, null, null, null, certificateValue);
-
-        return new ProvisionRequest(null, DeviceCredentialsType.X509_CERTIFICATE, provisionDeviceCredentialsData, provisionDeviceProfileCredentials);
-    }
-
-    private ProvisionResponse provisionDeviceRequestAndGetResponse(ProvisionRequest provisionRequest) {
-        try {
-            return deviceProvisionService.provisionDevice(provisionRequest);
-        } catch (ProvisionFailedException e) {
-            log.error(e.getMessage());
-        }
-        return null;
+    private ProvisionRequest createProvisionRequest(String certificateValue) {
+        return new ProvisionRequest(null, DeviceCredentialsType.X509_CERTIFICATE,
+                new ProvisionDeviceCredentialsData(null, null, null, null, certificateValue),
+                null);
     }
 
 }
