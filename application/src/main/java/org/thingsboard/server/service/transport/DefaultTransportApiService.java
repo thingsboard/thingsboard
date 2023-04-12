@@ -66,11 +66,13 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
+import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -108,8 +110,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.PASSWORD_MISMATCH;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.VALID;
 
@@ -124,10 +128,13 @@ public class DefaultTransportApiService implements TransportApiService {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    private static final Pattern X509_CERTIFICATE_TRIM_CHAIN_PATTERN = Pattern.compile("-----BEGIN CERTIFICATE-----\\s*.*?\\s*-----END CERTIFICATE-----");
+
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbTenantProfileCache tenantProfileCache;
     private final TbApiUsageStateService apiUsageStateService;
     private final DeviceService deviceService;
+    private final DeviceProfileService deviceProfileService;
     private final RelationService relationService;
     private final DeviceCredentialsService deviceCredentialsService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
@@ -159,6 +166,9 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasValidateX509CertRequestMsg()) {
             ValidateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateX509CertRequestMsg();
             result = validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
+        } else if (transportApiRequestMsg.hasValidateOrCreateX509CertRequestMsg()) {
+            TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateOrCreateX509CertRequestMsg();
+            result = validateOrCreateDeviceX509Certificate(msg.getCertificateChain());
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
             result = handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasEntityProfileRequestMsg()) {
@@ -224,6 +234,32 @@ public class DefaultTransportApiService implements TransportApiService {
                 return validateUserNameCredentials(mqtt);
             }
         }
+    }
+
+    protected ListenableFuture<TransportApiResponseMsg> validateOrCreateDeviceX509Certificate(String certificateChain) {
+        List<String> chain = X509_CERTIFICATE_TRIM_CHAIN_PATTERN.matcher(certificateChain).results().map(match ->
+                EncryptionUtil.certTrimNewLines(match.group())).collect(Collectors.toList());
+        for (String certificateValue : chain) {
+            String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
+            DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
+            if (credentials != null && credentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
+                return getDeviceInfo(credentials);
+            }
+            DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
+            if (deviceProfile != null && deviceProfile.getProvisionType() == X509_CERTIFICATE_CHAIN) {
+                String updatedDeviceProvisionSecret = chain.get(0);
+                ProvisionRequest provisionRequest = createProvisionRequest(deviceProfile, updatedDeviceProvisionSecret);
+                ProvisionResponse provisionResponse = provisionDeviceRequestAndGetResponse(provisionRequest);
+                if (provisionResponse != null && ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
+                    return getDeviceInfo(provisionResponse.getDeviceCredentials());
+                } else {
+                    return getEmptyTransportApiResponseFuture();
+                }
+            } else if (deviceProfile != null) {
+                log.warn("[{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getId(), X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
+            }
+        }
+        return getEmptyTransportApiResponseFuture();
     }
 
     private ListenableFuture<TransportApiResponseMsg> validateUserNameCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
@@ -665,4 +701,24 @@ public class DefaultTransportApiService implements TransportApiService {
     private Long checkLong(Long l) {
         return l != null ? l : 0;
     }
+
+    private ProvisionRequest createProvisionRequest(DeviceProfile deviceProfile, String certificateValue) {
+        ProvisionDeviceProfileCredentials provisionDeviceProfileCredentials = new ProvisionDeviceProfileCredentials(
+                deviceProfile.getProvisionDeviceKey(),
+                deviceProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret()
+        );
+        ProvisionDeviceCredentialsData provisionDeviceCredentialsData = new ProvisionDeviceCredentialsData(null, null, null, null, certificateValue);
+
+        return new ProvisionRequest(null, DeviceCredentialsType.X509_CERTIFICATE, provisionDeviceCredentialsData, provisionDeviceProfileCredentials);
+    }
+
+    private ProvisionResponse provisionDeviceRequestAndGetResponse(ProvisionRequest provisionRequest) {
+        try {
+            return deviceProvisionService.provisionDevice(provisionRequest);
+        } catch (ProvisionFailedException e) {
+            log.error(e.getMessage());
+        }
+        return null;
+    }
+
 }

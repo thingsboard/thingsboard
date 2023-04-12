@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device;
+
+package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
 @Data
-public class DeviceProfileEvictEvent {
+@NoArgsConstructor
+public class X509CertificateChainProvisionConfiguration implements DeviceProfileProvisionConfiguration {
 
-    private final TenantId tenantId;
-    private final String newName;
-    private final String oldName;
-    private final DeviceProfileId deviceProfileId;
-    private final boolean defaultProfile;
-    private final String provisionDeviceKey;
+    private String provisionDeviceSecret;
+    private String certificateRegExPattern;
+    private boolean allowCreateNewDevicesByX509Certificate;
+
+    @Override
+    public DeviceProfileProvisionType getType() {
+        return DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN;
+    }
 
 }

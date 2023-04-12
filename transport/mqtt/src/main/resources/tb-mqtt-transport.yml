@@ -114,7 +114,7 @@ transport:
       # Server SSL credentials
       credentials:
         # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
-        type:  "${MQTT_SSL_CREDENTIALS_TYPE:PEM}"
+        type: "${MQTT_SSL_CREDENTIALS_TYPE:PEM}"
         # PEM server credentials
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
