@@ -130,7 +130,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             }
             if (ruleId == null) {
                 if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
-                    throw new IllegalArgumentException("Target for " + deliveryMethod.getName() + " delivery method is missing");
+                    throw new IllegalArgumentException("Recipients for " + deliveryMethod.getName() + " delivery method not chosen");
                 }
             }
         });

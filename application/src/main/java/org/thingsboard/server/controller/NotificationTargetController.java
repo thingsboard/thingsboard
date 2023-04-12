@@ -71,7 +71,7 @@ public class NotificationTargetController extends BaseController {
     private final NotificationTargetService notificationTargetService;
 
     @ApiOperation(value = "Save notification target (saveNotificationTarget)",
-            notes = "Create or update notification target.\n\n" +
+            notes = "Create or update notification target." +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/target")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
