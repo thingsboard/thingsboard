@@ -190,7 +190,7 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
         return device;
     }
 
-    private Device createDevice(String deviceName, String accessToken) throws Exception {
+    protected Device createDevice(String deviceName, String accessToken) throws Exception {
         Device device = new Device();
         device.setName(deviceName);
         device.setType("default");

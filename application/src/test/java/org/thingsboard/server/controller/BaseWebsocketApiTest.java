@@ -16,6 +16,8 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -87,7 +89,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         device.setType("default");
         device.setLabel("testLabel" + (int) (Math.random() * 1000));
         device = doPost("/api/device", device, Device.class);
-        dtf = new DeviceTypeFilter(device.getType(), device.getName());
+        dtf = new DeviceTypeFilter(List.of(device.getType()), device.getName());
     }
 
     @After
@@ -195,7 +197,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         Assert.assertEquals(1, update1.getCmdId());
         Assert.assertEquals(1, update1.getCount());
 
-        DeviceTypeFilter dtf2 = new DeviceTypeFilter("non-existing-device-type", "D");
+        DeviceTypeFilter dtf2 = new DeviceTypeFilter(List.of("non-existing-device-type"), "D");
         EntityCountQuery edq2 = new EntityCountQuery(dtf2, Collections.emptyList());
         EntityCountCmd cmd2 = new EntityCountCmd(2, edq2);
 
@@ -214,7 +216,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         highTemperatureFilter.setPredicate(predicate);
         highTemperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
 
-        DeviceTypeFilter dtf3 = new DeviceTypeFilter("default", "D");
+        DeviceTypeFilter dtf3 = new DeviceTypeFilter(List.of("default"), "D");
         EntityCountQuery edq3 = new EntityCountQuery(dtf3, Collections.singletonList(highTemperatureFilter));
         EntityCountCmd cmd3 = new EntityCountCmd(3, edq3);
         getWsClient().send(cmd3);
@@ -231,7 +233,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         highTemperatureFilter2.setPredicate(predicate2);
         highTemperatureFilter2.setValueType(EntityKeyValueType.NUMERIC);
 
-        DeviceTypeFilter dtf4 = new DeviceTypeFilter("default", "D");
+        DeviceTypeFilter dtf4 = new DeviceTypeFilter(List.of("default"), "D");
         EntityCountQuery edq4 = new EntityCountQuery(dtf4, Collections.singletonList(highTemperatureFilter2));
         EntityCountCmd cmd4 = new EntityCountCmd(4, edq4);
 
@@ -635,6 +637,34 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         JsonNode update = JacksonUtil.toJsonNode(getWsClient().waitForUpdate());
         assertThat(update).as("waitForUpdate").isNotNull();
         assertThat(update.get("data").get("attr").get(0).get(1).asText()).isEqualTo(expectedAttrValue);
+    }
+
+    @Test
+    public void testEntityCountCmd_filterTypeSingularCompatibilityTest() {
+        ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        oldFormatDeviceTypeFilterSingular.put("type", "deviceType");
+        oldFormatDeviceTypeFilterSingular.put("deviceType", "default");
+        oldFormatDeviceTypeFilterSingular.put("deviceNameFilter", "Device");
+
+        ObjectNode query = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        query.set("entityFilter", oldFormatDeviceTypeFilterSingular);
+
+        ObjectNode entityCountCmd = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        entityCountCmd.put("cmdId", 1);
+        entityCountCmd.set("query", query);
+
+        ArrayNode entityCountCmds = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+        entityCountCmds.add(entityCountCmd);
+
+        ObjectNode wrapperNode = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        wrapperNode.set("entityCountCmds", entityCountCmds);
+
+        getWsClient().send(JacksonUtil.toString(wrapperNode));
+
+        EntityCountUpdate update = getWsClient().parseCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
     }
 
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {

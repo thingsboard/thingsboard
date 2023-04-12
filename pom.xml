@@ -164,6 +164,7 @@
         <module>application</module>
         <module>msa</module>
         <module>rest-client</module>
+        <module>monitoring</module>
     </modules>
 
     <profiles>
@@ -194,6 +195,7 @@
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-resources-plugin</artifactId>
+                            <version>3.2.0</version>
                             <executions>
                                 <execution>
                                     <id>copy-conf</id>
@@ -623,7 +625,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>2.7</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -1083,6 +1085,11 @@
                 <groupId>org.glassfish.jaxb</groupId>
                 <artifactId>jaxb-runtime</artifactId>
                 <version>${jaxb-runtime.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>

@@ -604,6 +604,47 @@ export class DashboardUtilsService {
       delete entityAlias.entityType;
       delete entityAlias.entityFilter;
     }
+    entityAlias = this.validateAndUpdateEntityAliasSingleTypeFilters(entityAlias);
+    return entityAlias;
+  }
+
+  private validateAndUpdateEntityAliasSingleTypeFilters(entityAlias: EntityAlias): EntityAlias {
+    if (entityAlias.filter.type === AliasFilterType.deviceType) {
+      if (entityAlias.filter.deviceType) {
+        if (!entityAlias.filter.deviceTypes) {
+          entityAlias.filter.deviceTypes = [];
+        }
+        entityAlias.filter.deviceTypes.push(entityAlias.filter.deviceType);
+        delete entityAlias.filter.deviceType;
+      }
+    }
+    if (entityAlias.filter.type === AliasFilterType.assetType) {
+      if (entityAlias.filter.assetType) {
+        if (!entityAlias.filter.assetTypes) {
+          entityAlias.filter.assetTypes = [];
+        }
+        entityAlias.filter.assetTypes.push(entityAlias.filter.assetType);
+        delete entityAlias.filter.assetType;
+      }
+    }
+    if (entityAlias.filter.type === AliasFilterType.entityViewType) {
+      if (entityAlias.filter.entityViewType) {
+        if (!entityAlias.filter.entityViewTypes) {
+          entityAlias.filter.entityViewTypes = [];
+        }
+        entityAlias.filter.entityViewTypes.push(entityAlias.filter.entityViewType);
+        delete entityAlias.filter.entityViewType;
+      }
+    }
+    if (entityAlias.filter.type === AliasFilterType.edgeType) {
+      if (entityAlias.filter.edgeType) {
+        if (!entityAlias.filter.edgeTypes) {
+          entityAlias.filter.edgeTypes = [];
+        }
+        entityAlias.filter.edgeTypes.push(entityAlias.filter.edgeType);
+        delete entityAlias.filter.edgeType;
+      }
+    }
     return entityAlias;
   }
 

@@ -73,7 +73,7 @@ public class DefaultDeviceStateServiceTest {
 
     @Before
     public void setUp() {
-        service = spy(new DefaultDeviceStateService(tenantService, deviceService, attributesService, tsService, clusterService, partitionService, serviceInfoProvider, null, null));
+        service = spy(new DefaultDeviceStateService(tenantService, deviceService, attributesService, tsService, clusterService, partitionService, serviceInfoProvider, null, null, null));
     }
 
     @Test
