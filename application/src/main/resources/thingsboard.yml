@@ -746,7 +746,7 @@ transport:
     # MQTT SSL configuration
     ssl:
       # Enable/disable SSL support
-      enabled: "${MQTT_SSL_ENABLED:false}"
+      enabled: "${MQTT_SSL_ENABLED:true}"
       # MQTT SSL bind address
       bind_address: "${MQTT_SSL_BIND_ADDRESS:0.0.0.0}"
       # MQTT SSL bind port
@@ -760,11 +760,11 @@ transport:
         # PEM server credentials
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
-          cert_file: "${MQTT_SSL_PEM_CERT:mqttserver.pem}"
+          cert_file: "${MQTT_SSL_PEM_CERT:/home/developer/x509/server.pem}"
           # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
-          key_file: "${MQTT_SSL_PEM_KEY:mqttserver_key.pem}"
+          key_file: "${MQTT_SSL_PEM_KEY:/home/developer/x509/server_key.pem}"
           # Server certificate private key password (optional)
-          key_password: "${MQTT_SSL_PEM_KEY_PASSWORD:server_key_password}"
+          key_password: "${MQTT_SSL_PEM_KEY_PASSWORD:}"
         # Keystore server credentials
         keystore:
           # Type of the key store (JKS or PKCS12)

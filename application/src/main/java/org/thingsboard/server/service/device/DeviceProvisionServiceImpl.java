@@ -110,12 +110,8 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         X509CertificateChainProvisionConfiguration configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
         String certificateValue = provisionRequest.getCredentialsData().getX509CertHash();
         String certificateRegEx = configuration.getCertificateRegExPattern();
-        String commonName = getCNFromX509Certificate(certificateValue);
+        String commonName = getCNFromX509Certificate(targetProfile, certificateValue);
         String deviceName = extractDeviceNameFromCNByRegEx(targetProfile, commonName, certificateRegEx);
-        if (StringUtils.isBlank(deviceName)) {
-            log.warn("[{}][{}] Failed to extract device name using [{}] and certificate: [{}]", targetProfile.getTenantId(), targetProfile.getId(), certificateRegEx, certificateValue);
-            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
-        }
         provisionRequest.setDeviceName(deviceName);
         Device targetDevice = deviceService.findDeviceByTenantIdAndName(targetProfile.getTenantId(), provisionRequest.getDeviceName());
         X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
@@ -296,15 +292,16 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         auditLogService.logEntityAction(tenantId, customerId, new UserId(UserId.NULL_UUID), device.getName(), device.getId(), device, actionType, null, provisionRequest);
     }
 
-    private String getCNFromX509Certificate(String x509Value) {
+    private String getCNFromX509Certificate(DeviceProfile profile, String x509Value) {
         try {
             return SslUtil.parseCommonName(SslUtil.readCertFile(x509Value));
         } catch (Exception e) {
+            log.trace("[{}][{}] Failed to parse CN from X509 certificate {}", profile.getTenantId(), profile.getId(), x509Value);
             return null;
         }
     }
 
-    public String extractDeviceNameFromCNByRegEx(DeviceProfile profile, String commonName, String regex) {
+    public String extractDeviceNameFromCNByRegEx(DeviceProfile profile, String commonName, String regex) throws ProvisionFailedException {
         try {
             log.trace("Extract device name from CN [{}] by regex pattern [{}]", commonName, regex);
             Pattern pattern = Pattern.compile(regex);
@@ -314,7 +311,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             }
         } catch (Exception ignored) {}
         log.trace("[{}][{}] Failed to match device name using [{}] from CN: [{}]", profile.getTenantId(), profile.getId(), regex, commonName);
-        return null;
+        throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
     }
 
 }
