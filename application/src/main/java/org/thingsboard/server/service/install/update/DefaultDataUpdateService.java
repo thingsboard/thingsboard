@@ -33,7 +33,7 @@ import org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode;
 import org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode;
-import org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode;
+import org.thingsboard.rule.engine.metadata.TbGetRelatedDeviceAttrNode;
 import org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode;
 import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
 import org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode;
@@ -232,7 +232,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     TbGetOriginatorFieldsNode.class.getName(),
                     TbFetchDeviceCredentialsNode.class.getName(),
                     TbGetAttributesNode.class.getName(),
-                    TbGetDeviceAttrNode.class.getName(),
+                    TbGetRelatedDeviceAttrNode.class.getName(),
                     TbGetRelatedAttributeNode.class.getName(),
                     TbGetTenantAttributeNode.class.getName(),
                     TbGetCustomerAttributeNode.class.getName(),
