@@ -1,15 +1,21 @@
 #### Examples of RegEx usage
 
-* **Pattern:** <code>.*</code> - matches any character (until line terminators)
-  <br>**CN sample:** <code>DeviceName\nAdditionalInfo</code>
-  <br>**Pattern matches:** <code>DeviceName</code>
+The regular expression is required to extract device name from the X509 certificate's common name.
+The regular expression syntax is based on Java [Pattern](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/regex/Pattern.html).
+You may also use this [resource](https://regex101.com/) to test your expressions but make sure you select Java 8 flavor.
 
-* **Pattern:** <code>^([^@]+)</code> - matches any string that starts with one or more characters that are not the <code>@</code> symbol (<code>@</code> could be replaced by any other symbol)
-  <br>**CN sample:** <code>DeviceName@AdditionalInfo</code>
-  <br>**Pattern matches:** <code>DeviceName</code>
+* **Pattern:**<code>(.*)\.company.com</code>- matches any characters before the ".company.com".
+  <br>**CN sample:**<code>DeviceA.company.com</code>
+  <br>**Result:**<code>DeviceA</code>
 
-* **Pattern:** <code>[\w]*$</code> (equivalent to <code>[a-zA-Z0-9_]\*$</code>) - matches zero or more occurences of any word character  (letter, digit or underscore) at the end of the string
-  <br>**CN sample:** <code>AdditionalInfo2110#DeviceName_01</code>
-  <br>**Pattern matches:** <code>DeviceName_01</code>
+* **Pattern:** <code>(.*)@company.com</code>- matches any characters before the "@company.com".
+  <br>**CN sample:**<code>DeviceA@company.com</code>
+  <br>**Result:**<code>DeviceA</code>
 
-**Note:** Client will get error response in case regex is failed to match.
+* **Pattern:** <code>prefix(.*)suffix@company.com</code>- matches characters between "prefix" and "suffix@company.com".
+  <br>**CN sample:**<code>prefixDeviceAsuffix@company.com</code>
+  <br>**Pattern matches:** <code>DeviceA</code>
+
+* **Pattern:** <code>\\D+\\.(.*)\\.\\d+@company.com</code>- matches characters between not digits prefix followed by period and sequence of digits with "@company.com" ending.
+  <br>**CN sample:**<code>region.DeviceA.220423@company.com</code>
+  <br>**Pattern matches:** <code>DeviceA</code>

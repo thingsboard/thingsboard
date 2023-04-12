@@ -24,5 +24,5 @@ public interface DeviceProvisionService {
 
     ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) throws ProvisionFailedException;
 
-    ProvisionResponse provisionDeviceViaX509Chain(DeviceProfile deviceProfile, ProvisionRequest provisionRequest);
+    ProvisionResponse provisionDeviceViaX509Chain(DeviceProfile deviceProfile, ProvisionRequest provisionRequest) throws ProvisionFailedException;
 }

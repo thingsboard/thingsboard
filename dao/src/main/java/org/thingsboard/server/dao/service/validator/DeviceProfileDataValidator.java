@@ -408,8 +408,8 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                     return true;
                 }
             }
-        } catch (Exception ignored) {
-            log.trace("Failed to validate certificate due to: ", ignored);
+        } catch (Exception e) {
+            log.trace("Failed to validate certificate due to: ", e);
         }
         return false;
     }
