@@ -19,6 +19,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Base64Utils;
@@ -56,14 +57,12 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.PKIXParameters;
@@ -99,6 +98,12 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     @Autowired
     private DashboardService dashboardService;
 
+    @Value("${security.java_cacerts.path}")
+    private String javaCacertsPath;
+
+    @Value("${security.java_cacerts.password}")
+    private String javaCacertsPassword;
+
     @Override
     protected void validateDataImpl(TenantId tenantId, DeviceProfile deviceProfile) {
         if (StringUtils.isEmpty(deviceProfile.getName())) {
@@ -132,8 +137,8 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         if (deviceProfile.getProvisionType() == null) {
             deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         }
-        if (deviceProfile.getProvisionDeviceKey() != null) {
-            if (getRootCAFromJavaCacerts(deviceProfile.getProvisionDeviceKey())) {
+        if (deviceProfile.getProvisionDeviceKey() != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
+            if (isDeviceProfileCertificateInJavaCacerts(deviceProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret())) {
                 throw new DataValidationException("Device profile certificate cannot be well known root CA!");
             }
         }
@@ -230,8 +235,8 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DataValidationException(message);
             }
         }
-        if (deviceProfile.getProvisionDeviceKey() != null) {
-            if (getRootCAFromJavaCacerts(deviceProfile.getProvisionDeviceKey())) {
+        if (deviceProfile.getProvisionDeviceKey() != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
+            if (isDeviceProfileCertificateInJavaCacerts(deviceProfile.getProvisionDeviceKey())) {
                 throw new DataValidationException("Device profile certificate cannot be well known root CA!");
             }
         }
@@ -388,18 +393,16 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         }
     }
 
-    boolean getRootCAFromJavaCacerts(String deviceProfileHash) {
+    private boolean isDeviceProfileCertificateInJavaCacerts(String deviceProfileX509Secret) {
         try {
-            String filename = System.getProperty("java.home") + "/lib/security/cacerts".replace('/', File.separatorChar);
-            FileInputStream is = new FileInputStream(filename);
+            FileInputStream is = new FileInputStream(javaCacertsPath);
             KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-            String password = "changeit";
-            keystore.load(is, password.toCharArray());
+            keystore.load(is, javaCacertsPassword.toCharArray());
 
             PKIXParameters params = new PKIXParameters(keystore);
             for (TrustAnchor ta : params.getTrustAnchors()) {
                 X509Certificate cert = ta.getTrustedCert();
-                if (EncryptionUtil.getSha3Hash(getCertificateString(cert)).equals(deviceProfileHash)) {
+                if (getCertificateString(cert).equals(deviceProfileX509Secret)) {
                     return true;
                 }
             }
@@ -409,7 +412,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         return false;
     }
 
-    private String getCertificateString(Certificate cert) throws CertificateEncodingException {
+    private String getCertificateString(X509Certificate cert) throws CertificateEncodingException {
         return EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
     }
 }
