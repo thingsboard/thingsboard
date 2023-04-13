@@ -478,10 +478,14 @@ cache:
     entityCount:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
       maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+
   # deliberately placed outside 'specs' group above
   notificationRules:
     timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:30}"
     maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:1000}"
+  rateLimits:
+    timeToLiveInMinutes: "${CACHE_SPECS_RATE_LIMITS_TTL:60}"
+    maxSize: "${CACHE_SPECS_RATE_LIMITS_MAX_SIZE:100000}"
 
 #Disable this because it is not required.
 spring.data.redis.repositories.enabled: false
