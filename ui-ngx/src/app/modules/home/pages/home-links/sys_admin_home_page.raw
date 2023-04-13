@@ -301,7 +301,7 @@
           },
           "showLegend": false,
           "useDashboardTimewindow": true,
-          "widgetCss": "gridster.mobile {\n    overflow-y: hidden;\n}\n",
+          "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
         },
@@ -1397,7 +1397,7 @@
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-start;\n    align-items: stretch;\n}\n\n.tb-card-section {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-section.left {\n    padding-right: 12px;\n    border-right: solid 1px rgba(0, 0, 0, 0.12);\n}\n\n.tb-card-section.center {\n    padding-left: 12px;\n    padding-right: 12px;\n}\n\n.tb-card-section.right {\n    padding-left: 12px;\n    border-left: solid 1px rgba(0, 0, 0, 0.12);\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 600;\n    font-size: 20px;\n    line-height: 24px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 400;\n    font-size: 12px;\n    line-height: 16px;\n    color: rgba(0, 0, 0, 0.54);\n}\n"
           },
-          "title": "Mobile system info cards",
+          "title": "System info mobile card",
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
@@ -2282,7 +2282,7 @@
             "markdownTextPattern": "<div style=\"width: 100%; height: 100%;\">\n    <tb-dashboard-state *ngIf=\"!ctx.isMobile; else mobile\" stateId=\"entities_info_desktop\" [ctx]=\"ctx\"></tb-dashboard-state>\n    <ng-template #mobile>\n        <tb-dashboard-state stateId=\"entities_info_mobile\" [ctx]=\"ctx\"></tb-dashboard-state>\n    </ng-template>    \n</div>",
             "applyDefaultMarkdownStyle": false
           },
-          "title": "System info cards",
+          "title": "Entities info cards",
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
@@ -2300,7 +2300,7 @@
           },
           "showLegend": false,
           "useDashboardTimewindow": true,
-          "widgetCss": "gridster.mobile {\n    overflow-y: hidden;\n}\n",
+          "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
         },

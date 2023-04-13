@@ -587,7 +587,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       }
       if (parentHeight) {
         let totalRows = 0;
-        for (const widget of this.dashboardWidgets.dashboardWidgets) {
+        for (const widget of this.dashboardWidgets.activeDashboardWidgets) {
           totalRows += widget.rows;
         }
         rowHeight = ( parentHeight - this.gridsterOpts.margin *
