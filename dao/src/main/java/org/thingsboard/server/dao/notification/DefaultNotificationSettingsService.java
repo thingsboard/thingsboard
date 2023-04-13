@@ -170,8 +170,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         newAlarmRuleTriggerConfig.setAlarmSeverities(null);
         newAlarmRuleTriggerConfig.setNotifyOn(Set.of(AlarmAction.CREATED));
         createRule(tenantId, "New alarm", newAlarmNotificationTemplate.getId(), newAlarmRuleTriggerConfig,
-                List.of(tenantAdmins.getId(), originatorEntityOwnerUsers.getId()), "Send notification to tenant admins and alarm's customer users " +
-                        "when an alarm is created");
+                List.of(tenantAdmins.getId()), "Send notification to tenant admins when an alarm is created");
 
         NotificationTemplate alarmUpdateNotificationTemplate = createTemplate(tenantId, "Alarm update notification", NotificationType.ALARM,
                 "Alarm '${alarmType}' - ${action}",
@@ -182,8 +181,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         alarmRuleTriggerConfig.setAlarmSeverities(null);
         alarmRuleTriggerConfig.setNotifyOn(Set.of(AlarmAction.SEVERITY_CHANGED, AlarmAction.ACKNOWLEDGED, AlarmAction.CLEARED));
         createRule(tenantId, "Alarm update", alarmUpdateNotificationTemplate.getId(), alarmRuleTriggerConfig,
-                List.of(tenantAdmins.getId(), originatorEntityOwnerUsers.getId()), "Send notification to tenant admins and alarm's customer users " +
-                        "when any alarm is updated or cleared");
+                List.of(tenantAdmins.getId()), "Send notification to tenant admins when any alarm is updated or cleared");
 
         NotificationTemplate deviceActionNotificationTemplate = createTemplate(tenantId, "Device action notification", NotificationType.ENTITY_ACTION,
                 "${entityType} was ${actionType}",
@@ -195,8 +193,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         deviceActionRuleTriggerConfig.setUpdated(false);
         deviceActionRuleTriggerConfig.setDeleted(false);
         createRule(tenantId, "Device created", deviceActionNotificationTemplate.getId(), deviceActionRuleTriggerConfig,
-                List.of(originatorEntityOwnerUsers.getId()), "Send notification to tenant admins or customer users " +
-                        "when device is created");
+                List.of(tenantAdmins.getId()), "Send notification to tenant admins when device is created");
 
         NotificationTemplate deviceActivityNotificationTemplate = createTemplate(tenantId, "Device activity notification", NotificationType.DEVICE_ACTIVITY,
                 "Device '${deviceName}' became ${eventType}",
@@ -207,8 +204,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         deviceActivityRuleTriggerConfig.setDeviceProfiles(null);
         deviceActivityRuleTriggerConfig.setNotifyOn(Set.of(DeviceEvent.ACTIVE, DeviceEvent.INACTIVE));
         createRule(tenantId, "Device activity status change", deviceActivityNotificationTemplate.getId(), deviceActivityRuleTriggerConfig,
-                List.of(originatorEntityOwnerUsers.getId()), "Send notification to tenant admins or customer users " +
-                        "when any device changes its activity state");
+                List.of(tenantAdmins.getId()), "Send notification to tenant admins when any device changes its activity state");
 
         NotificationTemplate alarmCommentNotificationTemplate = createTemplate(tenantId, "Alarm comment notification", NotificationType.ALARM_COMMENT,
                 "Comment on '${alarmType}' alarm",
@@ -221,8 +217,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         alarmCommentRuleTriggerConfig.setOnlyUserComments(true);
         alarmCommentRuleTriggerConfig.setNotifyOnCommentUpdate(false);
         createRule(tenantId, "Comment on active alarm", alarmCommentNotificationTemplate.getId(), alarmCommentRuleTriggerConfig,
-                List.of(originatorEntityOwnerUsers.getId()), "Send notification to tenant admins or customer users " +
-                        "when comment is added by user on active alarm");
+                List.of(tenantAdmins.getId()), "Send notification to tenant admins when comment is added by user on active alarm");
 
         NotificationTemplate alarmAssignedNotificationTemplate = createTemplate(tenantId, "Alarm assigned notification", NotificationType.ALARM_ASSIGNMENT,
                 "Alarm '${alarmType}' (${alarmSeverity}) was assigned to user",
