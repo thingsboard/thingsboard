@@ -23,7 +23,7 @@
   </mat-spinner>
 </div>
 <div id="gridster-parent"
-     fxFlex class="tb-dashboard-content layout-wrap" [ngStyle]="{overflowY: isAutofillHeight() ? 'hidden' : 'auto'}"
+     fxFlex class="tb-dashboard-content layout-wrap" [ngClass]="{'autofill-height': isAutofillHeight()}"
                 (contextmenu)="openDashboardContextMenu($event)">
   <div #dashboardMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
        [style.left]="dashboardMenuPosition.x"

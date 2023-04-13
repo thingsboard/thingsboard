@@ -534,17 +534,17 @@
         "filter-type-state-entity": "Entity from dashboard state",
         "filter-type-state-entity-description": "Entity taken from dashboard state parameters",
         "filter-type-asset-type": "Asset type",
-        "filter-type-asset-type-description": "Assets of type '{{assetType}}'",
-        "filter-type-asset-type-and-name-description": "Assets of type '{{assetType}}' and with name starting with '{{prefix}}'",
+        "filter-type-asset-type-description": "Assets of type '{{assetTypes}}'",
+        "filter-type-asset-type-and-name-description": "Assets of type '{{assetTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-device-type": "Device type",
-        "filter-type-device-type-description": "Devices of type '{{deviceType}}'",
-        "filter-type-device-type-and-name-description": "Devices of type '{{deviceType}}' and with name starting with '{{prefix}}'",
+        "filter-type-device-type-description": "Devices of type '{{deviceTypes}}'",
+        "filter-type-device-type-and-name-description": "Devices of types '{{deviceTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-entity-view-type": "Entity View type",
-        "filter-type-entity-view-type-description": "Entity Views of type '{{entityViewType}}'",
-        "filter-type-entity-view-type-and-name-description": "Entity Views of type '{{entityViewType}}' and with name starting with '{{prefix}}'",
+        "filter-type-entity-view-type-description": "Entity Views of type '{{entityViewTypes}}'",
+        "filter-type-entity-view-type-and-name-description": "Entity Views of type '{{entityViewTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-edge-type": "Edge type",
-        "filter-type-edge-type-description": "Edges of type '{{edgeType}}'",
-        "filter-type-edge-type-and-name-description": "Edges of type '{{edgeType}}' and with name starting with '{{prefix}}'",
+        "filter-type-edge-type-description": "Edges of type '{{edgeTypes}}'",
+        "filter-type-edge-type-and-name-description": "Edges of type '{{edgeTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-relations-query": "Relations query",
         "filter-type-relations-query-description": "{{entities}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
         "filter-type-asset-search-query": "Asset search query",
@@ -995,6 +995,7 @@
         "vertical-margin-required": "Vertical margin value is required.",
         "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
         "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
+        "apply-outer-margin": "Apply margin to the sides of the layout",
         "autofill-height": "Auto fill layout height",
         "mobile-layout": "Mobile layout settings",
         "mobile-row-height": "Mobile row height, px",
@@ -2400,7 +2401,7 @@
          "ignore-case": "ignore case",
          "value": "Value",
          "remove-filter": "Remove filter",
-         "duplicate-filter": "Duplicate filter",
+         "duplicate-filter-action": "Duplicate filter",
          "preview": "Filter preview",
          "no-filters": "No filters configured",
          "add-filter": "Add filter",
@@ -3483,6 +3484,7 @@
         "tenant-profile": "Tenant profile",
         "tenant-profiles": "Tenant profiles",
         "add": "Add tenant profile",
+        "add-profile": "Add profile",
         "edit": "Edit tenant profile",
         "tenant-profile-details": "Tenant profile details",
         "no-tenant-profiles-text": "No tenant profiles found",
@@ -3600,6 +3602,7 @@
         "incorrect-pattern-for-rate-limits": "The format is comma separated pairs of capacity and period (in seconds) with a colon between, e.g. 100:1,2000:60",
         "too-small-value-zero": "The value must be bigger than 0",
         "too-small-value-one": "The value must be bigger than 1",
+        "queue-size-is-limited-by-system-configuration": "The size of the queue is also limited by the system configuration.",
         "cassandra-tenant-limits-configuration": "Cassandra query for tenant",
         "ws-limit-max-sessions-per-tenant": "Sessions per tenant maximum number",
         "ws-limit-max-sessions-per-customer": "Sessions per customer maximum number",
@@ -5083,6 +5086,115 @@
             "font-weight-lighter": "Lighter",
             "color": "Color",
             "shadow-color": "Shadow color"
+        },
+        "system-info": {
+            "cpu": "CPU",
+            "ram": "RAM",
+            "disk": "Disk",
+            "cpu-warning-text": "Running high on CPU usage. To avoid system failure, optimize system performance.",
+            "cpu-critical-text": "Critically high CPU usage. To avoid system failure, optimize system performance.",
+            "ram-warning-text": "Running low on reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.",
+            "ram-critical-text": "Critically low reserve of RAM. To avoid system failure, optimize system performance or increase the size of RAM.",
+            "disk-warning-text": "Running low on disk space. To avoid data loss, free up or expand the disk space.",
+            "disk-critical-text": "Critically low disk space. To avoid data loss, free up or expand the disk space."
+        },
+        "cluster-info": {
+            "service-id": "Service id",
+            "service-type": "Service type",
+            "no-data": "No data"
+        },
+        "transport-messages": {
+            "title": "Transport messages",
+            "info": "All the messages that came from devices"
+        },
+        "documentation": {
+            "title": "Documentation",
+            "add-link": "Add link",
+            "add-link-title": "Add documentation link",
+            "name": "Name",
+            "name-required": "Name is required.",
+            "link": "Link",
+            "link-required": "Link is required.",
+            "columns": "Columns"
+        },
+        "configured-features": {
+            "title": "Configured features",
+            "info": "Status of features that require configuration",
+            "email-feature": "Email",
+            "sms-feature": "SMS",
+            "slack-feature": "Slack",
+            "oauth2-feature": "OAuth 2",
+            "2fa-feature": "2FA",
+            "feature-configured": "Feature is configured.\nClick to setup",
+            "feature-not-configured": "Feature is not configured.\nClick to setup"
+        },
+        "version-info": {
+            "title": "Version",
+            "contact-us": "Contact us",
+            "current-version": "Current version",
+            "current": "Current",
+            "available-version": "Available version",
+            "available": "Available",
+            "upgrade": "Upgrade",
+            "version-is-up-to-date": "Version is up to date"
+        },
+        "functions": {
+            "title": "Functions",
+            "pe-feature-tooltip": "Only on ThingsBoard\nProfessional Edition",
+            "switch-to-pe": "Switch to PE",
+            "alarms": "Alarms",
+            "dashboards": "Dashboards",
+            "entities-and-relations": "Entities & Relations",
+            "profiles": "Profiles",
+            "advanced-features": "Advanced features",
+            "notification-center": "Notification center",
+            "api-usage": "API usage",
+            "customers": "Customers",
+            "customers-hierarchy": "Customers hierarchy",
+            "roles-and-permissions": "Roles & Permissions",
+            "groups": "Groups",
+            "integrations": "Integrations",
+            "solution-templates": "Solution templates",
+            "scheduler": "Scheduler",
+            "white-labeling": "White-labeling"
+        },
+        "getting-started": {
+            "get-started": "Get started",
+            "finish": "Finish",
+            "done-welcome-title": "Welcome on board",
+            "done-welcome-text": "You did great with it!",
+            "sys-admin": {
+                "step1": {
+                    "title": "Create Tenant and Tenant Administrator",
+                    "content": "<p>A tenant is an individual or organization that owns or produces devices and assets. Tenants can create Tenant administrator users.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-create-tenant": "How to create Tenant"
+                },
+                "step2": {
+                    "title": "Configure feature: Mail server",
+                    "content": "<p>Users will receive activation and password reset emails from the System Administrator via an SMTP server.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-mail-server": "How to configure Mail server"
+                },
+                "step3": {
+                    "title": "Configure feature: SMS provider",
+                    "content": "<p>To distribute SMS messages about alarms, the System Administrator can configure SMS providers.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-sms-provider": "How to configure SMS provider"
+                },
+                "step4": {
+                    "title": "Configure feature: 2FA",
+                    "content": "<p>Adding two-factor authentication to your account increases security and prevents malicious access.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-2fa": "How to configure 2FA"
+                },
+                "step5": {
+                    "title": "Configure feature: OAuth 2",
+                    "content": "<p>You can provide your customers with Single Sign-On functionality and automatically create tenants, customers, or sub-customers by using external user management platforms that support OAuth 2.0.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-oauth2": "How to configure OAuth 2"
+                },
+                "step6": {
+                    "title": "Configure feature: Notifications",
+                    "content": "<p>Some text</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-notifications": "How to configure Notifications"
+                }
+            }
         }
     },
     "icon": {

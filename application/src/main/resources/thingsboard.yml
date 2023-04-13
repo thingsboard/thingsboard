@@ -65,6 +65,7 @@ server:
       max_per_user: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_MAX_PER_USER:10}"
     max_entities_per_data_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_DATA_SUBSCRIPTION:10000}"
     max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
+    max_queue_messages_per_session: "${TB_SERVER_WS_DEFAULT_QUEUE_MESSAGES_PER_SESSION:1000}"
   rest:
     server_side_rpc:
       # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
@@ -140,6 +141,7 @@ usage:
       interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
     check:
       cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
+    gauge_report_interval: "${USAGE_STATS_GAUGE_REPORT_INTERVAL:180000}"
 
 # UI parameters
 ui:
@@ -987,6 +989,13 @@ queue:
       print-interval-ms: "${TB_QUEUE_IN_MEMORY_STATS_PRINT_INTERVAL_MS:60000}"
   kafka:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
+    ssl:
+      enabled: "${TB_KAFKA_SSL_ENABLED:false}"
+      truststore.location: "${TB_KAFKA_SSL_TRUSTSTORE_LOCATION:}"
+      truststore.password: "${TB_KAFKA_SSL_TRUSTSTORE_PASSWORD:}"
+      keystore.location: "${TB_KAFKA_SSL_KEYSTORE_LOCATION:}"
+      keystore.password: "${TB_KAFKA_SSL_KEYSTORE_PASSWORD:}"
+      key.password: "${TB_KAFKA_SSL_KEY_PASSWORD:}"
     acks: "${TB_KAFKA_ACKS:all}"
     retries: "${TB_KAFKA_RETRIES:1}"
     compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip

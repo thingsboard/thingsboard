@@ -50,6 +50,13 @@ queue:
       print-interval-ms: "${TB_QUEUE_IN_MEMORY_STATS_PRINT_INTERVAL_MS:60000}"
   kafka:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
+    ssl:
+      enabled: "${TB_KAFKA_SSL_ENABLED:false}"
+      truststore.location: "${TB_KAFKA_SSL_TRUSTSTORE_LOCATION:}"
+      truststore.password: "${TB_KAFKA_SSL_TRUSTSTORE_PASSWORD:}"
+      keystore.location: "${TB_KAFKA_SSL_KEYSTORE_LOCATION:}"
+      keystore.password: "${TB_KAFKA_SSL_KEYSTORE_PASSWORD:}"
+      key.password: "${TB_KAFKA_SSL_KEY_PASSWORD:}"
     acks: "${TB_KAFKA_ACKS:all}"
     retries: "${TB_KAFKA_RETRIES:1}"
     compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip
@@ -166,6 +173,14 @@ vc:
     # Pool size for handling the git IO operations
     io_pool_size: "${TB_VC_GIT_POOL_SIZE:3}"
     repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
+
+# Usage statistics parameters
+usage:
+  stats:
+    report:
+      enabled: "${USAGE_STATS_REPORT_ENABLED:true}"
+      enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
+      interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
 
 metrics:
   # Enable/disable actuator metrics.

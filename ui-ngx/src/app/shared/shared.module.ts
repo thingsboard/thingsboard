@@ -176,6 +176,17 @@ import { NotificationComponent } from '@shared/components/notification/notificat
 import { TemplateAutocompleteComponent } from '@shared/components/notification/template-autocomplete.component';
 import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import {
+  TbBreakPointsProvider,
+  MdLgLayoutDirective,
+  MdLgLayoutAlignDirective,
+  MdLgLayoutGapDirective,
+  MdLgShowHideDirective,
+  GtMdLgLayoutDirective,
+  GtMdLgLayoutAlignDirective,
+  GtMdLgLayoutGapDirective,
+  GtMdLgShowHideDirective
+} from '@shared/layout/layout.directives';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -222,7 +233,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
       useValue: {
         hideSingleSelectionIndicator: true
       }
-    }
+    },
+    TbBreakPointsProvider
   ],
   declarations: [
     FooterComponent,
@@ -327,7 +339,15 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    DateAgoPipe
+    DateAgoPipe,
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective
   ],
   imports: [
     CommonModule,
@@ -541,7 +561,15 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    DateAgoPipe
+    DateAgoPipe,
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective
   ]
 })
 export class SharedModule { }

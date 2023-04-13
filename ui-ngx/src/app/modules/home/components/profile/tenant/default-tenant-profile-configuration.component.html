@@ -410,6 +410,9 @@
             <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('wsMsgQueueLimitPerSession').hasError('min')">
               {{ 'tenant-profile.too-small-value-one' | translate}}
             </mat-error>
+            <mat-hint>
+              {{ 'tenant-profile.queue-size-is-limited-by-system-configuration' | translate}}
+            </mat-hint>
           </mat-form-field>
           <div fxFlex></div>
         </div>
