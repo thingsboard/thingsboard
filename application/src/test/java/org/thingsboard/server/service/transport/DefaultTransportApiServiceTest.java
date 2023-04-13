@@ -109,7 +109,8 @@ public class DefaultTransportApiServiceTest {
 
     @Before
     public void setUp() {
-        String filePath = "src/test/resources/mqtt/x509ChainProvisionTest.pem";
+
+        String filePath = "src/test/resources/provision/x509ChainProvisionTest.pem";
         try {
             certificateChain = Files.readString(Paths.get(filePath));
             certificateChain = certTrimNewLinesForChainInDeviceProfile(certificateChain);
@@ -120,7 +121,7 @@ public class DefaultTransportApiServiceTest {
     }
 
     @Test
-    public void validateExistingDeviceX509Certificate() {
+    public void validateExistingDeviceByX509CertificateStrategy() {
         var device = createDevice();
         when(deviceService.findDeviceByIdAsync(any(), any())).thenReturn(Futures.immediateFuture(device));
 
@@ -145,13 +146,13 @@ public class DefaultTransportApiServiceTest {
         when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
 
         var provisionResponse = createProvisionResponse(deviceCredentials);
-        when(deviceProvisionService.provisionDevice(any())).thenReturn(provisionResponse);
+        when(deviceProvisionService.provisionDeviceViaX509Chain(any(), any())).thenReturn(provisionResponse);
 
         service.validateOrCreateDeviceX509Certificate(certificateChain);
         verify(deviceProfileService, times(1)).findDeviceProfileByProvisionDeviceKey(any());
         verify(deviceService, times(1)).findDeviceByIdAsync(any(), any());
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByCredentialsId(any());
-        verify(deviceProvisionService, times(1)).provisionDevice(any());
+        verify(deviceProvisionService, times(1)).provisionDeviceViaX509Chain(any(), any());
     }
 
     private DeviceProfile createDeviceProfile(String certificateValue) {

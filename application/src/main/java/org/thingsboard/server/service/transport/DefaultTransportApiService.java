@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -113,7 +114,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.PASSWORD_MISMATCH;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.VALID;
 
@@ -246,7 +246,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 return getDeviceInfo(credentials);
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
-            if (deviceProfile != null && X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
+            if (deviceProfile != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
                 String updatedDeviceProvisionSecret = chain.get(0);
                 ProvisionRequest provisionRequest = createProvisionRequest(updatedDeviceProvisionSecret);
                 try {
@@ -259,7 +259,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     return getEmptyTransportApiResponseFuture();
                 }
             } else if (deviceProfile != null) {
-                log.warn("[{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getId(), X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
+                log.warn("[{}][{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getTenantId(), deviceProfile.getId(), DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
             }
         }
         return getEmptyTransportApiResponseFuture();
