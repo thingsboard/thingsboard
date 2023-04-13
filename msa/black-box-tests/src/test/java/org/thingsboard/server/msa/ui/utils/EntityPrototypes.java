@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.msa.ui.utils;
 
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
@@ -32,8 +34,11 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.settings.UserSettings;
 
 public class EntityPrototypes {
 
@@ -105,37 +110,71 @@ public class EntityPrototypes {
         return assetProfile;
     }
 
-    public static Alarm defaultAlarm(EntityId id) {
+    public static Alarm defaultAlarm(EntityId id, String type) {
         Alarm alarm = new Alarm();
-        alarm.setType("default");
+        alarm.setType(type);
         alarm.setOriginator(id);
         alarm.setSeverity(AlarmSeverity.CRITICAL);
         return alarm;
     }
 
-    public static Alarm defaultAlarm(EntityId id, UserId userId) {
+    public static Alarm defaultAlarm(EntityId id, String type, boolean propagate) {
         Alarm alarm = new Alarm();
-        alarm.setType("default");
+        alarm.setType(type);
+        alarm.setOriginator(id);
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        alarm.setPropagate(propagate);
+        return alarm;
+    }
+
+    public static Alarm defaultAlarm(EntityId id, String type, UserId userId) {
+        Alarm alarm = new Alarm();
+        alarm.setType(type);
         alarm.setOriginator(id);
         alarm.setSeverity(AlarmSeverity.CRITICAL);
         alarm.setAssigneeId(userId);
         return alarm;
     }
 
-    public static User defaultUser(CustomerId customerId) {
+    public static Alarm defaultAlarm(EntityId id, String type, UserId userId, boolean propagate) {
+        Alarm alarm = new Alarm();
+        alarm.setType(type);
+        alarm.setOriginator(id);
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        alarm.setAssigneeId(userId);
+        alarm.setPropagate(propagate);
+        return alarm;
+    }
+
+    public static User defaultUser(String email, CustomerId customerId) {
         User user = new User();
-        user.setEmail("test@thingsboard.org");
+        user.setEmail(email);
         user.setCustomerId(customerId);
         user.setAuthority(Authority.CUSTOMER_USER);
         return user;
     }
 
-    public static User defaultUser(CustomerId customerId, String name) {
+    public static User defaultUser(String email, CustomerId customerId, String name) {
         User user = new User();
-        user.setEmail("test@thingsboard.org");
+        user.setEmail(email);
         user.setFirstName(name);
         user.setCustomerId(customerId);
         user.setAuthority(Authority.CUSTOMER_USER);
         return user;
+    }
+
+    public static Device defaultDevicePrototype(String name){
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, CustomerId id){
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setCustomerId(id);
+        device.setType("DEFAULT");
+        return device;
     }
 }

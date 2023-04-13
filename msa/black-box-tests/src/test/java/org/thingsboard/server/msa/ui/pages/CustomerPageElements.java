@@ -32,14 +32,16 @@ public class CustomerPageElements extends OtherPageElementsHelper {
     private static final String TITLES = "//mat-cell[contains(@class,'cdk-column-title')]/span";
     protected static final String EDIT_MENU_DASHBOARD_FIELD = "//input[@formcontrolname='dashboard']";
     private static final String EDIT_MENU_DASHBOARD = "//div[@class='cdk-overlay-pane']//span/span[contains(text(),'%s')]";
-    private static final String MANAGE_CUSTOMERS_USERS_BTN = ENTITY + "/ancestor::mat-row//mat-icon[contains(text(),' account_circle')]";
+    private static final String MANAGE_CUSTOMERS_USERS_BTN = ENTITY + "/ancestor::mat-row//mat-icon[contains(text(),' account_circle')]/parent::button";
     private static final String MANAGE_CUSTOMERS_ASSETS_BTN = ENTITY + "/ancestor::mat-row//mat-icon[contains(text(),' domain')]/parent::button";
     private static final String MANAGE_CUSTOMERS_DEVICES_BTN = ENTITY + "/ancestor::mat-row//mat-icon[contains(text(),'devices_other')]/parent::button";
     private static final String MANAGE_CUSTOMERS_DASHBOARDS_BTN = ENTITY + "/ancestor::mat-row//mat-icon[contains(text(),'dashboard')]/parent::button";
     private static final String MANAGE_CUSTOMERS_EDGE_BTN = ENTITY + "/ancestor::mat-row//mat-icon[contains(text(),'router')]/parent::button";
     private static final String ADD_USER_EMAIL = "//tb-add-user-dialog//input[@formcontrolname='email']";
     private static final String ACTIVATE_WINDOW_OK_BTN = "//span[contains(text(),'OK')]";
-    private static final String USER_LOGIN_BTN = "//mat-icon[@data-mat-icon-name='login']";
+    private static final String USER_LOGIN_BTN = "//mat-icon[@data-mat-icon-name='login']/parent::button";
+    private static final String USER_LOGIN_BTN_BY_EMAIL = "//mat-cell[contains(@class,'email')]/span[contains(text(),'%s')]" +
+            "/ancestor::mat-row//mat-icon[@data-mat-icon-name='login']/parent::button";
     private static final String USERS_WIDGET = "//tb-widget";
     private static final String SELECT_COUNTRY_MENU = "//mat-form-field//mat-select[@formcontrolname='country']";
     private static final String COUNTRIES = "//span[@class='mdc-list-item__primary-text']";
@@ -146,6 +148,10 @@ public class CustomerPageElements extends OtherPageElementsHelper {
 
     public WebElement userLoginBtn() {
         return waitUntilElementToBeClickable(USER_LOGIN_BTN);
+    }
+
+    public WebElement getUserLoginBtnByEmail(String email) {
+        return waitUntilElementToBeClickable(String.format(USER_LOGIN_BTN_BY_EMAIL, email));
     }
 
     public WebElement usersWidget() {

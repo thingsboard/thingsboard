@@ -150,10 +150,4 @@ public class DataProviderCredential {
                 {description, Keys.CONTROL + "A" + Keys.BACK_SPACE, ""}};
     }
 
-    @DataProvider
-    public static Object[][] assignTo() {
-        return new Object[][]{
-                {Const.TENANT_EMAIL},
-                {"customer@thingsboard.org"}};
-    }
 }

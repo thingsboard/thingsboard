@@ -29,6 +29,7 @@ import io.restassured.specification.RequestSpecification;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -431,5 +432,17 @@ public class TestRestClient {
 
     public String getRefreshToken() {
         return refreshToken;
+    }
+
+    public PageData<Tenant> getTenants(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return given().spec(requestSpec).queryParams(params)
+                .get("/api/tenants")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<PageData<Tenant>>() {
+                });
     }
 }

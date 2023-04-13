@@ -25,10 +25,18 @@ public class LoginPageHelper extends LoginPageElements {
         super(driver);
     }
 
-    public void authorizationTenant() {
-        emailField().sendKeys(Const.TENANT_EMAIL);
-        passwordField().sendKeys(Const.TENANT_PASSWORD);
+    public void login(String username, String password) {
+        emailField().sendKeys(username);
+        passwordField().sendKeys(password);
         submitBtn().click();
         waitUntilUrlContainsText("/home");
+    }
+
+    public void authorizationTenant() {
+        login(Const.TENANT_EMAIL, Const.TENANT_PASSWORD);
+    }
+
+    public void authorizationCustomer() {
+        login("customer@thingsboard.org", "customer");
     }
 }
