@@ -29,7 +29,6 @@ public class CacheConstants {
     public static final String TENANTS_CACHE = "tenants";
     public static final String TENANTS_EXIST_CACHE = "tenantsExist";
     public static final String DEVICE_PROFILE_CACHE = "deviceProfiles";
-    public static final String NOTIFICATION_RULES_CACHE = "notificationRules";
     public static final String NOTIFICATION_SETTINGS_CACHE = "notificationSettings";
 
     public static final String ASSET_PROFILE_CACHE = "assetProfiles";
@@ -42,4 +41,6 @@ public class CacheConstants {
     public static final String TWO_FA_VERIFICATION_CODES_CACHE = "twoFaVerificationCodes";
     public static final String VERSION_CONTROL_TASK_CACHE = "versionControlTask";
     public static final String USER_SETTINGS_CACHE = "userSettings";
+    public static final String DASHBOARD_TITLES_CACHE = "dashboardTitles";
+    public static final String ENTITY_COUNT_CACHE = "entityCount";
 }

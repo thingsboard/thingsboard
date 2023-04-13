@@ -15,11 +15,13 @@ Available template parameters:
   * *entityId* - the entity id as uuid string;
   * *entityName* - the name of the entity;
   * *actionType* - one of: 'added', 'updated', 'deleted';    
-  * *originatorUserId* - the user who made the action;    
-  * *originatorUserName* - the user who made the action;    // WHY no EMAIL, first, last, entityLabel (if applicable)
+  * *userId* - id of the user who made the action;
+  * *userEmail* - email of the user who made the action;
+  * *userFirstName* - first name of the user who made the action;
+  * *userLastName* - last name of the user who made the action;
 
 Parameter names must be wrapped using `${...}`. For example: `${recipientFirstName}`. 
-You may also modify the value of the parameter with one of the sufixes:
+You may also modify the value of the parameter with one of the suffixes:
 
   * `upperCase`, for example - `${recipientFirstName:upperCase}`
   * `lowerCase`, for example - `${recipientFirstName:lowerCase}`

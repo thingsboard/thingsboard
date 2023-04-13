@@ -173,7 +173,20 @@ import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
 import { NotificationComponent } from '@shared/components/notification/notification.component';
+import { TemplateAutocompleteComponent } from '@shared/components/notification/template-autocomplete.component';
+import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import {
+  TbBreakPointsProvider,
+  MdLgLayoutDirective,
+  MdLgLayoutAlignDirective,
+  MdLgLayoutGapDirective,
+  MdLgShowHideDirective,
+  GtMdLgLayoutDirective,
+  GtMdLgLayoutAlignDirective,
+  GtMdLgLayoutGapDirective,
+  GtMdLgShowHideDirective
+} from '@shared/layout/layout.directives';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -226,7 +239,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
       useValue: {
         disableTooltipInteractivity: true
       }
-    }
+    },
+    TbBreakPointsProvider
   ],
   declarations: [
     FooterComponent,
@@ -329,7 +343,17 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     PhoneInputComponent,
     TbScriptLangComponent,
     NotificationComponent,
-    DateAgoPipe
+    TemplateAutocompleteComponent,
+    SlackConversationAutocompleteComponent,
+    DateAgoPipe,
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective
   ],
   imports: [
     CommonModule,
@@ -446,6 +470,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HtmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
+    TbJsonToStringDirective,
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
     ValueInputComponent,
@@ -541,7 +566,17 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     PhoneInputComponent,
     TbScriptLangComponent,
     NotificationComponent,
-    DateAgoPipe
+    TemplateAutocompleteComponent,
+    SlackConversationAutocompleteComponent,
+    DateAgoPipe,
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective
   ]
 })
 export class SharedModule { }

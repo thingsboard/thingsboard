@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormattedData } from '@shared/models/widget.models';
 
 export interface SelectEntityDialogData {
@@ -33,14 +33,13 @@ export interface SelectEntityDialogData {
   styleUrls: ['./select-entity-dialog.component.scss']
 })
 export class SelectEntityDialogComponent extends DialogComponent<SelectEntityDialogComponent, FormattedData> {
-
-  selectEntityFormGroup: UntypedFormGroup;
+  selectEntityFormGroup: FormGroup;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: SelectEntityDialogData,
               public dialogRef: MatDialogRef<SelectEntityDialogComponent, FormattedData>,
-              public fb: UntypedFormBuilder) {
+              public fb: FormBuilder) {
     super(store, router, dialogRef);
 
     this.selectEntityFormGroup = this.fb.group(

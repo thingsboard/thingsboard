@@ -109,7 +109,7 @@ export class NotificationComponent implements OnInit {
           stateObject.id = this.notification.additionalConfig.actionButtonConfig.dashboardState;
           state = objToBase64URI([ stateObject ]);
         }
-        link = `/dashboards/${this.notification.additionalConfig.actionButtonConfig.dashboardId}`
+        link = `/dashboards/${this.notification.additionalConfig.actionButtonConfig.dashboardId}`;
         if (state) {
           link += `?state=${state}`;
         }

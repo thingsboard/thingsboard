@@ -11,7 +11,7 @@ Available template parameters:
   * *recipientEmail* - email of the recipient;
   * *recipientFirstName* - first name of the recipient;
   * *recipientLastName* - last name of the recipient;
-  * *componentType* - one of: 'rule chain', 'rule node';
+  * *componentType* - one of: 'Rule chain', 'Rule node';
   * *componentId* - the component id as uuid string;
   * *componentName* - the rule chain or rule node name;    
   * *ruleChainId* - the rule chain id as uuid string;
@@ -21,7 +21,7 @@ Available template parameters:
   * *error* - the error text;
 
 Parameter names must be wrapped using `${...}`. For example: `${recipientFirstName}`. 
-You may also modify the value of the parameter with one of the sufixes:
+You may also modify the value of the parameter with one of the suffixes:
 
   * `upperCase`, for example - `${recipientFirstName:upperCase}`
   * `lowerCase`, for example - `${recipientFirstName:lowerCase}`

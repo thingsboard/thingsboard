@@ -34,6 +34,7 @@ import { tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmCommentComponent } from '@home/components/alarm/alarm-comment.component';
+import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 
 export interface AlarmDetailsDialogData {
   alarmId?: string;
@@ -41,6 +42,7 @@ export interface AlarmDetailsDialogData {
   allowAcknowledgment: boolean;
   allowClear: boolean;
   displayDetails: boolean;
+  allowAssign: boolean;
 }
 
 @Component({
@@ -56,6 +58,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
   allowAcknowledgment: boolean;
   allowClear: boolean;
   displayDetails: boolean;
+  allowAssign: boolean;
 
   loadAlarmSubject = new ReplaySubject<AlarmInfo>();
   alarm$: Observable<AlarmInfo> = this.loadAlarmSubject.asObservable().pipe(
@@ -72,6 +75,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private datePipe: DatePipe,
+              private millisecondsToTimeStringPipe: MillisecondsToTimeStringPipe,
               private translate: TranslateService,
               @Inject(MAT_DIALOG_DATA) public data: AlarmDetailsDialogData,
               private alarmService: AlarmService,
@@ -82,17 +86,15 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
     this.allowAcknowledgment = data.allowAcknowledgment;
     this.allowClear = data.allowClear;
     this.displayDetails = data.displayDetails;
+    this.allowAssign = data.allowAssign;
 
     this.alarmFormGroup = this.fb.group(
       {
-        createdTime: [''],
         originatorName: [''],
-        startTime: [''],
-        endTime: [''],
-        ackTime: [''],
-        clearTime: [''],
-        type: [''],
         alarmSeverity: [''],
+        startTime: [''],
+        duration: [''],
+        type: [''],
         alarmStatus: [''],
         alarmDetails: [null]
       }
@@ -116,29 +118,25 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
   }
 
   loadAlarmFields(alarm: AlarmInfo) {
-    this.alarmFormGroup.get('createdTime')
-      .patchValue(this.datePipe.transform(alarm.createdTime, 'yyyy-MM-dd HH:mm:ss'));
     this.alarmFormGroup.get('originatorName')
-      .patchValue(alarm.originatorName);
+      .patchValue(alarm.originatorLabel ? alarm.originatorLabel : alarm.originatorName);
+    this.alarmFormGroup.get('alarmSeverity')
+      .patchValue(this.translate.instant(alarmSeverityTranslations.get(alarm.severity)));
     if (alarm.startTs) {
       this.alarmFormGroup.get('startTime')
         .patchValue(this.datePipe.transform(alarm.startTs, 'yyyy-MM-dd HH:mm:ss'));
     }
-    if (alarm.endTs) {
-      this.alarmFormGroup.get('endTime')
-        .patchValue(this.datePipe.transform(alarm.endTs, 'yyyy-MM-dd HH:mm:ss'));
-    }
-    if (alarm.ackTs) {
-      this.alarmFormGroup.get('ackTime')
-        .patchValue(this.datePipe.transform(alarm.ackTs, 'yyyy-MM-dd HH:mm:ss'));
-    }
-    if (alarm.clearTs) {
-      this.alarmFormGroup.get('clearTime')
-        .patchValue(this.datePipe.transform(alarm.clearTs, 'yyyy-MM-dd HH:mm:ss'));
+    if (alarm.startTs || alarm.endTs) {
+      let duration = '';
+      if (alarm.startTs && (alarm.status === AlarmStatus.ACTIVE_ACK || alarm.status === AlarmStatus.ACTIVE_UNACK)) {
+        duration = this.millisecondsToTimeStringPipe.transform(Date.now() - alarm.startTs);
+      }
+      if (alarm.endTs && (alarm.status === AlarmStatus.CLEARED_ACK || alarm.status === AlarmStatus.CLEARED_UNACK)) {
+        duration = this.millisecondsToTimeStringPipe.transform(alarm.endTs - alarm.startTs);
+      }
+      this.alarmFormGroup.get('duration').patchValue(duration);
     }
     this.alarmFormGroup.get('type').patchValue(alarm.type);
-    this.alarmFormGroup.get('alarmSeverity')
-      .patchValue(this.translate.instant(alarmSeverityTranslations.get(alarm.severity)));
     this.alarmFormGroup.get('alarmStatus')
       .patchValue(this.translate.instant(alarmStatusTranslations.get(alarm.status)));
     this.alarmFormGroup.get('alarmDetails').patchValue(alarm.details);

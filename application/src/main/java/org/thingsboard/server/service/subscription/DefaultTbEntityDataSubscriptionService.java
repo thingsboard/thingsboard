@@ -54,6 +54,7 @@ import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggKey;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggTimeSeriesCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
@@ -94,8 +95,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private static final int DEFAULT_LIMIT = 100;
     private final Map<String, Map<Integer, TbAbstractSubCtx>> subscriptionsBySessionId = new ConcurrentHashMap<>();
 
-    @Autowired
-    @Lazy
+    @Autowired @Lazy
     private WebSocketService wsService;
 
     @Autowired
@@ -409,6 +409,26 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
     }
 
+    @Override
+    public void handleCmd(WebSocketSessionRef session, AlarmCountCmd cmd) {
+        TbAlarmCountSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
+        if (ctx == null) {
+            ctx = createSubCtx(session, cmd);
+            long start = System.currentTimeMillis();
+            ctx.fetchData();
+            long end = System.currentTimeMillis();
+            stats.getAlarmQueryInvocationCnt().incrementAndGet();
+            stats.getAlarmQueryTimeSpent().addAndGet(end - start);
+            TbAlarmCountSubCtx finalCtx = ctx;
+            ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
+                    () -> refreshDynamicQuery(finalCtx),
+                    dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
+            finalCtx.setRefreshTask(task);
+        } else {
+            log.debug("[{}][{}] Received duplicate command: {}", session.getSessionId(), cmd.getCmdId(), cmd);
+        }
+    }
+
     private boolean validate(TbAbstractSubCtx<?> finalCtx) {
         if (finalCtx.isStopped()) {
             log.warn("[{}][{}][{}] Received validation task for already stopped context.", finalCtx.getTenantId(), finalCtx.getSessionId(), finalCtx.getCmdId());
@@ -498,6 +518,17 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription,
                 maxAlarmQueriesPerRefreshInterval);
         ctx.setAndResolveQuery(cmd.getQuery());
+        sessionSubs.put(cmd.getCmdId(), ctx);
+        return ctx;
+    }
+
+    private TbAlarmCountSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
+        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
+        TbAlarmCountSubCtx ctx = new TbAlarmCountSubCtx(serviceId, wsService, entityService, localSubscriptionService,
+                attributesService, stats, alarmService, sessionRef, cmd.getCmdId());
+        if (cmd.getQuery() != null) {
+            ctx.setAndResolveQuery(cmd.getQuery());
+        }
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
     }

@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.service.ws.notification.sub;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 
@@ -32,7 +30,7 @@ import java.util.UUID;
 @Builder
 public class NotificationUpdate {
 
-    private NotificationId notificationId;
+    private UUID notificationId;
 
     private boolean created;
     private Notification notification;
@@ -42,11 +40,5 @@ public class NotificationUpdate {
     private boolean allNotifications;
 
     private boolean deleted;
-
-    @JsonIgnore
-    public UUID getNotificationId() {
-        return notificationId != null ? notificationId.getId() :
-                notification != null ? notification.getUuidId() : null;
-    }
 
 }

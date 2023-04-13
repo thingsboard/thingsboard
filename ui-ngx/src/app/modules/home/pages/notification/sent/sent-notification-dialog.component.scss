@@ -38,8 +38,10 @@
     background-color: rgba(48, 86, 128, 0.04);
     margin-bottom: 8px;
     padding: 8px 16px;
-    display: flex;
-    align-items: center;
+
+    .content {
+      vertical-align: middle;
+    }
   }
 
   .delivery-method-container {
@@ -128,6 +130,8 @@
       border-radius: 4px;
       background: #fff;
       padding: 12px 16px;
+      display: inline-grid;
+      width: 100%;
 
       .subject {
         padding-bottom: 12px;
@@ -140,6 +144,7 @@
         font-weight: 400;
         font-size: 14px;
         line-height: 20px;
+        overflow-x: auto;
       }
     }
   }

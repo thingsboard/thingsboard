@@ -804,7 +804,7 @@ CREATE TABLE IF NOT EXISTS notification_template (
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
     notification_type VARCHAR(50) NOT NULL,
-    configuration VARCHAR(10000) NOT NULL,
+    configuration VARCHAR(10000000) NOT NULL,
     CONSTRAINT uq_notification_template_name UNIQUE (tenant_id, name)
 );
 
@@ -827,7 +827,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     tenant_id UUID NOT NULL,
     targets VARCHAR(10000) NOT NULL,
     template_id UUID,
-    template VARCHAR(10000),
+    template VARCHAR(10000000),
     info VARCHAR(1000),
     additional_config VARCHAR(1000),
     originator_entity_id UUID,
@@ -850,9 +850,11 @@ CREATE TABLE IF NOT EXISTS notification (
 ) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS user_settings (
-    user_id uuid NOT NULL CONSTRAINT user_settings_pkey PRIMARY KEY,
+    user_id uuid NOT NULL,
+    type VARCHAR(50) NOT NULL,
     settings varchar(10000),
-    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE,
+    CONSTRAINT user_settings_pkey PRIMARY KEY (user_id, type)
 );
 
 DROP VIEW IF EXISTS alarm_info CASCADE;

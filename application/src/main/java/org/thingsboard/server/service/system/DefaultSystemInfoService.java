@@ -26,11 +26,12 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.FeaturesInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.SystemInfoData;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -51,6 +52,7 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -58,10 +60,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.common.util.SystemUtil.getCpuUsage;
-import static org.thingsboard.common.util.SystemUtil.getFreeDiscSpace;
-import static org.thingsboard.common.util.SystemUtil.getFreeMemory;
 import static org.thingsboard.common.util.SystemUtil.getMemoryUsage;
-import static org.thingsboard.common.util.SystemUtil.getTotalCpuUsage;
+import static org.thingsboard.common.util.SystemUtil.getDiscSpaceUsage;
+import static org.thingsboard.common.util.SystemUtil.getCpuCount;
 import static org.thingsboard.common.util.SystemUtil.getTotalDiscSpace;
 import static org.thingsboard.common.util.SystemUtil.getTotalMemory;
 
@@ -145,9 +146,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         AdminSettings mailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (mailSettings != null) {
             JsonNode mailFrom = mailSettings.getJsonValue().get("mailFrom");
-            if (mailFrom != null) {
-                return DataValidator.doValidateEmail(mailFrom.asText());
-            }
+            return StringUtils.isNotEmpty(mailFrom.asText()) && !"ThingsBoard <sysadmin@localhost.localdomain>".equalsIgnoreCase(mailFrom.asText());
         }
         return false;
     }
@@ -156,18 +155,19 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         long ts = System.currentTimeMillis();
         List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfo());
         BasicTsKvEntry clusterDataKv = new BasicTsKvEntry(ts, new JsonDataEntry("clusterSystemData", JacksonUtil.toString(clusterSystemData)));
-        doSave(Collections.singletonList(clusterDataKv));
+        doSave(Arrays.asList(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", true)), clusterDataKv));
     }
 
     private void saveCurrentMonolithSystemInfo() {
         long ts = System.currentTimeMillis();
         List<TsKvEntry> tsList = new ArrayList<>();
-        getMemoryUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", v))));
+        tsList.add(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", false)));
+        getCpuUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuUsage", (long) v))));
+        getMemoryUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", (long) v))));
+        getDiscSpaceUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("discUsage", (long) v))));
+
+        getCpuCount().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuCount", (long) v))));
         getTotalMemory().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalMemory", v))));
-        getFreeMemory().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeMemory", v))));
-        getCpuUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("cpuUsage", v))));
-        getTotalCpuUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new DoubleDataEntry("totalCpuUsage", v))));
-        getFreeDiscSpace().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("freeDiscSpace", v))));
         getTotalDiscSpace().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalDiscSpace", v))));
 
         doSave(tsList);
@@ -193,13 +193,15 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         SystemInfoData infoData = new SystemInfoData();
         infoData.setServiceId(serviceInfo.getServiceId());
         infoData.setServiceType(serviceTypes.size() > 1 ? "MONOLITH" : serviceTypes.get(0));
-        infoData.setMemoryUsage(serviceInfo.getSystemInfo().getMemoryUsage());
-        infoData.setTotalMemory(serviceInfo.getSystemInfo().getTotalMemory());
-        infoData.setFreeMemory(serviceInfo.getSystemInfo().getFreeMemory());
+
         infoData.setCpuUsage(serviceInfo.getSystemInfo().getCpuUsage());
-        infoData.setTotalCpuUsage(serviceInfo.getSystemInfo().getTotalCpuUsage());
-        infoData.setFreeDiscSpace(serviceInfo.getSystemInfo().getFreeDiscSpace());
+        infoData.setMemoryUsage(serviceInfo.getSystemInfo().getMemoryUsage());
+        infoData.setDiscUsage(serviceInfo.getSystemInfo().getDiskUsage());
+
+        infoData.setCpuCount(serviceInfo.getSystemInfo().getCpuCount());
+        infoData.setTotalMemory(serviceInfo.getSystemInfo().getTotalMemory());
         infoData.setTotalDiscSpace(serviceInfo.getSystemInfo().getTotalDiscSpace());
+
         return infoData;
     }
 

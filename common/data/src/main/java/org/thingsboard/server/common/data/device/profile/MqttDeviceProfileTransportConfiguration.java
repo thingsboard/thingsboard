@@ -28,6 +28,9 @@ public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTra
     private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
     @NoXss
     private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+    @NoXss
+    private String deviceAttributesSubscribeTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+
     private TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
     private boolean sparkplug;
     private Set<String> sparkplugAttributesMetricNames;

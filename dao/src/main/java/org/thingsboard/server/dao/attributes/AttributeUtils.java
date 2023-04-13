@@ -21,6 +21,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
 public class AttributeUtils {
+
     public static void validate(EntityId id, String scope) {
         Validator.validateId(id.getId(), "Incorrect id " + id);
         Validator.validateString(scope, "Incorrect scope " + scope);

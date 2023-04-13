@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -40,9 +41,12 @@ import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignm
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.AlarmAction;
-import org.thingsboard.server.common.data.notification.rule.trigger.DeviceInactivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
@@ -124,61 +128,91 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             NotificationTarget sysAdmins = createTarget(tenantId, "System administrators", new SystemAdministratorsFilter(), "All system administrators");
             NotificationTarget affectedTenantAdmins = createTarget(tenantId, "Affected tenant's administrators", new AffectedTenantAdministratorsFilter(), "");
 
-            NotificationTemplate entitiesLimitNotificationTemplate = createTemplate(tenantId, "Entities limit notification", NotificationType.ENTITIES_LIMIT,
+            NotificationTemplate entitiesLimitNotificationTemplate = createTemplate(tenantId, "Entities count limit notification", NotificationType.ENTITIES_LIMIT,
                     "${entityType}s limit will be reached soon for tenant ${tenantName}",
                     "${entityType}s usage: ${currentCount}/${limit} (${percents}%)");
             EntitiesLimitNotificationRuleTriggerConfig entitiesLimitRuleTriggerConfig = new EntitiesLimitNotificationRuleTriggerConfig();
             entitiesLimitRuleTriggerConfig.setEntityTypes(null);
             entitiesLimitRuleTriggerConfig.setThreshold(0.8f);
-            createRule(tenantId, "Entities limit", entitiesLimitNotificationTemplate.getId(), entitiesLimitRuleTriggerConfig,
-                    List.of(affectedTenantAdmins.getId(), sysAdmins.getId()), "Send notification to tenant admins when count of entities of some type reached 80% threshold of the limit");
+            createRule(tenantId, "Entities count limit", entitiesLimitNotificationTemplate.getId(), entitiesLimitRuleTriggerConfig,
+                    List.of(affectedTenantAdmins.getId(), sysAdmins.getId()), "Send notification to tenant admins and system admins when count of entities of some type reached 80% threshold of the limit");
+
+            NotificationTemplate apiUsageLimitNotificationTemplate = createTemplate(tenantId, "API usage limit notification", NotificationType.API_USAGE_LIMIT,
+                    "${feature} feature - ${status:upperCase}",
+                    "Tenant '${tenantName}': usage - ${currentValue} out of ${limit} ${unitLabel}s");
+            ApiUsageLimitNotificationRuleTriggerConfig apiUsageLimitRuleTriggerConfig = new ApiUsageLimitNotificationRuleTriggerConfig();
+            apiUsageLimitRuleTriggerConfig.setApiFeatures(null);
+            apiUsageLimitRuleTriggerConfig.setNotifyOn(Set.of(ApiUsageStateValue.WARNING, ApiUsageStateValue.DISABLED));
+            createRule(tenantId, "API usage limit", apiUsageLimitNotificationTemplate.getId(), apiUsageLimitRuleTriggerConfig,
+                    List.of(affectedTenantAdmins.getId(), sysAdmins.getId()), "Send notification to tenant admins and system admins when API feature usage state changed");
+
+            NotificationTemplate newPlatformVersionNotificationTemplate = createTemplate(tenantId, "New platform version notification", NotificationType.NEW_PLATFORM_VERSION,
+                    "New version <b>${latestVersion}</b> is available",
+                    "Current platform version is ${currentVersion}",
+                    null, "Open release notes", "${latestVersionReleaseNotesUrl}");
+            NewPlatformVersionNotificationRuleTriggerConfig newPlatformVersionRuleTriggerConfig = new NewPlatformVersionNotificationRuleTriggerConfig();
+            createRule(tenantId, "New platform version", newPlatformVersionNotificationTemplate.getId(), newPlatformVersionRuleTriggerConfig,
+                    List.of(sysAdmins.getId(), tenantAdmins.getId()), "Send notification to system admins and tenant admins when new platform version is available");
             return;
         }
 
-        NotificationTarget originatorEntityOwnerUsers = createTarget(tenantId, "Users of rule trigger entity's owner", new OriginatorEntityOwnerUsersFilter(),
-                "Customer users in case trigger entity (e.g. alarm) has customer, tenant admins otherwise");
+        NotificationTarget originatorEntityOwnerUsers = createTarget(tenantId, "Users of the entity owner", new OriginatorEntityOwnerUsersFilter(),
+                "In case trigger entity (e.g. created device or alarm) is owned by customer, then recipients are this customer's users, otherwise tenant admins");
         NotificationTarget affectedUser = createTarget(tenantId, "Affected user", new AffectedUserFilter(),
                 "If rule trigger is an action that affects some user (e.g. alarm assigned to user) - this user");
 
-        NotificationTemplate alarmNotificationTemplate = createTemplate(tenantId, "Alarm notification", NotificationType.ALARM,
+        NotificationTemplate newAlarmNotificationTemplate = createTemplate(tenantId, "New alarm notification", NotificationType.ALARM,
+                "New alarm '${alarmType}'",
+                "Severity: ${alarmSeverity}, originator: ${alarmOriginatorEntityType} '${alarmOriginatorName}'",
+                "notifications", null, null);
+        AlarmNotificationRuleTriggerConfig newAlarmRuleTriggerConfig = new AlarmNotificationRuleTriggerConfig();
+        newAlarmRuleTriggerConfig.setAlarmTypes(null);
+        newAlarmRuleTriggerConfig.setAlarmSeverities(null);
+        newAlarmRuleTriggerConfig.setNotifyOn(Set.of(AlarmAction.CREATED));
+        createRule(tenantId, "New alarm", newAlarmNotificationTemplate.getId(), newAlarmRuleTriggerConfig,
+                List.of(tenantAdmins.getId(), originatorEntityOwnerUsers.getId()), "Send notification to tenant admins and alarm's customer users " +
+                        "when an alarm is created");
+
+        NotificationTemplate alarmUpdateNotificationTemplate = createTemplate(tenantId, "Alarm update notification", NotificationType.ALARM,
                 "Alarm '${alarmType}' - ${action}",
                 "Severity: ${alarmSeverity}, originator: ${alarmOriginatorEntityType} '${alarmOriginatorName}'",
                 "notifications", null, null);
         AlarmNotificationRuleTriggerConfig alarmRuleTriggerConfig = new AlarmNotificationRuleTriggerConfig();
         alarmRuleTriggerConfig.setAlarmTypes(null);
         alarmRuleTriggerConfig.setAlarmSeverities(null);
-        alarmRuleTriggerConfig.setNotifyOn(Set.of(AlarmAction.CREATED, AlarmAction.SEVERITY_CHANGED, AlarmAction.ACKNOWLEDGED, AlarmAction.CLEARED));
-        createRule(tenantId, "Alarm", alarmNotificationTemplate.getId(), alarmRuleTriggerConfig,
-                List.of(originatorEntityOwnerUsers.getId()), "Send notification to tenant admins or customer users " +
-                        "when any alarm is created, updated or cleared");
+        alarmRuleTriggerConfig.setNotifyOn(Set.of(AlarmAction.SEVERITY_CHANGED, AlarmAction.ACKNOWLEDGED, AlarmAction.CLEARED));
+        createRule(tenantId, "Alarm update", alarmUpdateNotificationTemplate.getId(), alarmRuleTriggerConfig,
+                List.of(tenantAdmins.getId(), originatorEntityOwnerUsers.getId()), "Send notification to tenant admins and alarm's customer users " +
+                        "when any alarm is updated or cleared");
 
         NotificationTemplate deviceActionNotificationTemplate = createTemplate(tenantId, "Device action notification", NotificationType.ENTITY_ACTION,
                 "${entityType} was ${actionType}",
-                "${entityType} '${entityName}' was ${actionType} by user ${originatorUserName}",
-                "info", "Go to Device", "/devices/${entityId}");
+                "${entityType} '${entityName}' was ${actionType} by user ${userEmail}",
+                "info", "Go to device", "/devices/${entityId}");
         EntityActionNotificationRuleTriggerConfig deviceActionRuleTriggerConfig = new EntityActionNotificationRuleTriggerConfig();
-        deviceActionRuleTriggerConfig.setEntityType(EntityType.DEVICE);
+        deviceActionRuleTriggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
         deviceActionRuleTriggerConfig.setCreated(true);
         deviceActionRuleTriggerConfig.setUpdated(false);
-        deviceActionRuleTriggerConfig.setDeleted(true);
-        createRule(tenantId, "Device created or deleted", deviceActionNotificationTemplate.getId(), deviceActionRuleTriggerConfig,
+        deviceActionRuleTriggerConfig.setDeleted(false);
+        createRule(tenantId, "Device created", deviceActionNotificationTemplate.getId(), deviceActionRuleTriggerConfig,
                 List.of(originatorEntityOwnerUsers.getId()), "Send notification to tenant admins or customer users " +
-                        "when device is created or deleted");
+                        "when device is created");
 
-        NotificationTemplate deviceInactivityNotificationTemplate = createTemplate(tenantId, "Device inactivity notification", NotificationType.DEVICE_INACTIVITY,
-                "Device '${deviceName}' inactive",
-                "Device '${deviceName}' with type '${deviceType}' became inactive",
-                "info", "Go to Device", "/devices/${deviceId}");
-        DeviceInactivityNotificationRuleTriggerConfig deviceInactivityRuleTriggerConfig = new DeviceInactivityNotificationRuleTriggerConfig();
-        deviceInactivityRuleTriggerConfig.setDevices(null);
-        deviceInactivityRuleTriggerConfig.setDeviceProfiles(null);
-        createRule(tenantId, "Device became inactive", deviceInactivityNotificationTemplate.getId(), deviceInactivityRuleTriggerConfig,
+        NotificationTemplate deviceActivityNotificationTemplate = createTemplate(tenantId, "Device activity notification", NotificationType.DEVICE_ACTIVITY,
+                "Device '${deviceName}' became ${eventType}",
+                "Device '${deviceName}' of type '${deviceType}' is now ${eventType}",
+                "info", "Go to device", "/devices/${deviceId}");
+        DeviceActivityNotificationRuleTriggerConfig deviceActivityRuleTriggerConfig = new DeviceActivityNotificationRuleTriggerConfig();
+        deviceActivityRuleTriggerConfig.setDevices(null);
+        deviceActivityRuleTriggerConfig.setDeviceProfiles(null);
+        deviceActivityRuleTriggerConfig.setNotifyOn(Set.of(DeviceEvent.ACTIVE, DeviceEvent.INACTIVE));
+        createRule(tenantId, "Device activity status change", deviceActivityNotificationTemplate.getId(), deviceActivityRuleTriggerConfig,
                 List.of(originatorEntityOwnerUsers.getId()), "Send notification to tenant admins or customer users " +
-                        "when any device became inactive");
+                        "when any device changes its activity state");
 
         NotificationTemplate alarmCommentNotificationTemplate = createTemplate(tenantId, "Alarm comment notification", NotificationType.ALARM_COMMENT,
                 "Comment on '${alarmType}' alarm",
-                "${userName} ${action} comment: ${comment}",
+                "${userEmail} ${action} comment: ${comment}",
                 "people", null, null);
         AlarmCommentNotificationRuleTriggerConfig alarmCommentRuleTriggerConfig = new AlarmCommentNotificationRuleTriggerConfig();
         alarmCommentRuleTriggerConfig.setAlarmTypes(null);
@@ -192,7 +226,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
         NotificationTemplate alarmAssignedNotificationTemplate = createTemplate(tenantId, "Alarm assigned notification", NotificationType.ALARM_ASSIGNMENT,
                 "Alarm '${alarmType}' (${alarmSeverity}) was assigned to user",
-                "${userName} assigned alarm on ${alarmOriginatorEntityType} '${alarmOriginatorName}' to ${assigneeEmail}",
+                "${userEmail} assigned alarm on ${alarmOriginatorEntityType} '${alarmOriginatorName}' to ${assigneeEmail}",
                 "person", null, null);
         AlarmAssignmentNotificationRuleTriggerConfig alarmAssignmentRuleTriggerConfig = new AlarmAssignmentNotificationRuleTriggerConfig();
         alarmAssignmentRuleTriggerConfig.setAlarmTypes(null);
@@ -203,9 +237,9 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
                 List.of(affectedUser.getId()), "Send notification to user when any alarm was assigned to him");
 
         NotificationTemplate ruleEngineComponentLifecycleFailureNotificationTemplate = createTemplate(tenantId, "Rule chain/node lifecycle failure notification", NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
+                "${action:capitalize} failure in Rule chain '${ruleChainName}'",
                 "${componentType} '${componentName}' failed to ${action}",
-                "Rule chain '${ruleChainName}' - ${action} failure:<br/>${error}",
-                "warning", "Go to Rule chain", "/ruleChains/${ruleChainId}");
+                "warning", "Go to rule chain", "/ruleChains/${ruleChainId}");
         RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig ruleEngineComponentLifecycleEventRuleTriggerConfig = new RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig();
         ruleEngineComponentLifecycleEventRuleTriggerConfig.setRuleChains(null);
         ruleEngineComponentLifecycleEventRuleTriggerConfig.setRuleChainEvents(Set.of(ComponentLifecycleEvent.STARTED, ComponentLifecycleEvent.UPDATED, ComponentLifecycleEvent.STOPPED));

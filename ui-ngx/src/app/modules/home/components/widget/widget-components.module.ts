@@ -42,6 +42,8 @@ import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input
 import { QrCodeWidgetComponent } from '@home/components/widget/lib/qrcode-widget.component';
 import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-widget.component';
 import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
+import { HomePageWidgetsModule } from '@home/components/widget/lib/home-page/home-page-widgets.module';
+import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 
 @NgModule({
   declarations:
@@ -70,6 +72,7 @@ import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps/di
     CommonModule,
     SharedModule,
     RpcWidgetsModule,
+    HomePageWidgetsModule,
     SharedHomeComponentsModule
   ],
   exports: [
@@ -79,6 +82,7 @@ import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps/di
     EntitiesHierarchyWidgetComponent,
     EdgesOverviewWidgetComponent,
     RpcWidgetsModule,
+    HomePageWidgetsModule,
     DateRangeNavigatorWidgetComponent,
     JsonInputWidgetComponent,
     MultipleInputWidgetComponent,
@@ -92,7 +96,8 @@ import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps/di
   ],
   providers: [
     CustomDialogService,
-    ImportExportService
+    ImportExportService,
+    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
   ]
 })
 export class WidgetComponentsModule {
