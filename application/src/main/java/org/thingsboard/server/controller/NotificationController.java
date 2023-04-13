@@ -251,9 +251,12 @@ public class NotificationController extends BaseController {
         preview.setRecipientsCountByTarget(recipientsCountByTarget);
         preview.setTotalRecipientsCount(recipientsCountByTarget.values().stream().mapToInt(Integer::intValue).sum());
 
+        Set<NotificationDeliveryMethod> deliveryMethods = template.getConfiguration().getDeliveryMethodsTemplates().entrySet()
+                .stream().filter(entry -> entry.getValue().isEnabled()).map(Map.Entry::getKey).collect(Collectors.toSet());
         NotificationProcessingContext ctx = NotificationProcessingContext.builder()
                 .tenantId(user.getTenantId())
                 .request(request)
+                .deliveryMethods(deliveryMethods)
                 .template(template)
                 .settings(null)
                 .build();
