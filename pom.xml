@@ -112,6 +112,7 @@
         <pubsub.client.version>1.105.0</pubsub.client.version>
         <google.common.protos.version>2.1.0</google.common.protos.version> <!-- required by io.grpc:grpc-protobuf:1.38.0-->
         <azure-servicebus.version>3.2.0</azure-servicebus.version>
+        <azure-iot-service-client.version>1.13.0</azure-iot-service-client.version>
         <passay.version>1.5.0</passay.version>
         <ua-parser.version>1.5.4</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
@@ -1836,6 +1837,11 @@
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-servicebus</artifactId>
                 <version>${azure-servicebus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.microsoft.azure.sdk.iot</groupId>
+                <artifactId>iot-service-client</artifactId>
+                <version>${azure-iot-service-client.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>
