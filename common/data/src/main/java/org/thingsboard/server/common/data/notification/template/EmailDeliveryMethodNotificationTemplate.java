@@ -21,6 +21,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.constraints.NotEmpty;
 
@@ -30,6 +32,8 @@ import javax.validation.constraints.NotEmpty;
 @ToString(callSuper = true)
 public class EmailDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
+    @NoXss(fieldName = "email subject")
+    @Length(fieldName = "email subject", max = 250, message = "cannot be longer than 250 chars")
     @NotEmpty
     private String subject;
 

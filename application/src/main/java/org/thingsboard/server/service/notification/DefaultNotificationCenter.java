@@ -125,8 +125,10 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         NotificationRuleId ruleId = request.getRuleId();
         notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (!template.isEnabled()) return;
-            if (!channels.get(deliveryMethod).check(tenantId)) {
-                throw new IllegalArgumentException("Unable to send notification via " + deliveryMethod.getName() + ": not configured or not working");
+            try {
+                channels.get(deliveryMethod).check(tenantId);
+            } catch (Exception e) {
+                throw new IllegalArgumentException(e.getMessage());
             }
             if (ruleId == null) {
                 if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
@@ -341,14 +343,20 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     @Override
     public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId) {
         return channels.values().stream()
-                .filter(channel -> channel.check(tenantId))
+                .filter(channel -> {
+                    try {
+                        channel.check(tenantId);
+                        return true;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
                 .map(NotificationChannel::getDeliveryMethod)
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public boolean check(TenantId tenantId) {
-        return true;
+    public void check(TenantId tenantId) throws Exception {
     }
 
     @Override
