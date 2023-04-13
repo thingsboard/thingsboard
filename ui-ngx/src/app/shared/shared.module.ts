@@ -53,7 +53,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
 import { DatetimeAdapter, MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
@@ -232,6 +232,12 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
       provide: MAT_AUTOCOMPLETE_DEFAULT_OPTIONS,
       useValue: {
         hideSingleSelectionIndicator: true
+      }
+    },
+    {
+      provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
+      useValue: {
+        disableTooltipInteractivity: true
       }
     },
     TbBreakPointsProvider
