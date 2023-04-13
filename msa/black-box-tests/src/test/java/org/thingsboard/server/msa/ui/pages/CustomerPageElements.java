@@ -73,6 +73,8 @@ public class CustomerPageElements extends OtherPageElementsHelper {
     private static final String MANAGE_CUSTOMERS_DASHBOARD_BTN_VIEW = "Manage dashboards";
     private static final String MANAGE_CUSTOMERS_EDGE_BTN_VIEW = "Manage edges ";
     private static final String DELETE_FROM_VIEW_BTN = "//tb-customer//span[contains(text(),' Delete')]";
+    private static final String CUSTOMER_DETAILS_VIEW = "//tb-details-panel";
+    private static final String CUSTOMER_DETAILS_ALARMS = CUSTOMER_DETAILS_VIEW + "//span[text()='Alarms']";
 
     public WebElement titleFieldAddEntityView() {
         return waitUntilElementToBeClickable(ADD_ENTITY_VIEW + String.format(INPUT_FIELD, INPUT_FIELD_NAME_TITLE));
@@ -284,5 +286,13 @@ public class CustomerPageElements extends OtherPageElementsHelper {
 
     public WebElement customerViewDeleteBtn() {
         return waitUntilElementToBeClickable(DELETE_FROM_VIEW_BTN);
+    }
+
+    public WebElement customerDetailsView() {
+        return waitUntilPresenceOfElementLocated(CUSTOMER_DETAILS_VIEW);
+    }
+
+    public WebElement customerDetailsAlarmsBtn() {
+        return waitUntilElementToBeClickable(CUSTOMER_DETAILS_ALARMS);
     }
 }

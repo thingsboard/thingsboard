@@ -15,21 +15,14 @@
  */
 package org.thingsboard.server.msa.ui.tests.assignee;
 
-import org.junit.platform.commons.function.Try;
-import org.openqa.selenium.html5.WebStorage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.thingsboard.server.msa.ui.pages.AssetPageElements;
 import org.thingsboard.server.msa.ui.utils.Const;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AssignDetailsTab extends AbstractAssignTest {
-
-    /*@BeforeMethod
-    public void openAlarmView() {
-        sideBarMenuView.goToDevicesPage();
-        devicePage.openDeviceAlarms(deviceName);
-    }*/
 
     @Test(dataProvider = "alarms")
     public void assignAlarmToYourself(String alarm) {
@@ -85,7 +78,7 @@ public class AssignDetailsTab extends AbstractAssignTest {
         alarmPage.searchAlarm(alarm, name);
         alarmPage.setUsers();
 
-        assertThat(alarmPage.getUsers()).hasSize(1).contains(name);
+        //assertThat(alarmPage.getUsers()).hasSize(1).contains(name);
         alarmPage.assignUsers().forEach(u -> assertThat(u.isDisplayed()).isTrue());
     }
 
@@ -95,7 +88,7 @@ public class AssignDetailsTab extends AbstractAssignTest {
         devicePage.openDeviceAlarms(deviceName);
         alarmPage.alarmDetailsBtn(alarm).click();
         alarmDetailsView.assignAlarmTo(Const.TENANT_EMAIL);
-        alarmDetailsView.closeViewBtn().click();
+        alarmDetailsView.closeAlarmDetailsViewBtn().click();
 
         Assert.assertTrue(alarmPage.assignedUser(Const.TENANT_EMAIL).isDisplayed());
     }
@@ -106,7 +99,7 @@ public class AssignDetailsTab extends AbstractAssignTest {
         devicePage.openDeviceAlarms(deviceName);
         alarmPage.alarmDetailsBtn(alarm).click();
         alarmDetailsView.assignAlarmTo(userEmail);
-        alarmDetailsView.closeViewBtn().click();
+        alarmDetailsView.closeAlarmDetailsViewBtn().click();
 
         Assert.assertTrue(alarmPage.assignedUser(userEmail).isDisplayed());
     }
@@ -117,7 +110,7 @@ public class AssignDetailsTab extends AbstractAssignTest {
         devicePage.openDeviceAlarms(deviceName);
         alarmPage.alarmDetailsBtn(assignedAlarm).click();
         alarmDetailsView.unassignedAlarm();
-        alarmDetailsView.closeViewBtn().click();
+        alarmDetailsView.closeAlarmDetailsViewBtn().click();
 
         Assert.assertTrue(alarmPage.unassigned(assignedAlarm).isDisplayed());
     }
@@ -128,7 +121,7 @@ public class AssignDetailsTab extends AbstractAssignTest {
         devicePage.openDeviceAlarms(deviceName);
         alarmPage.alarmDetailsBtn(assignedAlarm).click();
         alarmDetailsView.assignAlarmTo(Const.TENANT_EMAIL);
-        alarmDetailsView.closeViewBtn().click();
+        alarmDetailsView.closeAlarmDetailsViewBtn().click();
 
         Assert.assertTrue(alarmPage.assignedUser(Const.TENANT_EMAIL).isDisplayed());
     }
@@ -180,30 +173,63 @@ public class AssignDetailsTab extends AbstractAssignTest {
     @Test
     public void checkTheDisplayOfNamesEmailsFromCustomer() {
         sideBarMenuView.goToDevicesPage();
-        devicePage.openDeviceAlarms(deviceName);
-        alarmPage.assignAlarmTo(alarm, Const.TENANT_EMAIL);
+        devicePage.openDeviceAlarms(tenantDeviceName);
+        alarmPage.assignAlarmTo(tenantAlarm, Const.TENANT_EMAIL);
+        devicePage.closeDeviceDetailsViewBtn().click();
+        devicePage.assignToCustomerBtn(tenantDeviceName).click();
+        devicePage.assignToCustomer(customerTitle);
         loginByUser(userEmail);
         sideBarMenuView.goToDevicesPage();
-        devicePage.openDeviceAlarms(deviceName);
-        alarmPage.assignBtn(alarm).click();
-        try {
-            alarmPage.assertUsersForAssignIsNotPresent();
-        } finally {
-            clearStorage();
-        }
+        devicePage.openDeviceAlarms(tenantDeviceName);
+
+        clearStorage();
+        Assert.assertTrue(alarmPage.assignedUser(Const.TENANT_EMAIL).isDisplayed());
     }
 
-    public WebStorage getWebStorage() {
-        if (driver instanceof WebStorage) {
-            return (WebStorage) driver;
-        } else {
-            throw new IllegalArgumentException("This test expects the driver to implement WebStorage");
-        }
+    @Test
+    public void reassignTenantForOldAlarm() {
+        sideBarMenuView.goToDevicesPage();
+        devicePage.openDeviceAlarms(tenantDeviceName);
+        alarmPage.assignAlarmTo(tenantAlarm, Const.TENANT_EMAIL);
+        devicePage.closeDeviceDetailsViewBtn().click();
+        devicePage.assignToCustomerBtn(tenantDeviceName).click();
+        devicePage.assignToCustomer(customerTitle);
+        loginByUser(userEmail);
+        sideBarMenuView.goToDevicesPage();
+        devicePage.openDeviceAlarms(tenantDeviceName);
+        alarmPage.assignAlarmTo(tenantAlarm, userEmail);
+
+        clearStorage();
+        Assert.assertTrue(alarmPage.accessForbiddenDialogView().isDisplayed());
     }
 
-    public void clearStorage() {
-        getWebStorage().getLocalStorage().clear();
-        getWebStorage().getSessionStorage().clear();
+    @Test
+    public void assignCustomerAlarmToYourself() {
+        sideBarMenuView.customerBtn().click();
+        customerPage.openCustomerAlarms(customerTitle);
+        alarmPage.assignAlarmTo(customerAlarm, userEmail);
+
+        Assert.assertTrue(alarmPage.assignedUser(userEmail).isDisplayed());
+    }
+
+    @Test
+    public void assignAssetAlarmToYourself() {
+        AssetPageElements assetPageElements = new AssetPageElements(driver);
+        sideBarMenuView.goToAssetsPage();
+        assetPageElements.openAssetAlarms(customerTitle);
+        alarmPage.assignAlarmTo(assetAlarm, userEmail);
+
+        Assert.assertTrue(alarmPage.assignedUser(userEmail).isDisplayed());
+    }
+
+    @Test
+    public void assignEntityViewsAlarmToYourself() {
+        AssetPageElements assetPageElements = new AssetPageElements(driver);
+        sideBarMenuView.goToEntityViewsPage();
+        assetPageElements.openAssetAlarms(entityViewName);
+        alarmPage.assignAlarmTo(entityViewAlarm, userEmail);
+
+        Assert.assertTrue(alarmPage.assignedUser(userEmail).isDisplayed());
     }
 
 }

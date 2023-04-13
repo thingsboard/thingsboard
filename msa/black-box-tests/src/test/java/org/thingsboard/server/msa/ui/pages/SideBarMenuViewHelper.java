@@ -38,6 +38,16 @@ public class SideBarMenuViewHelper extends SideBarMenuViewElements {
         devicesBtn().click();
     }
 
+    public void goToAssetsPage() {
+        openEntitiesDropdown();
+        assetsBtn().click();
+    }
+
+    public void goToEntityViewsPage() {
+        openEntitiesDropdown();
+        entityViewsBtn().click();
+    }
+
     public void openEntitiesDropdown() {
         if (entitiesDropdownIsClose()) {
             entitiesDropdown().click();

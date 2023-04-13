@@ -28,4 +28,10 @@ public class DevicePageHelper extends DevicePageElements {
         }
         deviceDetailsAlarmsBtn().click();
     }
+
+    public void assignToCustomer(String customerTitle) {
+        chooseCustomerForAssignField().click();
+        customerFromAssignDropdown(customerTitle).click();
+        submitAssignToCustomerBtn().click();
+    }
 }

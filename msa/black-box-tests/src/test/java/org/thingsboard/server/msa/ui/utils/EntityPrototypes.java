@@ -23,9 +23,11 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
@@ -176,5 +178,21 @@ public class EntityPrototypes {
         device.setCustomerId(id);
         device.setType("DEFAULT");
         return device;
+    }
+
+    public static Asset defaultAssetPrototype(String name, CustomerId id){
+        Asset asset = new Asset();
+        asset.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        asset.setCustomerId(id);
+        asset.setType("DEFAULT");
+        return asset;
+    }
+
+    public static EntityView defaultEntityViewPrototype(String name, String type, String entityType){
+        EntityView entityView = new EntityView();
+        entityView.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        entityView.setType(type + RandomStringUtils.randomAlphanumeric(7));
+        entityView.setAdditionalInfo(JacksonUtil.newObjectNode().put("entityType", entityType));
+        return entityView;
     }
 }

@@ -29,16 +29,20 @@ import io.restassured.specification.RequestSpecification;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -444,5 +448,43 @@ public class TestRestClient {
                 .extract()
                 .as(new TypeRef<PageData<Tenant>>() {
                 });
+    }
+
+    public Asset postAsset(Asset asset) {
+        return given().spec(requestSpec)
+                .body(asset)
+                .post("/api/asset")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Asset.class);
+    }
+
+    public Asset getAssetById(AssetId assetId) {
+        return given().spec(requestSpec)
+                .get("/api/asset/{assetId}", assetId.getId())
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Asset.class);
+    }
+
+    public EntityView postEntityView(EntityView entityView) {
+        return given().spec(requestSpec)
+                .body(entityView)
+                .post("/api/entityView")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(EntityView.class);
+    }
+
+    public EntityView getEntityViewById(EntityViewId entityViewId) {
+        return given().spec(requestSpec)
+                .get("/api/entityView/{entityViewId}", entityViewId.getId())
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(EntityView.class);
     }
 }

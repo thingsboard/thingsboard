@@ -27,6 +27,7 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.html5.WebStorage;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -178,5 +179,18 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             Allure.addAttachment(screenshotName,
                     new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
         }
+    }
+
+    public WebStorage getWebStorage() {
+        if (driver instanceof WebStorage) {
+            return (WebStorage) driver;
+        } else {
+            throw new IllegalArgumentException("This test expects the driver to implement WebStorage");
+        }
+    }
+
+    public void clearStorage() {
+        getWebStorage().getLocalStorage().clear();
+        getWebStorage().getSessionStorage().clear();
     }
 }
