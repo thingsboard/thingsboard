@@ -995,6 +995,7 @@
         "vertical-margin-required": "Vertical margin value is required.",
         "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
         "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
+        "apply-outer-margin": "Apply margin to the sides of the layout",
         "autofill-height": "Auto fill layout height",
         "mobile-layout": "Mobile layout settings",
         "mobile-row-height": "Mobile row height, px",

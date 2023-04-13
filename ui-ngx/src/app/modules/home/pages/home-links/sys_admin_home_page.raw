@@ -6,552 +6,6 @@
   "configuration": {
     "description": "",
     "widgets": {
-      "04a9afdf-fbb4-4eaf-0fcc-a190c6202c62": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entityCount",
-              "name": null,
-              "entityAliasId": "ae870700-071f-b3bc-406c-16ba554c5a55",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "tenantsCount",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.8491768696709192,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/tenants\">{{ 'tenant.tenants' | translate }}</a>\n            </div>\n            <a class=\"tb-hide-md-lg\" mat-flat-button color=\"primary\" routerLink=\"/tenants\" [queryParams]=\"{action: 'add'}\">{{ 'tenant.add' | translate }}</a>\n        </div>\n        <div class=\"tb-count\">${tenantsCount:0}</div>\n    </div>\n    <div class=\"tb-small-button-container tb-hide-not-md-lg\">\n        <a class=\"tb-hide-not-md-lg\" mat-icon-button color=\"primary\" routerLink=\"/tenants\" [queryParams]=\"{action: 'add'}\"\n                matTooltipPosition=\"above\"\n                matTooltip=\"{{ 'tenant.add' | translate }}\">\n                <mat-icon>add</mat-icon>\n        </a>\n    </div>\n</div>",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-small-button-container {\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 28px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}\n"
-          },
-          "title": "Tenants",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": "",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "04a9afdf-fbb4-4eaf-0fcc-a190c6202c62"
-      },
-      "cf1b7a07-2a16-cab7-2528-ef5caba4ac38": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entityCount",
-              "name": null,
-              "entityAliasId": "ca4d90e4-f9ae-6fca-6b09-85815a48d52b",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "tenantProfilesCount",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.8491768696709192,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/tenantProfiles\">{{ 'tenant-profile.tenant-profiles' | translate }}</a>\n            </div>\n            <a class=\"tb-hide-md-lg\" mat-stroked-button color=\"primary\" routerLink=\"/tenantProfiles\" [queryParams]=\"{action: 'add'}\">{{ 'tenant-profile.add-profile' | translate }}</a>\n        </div>\n        <div class=\"tb-count\">${tenantProfilesCount:0}</div>\n    </div>\n    <div class=\"tb-small-button-container tb-hide-not-md-lg\">\n        <a class=\"tb-hide-not-md-lg\" mat-icon-button color=\"primary\" routerLink=\"/tenantProfiles\" [queryParams]=\"{action: 'add'}\"\n                matTooltipPosition=\"above\"\n                matTooltip=\"{{ 'tenant-profile.add-profile' | translate }}\">\n                <mat-icon>add</mat-icon>\n        </a>\n    </div>\n</div>\n",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-small-button-container {\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 28px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}\n"
-          },
-          "title": "Tenant Profiles",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": "",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "cf1b7a07-2a16-cab7-2528-ef5caba4ac38"
-      },
-      "551a27a0-cd23-a70c-0de2-c97ab6673faa": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entityCount",
-              "name": null,
-              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "devicesCount",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.8491768696709192,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'device.devices' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${devicesCount:0}</div>\n</div>",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}"
-          },
-          "title": "Devices",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": "",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "551a27a0-cd23-a70c-0de2-c97ab6673faa"
-      },
-      "a41682b0-2f23-23e9-0807-e8b47c1c1795": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entityCount",
-              "name": null,
-              "entityAliasId": "619cdf00-a042-3b55-124e-194c1b28c236",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "assetsCount",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.8491768696709192,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'asset.assets' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${assetsCount:0}</div>\n</div>",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}"
-          },
-          "title": "Assets",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": "",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "a41682b0-2f23-23e9-0807-e8b47c1c1795"
-      },
-      "1abf533c-aee7-080d-0274-d047e1d5dc63": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entityCount",
-              "name": null,
-              "entityAliasId": "1d97ff7f-8b42-5882-f87b-16f3d0dee4f2",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "usersCount",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.8491768696709192,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'user.users' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${usersCount:0}</div>\n</div>",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}\n"
-          },
-          "title": "Users",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": "",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "1abf533c-aee7-080d-0274-d047e1d5dc63"
-      },
-      "5d02c63b-bcb1-aaf3-f35d-de4dbaca96c2": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
-        "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
-        "sizeX": 5,
-        "sizeY": 3.5,
-        "config": {
-          "datasources": [
-            {
-              "type": "entityCount",
-              "name": null,
-              "entityAliasId": "0dd2b154-59f4-0f97-da1a-d85f5b5cfe31",
-              "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "customersCount",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.8491768696709192,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'customer.customers' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${customersCount:0}</div>\n</div>",
-            "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}"
-          },
-          "title": "Customers",
-          "showTitleIcon": false,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "widgetCss": "",
-          "pageSize": 1024,
-          "noDataDisplayMessage": ""
-        },
-        "row": 0,
-        "col": 0,
-        "id": "5d02c63b-bcb1-aaf3-f35d-de4dbaca96c2"
-      },
       "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
         "isSystemType": true,
         "bundleAlias": "cards",
@@ -1060,7 +514,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {},
-          "widgetCss": ".tb-widget-container {\n  display: block;\n  height: calc(100% - 12px);\n  margin-top: 12px;\n}\n\n.tb-legend-keys td .tb-legend-line {\n    height: 5px !important;\n    vertical-align: middle;\n}\n",
+          "widgetCss": "\n.tb-legend-keys td .tb-legend-line {\n    height: 5px !important;\n    vertical-align: middle;\n}\n",
           "pageSize": 1024,
           "units": "%",
           "noDataDisplayMessage": "",
@@ -1470,7 +924,7 @@
           },
           "showLegend": false,
           "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n  display: block;\n  height: 100%;\n  margin-right: 6px;\n}\n",
+          "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
         },
@@ -1603,7 +1057,7 @@
           },
           "showLegend": false,
           "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n  display: block;\n  height: 100%;\n  margin-right: 6px;\n  margin-left: 6px;\n}\n",
+          "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
         },
@@ -1736,7 +1190,7 @@
           },
           "showLegend": false,
           "useDashboardTimewindow": true,
-          "widgetCss": ".tb-widget-container {\n  display: block;\n  height: 100%;\n  margin-left: 6px;\n}\n",
+          "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
         },
@@ -1781,7 +1235,7 @@
                 {
                   "name": "cpuUsage",
                   "type": "timeseries",
-                  "label": "status",
+                  "label": "cpuStatus",
                   "color": "#f44336",
                   "settings": {},
                   "_hash": 0.025084892962804473,
@@ -1795,7 +1249,7 @@
                 {
                   "name": "cpuUsage",
                   "type": "timeseries",
-                  "label": "statusTooltip",
+                  "label": "cpuStatusTooltip",
                   "color": "#ffc107",
                   "settings": {},
                   "_hash": 0.8542003006820891,
@@ -1805,6 +1259,106 @@
                   "funcBody": null,
                   "usePostProcessing": true,
                   "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.cpu-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.cpu-warning-text\\' | translate }}';\n}\nreturn text;\n"
+                },
+                {
+                  "name": "memoryUsage",
+                  "type": "timeseries",
+                  "label": "memoryUsage",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.9761283269385537
+                },
+                {
+                  "name": "totalMemory",
+                  "type": "timeseries",
+                  "label": "totalMemory",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.6363130990513808,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value / 1073741824;"
+                },
+                {
+                  "name": "memoryUsage",
+                  "type": "timeseries",
+                  "label": "memoryStatus",
+                  "color": "#8bc34a",
+                  "settings": {},
+                  "_hash": 0.15388812616419556,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
+                },
+                {
+                  "name": "memoryUsage",
+                  "type": "timeseries",
+                  "label": "memoryStatusTooltip",
+                  "color": "#3f51b5",
+                  "settings": {},
+                  "_hash": 0.8086245517967001,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.ram-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.ram-warning-text\\' | translate }}';\n}\nreturn text;"
+                },
+                {
+                  "name": "discUsage",
+                  "type": "timeseries",
+                  "label": "discUsage",
+                  "color": "#e91e63",
+                  "settings": {},
+                  "_hash": 0.4278686534236851
+                },
+                {
+                  "name": "totalDiscSpace",
+                  "type": "timeseries",
+                  "label": "totalDiscSpace",
+                  "color": "#ffeb3b",
+                  "settings": {},
+                  "_hash": 0.543030429255416,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value / 1073741824;"
+                },
+                {
+                  "name": "discUsage",
+                  "type": "timeseries",
+                  "label": "discStatus",
+                  "color": "#03a9f4",
+                  "settings": {},
+                  "_hash": 0.29138586081227835,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var status = 'status-ok';\nif (value > 85) {\n    status = 'status-critical';\n} else if (value > 75) {\n    status = 'status-warn';\n}\nreturn status;"
+                },
+                {
+                  "name": "discUsage",
+                  "type": "timeseries",
+                  "label": "discStatusTooltip",
+                  "color": "#ff9800",
+                  "settings": {},
+                  "_hash": 0.08995267596665912,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var text = '';\nif (value > 85) {\n    text = '{{ \\'widgets.system-info.disk-critical-text\\' | translate }}';\n} else if (value > 75) {\n    text = '{{ \\'widgets.system-info.disk-warning-text\\' | translate }}';\n}\nreturn text;"
                 }
               ]
             }
@@ -1838,10 +1392,10 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "16px",
           "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-section\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>\n            <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n        </div>\n        <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n            <span class=\"tb-count\">${cpuUsage:0}%</span>\n            <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n        </div>\n    </div>    \n    <div class=\"tb-card-section\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>\n            <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n        </div>\n        <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n            <span class=\"tb-count\">${cpuUsage:0}%</span>\n            <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n        </div>\n    </div>\n    <div class=\"tb-card-section\">\n        <div class=\"tb-card-title\">\n            <div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>\n            <div matTooltip=\"${statusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${status}\"></div>\n        </div>\n        <div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">\n            <span class=\"tb-count\">${cpuUsage:0}%</span>\n            <span class=\"tb-total\">| ${cpuCount:0} cores</span>\n        </div>\n    </div>\n</div>",
+            "useMarkdownTextFunction": true,
+            "markdownTextFunction": "const memoryUsage = data[0]['memoryUsage'];\nconst totalMemory = data[0]['totalMemory'];\nconst usedMemory = (totalMemory * (memoryUsage / 100)).toFixed(0);\n\nconst discUsage = data[0]['discUsage'];\nconst totalDiscSpace = data[0]['totalDiscSpace'];\nconst usedDisc = (totalDiscSpace * (discUsage / 100)).toFixed(0);\n\n\nreturn '<div class=\"tb-card-content\">' +\n            '<div class=\"tb-card-section left\">' +\n                '<div class=\"tb-card-title\">' +\n                    '<div class=\"tb-home-widget-title\" translate>widgets.system-info.cpu</div>' +\n                    '<div matTooltip=\"${cpuStatusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${cpuStatus}\"></div>' +\n                '</div>' +\n                '<div class=\"tb-value-container\" matTooltip=\"${cpuUsage:0} / 100 %\" matTooltipPosition=\"above\">' +\n                    '<span class=\"tb-count\">${cpuUsage:0}%</span>' +\n                    '<span class=\"tb-total\">| ${cpuCount:0} cores</span>' +\n                '</div>' +\n            '</div>' +\n            '<div class=\"tb-card-section center\">' +\n                '<div class=\"tb-card-title\">' +\n                    '<div class=\"tb-home-widget-title\" translate>widgets.system-info.ram</div>' +\n                    '<div matTooltip=\"${memoryStatusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${memoryStatus}\"></div>' +\n                '</div>' +\n                '<div class=\"tb-value-container\" matTooltip=\"' + usedMemory +' / ${totalMemory:0} Gb\" matTooltipPosition=\"above\">' +\n                    '<span class=\"tb-count\">${memoryUsage:0}%</span>' +\n                    '<span class=\"tb-total\">| ${totalMemory:0} Gb</span>' +\n                '</div>' +\n            '</div>' +\n            '<div class=\"tb-card-section right\">' +\n                '<div class=\"tb-card-title\">' +\n                    '<div class=\"tb-home-widget-title\" translate>widgets.system-info.disk</div>' +\n                    '<div matTooltip=\"${discStatusTooltip}\" matTooltipPosition=\"above\" class=\"tb-status ${discStatus}\"></div>' +\n                '</div>' +\n                '<div class=\"tb-value-container\" matTooltip=\"' + usedDisc +' / ${totalDiscSpace:0} Gb\" matTooltipPosition=\"above\">' +\n                    '<span class=\"tb-count\">${discUsage:0}%</span>' +\n                    '<span class=\"tb-total\">| ${totalDiscSpace:0} Gb</span>' +\n                '</div>' +\n            '</div>' +\n        '</div>';",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-start;\n    align-items: stretch;\n}\n\n.tb-card-section {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-status {\n        width: 18px;\n        height: 18px;\n    }\n    .tb-status:after {\n        font-size: 14px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    .tb-total {\n        font-size: 11px;\n        line-height: 16px;\n    }\n}"
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-start;\n    align-items: stretch;\n}\n\n.tb-card-section {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    align-items: flex-start;\n}\n\n.tb-card-section.left {\n    padding-right: 12px;\n    border-right: solid 1px rgba(0, 0, 0, 0.12);\n}\n\n.tb-card-section.center {\n    padding-left: 12px;\n    padding-right: 12px;\n}\n\n.tb-card-section.right {\n    padding-left: 12px;\n    border-left: solid 1px rgba(0, 0, 0, 0.12);\n}\n\n.tb-card-title {\n    width: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-status {\n    width: 24px;\n    height: 24px;\n    position: relative;\n}\n\n.tb-status.status-ok {\n    background: #F3F6FA;\n    border-radius: 4px;\n}\n\n.tb-status:after {\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    font-family: 'Material Icons Round';\n    font-size: 20px;\n    line-height: 1;\n}\n\n.tb-status.status-ok:after {\n    content: \"check\";\n    color: #198038;\n    font-weight: 600;\n}\n\n.tb-status.status-warn:after {\n    content: \"warning\";\n    color: #FAA405;\n}\n\n.tb-status.status-critical:after {\n    content: \"warning\";\n    color: #D12730;\n}\n\n.tb-value-container {\n    user-select: none;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 600;\n    font-size: 20px;\n    line-height: 24px;\n}\n\n.tb-total {\n    padding-left: 4px;\n    font-weight: 400;\n    font-size: 12px;\n    line-height: 16px;\n    color: rgba(0, 0, 0, 0.54);\n}\n"
           },
           "title": "Mobile system info cards",
           "showTitleIcon": false,
@@ -1935,6 +1489,824 @@
         "row": 0,
         "col": 0,
         "id": "f0479b00-ed47-0a30-0c36-bde7847aae00"
+      },
+      "57ed0ad9-8fcf-4454-1fa7-d39e22f84570": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "ae870700-071f-b3bc-406c-16ba554c5a55",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "tenantsCount",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/tenants\">{{ 'tenant.tenants' | translate }}</a>\n            </div>\n            <a class=\"tb-hide-md-lg\" mat-flat-button color=\"primary\" routerLink=\"/tenants\" [queryParams]=\"{action: 'add'}\">{{ 'tenant.add' | translate }}</a>\n        </div>\n        <div class=\"tb-count\">${tenantsCount:0}</div>\n    </div>\n    <div class=\"tb-small-button-container tb-hide-not-md-lg\">\n        <a class=\"tb-hide-not-md-lg\" mat-icon-button color=\"primary\" routerLink=\"/tenants\" [queryParams]=\"{action: 'add'}\"\n                matTooltipPosition=\"above\"\n                matTooltip=\"{{ 'tenant.add' | translate }}\">\n                <mat-icon>add</mat-icon>\n        </a>\n    </div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-small-button-container {\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 28px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}\n"
+          },
+          "title": "Tenants",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "57ed0ad9-8fcf-4454-1fa7-d39e22f84570"
+      },
+      "0464b6bc-7863-ba75-4b84-64b8acae2af9": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "ca4d90e4-f9ae-6fca-6b09-85815a48d52b",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "tenantProfilesCount",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/tenantProfiles\">{{ 'tenant-profile.tenant-profiles' | translate }}</a>\n            </div>\n            <a class=\"tb-hide-md-lg\" mat-stroked-button color=\"primary\" routerLink=\"/tenantProfiles\" [queryParams]=\"{action: 'add'}\">{{ 'tenant-profile.add-profile' | translate }}</a>\n        </div>\n        <div class=\"tb-count\">${tenantProfilesCount:0}</div>\n    </div>\n    <div class=\"tb-small-button-container tb-hide-not-md-lg\">\n        <a class=\"tb-hide-not-md-lg\" mat-icon-button color=\"primary\" routerLink=\"/tenantProfiles\" [queryParams]=\"{action: 'add'}\"\n                matTooltipPosition=\"above\"\n                matTooltip=\"{{ 'tenant-profile.add-profile' | translate }}\">\n                <mat-icon>add</mat-icon>\n        </a>\n    </div>\n</div>\n",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-small-button-container {\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 28px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}\n"
+          },
+          "title": "Tenant Profiles",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "0464b6bc-7863-ba75-4b84-64b8acae2af9"
+      },
+      "4c043bba-6ac1-dd23-0796-fe6ae4c3c0a3": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "devicesCount",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'device.devices' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${devicesCount:0}</div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}"
+          },
+          "title": "Devices",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "4c043bba-6ac1-dd23-0796-fe6ae4c3c0a3"
+      },
+      "8b8d5d4f-2c5f-c768-d4fb-68d6e0b716f4": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "619cdf00-a042-3b55-124e-194c1b28c236",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "assetsCount",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'asset.assets' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${assetsCount:0}</div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}"
+          },
+          "title": "Assets",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "8b8d5d4f-2c5f-c768-d4fb-68d6e0b716f4"
+      },
+      "d58bfdd4-18b0-a70c-5d5f-73d12c2ea468": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "1d97ff7f-8b42-5882-f87b-16f3d0dee4f2",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "usersCount",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'user.users' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${usersCount:0}</div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}\n"
+          },
+          "title": "Users",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "d58bfdd4-18b0-a70c-5d5f-73d12c2ea468"
+      },
+      "a3d83738-a4f2-ea92-17d7-1a3c52aa1770": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "0dd2b154-59f4-0f97-da1a-d85f5b5cfe31",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "customersCount",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-title\">\n        <div class=\"tb-home-widget-title\">{{ 'customer.customers' | translate }}</div>\n    </div>\n    <div class=\"tb-count\">${customersCount:0}</div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 26px;\n    line-height: 36px;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-count {\n        font-size: 18px;\n        line-height: 24px;\n    }\n}"
+          },
+          "title": "Customers",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "a3d83738-a4f2-ea92-17d7-1a3c52aa1770"
+      },
+      "ff4f04a2-f739-2f3e-17dc-9ede9f2df75d": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "ae870700-071f-b3bc-406c-16ba554c5a55",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "tenantsCount",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "ca4d90e4-f9ae-6fca-6b09-85815a48d52b",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "tenantProfilesCount",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.04291827117688696,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "devicesCount",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.45105711028955886,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "619cdf00-a042-3b55-124e-194c1b28c236",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "assetsCount",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.17028494648519876,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "1d97ff7f-8b42-5882-f87b-16f3d0dee4f2",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "usersCount",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.0362458342595664,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "0dd2b154-59f4-0f97-da1a-d85f5b5cfe31",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "customersCount",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.7596585662918276,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-card-section left\">\n        <div class=\"tb-entity-section\">\n            <div class=\"tb-count\">${tenantsCount:0}</div>\n            <a class=\"tb-entity-title tb-home-widget-link\" routerLink=\"/tenants\">{{ 'tenant.tenants' | translate }}</a>\n        </div>\n        <div class=\"tb-button-section\">\n            <a mat-flat-button color=\"primary\" routerLink=\"/tenants\" [queryParams]=\"{action: 'add'}\">{{ 'tenant.add' | translate }}</a>\n        </div>\n        <div class=\"tb-entity-section\">\n            <div class=\"tb-count\">${tenantProfilesCount:0}</div>\n            <a class=\"tb-entity-title tb-home-widget-link\" routerLink=\"/tenantProfiles\">{{ 'tenant-profile.tenant-profiles' | translate }}</a>\n        </div>\n        <div class=\"tb-button-section\">\n            <a mat-stroked-button color=\"primary\" routerLink=\"/tenantProfiles\" [queryParams]=\"{action: 'add'}\">{{ 'tenant-profile.add-profile' | translate }}</a>\n        </div>\n    </div>\n    <div class=\"tb-card-section right\">\n        <div class=\"tb-entity-section\">\n            <div class=\"tb-count\">${devicesCount:0}</div>\n            <div class=\"tb-entity-title\">{{ 'device.devices' | translate }}</div>\n        </div>\n        <div class=\"tb-entity-section\">\n            <div class=\"tb-count\">${assetsCount:0}</div>\n            <div class=\"tb-entity-title\">{{ 'asset.assets' | translate }}</div>\n        </div>\n        <div class=\"tb-entity-section\">\n            <div class=\"tb-count\">${usersCount:0}</div>\n            <div class=\"tb-entity-title\">{{ 'user.users' | translate }}</div>\n        </div>\n        <div class=\"tb-entity-section\">\n            <div class=\"tb-count\">${customersCount:0}</div>\n            <div class=\"tb-entity-title\">{{ 'customer.customers' | translate }}</div>\n        </div>\n    </div>\n</div>\n",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-start;\n    align-items: stretch;\n}\n\n.tb-card-section {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-evenly;\n    align-items: stretch;\n}\n\n.tb-card-section.left {\n    border-right: solid 1px rgba(0, 0, 0, 0.12);\n}\n\n.tb-card-section.right .tb-entity-section {\n    padding-left: 40px;\n}\n\n.tb-card-section.right .tb-count {\n    min-width: 24px;\n    text-align: right;\n}\n\n.tb-button-section {\n    display: flex;\n    padding-right: 40px;\n    flex-direction: row;\n    justify-content: flex-end;\n    align-items: center;\n}\n\n.tb-entity-section {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-start;\n    align-items: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 600;\n    font-size: 20px;\n    line-height: 24px;\n    margin-right: 12px;\n}\n\n.tb-entity-title {\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n"
+          },
+          "title": "Entities info mobile card",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "ff4f04a2-f739-2f3e-17dc-9ede9f2df75d"
+      },
+      "163025d8-3ca4-dd1e-c17b-e40d8e03e8a8": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgba(0,0,0,0)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div style=\"width: 100%; height: 100%;\">\n    <tb-dashboard-state *ngIf=\"!ctx.isMobile; else mobile\" stateId=\"entities_info_desktop\" [ctx]=\"ctx\"></tb-dashboard-state>\n    <ng-template #mobile>\n        <tb-dashboard-state stateId=\"entities_info_mobile\" [ctx]=\"ctx\"></tb-dashboard-state>\n    </ng-template>    \n</div>",
+            "applyDefaultMarkdownStyle": false
+          },
+          "title": "System info cards",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {
+            "border": "none",
+            "boxShadow": "none",
+            "padding": "0"
+          },
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "gridster.mobile {\n    overflow-y: hidden;\n}\n",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "163025d8-3ca4-dd1e-c17b-e40d8e03e8a8"
       }
     },
     "states": {
@@ -1944,69 +2316,21 @@
         "layouts": {
           "main": {
             "widgets": {
-              "04a9afdf-fbb4-4eaf-0fcc-a190c6202c62": {
-                "sizeX": 22,
-                "sizeY": 8,
-                "row": 0,
-                "col": 0,
-                "mobileOrder": 0,
-                "mobileHeight": 4
-              },
-              "cf1b7a07-2a16-cab7-2528-ef5caba4ac38": {
-                "sizeX": 22,
-                "sizeY": 8,
-                "row": 0,
-                "col": 22,
-                "mobileOrder": 1,
-                "mobileHeight": 4
-              },
-              "551a27a0-cd23-a70c-0de2-c97ab6673faa": {
-                "sizeX": 11,
-                "sizeY": 7,
-                "row": 8,
-                "col": 0,
-                "mobileOrder": 2,
-                "mobileHeight": 4
-              },
-              "a41682b0-2f23-23e9-0807-e8b47c1c1795": {
-                "sizeX": 11,
-                "sizeY": 7,
-                "row": 8,
-                "col": 11,
-                "mobileOrder": 3,
-                "mobileHeight": 4
-              },
-              "1abf533c-aee7-080d-0274-d047e1d5dc63": {
-                "sizeX": 11,
-                "sizeY": 7,
-                "row": 8,
-                "col": 22,
-                "mobileOrder": 4,
-                "mobileHeight": 4
-              },
-              "5d02c63b-bcb1-aaf3-f35d-de4dbaca96c2": {
-                "sizeX": 11,
-                "sizeY": 7,
-                "row": 8,
-                "col": 33,
-                "mobileOrder": 5,
-                "mobileHeight": 4
-              },
               "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
                 "sizeX": 41,
-                "sizeY": 18,
-                "row": 24,
+                "sizeY": 16,
+                "row": 26,
                 "col": 44,
                 "mobileOrder": 7,
                 "mobileHeight": 8
               },
               "4b5e47ed-c197-a937-d727-041ba8decec2": {
                 "sizeX": 41,
-                "sizeY": 24,
+                "sizeY": 26,
                 "row": 0,
                 "col": 44,
                 "mobileOrder": 6,
-                "mobileHeight": 16
+                "mobileHeight": 11
               },
               "8acbf5df-f9fc-114d-216f-86f081aa4779": {
                 "sizeX": 52,
@@ -2044,6 +2368,14 @@
                 "row": 0,
                 "col": 85,
                 "mobileHide": true
+              },
+              "163025d8-3ca4-dd1e-c17b-e40d8e03e8a8": {
+                "sizeX": 44,
+                "sizeY": 15,
+                "mobileOrder": 0,
+                "mobileHeight": 7,
+                "row": 0,
+                "col": 0
               }
             },
             "gridSettings": {
@@ -2054,7 +2386,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 20
+              "mobileRowHeight": 20,
+              "outerMargin": true
             }
           }
         }
@@ -2080,7 +2413,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": true,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -2093,15 +2427,15 @@
             "widgets": {
               "eace9148-b02a-48fe-1a95-acd9928aa8c5": {
                 "sizeX": 48,
-                "sizeY": 21,
-                "row": 7,
+                "sizeY": 20,
+                "row": 8,
                 "col": 0,
                 "mobileOrder": 1,
                 "mobileHeight": 10
               },
               "f0479b00-ed47-0a30-0c36-bde7847aae00": {
                 "sizeX": 48,
-                "sizeY": 7,
+                "sizeY": 8,
                 "mobileOrder": 0,
                 "mobileHeight": 4,
                 "row": 0,
@@ -2111,12 +2445,13 @@
             "gridSettings": {
               "backgroundColor": "rgba(0,0,0,0)",
               "columns": 48,
-              "margin": 0,
+              "margin": 12,
               "backgroundSizeMode": "100%",
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": true,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": false
             }
           }
         }
@@ -2149,12 +2484,13 @@
             "gridSettings": {
               "backgroundColor": "rgba(0,0,0,0)",
               "columns": 24,
-              "margin": 0,
+              "margin": 12,
               "backgroundSizeMode": "100%",
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": true,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": false
             }
           }
         }
@@ -2175,7 +2511,92 @@
             "gridSettings": {
               "backgroundColor": "rgba(0,0,0,0)",
               "columns": 24,
-              "margin": 0,
+              "margin": 12,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": true,
+              "mobileRowHeight": 70,
+              "outerMargin": false
+            }
+          }
+        }
+      },
+      "entities_info_desktop": {
+        "name": "Entities Info Desktop",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "57ed0ad9-8fcf-4454-1fa7-d39e22f84570": {
+                "sizeX": 60,
+                "sizeY": 29,
+                "row": 0,
+                "col": 0
+              },
+              "0464b6bc-7863-ba75-4b84-64b8acae2af9": {
+                "sizeX": 60,
+                "sizeY": 29,
+                "row": 0,
+                "col": 60
+              },
+              "4c043bba-6ac1-dd23-0796-fe6ae4c3c0a3": {
+                "sizeX": 30,
+                "sizeY": 26,
+                "row": 29,
+                "col": 0
+              },
+              "8b8d5d4f-2c5f-c768-d4fb-68d6e0b716f4": {
+                "sizeX": 30,
+                "sizeY": 26,
+                "row": 29,
+                "col": 30
+              },
+              "d58bfdd4-18b0-a70c-5d5f-73d12c2ea468": {
+                "sizeX": 30,
+                "sizeY": 26,
+                "row": 29,
+                "col": 60
+              },
+              "a3d83738-a4f2-ea92-17d7-1a3c52aa1770": {
+                "sizeX": 30,
+                "sizeY": 26,
+                "row": 29,
+                "col": 90
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "rgba(0,0,0,0)",
+              "columns": 120,
+              "margin": 12,
+              "outerMargin": false,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "entities_info_mobile": {
+        "name": "Entities Info Mobile",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "ff4f04a2-f739-2f3e-17dc-9ede9f2df75d": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "rgba(0,0,0,0)",
+              "columns": 24,
+              "margin": 12,
+              "outerMargin": false,
               "backgroundSizeMode": "100%",
               "autoFillHeight": true,
               "backgroundImageUrl": null,
