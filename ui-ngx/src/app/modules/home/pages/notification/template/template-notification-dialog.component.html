@@ -167,7 +167,7 @@
       </form>
     </mat-step>
     <mat-step *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.EMAIL.enabled').value"
-      [stepControl]="emailTemplateForm">
+      [stepControl]="emailTemplateForm" #emailStep="matStep">
       <ng-template matStepLabel>{{ 'notification.delivery-method.email' | translate }}</ng-template>
       <ng-template matStepContent>
         <div class="tb-hint-available-params mat-body-2">
@@ -186,8 +186,14 @@
               {{ 'notification.subject-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-label class="tb-title" translate>notification.message</mat-label>
-          <editor [init]="tinyMceOptions" formControlName="body"></editor>
+          <mat-label class="tb-title tb-required"
+                     [ngClass]="{'tb-error': (emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')}"
+                     translate>notification.message</mat-label>
+          <editor [init]="tinyMceOptions" matInput formControlName="body"></editor>
+          <mat-error class="tb-mat-error"
+            *ngIf="(emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
         </form>
       </ng-template>
     </mat-step>
