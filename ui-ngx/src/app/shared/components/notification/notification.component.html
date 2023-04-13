@@ -1,0 +1,51 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section fxLayout="row" fxLayoutAlign="space-between start" class="notification"
+         [ngStyle]="{borderColor: notificationColor()}">
+  <div *ngIf="showIcon; else defaultIcon">
+    <mat-icon class="icon" [ngStyle]="{color: notification.additionalConfig.icon.color}">
+      {{ notification.additionalConfig.icon.icon }}
+    </mat-icon>
+  </div>
+  <ng-template #defaultIcon>
+    <mat-icon class="icon" *ngIf="notificationTypeIcons.get(notification.type)" [ngStyle]="notificationIconColor()">
+      {{ notificationTypeIcons.get(notification.type) }}
+    </mat-icon>
+  </ng-template>
+  <div class="content" fxFlex>
+    <div class="title" [innerHTML]="(notification.subject | safe: 'html' )"></div>
+    <div class="message" [innerHTML]="(notification.text  | safe: 'html' )"></div>
+    <button *ngIf="showButton" mat-stroked-button class="button" color="primary"
+            (click)="navigate($event)">
+      {{ buttonLabel }}
+    </button>
+  </div>
+  <div class="description" fxLayout="column" fxLayoutAlign="start end">
+    <span class="time">{{ notification.createdTime ?? currentDate | dateAgo }}</span>
+    <button mat-icon-button (click)="markRead($event)" *ngIf="!hideMarkAsReadButton"
+            matTooltip="{{ 'notification.mark-as-read' | translate }}" matTooltipPosition="above">
+      <mat-icon>check_circle_outline</mat-icon>
+    </button>
+    <div class="alarm-severity" *ngIf="notification.type === notificationType.ALARM"
+         [ngStyle]="{backgroundColor: alarmColorSeverity(0.06)}">
+      <span [ngStyle]="notificationIconColor()" class="severity">
+        {{alarmSeverityTranslations.get(notification.info.alarmSeverity) | translate}}
+      </span>
+    </div>
+  </div>
+</section>

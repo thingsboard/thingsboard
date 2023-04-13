@@ -63,7 +63,7 @@ import { isDefined, isEmptyStr, isEqual, isString, isUndefined } from '@core/uti
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
-import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
+import { EntitiesTableAction, IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 
 @Component({
@@ -126,6 +126,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   private widgetResize$: ResizeObserver;
 
+  private rxSubscriptions = new Array<Subscription>();
+
   constructor(protected store: Store<AppState>,
               public route: ActivatedRoute,
               public translate: TranslateService,
@@ -143,7 +145,11 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     if (this.entitiesTableConfig) {
       this.init(this.entitiesTableConfig);
     } else {
-      this.init(this.route.snapshot.data.entitiesTableConfig);
+      this.rxSubscriptions.push(this.route.data.subscribe(
+        (data) => {
+          this.init(data.entitiesTableConfig);
+        }
+      ));
     }
     this.widgetResize$ = new ResizeObserver(() => {
       const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
@@ -159,6 +165,10 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    this.rxSubscriptions.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    this.rxSubscriptions.length = 0;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -221,8 +231,11 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     const routerQueryParams: PageQueryParam = this.route.snapshot.queryParams;
 
     let sortOrder: SortOrder = null;
+    let initialAction: EntitiesTableAction = null;
     if (this.pageMode) {
-      if (this.entitiesTableConfig.defaultSortOrder || routerQueryParams.hasOwnProperty('direction') || routerQueryParams.hasOwnProperty('property')) {
+      initialAction = routerQueryParams?.action;
+      if (this.entitiesTableConfig.defaultSortOrder || routerQueryParams.hasOwnProperty('direction')
+        || routerQueryParams.hasOwnProperty('property')) {
         sortOrder = {
           property: routerQueryParams?.property || this.entitiesTableConfig.defaultSortOrder.property,
           direction: routerQueryParams?.direction || this.entitiesTableConfig.defaultSortOrder.direction
@@ -271,6 +284,22 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       setTimeout(() => {
         this.updatePaginationSubscriptions();
       }, 0);
+    }
+    if (this.pageMode) {
+      if (initialAction) {
+        const queryParams: PageQueryParam = {};
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams,
+          queryParamsHandling: '',
+          replaceUrl: true
+        });
+      }
+      if (initialAction === 'add') {
+        setTimeout(() => {
+          this.addEntity(null);
+        }, 0);
+      }
     }
   }
 
@@ -691,5 +720,9 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     } else {
       this.updateData();
     }
+  }
+
+  detectChanges() {
+    this.cd.markForCheck();
   }
 }

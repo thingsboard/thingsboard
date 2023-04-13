@@ -1,0 +1,372 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary">
+  <h2>{{ dialogTitle | translate }}</h2>
+  <span fxFlex></span>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+</mat-progress-bar>
+<div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+<div mat-dialog-content>
+  <mat-horizontal-stepper linear #createNotification
+                          [labelPosition]="(stepperLabelPosition | async)"
+                          [orientation]="(stepperOrientation | async)"
+                          (selectionChange)="changeStep($event)">
+    <ng-template matStepperIcon="edit">
+      <mat-icon>check</mat-icon>
+    </ng-template>
+    <mat-step [stepControl]="notificationRequestForm">
+      <ng-template matStepLabel>{{ 'notification.compose' | translate }}</ng-template>
+      <form [formGroup]="notificationRequestForm">
+        <div fxLayout="row" fxLayoutAlign="center">
+          <mat-button-toggle-group class="tb-notification-use-template-toggle-group"
+                                   style="width: 320px;"
+                                   formControlName="useTemplate">
+            <mat-button-toggle fxFlex [value]=false>{{ 'notification.start-from-scratch' | translate }}</mat-button-toggle>
+            <mat-button-toggle fxFlex [value]=true>{{ 'notification.use-template' | translate }}</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+        <div *ngIf="notificationRequestForm.get('useTemplate').value; else scratchTemplate">
+          <tb-template-autocomplete
+            required
+            allowCreate
+            formControlName="templateId"
+            [notificationTypes]="notificationType.GENERAL">
+          </tb-template-autocomplete>
+          <ng-container *ngTemplateOutlet="recipientsList"></ng-container>
+        </div>
+        <ng-template #scratchTemplate>
+          <ng-container *ngTemplateOutlet="recipientsList"></ng-container>
+          <section formGroupName="template">
+            <section formGroupName="configuration">
+              <label [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
+                     class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
+              <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
+              <section formGroupName="deliveryMethodsTemplates" fxLayout="row wrap" style="margin-bottom: 12px;">
+                <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
+                         [formGroupName]="deliveryMethods" fxFlex="50%" [ngClass]={even:isEven}>
+                  <mat-slide-toggle class="delivery-method" formControlName="enabled">
+                    {{ notificationDeliveryMethodTranslateMap.get(deliveryMethods) | translate }}
+                  </mat-slide-toggle>
+                </section>
+              </section>
+            </section>
+          </section>
+        </ng-template>
+        <ng-template #recipientsList>
+          <tb-entity-list
+            required
+            formControlName="targets"
+            labelText="{{ 'notification.recipients' | translate }}"
+            placeholderText="{{ 'notification.recipient' | translate }}"
+            requiredText="{{ 'notification.recipients-required' | translate }}"
+            entityType="{{ entityType.NOTIFICATION_TARGET }}"
+            subType="{{ notificationType.GENERAL }}">
+            <button #createTargetButton
+                    mat-button color="primary" matSuffix
+                    (click)="createTarget($event, createTargetButton)">
+              <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+            </button>
+          </tb-entity-list>
+        </ng-template>
+        <section formGroupName="additionalConfig" class="additional-config-group">
+          <mat-slide-toggle formControlName="enabled" class="toggle">
+            {{ 'notification.scheduler-later' | translate }}
+          </mat-slide-toggle>
+          <div *ngIf="notificationRequestForm.get('additionalConfig.enabled').value" fxLayout="column">
+            <tb-timezone-select userTimezoneByDefault
+                                required
+                                formControlName="timezone">
+            </tb-timezone-select>
+            <mat-form-field>
+              <mat-label translate>notification.time</mat-label>
+              <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #startTimePicker type="datetime" openOnFocus="true" [timeInterval]="1"></mat-datetimepicker>
+              <input required matInput fxFlex formControlName="time" [min]="minDate()" [max]="maxDate()" [matDatetimepicker]="startTimePicker">
+            </mat-form-field>
+          </div>
+        </section>
+      </form>
+    </mat-step>
+    <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                      notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.WEB.enabled').value"
+              [stepControl]="webTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.delivery-method.web' | translate }}</ng-template>
+      <div class="tb-hint-available-params mat-body-2">
+        <span class="content">{{ 'notification.input-fields-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
+      </div>
+      <form [formGroup]="webTemplateForm">
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.subject</mat-label>
+          <input matInput formControlName="subject">
+          <mat-error *ngIf="webTemplateForm.get('subject').hasError('required')">
+            {{ 'notification.subject-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.message</mat-label>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cols="1"
+                    cdkAutosizeMinRows="1"
+                    formControlName="body">
+          </textarea>
+          <mat-error *ngIf="webTemplateForm.get('body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <section formGroupName="additionalConfig">
+          <section formGroupName="icon" class="additional-config-group">
+            <mat-slide-toggle formControlName="enabled" class="toggle">
+              {{ 'icon.icon' | translate }}
+            </mat-slide-toggle>
+            <div *ngIf="webTemplateForm.get('additionalConfig.icon.enabled').value"
+                 fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
+              <tb-material-icon-select formControlName="icon" required fxFlex>
+              </tb-material-icon-select>
+              <tb-color-input formControlName="color" fxFlex>
+              </tb-color-input>
+            </div>
+          </section>
+          <section formGroupName="actionButtonConfig" class="additional-config-group">
+            <mat-slide-toggle formControlName="enabled" class="toggle">
+              {{ 'notification.action-button' | translate }}
+            </mat-slide-toggle>
+            <div *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value">
+              <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
+                <mat-form-field class="mat-block" fxFlex>
+                  <mat-label translate>notification.button-text</mat-label>
+                  <input matInput formControlName="text" required>
+                  <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('required')">
+                    {{ 'notification.button-text-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+              <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
+                <mat-form-field fxFlex="30" fxFlex.xs="100">
+                  <mat-label translate>notification.action-type</mat-label>
+                  <mat-select formControlName="linkType">
+                    <mat-option *ngFor="let actionButtonLinkType of actionButtonLinkTypes" [value]="actionButtonLinkType">
+                      {{ actionButtonLinkTypeTranslateMap.get(actionButtonLinkType) | translate }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field fxFlex
+                                *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.LINK; else dashboardSelector">
+                  <mat-label translate>notification.link</mat-label>
+                  <input matInput formControlName="link" required>
+                  <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.link').hasError('required')">
+                    {{ 'notification.link-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <ng-template #dashboardSelector>
+                  <tb-dashboard-autocomplete
+                    fxFlex="35" fxFlex.xs="100"
+                    required
+                    formControlName="dashboardId">
+                  </tb-dashboard-autocomplete>
+                  <tb-dashboard-state-autocomplete fxFlex="35" fxFlex.xs="100"
+                                                   [dashboardId]="webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').value"
+                                                   formControlName="dashboardState">
+                  </tb-dashboard-state-autocomplete>
+                </ng-template>
+              </div>
+              <mat-slide-toggle formControlName="setEntityIdInState" class="toggle"
+                                *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.DASHBOARD">
+                {{ 'notification.set-entity-from-notification' | translate }}
+              </mat-slide-toggle>
+            </div>
+          </section>
+        </section>
+      </form>
+    </mat-step>
+    <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                     notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.EMAIL.enabled').value"
+              [stepControl]="emailTemplateForm"  #emailStep="matStep">
+      <ng-template matStepLabel>{{ 'notification.delivery-method.email' | translate }}</ng-template>
+      <ng-template matStepContent>
+        <div class="tb-hint-available-params mat-body-2">
+          <span class="content">{{ 'notification.input-fields-support-templatization' | translate}}</span>
+          <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+                tb-help-popup-placement="bottom"
+                trigger-style="letter-spacing:0.25px"
+                [tb-help-popup-style]="{maxWidth: '820px'}"
+                trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
+        </div>
+        <form [formGroup]="emailTemplateForm">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.subject</mat-label>
+            <input matInput formControlName="subject">
+            <mat-error *ngIf="emailTemplateForm.get('subject').hasError('required')">
+              {{ 'notification.subject-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-label class="tb-title tb-required"
+                     [ngClass]="{'tb-error': (emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')}"
+                     translate>notification.message</mat-label>
+          <editor [init]="tinyMceOptions" formControlName="body"></editor>
+          <mat-error class="tb-mat-error"
+                     *ngIf="(emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
+        </form>
+      </ng-template>
+    </mat-step>
+    <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                      notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SMS.enabled').value"
+              [stepControl]="smsTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.delivery-method.sms' | translate }}</ng-template>
+      <div class="tb-hint-available-params mat-body-2">
+        <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
+      </div>
+      <form [formGroup]="smsTemplateForm">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic">
+          <mat-label translate>notification.message</mat-label>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cols="1"
+                    cdkAutosizeMinRows="1"
+                    formControlName="body">
+          </textarea>
+          <mat-error *ngIf="smsTemplateForm.get('body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="smsTemplateForm.get('body').hasError('maxlength')">
+            {{ 'notification.message-max-length' | translate :
+            {length: smsTemplateForm.get('body').getError('maxlength').requiredLength}
+            }}
+          </mat-error>
+        </mat-form-field>
+      </form>
+    </mat-step>
+    <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                     notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.SLACK.enabled').value"
+              [stepControl]="slackTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.delivery-method.slack' | translate }}</ng-template>
+      <div class="tb-hint-available-params mat-body-2">
+        <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
+      </div>
+      <form [formGroup]="slackTemplateForm" fxLayoutGap="8px">
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.message</mat-label>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cols="1"
+                    cdkAutosizeMinRows="1"
+                    formControlName="body">
+          </textarea>
+          <mat-error *ngIf="slackTemplateForm.get('body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </form>
+    </mat-step>
+    <mat-step>
+      <ng-template matStepLabel>{{ 'notification.review' | translate }}</ng-template>
+      <mat-progress-spinner color="warn" mode="indeterminate"
+                            strokeWidth="5" *ngIf="(isLoading$ | async) && !preview">
+      </mat-progress-spinner>
+      <div *ngIf="preview" style="padding-bottom: 16px">
+        <section class="preview-group notification" *ngIf="preview.processedTemplates.WEB?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <mat-icon class="tb-mat-18" svgIcon="mdi:bell-badge"></mat-icon>
+            <div class="group-title" translate>notification.delivery-method.web-preview</div>
+          </div>
+          <div class="web-preview">
+            <tb-notification preview [notification]="preview.processedTemplates.WEB"></tb-notification>
+          </div>
+        </section>
+        <section class="preview-group notification" *ngIf="preview.processedTemplates.EMAIL?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <mat-icon class="tb-mat-18" svgIcon="mdi:email"></mat-icon>
+            <div class="group-title" translate>notification.delivery-method.email-preview</div>
+          </div>
+          <div class="notification-content">
+            <div class="subject">{{ preview.processedTemplates.EMAIL.subject }}</div>
+            <mat-divider></mat-divider>
+            <div class="html-content" [innerHTML]="(preview.processedTemplates.EMAIL.body | safe: 'html')"></div>
+          </div>
+        </section>
+        <section class="preview-group notification" *ngIf="preview.processedTemplates.SMS?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <mat-icon class="tb-mat-18" svgIcon="mdi:message-processing"></mat-icon>
+            <div class="group-title" translate>notification.delivery-method.sms-preview</div>
+          </div>
+          <div class="notification-content">
+            {{ preview.processedTemplates.SMS.body }}
+          </div>
+        </section>
+        <section class="preview-group notification" *ngIf="preview.processedTemplates.SLACK?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <mat-icon class="tb-mat-18" svgIcon="mdi:slack"></mat-icon>
+            <div class="group-title" translate>notification.delivery-method.slack-preview</div>
+          </div>
+          <div class="notification-content">
+            {{ preview.processedTemplates.SLACK.body }}
+          </div>
+        </section>
+        <section class="preview-group">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <mat-icon  class="tb-mat-18">supervisor_account</mat-icon>
+            <div class="group-title">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
+          </div>
+          <div class="details-recipients" *ngIf="notificationRequestForm.get('targets').value?.length > 1">
+            <div *ngFor="let detail of preview.recipientsCountByTarget | keyvalue" class="details-recipient">
+              <span class="number">{{ detail.value }}</span>{{ detail.key }}
+            </div>
+          </div>
+          <mat-divider class="divider"></mat-divider>
+          <mat-chip-listbox>
+            <mat-chip *ngFor="let recipientTitle of preview.recipientsPreview">
+              <span>{{ recipientTitle }}</span>
+            </mat-chip>
+          </mat-chip-listbox>
+        </section>
+      </div>
+    </mat-step>
+  </mat-horizontal-stepper>
+</div>
+<mat-divider></mat-divider>
+<div mat-dialog-actions fxLayout="row">
+  <button mat-stroked-button *ngIf="selectedIndex > 0"
+          (click)="backStep()">{{ 'action.back' | translate }}</button>
+  <span fxFlex></span>
+  <button mat-raised-button
+          color="primary"
+          (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+</div>

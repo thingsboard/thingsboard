@@ -34,18 +34,22 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -76,10 +80,10 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     private final UserDao userDao;
     private final UserCredentialsDao userCredentialsDao;
     private final UserAuthSettingsDao userAuthSettingsDao;
-    private final UserSettingsDao userSettingsDao;
     private final DataValidator<User> userValidator;
     private final DataValidator<UserCredentials> userCredentialsValidator;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityCountService countService;
 
     @Override
     public User findUserByEmail(TenantId tenantId, String email) {
@@ -123,6 +127,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
         User savedUser = userDao.save(user.getTenantId(), user);
         if (user.getId() == null) {
+            countService.publishCountEntityEvictEvent(savedUser.getTenantId(), EntityType.USER);
             UserCredentials userCredentials = new UserCredentials();
             userCredentials.setEnabled(false);
             userCredentials.setActivateToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
@@ -231,6 +236,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
+        countService.publishCountEntityEvictEvent(tenantId, EntityType.USER);
     }
 
     @Override
@@ -250,6 +256,31 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
+    public PageData<User> findSysAdmins(PageLink pageLink) {
+        return userDao.findAllByAuthority(Authority.SYS_ADMIN, pageLink);
+    }
+
+    @Override
+    public PageData<User> findAllTenantAdmins(PageLink pageLink) {
+        return userDao.findAllByAuthority(Authority.TENANT_ADMIN, pageLink);
+    }
+
+    @Override
+    public PageData<User> findTenantAdminsByTenantsIds(List<TenantId> tenantsIds, PageLink pageLink) {
+        return userDao.findByAuthorityAndTenantsIds(Authority.TENANT_ADMIN, tenantsIds, pageLink);
+    }
+
+    @Override
+    public PageData<User> findTenantAdminsByTenantProfilesIds(List<TenantProfileId> tenantProfilesIds, PageLink pageLink) {
+        return userDao.findByAuthorityAndTenantProfilesIds(Authority.TENANT_ADMIN, tenantProfilesIds, pageLink);
+    }
+
+    @Override
+    public PageData<User> findAllUsers(PageLink pageLink) {
+        return userDao.findAll(pageLink);
+    }
+
+    @Override
     public void deleteTenantAdmins(TenantId tenantId) {
         log.trace("Executing deleteTenantAdmins, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -263,6 +294,15 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         validateId(customerId, "Incorrect customerId " + customerId);
         validatePageLink(pageLink);
         return userDao.findCustomerUsers(tenantId.getId(), customerId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<User> findUsersByCustomerIds(TenantId tenantId, List<CustomerId> customerIds, PageLink pageLink) {
+        log.trace("Executing findTenantAndCustomerUsers, tenantId [{}], customerIds [{}], pageLink [{}]", tenantId, customerIds, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validatePageLink(pageLink);
+        customerIds.forEach(customerId -> {validateId(customerId, "Incorrect customerId " + customerId);});
+        return userDao.findUsersByCustomerIds(tenantId.getId(), customerIds, pageLink);
     }
 
     @Override
@@ -401,6 +441,11 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findUserById(tenantId, new UserId(entityId.getId())));
+    }
+
+    @Override
+    public long countByTenantId(TenantId tenantId) {
+        return userDao.countByTenantId(tenantId);
     }
 
     @Override

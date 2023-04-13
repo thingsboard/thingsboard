@@ -65,6 +65,7 @@ server:
       max_per_user: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_MAX_PER_USER:10}"
     max_entities_per_data_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_DATA_SUBSCRIPTION:10000}"
     max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
+    max_queue_messages_per_session: "${TB_SERVER_WS_DEFAULT_QUEUE_MESSAGES_PER_SESSION:1000}"
   rest:
     server_side_rpc:
       # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
@@ -140,6 +141,7 @@ usage:
       interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
     check:
       cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
+    gauge_report_interval: "${USAGE_STATS_GAUGE_REPORT_INTERVAL:180000}"
 
 # UI parameters
 ui:
@@ -281,6 +283,8 @@ sql:
     partition_size: "${SQL_AUDIT_LOGS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
   alarm_comments:
     partition_size: "${SQL_ALARM_COMMENTS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
+  notifications:
+    partition_size: "${SQL_NOTIFICATIONS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
   # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
   batch_sort: "${SQL_BATCH_SORT:true}"
   # Specify whether to remove null characters from strValue of attributes and timeseries before insert
@@ -323,6 +327,10 @@ sql:
       enabled: "${SQL_TTL_AUDIT_LOGS_ENABLED:true}"
       ttl: "${SQL_TTL_AUDIT_LOGS_SECS:0}" # Disabled by default. Accuracy of the cleanup depends on the sql.audit_logs.partition_size
       checking_interval_ms: "${SQL_TTL_AUDIT_LOGS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+    notifications:
+      enabled: "${SQL_TTL_NOTIFICATIONS_ENABLED:true}"
+      ttl: "${SQL_TTL_NOTIFICATIONS_SECS:2592000}" # Default value - 30 days
+      checking_interval_ms: "${SQL_TTL_NOTIFICATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
   relations:
     max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonable small to prevent infinite recursion as early as possible
     pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonable small to prevent relation query blocking all other DB calls
@@ -431,6 +439,9 @@ cache:
     assetProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_ASSET_PROFILES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ASSET_PROFILES_MAX_SIZE:10000}"
+    notificationSettings:
+      timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_SETTINGS_TTL:10}"
+      maxSize: "${CACHE_SPECS_NOTIFICATION_SETTINGS_MAX_SIZE:1000}"
     attributes:
       timeToLiveInMinutes: "${CACHE_SPECS_ATTRIBUTES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ATTRIBUTES_MAX_SIZE:100000}"
@@ -462,6 +473,16 @@ cache:
     userSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_USER_SETTINGS_TTL:1440}"
       maxSize: "${CACHE_SPECS_USER_SETTINGS_MAX_SIZE:100000}"
+    dashboardTitles:
+      timeToLiveInMinutes: "${CACHE_SPECS_DASHBOARD_TITLES_TTL:1440}"
+      maxSize: "${CACHE_SPECS_DASHBOARD_TITLES_MAX_SIZE:100000}"
+    entityCount:
+      timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
+      maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+  # deliberately placed outside 'specs' group above
+  notificationRules:
+    timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:30}"
+    maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:1000}"
 
 #Disable this because it is not required.
 spring.data.redis.repositories.enabled: false
@@ -942,7 +963,6 @@ edges:
   scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:1}"
   send_scheduler_pool_size: "${EDGES_SEND_SCHEDULER_POOL_SIZE:1}"
   grpc_callback_thread_pool_size: "${EDGES_GRPC_CALLBACK_POOL_SIZE:1}"
-  edge_events_ttl: "${EDGES_EDGE_EVENTS_TTL:0}"
   state:
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
@@ -969,6 +989,13 @@ queue:
       print-interval-ms: "${TB_QUEUE_IN_MEMORY_STATS_PRINT_INTERVAL_MS:60000}"
   kafka:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
+    ssl:
+      enabled: "${TB_KAFKA_SSL_ENABLED:false}"
+      truststore.location: "${TB_KAFKA_SSL_TRUSTSTORE_LOCATION:}"
+      truststore.password: "${TB_KAFKA_SSL_TRUSTSTORE_PASSWORD:}"
+      keystore.location: "${TB_KAFKA_SSL_KEYSTORE_LOCATION:}"
+      keystore.password: "${TB_KAFKA_SSL_KEYSTORE_PASSWORD:}"
+      key.password: "${TB_KAFKA_SSL_KEY_PASSWORD:}"
     acks: "${TB_KAFKA_ACKS:all}"
     retries: "${TB_KAFKA_RETRIES:1}"
     compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip
@@ -1205,6 +1232,9 @@ vc:
     # Pool size for handling the git IO operations
     io_pool_size: "${TB_VC_GIT_POOL_SIZE:3}"
     repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
+
+notification_system:
+  thread_pool_size: "${TB_NOTIFICATION_SYSTEM_THREAD_POOL_SIZE:10}"
 
 management:
   endpoints:

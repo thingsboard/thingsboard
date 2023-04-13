@@ -156,6 +156,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
         columns: [this.gridSettings.columns || 24, [Validators.required, Validators.min(10), Validators.max(1000)]],
         margin: [isDefined(this.gridSettings.margin) ? this.gridSettings.margin : 10,
           [Validators.required, Validators.min(0), Validators.max(50)]],
+        outerMargin: [isUndefined(this.gridSettings.outerMargin) ? true : this.gridSettings.outerMargin, []],
         autoFillHeight: [isUndefined(this.gridSettings.autoFillHeight) ? false : this.gridSettings.autoFillHeight, []],
         backgroundColor: [this.gridSettings.backgroundColor || 'rgba(0,0,0,0)', []],
         backgroundImageUrl: [this.gridSettings.backgroundImageUrl, []],

@@ -19,15 +19,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmModificationRequest;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -35,7 +37,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
-import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -44,56 +46,34 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.notification.trigger.AlarmTrigger;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
-import org.thingsboard.server.dao.alarm.AlarmApiCallResult;
-import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.service.subscription.SubscriptionManagerService;
+import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.Collection;
-import java.util.Optional;
 
 /**
  * Created by ashvayka on 27.03.18.
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService implements AlarmSubscriptionService {
 
     private final AlarmService alarmService;
-    private final AlarmCommentService alarmCommentService;
+    private final TbAlarmCommentService alarmCommentService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
-
-    public DefaultAlarmSubscriptionService(TbClusterService clusterService,
-                                           PartitionService partitionService,
-                                           AlarmService alarmService,
-                                           TbApiUsageReportClient apiUsageClient,
-                                           TbApiUsageStateService apiUsageStateService,
-                                           AlarmCommentService alarmCommentService) {
-        super(clusterService, partitionService);
-        this.alarmService = alarmService;
-        this.apiUsageClient = apiUsageClient;
-        this.apiUsageStateService = apiUsageStateService;
-        this.alarmCommentService = alarmCommentService;
-    }
-
-    @Autowired(required = false)
-    public void setSubscriptionManagerService(Optional<SubscriptionManagerService> subscriptionManagerService) {
-        this.subscriptionManagerService = subscriptionManagerService;
-    }
+    private final NotificationRuleProcessor notificationRuleProcessor;
 
     @Override
-    String getExecutorPrefix() {
+    protected String getExecutorPrefix() {
         return "alarm";
     }
 
@@ -144,7 +124,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                         .type(AlarmCommentType.SYSTEM)
                         .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm severity was updated from %s to %s", oldSeverity, result.getAlarm().getSeverity())))
                         .build();
-                alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment);
+                try {
+                    alarmCommentService.saveAlarmComment(alarm, alarmComment, null);
+                } catch (ThingsboardException e) {
+                    log.error("Failed to save alarm comment", e);
+                }
             }
         }
         if (result.isCreated()) {
@@ -228,20 +212,14 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     @Deprecated
     private void onAlarmUpdated(AlarmOperationResult result) {
         wsCallBackExecutor.submit(() -> {
-            Alarm alarm = result.getAlarm();
+            AlarmInfo alarm = new AlarmInfo(result.getAlarm());
             TenantId tenantId = alarm.getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-                if (currentPartitions.contains(tpi)) {
-                    if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, new AlarmInfo(alarm), TbCallback.EMPTY);
-                    } else {
-                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-                    }
-                } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, new AlarmInfo(alarm));
-                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-                }
+                forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
+                    subscriptionManagerService.onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
+                }, () -> {
+                    return TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
+                });
             }
         });
     }
@@ -251,18 +229,16 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
             AlarmInfo alarm = result.getAlarm();
             TenantId tenantId = alarm.getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-                if (currentPartitions.contains(tpi)) {
-                    if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
-                    } else {
-                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-                    }
-                } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
-                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-                }
+                forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
+                    subscriptionManagerService.onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
+                }, () -> {
+                    return TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
+                });
             }
+            notificationRuleProcessor.process(AlarmTrigger.builder()
+                    .tenantId(tenantId)
+                    .alarmUpdate(result)
+                    .build());
         });
     }
 
@@ -271,18 +247,16 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
             AlarmInfo alarm = result.getAlarm();
             TenantId tenantId = alarm.getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-                if (currentPartitions.contains(tpi)) {
-                    if (subscriptionManagerService.isPresent()) {
-                        subscriptionManagerService.get().onAlarmDeleted(tenantId, entityId, alarm, TbCallback.EMPTY);
-                    } else {
-                        log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-                    }
-                } else {
-                    TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
-                    clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-                }
+                forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
+                    subscriptionManagerService.onAlarmDeleted(tenantId, entityId, alarm, TbCallback.EMPTY);
+                }, () -> {
+                    return TbSubscriptionUtils.toAlarmDeletedProto(tenantId, entityId, alarm);
+                });
             }
+            notificationRuleProcessor.process(AlarmTrigger.builder()
+                    .tenantId(tenantId)
+                    .alarmUpdate(result)
+                    .build());
         });
     }
 
@@ -315,7 +289,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                 if (request != null && request.getUserId() != null) {
                     alarmComment.userId(request.getUserId());
                 }
-                alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment.build());
+                try {
+                    alarmCommentService.saveAlarmComment(alarm, alarmComment.build(), null);
+                } catch (ThingsboardException e) {
+                    log.error("Failed to save alarm comment", e);
+                }
             }
         }
         return result;

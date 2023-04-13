@@ -1,0 +1,505 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary">
+  <h2>{{ dialogTitle | translate }}</h2>
+  <span fxFlex></span>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+</mat-progress-bar>
+<div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+<div mat-dialog-content ngStyle.xs="padding: 0;">
+  <mat-horizontal-stepper [linear]="true" labelPosition="end" #addNotificationRule [orientation]="(stepperOrientation | async)"
+                          (selectionChange)="changeStep($event)">
+    <ng-template matStepperIcon="edit">
+      <mat-icon>check</mat-icon>
+    </ng-template>
+    <mat-step [stepControl]="ruleNotificationForm">
+      <ng-template matStepLabel>{{ 'notification.basic-settings' | translate }}</ng-template>
+      <form [formGroup]="ruleNotificationForm">
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.rule-name</mat-label>
+          <input matInput formControlName="name" required>
+          <mat-error *ngIf="ruleNotificationForm.get('name').hasError('required')">
+            {{ 'notification.rule-name-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.trigger.trigger</mat-label>
+          <mat-select formControlName="triggerType" required>
+            <mat-option *ngFor="let trigger of triggerTypes" [value]="trigger">
+              {{ triggerTypeTranslationMap.get(trigger) | translate }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="ruleNotificationForm.get('triggerType').hasError('required')">
+            {{ 'notification.trigger.trigger-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <tb-template-autocomplete
+          required
+          allowCreate
+          formControlName="templateId"
+          [notificationTypes]="ruleNotificationForm.get('triggerType').value">
+        </tb-template-autocomplete>
+        <section formGroupName="recipientsConfig"
+                 *ngIf="ruleNotificationForm.get('triggerType').value !== triggerType.ALARM; else alarmTargesConfig">
+          <tb-entity-list
+            required
+            formControlName="targets"
+            subType="{{ ruleNotificationForm.get('triggerType').value }}"
+            entityType="{{ entityType.NOTIFICATION_TARGET }}"
+            placeholderText="{{ 'notification.recipient' | translate }}">
+            <button #createTargetButton
+                    mat-button color="primary" matSuffix
+                    (click)="createTarget($event, createTargetButton)">
+              <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+            </button>
+          </tb-entity-list>
+        </section>
+        <ng-template #alarmTargesConfig>
+          <fieldset class="fields-group tb-hierarchy" formGroupName="recipientsConfig">
+            <legend translate>notification.escalation-chain</legend>
+            <div class="mat-body-2" translate>notification.recipients</div>
+            <tb-escalations-component formControlName="escalationTable"></tb-escalations-component>
+            <ng-container *ngTemplateOutlet="clearRules"></ng-container>
+          </fieldset>
+        </ng-template>
+      </form>
+      <ng-template #clearRules>
+        <form [formGroup]="alarmTemplateForm">
+          <section formGroupName="triggerConfig">
+            <section formGroupName="clearRule">
+              <div class="mat-body-2" translate>notification.stop-escalation-alarm-status-become</div>
+              <mat-form-field fxFlex class="mat-block" floatLabel="always" style="margin-right: 48px">
+                <mat-label translate>alarm.alarm-status-list</mat-label>
+                <mat-select formControlName="alarmStatuses" multiple
+                            placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
+                  <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+                    {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </section>
+          </section>
+        </form>
+      </ng-template>
+    </mat-step>
+    <mat-step [stepControl]="alarmTemplateForm"
+              *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ALARM">
+      <ng-template matStepLabel>{{ 'notification.alarm-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="alarmTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin-before-field">
+            <legend translate>notification.filter</legend>
+            <tb-string-items-list
+              editable
+              label="{{ 'alarm.alarm-type-list' | translate }}"
+              placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmTypes').value?.length ? ('alarm.any-type' | translate) : '' }}"
+              floatLabel="always"
+              formControlName="alarmTypes">
+            </tb-string-items-list>
+
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-severity-list</mat-label>
+              <mat-select formControlName="alarmSeverities" multiple
+                          placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
+                <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+                  {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </fieldset>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>notification.notify-on</mat-label>
+            <mat-select formControlName="notifyOn" multiple>
+              <mat-option *ngFor="let alarmAction of alarmActions" [value]="alarmAction">
+                {{ alarmActionTranslationMap.get(alarmAction) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="alarmTemplateForm.get('triggerConfig.notifyOn').hasError('required')">
+              {{ 'notification.notify-on-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.DEVICE_ACTIVITY"
+              [stepControl]="deviceInactivityTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.device-activity-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="deviceInactivityTemplateForm">
+        <section formGroupName="triggerConfig">
+          <div fxFlex fxLayoutAlign="center center">
+            <mat-button-toggle-group class="tb-notification-unread-toggle-group"
+                                     style="width: 250px;"
+                                     formControlName="filterByDevice">
+              <mat-button-toggle fxFlex [value]=true>{{ 'device.device' | translate }}</mat-button-toggle>
+              <mat-button-toggle fxFlex [value]=false>{{ 'device-profile.device-profile' | translate }}</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+          <ng-container *ngIf="deviceInactivityTemplateForm.get('triggerConfig.filterByDevice').value; else deviceProfile">
+            <tb-entity-list
+              formControlName="devices"
+              subscriptSizing="dynamic"
+              labelText="{{ 'device.devices' | translate }}"
+              placeholderText="{{ 'device.devices' | translate }}"
+              hint="{{ 'notification.device-list-rule-hint' | translate }}"
+              [entityType]="entityType.DEVICE">
+            </tb-entity-list>
+          </ng-container>
+          <ng-template #deviceProfile>
+            <tb-entity-list
+              formControlName="deviceProfiles"
+              subscriptSizing="dynamic"
+              labelText="{{ 'device-profile.device-profiles' | translate }}"
+              placeholderText="{{ 'device-profile.device-profiles' | translate }}"
+              hint="{{ 'notification.device-profiles-list-rule-hint' | translate }}"
+              [entityType]="entityType.DEVICE_PROFILE">
+            </tb-entity-list>
+          </ng-template>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>notification.notify-on</mat-label>
+            <mat-select formControlName="notifyOn" multiple>
+              <mat-option *ngFor="let deviceEvent of deviceEvents" [value]="deviceEvent">
+                {{ deviceEventTranslationMap.get(deviceEvent) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="deviceInactivityTemplateForm.get('triggerConfig.notifyOn').hasError('required')">
+              {{ 'notification.notify-on-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ENTITY_ACTION"
+              [stepControl]="entityActionTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.entity-action-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="entityActionTemplateForm">
+        <fieldset class="fields-group tb-margin" formGroupName="triggerConfig">
+          <legend translate>notification.filter</legend>
+          <tb-entity-type-list required
+                               ignoreAuthorityFilter
+                               [allowedEntityTypes]="allowEntityTypeForEntityAction"
+                               formControlName="entityTypes">
+          </tb-entity-type-list>
+          <section fxLayout="column" fxLayoutGap="8px">
+            <span fxFlex translate>notification.status</span>
+            <mat-slide-toggle formControlName="created">{{ 'notification.created' | translate }}</mat-slide-toggle>
+            <mat-slide-toggle formControlName="updated">{{ 'notification.updated' | translate }}</mat-slide-toggle>
+            <mat-slide-toggle formControlName="deleted">{{ 'notification.deleted' | translate }}</mat-slide-toggle>
+          </section>
+        </fieldset>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ALARM_COMMENT"
+              [stepControl]="alarmCommentTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.alarm-comment-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="alarmCommentTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin">
+            <legend translate>notification.filter</legend>
+            <tb-string-items-list
+              editable
+              label="{{ 'alarm.alarm-type-list' | translate }}"
+              placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmTypes').value?.length ? ('alarm.any-type' | translate) : '' }}"
+              floatLabel="always"
+              formControlName="alarmTypes">
+            </tb-string-items-list>
+
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-severity-list</mat-label>
+              <mat-select formControlName="alarmSeverities" multiple
+                          placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
+                <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+                  {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-status-list</mat-label>
+              <mat-select formControlName="alarmStatuses" multiple
+                          placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
+                <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+                  {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </fieldset>
+          <section fxLayout="column">
+            <mat-slide-toggle formControlName="onlyUserComments" style="margin-bottom: 12px;">
+              {{ 'notification.notify-only-user-comments' | translate }}
+            </mat-slide-toggle>
+            <mat-slide-toggle formControlName="notifyOnCommentUpdate" style="margin-bottom: 12px;">
+              {{ 'notification.notify-on-comment-update' | translate }}
+            </mat-slide-toggle>
+          </section>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ALARM_ASSIGNMENT"
+              [stepControl]="alarmAssignmentTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.alarm-assignment-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="alarmAssignmentTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin">
+            <legend translate>notification.filter</legend>
+            <tb-string-items-list
+              editable
+              label="{{ 'alarm.alarm-type-list' | translate }}"
+              placeholder="{{ !alarmAssignmentTemplateForm.get('triggerConfig.alarmTypes').value?.length ? ('alarm.any-type' | translate) : '' }}"
+              floatLabel="always"
+              formControlName="alarmTypes">
+            </tb-string-items-list>
+
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-severity-list</mat-label>
+              <mat-select formControlName="alarmSeverities" multiple
+                          placeholder="{{ !alarmAssignmentTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
+                <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+                  {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>alarm.alarm-status-list</mat-label>
+              <mat-select formControlName="alarmStatuses" multiple
+                          placeholder="{{ !alarmAssignmentTemplateForm.get('triggerConfig.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
+                <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+                  {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </fieldset>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>notification.notify-on</mat-label>
+            <mat-select formControlName="notifyOn" multiple>
+              <mat-option *ngFor="let alarmAssignmentAction of alarmAssignmentActions" [value]="alarmAssignmentAction">
+                {{ alarmAssignmentActionTranslationMap.get(alarmAssignmentAction) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="alarmAssignmentTemplateForm.get('triggerConfig.notifyOn').hasError('required')">
+              {{ 'notification.notify-on-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT"
+              [stepControl]="ruleEngineEventsTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.rule-engine-events-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="ruleEngineEventsTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin">
+            <legend translate>notification.rule-engine-filter</legend>
+            <tb-entity-list
+              formControlName="ruleChains"
+              subscriptSizing="dynamic"
+              labelText="{{ 'rulechain.rulechains' | translate }}"
+              placeholderText="{{ 'rulechain.rulechains' | translate }}"
+              hint="{{ 'notification.rule-chain-list-rule-hint' | translate }}"
+              [entityType]="entityType.RULE_CHAIN">
+            </tb-entity-list>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>rulechain.rulechain-events</mat-label>
+              <mat-select formControlName="ruleChainEvents" multiple
+                          placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleChainEvents').value?.length ? ('event.all-events' | translate) : '' }}">
+                <mat-option *ngFor="let componentLifecycleEvent of componentLifecycleEvents" [value]="componentLifecycleEvent">
+                  {{ componentLifecycleEventTranslationMap.get(componentLifecycleEvent) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-slide-toggle formControlName="onlyRuleChainLifecycleFailures">
+              {{ 'notification.only-rule-chain-lifecycle-failures' | translate }}
+            </mat-slide-toggle>
+          </fieldset>
+          <fieldset class="fields-group tb-margin">
+            <legend translate>notification.rule-node-filter</legend>
+            <mat-slide-toggle formControlName="trackRuleNodeEvents">
+              {{ 'notification.track-rule-node-events' | translate }}
+            </mat-slide-toggle>
+            <section *ngIf="ruleEngineEventsTemplateForm.get('triggerConfig.trackRuleNodeEvents').value">
+              <mat-form-field fxFlex class="mat-block" floatLabel="always">
+                <mat-label translate>rulenode.rule-node-events</mat-label>
+                <mat-select formControlName="ruleNodeEvents" multiple
+                            placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleNodeEvents').value?.length ? ('event.all-events' | translate) : '' }}">
+                  <mat-option *ngFor="let componentLifecycleEvent of componentLifecycleEvents" [value]="componentLifecycleEvent">
+                    {{ componentLifecycleEventTranslationMap.get(componentLifecycleEvent) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-slide-toggle formControlName="onlyRuleNodeLifecycleFailures">
+                {{ 'notification.only-rule-node-lifecycle-failures' | translate }}
+              </mat-slide-toggle>
+            </section>
+          </fieldset>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ENTITIES_LIMIT"
+              [stepControl]="entitiesLimitTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.entities-limit-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="entitiesLimitTemplateForm">
+        <fieldset class="fields-group tb-margin" formGroupName="triggerConfig">
+          <legend translate>notification.filter</legend>
+          <tb-entity-type-list formControlName="entityTypes"
+                               ignoreAuthorityFilter
+                               [allowedEntityTypes]="allowEntityTypeForEntitiesLimit">
+          </tb-entity-type-list>
+          <div class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center"
+               fxLayout.xs="column"  fxLayoutAlign.xs="stretch">
+            <label translate>notification.threshold</label>
+            <div fxLayout="row" fxLayoutAlign="start center" fxFlex>
+              <mat-slider fxFlex min="0" max="1" step="0.01" discrete [displayWith]="formatLabel">
+                <input matSliderThumb formControlName="threshold">
+              </mat-slider>
+              <mat-form-field class="limit-slider-value">
+                <input matInput formControlName="threshold" type="number" step="0.01"
+                       [value]="entitiesLimitTemplateForm.get('triggerConfig.threshold').value"
+                       min="0"
+                       max="1"/>
+              </mat-form-field>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.API_USAGE_LIMIT"
+              [stepControl]="apiUsageLimitTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.api-usage-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="apiUsageLimitTemplateForm">
+        <section formGroupName="triggerConfig">
+          <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
+            <mat-label translate>api-usage.api-features</mat-label>
+            <mat-select formControlName="apiFeatures" multiple>
+              <mat-option *ngFor="let apiFeature of apiFeatures" [value]="apiFeature">
+                {{ apiFeatureTranslationMap.get(apiFeature) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>{{ 'notification.api-feature-hint' | translate }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>notification.notify-on</mat-label>
+            <mat-select formControlName="notifyOn" multiple>
+              <mat-option *ngFor="let apiUsageStateValue of apiUsageStateValues" [value]="apiUsageStateValue">
+                {{ apiUsageStateValueTranslationMap.get(apiUsageStateValue) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="apiUsageLimitTemplateForm.get('triggerConfig.notifyOn').hasError('required')">
+              {{ 'notification.notify-on-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.NEW_PLATFORM_VERSION"
+              [stepControl]="newPlatformVersionTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.new-platform-version-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+  </mat-horizontal-stepper>
+</div>
+<mat-divider></mat-divider>
+<div mat-dialog-actions fxLayout="row">
+  <button mat-stroked-button *ngIf="selectedIndex > 0"
+          (click)="backStep()">{{ 'action.back' | translate }}</button>
+  <span fxFlex></span>
+  <button mat-raised-button
+          color="primary"
+          (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+</div>

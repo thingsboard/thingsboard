@@ -30,10 +30,8 @@ import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
@@ -69,13 +67,18 @@ import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
 import org.thingsboard.server.actors.device.SessionInfo;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -98,6 +101,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.Dao;
@@ -136,6 +141,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 @Slf4j
 public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
+
     public static final int TIMEOUT = 30;
 
     protected ObjectMapper mapper = new ObjectMapper();
@@ -352,24 +358,28 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected Tenant savedDifferentTenant;
     protected User savedDifferentTenantUser;
     private Customer savedDifferentCustomer;
+    protected User differentCustomerUser;
 
     protected void loginDifferentTenant() throws Exception {
         if (savedDifferentTenant != null) {
             login(DIFFERENT_TENANT_ADMIN_EMAIL, DIFFERENT_TENANT_ADMIN_PASSWORD);
         } else {
-            loginSysAdmin();
-
-            Tenant tenant = new Tenant();
-            tenant.setTitle(TEST_DIFFERENT_TENANT_NAME);
-            savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
-            differentTenantId = savedDifferentTenant.getId();
-            Assert.assertNotNull(savedDifferentTenant);
-            User differentTenantAdmin = new User();
-            differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-            differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
-            differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
-            savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
+            createDifferentTenant();
         }
+    }
+
+    protected void createDifferentTenant() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle(TEST_DIFFERENT_TENANT_NAME);
+        savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        differentTenantId = savedDifferentTenant.getId();
+        Assert.assertNotNull(savedDifferentTenant);
+        User differentTenantAdmin = new User();
+        differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
+        differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
+        savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
     }
 
     protected void loginDifferentCustomer() throws Exception {
@@ -379,7 +389,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             createDifferentCustomer();
 
             loginTenantAdmin();
-            User differentCustomerUser = new User();
+            differentCustomerUser = new User();
             differentCustomerUser.setAuthority(Authority.CUSTOMER_USER);
             differentCustomerUser.setTenantId(tenantId);
             differentCustomerUser.setCustomerId(savedDifferentCustomer.getId());
@@ -524,10 +534,33 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return assetProfile;
     }
 
+    protected Device createDevice(String name, String accessToken) throws Exception {
+        Device device = new Device();
+        device.setName(name);
+        device.setType("default");
+        DeviceData deviceData = new DeviceData();
+        deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+        deviceData.setConfiguration(new DefaultDeviceConfiguration());
+        device.setDeviceData(deviceData);
+        return doPost("/api/device?accessToken=" + accessToken, device, Device.class);
+    }
+
     protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
         mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(MqttTopics.DEVICE_TELEMETRY_TOPIC);
-        mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
+        mqttDeviceProfileTransportConfiguration.setDeviceAttributesTopic(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
+        mqttDeviceProfileTransportConfiguration.setDeviceAttributesSubscribeTopic(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
+        mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(sendAckOnValidationException);
+        mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
+        return mqttDeviceProfileTransportConfiguration;
+    }
+
+    protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException,
+                                                                                                    String telemetryTopic, String attributesPublishTopic, String attributesSubscribeTopic) {
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
+        mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(telemetryTopic);
+        mqttDeviceProfileTransportConfiguration.setDeviceAttributesTopic(attributesPublishTopic);
+        mqttDeviceProfileTransportConfiguration.setDeviceAttributesSubscribeTopic(attributesSubscribeTopic);
         mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(sendAckOnValidationException);
         mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
         return mqttDeviceProfileTransportConfiguration;
@@ -542,6 +575,18 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return protoTransportPayloadConfiguration;
     }
 
+    protected Device createDevice(String deviceName, String type, String accessToken) throws Exception {
+        Device device = new Device();
+        device.setName(deviceName);
+        device.setType(type);
+
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        credentials.setCredentialsId(accessToken);
+
+        SaveDeviceWithCredentialsRequest request = new SaveDeviceWithCredentialsRequest(device, credentials);
+        return doPost("/api/device-with-credentials", request, Device.class);
+    }
 
     protected ResultActions doGet(String urlTemplate, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
@@ -643,7 +688,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doPost(urlTemplate, content, params).andExpect(resultMatcher), responseClass);
     }
 
-    protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) {
+    protected <T, R> R doPost(String urlTemplate, T content, Class<R> responseClass, String... params) {
         try {
             return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
         } catch (Exception e) {
@@ -769,10 +814,21 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     public class IdComparator<D extends HasId> implements Comparator<D> {
+
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());
         }
+
+    }
+
+    public class EntityIdComparator<D extends EntityId> implements Comparator<D> {
+
+        @Override
+        public int compare(D o1, D o2) {
+            return o1.getId().compareTo(o2.getId());
+        }
+
     }
 
     protected static <T> ResultMatcher statusReason(Matcher<T> matcher) {
@@ -853,6 +909,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return (T) field.get(target);
     }
 
+    protected void setStaticFieldValue(Class<?> targetCls, String fieldName, Object value) throws Exception {
+        Field field = targetCls.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(null, value);
+    }
+
     protected int getDeviceActorSubscriptionCount(DeviceId deviceId, FeatureType featureType) {
         DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
         Map<UUID, SessionInfo> subscriptions = (Map<UUID, SessionInfo>) ReflectionTestUtils.getField(processor, getMapName(featureType));
@@ -862,7 +924,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected void awaitForDeviceActorToReceiveSubscription(DeviceId deviceId, FeatureType featureType, int subscriptionCount) {
         DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
         Map<UUID, SessionInfo> subscriptions = (Map<UUID, SessionInfo>) ReflectionTestUtils.getField(processor, getMapName(featureType));
-        Awaitility.await("Device actor received subscription command from the transport").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> subscriptions.size() == subscriptionCount);
+        Awaitility.await("Device actor received subscription command from the transport").atMost(5, TimeUnit.SECONDS).until(() -> {
+            log.warn("device {}, subscriptions.size() == {}", deviceId, subscriptions.size());
+            return subscriptions.size() == subscriptionCount;
+        });
     }
 
     protected static String getMapName(FeatureType featureType) {

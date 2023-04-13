@@ -192,7 +192,7 @@ public class DefaultTbActorSystem implements TbActorSystem {
         }
         TbActorMailbox mailbox = actors.remove(actorId);
         if (mailbox != null) {
-            mailbox.destroy();
+            mailbox.destroy(null);
         }
     }
 

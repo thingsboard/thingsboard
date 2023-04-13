@@ -25,14 +25,13 @@ import {
   Timewindow,
   TimewindowType
 } from '@shared/models/time/time.models';
-import { OverlayRef } from '@angular/cdk/overlay';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
-
-export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelData');
+import { isDefined } from '@core/utils';
+import { OverlayRef } from '@angular/cdk/overlay';
 
 export interface TimewindowPanelData {
   historyOnly: boolean;
@@ -42,6 +41,8 @@ export interface TimewindowPanelData {
   timezone: boolean;
   isEdit: boolean;
 }
+
+export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelData');
 
 @Component({
   selector: 'tb-timewindow-panel',
@@ -62,8 +63,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   timewindow: Timewindow;
 
-  result: Timewindow;
-
   timewindowForm: UntypedFormGroup;
 
   historyTypes = HistoryWindowType;
@@ -77,6 +76,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   aggregations = Object.keys(AggregationType);
 
   aggregationTypesTranslations = aggregationTranslations;
+
+  result: Timewindow;
 
   constructor(@Inject(TIMEWINDOW_PANEL_DATA) public data: TimewindowPanelData,
               public overlayRef: OverlayRef,
@@ -101,81 +102,64 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     const hideAggInterval = this.timewindow.hideAggInterval || false;
     const hideTimezone = this.timewindow.hideTimezone || false;
 
+    const realtime = this.timewindow.realtime;
+    const history = this.timewindow.history;
+    const aggregation = this.timewindow.aggregation;
+
     this.timewindowForm = this.fb.group({
-        realtime: this.fb.group(
-          {
-            realtimeType: this.fb.control({
-              value: this.timewindow.realtime && typeof this.timewindow.realtime.realtimeType !== 'undefined'
-                ? this.timewindow.realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL,
-              disabled: hideInterval
-            }),
-            timewindowMs: this.fb.control({
-                value: this.timewindow.realtime && typeof this.timewindow.realtime.timewindowMs !== 'undefined'
-                  ? this.timewindow.realtime.timewindowMs : null,
-              disabled: hideInterval || hideLastInterval
-              }),
-            interval: [
-              this.timewindow.realtime && typeof this.timewindow.realtime.interval !== 'undefined'
-                ? this.timewindow.realtime.interval : null
-            ],
-            quickInterval: this.fb.control({
-              value: this.timewindow.realtime && typeof this.timewindow.realtime.quickInterval !== 'undefined'
-                ? this.timewindow.realtime.quickInterval : null,
-              disabled: hideInterval || hideQuickInterval
-            })
-          }
-        ),
-        history: this.fb.group(
-          {
-            historyType: this.fb.control({
-              value: this.timewindow.history && typeof this.timewindow.history.historyType !== 'undefined'
-                ? this.timewindow.history.historyType : HistoryWindowType.LAST_INTERVAL,
-              disabled: hideInterval
-            }),
-            timewindowMs: this.fb.control({
-              value: this.timewindow.history && typeof this.timewindow.history.timewindowMs !== 'undefined'
-                ? this.timewindow.history.timewindowMs : null,
-              disabled: hideInterval
-            }),
-            interval: [
-              this.timewindow.history && typeof this.timewindow.history.interval !== 'undefined'
-                ? this.timewindow.history.interval : null
-            ],
-            fixedTimewindow: this.fb.control({
-              value: this.timewindow.history && typeof this.timewindow.history.fixedTimewindow !== 'undefined'
-                ? this.timewindow.history.fixedTimewindow : null,
-              disabled: hideInterval
-            }),
-            quickInterval: this.fb.control({
-              value: this.timewindow.history && typeof this.timewindow.history.quickInterval !== 'undefined'
-                ? this.timewindow.history.quickInterval : null,
-              disabled: hideInterval
-            })
-          }
-        ),
-        aggregation: this.fb.group(
-          {
-            type: this.fb.control({
-              value: this.timewindow.aggregation && typeof this.timewindow.aggregation.type !== 'undefined'
-                ? this.timewindow.aggregation.type : null,
-              disabled: hideAggregation
-            }),
-            limit: this.fb.control({
-              value: this.timewindow.aggregation && typeof this.timewindow.aggregation.limit !== 'undefined'
-                ? this.checkLimit(this.timewindow.aggregation.limit) : null,
-              disabled: hideAggInterval
-            }, [])
-          }
-        ),
-        timezone: this.fb.control({
-          value: this.timewindow.timezone !== 'undefined'
-            ? this.timewindow.timezone : null,
-          disabled: hideTimezone
-        })
+      realtime: this.fb.group({
+        realtimeType: [{
+          value: isDefined(realtime?.realtimeType) ? this.timewindow.realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL,
+          disabled: hideInterval
+        }],
+        timewindowMs: [{
+          value: isDefined(realtime?.timewindowMs) ? this.timewindow.realtime.timewindowMs : null,
+          disabled: hideInterval || hideLastInterval
+        }],
+        interval: [isDefined(realtime?.interval) ? this.timewindow.realtime.interval : null],
+        quickInterval: [{
+          value: isDefined(realtime?.quickInterval) ? this.timewindow.realtime.quickInterval : null,
+          disabled: hideInterval || hideQuickInterval
+        }]
+      }),
+      history: this.fb.group({
+        historyType: [{
+          value: isDefined(history?.historyType) ? this.timewindow.history.historyType : HistoryWindowType.LAST_INTERVAL,
+          disabled: hideInterval
+        }],
+        timewindowMs: [{
+          value: isDefined(history?.timewindowMs) ? this.timewindow.history.timewindowMs : null,
+          disabled: hideInterval
+        }],
+        interval: [ isDefined(history?.interval) ? this.timewindow.history.interval : null
+        ],
+        fixedTimewindow: [{
+          value: isDefined(history?.fixedTimewindow) ? this.timewindow.history.fixedTimewindow : null,
+          disabled: hideInterval
+        }],
+        quickInterval: [{
+          value: isDefined(history?.quickInterval) ? this.timewindow.history.quickInterval : null,
+          disabled: hideInterval
+        }]
+      }),
+      aggregation: this.fb.group({
+        type: [{
+          value: isDefined(aggregation?.type) ? this.timewindow.aggregation.type : null,
+          disabled: hideAggregation
+        }],
+        limit: [{
+          value: isDefined(aggregation?.limit) ? this.checkLimit(this.timewindow.aggregation.limit) : null,
+          disabled: hideAggInterval
+        }, []]
+      }),
+      timezone: [{
+        value: isDefined(this.timewindow.timezone) ? this.timewindow.timezone : null,
+        disabled: hideTimezone
+      }]
     });
-    this.updateValidators();
-    this.timewindowForm.get('aggregation.type').valueChanges.subscribe(() => {
-      this.updateValidators();
+    this.updateValidators(this.timewindowForm.get('aggregation.type').value);
+    this.timewindowForm.get('aggregation.type').valueChanges.subscribe((aggregationType: AggregationType) => {
+      this.updateValidators(aggregationType);
     });
   }
 
@@ -188,8 +172,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     return limit;
   }
 
-  private updateValidators() {
-    const aggType = this.timewindowForm.get('aggregation.type').value;
+  private updateValidators(aggType: AggregationType) {
     if (aggType !== AggregationType.NONE) {
       this.timewindowForm.get('aggregation.limit').clearValidators();
     } else {

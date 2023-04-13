@@ -21,9 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -31,7 +29,6 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -73,8 +70,13 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.sql.relation.RelationRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
@@ -100,30 +102,21 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     static final int ENTITY_COUNT = 5;
 
     @Autowired
-    private AttributesService attributesService;
-
+    AssetService assetService;
     @Autowired
-    private TimeseriesService timeseriesService;
-
-    private TenantId tenantId;
-
+    AttributesService attributesService;
     @Autowired
-    private RelationRepository relationRepository;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
-
+    DeviceService deviceService;
+    @Autowired
+    EdgeService edgeService;
+    @Autowired
+    EntityService entityService;
+    @Autowired
+    RelationRepository relationRepository;
+    @Autowired
+    RelationService relationService;
+    @Autowired
+    TimeseriesService timeseriesService;
 
     @Test
     public void testCountEntitiesByQuery() throws InterruptedException {
@@ -138,7 +131,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
@@ -146,11 +139,11 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         long count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(97, count);
 
-        filter.setDeviceType("unknown");
+        filter.setDeviceTypes(List.of("unknown"));
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(0, count);
 
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("Device1");
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(11, count);
@@ -242,7 +235,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         EdgeTypeFilter filter = new EdgeTypeFilter();
-        filter.setEdgeType("default");
+        filter.setEdgeTypes(List.of("default"));
         filter.setEdgeNameFilter("");
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
@@ -250,11 +243,11 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         long count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(97, count);
 
-        filter.setEdgeType("unknown");
+        filter.setEdgeTypes(List.of("unknown"));
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(0, count);
 
-        filter.setEdgeType("default");
+        filter.setEdgeTypes(List.of("default"));
         filter.setEdgeNameFilter("Edge1");
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(11, count);
@@ -820,7 +813,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1344,7 +1337,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
     private EntityDataQuery createDeviceSearchQuery(String deviceField, StringOperation operation, String searchQuery) {
         DeviceTypeFilter deviceTypeFilter = new DeviceTypeFilter();
-        deviceTypeFilter.setDeviceType("default");
+        deviceTypeFilter.setDeviceTypes(List.of("default"));
         deviceTypeFilter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1409,7 +1402,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Futures.allAsList(attributeFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1509,7 +1502,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Futures.allAsList(attributeFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1655,7 +1648,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Futures.allAsList(timeseriesFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1787,7 +1780,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Futures.allAsList(attributeFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1919,7 +1912,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -2036,7 +2029,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.DESC);

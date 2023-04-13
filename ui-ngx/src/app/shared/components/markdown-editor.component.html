@@ -17,7 +17,7 @@
 -->
 <div class="markdown-content" [ngClass]="{'tb-edit-mode': !readonly}"
      tb-fullscreen [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()">
-  <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;" class="markdown-editor-toolbar">
+  <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;" class="markdown-editor-toolbar">
     <label class="tb-title no-padding" [ngClass]="{'tb-error': !disabled && required && !markdownValue, 'tb-required': !disabled && required}">{{ label }}</label>
     <span fxFlex></span>
     <button [fxShow]="!editorMode"

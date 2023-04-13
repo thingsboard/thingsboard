@@ -101,7 +101,8 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         }
     }
 
-    public void onAttributesTelemetryProto(int msgId, SparkplugBProto.Payload sparkplugBProto, String deviceName, SparkplugTopic topic) throws AdaptorException, ThingsboardException {
+    public void onAttributesTelemetryProto(int msgId, SparkplugBProto.Payload sparkplugBProto, SparkplugTopic topic) throws AdaptorException, ThingsboardException {
+        String deviceName = topic.getNodeDeviceName();
         checkDeviceName(deviceName);
 
         ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture;
@@ -113,7 +114,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
             }
             contextListenableFuture = Futures.immediateFuture(this.deviceSessionCtx);
         } else {
-            ListenableFuture<SparkplugDeviceSessionContext> deviceCtx = onDeviceConnectProto(deviceName);
+            ListenableFuture<SparkplugDeviceSessionContext> deviceCtx = onDeviceConnectProto(topic);
             contextListenableFuture = Futures.transform(deviceCtx, ctx -> {
                 if (topic.isType(DBIRTH)) {
                     sendSparkplugStateOnTelemetry(ctx.getSessionInfo(), deviceName, ONLINE,
@@ -218,10 +219,10 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         }
     }
 
-    private ListenableFuture<SparkplugDeviceSessionContext> onDeviceConnectProto(String deviceName) throws ThingsboardException {
+    private ListenableFuture<SparkplugDeviceSessionContext> onDeviceConnectProto(SparkplugTopic topic) throws ThingsboardException {
         try {
             String deviceType = this.gateway.getDeviceType() + "-node";
-            return onDeviceConnect(deviceName, deviceType);
+            return onDeviceConnect(topic.getNodeDeviceName(), deviceType);
         } catch (RuntimeException e) {
             log.error("Failed Sparkplug Device connect proto!", e);
             throw new ThingsboardException(e, ThingsboardErrorCode.BAD_REQUEST_PARAMS);

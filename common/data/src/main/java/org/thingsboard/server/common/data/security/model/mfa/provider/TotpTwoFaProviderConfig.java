@@ -22,7 +22,7 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class TotpTwoFaProviderConfig implements TwoFaProviderConfig {
 
-    @NotBlank(message = "issuer name must not be blank")
+    @NotBlank
     private String issuerName;
 
     @Override

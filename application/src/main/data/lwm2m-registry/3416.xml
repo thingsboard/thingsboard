@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2020 uCIFI Alliance
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+	<Object ObjectType="MODefinition">
+		<Name>Outdoor lamp controller</Name>
+		<Description1>The uCIFI outdoor lamp controller object provides attributes to control, command and monitor outdoor luminaires in streets, in tunnels, on roads and for illumination of park and gardens.</Description1>
+		<ObjectID>3416</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:ext:3416</ObjectURN>
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="1">
+				<Name>Command</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..100</RangeEnumeration>
+				<Units>/100</Units>
+				<Description>Command (e.g. manual override, scheduler) sent to the outdoor lamp controller.</Description>
+			</Item>
+			<Item ID="2">
+				<Name>Command in action</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..100</RangeEnumeration>
+				<Units>/100</Units>
+				<Description>For outdoor lighting applications, the command in action (this resource) may differ from a command that was sent (resource ID: 1), due to LPWAN network constraints and/or light adjustments within the lamp’s control gear (e.g. virtual power settings). The command in action is the actual value of the command in action in the outdoor lamp controller.</Description>
+			</Item>
+			<Item ID="3">
+				<Name>Dimming level</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..100</RangeEnumeration>
+				<Units>/100</Units>
+				<Description>Dimming level (0 for OFF and 100% for ON) measured on the outdoor lamp controller.</Description>
+			</Item>
+			<Item ID="4">
+				<Name>Default dimming level</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..100</RangeEnumeration>
+				<Units>/100</Units>
+				<Description>The default dimming level that the outdoor lamp controller applies when the device is powered ON.</Description>
+			</Item>
+			<Item ID="5">
+				<Name>Lamp failure</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True if the outdoor lamp controller detects that the lamp is not producing light while it is expected to (e.g. the lamp is broken).</Description>
+			</Item>
+			<Item ID="6">
+				<Name>Lamp failure reason</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Description of the reason why the lamp failed (e.g. low power on a LED engine, no consumption detected while relay closed).</Description>
+			</Item>
+			<Item ID="7">
+				<Name>Control gear failure</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True in case the control gear has a failure. Outdoor lamp controllers may read the control gear failure from a DALI bus or by analyzing a 0-10 volts interface to the control gear.</Description>
+			</Item>
+			<Item ID="8">
+				<Name>Control gear failure reason</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Description of the reason why the control gear failed. You may refer to the DiiA list of possible control gear failures.</Description>
+			</Item>
+			<Item ID="9">
+				<Name>Relay failure</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True if the outdoor lamp controller detects that its relay is not operating as it is expected to.</Description>
+			</Item>
+			<Item ID="10">
+				<Name>Day burner</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True in case the lamp is ON while it should be OFF (e.g. day burner).</Description>
+			</Item>
+			<Item ID="11">
+				<Name>Cycling failure</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True if the outdoor lamp controller detects that the lamp is switching ON and OFF too often.</Description>
+			</Item>
+			<Item ID="12">
+				<Name>Control gear communication failure</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True in case the control gear (e.g. LED driver) does not answer on the DALI bus.</Description>
+			</Item>
+			<Item ID="13">
+				<Name>Scheduler ID</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Identifier(s) of the scheduler(s) that are assigned to the Command of this outdoor lamp controller.</Description>
+			</Item>
+			<Item ID="14">
+				<Name>Invalid scheduler</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True when one of the schedulers can’t be executed or is not supported by the outdoor lamp controller. Otherwise set to False.</Description>
+			</Item>
+			<Item ID="15">
+				<Name>Lamp operating hours</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>h</Units>
+				<Description>Cumulated number of hours during which the lamp has been ON with a strictly positive dimming level.</Description>
+			</Item>
+			<Item ID="16">
+				<Name>Lamp operating hours reset</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Reset of the lamp operating hours counter.</Description>
+			</Item>
+			<Item ID="17">
+				<Name>Lamp ON timestamp</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Time</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Last date and time at which the lamp switched ON, i.e. from no light to light (e.g. power off to power on and/or dim level = 0 to dim level > 0).</Description>
+			</Item>
+			<Item ID="18">
+				<Name>Lamp switch counter</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Number of times the lamp was switched from ON to OFF since the last lamp switch counter reset.</Description>
+			</Item>
+			<Item ID="19">
+				<Name>Lamp switch counter reset</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Reset the lamp switch counter.</Description>
+			</Item>
+			<Item ID="20">
+				<Name>Control gear start counter</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Number of times the control gear was switched from ON to OFF.</Description>
+			</Item>
+			<Item ID="21">
+				<Name>Control gear temperature</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>Cel</Units>
+				<Description>Temperature measured by the control gear and transmitted to the device through DALI, Zhaga D4i or equivalent.</Description>
+			</Item>
+			<Item ID="22">
+				<Name>Control gear thermal derating</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True if the control gear has derated the light source due to high temperature.</Description>
+			</Item>
+			<Item ID="23">
+				<Name>Control gear thermal derating counter</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Number of time the control gear has derated the light source due to a high temperature, since last counter reset.</Description>
+			</Item>
+			<Item ID="24">
+				<Name>Control gear thermal derating counter reset</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Reset of the control gear thermal derating counter.</Description>
+			</Item>
+			<Item ID="25">
+				<Name>Control gear thermal shutdown</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True if the control gear has shut the light source down due to high temperature.</Description>
+			</Item>
+			<Item ID="26">
+				<Name>Control gear thermal shutdown counter</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Number of times the control gear has shutdown the light source since last counter reset.</Description>
+			</Item>
+			<Item ID="27">
+				<Name>Control gear thermal derating counter reset</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Reset of the control gear shutdown counter.</Description>
+			</Item>
+			<Item ID="28">
+				<Name>Output port</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Address or reference of the output port (e.g. DALI port address or 1-10 volt output) in case of multiple control gears.</Description>
+			</Item>
+			<Item ID="29">
+				<Name>Standby mode</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True if the outdoor lamp controller should keep its relay closed (control gear is powered ON) when command and/or dimming level is equal to 0. Set to False if the outdoor lamp controller should open its relay (control gear is not powered ON) when command and/or dimming level is equal to 0.</Description>
+			</Item>
+			<Item ID="30">
+				<Name>Constant light output</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True to activate Constant Light Output dimming correction on the outdoor lamp controller. Set to False to deactivate Constant Light Output.</Description>
+			</Item>
+			<Item ID="31">
+				<Name>Cleaning factor enabled</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Light output of a luminaire may depend on the lamp cleaning factor. Cleaning factor may be used as a light output compensation. Set to True to activate lamp cleaning correction on the outdoor lamp controller. Set to False to deactivate the lamp cleaning correction.</Description>
+			</Item>
+			<Item ID="32">
+				<Name>Cleaning period</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Number of days after which cleaning factor is back to 100%.</Description>
+			</Item>
+			<Item ID="33">
+				<Name>Initial lamp cleaning factor</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..100</RangeEnumeration>
+				<Units>/100</Units>
+				<Description>Initial lamp cleaning correction factor to multiply to the command when the luminaire is cleaned, at the lamp cleaning date.</Description>
+			</Item>
+			<Item ID="34">
+				<Name>Lamp cleaning date</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Time</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Date at which the luminaire was last (or will be next) cleaned and the lamp cleaning factor should be set to the initial lamp cleaning factor.</Description>
+			</Item>
+			<Item ID="35">
+				<Name>Control type</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..13</RangeEnumeration>
+				<Units></Units>
+				<Description>Type of control system with whioch the outdoor lamp controller switches, dims and monitors the lamp. The possible control types are: 0: No dimming control, 1 : DALI part 201 - Device Type 0, 2 : DALI part 202 - Device Type 1, 3 : DALI part 203 - Device Type 2, 4 : DALI part 204 - Device Type 3, 5 : DALI part 205 - Device Type 4, 6 : DALI part 206 - Device Type 5, 7 : DALI part 207 - Device Type 6, 8 : DALI part 208 - Device Type 7, 9 : DALI part 209 - Device Type 8, 10 : 0-10V, 11 : PWM, 12 : PWM_N, 13 : Other</Description>
+			</Item>
+			<Item ID="36">
+				<Name>Nominal Lamp wattage</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>W</Units>
+				<Description>Active power of the light source at 100% dimming level.</Description>
+			</Item>
+			<Item ID="37">
+				<Name>Minimum dimming level</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>/100</Units>
+				<Description>Minimum dimming level under which the lamp will most probably not operate.</Description>
+			</Item>
+			<Item ID="38">
+				<Name>Minimum lamp wattage</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>W</Units>
+				<Description>Expected active power of the light source at its minimum dimming level. This value may be used to detect failure at low dimming level.</Description>
+			</Item>
+			<Item ID="39">
+				<Name>Light color temperature command</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>K</Units>
+				<Description>Latest light color temperature command sent to the lamp actuator.</Description>
+			</Item>
+			<Item ID="40">
+				<Name>Actual light color temperature</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>K</Units>
+				<Description>The actual light color temperature of the light source.</Description>
+			</Item>
+			<Item ID="41">
+				<Name>Virtual power output</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..100</RangeEnumeration>
+				<Units>/100</Units>
+				<Description>Percentage of nominal power at which the light source should be set when the Command is set to 100%.</Description>
+			</Item>
+			<Item ID="42">
+				<Name>Voltage at max dim level</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>V</Units>
+				<Description>Voltage level on the control port that corresponds to maximum dimming level. This applies only if Control Type = 0-10V.</Description>
+			</Item>
+			<Item ID="43">
+				<Name>Voltage at min dim level</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>V</Units>
+				<Description>Voltage level on the control port that corresponds to minimum dimming level. This applies only if Control Type = 0-10V.</Description>
+			</Item>
+			<Item ID="44">
+				<Name>Light source voltage</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>V</Units>
+				<Description>Voltage (usually DC voltage) to the light source or generic load, measured at the output of the control gear.</Description>
+			</Item>
+			<Item ID="45">
+				<Name>Light source current</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>A</Units>
+				<Description>Current (usually DC current) delivered by the control gear to the light source or generic load, measured at the output of the control gear.</Description>
+			</Item>
+			<Item ID="46">
+				<Name>Light source active power</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>W</Units>
+				<Description>Active power of the light source or generic load, measured at the output of the control gear.</Description>
+			</Item>
+			<Item ID="47">
+				<Name>Light source active energy</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>kWh</Units>
+				<Description>Cumulated active energy consumption of the light source or generic load, measured at the output of the control gear.</Description>
+			</Item>
+		</Resources>
+		<Description2></Description2>
+	</Object>
+</LWM2M>

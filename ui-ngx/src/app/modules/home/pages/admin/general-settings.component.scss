@@ -14,5 +14,10 @@
  * limitations under the License.
  */
 :host {
+}
 
+:host ::ng-deep {
+  .mat-checkbox-layout {
+    white-space: normal;
+  }
 }
