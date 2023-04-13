@@ -80,7 +80,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     @Value("${sql.edge_events.stats_print_interval_ms:10000}")
     private long statsPrintIntervalMs;
 
-    @Value("${sql.edge_events.partitions_size:168}")
+    @Value("${sql.edge_events.partition_size:168}")
     private int partitionSizeInHours;
 
     @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
