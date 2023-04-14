@@ -74,7 +74,6 @@
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.42",
     "ngx-clipboard": "^15.1.0",
-    "ngx-color-picker": "^14.0.0",
     "ngx-daterangepicker-material": "^6.0.4",
     "ngx-drag-drop": "^15.0.1",
     "ngx-flowchart": "https://github.com/thingsboard/ngx-flowchart.git#release/2.0.0",

@@ -8137,13 +8137,6 @@ ngx-clipboard@^15.1.0:
     ngx-window-token ">=6.0.0"
     tslib "^2.0.0"
 
-ngx-color-picker@^14.0.0:
-  version "14.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-color-picker/-/ngx-color-picker-14.0.0.tgz#4587f517ac5683a705d4e55cd0939afa91faa853"
-  integrity sha512-w28zx2DyVpIJeNsTB3T2LUI4Ed/Ujf5Uhxuh0dllputfpxXwZG9ocSJM/0L67+fxA3UnfvvXVZNUX1Ny5nZIIw==
-  dependencies:
-    tslib "^2.3.0"
-
 ngx-daterangepicker-material@^6.0.4:
   version "6.0.4"
   resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-6.0.4.tgz#4e2432698ded28021a5fc0b0025dd1e0a3a13412"
