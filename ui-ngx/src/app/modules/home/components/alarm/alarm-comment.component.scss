@@ -13,69 +13,182 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@use '@angular/material' as mat;
+@import '../theme.scss';
+
+$primary-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.4);
+$border: 1px solid mat.get-color-from-palette($tb-primary);
+
 :host {
   .tb-alarm-comments {
-    padding: 16px 24px 24px 24px;
-    background-color: #fafafa;
+    background-color: $primary-color;
     max-width: 600px;
+    width: 100%;
 
-    &-header {
-      background-color: #fafafa;
+    .comment-input {
       position: sticky;
-      top: -25px;
       z-index: 1;
-      margin-bottom: 10px;
 
-      &-title {
-        color: rgba(0, 0, 0, 0.76);
-        letter-spacing: 0.25px;
-        font-weight: 500;
+      .inner-wrap {
+        border: $border;
+        padding: 0 24px;
+        background-color: $primary-color;
       }
 
-      .mat-icon {
-        color: rgba(0, 0, 0, 0.38);
+      &.oldest-first {
+        bottom: -24px;
+        box-shadow: 0px -4px 12px rgba(0, 0, 0, 0.04);
+
+        .inner-wrap {
+          border-radius: 0 0 8px 8px;
+        }
+
+        &.activity-only {
+          bottom: -1px;
+
+          .inner-wrap {
+            border: none
+          }
+        }
+      }
+
+      &.newest-first {
+        top: 24px;
+        box-shadow: 0 8px 10px rgba(23, 33, 90, 0.08);
+
+        .inner-wrap {
+          border-top: none;
+        }
+
+        &.activity-only {
+          top: 48px;
+          box-shadow: 0 8px 10px rgba(23, 33, 90, 0.08);
+
+          .inner-wrap {
+            border: none;
+          }
+        }
       }
     }
 
-    &-user-avatar {
+    .header {
+      z-index: 1;
+      position: sticky;
+      top: -24px;
+      background-color: white;
+
+      &.activity-only {
+        top: 0;
+      }
+
+      &-container {
+        padding: 0 24px;
+        background-color: $primary-color;
+        border: $border;
+        border-bottom: none;
+        border-radius: 8px 8px 0px 0px;
+
+        &.activity-only {
+          border: none;
+        }
+
+        &.asc {
+          border-bottom: $border;
+          box-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);
+
+          &.activity-only {
+            border: none;
+          }
+        }
+
+        .header-title {
+          color: rgba(0, 0, 0, 0.76);
+          letter-spacing: 0.25px;
+          font-weight: 500;
+        }
+
+        .mat-icon {
+          color: rgba(0, 0, 0, 0.38);
+        }
+      }
+    }
+
+    .comments-container {
+      border: $border;
+      border-top: none;
+      border-radius: 0px 0px 8px 8px;
+
+      &.activity-only {
+        border: none;
+      }
+
+      &.asc {
+        border-bottom: none;
+        border-radius: unset;
+      }
+    }
+
+    .user-comment {
+      padding: 4px;
+      border-radius: 8px;
+      &:hover {
+        background-color: $primary-color;
+      }
+    }
+
+    .user-avatar {
       width: 28px;
       min-width: 28px;
       height: 28px;
       min-height: 28px;
       border-radius: 50%;
       font-weight: 700;
-      color: #FFFFFF;
+      color: white;
       font-size: 13px;
     }
 
-    &-user-name {
+    .user-name {
       font-size: 16px;
       color: rgba(0, 0, 0, 0.76);
       font-weight: 500;
       letter-spacing: 0.25px;
     }
 
-    &-time {
+    .time {
       font-size: 14px;
       font-weight: 400;
       color: rgba(0, 0, 0, 0.38);
-      letter-spacing: 0.2px
+      letter-spacing: 0.2px;
+      border-radius: 16px;
+      padding: 0 3px;
+      &:hover {
+        background: rgba(0, 0, 0, 0.04);
+      }
     }
 
-    &-system-text {
-      color: rgba(0, 0, 0, 0.38);
+    .system-comment {
+      margin-left: 38px;
+      @media #{$mat-xs} {
+        margin-left: 0;
+      }
+    }
+
+    .system-text {
       font-weight: 500;
+      font-size: 14px;
       letter-spacing: 0.25px;
+      color: rgba(0, 0, 0, 0.38);
     }
 
-    &-text {
+    .text {
       white-space: pre-line;
       word-break: break-word;
-      color: rgba(0, 0, 0, 0.54);
+      font-size: 16px;
       letter-spacing: 0.15px;
+      color: rgba(0, 0, 0, 0.54);
     }
 
-    &-action-buttons {
+    .action-buttons {
       visibility: hidden;
       .mat-icon {
         color: rgba(0, 0, 0, 0.38);

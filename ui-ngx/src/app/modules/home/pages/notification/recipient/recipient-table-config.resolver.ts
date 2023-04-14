@@ -28,7 +28,7 @@ import { TranslateService } from '@ngx-translate/core';
 import {
   RecipientNotificationDialogComponent,
   RecipientNotificationDialogData
-} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
+} from '@home/pages/notification/recipient/recipient-notification-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { RecipientTableHeaderComponent } from '@home/pages/notification/recipient/recipient-table-header.component';

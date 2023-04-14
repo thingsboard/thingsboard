@@ -804,7 +804,7 @@ CREATE TABLE IF NOT EXISTS notification_template (
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
     notification_type VARCHAR(50) NOT NULL,
-    configuration VARCHAR(10000) NOT NULL,
+    configuration VARCHAR(10000000) NOT NULL,
     CONSTRAINT uq_notification_template_name UNIQUE (tenant_id, name)
 );
 
@@ -827,7 +827,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     tenant_id UUID NOT NULL,
     targets VARCHAR(10000) NOT NULL,
     template_id UUID,
-    template VARCHAR(10000),
+    template VARCHAR(10000000),
     info VARCHAR(1000),
     additional_config VARCHAR(1000),
     originator_entity_id UUID,
@@ -850,9 +850,11 @@ CREATE TABLE IF NOT EXISTS notification (
 ) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS user_settings (
-    user_id uuid NOT NULL CONSTRAINT user_settings_pkey PRIMARY KEY,
+    user_id uuid NOT NULL,
+    type VARCHAR(50) NOT NULL,
     settings varchar(10000),
-    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE,
+    CONSTRAINT user_settings_pkey PRIMARY KEY (user_id, type)
 );
 
 DROP VIEW IF EXISTS alarm_info CASCADE;
@@ -874,15 +876,15 @@ COALESCE(CASE WHEN a.originator_type = 0 THEN (select title from tenant where id
               WHEN a.originator_type = 18 THEN (select name from edge where id = a.originator_id) END
     , 'Deleted') originator_name,
 COALESCE(CASE WHEN a.originator_type = 0 THEN (select title from tenant where id = a.originator_id)
-              WHEN a.originator_type = 1 THEN (select COALESCE(title, email) from customer where id = a.originator_id)
+              WHEN a.originator_type = 1 THEN (select COALESCE(NULLIF(title, ''), email) from customer where id = a.originator_id)
               WHEN a.originator_type = 2 THEN (select email from tb_user where id = a.originator_id)
               WHEN a.originator_type = 3 THEN (select title from dashboard where id = a.originator_id)
-              WHEN a.originator_type = 4 THEN (select COALESCE(label, name) from asset where id = a.originator_id)
-              WHEN a.originator_type = 5 THEN (select COALESCE(label, name) from device where id = a.originator_id)
+              WHEN a.originator_type = 4 THEN (select COALESCE(NULLIF(label, ''), name) from asset where id = a.originator_id)
+              WHEN a.originator_type = 5 THEN (select COALESCE(NULLIF(label, ''), name) from device where id = a.originator_id)
               WHEN a.originator_type = 9 THEN (select name from entity_view where id = a.originator_id)
               WHEN a.originator_type = 13 THEN (select name from device_profile where id = a.originator_id)
               WHEN a.originator_type = 14 THEN (select name from asset_profile where id = a.originator_id)
-              WHEN a.originator_type = 18 THEN (select COALESCE(label, name) from edge where id = a.originator_id) END
+              WHEN a.originator_type = 18 THEN (select COALESCE(NULLIF(label, ''), name) from edge where id = a.originator_id) END
     , 'Deleted') as originator_label,
 u.first_name as assignee_first_name, u.last_name as assignee_last_name, u.email as assignee_email
 FROM alarm a

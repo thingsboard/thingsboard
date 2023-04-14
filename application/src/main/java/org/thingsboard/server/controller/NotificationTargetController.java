@@ -116,7 +116,7 @@ public class NotificationTargetController extends BaseController {
         }
 
         PageLink pageLink = createPageLink(pageSize, page, null, null, null);
-        return notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), null, notificationTarget.getConfiguration(), pageLink);
+        return notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), (PlatformUsersNotificationTargetConfig) notificationTarget.getConfiguration(), pageLink);
     }
 
     @GetMapping(value = "/targets", params = {"ids"})

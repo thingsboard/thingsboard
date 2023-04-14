@@ -28,14 +28,23 @@ import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NewPlatformVersionNotificationInfo implements NotificationInfo {
+public class NewPlatformVersionNotificationInfo implements RuleOriginatedNotificationInfo {
 
-    private String message;
+    private String latestVersion;
+    private String latestVersionReleaseNotesUrl;
+    private String upgradeInstructionsUrl;
+
+    private String currentVersion;
+    private String currentVersionReleaseNotesUrl;
 
     @Override
     public Map<String, String> getTemplateData() {
         return mapOf(
-                "message", message
+                "latestVersion", latestVersion,
+                "latestVersionReleaseNotesUrl", latestVersionReleaseNotesUrl,
+                "upgradeInstructionsUrl", upgradeInstructionsUrl,
+                "currentVersion", currentVersion,
+                "currentVersionReleaseNotesUrl", currentVersionReleaseNotesUrl
         );
     }
 

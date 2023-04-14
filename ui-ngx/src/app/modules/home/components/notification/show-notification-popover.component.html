@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section fxLayout="row" fxLayoutAlign="space-between center" style="margin-bottom: 4px; min-height: 36px">
+<section fxLayout="row" fxLayoutAlign="space-between center" style="margin: 0 10px 4px; min-height: 36px">
   <div style="font-weight: 500; letter-spacing: .25px" translate>notification.notification</div>
   <button mat-button color="primary"
           *ngIf="(notifications$ | async).length"
@@ -25,13 +25,13 @@
 </section>
 <mat-divider></mat-divider>
 <div *ngIf="(notifications$ | async).length; else emptyNotification" style="overflow: auto">
-  <section style="min-height: 100px; overflow: auto; padding: 10px 0;">
+  <section style="min-height: 100px; overflow: auto; padding: 6px 0;">
    <div *ngFor="let notification of (notifications$ | async); let last = last; trackBy: trackById">
      <tb-notification [notification]="notification"
                       [onClose]="onClose"
                       (markAsRead)="markAsRead($event)">
      </tb-notification>
-     <mat-divider *ngIf="!last" style="margin-bottom: 4px"></mat-divider>
+     <mat-divider *ngIf="!last" style="margin: 4px"></mat-divider>
    </div>
   </section>
 </div>

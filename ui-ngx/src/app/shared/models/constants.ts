@@ -67,7 +67,8 @@ export const MediaBreakpoints = {
   'gt-sm': 'screen and (min-width: 960px)',
   'gt-md': 'screen and (min-width: 1280px)',
   'gt-lg': 'screen and (min-width: 1920px)',
-  'gt-xl': 'screen and (min-width: 5001px)'
+  'gt-xl': 'screen and (min-width: 5001px)',
+  'md-lg': 'screen and (min-width: 960px) and (max-width: 1819px)'
 };
 
 export const helpBaseUrl = 'https://thingsboard.io';
@@ -76,6 +77,7 @@ export const HelpLinks = {
   linksMap: {
     outgoingMailSettings: helpBaseUrl + '/docs/user-guide/ui/mail-settings',
     smsProviderSettings: helpBaseUrl + '/docs/user-guide/ui/sms-provider-settings',
+    slackSettings: helpBaseUrl + '/docs/user-guide/ui/slack-settings',
     securitySettings: helpBaseUrl + '/docs/user-guide/ui/security-settings',
     oauth2Settings: helpBaseUrl + '/docs/user-guide/oauth-2-support/',
     twoFactorAuthSettings: helpBaseUrl + '/docs/',

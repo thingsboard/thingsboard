@@ -33,7 +33,7 @@ import {
 } from '@core/utils';
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
-import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import { HOME_COMPONENTS_MODULE_TOKEN, WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 interface MarkdownWidgetSettings {
@@ -69,6 +69,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
               @Inject(HOME_COMPONENTS_MODULE_TOKEN) public homeComponentsModule: Type<any>,
+              @Inject(WIDGET_COMPONENTS_MODULE_TOKEN) public widgetComponentsModule: Type<any>,
               private cd: ChangeDetectorRef) {
     super(store);
   }

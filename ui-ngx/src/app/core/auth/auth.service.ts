@@ -297,16 +297,6 @@ export class AuthService {
           } else if (authState.authUser.isPublic) {
             result = this.router.parseUrl(`dashboard/${authState.lastPublicDashboardId}`);
           }
-        } else if (authState.authUser.authority === Authority.SYS_ADMIN) {
-          this.adminService.checkUpdates().subscribe((updateMessage) => {
-            if (updateMessage && updateMessage.updateAvailable) {
-              this.store.dispatch(new ActionNotificationShow(
-                {message: updateMessage.message,
-                           type: 'info',
-                           verticalPosition: 'bottom',
-                           horizontalPosition: 'right'}));
-            }
-          });
         }
       }
     } else {

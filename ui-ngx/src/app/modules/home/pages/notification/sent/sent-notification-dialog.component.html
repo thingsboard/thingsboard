@@ -59,10 +59,8 @@
           <ng-container *ngTemplateOutlet="recipientsList"></ng-container>
           <section formGroupName="template">
             <section formGroupName="configuration">
-              <label class="tb-title tb-required"
-                     [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}">
-                {{ "notification.delivery-methods" | translate }}
-              </label>
+              <label [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
+                     class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
               <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
               <section formGroupName="deliveryMethodsTemplates" fxLayout="row wrap" style="margin-bottom: 12px;">
                 <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
@@ -115,12 +113,12 @@
               [stepControl]="webTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.web' | translate }}</ng-template>
       <div class="tb-hint-available-params mat-body-2">
-        {{ 'notification.input-fields-support-templatization' | translate}}
-        <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
-             tb-help-popup-placement="bottom"
-             trigger-style="letter-spacing:0.25px"
-             [tb-help-popup-style]="{maxWidth: '820px'}"
-             trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
+        <span class="content">{{ 'notification.input-fields-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
       </div>
       <form [formGroup]="webTemplateForm">
         <mat-form-field class="mat-block">
@@ -209,16 +207,16 @@
     </mat-step>
     <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
                      notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.EMAIL.enabled').value"
-              [stepControl]="emailTemplateForm">
+              [stepControl]="emailTemplateForm"  #emailStep="matStep">
       <ng-template matStepLabel>{{ 'notification.delivery-method.email' | translate }}</ng-template>
       <ng-template matStepContent>
         <div class="tb-hint-available-params mat-body-2">
-          {{ 'notification.input-fields-support-templatization' | translate}}
-          <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
-               tb-help-popup-placement="bottom"
-               trigger-style="letter-spacing:0.25px"
-               [tb-help-popup-style]="{maxWidth: '820px'}"
-               trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
+          <span class="content">{{ 'notification.input-fields-support-templatization' | translate}}</span>
+          <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+                tb-help-popup-placement="bottom"
+                trigger-style="letter-spacing:0.25px"
+                [tb-help-popup-style]="{maxWidth: '820px'}"
+                trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
         </div>
         <form [formGroup]="emailTemplateForm">
           <mat-form-field class="mat-block">
@@ -228,8 +226,14 @@
               {{ 'notification.subject-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-label class="tb-title" translate>notification.message</mat-label>
+          <mat-label class="tb-title tb-required"
+                     [ngClass]="{'tb-error': (emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')}"
+                     translate>notification.message</mat-label>
           <editor [init]="tinyMceOptions" formControlName="body"></editor>
+          <mat-error class="tb-mat-error"
+                     *ngIf="(emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
         </form>
       </ng-template>
     </mat-step>
@@ -238,15 +242,15 @@
               [stepControl]="smsTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.sms' | translate }}</ng-template>
       <div class="tb-hint-available-params mat-body-2">
-        {{ 'notification.input-field-support-templatization' | translate}}
-        <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
-             tb-help-popup-placement="bottom"
-             trigger-style="letter-spacing:0.25px"
-             [tb-help-popup-style]="{maxWidth: '820px'}"
-             trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
+        <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
       </div>
       <form [formGroup]="smsTemplateForm">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic">
           <mat-label translate>notification.message</mat-label>
           <textarea matInput
                     cdkTextareaAutosize
@@ -257,6 +261,11 @@
           <mat-error *ngIf="smsTemplateForm.get('body').hasError('required')">
             {{ 'notification.message-required' | translate }}
           </mat-error>
+          <mat-error *ngIf="smsTemplateForm.get('body').hasError('maxlength')">
+            {{ 'notification.message-max-length' | translate :
+            {length: smsTemplateForm.get('body').getError('maxlength').requiredLength}
+            }}
+          </mat-error>
         </mat-form-field>
       </form>
     </mat-step>
@@ -265,12 +274,12 @@
               [stepControl]="slackTemplateForm">
       <ng-template matStepLabel>{{ 'notification.delivery-method.slack' | translate }}</ng-template>
       <div class="tb-hint-available-params mat-body-2">
-        {{ 'notification.input-field-support-templatization' | translate}}
-        <div tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
-             tb-help-popup-placement="bottom"
-             trigger-style="letter-spacing:0.25px"
-             [tb-help-popup-style]="{maxWidth: '820px'}"
-             trigger-text="{{ 'notification.see-documentation' | translate }}"></div>
+        <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
       </div>
       <form [formGroup]="slackTemplateForm" fxLayoutGap="8px">
         <mat-form-field class="mat-block">
@@ -342,14 +351,11 @@
             </div>
           </div>
           <mat-divider class="divider"></mat-divider>
-          <div class="details-recipients">
-            <div *ngFor="let user of preview.recipientsPreview" class="details-recipient">
-              <span *ngIf="(user.firstName || user.lastName); else email">{{ user.firstName }}&nbsp;{{ user.lastName }} ({{ user.email }})</span>
-              <ng-template #email>
-                {{ user.email }}
-              </ng-template>
-            </div>
-          </div>
+          <mat-chip-listbox>
+            <mat-chip *ngFor="let recipientTitle of preview.recipientsPreview">
+              <span>{{ recipientTitle }}</span>
+            </mat-chip>
+          </mat-chip-listbox>
         </section>
       </div>
     </mat-step>

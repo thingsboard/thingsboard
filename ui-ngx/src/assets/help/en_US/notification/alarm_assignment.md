@@ -22,10 +22,13 @@ Available template parameters:
   * *assigneeFirstName* - first name of the assignee;    
   * *assigneeLastName* - last name of the assignee;
   * *assigneeId* - the id of the assignee as uuid string;
+  * *userEmail* - email of the user who made the action;
+  * *userFirstName* - first name of the user who made the action;
+  * *userLastName* - last name of the user who made the action;
   * *action* - one of: 'assigned', 'unassigned';
 
 Parameter names must be wrapped using `${...}`. For example: `${action}`. 
-You may also modify the value of the parameter with one of the sufixes:
+You may also modify the value of the parameter with one of the suffixes:
 
   * `upperCase`, for example - `${recipientFirstName:upperCase}`
   * `lowerCase`, for example - `${recipientFirstName:lowerCase}`
