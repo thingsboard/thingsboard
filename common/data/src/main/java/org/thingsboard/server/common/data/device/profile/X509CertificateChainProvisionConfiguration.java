@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device;
 
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
-import org.thingsboard.server.dao.device.provision.ProvisionRequest;
-import org.thingsboard.server.dao.device.provision.ProvisionResponse;
+package org.thingsboard.server.common.data.device.profile;
 
-public interface DeviceProvisionService {
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
-    ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) throws ProvisionFailedException;
+@Data
+@NoArgsConstructor
+public class X509CertificateChainProvisionConfiguration implements DeviceProfileProvisionConfiguration {
 
-    ProvisionResponse provisionDeviceViaX509Chain(DeviceProfile deviceProfile, ProvisionRequest provisionRequest) throws ProvisionFailedException;
+    private String provisionDeviceSecret;
+    private String certificateRegExPattern;
+    private boolean allowCreateNewDevicesByX509Certificate;
+
+    @Override
+    public DeviceProfileProvisionType getType() {
+        return DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN;
+    }
+
 }
