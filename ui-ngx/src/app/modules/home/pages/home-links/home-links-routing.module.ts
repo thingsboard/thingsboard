@@ -27,6 +27,7 @@ import { AppState } from '@core/core.state';
 import { map } from 'rxjs/operators';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import sysAdminHomePageDashboardJson from '!raw-loader!./sys_admin_home_page.raw';
+import tenantAdminHomePageDashboardJson from '!raw-loader!./tenant_admin_home_page.raw';
 
 @Injectable()
 export class HomeDashboardResolver implements Resolve<HomeDashboard> {
@@ -39,8 +40,18 @@ export class HomeDashboardResolver implements Resolve<HomeDashboard> {
     return this.dashboardService.getHomeDashboard().pipe(
       map((dashboard) => {
         if (!dashboard) {
-          if (getCurrentAuthUser(this.store).authority === Authority.SYS_ADMIN) {
-            dashboard = JSON.parse(sysAdminHomePageDashboardJson);
+          const authority = getCurrentAuthUser(this.store).authority;
+          switch (authority) {
+            case Authority.SYS_ADMIN:
+              dashboard = JSON.parse(sysAdminHomePageDashboardJson);
+              break;
+            case Authority.TENANT_ADMIN:
+              dashboard = JSON.parse(tenantAdminHomePageDashboardJson);
+              break;
+            case Authority.CUSTOMER_USER:
+              break;
+          }
+          if (dashboard) {
             dashboard.hideDashboardToolbar = true;
           }
         }

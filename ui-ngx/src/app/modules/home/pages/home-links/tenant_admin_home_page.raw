@@ -1,0 +1,667 @@
+{
+  "title": "Tenant Administrator Home Page",
+  "image": null,
+  "mobileHide": false,
+  "mobileOrder": null,
+  "configuration": {
+    "description": "",
+    "widgets": {
+      "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div fxLayout=\"row\" fxLayoutAlign=\"space-between start\">\n        <div class=\"tb-home-widget-title\">{{ 'widgets.activity.title' | translate }}</div>\n        <tb-toggle-header #activityStates value=\"devices\" name=\"activityStates\">\n            <mat-button-toggle value=\"devices\">{{ 'device.devices' | translate }}</mat-button-toggle>\n            <mat-button-toggle value=\"transportMessages\">{{ 'widgets.transport-messages.title' | translate }}</mat-button-toggle>\n        </tb-toggle-header>\n    </div>\n    <ng-container [ngSwitch]=\"activityStates.value\">\n        <ng-template [ngSwitchCase]=\"'devices'\">\n            <tb-dashboard-state fxFlex stateId=\"devices_activity\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n        <ng-template [ngSwitchCase]=\"'transportMessages'\">\n            <tb-dashboard-state fxFlex stateId=\"transport_messages\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n    </ng-container>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n"
+          },
+          "title": "Transport messages",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "d70cc256-4c7b-ee06-9905-b8c5e546605f"
+      },
+      "8ee72d43-678c-4e25-e9a8-7d4cfd7a5f8e": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "timeseries_bars_flot",
+        "type": "timeseries",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "transportMsgCountHourly",
+                  "type": "timeseries",
+                  "label": "{i18n:widgets.transport-messages.title}",
+                  "color": "#305680",
+                  "settings": {},
+                  "_hash": 0.2880464219129071,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "latestDataKeys": []
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideLastInterval": false,
+            "hideQuickInterval": false,
+            "hideAggregation": true,
+            "hideAggInterval": false,
+            "hideTimezone": false,
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
+              "timewindowMs": 2592000000,
+              "interval": 86400000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680443065451,
+                "endTimeMs": 1680529465451
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "SUM",
+              "limit": 50000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "stack": true,
+            "fontSize": 10,
+            "fontColor": "#545454",
+            "showTooltip": true,
+            "tooltipIndividual": false,
+            "tooltipCumulative": false,
+            "hideZeros": false,
+            "grid": {
+              "verticalLines": false,
+              "horizontalLines": false,
+              "outlineWidth": 0,
+              "color": "#545454",
+              "backgroundColor": null,
+              "tickColor": "#DDDDDD"
+            },
+            "xaxis": {
+              "title": null,
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "min": 0,
+              "max": null,
+              "title": null,
+              "showLabels": true,
+              "color": "#545454",
+              "tickSize": null,
+              "tickDecimals": 0,
+              "ticksFormatter": "return value % 1000 === 0 ? ((value / 1000) + 'k') : '';"
+            },
+            "defaultBarWidth": 1800000,
+            "barAlignment": "left",
+            "comparisonEnabled": false,
+            "timeForComparison": "previousInterval",
+            "comparisonCustomIntervalValue": 7200000,
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "title": null,
+              "showLabels": true
+            },
+            "customLegendEnabled": false,
+            "dataKeysListForLabels": []
+          },
+          "title": "Transport messages",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetStyle": {
+            "padding": "0"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "actions": {},
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "titleTooltip": "",
+          "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}\n\n.tb-widget-container > .tb-widget .flot-base {\n    opacity: 0.48;\n}\n",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": true,
+            "showTotal": false,
+            "showLatest": false
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "8ee72d43-678c-4e25-e9a8-7d4cfd7a5f8e"
+      },
+      "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
+        "isSystemType": true,
+        "bundleAlias": "home_page_widgets",
+        "typeAlias": "documentation_links",
+        "type": "static",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "columns": 2
+          },
+          "title": "Documentation",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false
+        },
+        "row": 0,
+        "col": 0,
+        "id": "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4"
+      },
+      "a23185ad-dc46-806c-0e50-5b21fb080ace": {
+        "isSystemType": true,
+        "bundleAlias": "home_page_widgets",
+        "typeAlias": "getting_started",
+        "type": "static",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "columns": 3
+          },
+          "title": "Getting started",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false
+        },
+        "row": 0,
+        "col": 0,
+        "id": "a23185ad-dc46-806c-0e50-5b21fb080ace"
+      },
+      "d26e5cd7-75ef-d475-00c7-1a2d1114efe8": {
+        "isSystemType": true,
+        "bundleAlias": "charts",
+        "typeAlias": "basic_timeseries",
+        "type": "timeseries",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "activeDevicesCount",
+                  "type": "timeseries",
+                  "label": "{i18n:device.devices}",
+                  "color": "#305680",
+                  "settings": {
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "excludeFromStacking": false,
+                    "showLines": true,
+                    "lineWidth": 3,
+                    "fillLines": true,
+                    "showPoints": false,
+                    "showPointsLineWidth": 5,
+                    "showPointsRadius": 3,
+                    "showPointShape": "circle",
+                    "pointShapeFormatter": "var size = radius * Math.sqrt(Math.PI) / 2;\nctx.moveTo(x - size, y - size);\nctx.lineTo(x + size, y + size);\nctx.moveTo(x - size, y + size);\nctx.lineTo(x + size, y - size);",
+                    "showSeparateAxis": false,
+                    "axisPosition": "left",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    },
+                    "thresholds": []
+                  },
+                  "_hash": 0.9688095820365725,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "latestDataKeys": []
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideLastInterval": false,
+            "hideQuickInterval": false,
+            "hideAggregation": true,
+            "hideAggInterval": true,
+            "hideTimezone": false,
+            "selectedTab": 1,
+            "history": {
+              "historyType": 0,
+              "timewindowMs": 2592000000,
+              "interval": 7200000,
+              "fixedTimewindow": {
+                "startTimeMs": 1681400576338,
+                "endTimeMs": 1681486976338
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "stack": false,
+            "fontSize": 10,
+            "fontColor": "#545454",
+            "showTooltip": true,
+            "tooltipIndividual": false,
+            "tooltipCumulative": false,
+            "hideZeros": false,
+            "grid": {
+              "verticalLines": false,
+              "horizontalLines": false,
+              "outlineWidth": 0,
+              "color": "#545454",
+              "backgroundColor": null,
+              "tickColor": "#DDDDDD"
+            },
+            "xaxis": {
+              "title": null,
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "min": null,
+              "max": null,
+              "title": null,
+              "showLabels": true,
+              "color": "#545454",
+              "tickSize": null,
+              "tickDecimals": 0,
+              "ticksFormatter": ""
+            },
+            "shadowSize": 0,
+            "smoothLines": true,
+            "comparisonEnabled": false,
+            "timeForComparison": "previousInterval",
+            "comparisonCustomIntervalValue": 7200000,
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "title": null,
+              "showLabels": true
+            },
+            "customLegendEnabled": false,
+            "dataKeysListForLabels": []
+          },
+          "title": "Devices activity",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": false,
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "titleTooltip": "",
+          "widgetStyle": {
+            "padding": "0"
+          },
+          "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false,
+          "legendConfig": {
+            "direction": "column",
+            "position": "bottom",
+            "sortDataKeys": false,
+            "showMin": false,
+            "showMax": false,
+            "showAvg": true,
+            "showTotal": false,
+            "showLatest": false
+          }
+        },
+        "row": 0,
+        "col": 0,
+        "id": "d26e5cd7-75ef-d475-00c7-1a2d1114efe8"
+      }
+    },
+    "states": {
+      "default": {
+        "name": "Tenant Administrator Home Page",
+        "root": true,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
+                "sizeX": 41,
+                "sizeY": 16,
+                "row": 26,
+                "col": 44,
+                "mobileOrder": 7,
+                "mobileHeight": 8
+              },
+              "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
+                "sizeX": 31,
+                "sizeY": 16,
+                "row": 42,
+                "col": 26,
+                "mobileHide": true
+              },
+              "a23185ad-dc46-806c-0e50-5b21fb080ace": {
+                "sizeX": 35,
+                "sizeY": 58,
+                "row": 0,
+                "col": 85,
+                "mobileHide": true
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 120,
+              "margin": 12,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 20,
+              "outerMargin": true
+            }
+          }
+        }
+      },
+      "transport_messages": {
+        "name": "Transport messages",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "8ee72d43-678c-4e25-e9a8-7d4cfd7a5f8e": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#ffffff",
+              "columns": 24,
+              "margin": 0,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": true,
+              "mobileRowHeight": 70,
+              "outerMargin": true
+            }
+          }
+        }
+      },
+      "devices_activity": {
+        "name": "Devices activity",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "d26e5cd7-75ef-d475-00c7-1a2d1114efe8": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#ffffff",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": true,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      }
+    },
+    "entityAliases": {
+      "ae870700-071f-b3bc-406c-16ba554c5a55": {
+        "id": "ae870700-071f-b3bc-406c-16ba554c5a55",
+        "alias": "Tenants",
+        "filter": {
+          "type": "entityType",
+          "resolveMultiple": true,
+          "entityType": "TENANT"
+        }
+      },
+      "ca4d90e4-f9ae-6fca-6b09-85815a48d52b": {
+        "id": "ca4d90e4-f9ae-6fca-6b09-85815a48d52b",
+        "alias": "TenantProfiles",
+        "filter": {
+          "type": "entityType",
+          "resolveMultiple": true,
+          "entityType": "TENANT"
+        }
+      },
+      "a1ddb8fa-90ff-5598-e7f2-e254194d055d": {
+        "id": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+        "alias": "Devices",
+        "filter": {
+          "type": "entityType",
+          "resolveMultiple": true,
+          "entityType": "DEVICE"
+        }
+      },
+      "619cdf00-a042-3b55-124e-194c1b28c236": {
+        "id": "619cdf00-a042-3b55-124e-194c1b28c236",
+        "alias": "Assets",
+        "filter": {
+          "type": "entityType",
+          "resolveMultiple": true,
+          "entityType": "ASSET"
+        }
+      },
+      "1d97ff7f-8b42-5882-f87b-16f3d0dee4f2": {
+        "id": "1d97ff7f-8b42-5882-f87b-16f3d0dee4f2",
+        "alias": "Users",
+        "filter": {
+          "type": "entityType",
+          "resolveMultiple": true,
+          "entityType": "USER"
+        }
+      },
+      "0dd2b154-59f4-0f97-da1a-d85f5b5cfe31": {
+        "id": "0dd2b154-59f4-0f97-da1a-d85f5b5cfe31",
+        "alias": "Customers",
+        "filter": {
+          "type": "entityType",
+          "resolveMultiple": true,
+          "entityType": "CUSTOMER"
+        }
+      },
+      "d9229b29-3f46-de8d-7fe8-eb0c43c75079": {
+        "id": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+        "alias": "Api Usage State",
+        "filter": {
+          "type": "apiUsageState",
+          "resolveMultiple": true
+        }
+      }
+    },
+    "filters": {},
+    "timewindow": {
+      "displayValue": "",
+      "hideInterval": false,
+      "hideLastInterval": false,
+      "hideQuickInterval": false,
+      "hideAggregation": false,
+      "hideAggInterval": false,
+      "hideTimezone": false,
+      "selectedTab": 0,
+      "realtime": {
+        "realtimeType": 0,
+        "interval": 1000,
+        "timewindowMs": 60000,
+        "quickInterval": "CURRENT_DAY"
+      },
+      "history": {
+        "historyType": 0,
+        "interval": 1000,
+        "timewindowMs": 60000,
+        "fixedTimewindow": {
+          "startTimeMs": 1680168326072,
+          "endTimeMs": 1680254726072
+        },
+        "quickInterval": "CURRENT_DAY"
+      },
+      "aggregation": {
+        "type": "AVG",
+        "limit": 25000
+      }
+    },
+    "settings": {
+      "stateControllerId": "entity",
+      "showTitle": false,
+      "showDashboardsSelect": true,
+      "showEntitiesSelect": true,
+      "showDashboardTimewindow": true,
+      "showDashboardExport": true,
+      "toolbarAlwaysOpen": true,
+      "titleColor": "rgba(0,0,0,0.870588)",
+      "showDashboardLogo": false,
+      "dashboardLogoUrl": null,
+      "hideToolbar": true,
+      "showFilters": true,
+      "showUpdateDashboardImage": true,
+      "dashboardCss": ".tb-widget-container > .tb-widget {\n    border: 1px solid rgba(0, 0, 0, 0.05);\n    box-shadow: 0px 5px 16px rgba(0, 0, 0, 0.04);\n    border-radius: 12px;\n}\n\n.tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n    padding: 16px !important;\n}\n\n.tb-card-title {\n    display: grid;\n}\n\n.tb-home-widget-title {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.25px;\n    color: rgba(0, 0, 0, 0.54);\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n}\n\n.tb-home-widget-link {\n    position: relative;\n    border-bottom: none;\n}\n\n.tb-home-widget-link:hover {\n    border-bottom: none;\n}\n\n.tb-home-widget-link:focus {\n    border-bottom: none;\n}\n\n.tb-home-widget-link::after {\n    content: 'arrow_forward';\n    display: inline-block;\n    transform: rotate(315deg);\n    font-family: 'Material Icons';\n    font-weight: normal;\n    font-style: normal;\n    font-size: 18px;\n    color: rgba(0, 0, 0, 0.12);\n    vertical-align: bottom;\n    margin-left: 6px;    \n}\n\n.tb-home-widget-link:hover::after {\n    color: inherit;\n}\n\n.tb-home-widget-info-icon {\n    color: rgba(0, 0, 0, 0.12);\n    font-size: 16px;\n    width: 16px;\n    height: 16px;\n    line-height: 15px;\n    vertical-align: middle;\n}\n\n.tb-widget-container > .tb-widget .tb-timewindow {\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.25px;\n    color: rgba(0, 0, 0, 0.54);\n    padding: 0;\n}\n\n.tb-widget-container > .tb-widget .tb-legend-keys .tb-legend-label {\n    cursor: pointer;\n    user-select: none;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1279px) {\n    .tb-widget-container > .tb-widget {\n        border-radius: 4px;\n    }\n    .tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n        padding: 2px !important;\n    }\n    .tb-hide-md {\n        display: none;\n    }\n}\n\n@media screen and (min-width: 1280px) and (max-width: 1819px) {\n    .tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n        padding: 8px !important;\n    }\n    .tb-hide-lg {\n        display: none;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-hide-md-lg {\n        display: none;\n    }\n\n    .tb-home-widget-title {\n        font-size: 12px;\n        line-height: 16px;\n    }\n    \n    .tb-widget-container > .tb-widget .tb-widget-title {\n        padding: 0;\n    }\n\n    .tb-widget-container > .tb-widget .tb-timewindow {\n        font-size: 12px;\n        line-height: 16px;\n        min-height: 24px;\n        padding: 0;\n    }\n\n    .tb-widget-container > .tb-widget .tb-timewindow .mat-mdc-icon-button.tb-mat-32 {\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n    }\n\n    .tb-widget-container > .tb-widget .tb-timewindow .mat-mdc-icon-button.tb-mat-32 .mat-icon {\n        width: 18px;\n        height: 18px;\n        font-size: 18px;\n    }\n    \n    .tb-widget-container > .tb-widget tb-legend {\n        padding-bottom: 0 !important;\n    }\n    \n    .tb-widget-container > .tb-widget .tb-legend-keys .tb-legend-label {\n        font-size: 11px;\n        line-height: 16px;\n        letter-spacing: 0.25px;\n    }\n}\n\n@media screen and (max-width: 959px), screen and (min-width: 1820px) {\n    .tb-hide-not-md-lg {\n        display: none;\n    }\n}\n"
+    }
+  },
+  "externalId": null,
+  "name": "Tenant Administrator Home Page"
+}

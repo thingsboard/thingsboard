@@ -28,6 +28,7 @@ import { GettingStartedWidgetComponent } from '@home/components/widget/lib/home-
 import {
   GettingStartedCompletedDialogComponent
 } from '@home/components/widget/lib/home-page/getting-started-completed-dialog.component';
+import { ToggleHeaderComponent } from '@home/components/widget/lib/home-page/toggle-header.component';
 
 @NgModule({
   declarations:
@@ -40,7 +41,8 @@ import {
       AddDocLinkDialogComponent,
       EditDocLinksDialogComponent,
       GettingStartedWidgetComponent,
-      GettingStartedCompletedDialogComponent
+      GettingStartedCompletedDialogComponent,
+      ToggleHeaderComponent
     ],
   imports: [
     CommonModule,
@@ -55,7 +57,8 @@ import {
     AddDocLinkDialogComponent,
     EditDocLinksDialogComponent,
     GettingStartedWidgetComponent,
-    GettingStartedCompletedDialogComponent
+    GettingStartedCompletedDialogComponent,
+    ToggleHeaderComponent
   ]
 })
 export class HomePageWidgetsModule { }

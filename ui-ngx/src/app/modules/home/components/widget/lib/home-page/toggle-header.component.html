@@ -15,12 +15,6 @@
     limitations under the License.
 
 -->
-<ng-container #markdownContainer>
-</ng-container>
-<div *ngIf="error && !fallbackToPlainMarkdown" style="color: #f00; font-size: 14px;
-                                                      line-height: 28px;
-                                                      background: #efefef;">
-  {{error}}
-</div>
-<div #fallbackElement [fxShow]="usePlainMarkdown || (error && fallbackToPlainMarkdown)" class="tb-markdown-view" [ngClass]="markdownClass" [ngStyle]="style">
-</div>
+<mat-button-toggle-group class="tb-toggle-header" #toggleGroup="matButtonToggleGroup" [name]="name">
+  <ng-content></ng-content>
+</mat-button-toggle-group>

@@ -91,6 +91,118 @@
             <mat-icon>description</mat-icon>{{ 'widgets.getting-started.sys-admin.step6.how-to-configure-notifications' | translate }}</a>
         </mat-step>
       </ng-template>
+      <ng-template [ngSwitchCase]="authority.TENANT_ADMIN">
+        <mat-step [completed]="gettingStarted.maxSelectedIndex > -1">
+          <ng-template matStepLabel>
+            <div style="width: 100%;" fxLayout="row" fxLayoutAlign="space-between center">
+              <div translate>widgets.getting-started.tenant-admin.step1.title</div>
+              <a *ngIf="matStepper.selectedIndex === 0" mat-button color="primary" routerLink="/entities/devices">{{ 'device.devices' | translate }}</a>
+            </div>
+          </ng-template>
+          <div [innerHTML]="'widgets.getting-started.tenant-admin.step1.content' | translate | safe: 'html'"></div>
+          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-1-provision-device" target="_blank">
+            <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step1.how-to-create-device' | translate }}</a>
+        </mat-step>
+        <mat-step [completed]="gettingStarted.maxSelectedIndex > 0">
+          <ng-template matStepLabel>
+            <div style="width: 100%;" fxLayout="row" fxLayoutAlign="space-between center">
+              <div translate>widgets.getting-started.tenant-admin.step2.title</div>
+            </div>
+          </ng-template>
+          <div [innerHTML]="'widgets.getting-started.tenant-admin.step2.content-before' | translate | safe: 'html'"></div>
+          <div class="tb-bordered-content">
+            <tb-toggle-header #publishCommandSteps value="ubuntu" name="publishCommandSteps">
+              <mat-button-toggle value="ubuntu">Ubuntu</mat-button-toggle>
+              <mat-button-toggle value="macos">MacOS</mat-button-toggle>
+              <mat-button-toggle value="windows">Windows</mat-button-toggle>
+            </tb-toggle-header>
+            <ng-container [ngSwitch]="publishCommandSteps.value">
+              <ng-template [ngSwitchCase]="'ubuntu'">
+                <p [innerHTML]="'widgets.getting-started.tenant-admin.step2.ubuntu.install-curl' | translate | safe: 'html'"></p>
+                <tb-markdown usePlainMarkdown containerClass="tb-getting-started-code" data="
+                    ```bash
+                    sudo apt-get install curl
+                    {:copy-code}
+                    ```
+                "></tb-markdown>
+              </ng-template>
+              <ng-template [ngSwitchCase]="'macos'">
+                <p [innerHTML]="'widgets.getting-started.tenant-admin.step2.macos.install-curl' | translate | safe: 'html'"></p>
+                <tb-markdown usePlainMarkdown containerClass="tb-getting-started-code" data="
+                    ```bash
+                    brew install curl
+                    {:copy-code}
+                    ```
+                "></tb-markdown>
+              </ng-template>
+              <ng-template [ngSwitchCase]="'windows'">
+                <p [innerHTML]="'widgets.getting-started.tenant-admin.step2.windows.install-curl' | translate | safe: 'html'"></p>
+              </ng-template>
+            </ng-container>
+            <p [innerHTML]="'widgets.getting-started.tenant-admin.step2.replace-access-token' | translate | safe: 'html'"></p>
+            <tb-markdown usePlainMarkdown containerClass="tb-getting-started-code" data="
+                    ```bash
+                    curl -v -X POST -d &quot;{\&quot;temperature\&quot;: 25}&quot; {{baseUrl}}/api/v1/$ACCESS_TOKEN/telemetry --header &quot;Content-Type:application/json&quot;
+                    {:copy-code}
+                    ```
+                "></tb-markdown>
+          </div>
+          <div [innerHTML]="'widgets.getting-started.tenant-admin.step2.content-after' | translate | safe: 'html'"></div>
+          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-2-connect-device" target="_blank">
+            <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step2.how-to-connect-device' | translate }}</a>
+        </mat-step>
+        <mat-step [completed]="gettingStarted.maxSelectedIndex > 1">
+          <ng-template matStepLabel>
+            <div style="width: 100%;" fxLayout="row" fxLayoutAlign="space-between center">
+              <div translate>widgets.getting-started.tenant-admin.step3.title</div>
+              <a *ngIf="matStepper.selectedIndex === 2" mat-button color="primary" routerLink="/dashboards">{{ 'dashboard.dashboards' | translate }}</a>
+            </div>
+          </ng-template>
+          <div [innerHTML]="'widgets.getting-started.tenant-admin.step3.content' | translate | safe: 'html'"></div>
+          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-3-create-dashboard" target="_blank">
+            <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step3.how-to-create-dashboard' | translate }}</a>
+        </mat-step>
+        <mat-step [completed]="gettingStarted.maxSelectedIndex > 2">
+          <ng-template matStepLabel>
+            <div style="width: 100%;" fxLayout="row" fxLayoutAlign="space-between center">
+              <div translate>widgets.getting-started.tenant-admin.step4.title</div>
+              <a *ngIf="matStepper.selectedIndex === 3" mat-button color="primary" routerLink="/profiles/deviceProfiles">{{ 'widgets.getting-started.tenant-admin.step4.alarm-rules' | translate }}</a>
+            </div>
+          </ng-template>
+          <div [innerHTML]="'widgets.getting-started.tenant-admin.step4.content' | translate | safe: 'html'"></div>
+          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-4-configure-alarm-rules" target="_blank">
+            <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step4.how-to-configure-alarm-rules' | translate }}</a>
+        </mat-step>
+        <mat-step [completed]="gettingStarted.maxSelectedIndex > 3">
+          <ng-template matStepLabel>
+            <div style="width: 100%;" fxLayout="row" fxLayoutAlign="space-between center">
+              <div translate>widgets.getting-started.tenant-admin.step5.title</div>
+            </div>
+          </ng-template>
+          <div [innerHTML]="'widgets.getting-started.tenant-admin.step5.content-before' | translate | safe: 'html'"></div>
+          <p [innerHTML]="'widgets.getting-started.tenant-admin.step5.replace-access-token' | translate | safe: 'html'"></p>
+          <tb-markdown usePlainMarkdown containerClass="tb-getting-started-code" data="
+                    ```bash
+                    curl -v -X POST -d &quot;{\&quot;temperature\&quot;: 26}&quot; {{baseUrl}}/api/v1/$ACCESS_TOKEN/telemetry --header &quot;Content-Type:application/json&quot;
+                    {:copy-code}
+                    ```
+                "></tb-markdown>
+          <div [innerHTML]="'widgets.getting-started.tenant-admin.step5.content-after' | translate | safe: 'html'"></div>
+          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-5-create-alarm" target="_blank">
+            <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step5.how-to-create-alarm' | translate }}</a>
+        </mat-step>
+        <mat-step [completed]="gettingStarted.maxSelectedIndex > 4">
+          <ng-template matStepLabel>
+            <div style="width: 100%;" fxLayout="row" fxLayoutAlign="space-between center">
+              <div translate>widgets.getting-started.tenant-admin.step6.title</div>
+              <a *ngIf="matStepper.selectedIndex === 5" mat-button color="primary" routerLink="/customers">{{ 'customer.customers' | translate }}</a>
+            </div>
+          </ng-template>
+          <div [innerHTML]="'widgets.getting-started.tenant-admin.step6.content' | translate | safe: 'html'"></div>
+          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-7-assign-device-and-dashboard-to-customer" target="_blank">
+            <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step6.how-to-create-customer-and-assign-dashboard' | translate }}</a>
+        </mat-step>
+      </ng-template>
     </ng-container>
   </mat-stepper>
   <div *ngIf="allCompleted" fxLayout="column" fxLayoutAlign="center center" style="padding-top: 24px;">

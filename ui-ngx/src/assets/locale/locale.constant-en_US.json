@@ -5114,6 +5114,9 @@
             "title": "Transport messages",
             "info": "All the messages that came from devices"
         },
+        "activity": {
+            "title": "Activity"
+        },
         "documentation": {
             "title": "Documentation",
             "add-link": "Add link",
@@ -5200,6 +5203,52 @@
                     "title": "Configure feature: Notifications",
                     "content": "<p>Some text</p><p>Follow the documentation on how to do it:</p>",
                     "how-to-configure-notifications": "How to configure Notifications"
+                }
+            },
+            "tenant-admin": {
+                "step1": {
+                    "title": "Create device",
+                    "content": "<p>We will manually provision the device using the UI. Follow the documentation on how to do it:</p>",
+                    "how-to-create-device": "How to create Device"
+                },
+                "step2": {
+                    "title": "Connect device",
+                    "content-before": "<p>To connect the device you need to get the device credentials. But we recommend using the default auto-generated one.</p><ul><li>Go to device table</li><li>Click on the device row to open device details</li><li>Press the button \"Copy access token\"</li></ul><p>Use simple commands to publish data over HTTP:</p>",
+                    "ubuntu": {
+                        "install-curl": "Install cURL for Ubuntu:"
+                    },
+                    "macos": {
+                        "install-curl": "Install cURL for MacOS:"
+                    },
+                    "windows": {
+                        "install-curl": "Starting Windows 10 b17063, cURL is available by default."
+                    },
+                    "replace-access-token": "Replace <em>$ACCESS_TOKEN</em> with your device's token:",
+                    "content-after": "<p>You can also use other protocols such as MQTT, CoAP, etc.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-connect-device": "How to connect Device"
+                },
+                "step3": {
+                    "title": "Create dashboard",
+                    "content": "<p>Create a dashboard to visualize data from entities such as assets, devices, etc.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-create-dashboard": "How to create Dashboard"
+                },
+                "step4": {
+                    "title": "Configure alarm rules",
+                    "alarm-rules": "Alarm rules",
+                    "content": "<p>When the temperature reaches 25°C, we will raise an alarm. Follow the documentation on how to do it:</p>",
+                    "how-to-configure-alarm-rules": "How to configure Alarm rules"
+                },
+                "step5": {
+                    "title": "Create alarm",
+                    "content-before": "<p>To trigger the alarm, send a new telemetry value of 26°C or higher.</p>",
+                    "replace-access-token": "Replace <em>$ACCESS_TOKEN</em> with your device's token:",
+                    "content-after": "<p>Follow the documentation on how to do it:</p>",
+                    "how-to-create-alarm": "How to create Alarm"
+                },
+                "step6": {
+                    "title": "Create customer and assign dashboard",
+                    "content": "<p>By creating end-user dashboards, a customer user can only see his own devices, and data from another customer will be hidden.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-create-customer-and-assign-dashboard": "How to create Customer and assign Dashboard"
                 }
             }
         }
