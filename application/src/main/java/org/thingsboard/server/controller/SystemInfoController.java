@@ -16,10 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
@@ -28,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -57,8 +55,7 @@ public class SystemInfoController {
     }
 
     private JsonNode buildInfoObject() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode infoObject = objectMapper.createObjectNode();
+        ObjectNode infoObject = JacksonUtil.newObjectNode();
         if (buildProperties != null) {
             infoObject.put("version", buildProperties.getVersion());
             infoObject.put("artifact", buildProperties.getArtifact());

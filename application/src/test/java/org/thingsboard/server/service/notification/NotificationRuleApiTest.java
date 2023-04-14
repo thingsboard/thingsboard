@@ -414,7 +414,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         generatorNodeConfiguration.setPeriodInSeconds(1000);
         generatorNodeConfiguration.setMsgCount(1);
         generatorNodeConfiguration.setJsScript("[return");
-        generatorNodeWithError.setConfiguration(mapper.valueToTree(generatorNodeConfiguration));
+        generatorNodeWithError.setConfiguration(JacksonUtil.valueToTree(generatorNodeConfiguration));
 
         metaData.setNodes(List.of(generatorNodeWithError));
         metaData.setFirstNodeIndex(0);

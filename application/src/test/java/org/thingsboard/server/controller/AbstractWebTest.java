@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -57,6 +56,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.actors.DefaultTbActorSystem;
 import org.thingsboard.server.actors.TbActorId;
@@ -143,8 +143,6 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     public static final int TIMEOUT = 30;
-
-    protected ObjectMapper mapper = new ObjectMapper();
 
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
     protected static final String TEST_DIFFERENT_TENANT_NAME = "TEST DIFFERENT TENANT";
@@ -442,7 +440,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         doGet("/api/noauth/activate?activateToken={activateToken}", this.currentActivateToken)
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + this.currentActivateToken));
-        return new ObjectMapper().createObjectNode()
+        return JacksonUtil.newObjectNode()
                 .put("activateToken", this.currentActivateToken)
                 .put("password", password);
     }
@@ -806,7 +804,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T> T readResponse(MvcResult result, TypeReference<T> type) throws Exception {
         byte[] content = result.getResponse().getContentAsByteArray();
-        return mapper.readerFor(type).readValue(content);
+        return JacksonUtil.OBJECT_MAPPER.readerFor(type).readValue(content);
     }
 
     protected String getErrorMessage(ResultActions result) throws Exception {

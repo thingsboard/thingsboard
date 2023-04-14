@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.action;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
@@ -53,8 +52,6 @@ import java.util.stream.Collectors;
 public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
-
-    private static final ObjectMapper json = new ObjectMapper();
 
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {
@@ -185,18 +182,18 @@ public class EntityActionService {
                     metaData.putValue("unassignedEdgeName", strEdgeName);
                 } else if (actionType == ActionType.ADDED_COMMENT || actionType == ActionType.UPDATED_COMMENT) {
                     AlarmComment comment = extractParameter(AlarmComment.class, 0, additionalInfo);
-                    metaData.putValue("comment", json.writeValueAsString(comment));
+                    metaData.putValue("comment", JacksonUtil.toString(comment));
                 }
                 ObjectNode entityNode;
                 if (entity != null) {
-                    entityNode = json.valueToTree(entity);
+                    entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(entity);
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {
                         entityNode.put("configuration", "");
                     }
                     metaData.putValue("entityName", entity.getName());
                     metaData.putValue("entityType", entityId.getEntityType().toString());
                 } else {
-                    entityNode = json.createObjectNode();
+                    entityNode = JacksonUtil.newObjectNode();
                     if (actionType == ActionType.ATTRIBUTES_UPDATED) {
                         String scope = extractParameter(String.class, 0, additionalInfo);
                         @SuppressWarnings("unchecked")
@@ -230,10 +227,10 @@ public class EntityActionService {
                         entityNode.put("startTs", extractParameter(Long.class, 1, additionalInfo));
                         entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
                     } else if (ActionType.RELATION_ADD_OR_UPDATE.equals(actionType) || ActionType.RELATION_DELETED.equals(actionType)) {
-                        entityNode = json.valueToTree(extractParameter(EntityRelation.class, 0, additionalInfo));
+                        entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(extractParameter(EntityRelation.class, 0, additionalInfo));
                     }
                 }
-                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+                    TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
                 if (tenantId == null || tenantId.isNullUid()) {
                     if (entity instanceof HasTenantId) {
                         tenantId = ((HasTenantId) entity).getTenantId();
@@ -278,7 +275,7 @@ public class EntityActionService {
             Map<Long, List<TsKvEntry>> groupedTelemetry = timeseries.stream()
                     .collect(Collectors.groupingBy(TsKvEntry::getTs));
             for (Map.Entry<Long, List<TsKvEntry>> entry : groupedTelemetry.entrySet()) {
-                ObjectNode element = json.createObjectNode();
+                ObjectNode element = JacksonUtil.newObjectNode();
                 element.put("ts", entry.getKey());
                 ObjectNode values = element.putObject("values");
                 for (TsKvEntry tsKvEntry : entry.getValue()) {

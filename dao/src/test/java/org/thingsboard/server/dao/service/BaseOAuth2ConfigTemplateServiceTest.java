@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
@@ -109,7 +110,7 @@ public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServic
     private OAuth2ClientRegistrationTemplate validClientRegistrationTemplate(String providerId) {
         OAuth2ClientRegistrationTemplate clientRegistrationTemplate = new OAuth2ClientRegistrationTemplate();
         clientRegistrationTemplate.setProviderId(providerId);
-        clientRegistrationTemplate.setAdditionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        clientRegistrationTemplate.setAdditionalInfo(JacksonUtil.newObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
         clientRegistrationTemplate.setMapperConfig(OAuth2MapperConfig.builder()
                 .type(MapperType.BASIC)
                 .basic(OAuth2BasicMapperConfig.builder()
