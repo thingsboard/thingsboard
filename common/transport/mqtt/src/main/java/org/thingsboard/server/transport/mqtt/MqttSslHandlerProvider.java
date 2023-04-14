@@ -141,6 +141,9 @@ public class MqttSslHandlerProvider {
 
         @Override
         public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            if (!validateCertificateChain(chain)) {
+                throw new CertificateException("Invalid Chain of X509 Certificates. ");
+            }
             String clientDeviceCertValue = SslUtil.getCertificateString(chain[0]);
             final String[] credentialsBodyHolder = new String[1];
             CountDownLatch latch = new CountDownLatch(1);
@@ -174,6 +177,22 @@ public class MqttSslHandlerProvider {
                 }
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
+            }
+        }
+
+        private boolean validateCertificateChain(X509Certificate[] chain) {
+            try {
+                if (chain.length > 1) {
+                    X509Certificate leafCert = chain[0];
+                    for (int i = 1; i < chain.length; i++) {
+                        X509Certificate intermediateCert = chain[i];
+                        leafCert.verify(intermediateCert.getPublicKey());
+                        leafCert = intermediateCert;
+                    }
+                }
+                return true;
+            } catch (Exception e) {
+                return false;
             }
         }
     }
