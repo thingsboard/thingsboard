@@ -29,8 +29,10 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
+  Optional,
   Renderer2,
   SimpleChanges,
+  Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -90,7 +92,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { ActivatedRoute, Router } from '@angular/router';
 import cssjs from '@core/css/css';
 import { ResourcesService } from '@core/services/resources.service';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TimeService } from '@core/services/time.service';
 import { DeviceService } from '@app/core/http/device.service';
@@ -115,6 +117,8 @@ import { DialogService } from '@core/services/dialog.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { DASHBOARD_PAGE_COMPONENT_TOKEN } from '@home/components/tokens';
+import { MODULES_MAP } from '@shared/models/constants';
+import { IModulesMap } from '@modules/common/modules-map.models';
 
 @Component({
   selector: 'tb-widget',
@@ -190,6 +194,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private popoverService: TbPopoverService,
               @Inject(EMBED_DASHBOARD_DIALOG_TOKEN) private embedDashboardDialogComponent: ComponentType<any>,
               @Inject(DASHBOARD_PAGE_COMPONENT_TOKEN) private dashboardPageComponent: ComponentType<any>,
+              @Optional() @Inject(MODULES_MAP) private modulesMap: IModulesMap,
               private widgetService: WidgetService,
               private resources: ResourcesService,
               private timeService: TimeService,
@@ -1160,7 +1165,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         if (isDefined(customHtml) && customHtml.length > 0) {
           htmlTemplate = customHtml;
         }
-        this.loadCustomActionResources(actionNamespace, customCss, customResources).subscribe(
+        this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe(
           () => {
             if (isDefined(customPrettyFunction) && customPrettyFunction.length > 0) {
               try {
@@ -1168,8 +1173,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
                   additionalParams = {};
                 }
                 const customActionPrettyFunction = new Function('$event', 'widgetContext', 'entityId',
-                  'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', customPrettyFunction);
-                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
+                  'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', 'customModules', customPrettyFunction);
+                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel, descriptor.customModules);
               } catch (e) {
                 console.error(e);
               }
@@ -1473,20 +1478,54 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
   }
 
-  private loadCustomActionResources(actionNamespace: string, customCss: string, customResources: Array<WidgetResource>): Observable<any> {
+  private loadCustomActionResources(actionNamespace: string, customCss: string, customResources: Array<WidgetResource>, actionDescriptor: WidgetActionDescriptor): Observable<any> {
     if (isDefined(customCss) && customCss.length > 0) {
       this.cssParser.cssPreviewNamespace = actionNamespace;
       this.cssParser.createStyleElement(actionNamespace, customCss, 'nonamespace');
     }
     const resourceTasks: Observable<string>[] = [];
+    const modulesTasks: Observable<Type<any>[] | string>[] = [];
     if (isDefined(customResources) && customResources.length > 0) {
-      customResources.forEach((resource) => {
+      customResources.filter(r => r.isModule).forEach(
+        (resource) => {
+          modulesTasks.push(
+            this.resources.loadModules(resource.url, this.modulesMap).pipe(
+              catchError((e: Error) => of(e?.message ? e.message : `Failed to load custom action resource module: '${resource.url}'`))
+            )
+          );
+        }
+      );
+      customResources.filter(r => !r.isModule).forEach((resource) => {
         resourceTasks.push(
           this.resources.loadResource(resource.url).pipe(
             catchError(e => of(`Failed to load custom action resource: '${resource.url}'`))
           )
         );
       });
+
+      if (modulesTasks.length) {
+        let modulesObservable: Observable<string | Type<any>[]> = forkJoin(modulesTasks).pipe(
+          map(res => {
+            const msg = res.find(r => typeof r === 'string');
+            if (msg) {
+              return msg as string;
+            } else {
+              return (res as Type<any>[][]).flat();
+            }
+          })
+        );
+
+        resourceTasks.push(modulesObservable.pipe(
+          mergeMap((resolvedModules) => {
+            if (typeof resolvedModules === 'string') {
+              return of(resolvedModules);
+            } else {
+              actionDescriptor.customModules = resolvedModules;
+              return of(null);
+            }
+          })));
+      }
+
       return forkJoin(resourceTasks).pipe(
         switchMap(msgs => {
             let errors: string[];
@@ -1499,7 +1538,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               return of(null);
             }
           }
-      ));
+        ));
     } else {
       return of(null);
     }

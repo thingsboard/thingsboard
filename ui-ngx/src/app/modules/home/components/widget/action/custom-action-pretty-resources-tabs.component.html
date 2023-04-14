@@ -27,6 +27,10 @@
                    (ngModelChange)="notifyActionUpdated()"
                    placeholder="{{ 'widget.resource-url' | translate }}"/>
           </mat-form-field>
+          <mat-checkbox [(ngModel)]="resource.isModule"
+                        (ngModelChange)="notifyActionUpdated()">
+            {{ 'widget.resource-is-module' | translate }}
+          </mat-checkbox>
           <button mat-icon-button color="primary"
                   [disabled]="isLoading$ | async"
                   type="button"
@@ -90,7 +94,7 @@
     <tb-js-func
       [(ngModel)]="action.customFunction"
       (ngModelChange)="notifyActionUpdated()"
-      [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
+      [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', 'customModules']"
       [disableUndefinedCheck]="true"
       [validationArgs]="[]"
       [editorCompleter]="customPrettyActionEditorCompleter"

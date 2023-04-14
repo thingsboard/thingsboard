@@ -26,7 +26,7 @@ import * as moment_ from 'moment';
 import { EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, Directive, EventEmitter, Inject, OnInit } from '@angular/core';
+import { AfterViewInit, Directive, EventEmitter, Inject, OnInit, Type } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
@@ -550,6 +550,7 @@ export interface CustomActionDescriptor {
   customResources?: Array<WidgetResource>;
   customHtml?: string;
   customCss?: string;
+  customModules?: Type<any>[];
 }
 
 export interface WidgetActionDescriptor extends CustomActionDescriptor {

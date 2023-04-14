@@ -29,6 +29,7 @@ import {
 } from '@home/components/widget/dialog/custom-dialog-container.component';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 import { HOME_COMPONENTS_MODULE_TOKEN, SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import { isObject } from '@core/utils';
 
 @Injectable()
 export class CustomDialogService {
@@ -46,10 +47,12 @@ export class CustomDialogService {
 
   customDialog(template: string, controller: (instance: CustomDialogComponent) => void, data?: any,
                config?: MatDialogConfig): Observable<any> {
+    const modules = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule];
+    if (isObject(data) && data.hasOwnProperty('customModules')) {
+      modules.push(data.customModules);
+    }
     return this.dynamicComponentFactoryService.createDynamicComponentFactory(
-      class CustomDialogComponentInstance extends CustomDialogComponent {},
-      template,
-      [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule]).pipe(
+      class CustomDialogComponentInstance extends CustomDialogComponent {}, template, modules).pipe(
       mergeMap((factory) => {
           const dialogData: CustomDialogContainerData = {
             controller,
