@@ -430,24 +430,13 @@ public class TestRestClient {
                 .then()
                 .statusCode(HTTP_OK);
     }
+
     public String getToken() {
         return token;
     }
 
     public String getRefreshToken() {
         return refreshToken;
-    }
-
-    public PageData<Tenant> getTenants(PageLink pageLink) {
-        Map<String, String> params = new HashMap<>();
-        addPageLinkToParam(params, pageLink);
-        return given().spec(requestSpec).queryParams(params)
-                .get("/api/tenants")
-                .then()
-                .statusCode(HTTP_OK)
-                .extract()
-                .as(new TypeRef<PageData<Tenant>>() {
-                });
     }
 
     public Asset postAsset(Asset asset) {
@@ -469,6 +458,13 @@ public class TestRestClient {
                 .as(Asset.class);
     }
 
+    public void deleteAsset(AssetId assetId) {
+        given().spec(requestSpec)
+                .delete("/api/asset/{assetId}", assetId.getId())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
     public EntityView postEntityView(EntityView entityView) {
         return given().spec(requestSpec)
                 .body(entityView)
@@ -486,5 +482,12 @@ public class TestRestClient {
                 .statusCode(HTTP_OK)
                 .extract()
                 .as(EntityView.class);
+    }
+
+    public void deleteEntityView(EntityViewId entityViewId) {
+        given().spec(requestSpec)
+                .delete("/api/entityView/{entityViewId}", entityViewId.getId())
+                .then()
+                .statusCode(HTTP_OK);
     }
 }

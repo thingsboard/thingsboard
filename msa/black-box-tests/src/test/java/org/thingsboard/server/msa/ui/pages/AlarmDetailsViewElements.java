@@ -24,7 +24,8 @@ public class AlarmDetailsViewElements extends AbstractBasePage {
         super(driver);
     }
 
-    private static final String ASSIGN_FIELD = "//tb-alarm-assignee//mat-icon[contains(text(),'keyboard_arrow_down')]/parent::button";
+    //private static final String ASSIGN_FIELD = "//tb-alarm-assignee//mat-icon[contains(text(),'keyboard_arrow_down')]/parent::button";
+    private static final String ASSIGN_FIELD = "//mat-label[text()='Assignee']/parent::label/parent::div//input";
     private static final String USER_FROM_DROP_DOWN = "//div[@class='user-display-name']/span[text() = '%s']";
     private static final String CLOSE_ALARM_DETAILS_VIEW_BTN = "//mat-dialog-container//mat-icon[contains(text(),'close')]/parent::button";
     private static final String UNASSIGNED_BTN = "//div[@role='listbox']//mat-icon[text() = 'account_circle']/following-sibling::span";

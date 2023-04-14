@@ -50,6 +50,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
@@ -192,5 +193,9 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     public void clearStorage() {
         getWebStorage().getLocalStorage().clear();
         getWebStorage().getSessionStorage().clear();
+    }
+
+    public void assertIsDisplayed(WebElement element) {
+        assertThat(element.isDisplayed()).as(element + " is displayed").isTrue();
     }
 }
