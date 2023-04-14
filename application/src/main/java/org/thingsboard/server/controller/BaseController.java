@@ -103,7 +103,6 @@ import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.settings.UserDashboardAction;
 import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -130,12 +129,12 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.dao.user.UserSettingsService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
@@ -164,7 +163,9 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolation;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -395,16 +396,19 @@ public abstract class BaseController {
      * Handles validation error for controller method arguments annotated with @{@link javax.validation.Valid}
      * */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public void handleValidationError(MethodArgumentNotValidException e, HttpServletResponse response) {
-        String errorMessage = "Validation error: " + e.getFieldErrors().stream()
+    public void handleValidationError(MethodArgumentNotValidException validationError, HttpServletResponse response) {
+        List<ConstraintViolation<Object>> constraintsViolations = validationError.getFieldErrors().stream()
                 .map(fieldError -> {
-                    String property = fieldError.getField();
-                    if (property.equals("valid") || StringUtils.endsWith(property, ".valid")) { // when custom @AssertTrue is used
-                        property = "";
+                    try {
+                        return (ConstraintViolation<Object>) fieldError.unwrap(ConstraintViolation.class);
+                    } catch (Exception e) {
+                        log.warn("FieldError source is not of type ConstraintViolation");
+                        return null; // should not happen
                     }
-                    return (!property.isEmpty() ? (property + " ") : "") + fieldError.getDefaultMessage();
                 })
-                .collect(Collectors.joining(", "));
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        String errorMessage = "Validation error: " + ConstraintValidator.getErrorMessage(constraintsViolations);
         ThingsboardException thingsboardException = new ThingsboardException(errorMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         handleControllerException(thingsboardException, response);
     }

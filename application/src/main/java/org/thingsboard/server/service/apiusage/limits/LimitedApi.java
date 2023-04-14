@@ -25,7 +25,8 @@ public enum LimitedApi {
 
     ENTITY_EXPORT(DefaultTenantProfileConfiguration::getTenantEntityExportRateLimit),
     ENTITY_IMPORT(DefaultTenantProfileConfiguration::getTenantEntityImportRateLimit),
-    NOTIFICATION_REQUEST(DefaultTenantProfileConfiguration::getTenantNotificationRequestsRateLimit);
+    NOTIFICATION_REQUESTS(DefaultTenantProfileConfiguration::getTenantNotificationRequestsRateLimit),
+    NOTIFICATION_REQUESTS_PER_RULE(DefaultTenantProfileConfiguration::getTenantNotificationRequestsPerRuleRateLimit);
 
     private final Function<DefaultTenantProfileConfiguration, String> configExtractor;
 
