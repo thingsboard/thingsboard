@@ -46,6 +46,7 @@ import javax.net.ssl.SSLException;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbExternalNodeAzureIotHubConfig"
 )
+@Deprecated
 public class TbAzureIotHubNode extends TbMqttNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {

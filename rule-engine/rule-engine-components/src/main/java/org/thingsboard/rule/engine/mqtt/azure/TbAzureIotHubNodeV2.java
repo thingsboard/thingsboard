@@ -29,12 +29,10 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
-
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Slf4j
@@ -51,11 +49,12 @@ public class TbAzureIotHubNodeV2 implements TbNode {
     private static final String ERROR = "error";
     private TbAzureIotHubNodeConfigurationV2 config;
     private ServiceClient serviceClient;
+    private ExecutorService executorService;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        executorService = Executors.newCachedThreadPool();
         this.config = TbNodeUtils.convert(configuration, TbAzureIotHubNodeConfigurationV2.class);
-        this.config = new TbAzureIotHubNodeConfigurationV2().defaultConfiguration();
         try {
             serviceClient = ServiceClient.createFromConnectionString(this.config.getConnString(), IotHubServiceClientProtocol.AMQPS);
             serviceClient.open();
@@ -65,20 +64,13 @@ public class TbAzureIotHubNodeV2 implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        publishMessageAsync(ctx, msg);
-    }
-
-    private void publishMessageAsync(TbContext ctx, TbMsg msg) {
-        ctx.getExternalCallExecutor().executeAsync(() -> publishMessage(ctx, msg));
-    }
-
-    private void publishMessage(TbContext ctx, TbMsg msg) {
+    public void onMsg(TbContext ctx, TbMsg msg)  {
         try {
             Message message = new Message(msg.getData());
             message.setDeliveryAcknowledgement(DeliveryAcknowledgement.Full);
             message.setMessageId(UUID.randomUUID().toString());
-            message.getProperties().put("content-type", "JSON");
+            message.getProperties().put("content-type", msg.getDataType().name());
+
             CompletableFuture<Void> future = serviceClient.sendAsync(config.getDeviceId(), message);
             future.whenCompleteAsync((success, err) -> {
                 if (err != null) {
@@ -87,25 +79,21 @@ public class TbAzureIotHubNodeV2 implements TbNode {
                 } else {
                     ctx.tellSuccess(msg);
                 }
-            }, Executors.newCachedThreadPool());
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            }, executorService);
+        } catch (UnsupportedEncodingException e) {
+            log.error("Failed to create message ", e);
         }
     }
 
     @Override
     public void destroy() {
-        try {
-            serviceClient.close();
-        } catch (IOException e) {
+        if (this.serviceClient != null) {
+            try {
+                this.serviceClient.close();
+            } catch (Exception e) {
+                log.error("Failed to close Azure iot hub client during destroy()", e);
+            }
         }
-        TbNode.super.destroy();
-    }
-
-    @Override
-    public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
-        TbNode.super.onPartitionChangeMsg(ctx, msg);
     }
 
     private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
