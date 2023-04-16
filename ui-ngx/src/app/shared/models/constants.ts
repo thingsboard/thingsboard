@@ -67,7 +67,8 @@ export const MediaBreakpoints = {
   'gt-sm': 'screen and (min-width: 960px)',
   'gt-md': 'screen and (min-width: 1280px)',
   'gt-lg': 'screen and (min-width: 1920px)',
-  'gt-xl': 'screen and (min-width: 5001px)'
+  'gt-xl': 'screen and (min-width: 5001px)',
+  'md-lg': 'screen and (min-width: 960px) and (max-width: 1819px)'
 };
 
 export const helpBaseUrl = 'https://thingsboard.io';

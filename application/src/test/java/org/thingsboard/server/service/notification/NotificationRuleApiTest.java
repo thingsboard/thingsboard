@@ -23,14 +23,12 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
-import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.debug.TbMsgGeneratorNode;
-import org.thingsboard.rule.engine.debug.TbMsgGeneratorNodeConfiguration;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -43,8 +41,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
-import org.thingsboard.server.common.data.id.NotificationRuleId;
-import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -59,25 +56,21 @@ import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotific
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.AlarmAction;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
-import org.thingsboard.server.dao.notification.NotificationRuleService;
-import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.service.apiusage.limits.LimitedApi;
+import org.thingsboard.server.service.apiusage.limits.RateLimitService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.util.ArrayList;
@@ -96,9 +89,6 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
-@TestPropertySource(properties = {
-        "js.evaluator=local"
-})
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @SpyBean
@@ -106,18 +96,13 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Autowired
     private NotificationRequestService notificationRequestService;
     @Autowired
-    private NotificationRuleService notificationRuleService;
+    private TenantProfileService tenantProfileService;
     @Autowired
-    private NotificationTemplateService notificationTemplateService;
-
-    @SpyBean
-    private AlarmService alarmService;
+    private RateLimitService rateLimitService;
 
     @Before
     public void beforeEach() throws Exception {
         loginTenantAdmin();
-        notificationRuleService.deleteNotificationRulesByTenantId(tenantId);
-        notificationTemplateService.deleteNotificationTemplatesByTenantId(tenantId);
     }
 
     @Test
@@ -208,7 +193,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
 
         String alarmType = "myBoolIsTrue";
-        DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(notificationRule.getId(), alarmType);
+        DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(alarmType);
         Device device = createDevice("Device 1", deviceProfile.getName(), "1234");
 
         clients.values().forEach(wsClient -> {
@@ -272,7 +257,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
 
         String alarmType = "myBoolIsTrue";
-        DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(notificationRule.getId(), alarmType);
+        DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(alarmType);
         Device device = createDevice("Device 1", deviceProfile.getName(), "1234");
 
         AlarmNotificationRuleTriggerConfig triggerConfig = new AlarmNotificationRuleTriggerConfig();
@@ -352,7 +337,56 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         assertThat(ruleInfo.getDeliveryMethods()).containsOnly(deliveryMethods);
     }
 
-    private DeviceProfile createDeviceProfileWithAlarmRules(NotificationRuleId notificationRuleId, String alarmType) {
+    @Test
+    public void testNotificationRequestsPerRuleRateLimits() throws Exception {
+        int notificationRequestsLimit = 10;
+        TenantProfile tenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
+        TenantProfileData profileData = tenantProfile.getProfileData();
+        DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
+        profileConfiguration.setTenantNotificationRequestsPerRuleRateLimit(notificationRequestsLimit + ":300");
+        tenantProfile.setProfileData(profileData);
+        loginSysAdmin();
+        doPost("/api/tenantProfile", tenantProfile).andExpect(status().isOk());
+        loginTenantAdmin();
+
+        NotificationRule rule = new NotificationRule();
+        rule.setName("Device created");
+        rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Device created", "Device created",
+                NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.SMS);
+        rule.setTemplateId(template.getId());
+        EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
+        triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
+        triggerConfig.setCreated(true);
+        rule.setTriggerConfig(triggerConfig);
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
+        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        recipientsConfig.setTargets(List.of(target.getUuidId()));
+        rule.setRecipientsConfig(recipientsConfig);
+        rule = saveNotificationRule(rule);
+
+        for (int i = 0; i < notificationRequestsLimit; i++) {
+            String name = "device " + i;
+            createDevice(name, name);
+        }
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    assertThat(getMyNotifications(false, 100)).size().isEqualTo(notificationRequestsLimit);
+                });
+        for (int i = 0; i < 5; i++) {
+            String name = "device " + (notificationRequestsLimit + i);
+            createDevice(name, name);
+        }
+
+        boolean rateLimitExceeded = !rateLimitService.checkRateLimit(LimitedApi.NOTIFICATION_REQUESTS_PER_RULE, tenantId, rule.getId());
+        assertThat(rateLimitExceeded).isTrue();
+
+        TimeUnit.SECONDS.sleep(3);
+        assertThat(getMyNotifications(false, 100)).size().isEqualTo(notificationRequestsLimit);
+    }
+
+    private DeviceProfile createDeviceProfileWithAlarmRules(String alarmType) {
         DeviceProfile deviceProfile = createDeviceProfile("For notification rule test");
         deviceProfile.setTenantId(tenantId);
 
@@ -385,41 +419,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         deviceProfile.getProfileData().setAlarms(alarms);
         deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         return deviceProfile;
-    }
-
-    private RuleChain createEmptyRuleChain(String name) {
-        RuleChain ruleChain = new RuleChain();
-        ruleChain.setName(name);
-        ruleChain.setTenantId(tenantId);
-        ruleChain.setRoot(false);
-        ruleChain.setDebugMode(false);
-        ruleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
-
-        RuleChainMetaData metaData = new RuleChainMetaData();
-        metaData.setRuleChainId(ruleChain.getId());
-        metaData.setNodes(List.of());
-        metaData = doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
-        return ruleChain;
-    }
-
-    private RuleNode addRuleNodeWithError(RuleChainId ruleChainId, String name) {
-        RuleChainMetaData metaData = new RuleChainMetaData();
-        metaData.setRuleChainId(ruleChainId);
-
-        RuleNode generatorNodeWithError = new RuleNode();
-        generatorNodeWithError.setName(name);
-        generatorNodeWithError.setType(TbMsgGeneratorNode.class.getName());
-        TbMsgGeneratorNodeConfiguration generatorNodeConfiguration = new TbMsgGeneratorNodeConfiguration();
-        generatorNodeConfiguration.setScriptLang(ScriptLanguage.JS);
-        generatorNodeConfiguration.setPeriodInSeconds(1000);
-        generatorNodeConfiguration.setMsgCount(1);
-        generatorNodeConfiguration.setJsScript("[return");
-        generatorNodeWithError.setConfiguration(JacksonUtil.valueToTree(generatorNodeConfiguration));
-
-        metaData.setNodes(List.of(generatorNodeWithError));
-        metaData.setFirstNodeIndex(0);
-        metaData = doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
-        return metaData.getNodes().get(0);
     }
 
     private NotificationRule saveNotificationRule(NotificationRule notificationRule) {

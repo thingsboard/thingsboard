@@ -107,8 +107,10 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
     @Override
     public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest request, Consumer<NotificationRequestStats> callback) {
-        if (!rateLimitService.checkRateLimit(tenantId, LimitedApi.NOTIFICATION_REQUEST)) {
-            throw new TbRateLimitsException(EntityType.TENANT);
+        if (request.getRuleId() == null) {
+            if (!rateLimitService.checkRateLimit(LimitedApi.NOTIFICATION_REQUESTS, tenantId)) {
+                throw new TbRateLimitsException(EntityType.TENANT);
+            }
         }
 
         NotificationTemplate notificationTemplate;
@@ -119,21 +121,33 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         }
         if (notificationTemplate == null) throw new IllegalArgumentException("Template is missing");
 
+        Set<NotificationDeliveryMethod> deliveryMethods = new HashSet<>();
         List<NotificationTarget> targets = request.getTargets().stream().map(NotificationTargetId::new)
-                .map(id -> notificationTargetService.findNotificationTargetById(tenantId, id)).collect(Collectors.toList());
+                .map(id -> notificationTargetService.findNotificationTargetById(tenantId, id))
+                .collect(Collectors.toList());
 
         NotificationRuleId ruleId = request.getRuleId();
         notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (!template.isEnabled()) return;
-            if (!channels.get(deliveryMethod).check(tenantId)) {
-                throw new IllegalArgumentException("Unable to send notification via " + deliveryMethod.getName() + ": not configured or not working");
+            try {
+                channels.get(deliveryMethod).check(tenantId);
+            } catch (Exception e) {
+                if (ruleId == null) {
+                    throw new IllegalArgumentException(e.getMessage());
+                } else {
+                    return; // if originated by rule - just ignore delivery method
+                }
             }
             if (ruleId == null) {
                 if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
-                    throw new IllegalArgumentException("Target for " + deliveryMethod.getName() + " delivery method is missing");
+                    throw new IllegalArgumentException("Recipients for " + deliveryMethod.getName() + " delivery method not chosen");
                 }
             }
+            deliveryMethods.add(deliveryMethod);
         });
+        if (deliveryMethods.isEmpty()) {
+            throw new IllegalArgumentException("No delivery methods to send notification with");
+        }
 
         if (request.getAdditionalConfig() != null) {
             NotificationRequestConfig config = request.getAdditionalConfig();
@@ -153,6 +167,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         NotificationProcessingContext ctx = NotificationProcessingContext.builder()
                 .tenantId(tenantId)
                 .request(request)
+                .deliveryMethods(deliveryMethods)
                 .template(notificationTemplate)
                 .settings(settings)
                 .build();
@@ -341,14 +356,20 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     @Override
     public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId) {
         return channels.values().stream()
-                .filter(channel -> channel.check(tenantId))
+                .filter(channel -> {
+                    try {
+                        channel.check(tenantId);
+                        return true;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
                 .map(NotificationChannel::getDeliveryMethod)
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public boolean check(TenantId tenantId) {
-        return true;
+    public void check(TenantId tenantId) throws Exception {
     }
 
     @Override

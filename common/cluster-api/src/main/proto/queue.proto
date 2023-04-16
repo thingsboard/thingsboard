@@ -179,6 +179,10 @@ message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
 }
 
+message ValidateOrCreateDeviceX509CertRequestMsg {
+  string certificateChain = 1;
+}
+
 message ValidateBasicMqttCredRequestMsg {
   string clientId = 1;
   string userName = 2;
@@ -942,6 +946,7 @@ message TransportApiRequestMsg {
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
   GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
+  ValidateOrCreateDeviceX509CertRequestMsg validateOrCreateX509CertRequestMsg = 15;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */

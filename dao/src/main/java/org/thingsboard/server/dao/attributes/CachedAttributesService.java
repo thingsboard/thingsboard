@@ -70,6 +70,9 @@ public class CachedAttributesService implements AttributesService {
     @Value("${cache.type:caffeine}")
     private String cacheType;
 
+    @Value("${sql.attributes.noxss_validation_enabled:true}")
+    private boolean noxssValidationEnabled;
+
     public CachedAttributesService(AttributesDao attributesDao,
                                    StatsFactory statsFactory,
                                    CacheExecutorService cacheExecutorService,
@@ -134,7 +137,7 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
-        attributeKeys =  new LinkedHashSet<>(attributeKeys); // deduplicate the attributes
+        attributeKeys = new LinkedHashSet<>(attributeKeys); // deduplicate the attributes
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
 
         Map<String, TbCacheValueWrapper<AttributeKvEntry>> wrappedCachedAttributes = findCachedAttributes(entityId, scope, attributeKeys);
@@ -212,7 +215,7 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
         validate(entityId, scope);
-        AttributeUtils.validate(attribute);
+        AttributeUtils.validate(attribute, noxssValidationEnabled);
         ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
         return Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor);
     }
@@ -220,7 +223,7 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
-        attributes.forEach(AttributeUtils::validate);
+        AttributeUtils.validate(attributes, noxssValidationEnabled);
 
         List<ListenableFuture<String>> futures = new ArrayList<>(attributes.size());
         for (var attribute : attributes) {

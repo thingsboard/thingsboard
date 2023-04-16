@@ -41,9 +41,11 @@ import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigg
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
-import org.thingsboard.server.service.notification.rule.cache.NotificationRulesCache;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.service.apiusage.limits.LimitedApi;
+import org.thingsboard.server.service.apiusage.limits.RateLimitService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
+import org.thingsboard.server.service.notification.rule.cache.NotificationRulesCache;
 import org.thingsboard.server.service.notification.rule.trigger.NotificationRuleTriggerProcessor;
 import org.thingsboard.server.service.notification.rule.trigger.RuleEngineMsgNotificationRuleTriggerProcessor;
 
@@ -65,6 +67,7 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
     private final NotificationRulesCache notificationRulesCache;
     private final NotificationRequestService notificationRequestService;
     private final PartitionService partitionService;
+    private final RateLimitService rateLimitService;
     @Autowired @Lazy
     private NotificationCenter notificationCenter;
     private final NotificationExecutorService notificationExecutor;
@@ -119,6 +122,11 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
         }
 
         if (matchesFilter(trigger, triggerConfig)) {
+            if (!rateLimitService.checkRateLimit(LimitedApi.NOTIFICATION_REQUESTS_PER_RULE, rule.getTenantId(), rule.getId())) {
+                log.debug("[{}] Rate limit for notification requests per rule was exceeded (rule '{}')", rule.getTenantId(), rule.getName());
+                return;
+            }
+
             NotificationInfo notificationInfo = constructNotificationInfo(trigger, triggerConfig);
             rule.getRecipientsConfig().getTargetsTable().forEach((delay, targets) -> {
                 submitNotificationRequest(targets, rule, trigger.getOriginatorEntityId(), notificationInfo, delay);

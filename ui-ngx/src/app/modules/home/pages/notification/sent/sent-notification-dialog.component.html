@@ -59,10 +59,8 @@
           <ng-container *ngTemplateOutlet="recipientsList"></ng-container>
           <section formGroupName="template">
             <section formGroupName="configuration">
-              <label class="tb-title tb-required"
-                     [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}">
-                {{ "notification.delivery-methods" | translate }}
-              </label>
+              <label [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
+                     class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
               <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
               <section formGroupName="deliveryMethodsTemplates" fxLayout="row wrap" style="margin-bottom: 12px;">
                 <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
@@ -209,7 +207,7 @@
     </mat-step>
     <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
                      notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.EMAIL.enabled').value"
-              [stepControl]="emailTemplateForm">
+              [stepControl]="emailTemplateForm"  #emailStep="matStep">
       <ng-template matStepLabel>{{ 'notification.delivery-method.email' | translate }}</ng-template>
       <ng-template matStepContent>
         <div class="tb-hint-available-params mat-body-2">
@@ -228,8 +226,14 @@
               {{ 'notification.subject-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-label class="tb-title" translate>notification.message</mat-label>
+          <mat-label class="tb-title tb-required"
+                     [ngClass]="{'tb-error': (emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')}"
+                     translate>notification.message</mat-label>
           <editor [init]="tinyMceOptions" formControlName="body"></editor>
+          <mat-error class="tb-mat-error"
+                     *ngIf="(emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
         </form>
       </ng-template>
     </mat-step>
@@ -246,7 +250,7 @@
               trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
       </div>
       <form [formGroup]="smsTemplateForm">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic">
           <mat-label translate>notification.message</mat-label>
           <textarea matInput
                     cdkTextareaAutosize
@@ -256,6 +260,11 @@
           </textarea>
           <mat-error *ngIf="smsTemplateForm.get('body').hasError('required')">
             {{ 'notification.message-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="smsTemplateForm.get('body').hasError('maxlength')">
+            {{ 'notification.message-max-length' | translate :
+            {length: smsTemplateForm.get('body').getError('maxlength').requiredLength}
+            }}
           </mat-error>
         </mat-form-field>
       </form>
