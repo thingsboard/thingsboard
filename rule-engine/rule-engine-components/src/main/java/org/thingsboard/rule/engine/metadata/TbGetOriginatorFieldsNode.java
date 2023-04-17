@@ -49,11 +49,11 @@ public class TbGetOriginatorFieldsNode extends TbAbstractNodeWithFetchTo<TbGetOr
 
     @Override
     protected TbGetOriginatorFieldsConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        var getOriginatorFieldsConfiguration = TbNodeUtils.convert(configuration, TbGetOriginatorFieldsConfiguration.class);
-        if (getOriginatorFieldsConfiguration.getFieldsMapping().isEmpty()) {
+        var config = TbNodeUtils.convert(configuration, TbGetOriginatorFieldsConfiguration.class);
+        if (config.getFieldsMapping() == null || config.getFieldsMapping().isEmpty()) {
             throw new TbNodeException("At least one field mapping should be specified!");
         }
-        return getOriginatorFieldsConfiguration;
+        return config;
     }
 
     @Override
