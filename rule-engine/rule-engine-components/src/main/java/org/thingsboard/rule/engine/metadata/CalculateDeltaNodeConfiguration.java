@@ -40,7 +40,6 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
         configuration.setAddPeriodBetweenMsgs(false);
         configuration.setPeriodValueKey("periodInMs");
         configuration.setTellFailureIfDeltaIsNegative(true);
-        configuration.setRound(0);
         return configuration;
     }
 

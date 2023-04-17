@@ -110,7 +110,6 @@ public class CalculateDeltaNodeTest {
         assertFalse(config.isAddPeriodBetweenMsgs());
         assertEquals(config.getPeriodValueKey(), "periodInMs");
         assertTrue(config.isTellFailureIfDeltaIsNegative());
-        assertEquals(config.getRound(), 0);
     }
 
     @Test
