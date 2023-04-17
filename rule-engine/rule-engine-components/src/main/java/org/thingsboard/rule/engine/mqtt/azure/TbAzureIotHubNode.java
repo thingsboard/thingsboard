@@ -39,14 +39,13 @@ import javax.net.ssl.SSLException;
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
-        name = "azure iot hub",
+        name = "azure iot hub (deprecated)",
         configClazz = TbAzureIotHubNodeConfiguration.class,
         nodeDescription = "Publish messages to the Azure IoT Hub",
         nodeDetails = "Will publish message payload to the Azure IoT Hub with QoS <b>AT_LEAST_ONCE</b>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbExternalNodeAzureIotHubConfig"
 )
-@Deprecated
 public class TbAzureIotHubNode extends TbMqttNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
