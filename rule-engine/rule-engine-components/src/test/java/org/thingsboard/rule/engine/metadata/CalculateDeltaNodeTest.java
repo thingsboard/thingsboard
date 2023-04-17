@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.Futures;
@@ -24,6 +39,7 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -82,6 +98,7 @@ public class CalculateDeltaNodeTest {
         config = new CalculateDeltaNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
+
         node.init(ctxMock, nodeConfiguration);
     }
 
@@ -126,184 +143,15 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void happyPathWithDoubleValueAndNoCache() throws TbNodeException {
+    public void givenDoubleValue_whenOnMsg_thenSuccess() throws TbNodeException {
         // GIVEN
+        config.setRound(1);
         config.setInputValueKey("temperature");
         config.setOutputValueKey("temp_delta");
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
 
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(timeseriesServiceMock.findLatest(
-                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of("temperature")))
-        )).thenReturn(Futures.immediateFuture(
-                List.of(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 40.0)))
-        ));
-
-        var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-
-        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
-        verify(ctxMock, never()).tellNext(any(), anyString());
-        verify(ctxMock, never()).tellNext(any(), anySet());
-        verify(ctxMock, never()).tellFailure(any(), any());
-
-        var expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":2}";
-
-        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
-    }
-
-    @Test
-    public void happyPathWithLongValueAndNoCache() throws TbNodeException {
-        // GIVEN
-        config.setInputValueKey("temperature");
-        config.setOutputValueKey("temp_delta");
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node.init(ctxMock, nodeConfiguration);
-
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(timeseriesServiceMock.findLatest(
-                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of("temperature")))
-        )).thenReturn(Futures.immediateFuture(
-                List.of(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("temperature", 40L)))
-        ));
-
-        var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-
-        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
-        verify(ctxMock, never()).tellNext(any(), anyString());
-        verify(ctxMock, never()).tellNext(any(), anySet());
-        verify(ctxMock, never()).tellFailure(any(), any());
-
-        var expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":2}";
-
-        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
-    }
-
-    @Test
-    public void happyPathWithStringValueAndNoCache() throws TbNodeException {
-        // GIVEN
-        config.setInputValueKey("temperature");
-        config.setOutputValueKey("temp_delta");
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node.init(ctxMock, nodeConfiguration);
-
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(timeseriesServiceMock.findLatest(
-                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of("temperature")))
-        )).thenReturn(Futures.immediateFuture(
-                List.of(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("temperature", "40.0")))
-        ));
-
-        var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-
-        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
-        verify(ctxMock, never()).tellNext(any(), anyString());
-        verify(ctxMock, never()).tellNext(any(), anySet());
-        verify(ctxMock, never()).tellFailure(any(), any());
-
-        var expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":2}";
-
-        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
-    }
-
-    @Test
-    public void happyPathWithDoubleValueAndCache() throws TbNodeException {
-        // STAGE 1
-        // GIVEN
-        config.setInputValueKey("temperature");
-        config.setOutputValueKey("temp_delta");
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node.init(ctxMock, nodeConfiguration);
-
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(timeseriesServiceMock.findLatest(
-                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of("temperature")))
-        )).thenReturn(Futures.immediateFuture(
-                List.of(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 40.0)))
-        ));
-
-        var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-
-        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
-        verify(ctxMock, never()).tellNext(any(), anyString());
-        verify(ctxMock, never()).tellNext(any(), anySet());
-        verify(ctxMock, never()).tellFailure(any(), any());
-
-        var expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":2}";
-
-        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
-
-        // STAGE 2
-        // GIVEN
-        reset(ctxMock);
-        reset(timeseriesServiceMock);
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-
-        verify(timeseriesServiceMock, never()).findLatest(any(), any(), anyList());
-        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
-        verify(ctxMock, never()).tellNext(any(), anyString());
-        verify(ctxMock, never()).tellNext(any(), anySet());
-        verify(ctxMock, never()).tellFailure(any(), any());
-
-        expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":0}";
-
-        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
-    }
-
-    @Test
-    public void happyPathWithDoubleHaveDigitsAfterPointAndNoCache() throws TbNodeException {
-        // STAGE 1
-        // GIVEN
-        config.setInputValueKey("temperature");
-        config.setOutputValueKey("temp_delta");
-        config.setRound(null);
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node.init(ctxMock, nodeConfiguration);
-
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(timeseriesServiceMock.findLatest(
-                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of("temperature")))
-        )).thenReturn(Futures.immediateFuture(
-                List.of(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 40.500)))
-        ));
+        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 40.5)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
@@ -325,15 +173,177 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void failedPathWithStringValueAndNoCache() {
+    public void givenLongStringValue_whenOnMsg_thenSuccess() throws TbNodeException {
         // GIVEN
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(timeseriesServiceMock.findLatest(
-                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of("pulseCounter")))
-        )).thenReturn(Futures.immediateFuture(
-                List.of(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("pulseCounter", "high")))
-        ));
+        config.setInputValueKey("temperature");
+        config.setOutputValueKey("temp_delta");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("temperature", 40L)));
+
+        var msgData = "{\"temperature\": 42,\"airPressure\":123}";
+        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
+        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellFailure(any(), any());
+
+        var expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":2}";
+
+        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
+    }
+
+    @Test
+    public void givenValidStringValue_whenOnMsg_thenSuccess() throws TbNodeException {
+        // GIVEN
+        config.setInputValueKey("temperature");
+        config.setOutputValueKey("temp_delta");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("temperature", "40.0")));
+
+        var msgData = "{\"temperature\": 42,\"airPressure\":123}";
+        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
+        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellFailure(any(), any());
+
+        var expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":2}";
+
+        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
+    }
+
+    @Test
+    public void givenTwoMessagesAndPeriodOnAndCachingOn_whenOnMsg_thenVerify() throws TbNodeException {
+        // STAGE 1
+        // GIVEN
+        config.setInputValueKey("temperature");
+        config.setOutputValueKey("temp_delta");
+        config.setPeriodValueKey("ts_delta");
+        config.setAddPeriodBetweenMsgs(true);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        mockFindLatest(new BasicTsKvEntry(1L, new DoubleDataEntry("temperature", 40.0)));
+
+        var msgData = "{\"temperature\": 42,\"airPressure\":123}";
+        var firstMsgMetaData = new TbMsgMetaData();
+        firstMsgMetaData.putValue("ts", String.valueOf(3L));
+        var firstMsg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, firstMsgMetaData, msgData);
+
+        // WHEN
+        node.onMsg(ctxMock, firstMsg);
+
+        // THEN
+        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
+        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellFailure(any(), any());
+
+        var expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":2,\"ts_delta\":2}";
+
+        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
+
+        // STAGE 2
+        // GIVEN
+        reset(ctxMock);
+        reset(timeseriesServiceMock);
+
+        var secondMsgMetaData = new TbMsgMetaData();
+        secondMsgMetaData.putValue("ts", String.valueOf(6L));
+        var secondMsg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, secondMsgMetaData, msgData);
+
+        // WHEN
+        node.onMsg(ctxMock, secondMsg);
+
+        // THEN
+        actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
+        verify(timeseriesServiceMock, never()).findLatest(any(), any(), anyList());
+        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellFailure(any(), any());
+
+        expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":0,\"ts_delta\":3}";
+
+        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
+    }
+
+    @Test
+    public void givenLastValueIsNull_whenOnMsh_thenDeltaShouldBeZero() throws TbNodeException {
+        // GIVEN
+        config.setInputValueKey("temperature");
+        config.setOutputValueKey("temp_delta");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", null)));
+
+        var msgData = "{\"temperature\": 42,\"airPressure\":123}";
+        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
+        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellFailure(any(), any());
+
+        var expectedMsgData = "{\"temperature\":42,\"airPressure\":123,\"temp_delta\":0}";
+
+        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
+    }
+
+    @Test
+    public void givenNegativeDeltaAndTellFailureIfNegativeDeltaTrue_whenOnMsg_thenFailure() throws TbNodeException {
+        // GIVEN
+        config.setTellFailureIfDeltaIsNegative(true);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("pulseCounter", 200L)));
+
+        var msgData = "{\"pulseCounter\":\"123\"}";
+        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        verify(ctxMock, times(1)).tellNext(msg, "Failure");
+        verify(ctxMock, never()).tellSuccess(any());
+        verify(ctxMock, never()).tellFailure(any(), any());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+    }
+
+    @Test
+    public void givenInvalidStringValue_whenOnMsg_thenException() {
+        // GIVEN
+        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("pulseCounter", "high")));
 
         var msgData = "{\"pulseCounter\":\"123\"}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
@@ -359,15 +369,9 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void failedPathWithBooleanValueAndNoCache() {
+    public void givenBooleanValue_whenOnMsg_thenException() {
         // GIVEN
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(timeseriesServiceMock.findLatest(
-                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of("pulseCounter")))
-        )).thenReturn(Futures.immediateFuture(
-                List.of(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry("pulseCounter", false)))
-        ));
+        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry("pulseCounter", false)));
 
         var msgData = "{\"pulseCounter\":true}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
@@ -393,15 +397,9 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void failedPathWithJsonValueAndNoCache() {
+    public void givenJsonValue_whenOnMsg_thenException() {
         // GIVEN
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(timeseriesServiceMock.findLatest(
-                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of("pulseCounter")))
-        )).thenReturn(Futures.immediateFuture(
-                List.of(new BasicTsKvEntry(System.currentTimeMillis(), new JsonDataEntry("pulseCounter", "{\"isActive\":false}")))
-        ));
+        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new JsonDataEntry("pulseCounter", "{\"isActive\":false}")));
 
         var msgData = "{\"pulseCounter\":{\"isActive\":true}}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
@@ -424,6 +422,14 @@ public class CalculateDeltaNodeTest {
         assertEquals(msg, actualMsgCaptor.getValue());
         assertInstanceOf(IllegalArgumentException.class, actualException);
         assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
+
+    private void mockFindLatest(TsKvEntry tsKvEntry) {
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(timeseriesServiceMock.findLatest(
+                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of(tsKvEntry.getKey())))
+        )).thenReturn(Futures.immediateFuture(List.of(tsKvEntry)));
     }
 
     @RequiredArgsConstructor
