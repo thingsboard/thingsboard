@@ -77,6 +77,9 @@ public class CalculateDeltaNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
             JsonNode json = JacksonUtil.toJsonNode(msg.getData());
+            if (!json.isObject()) {
+                throw new IllegalArgumentException("Message body is not an object!");
+            }
             String inputKey = config.getInputValueKey();
             if (json.has(inputKey)) {
                 DonAsynchron.withCallback(getLastValue(msg.getOriginator()),
