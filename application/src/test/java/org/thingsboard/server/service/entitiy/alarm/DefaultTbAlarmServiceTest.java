@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -66,7 +67,9 @@ public class DefaultTbAlarmServiceTest {
     @MockBean
     protected AlarmService alarmService;
     @MockBean
-    protected TbAlarmCommentService alarmCommentService;
+    protected TbAlarmCommentService tbAlarmCommentService;
+    @MockBean
+    protected AlarmCommentService alarmCommentService;
     @MockBean
     protected AlarmSubscriptionService alarmSubscriptionService;
     @MockBean
@@ -77,6 +80,7 @@ public class DefaultTbAlarmServiceTest {
     protected AlarmRuleService alarmRuleService;
     @MockBean
     private EntitiesVersionControlService vcService;
+//    AlarmCommentService alarmCommentService;
 
     @SpyBean
     DefaultTbAlarmService service;
@@ -102,7 +106,7 @@ public class DefaultTbAlarmServiceTest {
                 .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).build());
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
+        verify(tbAlarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
         verify(alarmSubscriptionService, times(1)).acknowledgeAlarm(any(), any(), anyLong());
     }
@@ -115,7 +119,7 @@ public class DefaultTbAlarmServiceTest {
                 .thenReturn(AlarmApiCallResult.builder().successful(true).cleared(true).build());
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
+        verify(tbAlarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
         verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), anyLong(), any());
     }
