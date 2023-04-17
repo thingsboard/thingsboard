@@ -27,7 +27,7 @@ public class TbAzureIotHubNodeConfigurationV2 implements NodeConfiguration<TbAzu
     @Override
     public TbAzureIotHubNodeConfigurationV2 defaultConfiguration() {
         TbAzureIotHubNodeConfigurationV2 configuration = new TbAzureIotHubNodeConfigurationV2();
-        configuration.setConnString("<iot-hub-name>");
+        configuration.setConnString("<iot-hub-connection-string>");
         configuration.setDeviceId("<device-id>");
         return configuration;
     }

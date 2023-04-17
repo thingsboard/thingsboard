@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
-        name = "azure iot hub V2",
+        name = "azure iot hub",
         configClazz = TbAzureIotHubNodeConfigurationV2.class,
         nodeDescription = "Publish messages to the Azure IoT Hub (Recommended)",
         nodeDetails = "Will publish message payload to the Azure IoT Hub with AMQP sender </b>.",
