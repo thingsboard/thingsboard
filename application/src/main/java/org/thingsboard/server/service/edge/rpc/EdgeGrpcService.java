@@ -288,7 +288,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         if (session != null) {
             boolean success = false;
             if (session.isConnected()) {
-                session.startSyncProcess(tenantId, edgeId, true);
+                session.startSyncProcess(true);
                 success = true;
             }
             clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success));
