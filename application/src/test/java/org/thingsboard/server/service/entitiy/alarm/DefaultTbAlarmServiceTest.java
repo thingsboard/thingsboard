@@ -80,7 +80,6 @@ public class DefaultTbAlarmServiceTest {
     protected AlarmRuleService alarmRuleService;
     @MockBean
     private EntitiesVersionControlService vcService;
-//    AlarmCommentService alarmCommentService;
 
     @SpyBean
     DefaultTbAlarmService service;
