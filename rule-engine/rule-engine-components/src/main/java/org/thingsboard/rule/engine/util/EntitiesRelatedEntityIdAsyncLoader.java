@@ -53,7 +53,8 @@ public class EntitiesRelatedEntityIdAsyncLoader {
     private static EntityRelationsQuery buildQuery(EntityId originator, RelationsQuery relationsQuery) {
         var query = new EntityRelationsQuery();
         var parameters = new RelationsSearchParameters(
-                originator, relationsQuery.getDirection(),
+                originator,
+                relationsQuery.getDirection(),
                 relationsQuery.getMaxLevel(),
                 relationsQuery.isFetchLastLevelOnly()
         );
