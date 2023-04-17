@@ -134,8 +134,6 @@ public class TbKafkaSettings {
         props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(AdminClientConfig.RETRIES_CONFIG, retries);
 
-        configureSSL(props);
-
         return props;
     }
 
@@ -146,8 +144,6 @@ public class TbKafkaSettings {
         props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, maxPartitionFetchBytes);
         props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, fetchMaxBytes);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
-
-        configureSSL(props);
 
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
@@ -174,7 +170,7 @@ public class TbKafkaSettings {
         return props;
     }
 
-    private Properties toProps() {
+    Properties toProps() {
         Properties props = new Properties();
 
         if (useConfluent) {
@@ -193,7 +189,7 @@ public class TbKafkaSettings {
         return props;
     }
 
-    private void configureSSL(Properties props) {
+    void configureSSL(Properties props) {
         if (sslEnabled) {
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
             props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, sslTruststoreLocation);
