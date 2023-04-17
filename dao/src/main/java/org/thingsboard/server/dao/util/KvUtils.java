@@ -22,16 +22,14 @@ import org.thingsboard.server.dao.service.ConstraintValidator;
 import java.util.List;
 
 public class KvUtils {
-    public static void validate(List<? extends KvEntry> tsKvEntries, boolean validateNoxss) {
-        tsKvEntries.forEach(kvEntry -> validate(kvEntry, validateNoxss));
+    public static void validate(List<? extends KvEntry> tsKvEntries) {
+        tsKvEntries.forEach(KvUtils::validate);
     }
 
-    public static void validate(KvEntry tsKvEntry, boolean validateNoxss) {
+    public static void validate(KvEntry tsKvEntry) {
         if (tsKvEntry == null) {
             throw new IncorrectParameterException("Key value entry can't be null");
         }
-        if (validateNoxss) {
-            ConstraintValidator.validateFields(tsKvEntry);
-        }
+        ConstraintValidator.validateFields(tsKvEntry);
     }
 }
