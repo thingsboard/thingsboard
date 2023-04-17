@@ -143,7 +143,7 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void givenDoubleValue_whenOnMsg_thenSuccess() throws TbNodeException {
+    public void givenDoubleValue_whenOnMsg_thenShouldTellSuccess() throws TbNodeException {
         // GIVEN
         config.setRound(1);
         config.setInputValueKey("temperature");
@@ -173,7 +173,7 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void givenLongStringValue_whenOnMsg_thenSuccess() throws TbNodeException {
+    public void givenLongStringValue_whenOnMsg_thenShouldTellSuccess() throws TbNodeException {
         // GIVEN
         config.setInputValueKey("temperature");
         config.setOutputValueKey("temp_delta");
@@ -202,7 +202,7 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void givenValidStringValue_whenOnMsg_thenSuccess() throws TbNodeException {
+    public void givenValidStringValue_whenOnMsg_thenShouldTellSuccess() throws TbNodeException {
         // GIVEN
         config.setInputValueKey("temperature");
         config.setOutputValueKey("temp_delta");
@@ -319,7 +319,7 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void givenNegativeDeltaAndTellFailureIfNegativeDeltaTrue_whenOnMsg_thenFailure() throws TbNodeException {
+    public void givenNegativeDeltaAndTellFailureIfNegativeDeltaTrue_whenOnMsg_thenShouldTellFailure() throws TbNodeException {
         // GIVEN
         config.setTellFailureIfDeltaIsNegative(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
