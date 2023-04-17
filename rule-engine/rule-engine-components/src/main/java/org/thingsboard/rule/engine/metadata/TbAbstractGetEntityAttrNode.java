@@ -65,7 +65,8 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
         var sourceKeys = List.copyOf(mappingsMap.keySet());
         withCallback(config.isTelemetry() ? getLatestTelemetryAsync(ctx, entityId, sourceKeys) : getAttributesAsync(ctx, entityId, sourceKeys),
                 data -> putDataAndTell(ctx, msg, data, mappingsMap, msgDataAsJsonNode),
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                t -> ctx.tellFailure(msg, t),
+                MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId, List<String> attrKeys) {
@@ -74,7 +75,7 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
                         l.stream()
                                 .map(i -> (KvEntry) i)
                                 .collect(Collectors.toList()),
-                MoreExecutors.directExecutor());
+                ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<List<KvEntry>> getLatestTelemetryAsync(TbContext ctx, EntityId entityId, List<String> timeseriesKeys) {
@@ -83,7 +84,7 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
                         l.stream()
                                 .map(i -> (KvEntry) i)
                                 .collect(Collectors.toList()),
-                MoreExecutors.directExecutor());
+                ctx.getDbCallbackExecutor());
     }
 
     private void putDataAndTell(TbContext ctx, TbMsg msg, List<? extends KvEntry> data, Map<String, String> map, ObjectNode msgData) {

@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.HasCustomerId;
@@ -34,19 +33,19 @@ public class EntitiesCustomerIdAsyncLoader {
             case CUSTOMER:
                 return Futures.immediateFuture((CustomerId) originator);
             case USER:
-                return toCustomerIdAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) originator));
+                return toCustomerIdAsync(ctx, ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) originator));
             case ASSET:
-                return toCustomerIdAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) originator));
+                return toCustomerIdAsync(ctx, ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) originator));
             case DEVICE:
-                return toCustomerIdAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) originator));
+                return toCustomerIdAsync(ctx, ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) originator));
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected originator EntityType: " + originator.getEntityType()));
         }
     }
 
-    private static <T extends HasCustomerId> ListenableFuture<CustomerId> toCustomerIdAsync(ListenableFuture<T> future) {
+    private static <T extends HasCustomerId> ListenableFuture<CustomerId> toCustomerIdAsync(TbContext ctx, ListenableFuture<T> future) {
         return Futures.transformAsync(future, in -> in != null ? Futures.immediateFuture(in.getCustomerId())
-                : Futures.immediateFuture(null), MoreExecutors.directExecutor());
+                : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
     }
 
 }

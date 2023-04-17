@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -70,19 +69,19 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
         switch (msg.getOriginator().getEntityType()) {
             case DEVICE:
                 return Futures.transformAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), new DeviceId(msg.getOriginator().getId())),
-                        device -> getCustomerFuture(ctx, device, msg.getOriginator()), MoreExecutors.directExecutor());
+                        device -> getCustomerFuture(ctx, device, msg.getOriginator()), ctx.getDbCallbackExecutor());
             case ASSET:
                 return Futures.transformAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), new AssetId(msg.getOriginator().getId())),
-                        asset -> getCustomerFuture(ctx, asset, msg.getOriginator()), MoreExecutors.directExecutor());
+                        asset -> getCustomerFuture(ctx, asset, msg.getOriginator()), ctx.getDbCallbackExecutor());
             case ENTITY_VIEW:
                 return Futures.transformAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId())),
-                        entityView -> getCustomerFuture(ctx, entityView, msg.getOriginator()), MoreExecutors.directExecutor());
+                        entityView -> getCustomerFuture(ctx, entityView, msg.getOriginator()), ctx.getDbCallbackExecutor());
             case USER:
                 return Futures.transformAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), new UserId(msg.getOriginator().getId())),
-                        user -> getCustomerFuture(ctx, user, msg.getOriginator()), MoreExecutors.directExecutor());
+                        user -> getCustomerFuture(ctx, user, msg.getOriginator()), ctx.getDbCallbackExecutor());
             case EDGE:
                 return Futures.transformAsync(ctx.getEdgeService().findEdgeByIdAsync(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId())),
-                        edge -> getCustomerFuture(ctx, edge, msg.getOriginator()), MoreExecutors.directExecutor());
+                        edge -> getCustomerFuture(ctx, edge, msg.getOriginator()), ctx.getDbCallbackExecutor());
             default:
                 return Futures.immediateFailedFuture(new NoSuchElementException("Entity with entityType '" + msg.getOriginator().getEntityType() + "' is not supported."));
         }

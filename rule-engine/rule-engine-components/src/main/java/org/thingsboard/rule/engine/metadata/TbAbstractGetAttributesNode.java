@@ -101,7 +101,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             } else {
                 ctx.tellFailure(outMsg, reportFailures(failuresPairSet));
             }
-        }, t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+        }, t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<TbPair<String, List<AttributeKvEntry>>> getAttrAsync(
@@ -121,7 +121,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 failuresPairSet.add(new TbPair<>(scope, nonExistentKeys));
             }
             return new TbPair<>(scope, attributeKvEntryList);
-        }, MoreExecutors.directExecutor());
+        }, ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<TbPair<String, List<TsKvEntry>>> getLatestTelemetry(TbContext ctx, EntityId entityId, List<String> keys, Set<TbPair<String, List<String>>> failuresPairSet) {
@@ -147,7 +147,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 failuresPairSet.add(new TbPair<>(LATEST_TS, nonExistentKeys));
             }
             return new TbPair<>(LATEST_TS, listTsKvEntry);
-        }, MoreExecutors.directExecutor());
+        }, ctx.getDbCallbackExecutor());
     }
 
     private TsKvEntry getValueWithTs(TsKvEntry tsKvEntry) {

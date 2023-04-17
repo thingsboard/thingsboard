@@ -16,10 +16,13 @@
 package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.Device;
@@ -39,6 +42,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -52,6 +56,21 @@ public class EntitiesRelatedEntitiesIdAsyncLoaderTest {
 
     private static final EntityId DUMMY_ORIGINATOR = new DeviceId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
+        @Override
+        public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
+            try {
+                return Futures.immediateFuture(task.call());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void execute(@NotNull Runnable command) {
+            command.run();
+        }
+    };
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -80,6 +99,7 @@ public class EntitiesRelatedEntitiesIdAsyncLoaderTest {
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
         when(relationServiceMock.findByQuery(eq(TENANT_ID), eq(expectedEntityRelationsQuery)))
                 .thenReturn(Futures.immediateFuture(null));
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
         EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctxMock, DUMMY_ORIGINATOR, relationsQuery);
@@ -138,6 +158,7 @@ public class EntitiesRelatedEntitiesIdAsyncLoaderTest {
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
         when(relationServiceMock.findByQuery(eq(TENANT_ID), eq(expectedEntityRelationsQuery)))
                 .thenReturn(Futures.immediateFuture(expectedEntityRelationsList));
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
         var deviceIdFuture = EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctxMock, DUMMY_ORIGINATOR, relationsQuery);

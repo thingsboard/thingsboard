@@ -16,6 +16,8 @@
 package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -55,6 +58,7 @@ import org.thingsboard.server.dao.user.UserService;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -71,6 +75,21 @@ public class TbGetCustomerDetailsNodeTest {
 
     private static final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
+        @Override
+        public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
+            try {
+                return Futures.immediateFuture(task.call());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void execute(@NotNull Runnable command) {
+            command.run();
+        }
+    };
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -209,6 +228,8 @@ public class TbGetCustomerDetailsNodeTest {
 
         mockFindCustomer();
 
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
         // WHEN
         node.onMsg(ctxMock, msg);
 
@@ -249,6 +270,8 @@ public class TbGetCustomerDetailsNodeTest {
 
         mockFindCustomer();
 
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
         // WHEN
         node.onMsg(ctxMock, msg);
 
@@ -281,6 +304,8 @@ public class TbGetCustomerDetailsNodeTest {
 
         mockFindCustomer();
 
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
         // WHEN
         node.onMsg(ctxMock, msg);
 
@@ -310,6 +335,8 @@ public class TbGetCustomerDetailsNodeTest {
         when(ctxMock.getUserService()).thenReturn(userServiceMock);
         when(userServiceMock.findUserByIdAsync(eq(TENANT_ID), eq(user.getId()))).thenReturn(Futures.immediateFuture(user));
 
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
         mockFindCustomer();
 
         // WHEN
@@ -334,12 +361,15 @@ public class TbGetCustomerDetailsNodeTest {
 
         prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2), edge.getId());
 
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+
         when(ctxMock.getEdgeService()).thenReturn(edgeServiceMock);
         when(edgeServiceMock.findEdgeByIdAsync(eq(TENANT_ID), eq(edge.getId()))).thenReturn(Futures.immediateFuture(edge));
 
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
         when(customerServiceMock.findCustomerByIdAsync(eq(TENANT_ID), eq(customer.getId()))).thenReturn(Futures.immediateFuture(null));
+
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -368,6 +398,8 @@ public class TbGetCustomerDetailsNodeTest {
         when(ctxMock.getEdgeService()).thenReturn(edgeServiceMock);
         when(edgeServiceMock.findEdgeByIdAsync(eq(TENANT_ID), eq(edge.getId()))).thenReturn(Futures.immediateFuture(null));
 
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
         // WHEN
         node.onMsg(ctxMock, msg);
 
@@ -393,6 +425,8 @@ public class TbGetCustomerDetailsNodeTest {
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(deviceServiceMock.findDeviceByIdAsync(eq(TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -420,6 +454,8 @@ public class TbGetCustomerDetailsNodeTest {
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(deviceServiceMock.findDeviceByIdAsync(eq(TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         mockFindCustomer();
 

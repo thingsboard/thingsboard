@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.data.DeviceRelationsQuery;
@@ -39,7 +38,7 @@ public class EntitiesRelatedDeviceIdAsyncLoader {
         return Futures.transformAsync(devicesListFuture,
                 deviceList -> CollectionUtils.isNotEmpty(deviceList) ?
                         Futures.immediateFuture(deviceList.get(0).getId())
-                        : Futures.immediateFuture(null), MoreExecutors.directExecutor());
+                        : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
     }
 
     private static DeviceSearchQuery buildQuery(EntityId originator, DeviceRelationsQuery deviceRelationsQuery) {

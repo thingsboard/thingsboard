@@ -16,11 +16,13 @@
 package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
-import org.junit.jupiter.api.Assertions;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.Customer;
@@ -39,6 +41,7 @@ import org.thingsboard.server.dao.user.UserService;
 
 import java.util.EnumSet;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -57,6 +60,21 @@ public class EntitiesCustomerIdAsyncLoaderTest {
             EntityType.ASSET,
             EntityType.DEVICE
     );
+    private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
+        @Override
+        public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
+            try {
+                return Futures.immediateFuture(task.call());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void execute(@NotNull Runnable command) {
+            command.run();
+        }
+    };
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -75,7 +93,7 @@ public class EntitiesCustomerIdAsyncLoaderTest {
         var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctxMock, customer.getId()).get();
 
         // THEN
-        Assertions.assertEquals(customer.getId(), actualCustomerId);
+        assertEquals(customer.getId(), actualCustomerId);
     }
 
     @Test
@@ -87,12 +105,13 @@ public class EntitiesCustomerIdAsyncLoaderTest {
 
         when(ctxMock.getUserService()).thenReturn(userServiceMock);
         doReturn(Futures.immediateFuture(user)).when(userServiceMock).findUserByIdAsync(any(), any());
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
         var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctxMock, user.getId()).get();
 
         // THEN
-        Assertions.assertEquals(expectedCustomerId, actualCustomerId);
+        assertEquals(expectedCustomerId, actualCustomerId);
     }
 
     @Test
@@ -104,12 +123,13 @@ public class EntitiesCustomerIdAsyncLoaderTest {
 
         when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
         doReturn(Futures.immediateFuture(asset)).when(assetServiceMock).findAssetByIdAsync(any(), any());
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
         var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctxMock, asset.getId()).get();
 
         // THEN
-        Assertions.assertEquals(expectedCustomerId, actualCustomerId);
+        assertEquals(expectedCustomerId, actualCustomerId);
     }
 
     @Test
@@ -121,12 +141,13 @@ public class EntitiesCustomerIdAsyncLoaderTest {
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         doReturn(Futures.immediateFuture(device)).when(deviceServiceMock).findDeviceByIdAsync(any(), any());
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN
         var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctxMock, device.getId()).get();
 
         // THEN
-        Assertions.assertEquals(expectedCustomerId, actualCustomerId);
+        assertEquals(expectedCustomerId, actualCustomerId);
     }
 
     @Test

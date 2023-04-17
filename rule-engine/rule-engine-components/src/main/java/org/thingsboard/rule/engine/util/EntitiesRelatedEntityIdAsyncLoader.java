@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.data.RelationsQuery;
@@ -40,12 +39,12 @@ public class EntitiesRelatedEntityIdAsyncLoader {
             return Futures.transformAsync(relationListFuture,
                     relationList -> CollectionUtils.isNotEmpty(relationList) ?
                             Futures.immediateFuture(relationList.get(0).getTo())
-                            : Futures.immediateFuture(null), MoreExecutors.directExecutor());
+                            : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
         } else if (relationsQuery.getDirection() == EntitySearchDirection.TO) {
             return Futures.transformAsync(relationListFuture,
                     relationList -> CollectionUtils.isNotEmpty(relationList) ?
                             Futures.immediateFuture(relationList.get(0).getFrom())
-                            : Futures.immediateFuture(null), MoreExecutors.directExecutor());
+                            : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
         }
         return Futures.immediateFailedFuture(new IllegalStateException("Unknown direction"));
     }
