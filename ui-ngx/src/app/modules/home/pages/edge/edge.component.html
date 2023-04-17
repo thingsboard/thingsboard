@@ -40,49 +40,48 @@
           [fxShow]="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer(entity)">
     {{ (entity?.customerIsPublic ? 'edge.make-private' : 'edge.unassign-from-customer') | translate }}
   </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeAssets')"
+          [fxShow]="!isEdit && edgeScope !== 'customer'">
+    {{'edge.manage-assets' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeDevices')"
+          [fxShow]="!isEdit && edgeScope !== 'customer'">
+    {{'edge.manage-devices' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeEntityViews')"
+          [fxShow]="!isEdit && edgeScope !== 'customer'">
+    {{'edge.manage-entity-views' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeDashboards')"
+          [fxShow]="!isEdit && edgeScope !== 'customer'">
+    {{'edge.manage-dashboards' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openEdgeRuleChains')"
+          [fxShow]="!isEdit && edgeScope === 'tenant'">
+    {{'edge.manage-rulechains' | translate }}
+  </button>
   <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
     {{'edge.delete' | translate }}
   </button>
-  <div fxLayout="row" fxLayout.xs="column">
-    <button mat-raised-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'openEdgeAssets')"
-            [fxShow]="!isEdit && edgeScope !== 'customer'">
-      {{'edge.edge-assets' | translate }}
-    </button>
-    <button mat-raised-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'openEdgeDevices')"
-            [fxShow]="!isEdit && edgeScope !== 'customer'">
-      {{'edge.edge-devices' | translate }}
-    </button>
-    <button mat-raised-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'openEdgeEntityViews')"
-            [fxShow]="!isEdit && edgeScope !== 'customer'">
-      {{'edge.edge-entity-views' | translate }}
-    </button>
-    <button mat-raised-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'openEdgeDashboards')"
-            [fxShow]="!isEdit && edgeScope !== 'customer'">
-      {{'edge.edge-dashboards' | translate }}
-    </button>
-    <button mat-raised-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'openEdgeRuleChains')"
-            [fxShow]="!isEdit && edgeScope === 'tenant'">
-      {{'edge.edge-rulechains' | translate }}
-    </button>
-  </div>
-  <div fxLayout="row" fxLayout.xs="column">
+  <div fxLayout="row wrap" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onEdgeIdCopied($event)"
             [cbContent]="entity?.id?.id"
+            [disabled]="(isLoading$ | async)"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-id</span>
@@ -91,6 +90,7 @@
             ngxClipboard
             (cbOnSuccess)="onEdgeInfoCopied('key')"
             [cbContent]="entity?.routingKey"
+            [disabled]="(isLoading$ | async)"
             [fxShow]="!isEdit && edgeScope !== 'customer_user'">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-edge-key</span>
@@ -99,6 +99,7 @@
             ngxClipboard
             (cbOnSuccess)="onEdgeInfoCopied('secret')"
             [cbContent]="entity?.secret"
+            [disabled]="(isLoading$ | async)"
             [fxShow]="!isEdit && edgeScope !== 'customer_user'">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-edge-secret</span>

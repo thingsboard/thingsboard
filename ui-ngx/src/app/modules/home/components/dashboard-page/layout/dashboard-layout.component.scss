@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 :host {
+  display: block;
+  height: 100%;
   button.tb-add-new-widget {
     height: auto;
     padding-right: 12px;

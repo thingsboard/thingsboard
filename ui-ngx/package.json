@@ -97,7 +97,7 @@
     "screenfull": "^6.0.2",
     "split.js": "^1.6.5",
     "systemjs": "6.11.0",
-    "tinycolor2": "~1.4.2",
+    "tinycolor2": "^1.6.0",
     "tinymce": "~5.10.7",
     "tooltipster": "^4.2.8",
     "ts-transformer-keys": "^0.4.4",

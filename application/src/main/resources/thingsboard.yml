@@ -65,6 +65,7 @@ server:
       max_per_user: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_MAX_PER_USER:10}"
     max_entities_per_data_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_DATA_SUBSCRIPTION:10000}"
     max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
+    max_queue_messages_per_session: "${TB_SERVER_WS_DEFAULT_QUEUE_MESSAGES_PER_SESSION:1000}"
   rest:
     server_side_rpc:
       # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
@@ -130,6 +131,9 @@ security:
     loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
     githubMapper:
       emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
+  java_cacerts:
+    path: "${SECURITY_JAVA_CACERTS_PATH:${java.home}${file.separator}lib${file.separator}security${file.separator}cacerts}"
+    password: "${SECURITY_JAVA_CACERTS_PASSWORD:changeit}"
 
 # Usage statistics parameters
 usage:
@@ -255,11 +259,13 @@ sql:
     batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_ATTRIBUTES_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    noxss_validation_enabled: "${SQL_ATTRIBUTES_NOXSS_VALIDATION_ENABLED:true}"
   ts:
     batch_size: "${SQL_TS_BATCH_SIZE:10000}"
     batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_TS_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    noxss_validation_enabled: "${SQL_TS_NOXSS_VALIDATION_ENABLED:true}"
   ts_latest:
     batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
     batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
@@ -478,10 +484,14 @@ cache:
     entityCount:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
       maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+
   # deliberately placed outside 'specs' group above
   notificationRules:
     timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:30}"
     maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:1000}"
+  rateLimits:
+    timeToLiveInMinutes: "${CACHE_SPECS_RATE_LIMITS_TTL:60}"
+    maxSize: "${CACHE_SPECS_RATE_LIMITS_MAX_SIZE:100000}"
 
 #Disable this because it is not required.
 spring.data.redis.repositories.enabled: false
@@ -948,7 +958,9 @@ edges:
   enabled: "${EDGES_ENABLED:true}"
   rpc:
     port: "${EDGES_RPC_PORT:7070}"
-    client_max_keep_alive_time_sec: "${EDGES_RPC_CLIENT_MAX_KEEP_ALIVE_TIME_SEC:300}"
+    client_max_keep_alive_time_sec: "${EDGES_RPC_CLIENT_MAX_KEEP_ALIVE_TIME_SEC:1}"
+    keep_alive_time_sec: "${EDGES_RPC_KEEP_ALIVE_TIME_SEC:10}"
+    keep_alive_timeout_sec: "${EDGES_RPC_KEEP_ALIVE_TIMEOUT_SEC:5}"
     ssl:
       # Enable/disable SSL support
       enabled: "${EDGES_RPC_SSL_ENABLED:false}"

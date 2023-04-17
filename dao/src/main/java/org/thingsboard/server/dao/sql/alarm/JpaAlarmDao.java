@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.sql.alarm;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -303,7 +302,6 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         return alarmQueryRepository.countAlarmsByQuery(tenantId, customerId, query);
     }
 
-    @NotNull
     private static String getPropagationTypes(AlarmPropagationInfo ap) {
         String propagateRelationTypes;
         if (!CollectionUtils.isEmpty(ap.getPropagateRelationTypes())) {

@@ -21,3 +21,26 @@ export interface UserSettings {
 export const initialUserSettings: UserSettings = {
   openedMenuSections: []
 };
+
+export enum UserSettingsType {
+  GENERAL = 'GENERAL',
+  QUICK_LINKS = 'QUICK_LINKS',
+  DOC_LINKS = 'DOC_LINKS',
+  DASHBOARDS = 'DASHBOARDS',
+  GETTING_STARTED = 'GETTING_STARTED'
+}
+
+export interface DocumentationLink {
+  icon: string;
+  name: string;
+  link: string;
+}
+
+export interface DocumentationLinks {
+  links?: DocumentationLink[];
+}
+
+export interface GettingStarted {
+  maxSelectedIndex?: number;
+  lastSelectedIndex?: number;
+}

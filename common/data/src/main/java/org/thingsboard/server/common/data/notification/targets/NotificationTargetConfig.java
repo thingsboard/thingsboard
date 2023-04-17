@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 public abstract class NotificationTargetConfig {
 
     @NoXss
+    @Length(max = 500, message = "cannot be longer than 500 chars")
     private String description;
 
     @JsonIgnore

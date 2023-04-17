@@ -80,7 +80,9 @@ public class DefaultUpdateService implements UpdateService {
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void init() {
         version = buildProperties != null ? buildProperties.getVersion() : "unknown";
-        updateMessage = new UpdateMessage(false, version, "", "", "", "");
+        updateMessage = new UpdateMessage(false, version, "", "",
+                "https://thingsboard.io/docs/reference/releases",
+                "https://thingsboard.io/docs/reference/releases");
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");

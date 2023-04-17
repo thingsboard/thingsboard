@@ -66,6 +66,9 @@
           <mat-option [value]="'select'">
             {{ 'widgets.input-widgets.datakey-value-type-select' | translate }}
           </mat-option>
+          <mat-option [value]="'JSON'">
+            {{ 'widgets.input-widgets.datakey-value-type-json' | translate }}
+          </mat-option>
         </mat-select>
       </mat-form-field>
     </section>
@@ -179,6 +182,28 @@
       <mat-label translate>widgets.input-widgets.invalid-date-error-message</mat-label>
       <input matInput formControlName="invalidDateErrorMessage">
     </mat-form-field>
+    <mat-form-field [fxShow]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'JSON'" fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.invalid-JSON-error-message</mat-label>
+      <input matInput formControlName="invalidJsonErrorMessage">
+    </mat-form-field>
+  </fieldset>
+  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value &&
+                      updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'JSON'" class="fields-group">
+    <legend class="group-title" translate>widgets.input-widgets.dialog-editor-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.input-widgets.title</mat-label>
+      <input matInput formControlName="dialogTitle">
+    </mat-form-field>
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.input-widgets.save-button-label</mat-label>
+        <input matInput formControlName="saveButtonLabel">
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.input-widgets.cancel-button-label</mat-label>
+        <input matInput formControlName="cancelButtonLabel">
+      </mat-form-field>
+    </section>
   </fieldset>
   <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.icon-settings</legend>
