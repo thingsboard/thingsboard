@@ -21,14 +21,12 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 @Data
 public class TbAzureIotHubNodeConfigurationV2 implements NodeConfiguration<TbAzureIotHubNodeConfigurationV2> {
 
-    private String connString;
-    private String deviceId;
+    private String deviceConnString;
 
     @Override
     public TbAzureIotHubNodeConfigurationV2 defaultConfiguration() {
         TbAzureIotHubNodeConfigurationV2 configuration = new TbAzureIotHubNodeConfigurationV2();
-        configuration.setConnString("<iot-hub-connection-string>");
-        configuration.setDeviceId("<device-id>");
+        configuration.setDeviceConnString("<device-connection-string>");
         return configuration;
     }
 }

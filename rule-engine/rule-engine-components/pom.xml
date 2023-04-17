@@ -156,7 +156,7 @@
         </dependency>
         <dependency>
             <groupId>com.microsoft.azure.sdk.iot</groupId>
-            <artifactId>iot-service-client</artifactId>
+            <artifactId>iot-device-client</artifactId>
         </dependency>
     </dependencies>
 

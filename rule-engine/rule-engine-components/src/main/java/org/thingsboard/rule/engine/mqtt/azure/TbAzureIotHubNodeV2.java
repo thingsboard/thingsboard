@@ -15,10 +15,11 @@
  */
 package org.thingsboard.rule.engine.mqtt.azure;
 
-import com.microsoft.azure.sdk.iot.service.DeliveryAcknowledgement;
-import com.microsoft.azure.sdk.iot.service.IotHubServiceClientProtocol;
-import com.microsoft.azure.sdk.iot.service.Message;
-import com.microsoft.azure.sdk.iot.service.ServiceClient;
+import com.microsoft.azure.sdk.iot.device.DeviceClient;
+import com.microsoft.azure.sdk.iot.device.IotHubClientProtocol;
+import com.microsoft.azure.sdk.iot.device.Message;
+import com.microsoft.azure.sdk.iot.device.MessageSentCallback;
+import com.microsoft.azure.sdk.iot.device.exceptions.IotHubClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -29,11 +30,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import java.io.UnsupportedEncodingException;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
 
 @Slf4j
 @RuleNode(
@@ -48,16 +45,14 @@ import java.util.concurrent.Executors;
 public class TbAzureIotHubNodeV2 implements TbNode {
     private static final String ERROR = "error";
     private TbAzureIotHubNodeConfigurationV2 config;
-    private ServiceClient serviceClient;
-    private ExecutorService executorService;
+    private DeviceClient client;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        executorService = Executors.newCachedThreadPool();
         this.config = TbNodeUtils.convert(configuration, TbAzureIotHubNodeConfigurationV2.class);
         try {
-            serviceClient = ServiceClient.createFromConnectionString(this.config.getConnString(), IotHubServiceClientProtocol.AMQPS);
-            serviceClient.open();
+            client = new DeviceClient(this.config.getDeviceConnString(), IotHubClientProtocol.AMQPS);
+            client.open(true);
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
@@ -65,31 +60,29 @@ public class TbAzureIotHubNodeV2 implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg)  {
-        try {
-            Message message = new Message(msg.getData());
-            message.setDeliveryAcknowledgement(DeliveryAcknowledgement.Full);
-            message.setMessageId(UUID.randomUUID().toString());
-            message.getProperties().put("content-type", msg.getDataType().name());
+        Message message = new Message(msg.getData());
+        message.setContentType(msg.getDataType().name());
+        message.setMessageId(java.util.UUID.randomUUID().toString());
 
-            CompletableFuture<Void> future = serviceClient.sendAsync(config.getDeviceId(), message);
-            future.whenCompleteAsync((success, err) -> {
-                if (err != null) {
-                    TbMsg next = processException(ctx, msg, err);
-                    ctx.tellFailure(next, err);
+        MessageSentCallback messageSentCallback = new MessageSentCallback() {
+            @Override
+            public void onMessageSent(Message message, IotHubClientException e, Object o) {
+                if (e != null) {
+                    TbMsg next = processException(ctx, msg, e);
+                    ctx.tellFailure(next, e);
                 } else {
                     ctx.tellSuccess(msg);
                 }
-            }, executorService);
-        } catch (UnsupportedEncodingException e) {
-            log.error("Failed to create message ", e);
-        }
+            }
+        };
+        client.sendEventAsync(message, messageSentCallback , null);
     }
 
     @Override
     public void destroy() {
-        if (this.serviceClient != null) {
+        if (this.client != null) {
             try {
-                this.serviceClient.close();
+                this.client.close();
             } catch (Exception e) {
                 log.error("Failed to close Azure iot hub client during destroy()", e);
             }
