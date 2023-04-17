@@ -15,54 +15,81 @@
  */
 package org.thingsboard.server.service.apiusage.limits;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.PostConstruct;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DefaultRateLimitService implements RateLimitService {
 
     private final TbTenantProfileCache tenantProfileCache;
+    @Value("${cache.rateLimits.timeToLiveInMinutes:60}")
+    private int rateLimitsTtl;
+    @Value("${cache.rateLimits.maxSize:100000}")
+    private int rateLimitsCacheMaxSize;
 
-    private final Map<LimitedApi, Map<TenantId, TbRateLimits>> rateLimits = new ConcurrentHashMap<>();
+    private Cache<RateLimitKey, TbRateLimits> rateLimits;
+
+    @PostConstruct
+    private void init() {
+        rateLimits = Caffeine.newBuilder()
+                .expireAfterAccess(rateLimitsTtl, TimeUnit.MINUTES)
+                .maximumSize(rateLimitsCacheMaxSize)
+                .build();
+    }
 
     @Override
-    public boolean checkRateLimit(TenantId tenantId, LimitedApi api) {
+    public boolean checkRateLimit(LimitedApi api, TenantId tenantId) {
+        return checkRateLimit(api, tenantId, tenantId);
+    }
+
+    @Override
+    public boolean checkRateLimit(LimitedApi api, TenantId tenantId, EntityId entityId) {
         if (tenantId.isSysTenantId()) {
             return true;
         }
+        RateLimitKey key = new RateLimitKey(api, entityId);
+
         String rateLimitConfig = tenantProfileCache.get(tenantId).getProfileConfiguration()
                 .map(api::getLimitConfig).orElse(null);
-
-        Map<TenantId, TbRateLimits> rateLimits = this.rateLimits.get(api);
         if (StringUtils.isEmpty(rateLimitConfig)) {
-            if (rateLimits != null) {
-                rateLimits.remove(tenantId);
-                if (rateLimits.isEmpty()) {
-                    this.rateLimits.remove(api);
-                }
-            }
+            rateLimits.invalidate(key);
             return true;
         }
+        log.trace("[{}] Checking rate limit for {} ({})", entityId, api, rateLimitConfig);
 
-        if (rateLimits == null) {
-            rateLimits = new ConcurrentHashMap<>();
-            this.rateLimits.put(api, rateLimits);
+        TbRateLimits rateLimit = rateLimits.asMap().compute(key, (k, limit) -> {
+            if (limit == null || !limit.getConfiguration().equals(rateLimitConfig)) {
+                limit = new TbRateLimits(rateLimitConfig);
+                log.trace("[{}] Created new rate limit bucket for {} ({})", entityId, api, rateLimitConfig);
+            }
+            return limit;
+        });
+        boolean success = rateLimit.tryConsume();
+        if (!success) {
+            log.debug("[{}] Rate limit exceeded for {} ({})", entityId, api, rateLimitConfig);
         }
-        TbRateLimits rateLimit = rateLimits.get(tenantId);
-        if (rateLimit == null || !rateLimit.getConfiguration().equals(rateLimitConfig)) {
-            rateLimit = new TbRateLimits(rateLimitConfig);
-            rateLimits.put(tenantId, rateLimit);
-        }
+        return success;
+    }
 
-        return rateLimit.tryConsume();
+    @Data(staticConstructor = "of")
+    private static class RateLimitKey {
+        private final LimitedApi api;
+        private final EntityId entityId;
     }
 
 }

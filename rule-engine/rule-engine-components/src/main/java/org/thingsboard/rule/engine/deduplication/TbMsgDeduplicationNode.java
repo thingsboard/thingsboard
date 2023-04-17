@@ -43,7 +43,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @RuleNode(
-        type = ComponentType.ACTION,
+        type = ComponentType.TRANSFORMATION,
         name = "deduplication",
         configClazz = TbMsgDeduplicationNodeConfiguration.class,
         nodeDescription = "Deduplicate messages for a configurable period based on a specified deduplication strategy.",
@@ -153,7 +153,15 @@ public class TbMsgDeduplicationNode implements TbNode {
                             }
                         }
                     }
-                    deduplicationResults.add(resultMsg);
+                    if (resultMsg != null) {
+                        deduplicationResults.add(TbMsg.newMsg(
+                                resultMsg.getQueueName(),
+                                resultMsg.getType(),
+                                resultMsg.getOriginator(),
+                                resultMsg.getCustomerId(),
+                                resultMsg.getMetaData(),
+                                resultMsg.getData()));
+                    }
                 }
                 packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);
             }

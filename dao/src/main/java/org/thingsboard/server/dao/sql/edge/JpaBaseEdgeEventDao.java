@@ -80,11 +80,11 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     @Value("${sql.edge_events.stats_print_interval_ms:10000}")
     private long statsPrintIntervalMs;
 
-    @Value("${sql.edge_events.partitions_size:168}")
+    @Value("${sql.edge_events.partition_size:168}")
     private int partitionSizeInHours;
 
     @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
-    private long edge_events_ttl;
+    private long edgeEventsTtl;
 
     private static final String TABLE_NAME = ModelConstants.EDGE_EVENT_COLUMN_FAMILY_NAME;
 
@@ -203,7 +203,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
 
     @Override
     public void migrateEdgeEvents() {
-        long startTime = edge_events_ttl > 0 ? System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(edge_events_ttl) : 1629158400000L;
+        long startTime = edgeEventsTtl > 0 ? System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(edgeEventsTtl) : 1629158400000L;
 
         long currentTime = System.currentTimeMillis();
         var partitionStepInMs = TimeUnit.HOURS.toMillis(partitionSizeInHours);

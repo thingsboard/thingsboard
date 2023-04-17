@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.template;
+package org.thingsboard.server.controller.sql;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.controller.BaseTelemetryControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class NotificationText {
-
-    private String body;
-    private String subject;
-
+@DaoSqlTest
+public class TelemetryControllerSqlTest extends BaseTelemetryControllerTest {
 }
