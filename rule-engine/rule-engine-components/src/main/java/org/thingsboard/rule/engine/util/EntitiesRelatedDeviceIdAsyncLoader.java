@@ -42,10 +42,7 @@ public class EntitiesRelatedDeviceIdAsyncLoader {
                         : Futures.immediateFuture(null), MoreExecutors.directExecutor());
     }
 
-    private static DeviceSearchQuery buildQuery(
-            EntityId originator,
-            DeviceRelationsQuery deviceRelationsQuery
-    ) {
+    private static DeviceSearchQuery buildQuery(EntityId originator, DeviceRelationsQuery deviceRelationsQuery) {
         var query = new DeviceSearchQuery();
         var parameters = new RelationsSearchParameters(
                 originator,
