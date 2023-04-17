@@ -29,7 +29,6 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { ColorPickerControl } from '@iplab/ngx-color-picker';
 
 export interface ColorPickerDialogData {
   color: string;
@@ -47,8 +46,6 @@ export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialo
   colorPickerFormGroup: UntypedFormGroup;
 
   submitted = false;
-
-  sketchControl = new ColorPickerControl().setValueFrom(this.data.color);
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -69,11 +66,6 @@ export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialo
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
-  }
-
-  onColorChange(color: string) {
-    this.colorPickerFormGroup.get('color').setValue(color);
-    this.colorPickerFormGroup.markAsDirty();
   }
 
   cancel(): void {

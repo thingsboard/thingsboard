@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 :host {
-  display: block;
   width: 100%;
-  max-width: 320px;
-  min-width: 100%;
-  border-radius: 2px;
-  background: #fff;
+  display: flex;
+  flex-direction: column;
 
   ::ng-deep {
     .saturation-component {
-      height: 200px;
+      height: 100%;
+      min-height: 200px;
+      max-height: 300px;
       border-radius: 8px;
+      margin-bottom: 16px;
       div.pointer {
         border-width: 2px;
         width: 16px;
@@ -56,25 +56,9 @@
   }
 }
 
-
-
-.controls {
-  padding: 15px 0;
-}
-
-.controls-row {
-  display: table;
-  width: 100%;
-}
-
-.column {
-  display: table-cell;
-  vertical-align: middle;
-}
-
-.hue-alpha .column:first-child {
-  width: 42px;
-  padding: 0 10px 0 0;
+.control-component {
+  max-height: 48px;
+  margin-bottom: 16px;
 }
 
 indicator-component {
@@ -90,17 +74,8 @@ indicator-component {
   }
 }
 
-hue-component {
-  margin-bottom: 16px;
-}
-
 color-presets-component {
   border-top: 1px solid #d0d0d0;
-  padding: 12px;
-
-  ::ng-deep .presets-row {
-    padding: 12px 0 0;
-  }
 }
 
 .type-btn {
@@ -113,13 +88,4 @@ color-presets-component {
   &:hover {
     background-color: #eee;
   }
-}
-
-.type-column {
-  width: 25px;
-  text-align: right;
-}
-
-.presentation {
-  padding: 12px 0 0;
 }

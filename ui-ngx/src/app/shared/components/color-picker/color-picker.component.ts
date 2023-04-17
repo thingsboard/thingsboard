@@ -14,20 +14,10 @@
 /// limitations under the License.
 ///
 
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  OnDestroy,
-  OnInit,
-  Output,
-  SimpleChanges
-} from '@angular/core';
+import { Component, forwardRef, OnDestroy, OnInit } from '@angular/core';
 import { Color, ColorPickerControl } from '@iplab/ngx-color-picker';
 import { Subscription } from 'rxjs';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export enum ColorType {
   hex = 'hex',
@@ -43,89 +33,90 @@ export enum ColorType {
   selector: `tb-color-picker`,
   templateUrl: `./color-picker.component.html`,
   styleUrls: [`./color-picker.component.scss`],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => ColorPickerComponent),
+      multi: true
+    }
+  ]
 })
-export class ColorPickerComponent implements OnInit, OnChanges, OnDestroy {
+export class ColorPickerComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
-  public selectedPresentation = 0;
-  public presentations = [ColorType.hex, ColorType.rgb, ColorType.rgba, ColorType.hsla, ColorType.hsl];
+  selectedPresentation = 0;
+  presentations = [ColorType.hex, ColorType.rgba, ColorType.hsla];
+  control = new ColorPickerControl();
 
-  @Input()
-  public color: string;
-
-  @Input()
-  public control: ColorPickerControl;
-
-  @Output()
-  public colorChange: EventEmitter<string> = new EventEmitter(false);
+  private modelValue: string;
 
   private subscriptions: Array<Subscription> = [];
 
-  constructor(private readonly cdr: ChangeDetectorRef) {
+  private propagateChange = null;
+
+  constructor() {
   }
 
   public ngOnInit(): void {
-    if (!this.control) {
-      this.control = new ColorPickerControl();
-    }
-
-    if (this.control.initType === ColorType.hexa) {
-      this.control.initType = ColorType.hex;
-    }
-
-    this.selectedPresentation = this.presentations.indexOf(this.control.initType);
-
-    if (this.color) {
-      this.control.setValueFrom(this.color);
-    }
-
     this.subscriptions.push(
-      this.control.valueChanges.subscribe((value) => {
-        this.cdr.markForCheck();
-        this.colorChange.emit(this.getValueByType(value, this.presentations[this.selectedPresentation]));
+      this.control.valueChanges.subscribe(value => {
+        if (this.modelValue) {
+          this.updateModel();
+        }
       })
     );
   }
 
-  changeColorFormat(event: Event) {
-    this.colorChange.emit(this.getValueByType(this.control.value, this.presentations[this.selectedPresentation]));
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+  }
+
+  writeValue(value: string): void {
+    this.control. setValueFrom(value || '#fff');
+    this.modelValue = value;
+
+    if (this.control.initType === ColorType.hexa) {
+      this.control.initType = ColorType.hex;
+    } else if (this.control.initType === ColorType.rgb) {
+      this.control.initType = ColorType.rgba;
+    } else if (this.control.initType === ColorType.hsl) {
+      this.control.initType = ColorType.hsla;
+    }
+
+    this.selectedPresentation = this.presentations.indexOf(this.control.initType);
+  }
+
+  private updateModel() {
+    const color: string = this.getValueByType(this.control.value, this.presentations[this.selectedPresentation]);
+    if (this.modelValue !== color) {
+      this.modelValue = color;
+      this.propagateChange(color);
+    }
   }
 
   public ngOnDestroy(): void {
-    this.cdr.detach();
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     this.subscriptions.length = 0;
-  }
-
-  public ngOnChanges(changes: SimpleChanges): void {
-    if (this.color && this.control &&
-      this.getValueByType(this.control.value, this.presentations[this.selectedPresentation]) !== this.color) {
-      this.control.setValueFrom(this.color);
-    }
   }
 
   public changePresentation(): void {
     this.selectedPresentation =
       this.selectedPresentation === this.presentations.length - 1 ? 0 : this.selectedPresentation + 1;
-    this.colorChange.emit(this.getValueByType(this.control.value, this.presentations[this.selectedPresentation]));
-    this.cdr.markForCheck();
+    this.updateModel();
   }
 
   getValueByType(color: Color, type: ColorType): string {
     switch (type) {
-      case ColorType.hex || ColorType.hexa:
+      case ColorType.hex:
         return color.toHexString(this.control.value.getRgba().getAlpha() !== 1);
-      case ColorType.rgb:
-        return color.toRgbString();
       case ColorType.rgba:
-        return color.toRgbaString();
-      case ColorType.hsl:
-        return color.toHslString();
+        return this.control.value.getRgba().getAlpha() !== 1 ? color.toRgbaString() : color.toRgbString();
       case ColorType.hsla:
-        return color.toHslaString();
+        return this.control.value.getRgba().getAlpha() !== 1 ? color.toHslaString() : color.toHslString();
       default:
         return color.toRgbaString();
     }
   }
-
 }
