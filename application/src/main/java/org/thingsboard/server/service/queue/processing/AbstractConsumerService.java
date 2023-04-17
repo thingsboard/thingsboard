@@ -16,8 +16,10 @@
 package org.thingsboard.server.service.queue.processing;
 
 import com.google.protobuf.ByteString;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -64,6 +66,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 public abstract class AbstractConsumerService<N extends com.google.protobuf.GeneratedMessageV3> extends TbApplicationEventListener<PartitionChangeEvent> {
 
     protected volatile ExecutorService consumersExecutor;
@@ -77,29 +80,10 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbAssetProfileCache assetProfileCache;
     protected final TbApiUsageStateService apiUsageStateService;
     protected final PartitionService partitionService;
-
+    protected final ApplicationEventPublisher eventPublisher;
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
     protected final Optional<JwtSettingsService> jwtSettingsService;
-
     protected final Optional<TbAlarmRuleStateService> alarmRuleStateService;
-
-    public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
-                                   TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
-                                   TbAssetProfileCache assetProfileCache, TbApiUsageStateService apiUsageStateService,
-                                   PartitionService partitionService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer,
-                                   Optional<JwtSettingsService> jwtSettingsService,
-                                   Optional<TbAlarmRuleStateService> alarmRuleStateService) {
-        this.actorContext = actorContext;
-        this.encodingService = encodingService;
-        this.tenantProfileCache = tenantProfileCache;
-        this.deviceProfileCache = deviceProfileCache;
-        this.assetProfileCache = assetProfileCache;
-        this.apiUsageStateService = apiUsageStateService;
-        this.partitionService = partitionService;
-        this.nfConsumer = nfConsumer;
-        this.jwtSettingsService = jwtSettingsService;
-        this.alarmRuleStateService = alarmRuleStateService;
-    }
 
     public void init(String mainConsumerThreadName, String nfConsumerThreadName) {
         this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(mainConsumerThreadName));
@@ -224,6 +208,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                         }
                     });
                 }
+                eventPublisher.publishEvent(componentLifecycleMsg);
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
             actorContext.tellWithHighPriority(actorMsg);

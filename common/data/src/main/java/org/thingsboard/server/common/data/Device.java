@@ -40,7 +40,7 @@ import java.util.Optional;
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId>, HasProfileId<DeviceProfileId> {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId>, HasProfileId<DeviceProfileId> {
 
     private static final long serialVersionUID = 2807343040519543363L;
 

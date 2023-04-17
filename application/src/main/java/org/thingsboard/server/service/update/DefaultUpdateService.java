@@ -15,15 +15,22 @@
  */
 package org.thingsboard.server.service.update;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.BuildProperties;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
+import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
@@ -53,10 +60,16 @@ public class DefaultUpdateService implements UpdateService {
     @Value("${updates.enabled}")
     private boolean updatesEnabled;
 
+    @Autowired(required = false)
+    private BuildProperties buildProperties;
+
+    @Autowired
+    private NotificationRuleProcessor notificationRuleProcessor;
+
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-update-service"));
 
-    private ScheduledFuture checkUpdatesFuture = null;
-    private RestTemplate restClient = new RestTemplate();
+    private ScheduledFuture<?> checkUpdatesFuture = null;
+    private final RestTemplate restClient = new RestTemplate();
 
     private UpdateMessage updateMessage;
 
@@ -64,16 +77,13 @@ public class DefaultUpdateService implements UpdateService {
     private String version;
     private UUID instanceId = null;
 
-    @PostConstruct
-    private void init() {
-        updateMessage = new UpdateMessage("", false);
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
+    public void init() {
+        version = buildProperties != null ? buildProperties.getVersion() : "unknown";
+        updateMessage = new UpdateMessage(false, version, "", "", "", "");
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");
-                version = getClass().getPackage().getImplementationVersion();
-                if (version == null) {
-                    version = "unknown";
-                }
                 instanceId = parseInstanceId();
                 checkUpdatesFuture = scheduler.scheduleAtFixedRate(checkUpdatesRunnable, 0, 1, TimeUnit.HOURS);
             } catch (Exception e) {
@@ -87,7 +97,7 @@ public class DefaultUpdateService implements UpdateService {
         Path instanceIdPath = Paths.get(INSTANCE_ID_FILE);
         if (instanceIdPath.toFile().exists()) {
             byte[] data = Files.readAllBytes(instanceIdPath);
-            if (data != null && data.length > 0) {
+            if (data.length > 0) {
                 try {
                     result = UUID.fromString(new String(data));
                 } catch (IllegalArgumentException e) {
@@ -117,15 +127,19 @@ public class DefaultUpdateService implements UpdateService {
     Runnable checkUpdatesRunnable = () -> {
         try {
             log.trace("Executing check update method for instanceId [{}], platform [{}] and version [{}]", instanceId, platform, version);
+            var headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
             ObjectNode request = new ObjectMapper().createObjectNode();
             request.put(PLATFORM_PARAM, platform);
             request.put(VERSION_PARAM, version);
             request.put(INSTANCE_ID_PARAM, instanceId.toString());
-            JsonNode response = restClient.postForObject(UPDATE_SERVER_BASE_URL+"/api/thingsboard/updates", request, JsonNode.class);
-            updateMessage = new UpdateMessage(
-                    response.get("message").asText(),
-                    response.get("updateAvailable").asBoolean()
-            );
+            UpdateMessage prevUpdateMessage = updateMessage;
+            updateMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v2/thingsboard/updates", new HttpEntity<>(request.toString(), headers), UpdateMessage.class);
+            if (updateMessage != null && updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
+                notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
+                        .updateInfo(updateMessage)
+                        .build());
+            }
         } catch (Exception e) {
             log.trace(e.getMessage());
         }

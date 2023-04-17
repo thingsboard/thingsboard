@@ -15,7 +15,23 @@
     limitations under the License.
 
 -->
-<form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;">
+<form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-top: 8px;">
+  <mat-checkbox formControlName="sparkplug">
+    {{ 'device-profile.mqtt-device-topic-filters-spark-plug' | translate }}
+  </mat-checkbox>
+  <div *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value"
+       class="tb-hint" innerHTML="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-hint' | translate }}"></div>
+  <tb-string-items-list *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value"
+                        editable
+                        label="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate }}"
+                        placeholder="{{'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names' | translate}}"
+                        hint="{{ 'device-profile.mqtt-device-topic-filters-spark-plug-attribute-metric-names-hint' | translate }}"
+                        floatLabel="always"
+                        subscriptSizing="dynamic"
+                        formControlName="sparkplugAttributesMetricNames">
+  </tb-string-items-list>
+</form>
+<form [formGroup]="mqttDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;" *ngIf="!mqttDeviceProfileTransportConfigurationFormGroup.get('sparkplug').value">
   <fieldset class="fields-group">
     <legend class="group-title" translate>device-profile.mqtt-device-topic-filters</legend>
     <div fxLayoutGap="8px" fxLayout="column">
@@ -47,6 +63,21 @@
             {{ 'device-profile.not-valid-single-character' | translate}}
           </mat-error>
           <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesTopic').hasError('invalidMultiTopicCharacter')">
+            {{ 'device-profile.not-valid-multi-character' | translate}}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-label translate>device-profile.attributes-subscribe-topic-filter</mat-label>
+          <input matInput required
+                 formControlName="deviceAttributesSubscribeTopic"
+                 type="text">
+          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesSubscribeTopic').hasError('required')">
+            {{ 'device-profile.attributes-subscribe-topic-filter-required' | translate}}
+          </mat-error>
+          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesSubscribeTopic').hasError('invalidSingleTopicCharacter')">
+            {{ 'device-profile.not-valid-single-character' | translate}}
+          </mat-error>
+          <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('deviceAttributesSubscribeTopic').hasError('invalidMultiTopicCharacter')">
             {{ 'device-profile.not-valid-multi-character' | translate}}
           </mat-error>
         </mat-form-field>

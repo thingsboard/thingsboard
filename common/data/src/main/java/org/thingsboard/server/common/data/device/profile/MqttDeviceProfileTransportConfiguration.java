@@ -19,6 +19,8 @@ import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.util.Set;
+
 @Data
 public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
@@ -26,7 +28,12 @@ public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTra
     private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
     @NoXss
     private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+    @NoXss
+    private String deviceAttributesSubscribeTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+
     private TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
+    private boolean sparkplug;
+    private Set<String> sparkplugAttributesMetricNames;
     private boolean sendAckOnValidationException;
 
     @Override

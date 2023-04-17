@@ -79,7 +79,6 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
                 .tenantId(tenantId)
                 .customerId(customerId)
                 .originator(customerDevice.getId())
-                .status(AlarmStatus.ACTIVE_UNACK)
                 .severity(AlarmSeverity.CRITICAL)
                 .type("test alarm type")
                 .build();
@@ -203,7 +202,13 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
         doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
                 .andExpect(status().isOk());
 
-        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED_COMMENT, 1, alarmComment);
+        AlarmComment expectedAlarmComment = AlarmComment.builder()
+                .alarmId(alarm.getId())
+                .type(AlarmCommentType.SYSTEM)
+                .comment(JacksonUtil.newObjectNode().put("text", String.format("User %s deleted his comment",
+                        CUSTOMER_USER_EMAIL)))
+                .build();
+        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED_COMMENT, 1, expectedAlarmComment);
     }
 
     @Test
@@ -216,7 +221,13 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
         doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
                 .andExpect(status().isOk());
 
-        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED_COMMENT, 1, alarmComment);
+        AlarmComment expectedAlarmComment = AlarmComment.builder()
+                .alarmId(alarm.getId())
+                .type(AlarmCommentType.SYSTEM)
+                .comment(JacksonUtil.newObjectNode().put("text", String.format("User %s deleted his comment",
+                        TENANT_ADMIN_EMAIL)))
+                .build();
+        testLogEntityAction(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED_COMMENT, 1, expectedAlarmComment);
     }
 
     @Test
@@ -316,7 +327,6 @@ public abstract class BaseAlarmCommentControllerTest extends AbstractControllerT
 
         Alarm alarm = Alarm.builder()
                 .originator(device.getId())
-                .status(AlarmStatus.ACTIVE_UNACK)
                 .severity(AlarmSeverity.CRITICAL)
                 .type("Test")
                 .build();

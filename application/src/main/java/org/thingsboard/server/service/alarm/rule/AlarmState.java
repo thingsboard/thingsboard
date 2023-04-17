@@ -17,17 +17,17 @@ package org.thingsboard.server.service.alarm.rule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmRuleState;
@@ -146,16 +145,12 @@ class AlarmState {
                 for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
                     stateUpdate = clearAlarmState(stateUpdate, state);
                 }
-                ListenableFuture<AlarmOperationResult> alarmClearOperationResult = ctx.getAlarmService().clearAlarmForResult(
-                        tenantId, currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis()
+                AlarmApiCallResult result = ctx.getAlarmService().clearAlarm(
+                        tenantId, currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearState)
                 );
-                DonAsynchron.withCallback(alarmClearOperationResult,
-                        result -> {
-                            pushMsg(ctx, msg, new TbAlarmResult(false, false, true, result.getAlarm()), clearState);
-                        },
-                        throwable -> {
-                            throw new RuntimeException(throwable);
-                        });
+                if (result.isCleared()) {
+                    pushMsg(ctx, msg, new TbAlarmResult(false, false, true, result.getAlarm()), clearState);
+                }
                 currentAlarm = null;
             } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
                 stateUpdate = clearAlarmState(stateUpdate, clearState);
@@ -184,9 +179,9 @@ class AlarmState {
         return true;
     }
 
-    public void initCurrentAlarm(TbAlarmRuleContext ctx) throws InterruptedException, ExecutionException {
+    public void initCurrentAlarm(TbAlarmRuleContext ctx) {
         if (!initialFetchDone) {
-            Alarm alarm = ctx.getAlarmService().findLatestByOriginatorAndType(tenantId, originator, alarmDefinition.getAlarmType()).get();
+            Alarm alarm = ctx.getAlarmService().findLatestActiveByOriginatorAndType(tenantId, originator, alarmDefinition.getAlarmType());
             if (alarm != null && !alarm.getStatus().isCleared()) {
                 currentAlarm = alarm;
             }
@@ -280,21 +275,18 @@ class AlarmState {
             // Skip update if severity is decreased.
             if (severity.ordinal() <= oldSeverity.ordinal()) {
                 currentAlarm.setDetails(createDetails(ruleState));
-                if (!oldSeverity.equals(severity)) {
-                    currentAlarm.setSeverity(severity);
-                    currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-                    return new TbAlarmResult(false, false, true, false, currentAlarm);
-                } else {
-                    currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-                    return new TbAlarmResult(false, true, false, false, currentAlarm);
-                }
+                currentAlarm.setSeverity(severity);
+                AlarmApiCallResult result = ctx.getAlarmService().updateAlarm(AlarmUpdateRequest.fromAlarm(currentAlarm));
+                currentAlarm = result.getAlarm();
+                return TbAlarmResult.fromAlarmResult(result);
             } else {
                 return null;
             }
         } else {
             currentAlarm = new Alarm();
             currentAlarm.setType(alarmDefinition.getAlarmType());
-            currentAlarm.setStatus(AlarmStatus.ACTIVE_UNACK);
+            currentAlarm.setAcknowledged(false);
+            currentAlarm.setCleared(false);
             currentAlarm.setSeverity(severity);
             long startTs = dataSnapshot.getTs();
             if (startTs == 0L) {
@@ -311,9 +303,9 @@ class AlarmState {
             if (alarmDefinition.getConfiguration().getPropagateRelationTypes() != null) {
                 currentAlarm.setPropagateRelationTypes(alarmDefinition.getConfiguration().getPropagateRelationTypes());
             }
-            currentAlarm = ctx.getAlarmService().createOrUpdateAlarm(currentAlarm);
-            boolean updated = currentAlarm.getStartTs() != currentAlarm.getEndTs();
-            return new TbAlarmResult(!updated, updated, false, false, currentAlarm);
+            AlarmApiCallResult result = ctx.getAlarmService().createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(currentAlarm));
+            currentAlarm = result.getAlarm();
+            return TbAlarmResult.fromAlarmResult(result);
         }
     }
 
@@ -381,7 +373,7 @@ class AlarmState {
 
     public void processAckAlarm(Alarm alarm) {
         if (currentAlarm != null && currentAlarm.getId().equals(alarm.getId())) {
-            currentAlarm.setStatus(alarm.getStatus());
+            currentAlarm.setAcknowledged(alarm.isAcknowledged());
             currentAlarm.setAckTs(alarm.getAckTs());
         }
     }

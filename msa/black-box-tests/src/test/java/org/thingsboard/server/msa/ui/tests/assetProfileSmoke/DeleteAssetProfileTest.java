@@ -16,8 +16,10 @@
 package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -33,15 +35,17 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewHelper(driver);
         profilesPage = new ProfilesPageHelper(driver);
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete one asset profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove the asset profile by clicking on the trash icon in the right side of asset profile")
     public void removeAssetProfile() {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
@@ -54,8 +58,10 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entityIsNotPresent(name));
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete one asset profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove the asset profile by clicking on the 'Delete asset profile' btn in the entity view")
     public void removeAssetProfileFromView() {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
@@ -69,8 +75,10 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entityIsNotPresent(name));
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete one asset profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove asset profile by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedAssetProfile() {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
@@ -84,16 +92,20 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.entityIsNotPresent(name));
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete one asset profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the default asset profile by clicking on the trash icon in the right side of asset profile")
     public void removeDefaultAssetProfile() {
         sideBarMenuView.openAssetProfiles();
 
         Assert.assertFalse(profilesPage.deleteBtn("default").isEnabled());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete one asset profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the Default asset profile by clicking on the 'Delete asset profile' btn in the entity view")
     public void removeDefaultAssetProfileFromView() {
         sideBarMenuView.openAssetProfiles();
         profilesPage.entity("default").click();
@@ -101,8 +113,10 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.deleteAssetProfileFromViewBtnIsNotDisplayed());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete one asset profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the default asset profile by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedDefaultAssetProfile() {
         sideBarMenuView.openAssetProfiles();
 
@@ -110,8 +124,10 @@ public class DeleteAssetProfileTest extends AbstractDriverBaseTest {
         Assert.assertFalse(profilesPage.presentCheckBox("default").isDisplayed());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Delete one asset profile")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Remove the asset profile by clicking on the trash icon in the right side of asset profile without refresh")
     public void removeAssetProfileWithoutRefresh() {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));

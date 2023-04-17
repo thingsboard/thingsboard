@@ -199,7 +199,7 @@ export abstract class StateControllerComponent implements IStateControllerCompon
 
   public abstract getStateParamsByStateId(stateId: string): StateParams;
 
-  public abstract navigatePrevState(index: number): void;
+  public abstract navigatePrevState(index: number, params?: StateParams): void;
 
   public abstract openState(id: string, params?: StateParams, openRightLayout?: boolean): void;
 

@@ -410,6 +410,9 @@
             <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('wsMsgQueueLimitPerSession').hasError('min')">
               {{ 'tenant-profile.too-small-value-one' | translate}}
             </mat-error>
+            <mat-hint>
+              {{ 'tenant-profile.queue-size-is-limited-by-system-configuration' | translate}}
+            </mat-hint>
           </mat-form-field>
           <div fxFlex></div>
         </div>
@@ -474,6 +477,11 @@
           </tb-rate-limits>
           <tb-rate-limits fxFlex formControlName="cassandraQueryTenantRateLimitsConfiguration"
                           [type]="rateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION">
+          </tb-rate-limits>
+        </div>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex="50" formControlName="tenantNotificationRequestsRateLimit"
+                          [type]="rateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT">
           </tb-rate-limits>
         </div>
       </ng-template>

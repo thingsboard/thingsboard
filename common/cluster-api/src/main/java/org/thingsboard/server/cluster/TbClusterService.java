@@ -34,11 +34,11 @@ import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTbAlarmRuleStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueClusterService;
 
@@ -57,7 +57,7 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void pushNotificationToCore(String targetServiceId, FromDeviceRpcResponse response, TbQueueCallback callback);
 
-    void pushMsgToAlarmRules(TopicPartitionInfo tpi, EntityId entityId, TransportProtos.ToTbAlarmRuleStateServiceMsg msg, TbQueueCallback callback);
+    void pushMsgToAlarmRules(TopicPartitionInfo tpi, EntityId entityId, ToTbAlarmRuleStateServiceMsg msg, TbQueueCallback callback);
 
     <T> void pushUpdateEntityMsgToAlarmRules(TopicPartitionInfo tpi, TenantId tenantId, EntityId entityId, T entity, TbQueueCallback callback);
 

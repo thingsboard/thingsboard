@@ -405,7 +405,7 @@ export class TbCanvasDigitalGauge {
           (this.gauge.options as CanvasDigitalGaugeOptions).labelTimestamp =
             filter.transform(timestamp, this.localSettings.timestampFormat);
         }
-        const value = tvPair[1];
+        const value = parseFloat(tvPair[1]);
         if (value !== this.gauge.value) {
           if (!this.gauge.options.animation) {
             this.gauge._value = value;

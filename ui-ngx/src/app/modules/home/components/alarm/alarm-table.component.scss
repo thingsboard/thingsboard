@@ -15,8 +15,43 @@
  */
 :host ::ng-deep {
   tb-entities-table {
-    .mat-drawer-container {
-      background-color: white;
+    &.tb-details-mode {
+      .mat-drawer-container {
+        background-color: white;
+      }
+    }
+    .assignee-cell {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      .assigned-container {
+        max-width: 180px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        .user-avatar {
+          display: inline-flex;
+          justify-content: center;
+          align-items: center;
+          margin-right: 8px;
+          border-radius: 50%;
+          width: 28px;
+          height: 28px;
+          min-width: 28px;
+          min-height: 28px;
+          color: white;
+          font-size: 13px;
+          font-weight: 700;
+        }
+      }
+      .material-icons.unassigned-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 28px;
+        margin-right: 8px;
+        color: rgba(0, 0, 0, 0.38);
+        overflow: visible;
+      }
     }
   }
 }

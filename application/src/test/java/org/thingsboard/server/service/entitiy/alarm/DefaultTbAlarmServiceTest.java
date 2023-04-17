@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
-import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,10 +26,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.dao.alarm.AlarmCommentService;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -67,7 +66,7 @@ public class DefaultTbAlarmServiceTest {
     @MockBean
     protected AlarmService alarmService;
     @MockBean
-    protected AlarmCommentService alarmCommentService;
+    protected TbAlarmCommentService alarmCommentService;
     @MockBean
     protected AlarmSubscriptionService alarmSubscriptionService;
     @MockBean
@@ -84,36 +83,41 @@ public class DefaultTbAlarmServiceTest {
 
     @Test
     public void testSave() throws ThingsboardException {
-        var alarm = new Alarm();
-        when(alarmSubscriptionService.createOrUpdateAlarm(alarm)).thenReturn(alarm);
+        var alarm = new AlarmInfo();
+        when(alarmSubscriptionService.createAlarm(any())).thenReturn(AlarmApiCallResult.builder()
+                .successful(true)
+                .modified(true)
+                .alarm(alarm)
+                .build());
         service.save(alarm, new User());
 
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
-        verify(alarmSubscriptionService, times(1)).createOrUpdateAlarm(eq(alarm));
+        verify(alarmSubscriptionService, times(1)).createAlarm(any());
     }
 
     @Test
-    public void testAck() {
+    public void testAck() throws ThingsboardException {
         var alarm = new Alarm();
-        alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
-        when(alarmSubscriptionService.ackAlarm(any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));
+        when(alarmSubscriptionService.acknowledgeAlarm(any(), any(), anyLong()))
+                .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).build());
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
+        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
-        verify(alarmSubscriptionService, times(1)).ackAlarm(any(), any(), anyLong());
+        verify(alarmSubscriptionService, times(1)).acknowledgeAlarm(any(), any(), anyLong());
     }
 
     @Test
-    public void testClear() {
+    public void testClear() throws ThingsboardException {
         var alarm = new Alarm();
-        alarm.setStatus(AlarmStatus.ACTIVE_ACK);
-        when(alarmSubscriptionService.clearAlarm(any(), any(), any(), anyLong())).thenReturn(Futures.immediateFuture(true));
+        alarm.setAcknowledged(true);
+        when(alarmSubscriptionService.clearAlarm(any(), any(), anyLong(), any()))
+                .thenReturn(AlarmApiCallResult.builder().successful(true).cleared(true).build());
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).createOrUpdateAlarmComment(any(), any());
+        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
-        verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), any(), anyLong());
+        verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), anyLong(), any());
     }
 
     @Test

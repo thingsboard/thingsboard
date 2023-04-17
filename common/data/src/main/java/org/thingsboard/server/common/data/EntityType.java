@@ -15,11 +15,43 @@
  */
 package org.thingsboard.server.common.data;
 
+import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author Andrew Shvayka
  */
 public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE,
-    WIDGET_TYPE, TENANT_PROFILE, DEVICE_PROFILE, ASSET_PROFILE, API_USAGE_STATE, TB_RESOURCE, OTA_PACKAGE, EDGE, RPC,
-    QUEUE, ALARM_RULE
+    TENANT,
+    CUSTOMER,
+    USER,
+    DASHBOARD,
+    ASSET,
+    DEVICE,
+    ALARM,
+    RULE_CHAIN,
+    RULE_NODE,
+    ENTITY_VIEW,
+    WIDGETS_BUNDLE,
+    WIDGET_TYPE,
+    TENANT_PROFILE,
+    DEVICE_PROFILE,
+    ASSET_PROFILE,
+    API_USAGE_STATE,
+    TB_RESOURCE,
+    OTA_PACKAGE,
+    EDGE,
+    RPC,
+    QUEUE,
+    NOTIFICATION_TARGET,
+    NOTIFICATION_TEMPLATE,
+    NOTIFICATION_REQUEST,
+    NOTIFICATION,
+    NOTIFICATION_RULE,
+    ALARM_RULE;
+
+    @Getter
+    private final String normalName = StringUtils.capitalize(StringUtils.removeStart(name(), "TB_")
+            .toLowerCase().replaceAll("_", " "));
+
 }

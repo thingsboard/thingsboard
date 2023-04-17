@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -59,12 +60,13 @@ public abstract class AbstractTbEntityService {
     @Autowired
     protected DbCallbackExecutorService dbExecutor;
     @Autowired(required = false)
+    @Lazy
     protected TbNotificationEntityService notificationEntityService;
     @Autowired(required = false)
     protected EdgeService edgeService;
     @Autowired
     protected AlarmService alarmService;
-    @Autowired
+    @Autowired @Lazy
     protected AlarmSubscriptionService alarmSubscriptionService;
     @Autowired
     protected AlarmRuleService alarmRuleService;
@@ -74,12 +76,12 @@ public abstract class AbstractTbEntityService {
     protected CustomerService customerService;
     @Autowired
     protected TbClusterService tbClusterService;
-    @Autowired(required = false)
+    @Autowired(required = false) @Lazy
     private EntitiesVersionControlService vcService;
 
     protected ListenableFuture<Void> removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
         ListenableFuture<PageData<AlarmInfo>> alarmsFuture =
-                alarmService.findAlarms(tenantId, new AlarmQuery(entityId, new TimePageLink(Integer.MAX_VALUE), null, null, false));
+                alarmService.findAlarms(tenantId, new AlarmQuery(entityId, new TimePageLink(Integer.MAX_VALUE), null, null, null, false));
 
         ListenableFuture<List<AlarmId>> alarmIdsFuture = Futures.transform(alarmsFuture, page ->
                 page.getData().stream().map(AlarmInfo::getId).collect(Collectors.toList()), dbExecutor);

@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="widgetFontFormGroup" fxLayout="column">
-  <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+  <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
     <mat-form-field fxFlex class="mat-block">
       <mat-label translate>widgets.widget-font.font-family</mat-label>
       <input matInput formControlName="family">
@@ -26,7 +26,7 @@
       <input matInput type="number" min="1" step="1" formControlName="size">
     </mat-form-field>
   </section>
-  <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+  <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
     <mat-form-field fxFlex class="mat-block">
       <mat-label translate>widgets.widget-font.font-style</mat-label>
       <mat-select formControlName="style">
@@ -68,7 +68,7 @@
       </mat-select>
     </mat-form-field>
   </section>
-  <section fxLayout="row wrap" fxLayoutGap="8px" fxLayoutAlign="start center">
+  <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
     <tb-color-input
       fxFlex
       formControlName="color"

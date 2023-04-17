@@ -64,6 +64,8 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
 
   filterToWidgetsMap: {[filterId: string]: Array<string>} = {};
 
+  filterNames: Set<string> = new Set<string>();
+
   filtersFormGroup: UntypedFormGroup;
 
   submitted = false;
@@ -112,6 +114,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
       if (isUndefined(filter.editable)) {
         filter.editable = true;
       }
+      this.filterNames.add(filter.filter);
       filterControls.push(this.createFilterFormControl(filterId, filter));
     }
 
@@ -158,7 +161,34 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
         message, this.translate.instant('action.close'), true);
     } else {
       (this.filtersFormGroup.get('filters') as UntypedFormArray).removeAt(index);
+      this.filterNames.delete(filter.filter);
       this.filtersFormGroup.markAsDirty();
+    }
+  }
+
+  private getNextDuplicatedName(filterName: string): string {
+    const suffix = ` - ${this.translate.instant('action.copy')} `;
+    let counter = 0;
+    while (++counter < Number.MAX_SAFE_INTEGER) {
+      const newName = `${filterName}${suffix}${counter}`;
+      if (!this.filterNames.has(newName)) {
+        return newName;
+      }
+    }
+
+    return null;
+  }
+
+  duplicateFilter(index: number) {
+    const originalFilter = (this.filtersFormGroup.get('filters').value as any[])[index];
+    const newFilterName = this.getNextDuplicatedName(originalFilter.filter);
+    if (newFilterName) {
+      const duplicatedFilter = deepClone(originalFilter);
+      duplicatedFilter.id = this.utils.guid();
+      duplicatedFilter.filter = newFilterName;
+      (this.filtersFormGroup.get('filters') as UntypedFormArray).
+        insert(index + 1, this.createFilterFormControl(duplicatedFilter.id, duplicatedFilter));
+      this.filterNames.add(duplicatedFilter.filter);
     }
   }
 
@@ -176,6 +206,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
     const filtersArray = this.filtersFormGroup.get('filters').value as any[];
     if (!isAdd) {
       filter = filtersArray[index];
+      this.filterNames.delete(filter.filter);
     }
     this.dialog.open<FilterDialogComponent, FilterDialogData,
       Filter>(FilterDialogComponent, {
@@ -197,6 +228,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
           filterFormControl.get('editable').patchValue(result.editable);
           filterFormControl.get('keyFilters').patchValue(result.keyFilters);
         }
+        this.filterNames.add(result.filter);
         this.filtersFormGroup.markAsDirty();
       }
     });

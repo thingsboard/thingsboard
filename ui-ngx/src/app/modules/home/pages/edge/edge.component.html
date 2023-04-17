@@ -156,7 +156,7 @@
           <mat-label translate>edge.edge-key</mat-label>
           <input matInput formControlName="routingKey">
         </mat-form-field>
-      <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('key')"
+      <button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('key')"
               [cbContent]="entityForm?.get('routingKey').value"
               matTooltip="{{'edge.copy-edge-key' | translate}}">
         <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
@@ -167,7 +167,7 @@
           <mat-label translate>edge.edge-secret</mat-label>
           <input matInput formControlName="secret">
         </mat-form-field>
-      <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('secret')"
+      <button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('secret')"
               [cbContent]="entityForm?.get('secret').value"
               matTooltip="{{'edge.copy-edge-secret' | translate}}">
         <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>

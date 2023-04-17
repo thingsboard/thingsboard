@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -28,7 +28,8 @@ import { RelationEntityTypeFilter } from '@shared/models/relation.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-relation-filters',
@@ -42,7 +43,7 @@ import { Subscription } from 'rxjs';
     }
   ]
 })
-export class RelationFiltersComponent extends PageComponent implements ControlValueAccessor, OnInit {
+export class RelationFiltersComponent extends PageComponent implements ControlValueAccessor, OnInit, OnDestroy {
 
   @Input() disabled: boolean;
 
@@ -50,9 +51,8 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
 
   relationFiltersFormGroup: UntypedFormGroup;
 
+  private destroy$ = new Subject<void>();
   private propagateChange = null;
-
-  private valueChangeSubscription: Subscription = null;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
@@ -60,12 +60,23 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
   }
 
   ngOnInit(): void {
-    this.relationFiltersFormGroup = this.fb.group({});
-    this.relationFiltersFormGroup.addControl('relationFilters',
-      this.fb.array([]));
+    this.relationFiltersFormGroup = this.fb.group({
+      relationFilters: this.fb.array([])
+    });
+
+    this.relationFiltersFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.updateModel();
+    });
   }
 
-  relationFiltersFormArray(): UntypedFormArray {
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  get relationFiltersFormArray(): UntypedFormArray {
       return this.relationFiltersFormGroup.get('relationFilters') as UntypedFormArray;
   }
 
@@ -81,19 +92,17 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
   }
 
   writeValue(filters: Array<RelationEntityTypeFilter>): void {
-    if (this.valueChangeSubscription) {
-      this.valueChangeSubscription.unsubscribe();
+    if (filters?.length === this.relationFiltersFormArray.length) {
+      this.relationFiltersFormArray.patchValue(filters, {emitEvent: false});
+    } else {
+      const relationFiltersControls: Array<AbstractControl> = [];
+      if (filters && filters.length) {
+        filters.forEach((filter) => {
+          relationFiltersControls.push(this.createRelationFilterFormGroup(filter));
+        });
+      }
+      this.relationFiltersFormGroup.setControl('relationFilters', this.fb.array(relationFiltersControls), {emitEvent: false});
     }
-    const relationFiltersControls: Array<AbstractControl> = [];
-    if (filters && filters.length) {
-      filters.forEach((filter) => {
-        relationFiltersControls.push(this.createRelationFilterFormGroup(filter));
-      });
-    }
-    this.relationFiltersFormGroup.setControl('relationFilters', this.fb.array(relationFiltersControls));
-    this.valueChangeSubscription = this.relationFiltersFormGroup.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
   }
 
   public removeFilter(index: number) {
@@ -101,12 +110,11 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
   }
 
   public addFilter() {
-    const relationFiltersFormArray = this.relationFiltersFormGroup.get('relationFilters') as UntypedFormArray;
     const filter: RelationEntityTypeFilter = {
       relationType: null,
       entityTypes: []
     };
-    relationFiltersFormArray.push(this.createRelationFilterFormGroup(filter));
+    this.relationFiltersFormArray.push(this.createRelationFilterFormGroup(filter));
   }
 
   private createRelationFilterFormGroup(filter: RelationEntityTypeFilter): AbstractControl {

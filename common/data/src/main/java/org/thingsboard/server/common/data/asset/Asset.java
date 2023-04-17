@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasProfileId;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -39,7 +40,7 @@ import java.util.Optional;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements HasName, HasTenantId, HasCustomerId, ExportableEntity<AssetId>, HasProfileId<AssetProfileId> {
+public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements HasLabel, HasTenantId, HasCustomerId, ExportableEntity<AssetId>, HasProfileId<AssetProfileId> {
 
     private static final long serialVersionUID = 2807343040519543363L;
 

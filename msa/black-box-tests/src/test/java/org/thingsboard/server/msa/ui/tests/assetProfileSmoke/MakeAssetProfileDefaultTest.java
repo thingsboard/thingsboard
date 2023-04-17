@@ -16,9 +16,11 @@
 package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -34,7 +36,7 @@ public class MakeAssetProfileDefaultTest extends AbstractDriverBaseTest {
     private ProfilesPageHelper profilesPage;
     private String name;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewHelper(driver);
@@ -47,8 +49,10 @@ public class MakeAssetProfileDefaultTest extends AbstractDriverBaseTest {
         testRestClient.deleteAssetProfile(getAssetProfileByName(name).getId());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Make asset profile default")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Make asset profile default by clicking on the 'Make asset profile default'  icon in the right corner")
     public void makeDeviceProfileDefaultByRightCornerBtn() {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
@@ -61,8 +65,10 @@ public class MakeAssetProfileDefaultTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.defaultCheckbox(name).isDisplayed());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Make asset profile default")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Make asset profile default by clicking on the 'Make asset profile default' button in the entity view")
     public void makeDeviceProfileDefaultFromView() {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));

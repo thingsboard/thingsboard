@@ -40,6 +40,8 @@ public enum ActionType {
     ALARM_ACK(false),
     ALARM_CLEAR(false),
     ALARM_DELETE(false),
+    ALARM_ASSIGN(false),
+    ALARM_UNASSIGN(false),
     LOGIN(false),
     LOGOUT(false),
     LOCKOUT(false),

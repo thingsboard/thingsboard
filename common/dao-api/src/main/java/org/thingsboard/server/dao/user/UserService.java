@@ -19,12 +19,15 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.entity.EntityDaoService;
+
+import java.util.List;
 
 public interface UserService extends EntityDaoService {
 	
@@ -60,9 +63,21 @@ public interface UserService extends EntityDaoService {
 
     PageData<User> findTenantAdmins(TenantId tenantId, PageLink pageLink);
 
+    PageData<User> findSysAdmins(PageLink pageLink);
+
+    PageData<User> findAllTenantAdmins(PageLink pageLink);
+
+    PageData<User> findTenantAdminsByTenantsIds(List<TenantId> tenantsIds, PageLink pageLink);
+
+    PageData<User> findTenantAdminsByTenantProfilesIds(List<TenantProfileId> tenantProfilesIds, PageLink pageLink);
+
+    PageData<User> findAllUsers(PageLink pageLink);
+
     void deleteTenantAdmins(TenantId tenantId);
 
     PageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, PageLink pageLink);
+
+    PageData<User> findUsersByCustomerIds(TenantId tenantId, List<CustomerId> customerIds, PageLink pageLink);
 
     void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
 

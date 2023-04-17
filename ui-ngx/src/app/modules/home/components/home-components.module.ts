@@ -175,10 +175,14 @@ import { AssetProfileDialogComponent } from '@home/components/profile/asset-prof
 import { AssetProfileAutocompleteComponent } from '@home/components/profile/asset-profile-autocomplete.component';
 import { MODULES_MAP } from '@shared/models/constants';
 import { modulesMap } from '@modules/common/modules-map';
+import { AlarmAssigneePanelComponent } from '@home/components/alarm/alarm-assignee-panel.component';
+import { RouterTabsComponent } from '@home/components/router-tabs.component';
+import { SendNotificationButtonComponent } from '@home/components/notification/send-notification-button.component';
 
 @NgModule({
   declarations:
     [
+      RouterTabsComponent,
       EntitiesTableComponent,
       AddEntityDialogComponent,
       DetailsPanelComponent,
@@ -197,6 +201,7 @@ import { modulesMap } from '@modules/common/modules-map';
       RelationFiltersComponent,
       AlarmTableHeaderComponent,
       AlarmTableComponent,
+      AlarmAssigneePanelComponent,
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
@@ -318,7 +323,8 @@ import { modulesMap } from '@modules/common/modules-map';
       RateLimitsListComponent,
       RateLimitsComponent,
       RateLimitsTextComponent,
-      RateLimitsDetailsDialogComponent
+      RateLimitsDetailsDialogComponent,
+      SendNotificationButtonComponent
     ],
   imports: [
     CommonModule,
@@ -332,6 +338,7 @@ import { modulesMap } from '@modules/common/modules-map';
     DeviceProfileCommonModule
   ],
   exports: [
+    RouterTabsComponent,
     EntitiesTableComponent,
     AddEntityDialogComponent,
     DetailsPanelComponent,
@@ -344,6 +351,7 @@ import { modulesMap } from '@modules/common/modules-map';
     RelationTableComponent,
     RelationFiltersComponent,
     AlarmTableComponent,
+    AlarmAssigneePanelComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
     AliasesEntityAutocompleteComponent,
@@ -455,7 +463,8 @@ import { modulesMap } from '@modules/common/modules-map';
     RateLimitsListComponent,
     RateLimitsComponent,
     RateLimitsTextComponent,
-    RateLimitsDetailsDialogComponent
+    RateLimitsDetailsDialogComponent,
+    SendNotificationButtonComponent
   ],
   providers: [
     WidgetComponentService,
