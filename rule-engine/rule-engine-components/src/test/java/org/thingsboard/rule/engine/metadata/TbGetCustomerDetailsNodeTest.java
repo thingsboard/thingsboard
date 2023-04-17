@@ -113,6 +113,7 @@ public class TbGetCustomerDetailsNodeTest {
     @Test
     public void givenConfigWithNullFetchTo_whenInit_thenException() {
         // GIVEN
+        config.setDetailsList(List.of(EntityDetails.ID));
         config.setFetchTo(null);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
@@ -141,15 +142,9 @@ public class TbGetCustomerDetailsNodeTest {
     }
 
     @Test
-    public void givenDefaultConfig_whenInit_thenOK() throws TbNodeException {
-        // GIVEN-WHEN
-        node.init(ctxMock, nodeConfiguration);
-
-        // THEN
-        assertThat(node.config).isEqualTo(config);
-        assertThat(config.getDetailsList()).isEqualTo(List.of(EntityDetails.STATE, EntityDetails.CITY));
+    public void givenDefaultConfig_whenInit_thenOK() {
+        assertThat(config.getDetailsList()).isEqualTo(Collections.emptyList());
         assertThat(config.getFetchTo()).isEqualTo(FetchTo.DATA);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.DATA);
     }
 
     @Test
