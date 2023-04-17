@@ -17,21 +17,25 @@
 -->
 <saturation-component class="saturation-component" [hue]="control.hue" [(color)]="control.value"></saturation-component>
 
-  <div fxFlex fxLayout="row" class="control-component" fxLayoutGap="16px">
-    <indicator-component [colorType]="presentations[selectedPresentation]" [color]="control.value"></indicator-component>
-    <div fxFlex fxLayout="column" fxLayoutAlign="space-between" class="hue-alpha-range">
-      <hue-component [(hue)]="control.hue" [(color)]="control.value"></hue-component>
-      <alpha-component *ngIf="control.alphaChannelVisibilityChanges | async" [(color)]="control.value"></alpha-component>
-    </div>
+<div class="control-component">
+  <indicator-component class="indicator-component"
+                       [colorType]="presentations[selectedPresentation]"
+                       [color]="control.value">
+  </indicator-component>
+  <div class="hue-alpha-range">
+    <hue-component [(hue)]="control.hue" [(color)]="control.value"></hue-component>
+    <alpha-component [(color)]="control.value"></alpha-component>
   </div>
+</div>
 
-  <div fxFlex fxLayout="row">
-    <div fxFlex [ngSwitch]="presentations[selectedPresentation]">
-      <rgba-input-component *ngSwitchCase="'rgba'" [alpha]="control.alphaChannelVisibilityChanges | async" label [(color)]="control.value" [(hue)]="control.hue"></rgba-input-component>
-      <hsla-input-component *ngSwitchCase="'hsla'" [alpha]="control.alphaChannelVisibilityChanges | async" label [(color)]="control.value" [(hue)]="control.hue"></hsla-input-component>
-      <hex-input-component *ngSwitchCase="'hex'" label prefix="#" [(color)]="control.value" [(hue)]="control.hue"></hex-input-component>
-    </div>
-    <div>
-      <span class="type-btn" (click)="changePresentation()"></span>
-    </div>
+<div class="color-input-block">
+  <div class="color-input" [ngSwitch]="presentations[selectedPresentation]">
+    <rgba-input-component *ngSwitchCase="'rgba'" label
+                          [(color)]="control.value" [(hue)]="control.hue"></rgba-input-component>
+    <hsla-input-component *ngSwitchCase="'hsla'" label
+                          [(color)]="control.value" [(hue)]="control.hue"></hsla-input-component>
+    <hex-input-component *ngSwitchCase="'hex'" label prefix="#" [(color)]="control.value"
+                         [(hue)]="control.hue"></hex-input-component>
   </div>
+  <div class="type-btn" (click)="changePresentation()"></div>
+</div>

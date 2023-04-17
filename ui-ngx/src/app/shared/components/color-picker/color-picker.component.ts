@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, forwardRef, OnDestroy } from '@angular/core';
 import { Color, ColorPickerControl } from '@iplab/ngx-color-picker';
 import { Subscription } from 'rxjs';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -41,7 +41,7 @@ export enum ColorType {
     }
   ]
 })
-export class ColorPickerComponent implements OnInit, ControlValueAccessor, OnDestroy {
+export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
 
   selectedPresentation = 0;
   presentations = [ColorType.hex, ColorType.rgba, ColorType.hsla];
@@ -51,16 +51,17 @@ export class ColorPickerComponent implements OnInit, ControlValueAccessor, OnDes
 
   private subscriptions: Array<Subscription> = [];
 
-  private propagateChange = null;
+  private propagateChange = (v: any) => {};
+
+  private setValue = false;
 
   constructor() {
-  }
-
-  public ngOnInit(): void {
     this.subscriptions.push(
-      this.control.valueChanges.subscribe(value => {
-        if (this.modelValue) {
+      this.control.valueChanges.subscribe(() => {
+        if (!this.setValue) {
           this.updateModel();
+        } else {
+          this.setValue = false;
         }
       })
     );
@@ -74,7 +75,8 @@ export class ColorPickerComponent implements OnInit, ControlValueAccessor, OnDes
   }
 
   writeValue(value: string): void {
-    this.control. setValueFrom(value || '#fff');
+    this.setValue = !!value;
+    this.control.setValueFrom(value || '#fff');
     this.modelValue = value;
 
     if (this.control.initType === ColorType.hexa) {
