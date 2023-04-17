@@ -9,25 +9,6 @@
   },
   "widgetTypes": [
     {
-      "alias": "documentation_links",
-      "name": "Documentation links",
-      "image": null,
-      "description": null,
-      "descriptor": {
-        "type": "static",
-        "sizeX": 7.5,
-        "sizeY": 3,
-        "resources": [],
-        "templateHtml": "<tb-doc-links-widget\n    [ctx]=\"ctx\">\n</tb-doc-links-widget>\n",
-        "templateCss": "",
-        "controllerScript": "self.onInit = function() {\n}",
-        "settingsSchema": "",
-        "dataKeySettingsSchema": "",
-        "settingsDirective": "tb-doc-links-widget-settings",
-        "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"columns\":3},\"title\":\"Documentation links\",\"dropShadow\":true}"
-      }
-    },
-    {
       "alias": "getting_started",
       "name": "Getting started",
       "image": null,
@@ -44,6 +25,63 @@
         "dataKeySettingsSchema": "",
         "settingsDirective": "",
         "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Getting started\",\"dropShadow\":true}"
+      }
+    },
+    {
+      "alias": "documentation_links",
+      "name": "Documentation links",
+      "image": null,
+      "description": null,
+      "descriptor": {
+        "type": "static",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "resources": [],
+        "templateHtml": "<tb-doc-links-widget\n    [ctx]=\"ctx\">\n</tb-doc-links-widget>\n",
+        "templateCss": "",
+        "controllerScript": "self.onInit = function() {\n}",
+        "settingsSchema": "",
+        "dataKeySettingsSchema": "",
+        "settingsDirective": "tb-doc-links-widget-settings",
+        "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"columns\":3},\"title\":\"Documentation links\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false}"
+      }
+    },
+    {
+      "alias": "usage_info",
+      "name": "Usage info",
+      "image": null,
+      "description": null,
+      "descriptor": {
+        "type": "static",
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "resources": [],
+        "templateHtml": "<tb-usage-info-widget\n    [ctx]=\"ctx\">\n</tb-usage-info-widget>\n",
+        "templateCss": "",
+        "controllerScript": "self.onInit = function() {\n}",
+        "settingsSchema": "",
+        "dataKeySettingsSchema": "",
+        "settingsDirective": "",
+        "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Usage info\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false}"
+      }
+    },
+    {
+      "alias": "quick_links",
+      "name": "Quick links",
+      "image": null,
+      "description": null,
+      "descriptor": {
+        "type": "static",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "resources": [],
+        "templateHtml": "<tb-quick-links-widget\n    [ctx]=\"ctx\">\n</tb-quick-links-widget>\n",
+        "templateCss": "",
+        "controllerScript": "self.onInit = function() {\n}",
+        "settingsSchema": "",
+        "dataKeySettingsSchema": "",
+        "settingsDirective": "tb-quick-links-widget-settings",
+        "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"columns\":3},\"title\":\"Quick links\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false}"
       }
     }
   ]

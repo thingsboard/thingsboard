@@ -19,7 +19,7 @@ import { Observable } from 'rxjs';
 import {
   DocumentationLink, DocumentationLinks,
   GettingStarted,
-  initialUserSettings,
+  initialUserSettings, QuickLinks,
   UserSettings,
   UserSettingsType
 } from '@shared/models/user-settings.models';
@@ -64,6 +64,16 @@ export class UserSettingsService {
 
   public updateDocumentationLinks(documentationLinks: DocumentationLinks, config?: RequestConfig): Observable<void> {
     return this.http.put<void>(`/api/user/settings/${UserSettingsType.DOC_LINKS}`, documentationLinks,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getQuickLinks(config?: RequestConfig): Observable<QuickLinks> {
+    return this.http.get<QuickLinks>(`/api/user/settings/${UserSettingsType.QUICK_LINKS}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public updateQuickLinks(quickLinks: QuickLinks, config?: RequestConfig): Observable<void> {
+    return this.http.put<void>(`/api/user/settings/${UserSettingsType.QUICK_LINKS}`, quickLinks,
       defaultHttpOptionsFromConfig(config));
   }
 

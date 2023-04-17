@@ -15,13 +15,9 @@
     limitations under the License.
 
 -->
-<mat-button-toggle-group *ngIf="!isMdLg || !useSelectOnMdLg; else select" class="tb-toggle-header" [name]="name" [(value)]="value">
-  <mat-button-toggle *ngFor="let option of options" [value]="option.value">{{ option.name }}</mat-button-toggle>
-</mat-button-toggle-group>
-<ng-template #select>
-  <mat-form-field appearance="outline" class="tb-toggle-header-select" subscriptSizing="dynamic">
-    <mat-select [(value)]="value">
-      <mat-option *ngFor="let option of options" [value]="option.value"> {{ option.name }}</mat-option>
-    </mat-select>
+<section class="tb-widget-settings" [formGroup]="quickLinksWidgetSettingsForm" fxLayout="column">
+  <mat-form-field fxFlex class="mat-block">
+    <mat-label translate>widgets.quick-links.columns</mat-label>
+    <input required matInput type="number" step="1" min="1" max="20" formControlName="columns">
   </mat-form-field>
-</ng-template>
+</section>

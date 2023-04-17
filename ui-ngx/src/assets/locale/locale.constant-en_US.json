@@ -4170,6 +4170,7 @@
             "line-settings": "Line settings",
             "show-line": "Show line",
             "fill-line": "Fill line",
+            "fill-line-opacity": "Fill opacity",
             "points-settings": "Points settings",
             "show-points": "Show points",
             "points-line-width": "Line width of points",
@@ -5127,6 +5128,11 @@
             "link-required": "Link is required.",
             "columns": "Columns"
         },
+        "quick-links": {
+            "title": "Quick links",
+            "add-link": "Add link",
+            "columns": "Columns"
+        },
         "configured-features": {
             "title": "Configured features",
             "info": "Status of features that require configuration",
@@ -5147,6 +5153,11 @@
             "available": "Available",
             "upgrade": "Upgrade",
             "version-is-up-to-date": "Version is up to date"
+        },
+        "usage-info": {
+            "title": "Usage",
+            "entities": "Entities",
+            "api-calls": "API calls"
         },
         "functions": {
             "title": "Functions",

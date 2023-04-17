@@ -40,6 +40,10 @@ export interface DocumentationLinks {
   links?: DocumentationLink[];
 }
 
+export interface QuickLinks {
+  links?: string[];
+}
+
 export interface GettingStarted {
   maxSelectedIndex?: number;
   lastSelectedIndex?: number;

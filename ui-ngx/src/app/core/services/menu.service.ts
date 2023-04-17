@@ -18,11 +18,10 @@ import { Injectable } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
 import { getCurrentOpenedMenuSections, selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
-import { filter, take } from 'rxjs/operators';
+import { filter, map, take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
-import { guid } from '@core/utils';
 import { AuthState } from '@core/auth/auth.models';
 import { NavigationEnd, Router } from '@angular/router';
 
@@ -34,6 +33,9 @@ export class MenuService {
   currentMenuSections: Array<MenuSection>;
   menuSections$: Subject<Array<MenuSection>> = new BehaviorSubject<Array<MenuSection>>([]);
   homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
+  availableMenuLinks$ = this.menuSections$.pipe(
+    map((items) => this.allMenuLinks(items))
+  );
 
   constructor(private store: Store<AppState>,
               private router: Router) {
@@ -91,21 +93,21 @@ export class MenuService {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
-        id: guid(),
+        id: 'home',
         name: 'home.home',
         type: 'link',
         path: '/home',
         icon: 'home'
       },
       {
-        id: guid(),
+        id: 'tenants',
         name: 'tenant.tenants',
         type: 'link',
         path: '/tenants',
         icon: 'supervisor_account'
       },
       {
-        id: guid(),
+        id: 'tenantProfiles',
         name: 'tenant-profile.tenant-profiles',
         type: 'link',
         path: '/tenantProfiles',
@@ -113,21 +115,21 @@ export class MenuService {
         isMdiIcon: true
       },
       {
-        id: guid(),
+        id: 'resources',
         name: 'admin.resources',
         type: 'toggle',
         path: '/resources',
         icon: 'folder',
         pages: [
           {
-            id: guid(),
+            id: 'resourcesWidgetsBundles',
             name: 'widget.widget-library',
             type: 'link',
             path: '/resources/widgets-bundles',
             icon: 'now_widgets'
           },
           {
-            id: guid(),
+            id: 'resourcesResourcesLibrary',
             name: 'resource.resources-library',
             type: 'link',
             path: '/resources/resources-library',
@@ -137,7 +139,7 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
+        id: 'notification',
         name: 'notification.notification-center',
         type: 'link',
         path: '/notification',
@@ -145,28 +147,28 @@ export class MenuService {
         isMdiIcon: true,
         pages: [
           {
-            id: guid(),
+            id: 'notificationInbox',
             name: 'notification.inbox',
             type: 'link',
             path: '/notification/inbox',
             icon: 'inbox'
           },
           {
-            id: guid(),
+            id: 'notificationSent',
             name: 'notification.sent',
             type: 'link',
             path: '/notification/sent',
             icon: 'outbox'
           },
           {
-            id: guid(),
+            id: 'notificationRecipients',
             name: 'notification.recipients',
             type: 'link',
             path: '/notification/recipients',
             icon: 'contacts'
           },
           {
-            id: guid(),
+            id: 'notificationTemplates',
             name: 'notification.templates',
             type: 'link',
             path: '/notification/templates',
@@ -174,7 +176,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: guid(),
+            id: 'notificationRules',
             name: 'notification.rules',
             type: 'link',
             path: '/notification/rules',
@@ -184,28 +186,28 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
+        id: 'settings',
         name: 'admin.settings',
         type: 'link',
         path: '/settings',
         icon: 'settings',
         pages: [
           {
-            id: guid(),
+            id: 'settingsGeneral',
             name: 'admin.general',
             type: 'link',
             path: '/settings/general',
             icon: 'settings_applications'
           },
           {
-            id: guid(),
+            id: 'settingsOutgoingMail',
             name: 'admin.outgoing-mail',
             type: 'link',
             path: '/settings/outgoing-mail',
             icon: 'mail'
           },
           {
-            id: guid(),
+            id: 'settingsNotifications',
             name: 'admin.notifications',
             type: 'link',
             path: '/settings/notifications',
@@ -213,7 +215,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: guid(),
+            id: 'settingsQueues',
             name: 'admin.queues',
             type: 'link',
             path: '/settings/queues',
@@ -222,21 +224,21 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
+        id: 'securitySettings',
         name: 'security.security',
         type: 'toggle',
         path: '/security-settings',
         icon: 'security',
         pages: [
           {
-            id: guid(),
+            id: 'securitySettingsGeneral',
             name: 'admin.general',
             type: 'link',
             path: '/security-settings/general',
             icon: 'settings_applications'
           },
           {
-            id: guid(),
+            id: 'securitySettings2fa',
             name: 'admin.2fa.2fa',
             type: 'link',
             path: '/security-settings/2fa',
@@ -244,7 +246,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: guid(),
+            id: 'securitySettingsOauth2',
             name: 'admin.oauth2.oauth2',
             type: 'link',
             path: '/security-settings/oauth2',
@@ -340,49 +342,49 @@ export class MenuService {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
-        id: guid(),
+        id: 'home',
         name: 'home.home',
         type: 'link',
         path: '/home',
         icon: 'home'
       },
       {
-        id: guid(),
+        id: 'alarms',
         name: 'alarm.alarms',
         type: 'link',
         path: '/alarms',
         icon: 'notifications'
       },
       {
-        id: guid(),
+        id: 'dashboards',
         name: 'dashboard.dashboards',
         type: 'link',
         path: '/dashboards',
         icon: 'dashboards'
       },
       {
-        id: guid(),
+        id: 'entities',
         name: 'entity.entities',
         type: 'toggle',
         path: '/entities',
         icon: 'category',
         pages: [
           {
-            id: guid(),
+            id: 'entitiesDevices',
             name: 'device.devices',
             type: 'link',
             path: '/entities/devices',
             icon: 'devices_other'
           },
           {
-            id: guid(),
+            id: 'entitiesAssets',
             name: 'asset.assets',
             type: 'link',
             path: '/entities/assets',
             icon: 'domain'
           },
           {
-            id: guid(),
+            id: 'entitiesEntityViews',
             name: 'entity-view.entity-views',
             type: 'link',
             path: '/entities/entityViews',
@@ -391,14 +393,14 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
+        id: 'profiles',
         name: 'profiles.profiles',
         type: 'toggle',
         path: '/profiles',
         icon: 'badge',
         pages: [
           {
-            id: guid(),
+            id: 'profilesDeviceProfiles',
             name: 'device-profile.device-profiles',
             type: 'link',
             path: '/profiles/deviceProfiles',
@@ -406,7 +408,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: guid(),
+            id: 'profilesAssetProfiles',
             name: 'asset-profile.asset-profiles',
             type: 'link',
             path: '/profiles/assetProfiles',
@@ -416,14 +418,14 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
+        id: 'customers',
         name: 'customer.customers',
         type: 'link',
         path: '/customers',
         icon: 'supervisor_account'
       },
       {
-        id: guid(),
+        id: 'ruleChains',
         name: 'rulechain.rulechains',
         type: 'link',
         path: '/ruleChains',
@@ -433,21 +435,21 @@ export class MenuService {
     if (authState.edgesSupportEnabled) {
       sections.push(
         {
-          id: guid(),
+          id: 'edgeManagement',
           name: 'edge.management',
           type: 'toggle',
           path: '/edgeManagement',
           icon: 'settings_input_antenna',
           pages: [
             {
-              id: guid(),
+              id: 'edgeManagementInstances',
               name: 'edge.instances',
               type: 'link',
               path: '/edgeManagement/instances',
               icon: 'router'
             },
             {
-              id: guid(),
+              id: 'edgeManagementRuleChains',
               name: 'edge.rulechain-templates',
               type: 'link',
               path: '/edgeManagement/ruleChains',
@@ -459,21 +461,21 @@ export class MenuService {
     }
     sections.push(
       {
-        id: guid(),
+        id: 'features',
         name: 'feature.advanced-features',
         type: 'toggle',
         path: '/features',
         icon: 'construction',
         pages: [
           {
-            id: guid(),
+            id: 'featuresOtaUpdates',
             name: 'ota-update.ota-updates',
             type: 'link',
             path: '/features/otaUpdates',
             icon: 'memory'
           },
           {
-            id: guid(),
+            id: 'featuresVc',
             name: 'version-control.version-control',
             type: 'link',
             path: '/features/vc',
@@ -482,21 +484,21 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
+        id: 'resources',
         name: 'admin.resources',
         type: 'toggle',
         path: '/resources',
         icon: 'folder',
         pages: [
           {
-            id: guid(),
+            id: 'resourcesWidgetsBundles',
             name: 'widget.widget-library',
             type: 'link',
             path: '/resources/widgets-bundles',
             icon: 'now_widgets'
           },
           {
-            id: guid(),
+            id: 'resourcesResourcesLibrary',
             name: 'resource.resources-library',
             type: 'link',
             path: '/resources/resources-library',
@@ -506,7 +508,7 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
+        id: 'notification',
         name: 'notification.notification-center',
         type: 'link',
         path: '/notification',
@@ -514,28 +516,28 @@ export class MenuService {
         isMdiIcon: true,
         pages: [
           {
-            id: guid(),
+            id: 'notificationInbox',
             name: 'notification.inbox',
             type: 'link',
             path: '/notification/inbox',
             icon: 'inbox'
           },
           {
-            id: guid(),
+            id: 'notificationSent',
             name: 'notification.sent',
             type: 'link',
             path: '/notification/sent',
             icon: 'outbox'
           },
           {
-            id: guid(),
+            id: 'notificationRecipients',
             name: 'notification.recipients',
             type: 'link',
             path: '/notification/recipients',
             icon: 'contacts'
           },
           {
-            id: guid(),
+            id: 'notificationTemplates',
             name: 'notification.templates',
             type: 'link',
             path: '/notification/templates',
@@ -543,7 +545,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: guid(),
+            id: 'notificationRules',
             name: 'notification.rules',
             type: 'link',
             path: '/notification/rules',
@@ -553,28 +555,28 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
+        id: 'usage',
         name: 'api-usage.api-usage',
         type: 'link',
         path: '/usage',
         icon: 'insert_chart'
       },
       {
-        id: guid(),
+        id: 'settings',
         name: 'admin.settings',
         type: 'link',
         path: '/settings',
         icon: 'settings',
         pages: [
           {
-            id: guid(),
+            id: 'settingsHome',
             name: 'admin.home',
             type: 'link',
             path: '/settings/home',
             icon: 'settings_applications'
           },
           {
-            id: guid(),
+            id: 'settingsNotifications',
             name: 'admin.notifications',
             type: 'link',
             path: '/settings/notifications',
@@ -582,14 +584,14 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: guid(),
+            id: 'settingsRepository',
             name: 'admin.repository',
             type: 'link',
             path: '/settings/repository',
             icon: 'manage_history'
           },
           {
-            id: guid(),
+            id: 'settingsAutoCommit',
             name: 'admin.auto-commit',
             type: 'link',
             path: '/settings/auto-commit',
@@ -598,14 +600,14 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
+        id: 'securitySettings',
         name: 'security.security',
         type: 'toggle',
         path: '/security-settings',
         icon: 'security',
         pages: [
           {
-            id: guid(),
+            id: 'securitySettingsAuditLogs',
             name: 'audit-log.audit-logs',
             type: 'link',
             path: '/security-settings/auditLogs',
@@ -781,49 +783,49 @@ export class MenuService {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
-        id: guid(),
+        id: 'home',
         name: 'home.home',
         type: 'link',
         path: '/home',
         icon: 'home'
       },
       {
-        id: guid(),
+        id: 'alarms',
         name: 'alarm.alarms',
         type: 'link',
         path: '/alarms',
         icon: 'notifications'
       },
       {
-        id: guid(),
+        id: 'dashboards',
         name: 'dashboard.dashboards',
         type: 'link',
         path: '/dashboards',
         icon: 'dashboards'
       },
       {
-        id: guid(),
+        id: 'entities',
         name: 'entity.entities',
         type: 'toggle',
         path: '/entities',
         icon: 'category',
         pages: [
           {
-            id: guid(),
+            id: 'entitiesDevices',
             name: 'device.devices',
             type: 'link',
             path: '/entities/devices',
             icon: 'devices_other'
           },
           {
-            id: guid(),
+            id: 'entitiesAssets',
             name: 'asset.assets',
             type: 'link',
             path: '/entities/assets',
             icon: 'domain'
           },
           {
-            id: guid(),
+            id: 'entitiesEntityViews',
             name: 'entity-view.entity-views',
             type: 'link',
             path: '/entities/entityViews',
@@ -835,7 +837,7 @@ export class MenuService {
     if (authState.edgesSupportEnabled) {
       sections.push(
         {
-          id: guid(),
+          id: 'edgeManagementInstances',
           name: 'edge.edge-instances',
           type: 'link',
           path: '/edgeManagement/instances',
@@ -845,7 +847,7 @@ export class MenuService {
     }
     sections.push(
       {
-        id: guid(),
+        id: 'notification',
         name: 'notification.notification-center',
         type: 'link',
         path: '/notification',
@@ -853,7 +855,7 @@ export class MenuService {
         isMdiIcon: true,
         pages: [
           {
-            id: guid(),
+            id: 'notificationInbox',
             name: 'notification.inbox',
             type: 'link',
             path: '/notification/inbox',
@@ -928,6 +930,19 @@ export class MenuService {
     return homeSections;
   }
 
+  private allMenuLinks(sections: Array<MenuSection>): Array<MenuSection> {
+    const result: Array<MenuSection> = [];
+    for (const section of sections) {
+      if (section.type === 'link') {
+        result.push(section);
+      }
+      if (section.pages && section.pages.length) {
+        result.push(...this.allMenuLinks(section.pages));
+      }
+    }
+    return result;
+  }
+
   public menuSections(): Observable<Array<MenuSection>> {
     return this.menuSections$;
   }
@@ -936,5 +951,20 @@ export class MenuService {
     return this.homeSections$;
   }
 
-}
+  public availableMenuLinks(): Observable<Array<MenuSection>> {
+    return this.availableMenuLinks$;
+  }
 
+  public menuLinkById(id: string): Observable<MenuSection | undefined> {
+    return this.availableMenuLinks$.pipe(
+      map((links) => links.find(link => link.id === id))
+    );
+  }
+
+  public menuLinksByIds(ids: string[]): Observable<Array<MenuSection>> {
+    return this.availableMenuLinks$.pipe(
+      map((links) => links.filter(link => ids.includes(link.id)))
+    );
+  }
+
+}

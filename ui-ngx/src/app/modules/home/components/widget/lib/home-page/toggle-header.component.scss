@@ -24,7 +24,6 @@
     padding: 2px;
     border: none;
     background: rgba(0, 0, 0, 0.06);
-    margin-bottom: 8px;
     .mat-button-toggle + .mat-button-toggle {
       border-left: none;
     }
@@ -63,7 +62,6 @@
   @media #{$mat-md-lg} {
     .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
       height: 24px;
-      margin-bottom: 0;
       .mat-button-toggle.mat-button-toggle-appearance-standard {
         .mat-button-toggle-button {
           height: 20px;
@@ -81,6 +79,55 @@
             }
           }
         }
+      }
+    }
+  }
+  .tb-toggle-header-select {
+    &.mat-mdc-form-field {
+      line-height: 16px;
+      font-size: 12px;
+    }
+    .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
+      min-height: 0;
+      width: auto;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    .mdc-text-field--outlined {
+      padding-left: 8px;
+      padding-right: 6px;
+    }
+    .mat-mdc-select {
+      font-weight: 400;
+      font-size: 12px;
+      line-height: 16px;
+      letter-spacing: 0.25px;
+    }
+    .mat-mdc-select-value {
+      color: rgba(0, 0, 0, 0.38);
+    }
+    .mat-mdc-select-arrow-wrapper {
+      height: 12px;
+      padding-left: 6px;
+    }
+    .mat-mdc-select-arrow {
+      width: 12px;
+      height: 12px;
+      & > svg {
+        display: none;
+      }
+      &:after {
+        font-family: 'Material Icons';
+        content: "expand_more";
+        position: absolute;
+        display: inline-block;
+        font-size: 20px;
+        line-height: 12px;
+        top: 0;
+        left: -6px;
+        right: 0;
+        bottom: 0;
+        color: rgba(0, 0, 0, 0.38);
       }
     }
   }

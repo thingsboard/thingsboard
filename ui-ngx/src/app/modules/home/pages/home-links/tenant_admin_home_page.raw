@@ -48,7 +48,7 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div fxLayout=\"row\" fxLayoutAlign=\"space-between start\">\n        <div class=\"tb-home-widget-title\">{{ 'widgets.activity.title' | translate }}</div>\n        <tb-toggle-header #activityStates value=\"devices\" name=\"activityStates\">\n            <mat-button-toggle value=\"devices\">{{ 'device.devices' | translate }}</mat-button-toggle>\n            <mat-button-toggle value=\"transportMessages\">{{ 'widgets.transport-messages.title' | translate }}</mat-button-toggle>\n        </tb-toggle-header>\n    </div>\n    <ng-container [ngSwitch]=\"activityStates.value\">\n        <ng-template [ngSwitchCase]=\"'devices'\">\n            <tb-dashboard-state fxFlex stateId=\"devices_activity\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n        <ng-template [ngSwitchCase]=\"'transportMessages'\">\n            <tb-dashboard-state fxFlex stateId=\"transport_messages\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n    </ng-container>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div fxLayout=\"row\" fxLayoutAlign=\"space-between start\">\n        <div class=\"tb-home-widget-title\">{{ 'widgets.activity.title' | translate }}</div>\n        <tb-toggle-header #activityStates value=\"devices\" name=\"activityStates\"\n            [options]=\"[\n                {\n                    name: ctx.translate.instant('device.devices'),\n                    value: 'devices'\n                },\n                {\n                    name: ctx.translate.instant('widgets.transport-messages.title'),\n                    value: 'transportMessages'\n                }\n            ]\">\n        </tb-toggle-header>\n    </div>\n    <ng-container [ngSwitch]=\"activityStates.value\">\n        <ng-template [ngSwitchCase]=\"'devices'\">\n            <tb-dashboard-state fxFlex stateId=\"devices_activity\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n        <ng-template [ngSwitchCase]=\"'transportMessages'\">\n            <tb-dashboard-state fxFlex stateId=\"transport_messages\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n    </ng-container>\n</div>",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n"
           },
@@ -308,7 +308,7 @@
               "filterId": null,
               "dataKeys": [
                 {
-                  "name": "activeDevicesCount",
+                  "name": "activeDevicesCountHourly",
                   "type": "timeseries",
                   "label": "{i18n:device.devices}",
                   "color": "#305680",
@@ -320,11 +320,8 @@
                     "showLines": true,
                     "lineWidth": 3,
                     "fillLines": true,
+                    "fillLinesOpacity": 0.04,
                     "showPoints": false,
-                    "showPointsLineWidth": 5,
-                    "showPointsRadius": 3,
-                    "showPointShape": "circle",
-                    "pointShapeFormatter": "var size = radius * Math.sqrt(Math.PI) / 2;\nctx.moveTo(x - size, y - size);\nctx.lineTo(x + size, y + size);\nctx.moveTo(x - size, y + size);\nctx.lineTo(x + size, y - size);",
                     "showSeparateAxis": false,
                     "axisPosition": "left",
                     "comparisonSettings": {
@@ -431,7 +428,7 @@
           "widgetStyle": {
             "padding": "0"
           },
-          "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}",
+          "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}\n",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
           "showLegend": false,
@@ -449,6 +446,68 @@
         "row": 0,
         "col": 0,
         "id": "d26e5cd7-75ef-d475-00c7-1a2d1114efe8"
+      },
+      "ebbd0a6e-8a47-e770-5086-7f4974250f2d": {
+        "isSystemType": true,
+        "bundleAlias": "home_page_widgets",
+        "typeAlias": "usage_info",
+        "type": "static",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {},
+          "title": "New Usage info",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false,
+          "datasources": []
+        },
+        "row": 0,
+        "col": 0,
+        "id": "ebbd0a6e-8a47-e770-5086-7f4974250f2d"
+      },
+      "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e": {
+        "isSystemType": true,
+        "bundleAlias": "home_page_widgets",
+        "typeAlias": "quick_links",
+        "type": "static",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "columns": 2
+          },
+          "title": "New Quick links",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false,
+          "datasources": []
+        },
+        "row": 0,
+        "col": 0,
+        "id": "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e"
       }
     },
     "states": {
@@ -467,10 +526,10 @@
                 "mobileHeight": 8
               },
               "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
-                "sizeX": 31,
+                "sizeX": 29,
                 "sizeY": 16,
                 "row": 42,
-                "col": 26,
+                "col": 28,
                 "mobileHide": true
               },
               "a23185ad-dc46-806c-0e50-5b21fb080ace": {
@@ -479,6 +538,18 @@
                 "row": 0,
                 "col": 85,
                 "mobileHide": true
+              },
+              "ebbd0a6e-8a47-e770-5086-7f4974250f2d": {
+                "sizeX": 28,
+                "sizeY": 16,
+                "row": 42,
+                "col": 57
+              },
+              "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e": {
+                "sizeX": 28,
+                "sizeY": 16,
+                "row": 42,
+                "col": 0
               }
             },
             "gridSettings": {

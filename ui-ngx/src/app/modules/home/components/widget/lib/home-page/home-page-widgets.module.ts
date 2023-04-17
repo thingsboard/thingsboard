@@ -29,6 +29,8 @@ import {
   GettingStartedCompletedDialogComponent
 } from '@home/components/widget/lib/home-page/getting-started-completed-dialog.component';
 import { ToggleHeaderComponent } from '@home/components/widget/lib/home-page/toggle-header.component';
+import { UsageInfoWidgetComponent } from '@home/components/widget/lib/home-page/usage-info-widget.component';
+import { QuickLinksWidgetComponent } from '@home/components/widget/lib/home-page/quick-links-widget.component';
 
 @NgModule({
   declarations:
@@ -42,7 +44,9 @@ import { ToggleHeaderComponent } from '@home/components/widget/lib/home-page/tog
       EditDocLinksDialogComponent,
       GettingStartedWidgetComponent,
       GettingStartedCompletedDialogComponent,
-      ToggleHeaderComponent
+      ToggleHeaderComponent,
+      UsageInfoWidgetComponent,
+      QuickLinksWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -58,7 +62,9 @@ import { ToggleHeaderComponent } from '@home/components/widget/lib/home-page/tog
     EditDocLinksDialogComponent,
     GettingStartedWidgetComponent,
     GettingStartedCompletedDialogComponent,
-    ToggleHeaderComponent
+    ToggleHeaderComponent,
+    UsageInfoWidgetComponent,
+    QuickLinksWidgetComponent
   ]
 })
 export class HomePageWidgetsModule { }

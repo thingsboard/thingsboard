@@ -19,96 +19,51 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
-import { map, Subscription } from 'rxjs';
-import { DocumentationLink, DocumentationLinks } from '@shared/models/user-settings.models';
+import { map, Observable, of, Subscription } from 'rxjs';
+import { QuickLinks } from '@shared/models/user-settings.models';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { MatDialog } from '@angular/material/dialog';
-import { AddDocLinkDialogComponent } from '@home/components/widget/lib/home-page/add-doc-link-dialog.component';
-import {
-  EditDocLinksDialogComponent,
-  EditDocLinksDialogData
-} from '@home/components/widget/lib/home-page/edit-doc-links-dialog.component';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
+import { MenuService } from '@core/services/menu.service';
+import { MenuSection } from '@core/services/menu.models';
 
-const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
+const defaultQuickLinksMap = new Map<Authority, QuickLinks>(
   [
     [Authority.SYS_ADMIN, {
-      links: [
-        {
-          icon: 'rocket',
-          name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
-        },
-        {
-          icon: 'title',
-          name: 'Tenant profiles',
-          link: 'https://thingsboard.io/docs/user-guide/tenant-profiles/'
-        },
-        {
-          icon: 'insert_chart',
-          name: 'API',
-          link: 'https://thingsboard.io/docs/api/'
-        },
-        {
-          icon: 'now_widgets',
-          name: 'Widgets Library',
-          link: 'https://thingsboard.io/docs/user-guide/ui/widget-library/'
-        }
-      ]
+      links: ['tenants', 'tenantProfiles']
     }],
     [Authority.TENANT_ADMIN, {
-      links: [
-        {
-          icon: 'rocket',
-          name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
-        },
-        {
-          icon: 'settings_ethernet',
-          name: 'Rule engine',
-          link: 'https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/'
-        },
-        {
-          icon: 'insert_chart',
-          name: 'API',
-          link: 'https://thingsboard.io/docs/api/'
-        },
-        {
-          icon: 'devices',
-          name: 'Device profiles',
-          link: 'https://thingsboard.io/docs/user-guide/device-profiles/'
-        }
-      ]
+      links: ['alarms', 'dashboards', 'entitiesDevices']
     }],
     [Authority.CUSTOMER_USER, {
-      links: []
+      links: ['alarms', 'dashboards', 'entitiesDevices']
     }]
   ]
 );
 
-interface DocLinksWidgetSettings {
+interface QuickLinksWidgetSettings {
   columns: number;
 }
 
 @Component({
-  selector: 'tb-doc-links-widget',
-  templateUrl: './doc-links-widget.component.html',
+  selector: 'tb-quick-links-widget',
+  templateUrl: './quick-links-widget.component.html',
   styleUrls: ['./home-page-widget.scss', './links-widget.component.scss']
 })
-export class DocLinksWidgetComponent extends PageComponent implements OnInit, OnDestroy {
+export class QuickLinksWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
   @Input()
   ctx: WidgetContext;
 
-  settings: DocLinksWidgetSettings;
+  settings: QuickLinksWidgetSettings;
   columns: number;
   rowHeight = '55px';
   gutterSize = '12px';
 
-  documentationLinks: DocumentationLinks;
+  quickLinks: QuickLinks;
   authUser = getCurrentAuthUser(this.store);
 
   private observeBreakpointSubscription: Subscription;
@@ -117,6 +72,7 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
               private cd: ChangeDetectorRef,
               private userSettingsService: UserSettingsService,
               private dialog: MatDialog,
+              private menuService: MenuService,
               private breakpointObserver: BreakpointObserver) {
     super(store);
   }
@@ -139,8 +95,8 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
           }
           this.cd.markForCheck();
         }
-    );
-    this.loadDocLinks();
+      );
+    this.loadQuickLinks();
   }
 
   ngOnDestroy() {
@@ -150,25 +106,29 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
     super.ngOnDestroy();
   }
 
-  private loadDocLinks() {
-    this.userSettingsService.getDocumentationLinks().pipe(
-      map((documentationLinks) => {
-        if (!documentationLinks || !documentationLinks.links) {
-          return defaultDocLinksMap.get(this.authUser.authority);
+  menuLinks$(): Observable<Array<MenuSection>> {
+    return this.quickLinks ? this.menuService.menuLinksByIds(this.quickLinks.links) : of([]);
+  }
+
+  private loadQuickLinks() {
+    this.userSettingsService.getQuickLinks().pipe(
+      map((quickLinks) => {
+        if (!quickLinks || !quickLinks.links) {
+          return defaultQuickLinksMap.get(this.authUser.authority);
         } else {
-          return documentationLinks;
+          return quickLinks;
         }
       })
     ).subscribe(
-      (documentationLinks) => {
-        this.documentationLinks = documentationLinks;
+      (quickLinks) => {
+        this.quickLinks = quickLinks;
         this.cd.markForCheck();
       }
     );
   }
 
   edit() {
-    this.dialog.open<EditDocLinksDialogComponent, EditDocLinksDialogData,
+  /*  this.dialog.open<EditDocLinksDialogComponent, EditDocLinksDialogData,
       boolean>(EditDocLinksDialogComponent, {
       disableClose: true,
       autoFocus: false,
@@ -181,11 +141,11 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
         if (result) {
           this.loadDocLinks();
         }
-      });
+      }); */
   }
 
   addLink() {
-    this.dialog.open<AddDocLinkDialogComponent, any,
+   /* this.dialog.open<AddDocLinkDialogComponent, any,
       DocumentationLink>(AddDocLinkDialogComponent, {
       disableClose: true,
       autoFocus: false,
@@ -197,6 +157,6 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
           this.cd.markForCheck();
           this.userSettingsService.updateDocumentationLinks(this.documentationLinks).subscribe();
         }
-    });
+      }); */
   }
 }

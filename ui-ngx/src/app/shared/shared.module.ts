@@ -187,6 +187,7 @@ import {
   GtMdLgLayoutGapDirective,
   GtMdLgShowHideDirective
 } from '@shared/layout/layout.directives';
+import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -203,7 +204,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     SafePipe,
-    DateAgoPipe,
+    ShortNumberPipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -327,6 +328,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     SafePipe,
+    ShortNumberPipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
@@ -345,7 +347,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    DateAgoPipe,
     MdLgLayoutDirective,
     MdLgLayoutAlignDirective,
     MdLgLayoutGapDirective,
@@ -550,6 +551,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     SafePipe,
+    ShortNumberPipe,
     SelectableColumnsPipe,
     RouterModule,
     TranslateModule,
@@ -568,7 +570,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    DateAgoPipe,
     MdLgLayoutDirective,
     MdLgLayoutAlignDirective,
     MdLgLayoutGapDirective,
