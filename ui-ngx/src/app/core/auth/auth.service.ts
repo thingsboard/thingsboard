@@ -156,10 +156,8 @@ export class AuthService {
       ));
   }
 
-  public resetPassword(resetToken: string, password: string) {
-    this.http.post('/api/noauth/resetPassword', {resetToken, password}, defaultHttpOptions()).subscribe(
-      () => { this.router.navigateByUrl('login'); }, () => {}
-      );
+  public resetPassword(resetToken: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>('/api/noauth/resetPassword', {resetToken, password}, defaultHttpOptions());
   }
 
   public changePassword(currentPassword: string, newPassword: string, config?: RequestConfig) {

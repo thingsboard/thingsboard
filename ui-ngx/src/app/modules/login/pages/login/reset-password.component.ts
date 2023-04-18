@@ -22,7 +22,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder } from '@angular/forms';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -44,6 +44,7 @@ export class ResetPasswordComponent extends PageComponent implements OnInit, OnD
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
+              private router: Router,
               private authService: AuthService,
               private translate: TranslateService,
               public fb: FormBuilder) {
@@ -71,7 +72,9 @@ export class ResetPasswordComponent extends PageComponent implements OnInit, OnD
     } else {
       this.authService.resetPassword(
         this.resetToken,
-        this.resetPassword.get('newPassword').value);
+        this.resetPassword.get('newPassword').value).subscribe(
+        () => this.router.navigateByUrl('login')
+      );
     }
   }
 }
