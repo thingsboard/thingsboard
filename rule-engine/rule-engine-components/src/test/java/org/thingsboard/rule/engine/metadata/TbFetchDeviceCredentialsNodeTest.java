@@ -42,7 +42,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -68,14 +69,6 @@ public class TbFetchDeviceCredentialsNodeTest {
         config = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
         config.setFetchTo(FetchTo.METADATA);
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-
-        lenient().doReturn(deviceCredentialsServiceMock).when(ctxMock).getDeviceCredentialsService();
-        lenient().doAnswer(invocation -> {
-            DeviceCredentials deviceCredentials = new DeviceCredentials();
-            deviceCredentials.setCredentialsType(ACCESS_TOKEN);
-            return deviceCredentials;
-        }).when(deviceCredentialsServiceMock).findDeviceCredentialsByDeviceId(any(), any());
-        lenient().doAnswer(invocation -> JacksonUtil.newObjectNode()).when(deviceCredentialsServiceMock).toCredentialsInfo(any());
     }
 
     @AfterEach
@@ -98,6 +91,13 @@ public class TbFetchDeviceCredentialsNodeTest {
     @Test
     void givenValidMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         // GIVEN
+        doReturn(deviceCredentialsServiceMock).when(ctxMock).getDeviceCredentialsService();
+        doAnswer(invocation -> {
+            DeviceCredentials deviceCredentials = new DeviceCredentials();
+            deviceCredentials.setCredentialsType(ACCESS_TOKEN);
+            return deviceCredentials;
+        }).when(deviceCredentialsServiceMock).findDeviceCredentialsByDeviceId(any(), any());
+        doAnswer(invocation -> JacksonUtil.newObjectNode()).when(deviceCredentialsServiceMock).toCredentialsInfo(any());
 
         // WHEN
         node.onMsg(ctxMock, getTbMsg(deviceId));
@@ -135,8 +135,8 @@ public class TbFetchDeviceCredentialsNodeTest {
     @Test
     void givenGetDeviceCredentials_whenOnMsg_thenShouldTellFailure() throws Exception {
         // GIVEN
-        willAnswer(invocation -> null)
-                .given(deviceCredentialsServiceMock).findDeviceCredentialsByDeviceId(any(), any());
+        doReturn(deviceCredentialsServiceMock).when(ctxMock).getDeviceCredentialsService();
+        willAnswer(invocation -> null).given(deviceCredentialsServiceMock).findDeviceCredentialsByDeviceId(any(), any());
 
         // WHEN
         node.onMsg(ctxMock, getTbMsg(deviceId));
