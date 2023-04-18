@@ -28,29 +28,26 @@ import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 
 public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
 
-    AlarmId tenantAlarmId;
-    DeviceId tenantDeviceId;
-    String tenantDeviceName;
-    String tenantAlarm = "Test tenant alarm " + random();
+    private AlarmId tenantAlarmId;
+    private DeviceId tenantDeviceId;
+    private String tenantDeviceName;
 
-    public void loginByUser(String userEmail) {
-        sideBarMenuView.customerBtn().click();
-        customerPage.manageCustomersUserBtn(customerTitle).click();
-        customerPage.getUserLoginBtnByEmail(userEmail).click();
-    }
+    private String tenantAlarmType;
 
     @BeforeMethod
     public void generateTenantEntity() {
         if (getJwtTokenFromLocalStorage() == null) {
             new LoginPageHelper(driver).authorizationTenant();
         }
+        tenantAlarmType = "Test tenant alarm " + random();
+
         tenantDeviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype("")).getName();
         tenantDeviceId = testRestClient.getDeviceByName(tenantDeviceName).getId();
-        tenantAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(tenantDeviceId, tenantAlarm)).getId();
+        tenantAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(tenantDeviceId, tenantAlarmType)).getId();
     }
 
     @AfterMethod
-    public void clear() {
+    public void deleteTenantEntity() {
         testRestClient.deleteAlarm(tenantAlarmId);
         testRestClient.deleteDevice(tenantDeviceId);
         clearStorage();
@@ -61,7 +58,7 @@ public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
         loginByUser(userEmail);
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.assignAlarmTo(alarm, userEmail);
+        alarmPage.assignAlarmTo(alarmType, userEmail);
 
         assertIsDisplayed(alarmPage.assignedUser(userEmail));
     }
@@ -71,7 +68,7 @@ public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
         loginByUser(userWithNameEmail);
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.assignAlarmTo(assignedAlarm, userName);
+        alarmPage.assignAlarmTo(assignedAlarmType, userName);
 
         assertIsDisplayed(alarmPage.assignedUser(userName));
     }
@@ -81,9 +78,9 @@ public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
         loginByUser(userWithNameEmail);
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.unassignedAlarm(assignedAlarm);
+        alarmPage.unassignedAlarm(assignedAlarmType);
 
-        assertIsDisplayed(alarmPage.unassigned(assignedAlarm));
+        assertIsDisplayed(alarmPage.unassigned(assignedAlarmType));
     }
 
     @Test
@@ -91,16 +88,16 @@ public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
         loginByUser(userEmail);
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.unassignedAlarm(assignedAlarm);
+        alarmPage.unassignedAlarm(assignedAlarmType);
 
-        assertIsDisplayed(alarmPage.unassigned(assignedAlarm));
+        assertIsDisplayed(alarmPage.unassigned(assignedAlarmType));
     }
 
     @Test
     public void checkTheDisplayOfNamesEmailsFromCustomer() {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(tenantDeviceName);
-        alarmPage.assignAlarmTo(tenantAlarm, Const.TENANT_EMAIL);
+        alarmPage.assignAlarmTo(tenantAlarmType, Const.TENANT_EMAIL);
         devicePage.closeDeviceDetailsViewBtn().click();
         devicePage.assignToCustomerBtn(tenantDeviceName).click();
         devicePage.assignToCustomer(customerTitle);
@@ -115,14 +112,14 @@ public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
     public void reassignTenantForOldAlarm() {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(tenantDeviceName);
-        alarmPage.assignAlarmTo(tenantAlarm, Const.TENANT_EMAIL);
+        alarmPage.assignAlarmTo(tenantAlarmType, Const.TENANT_EMAIL);
         devicePage.closeDeviceDetailsViewBtn().click();
         devicePage.assignToCustomerBtn(tenantDeviceName).click();
         devicePage.assignToCustomer(customerTitle);
         loginByUser(userEmail);
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(tenantDeviceName);
-        alarmPage.assignBtn(tenantAlarm).click();
+        jsClick(alarmPage.assignBtn(tenantAlarmType));
 
         assertIsDisplayed(alarmPage.accessForbiddenDialogView());
     }

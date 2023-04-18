@@ -20,8 +20,8 @@ import org.openqa.selenium.WebElement;
 
 import java.util.List;
 
-public class AlarmElements extends OtherPageElements{
-    public AlarmElements(WebDriver driver) {
+public class AlarmDetailsEntityTabElements extends OtherPageElements {
+    public AlarmDetailsEntityTabElements(WebDriver driver) {
         super(driver);
     }
 
@@ -34,6 +34,7 @@ public class AlarmElements extends OtherPageElements{
     private static final String UNASSIGNED = "//span[text() = '%s']/ancestor::mat-row//span[@class='assignee-cell']/mat-icon[text() = 'account_circle']/following-sibling::span";
     private static final String ALARM_DETAILS_BTN = "//span[text() = '%s']/ancestor::mat-row//mat-icon[contains(text(),'more_horiz')]/parent::button";
     private static final String ACCESS_FORBIDDEN_DIALOG_VIEW = "//h2[text() = 'Access Forbidden']/parent::tb-confirm-dialog";
+    private static final String ALARM_ASSIGNEE_DROPDOWN = "//tb-alarm-assignee-panel";
 
     public WebElement assignBtn(String type) {
         return waitUntilElementToBeClickable(String.format(ASSIGN_BTN, type));
@@ -69,5 +70,9 @@ public class AlarmElements extends OtherPageElements{
 
     public WebElement accessForbiddenDialogView() {
         return waitUntilVisibilityOfElementLocated(ACCESS_FORBIDDEN_DIALOG_VIEW);
+    }
+
+    public WebElement alarmAssigneeDropdown() {
+        return waitUntilVisibilityOfElementLocated(ALARM_ASSIGNEE_DROPDOWN);
     }
 }

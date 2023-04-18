@@ -24,8 +24,8 @@ import org.testng.annotations.Test;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.msa.ui.pages.AssetPageElements;
-import org.thingsboard.server.msa.ui.pages.EntityViewPage;
+import org.thingsboard.server.msa.ui.pages.AssetPageHelper;
+import org.thingsboard.server.msa.ui.pages.EntityViewPageHelper;
 import org.thingsboard.server.msa.ui.utils.Const;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
@@ -34,36 +34,49 @@ import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 
 public class AssignDetailsTabAssignTest extends AbstractAssignTest {
 
+    private AssetId assetId;
     private AlarmId propageteAlarmId;
     private AlarmId propageteAssigneAlarmId;
     private AlarmId customerAlarmId;
     private AlarmId assetAlarmId;
     private AlarmId entityViewAlarmId;
+    private EntityViewId entityViewId;
+
     private String assetName;
     private String entityViewName;
-    private final String propagateAlarm = "Test propagated alarm 1 " + random();
-    private final String propagateAssignedAlarm = "Test propagated alarm 2 " + random();
-    private final String customerAlarm = "Test customer alarm" + random();
-    private final String assetAlarm = "Test asset alarm" + random();
-    private final String entityViewAlarm = "Test entity view alarm" + random();
-    private AssetId assetId;
-    private EntityViewId entityViewId;
+    private String propagateAlarmType;
+    private String propagateAssignedAlarmType;
+    private String customerAlarmType;
+    private String assetAlarmType;
+    private String entityViewAlarmType;
+
+    private AssetPageHelper assetPage;
+    private EntityViewPageHelper entityViewPage;
 
     @BeforeClass
     public void generateTestEntities() {
-        customerAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(customerId, customerAlarm)).getId();
-        assetId = testRestClient.postAsset(EntityPrototypes.defaultAssetPrototype("", customerId)).getId();
+        assetPage = new AssetPageHelper(driver);
+        entityViewPage = new EntityViewPageHelper(driver);
+
+        customerAlarmType = "Test customer alarm" + random();
+        assetAlarmType = "Test asset alarm" + random();
+        entityViewAlarmType = "Test entity view alarm" + random();
+        propagateAlarmType = "Test propagated alarm " + random();
+        propagateAssignedAlarmType = "Test propagated alarm " + random();
+
+        customerAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(customerId, customerAlarmType)).getId();
+        assetId = testRestClient.postAsset(EntityPrototypes.defaultAssetPrototype("Asset", customerId)).getId();
         assetName = testRestClient.getAssetById(assetId).getName();
-        assetAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(assetId, assetAlarm)).getId();
-        entityViewId = testRestClient.postEntityView(EntityPrototypes.defaultEntityViewPrototype("", "", "DEVICE")).getId();
+        assetAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(assetId, assetAlarmType)).getId();
+        entityViewId = testRestClient.postEntityView(EntityPrototypes.defaultEntityViewPrototype("Entity view", "", "DEVICE")).getId();
         entityViewName = testRestClient.getEntityViewById(entityViewId).getName();
-        entityViewAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(entityViewId, entityViewAlarm)).getId();
+        entityViewAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(entityViewId, entityViewAlarmType)).getId();
     }
 
     @BeforeMethod
     public void generateTestAlarms() {
-        propageteAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId, propagateAlarm, true)).getId();
-        propageteAssigneAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId, propagateAssignedAlarm, userId, true)).getId();
+        propageteAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId, propagateAlarmType, true)).getId();
+        propageteAssigneAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId, propagateAssignedAlarmType, userId, true)).getId();
     }
 
     @AfterClass
@@ -84,15 +97,15 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     @DataProvider
     public Object[][] alarms() {
         return new Object[][]{
-                {alarm},
-                {propagateAlarm}};
+                {alarmType},
+                {propagateAlarmType}};
     }
 
     @DataProvider
     public Object[][] assignedAlarms() {
         return new Object[][]{
-                {assignedAlarm},
-                {propagateAssignedAlarm}};
+                {assignedAlarmType},
+                {propagateAssignedAlarmType}};
     }
 
     @Test(dataProvider = "alarms")
@@ -135,7 +148,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     public void searchByEmail() {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.searchAlarm(alarm, Const.TENANT_EMAIL);
+        alarmPage.searchAlarm(alarmType, Const.TENANT_EMAIL);
         alarmPage.setUsers();
 
         assertThat(alarmPage.getUsers()).hasSize(1).as("Search result contains search input").contains(Const.TENANT_EMAIL);
@@ -146,7 +159,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     public void searchByName() {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.searchAlarm(alarm, userName);
+        alarmPage.searchAlarm(alarmType, userName);
         alarmPage.setUsers();
 
         assertThat(alarmPage.getUsers()).hasSize(1).as("Search result contains search input").contains(userName);
@@ -157,7 +170,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     public void assignAlarmToYourselfFromDetails() {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.alarmDetailsBtn(alarm).click();
+        alarmPage.alarmDetailsBtn(alarmType).click();
         alarmDetailsView.assignAlarmTo(Const.TENANT_EMAIL);
         alarmDetailsView.closeAlarmDetailsViewBtn().click();
 
@@ -168,7 +181,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     public void assignAlarmToAnotherUserFromDetails() {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.alarmDetailsBtn(alarm).click();
+        alarmPage.alarmDetailsBtn(alarmType).click();
         alarmDetailsView.assignAlarmTo(userEmail);
         alarmDetailsView.closeAlarmDetailsViewBtn().click();
 
@@ -179,18 +192,18 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     public void unassignedAlarmFromDetails() {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.alarmDetailsBtn(assignedAlarm).click();
+        alarmPage.alarmDetailsBtn(assignedAlarmType).click();
         alarmDetailsView.unassignedAlarm();
         alarmDetailsView.closeAlarmDetailsViewBtn().click();
 
-        assertIsDisplayed(alarmPage.unassigned(assignedAlarm));
+        assertIsDisplayed(alarmPage.unassigned(assignedAlarmType));
     }
 
     @Test
     public void reassignAlarmFromDetails() {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
-        alarmPage.alarmDetailsBtn(assignedAlarm).click();
+        alarmPage.alarmDetailsBtn(assignedAlarmType).click();
         alarmDetailsView.assignAlarmTo(Const.TENANT_EMAIL);
         alarmDetailsView.closeAlarmDetailsViewBtn().click();
 
@@ -201,27 +214,25 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     public void assignCustomerAlarmToYourself() {
         sideBarMenuView.customerBtn().click();
         customerPage.openCustomerAlarms(customerTitle);
-        alarmPage.assignAlarmTo(customerAlarm, Const.TENANT_EMAIL);
+        alarmPage.assignAlarmTo(customerAlarmType, Const.TENANT_EMAIL);
 
         assertIsDisplayed(alarmPage.assignedUser(Const.TENANT_EMAIL));
     }
 
     @Test
     public void assignAssetAlarmToYourself() {
-        AssetPageElements assetPageElements = new AssetPageElements(driver);
         sideBarMenuView.goToAssetsPage();
-        assetPageElements.openAssetAlarms(assetName);
-        alarmPage.assignAlarmTo(assetAlarm, Const.TENANT_EMAIL);
+        assetPage.openAssetAlarms(assetName);
+        alarmPage.assignAlarmTo(assetAlarmType, Const.TENANT_EMAIL);
 
         assertIsDisplayed(alarmPage.assignedUser(Const.TENANT_EMAIL));
     }
 
     @Test
     public void assignEntityViewsAlarmToYourself() {
-        EntityViewPage entityViewPage = new EntityViewPage(driver);
         sideBarMenuView.goToEntityViewsPage();
         entityViewPage.openEntityViewAlarms(entityViewName);
-        alarmPage.assignAlarmTo(entityViewAlarm, Const.TENANT_EMAIL);
+        alarmPage.assignAlarmTo(entityViewAlarmType, Const.TENANT_EMAIL);
 
         assertIsDisplayed(alarmPage.assignedUser(Const.TENANT_EMAIL));
     }

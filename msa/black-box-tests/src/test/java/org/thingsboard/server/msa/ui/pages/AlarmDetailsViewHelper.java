@@ -17,7 +17,7 @@ package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
 
-public class AlarmDetailsViewHelper extends AlarmDetailsViewElements{
+public class AlarmDetailsViewHelper extends AlarmDetailsViewElements {
     public AlarmDetailsViewHelper(WebDriver driver) {
         super(driver);
     }

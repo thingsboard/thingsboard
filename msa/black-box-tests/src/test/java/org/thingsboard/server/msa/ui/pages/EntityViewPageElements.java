@@ -18,28 +18,20 @@ package org.thingsboard.server.msa.ui.pages;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-public class EntityViewPage extends OtherPageElementsHelper{
-    public EntityViewPage(WebDriver driver) {
+public class EntityViewPageElements extends OtherPageElementsHelper {
+    public EntityViewPageElements(WebDriver driver) {
         super(driver);
     }
 
-    private static final String CUSTOMER_DETAILS_VIEW = "//tb-details-panel";
-    private static final String CUSTOMER_DETAILS_ALARMS = CUSTOMER_DETAILS_VIEW + "//span[text()='Alarms']";
+    private static final String ENTITY_VIEW_DETAILS_VIEW = "//tb-details-panel";
+    private static final String ENTITY_VIEW_DETAILS_ALARMS = ENTITY_VIEW_DETAILS_VIEW + "//span[text()='Alarms']";
 
-    public WebElement customerDetailsView() {
-        return waitUntilPresenceOfElementLocated(CUSTOMER_DETAILS_VIEW);
+    public WebElement entityViewDetailsView() {
+        return waitUntilPresenceOfElementLocated(ENTITY_VIEW_DETAILS_VIEW);
     }
 
-    public WebElement customerDetailsAlarmsBtn() {
-        return waitUntilElementToBeClickable(CUSTOMER_DETAILS_ALARMS);
-    }
-
-
-    public void openEntityViewAlarms(String customerName) {
-        if (!customerDetailsView().isDisplayed()) {
-            entity(customerName).click();
-        }
-        customerDetailsAlarmsBtn().click();
+    public WebElement entityViewDetailsAlarmsBtn() {
+        return waitUntilElementToBeClickable(ENTITY_VIEW_DETAILS_ALARMS);
     }
 
 }

@@ -18,7 +18,7 @@ package org.thingsboard.server.msa.ui.pages;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-public class DevicePageElements extends OtherPageElements{
+public class DevicePageElements extends OtherPageElements {
     public DevicePageElements(WebDriver driver) {
         super(driver);
     }
@@ -32,6 +32,7 @@ public class DevicePageElements extends OtherPageElements{
     private static final String CUSTOMER_FROM_ASSIGN_DROPDOWN = "//div[@role = 'listbox']//span[text() = '%s']";
     private static final String CLOSE_DEVICE_DETAILS_VIEW = "//header//mat-icon[contains(text(),'close')]/parent::button";
     private static final String SUBMIT_ASSIGN_TO_CUSTOMER_BTN = "//button[@type='submit']";
+
     public WebElement device(String deviceName) {
         return waitUntilElementToBeClickable(String.format(DEVICE, deviceName));
     }

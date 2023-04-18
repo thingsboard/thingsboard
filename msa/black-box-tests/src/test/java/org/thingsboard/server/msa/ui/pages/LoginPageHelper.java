@@ -16,8 +16,6 @@
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.ui.ExpectedCondition;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.thingsboard.server.msa.ui.utils.Const;
 
 public class LoginPageHelper extends LoginPageElements {
@@ -25,18 +23,10 @@ public class LoginPageHelper extends LoginPageElements {
         super(driver);
     }
 
-    public void login(String username, String password) {
-        emailField().sendKeys(username);
-        passwordField().sendKeys(password);
+    public void authorizationTenant() {
+        emailField().sendKeys(Const.TENANT_EMAIL);
+        passwordField().sendKeys(Const.TENANT_PASSWORD);
         submitBtn().click();
         waitUntilUrlContainsText("/home");
-    }
-
-    public void authorizationTenant() {
-        login(Const.TENANT_EMAIL, Const.TENANT_PASSWORD);
-    }
-
-    public void authorizationCustomer() {
-        login("customer@thingsboard.org", "customer");
     }
 }

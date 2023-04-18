@@ -24,8 +24,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
+import org.thingsboard.server.msa.ui.pages.AlarmDetailsEntityTabHelper;
 import org.thingsboard.server.msa.ui.pages.AlarmDetailsViewHelper;
-import org.thingsboard.server.msa.ui.pages.AlarmHelper;
 import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
 import org.thingsboard.server.msa.ui.pages.DevicePageHelper;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -39,56 +39,68 @@ abstract public class AbstractAssignTest extends AbstractDriverBaseTest {
     protected AlarmId alarmId;
     protected AlarmId assignedAlarmId;
     protected DeviceId deviceId;
-
     protected UserId userId;
     protected UserId userWithNameId;
     protected CustomerId customerId;
+
     protected String deviceName;
+    protected String userName;
+    protected String customerTitle;
+    protected String userEmail;
+    protected String userWithNameEmail;
+    protected String alarmType;
+    protected String assignedAlarmType;
 
     protected SideBarMenuViewHelper sideBarMenuView;
-    protected AlarmHelper alarmPage;
+    protected AlarmDetailsEntityTabHelper alarmPage;
     protected DevicePageHelper devicePage;
     protected CustomerPageHelper customerPage;
     protected AlarmDetailsViewHelper alarmDetailsView;
 
-    protected String userName = "User " + random();
-    protected String customerTitle = "Customer " + random();
-    protected String userEmail = random() + "@thingsboard.org";
-    protected String userWithNameEmail = random() + "@thingsboard.org";
-    protected String alarm = "Test alarm " + random();
-    protected String assignedAlarm = "Test assigned alarm " + random();
-
     @BeforeClass
-    public void generateTestEntity() {
+    public void generateCommonTestEntity() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewHelper(driver);
-        alarmPage = new AlarmHelper(driver);
+        alarmPage = new AlarmDetailsEntityTabHelper(driver);
         devicePage = new DevicePageHelper(driver);
         customerPage = new CustomerPageHelper(driver);
         alarmDetailsView = new AlarmDetailsViewHelper(driver);
 
+        userName = "User " + random();
+        customerTitle = "Customer " + random();
+        userEmail = random() + "@thingsboard.org";
+        userWithNameEmail = random() + "@thingsboard.org";
+        alarmType = "Test alarm " + random();
+        assignedAlarmType = "Test assigned alarm " + random();
+
         customerId = testRestClient.postCustomer(EntityPrototypes.defaultCustomerPrototype(customerTitle)).getId();
         userId = testRestClient.postUser(EntityPrototypes.defaultUser(userEmail, getCustomerByName(customerTitle).getId())).getId();
         userWithNameId = testRestClient.postUser(EntityPrototypes.defaultUser(userWithNameEmail, getCustomerByName(customerTitle).getId(), userName)).getId();
-        deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype("", customerId)).getName();
+        deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype("Device ", customerId)).getName();
         deviceId = testRestClient.getDeviceByName(deviceName).getId();
     }
 
     @AfterClass
-    public void deleteEntities() {
+    public void deleteCommonEntities() {
         testRestClient.deleteCustomer(customerId);
         testRestClient.deleteDevice(deviceId);
     }
 
     @BeforeMethod
-    public void createTestAlarms() {
-        alarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId, alarm)).getId();
-        assignedAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId, assignedAlarm, userId)).getId();
+    public void createCommonTestAlarms() {
+        alarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId, alarmType)).getId();
+        assignedAlarmId = testRestClient.postAlarm(EntityPrototypes.defaultAlarm(deviceId, assignedAlarmType, userId)).getId();
     }
 
     @AfterMethod
-    public void deleteCreatedAlarms() {
+    public void deleteCommonCreatedAlarms() {
         testRestClient.deleteAlarm(alarmId);
         testRestClient.deleteAlarm(assignedAlarmId);
+    }
+
+    public void loginByUser(String userEmail) {
+        sideBarMenuView.customerBtn().click();
+        customerPage.manageCustomersUserBtn(customerTitle).click();
+        customerPage.getUserLoginBtnByEmail(userEmail).click();
     }
 }

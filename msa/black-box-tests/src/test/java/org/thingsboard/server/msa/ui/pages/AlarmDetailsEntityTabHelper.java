@@ -17,13 +17,12 @@ package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.thingsboard.server.msa.ui.utils.Const;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class AlarmHelper extends AlarmElements {
-    public AlarmHelper(WebDriver driver) {
+public class AlarmDetailsEntityTabHelper extends AlarmDetailsEntityTabElements {
+    public AlarmDetailsEntityTabHelper(WebDriver driver) {
         super(driver);
     }
 
@@ -33,12 +32,12 @@ public class AlarmHelper extends AlarmElements {
     }
 
     public void unassignedAlarm(String alarmType) {
-        assignBtn(alarmType).click();
+        jsClick(assignBtn(alarmType));
         unassignedBtn().click();
     }
 
     public void searchAlarm(String alarmType, String emailOrName) {
-        assignBtn(alarmType).click();
+        jsClick(assignBtn(alarmType));
         searchUserField().sendKeys(emailOrName);
     }
 

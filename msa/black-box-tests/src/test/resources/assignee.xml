@@ -18,11 +18,11 @@
 -->
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="Customer Smoke Tests">
+<suite name="Assignee ui tests">
     <listeners>
         <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
     </listeners>
-    <test name="Customer ui smoke tests">
+    <test name="Assignee ui tests">
         <groups>
             <run>
                 <exclude name="broken"/>
