@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 public class EntitiesAlarmOriginatorIdAsyncLoader {
 
     public static ListenableFuture<EntityId> findEntityIdAsync(TbContext ctx, EntityId original) {
-
         switch (original.getEntityType()) {
             case ALARM:
                 return getAlarmOriginatorAsync(ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) original));
@@ -37,9 +36,8 @@ public class EntitiesAlarmOriginatorIdAsyncLoader {
     }
 
     private static ListenableFuture<EntityId> getAlarmOriginatorAsync(ListenableFuture<Alarm> future) {
-        return Futures.transformAsync(future, in -> {
-            return in != null ? Futures.immediateFuture(in.getOriginator())
-                    : Futures.immediateFuture(null);
-        }, MoreExecutors.directExecutor());
+        return Futures.transformAsync(future, in -> in != null ?
+                Futures.immediateFuture(in.getOriginator())
+                : Futures.immediateFuture(null), MoreExecutors.directExecutor());
     }
 }
