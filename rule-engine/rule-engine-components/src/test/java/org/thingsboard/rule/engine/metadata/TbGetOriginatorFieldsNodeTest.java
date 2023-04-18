@@ -103,9 +103,7 @@ public class TbGetOriginatorFieldsNodeTest {
 
     @Test
     public void givenDefaultConfig_whenInit_thenOK() throws TbNodeException {
-        // GIVEN
-
-        // WHEN
+        // GIVEN-WHEN
         node.init(ctxMock, nodeConfiguration);
 
         // THEN
@@ -122,9 +120,9 @@ public class TbGetOriginatorFieldsNodeTest {
     public void givenCustomConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
         config.setFieldsMapping(Map.of(
-                "sourceField1", "targetKey1",
-                "sourceField2", "targetKey2",
-                "sourceField3", "targetKey3"));
+                "email", "originatorEmail",
+                "title", "originatorTitle",
+                "country", "originatorCountry"));
         config.setIgnoreNullStrings(true);
         config.setFetchTo(FetchTo.DATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -135,9 +133,9 @@ public class TbGetOriginatorFieldsNodeTest {
         // THEN
         assertThat(node.config).isEqualTo(config);
         assertThat(config.getFieldsMapping()).isEqualTo(Map.of(
-                "sourceField1", "targetKey1",
-                "sourceField2", "targetKey2",
-                "sourceField3", "targetKey3"));
+                "email", "originatorEmail",
+                "title", "originatorTitle",
+                "country", "originatorCountry"));
         assertThat(config.isIgnoreNullStrings()).isEqualTo(true);
         assertThat(config.getFetchTo()).isEqualTo(FetchTo.DATA);
         assertThat(node.fetchTo).isEqualTo(FetchTo.DATA);
