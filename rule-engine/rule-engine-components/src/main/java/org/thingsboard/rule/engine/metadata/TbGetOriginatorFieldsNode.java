@@ -58,7 +58,6 @@ public class TbGetOriginatorFieldsNode extends TbAbstractNodeWithFetchTo<TbGetOr
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.checkTenantEntity(msg.getOriginator());
         var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(collectMappedEntityFieldsAsync(ctx, msg.getOriginator()),
                 targetKeysToSourceValuesMap -> {

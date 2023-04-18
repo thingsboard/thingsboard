@@ -66,7 +66,6 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        ctx.checkTenantEntity(msg.getOriginator());
         var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(
                 findEntityIdAsync(ctx, msg),

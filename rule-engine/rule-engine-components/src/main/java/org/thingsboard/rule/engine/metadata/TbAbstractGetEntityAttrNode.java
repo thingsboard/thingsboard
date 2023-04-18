@@ -40,7 +40,6 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.checkTenantEntity(msg.getOriginator());
         var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(findEntityAsync(ctx, msg.getOriginator()),
                 entityId -> safeGetAttributes(ctx, msg, entityId, msgDataAsObjectNode),

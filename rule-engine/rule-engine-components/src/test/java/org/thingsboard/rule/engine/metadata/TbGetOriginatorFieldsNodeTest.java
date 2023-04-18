@@ -46,7 +46,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -155,24 +154,6 @@ public class TbGetOriginatorFieldsNodeTest {
 
         // THEN
         assertThat(exception.getMessage()).isEqualTo("Message body is not an object!");
-        verify(ctxMock, never()).tellSuccess(any());
-    }
-
-    @Test
-    public void givenEntityThatDoesNotBelongToTheCurrentTenant_whenOnMsg_thenException() {
-        // SETUP
-        var expectedExceptionMessage = "Entity with id: '" + DUMMY_DEVICE_ORIGINATOR +
-                "' specified in the configuration doesn't belong to the current tenant.";
-
-        // GIVEN
-        doThrow(new RuntimeException(expectedExceptionMessage)).when(ctxMock).checkTenantEntity(DUMMY_DEVICE_ORIGINATOR);
-        msg = TbMsg.newMsg("SOME_MESSAGE_TYPE", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "{}");
-
-        // WHEN
-        var exception = assertThrows(RuntimeException.class, () -> node.onMsg(ctxMock, msg));
-
-        // THEN
-        assertThat(exception.getMessage()).isEqualTo(expectedExceptionMessage);
         verify(ctxMock, never()).tellSuccess(any());
     }
 

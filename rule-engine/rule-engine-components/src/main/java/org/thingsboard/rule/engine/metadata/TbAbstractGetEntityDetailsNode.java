@@ -37,7 +37,6 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.checkTenantEntity(msg.getOriginator());
         var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(getDetails(ctx, msg, msgDataAsObjectNode),
                 ctx::tellSuccess,
