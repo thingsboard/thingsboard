@@ -22,6 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.Properties;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 
@@ -29,6 +32,7 @@ import static org.mockito.Mockito.spy;
 @TestPropertySource(properties = {
         "queue.type=kafka",
         "queue.kafka.bootstrap.servers=localhost:9092",
+        "queue.kafka.other-inline=metrics.recording.level:INFO;metrics.sample.window.ms:30000",
 })
 class TbKafkaSettingsTest {
 
@@ -42,25 +46,37 @@ class TbKafkaSettingsTest {
 
     @Test
     void givenToProps_whenConfigureSSL_thenVerifyOnce() {
-        settings.toProps();
+        Properties props = settings.toProps();
+
+        assertThat(props).as("TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS").containsEntry("request.timeout.ms", 30000);
+        assertThat(props).as("TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS").containsEntry("session.timeout.ms", 10000);
+
+        //other-inline
+        assertThat(props).as("metrics.recording.level").containsEntry("metrics.recording.level", "INFO");
+        assertThat(props).as("TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS").containsEntry("metrics.sample.window.ms", "30000");
+
+        Mockito.verify(settings).toProps();
         Mockito.verify(settings).configureSSL(any());
     }
 
     @Test
     void givenToAdminProps_whenConfigureSSL_thenVerifyOnce() {
         settings.toAdminProps();
+        Mockito.verify(settings).toProps();
         Mockito.verify(settings).configureSSL(any());
     }
 
     @Test
     void givenToConsumerProps_whenConfigureSSL_thenVerifyOnce() {
         settings.toConsumerProps("main");
+        Mockito.verify(settings).toProps();
         Mockito.verify(settings).configureSSL(any());
     }
 
     @Test
     void givenTotoProducerProps_whenConfigureSSL_thenVerifyOnce() {
         settings.toProducerProps();
+        Mockito.verify(settings).toProps();
         Mockito.verify(settings).configureSSL(any());
     }
 

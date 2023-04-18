@@ -32,6 +32,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbProperty;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -108,6 +109,12 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.fetch_max_bytes:134217728}")
     private int fetchMaxBytes;
 
+    @Value("${queue.kafka.request.timeout.ms:30000}")
+    private int requestTimeoutMs;
+
+    @Value("${queue.kafka.session.timeout.ms:10000}")
+    private int sessionTimeoutMs;
+
     @Value("${queue.kafka.use_confluent_cloud:false}")
     private boolean useConfluent;
 
@@ -123,6 +130,10 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.confluent.security.protocol:}")
     private String securityProtocol;
 
+    @Value("${queue.kafka.other-inline:}")
+    private String otherInline;
+
+    @Deprecated
     @Setter
     private List<TbProperty> other;
 
@@ -179,6 +190,11 @@ public class TbKafkaSettings {
             props.put("sasl.jaas.config", saslConfig);
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
         }
+
+        props.put(CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
+        props.put(CommonClientConfigs.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
+
+        props.putAll(PropertyUtils.getProps(otherInline));
 
         if (other != null) {
             other.forEach(kv -> props.put(kv.getKey(), kv.getValue()));
