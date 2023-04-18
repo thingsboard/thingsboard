@@ -33,14 +33,19 @@
             <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
 
     <logger name="org" level="WARN"/>
-    <logger name="org.thingsboard.server" level="INFO"/>
     <logger name="org.thingsboard.monitoring" level="DEBUG"/>
     <logger name="org.thingsboard.monitoring.client" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="fileLogAppender"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 
 </configuration>
