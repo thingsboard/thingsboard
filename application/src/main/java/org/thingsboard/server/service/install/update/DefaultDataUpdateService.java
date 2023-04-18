@@ -35,7 +35,7 @@ import org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode;
 import org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode;
 import org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode;
 import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
-import org.thingsboard.rule.engine.metadata.TbGetRelatedDeviceAttrNode;
+import org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode;
 import org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode;
 import org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
@@ -228,7 +228,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     private void updateEnrichmentRuleNodes() {
         try {
-            var fetchToDataNodes = List.of(TbGetAttributesNode.class.getName(), TbGetRelatedDeviceAttrNode.class.getName());
+            var fetchToDataNodes = List.of(TbGetAttributesNode.class.getName(), TbGetDeviceAttrNode.class.getName());
             var addToMetadataNodes = List.of(TbGetCustomerDetailsNode.class.getName(), TbGetTenantDetailsNode.class.getName());
             var fetchToMetadataNodes = List.of(TbFetchDeviceCredentialsNode.class.getName());
             var hardCodeMetadataNodes = List.of(
