@@ -57,6 +57,7 @@ import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -384,6 +385,7 @@ public class TbGetCustomerDetailsNodeTest {
         // GIVEN
         var device = new Device();
         device.setId(new DeviceId(UUID.randomUUID()));
+        device.setName("Thermostat");
 
         prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2), device.getId());
 
@@ -399,12 +401,19 @@ public class TbGetCustomerDetailsNodeTest {
 
         // THEN
         var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        var actualExceptionCaptor = ArgumentCaptor.forClass(Exception.class);
 
-        verify(ctxMock, times(1)).tellFailure(actualMessageCaptor.capture(), any());
+        verify(ctxMock, times(1)).tellFailure(actualMessageCaptor.capture(), actualExceptionCaptor.capture());
         verify(ctxMock, never()).tellSuccess(any());
 
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
+        var actualMsg = actualMessageCaptor.getValue();
+        var actualException = actualExceptionCaptor.getValue();
+
+        assertThat(actualMsg.getData()).isEqualTo(msg.getData());
+        assertThat(actualMsg.getMetaData()).isEqualTo(msg.getMetaData());
+
+        assertThat(actualException).isInstanceOf(RuntimeException.class);
+        assertThat(actualException.getMessage()).isEqualTo("Device with name 'Thermostat' is not assigned to Customer.");
     }
 
     @Test
@@ -451,12 +460,19 @@ public class TbGetCustomerDetailsNodeTest {
 
         // THEN
         var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        var actualExceptionCaptor = ArgumentCaptor.forClass(Exception.class);
 
-        verify(ctxMock, times(1)).tellFailure(actualMessageCaptor.capture(), any());
+        verify(ctxMock, times(1)).tellFailure(actualMessageCaptor.capture(), actualExceptionCaptor.capture());
         verify(ctxMock, never()).tellSuccess(any());
 
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
+        var actualMsg = actualMessageCaptor.getValue();
+        var actualException = actualExceptionCaptor.getValue();
+
+        assertThat(actualMsg.getData()).isEqualTo(msg.getData());
+        assertThat(actualMsg.getMetaData()).isEqualTo(msg.getMetaData());
+
+        assertThat(actualException).isInstanceOf(NoSuchElementException.class);
+        assertThat(actualException.getMessage()).isEqualTo("Entity with entityType 'DASHBOARD' is not supported.");
     }
 
     private void prepareMsgAndConfig(FetchTo fetchTo, List<EntityDetails> detailsList, EntityId originator) {
