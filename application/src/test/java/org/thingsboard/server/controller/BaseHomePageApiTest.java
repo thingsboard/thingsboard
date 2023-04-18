@@ -59,7 +59,6 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -90,9 +89,6 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
 
     @MockBean
     private SmsService smsService;
-
-    @MockBean
-    TwoFaConfigManager twoFaConfigManager;
 
     //For system administrator
     @Test
@@ -380,6 +376,10 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isTwoFaEnabled());
         Assert.assertTrue(featuresInfo.isNotificationEnabled());
         Assert.assertTrue(featuresInfo.isOauthEnabled());
+
+        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, "notifications");
+        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, "twoFaSettings");
+        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, "sms");
     }
 
     @Test
