@@ -39,11 +39,10 @@ import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNodeId> {
 
     private final String ruleChainName;
-    private final TbActorRef self;
     private final TbApiUsageReportClient apiUsageClient;
+    private final DefaultTbContext defaultCtx;
     private RuleNode ruleNode;
     private TbNode tbNode;
-    private DefaultTbContext defaultCtx;
     private RuleNodeInfo info;
 
     RuleNodeActorMessageProcessor(TenantId tenantId, String ruleChainName, RuleNodeId ruleNodeId, ActorSystemContext systemContext
@@ -51,7 +50,6 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         super(systemContext, tenantId, ruleNodeId);
         this.apiUsageClient = systemContext.getApiUsageClient();
         this.ruleChainName = ruleChainName;
-        this.self = self;
         this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         this.defaultCtx = new DefaultTbContext(systemContext, ruleChainName, new RuleNodeCtx(tenantId, parent, self, ruleNode));
         this.info = new RuleNodeInfo(ruleNodeId, ruleChainName, ruleNode != null ? ruleNode.getName() : "Unknown");
@@ -59,6 +57,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     @Override
     public void start(TbActorCtx context) throws Exception {
+        //TODO: do not start the node if singleton
         tbNode = initComponent(ruleNode);
         if (tbNode != null) {
             state = ComponentLifecycleState.ACTIVE;
@@ -95,12 +94,14 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     @Override
     public void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        //TODO: start the node
         if (tbNode != null) {
             tbNode.onPartitionChangeMsg(defaultCtx, msg);
         }
     }
 
     public void onRuleToSelfMsg(RuleNodeToSelfMsg msg) throws Exception {
+        // TODO: check that the rule node is singleton and use putToQueue
         checkComponentStateActive(msg.getMsg());
         TbMsg tbMsg = msg.getMsg();
         int ruleNodeCount = tbMsg.getAndIncrementRuleNodeCounter();
