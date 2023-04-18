@@ -138,7 +138,7 @@ export class TemplateNotificationDialogComponent
   }
 
   nextStepLabel(): string {
-    if (this.selectedIndex >= this.maxStepperIndex) {
+    if (this.selectedIndex >= this.maxStepperIndex && this.selectedIndex !== 0) {
       return (this.data.isAdd || this.data.isCopy) ? 'action.add' : 'action.save';
     }
     return 'action.next';

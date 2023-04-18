@@ -45,12 +45,12 @@
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
+      {{ cancelButtonLabel }}
     </button>
     <button mat-button mat-raised-button color="primary"
             type="submit"
             [disabled]="(isLoading$ | async) || jsonFormGroup.invalid || !jsonFormGroup.dirty">
-      {{ 'action.save' | translate }}
+      {{ saveButtonLabel }}
     </button>
   </div>
 </form>

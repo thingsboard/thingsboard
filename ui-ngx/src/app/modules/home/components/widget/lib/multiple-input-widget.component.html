@@ -85,6 +85,39 @@
               <span class="label-wrapper">{{key.label}}</span>
             </mat-checkbox>
           </div>
+          <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'JSON'">
+            <mat-form-field class="mat-block">
+              <mat-label>{{key.label}}</mat-label>
+              <input
+                matInput
+                type="text"
+                formControlName="{{key.formId}}"
+                tb-json-to-string
+                [readonly]="key.settings.isEditable === 'readonly'"
+                [required]="key.settings.required"
+                (focus)="key.isFocused = true; focusInputElement($event)"
+                (blur)="key.isFocused = false; inputChanged(source, key)"
+              />
+              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matPrefix>
+                <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
+                <ng-template #customToggleIcon>
+                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
+                </ng-template>
+              </ng-container>
+              <button [disabled]="key.settings.isEditable === 'disabled' || key.settings.isEditable === 'readonly'"
+                      type="button"
+                      matSuffix mat-icon-button
+                      (click)="openEditJSONDialog($event, key, source)">
+                <mat-icon>open_in_new</mat-icon>
+              </button>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+                {{ getErrorMessageText(key.settings,'required') }}
+              </mat-error>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('invalidJSON')">
+                {{ getErrorMessageText(key.settings,'invalidJSON') | translate }}
+              </mat-error>
+            </mat-form-field>
+          </div>
           <div class="input-field mat-block" *ngIf="key.settings.dataKeyValueType === 'booleanSwitch'">
             <mat-slide-toggle formControlName="{{key.formId}}"
                               [labelPosition]="key.settings.slideToggleLabelPosition"

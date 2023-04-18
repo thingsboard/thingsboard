@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationType;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
@@ -36,6 +37,7 @@ public class NotificationTemplate extends BaseData<NotificationTemplateId> imple
     private TenantId tenantId;
     @NoXss
     @NotEmpty
+    @Length(max = 255, message = "cannot be longer than 255 chars")
     private String name;
     @NoXss
     @NotNull
