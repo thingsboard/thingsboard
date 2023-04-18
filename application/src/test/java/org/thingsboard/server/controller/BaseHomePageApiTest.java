@@ -21,8 +21,12 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
@@ -53,7 +57,9 @@ import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -75,6 +81,18 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
 
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private AdminSettingsService adminSettingsService;
+
+    @MockBean
+    private MailService mailService;
+
+    @MockBean
+    private SmsService smsService;
+
+    @MockBean
+    TwoFaConfigManager twoFaConfigManager;
 
     //For system administrator
     @Test
@@ -266,6 +284,19 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
 
     @Test
     public void testGetFeaturesInfo() throws Exception {
+        String mail = "test@thingsboard.org";
+        Mockito.doAnswer(invocation -> {
+            AdminSettings mailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
+            JsonNode mailFrom = mailSettings.getJsonValue().get("mailFrom");
+            if (!mailFrom.asText().equals(mail)) {
+                throw new Exception();
+            }
+            return null;
+        }).when(mailService).testConnection(TenantId.SYS_TENANT_ID);
+
+        Mockito.when(smsService.isConfigured(TenantId.SYS_TENANT_ID))
+                .then(a -> adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "sms") != null);
+
         loginSysAdmin();
 
         FeaturesInfo featuresInfo = doGet("/api/admin/featuresInfo", FeaturesInfo.class);
@@ -279,7 +310,7 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
         AdminSettings mailSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
 
         JsonNode jsonValue = mailSettings.getJsonValue();
-        ((ObjectNode) jsonValue).put("mailFrom", "test@thingsboard.org");
+        ((ObjectNode) jsonValue).put("mailFrom", mail);
         mailSettings.setJsonValue(jsonValue);
 
         doPost("/api/admin/settings", mailSettings).andExpect(status().isOk());
@@ -305,7 +336,12 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
 
         AdminSettings twoFaSettingsSettings = new AdminSettings();
         twoFaSettingsSettings.setKey("twoFaSettings");
-        twoFaSettingsSettings.setJsonValue(JacksonUtil.newObjectNode());
+
+        var twoFaSettings = JacksonUtil.newObjectNode();
+        var providers = JacksonUtil.newArrayNode();
+        providers.add(JacksonUtil.newObjectNode());
+        twoFaSettings.set("providers", providers);
+        twoFaSettingsSettings.setJsonValue(twoFaSettings);
         doPost("/api/admin/settings", twoFaSettingsSettings).andExpect(status().isOk());
 
         featuresInfo = doGet("/api/admin/featuresInfo", FeaturesInfo.class);
@@ -317,7 +353,13 @@ public abstract class BaseHomePageApiTest extends AbstractControllerTest {
 
         AdminSettings notificationsSettings = new AdminSettings();
         notificationsSettings.setKey("notifications");
-        notificationsSettings.setJsonValue(JacksonUtil.newObjectNode());
+
+        var notificationSettings = JacksonUtil.newObjectNode();
+        var deliveryMethodsConfigs = JacksonUtil.newObjectNode();
+        deliveryMethodsConfigs.set("SLACK", JacksonUtil.newObjectNode());
+        notificationSettings.set("deliveryMethodsConfigs", deliveryMethodsConfigs);
+
+        notificationsSettings.setJsonValue(notificationSettings);
         doPost("/api/admin/settings", notificationsSettings).andExpect(status().isOk());
 
         featuresInfo = doGet("/api/admin/featuresInfo", FeaturesInfo.class);
