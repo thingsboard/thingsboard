@@ -96,22 +96,6 @@ public class TbGetTenantDetailsNodeTest {
     }
 
     @Test
-    public void givenNoEntityDetailsSelected_whenInit_thenException() {
-        // GIVEN
-        var expectedExceptionMessage = "No entity details selected!";
-
-        config.setDetailsList(Collections.emptyList());
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-
-        // WHEN
-        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
-
-        // THEN
-        assertThat(exception.getMessage()).isEqualTo(expectedExceptionMessage);
-        verify(ctxMock, never()).tellSuccess(any());
-    }
-
-    @Test
     public void givenDefaultConfig_whenInit_thenOK() {
         // THEN
         assertThat(config.getDetailsList()).isEqualTo(Collections.emptyList());
