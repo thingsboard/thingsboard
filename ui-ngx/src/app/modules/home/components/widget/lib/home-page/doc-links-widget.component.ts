@@ -27,9 +27,9 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddDocLinkDialogComponent } from '@home/components/widget/lib/home-page/add-doc-link-dialog.component';
 import {
-  EditDocLinksDialogComponent,
-  EditDocLinksDialogData
-} from '@home/components/widget/lib/home-page/edit-doc-links-dialog.component';
+  EditLinksDialogComponent,
+  EditLinksDialogData
+} from '@home/components/widget/lib/home-page/edit-links-dialog.component';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 
@@ -168,12 +168,13 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
   }
 
   edit() {
-    this.dialog.open<EditDocLinksDialogComponent, EditDocLinksDialogData,
-      boolean>(EditDocLinksDialogComponent, {
+    this.dialog.open<EditLinksDialogComponent, EditLinksDialogData,
+      boolean>(EditLinksDialogComponent, {
       disableClose: true,
       autoFocus: false,
       data: {
-        docLinks: this.documentationLinks
+        mode: 'docs',
+        links: this.documentationLinks
       },
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
     }).afterClosed().subscribe(

@@ -85,6 +85,7 @@
               "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
               "node_modules/leaflet/dist/leaflet.css",
               "src/app/modules/home/components/widget/lib/maps/markers.scss",
+              "src/app/modules/home/components/widget/lib/home-page/home-page.scss",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "node_modules/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css",

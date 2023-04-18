@@ -16,7 +16,7 @@
 
 -->
 <div fxLayout="row" *ngIf="addMode || editMode; else docLinkTemplate">
-  <div fxFlex class="tb-edit-doc-link" [ngClass]="{'edit-mode': editMode}" [formGroup]="editDocLinkFormGroup" fxLayout="column">
+  <div fxFlex class="tb-edit-link" [ngClass]="{'edit-mode': editMode}" [formGroup]="editDocLinkFormGroup" fxLayout="column">
     <tb-material-icon-select required formControlName="icon"></tb-material-icon-select>
     <mat-form-field fxFlex class="mat-block">
       <mat-label translate>widgets.documentation.name</mat-label>
@@ -44,12 +44,12 @@
 </div>
 <ng-template #docLinkTemplate>
   <div fxLayout="row">
-    <div fxFlex class="tb-doc-link">
-      <div class="tb-doc-container">
-        <div class="tb-doc-icon-container">
+    <div fxFlex class="tb-link">
+      <div class="tb-link-container">
+        <div class="tb-link-icon-container">
           <mat-icon color="primary">{{ docLink.icon }}</mat-icon>
         </div>
-        <div class="tb-doc-text">{{ docLink.name }}</div>
+        <div class="tb-link-text">{{ docLink.name }}</div>
       </div>
     </div>
     <div fxLayout="row" fxLayoutAlign="start center" class="tb-edit-buttons">

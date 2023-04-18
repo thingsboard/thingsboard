@@ -107,7 +107,7 @@ export class MenuService {
         icon: 'supervisor_account'
       },
       {
-        id: 'tenantProfiles',
+        id: 'tenant_profiles',
         name: 'tenant-profile.tenant-profiles',
         type: 'link',
         path: '/tenantProfiles',
@@ -122,14 +122,14 @@ export class MenuService {
         icon: 'folder',
         pages: [
           {
-            id: 'resourcesWidgetsBundles',
+            id: 'widget_library',
             name: 'widget.widget-library',
             type: 'link',
             path: '/resources/widgets-bundles',
             icon: 'now_widgets'
           },
           {
-            id: 'resourcesResourcesLibrary',
+            id: 'resources_library',
             name: 'resource.resources-library',
             type: 'link',
             path: '/resources/resources-library',
@@ -139,7 +139,7 @@ export class MenuService {
         ]
       },
       {
-        id: 'notification',
+        id: 'notifications_center',
         name: 'notification.notification-center',
         type: 'link',
         path: '/notification',
@@ -147,28 +147,28 @@ export class MenuService {
         isMdiIcon: true,
         pages: [
           {
-            id: 'notificationInbox',
+            id: 'notification_inbox',
             name: 'notification.inbox',
             type: 'link',
             path: '/notification/inbox',
             icon: 'inbox'
           },
           {
-            id: 'notificationSent',
+            id: 'notification_sent',
             name: 'notification.sent',
             type: 'link',
             path: '/notification/sent',
             icon: 'outbox'
           },
           {
-            id: 'notificationRecipients',
+            id: 'notification_recipients',
             name: 'notification.recipients',
             type: 'link',
             path: '/notification/recipients',
             icon: 'contacts'
           },
           {
-            id: 'notificationTemplates',
+            id: 'notification_templates',
             name: 'notification.templates',
             type: 'link',
             path: '/notification/templates',
@@ -176,7 +176,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: 'notificationRules',
+            id: 'notification_rules',
             name: 'notification.rules',
             type: 'link',
             path: '/notification/rules',
@@ -193,21 +193,21 @@ export class MenuService {
         icon: 'settings',
         pages: [
           {
-            id: 'settingsGeneral',
+            id: 'general',
             name: 'admin.general',
             type: 'link',
             path: '/settings/general',
             icon: 'settings_applications'
           },
           {
-            id: 'settingsOutgoingMail',
+            id: 'mail_server',
             name: 'admin.outgoing-mail',
             type: 'link',
             path: '/settings/outgoing-mail',
             icon: 'mail'
           },
           {
-            id: 'settingsNotifications',
+            id: 'notification_settings',
             name: 'admin.notifications',
             type: 'link',
             path: '/settings/notifications',
@@ -215,7 +215,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: 'settingsQueues',
+            id: 'queues',
             name: 'admin.queues',
             type: 'link',
             path: '/settings/queues',
@@ -224,21 +224,21 @@ export class MenuService {
         ]
       },
       {
-        id: 'securitySettings',
+        id: 'security_settings',
         name: 'security.security',
         type: 'toggle',
         path: '/security-settings',
         icon: 'security',
         pages: [
           {
-            id: 'securitySettingsGeneral',
+            id: 'security_settings_general',
             name: 'admin.general',
             type: 'link',
             path: '/security-settings/general',
             icon: 'settings_applications'
           },
           {
-            id: 'securitySettings2fa',
+            id: '2fa',
             name: 'admin.2fa.2fa',
             type: 'link',
             path: '/security-settings/2fa',
@@ -246,7 +246,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: 'securitySettingsOauth2',
+            id: 'oauth2',
             name: 'admin.oauth2.oauth2',
             type: 'link',
             path: '/security-settings/oauth2',
@@ -370,21 +370,21 @@ export class MenuService {
         icon: 'category',
         pages: [
           {
-            id: 'entitiesDevices',
+            id: 'devices',
             name: 'device.devices',
             type: 'link',
             path: '/entities/devices',
             icon: 'devices_other'
           },
           {
-            id: 'entitiesAssets',
+            id: 'assets',
             name: 'asset.assets',
             type: 'link',
             path: '/entities/assets',
             icon: 'domain'
           },
           {
-            id: 'entitiesEntityViews',
+            id: 'entity_views',
             name: 'entity-view.entity-views',
             type: 'link',
             path: '/entities/entityViews',
@@ -400,7 +400,7 @@ export class MenuService {
         icon: 'badge',
         pages: [
           {
-            id: 'profilesDeviceProfiles',
+            id: 'device_profiles',
             name: 'device-profile.device-profiles',
             type: 'link',
             path: '/profiles/deviceProfiles',
@@ -408,7 +408,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: 'profilesAssetProfiles',
+            id: 'asset_profiles',
             name: 'asset-profile.asset-profiles',
             type: 'link',
             path: '/profiles/assetProfiles',
@@ -425,7 +425,7 @@ export class MenuService {
         icon: 'supervisor_account'
       },
       {
-        id: 'ruleChains',
+        id: 'rule_chains',
         name: 'rulechain.rulechains',
         type: 'link',
         path: '/ruleChains',
@@ -435,21 +435,21 @@ export class MenuService {
     if (authState.edgesSupportEnabled) {
       sections.push(
         {
-          id: 'edgeManagement',
+          id: 'edge_management',
           name: 'edge.management',
           type: 'toggle',
           path: '/edgeManagement',
           icon: 'settings_input_antenna',
           pages: [
             {
-              id: 'edgeManagementInstances',
+              id: 'edges',
               name: 'edge.instances',
               type: 'link',
               path: '/edgeManagement/instances',
               icon: 'router'
             },
             {
-              id: 'edgeManagementRuleChains',
+              id: 'rulechain_templates',
               name: 'edge.rulechain-templates',
               type: 'link',
               path: '/edgeManagement/ruleChains',
@@ -468,14 +468,14 @@ export class MenuService {
         icon: 'construction',
         pages: [
           {
-            id: 'featuresOtaUpdates',
+            id: 'otaUpdates',
             name: 'ota-update.ota-updates',
             type: 'link',
             path: '/features/otaUpdates',
             icon: 'memory'
           },
           {
-            id: 'featuresVc',
+            id: 'version_control',
             name: 'version-control.version-control',
             type: 'link',
             path: '/features/vc',
@@ -491,14 +491,14 @@ export class MenuService {
         icon: 'folder',
         pages: [
           {
-            id: 'resourcesWidgetsBundles',
+            id: 'widget_library',
             name: 'widget.widget-library',
             type: 'link',
             path: '/resources/widgets-bundles',
             icon: 'now_widgets'
           },
           {
-            id: 'resourcesResourcesLibrary',
+            id: 'resources_library',
             name: 'resource.resources-library',
             type: 'link',
             path: '/resources/resources-library',
@@ -508,7 +508,7 @@ export class MenuService {
         ]
       },
       {
-        id: 'notification',
+        id: 'notifications_center',
         name: 'notification.notification-center',
         type: 'link',
         path: '/notification',
@@ -516,28 +516,28 @@ export class MenuService {
         isMdiIcon: true,
         pages: [
           {
-            id: 'notificationInbox',
+            id: 'notification_inbox',
             name: 'notification.inbox',
             type: 'link',
             path: '/notification/inbox',
             icon: 'inbox'
           },
           {
-            id: 'notificationSent',
+            id: 'notification_sent',
             name: 'notification.sent',
             type: 'link',
             path: '/notification/sent',
             icon: 'outbox'
           },
           {
-            id: 'notificationRecipients',
+            id: 'notification_recipients',
             name: 'notification.recipients',
             type: 'link',
             path: '/notification/recipients',
             icon: 'contacts'
           },
           {
-            id: 'notificationTemplates',
+            id: 'notification_templates',
             name: 'notification.templates',
             type: 'link',
             path: '/notification/templates',
@@ -545,7 +545,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: 'notificationRules',
+            id: 'notification_rules',
             name: 'notification.rules',
             type: 'link',
             path: '/notification/rules',
@@ -555,7 +555,7 @@ export class MenuService {
         ]
       },
       {
-        id: 'usage',
+        id: 'api_usage',
         name: 'api-usage.api-usage',
         type: 'link',
         path: '/usage',
@@ -569,14 +569,14 @@ export class MenuService {
         icon: 'settings',
         pages: [
           {
-            id: 'settingsHome',
+            id: 'home_settings',
             name: 'admin.home',
             type: 'link',
             path: '/settings/home',
             icon: 'settings_applications'
           },
           {
-            id: 'settingsNotifications',
+            id: 'notification_settings',
             name: 'admin.notifications',
             type: 'link',
             path: '/settings/notifications',
@@ -584,14 +584,14 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: 'settingsRepository',
+            id: 'repository_settings',
             name: 'admin.repository',
             type: 'link',
             path: '/settings/repository',
             icon: 'manage_history'
           },
           {
-            id: 'settingsAutoCommit',
+            id: 'auto_commit_settings',
             name: 'admin.auto-commit',
             type: 'link',
             path: '/settings/auto-commit',
@@ -600,14 +600,14 @@ export class MenuService {
         ]
       },
       {
-        id: 'securitySettings',
+        id: 'security_settings',
         name: 'security.security',
         type: 'toggle',
         path: '/security-settings',
         icon: 'security',
         pages: [
           {
-            id: 'securitySettingsAuditLogs',
+            id: 'audit_log',
             name: 'audit-log.audit-logs',
             type: 'link',
             path: '/security-settings/auditLogs',
@@ -811,21 +811,21 @@ export class MenuService {
         icon: 'category',
         pages: [
           {
-            id: 'entitiesDevices',
+            id: 'devices',
             name: 'device.devices',
             type: 'link',
             path: '/entities/devices',
             icon: 'devices_other'
           },
           {
-            id: 'entitiesAssets',
+            id: 'assets',
             name: 'asset.assets',
             type: 'link',
             path: '/entities/assets',
             icon: 'domain'
           },
           {
-            id: 'entitiesEntityViews',
+            id: 'entity_views',
             name: 'entity-view.entity-views',
             type: 'link',
             path: '/entities/entityViews',
@@ -837,7 +837,7 @@ export class MenuService {
     if (authState.edgesSupportEnabled) {
       sections.push(
         {
-          id: 'edgeManagementInstances',
+          id: 'edges',
           name: 'edge.edge-instances',
           type: 'link',
           path: '/edgeManagement/instances',
@@ -847,7 +847,7 @@ export class MenuService {
     }
     sections.push(
       {
-        id: 'notification',
+        id: 'notifications_center',
         name: 'notification.notification-center',
         type: 'link',
         path: '/notification',
@@ -855,7 +855,7 @@ export class MenuService {
         isMdiIcon: true,
         pages: [
           {
-            id: 'notificationInbox',
+            id: 'notification_inbox',
             name: 'notification.inbox',
             type: 'link',
             path: '/notification/inbox',
@@ -963,7 +963,11 @@ export class MenuService {
 
   public menuLinksByIds(ids: string[]): Observable<Array<MenuSection>> {
     return this.availableMenuLinks$.pipe(
-      map((links) => links.filter(link => ids.includes(link.id)))
+      map((links) => links.filter(link => ids.includes(link.id)).sort((a, b) => {
+        const i1 = ids.indexOf(a.id);
+        const i2 = ids.indexOf(b.id);
+        return i1 - i2;
+      }))
     );
   }
 

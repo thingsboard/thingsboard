@@ -29,17 +29,22 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { MenuService } from '@core/services/menu.service';
 import { MenuSection } from '@core/services/menu.models';
+import { AddQuickLinkDialogComponent } from '@home/components/widget/lib/home-page/add-quick-link-dialog.component';
+import {
+  EditLinksDialogComponent,
+  EditLinksDialogData
+} from '@home/components/widget/lib/home-page/edit-links-dialog.component';
 
 const defaultQuickLinksMap = new Map<Authority, QuickLinks>(
   [
     [Authority.SYS_ADMIN, {
-      links: ['tenants', 'tenantProfiles']
+      links: ['tenants', 'tenant_profiles']
     }],
     [Authority.TENANT_ADMIN, {
-      links: ['alarms', 'dashboards', 'entitiesDevices']
+      links: ['alarms', 'dashboards', 'devices']
     }],
     [Authority.CUSTOMER_USER, {
-      links: ['alarms', 'dashboards', 'entitiesDevices']
+      links: ['alarms', 'dashboards', 'devices']
     }]
   ]
 );
@@ -128,35 +133,36 @@ export class QuickLinksWidgetComponent extends PageComponent implements OnInit, 
   }
 
   edit() {
-  /*  this.dialog.open<EditDocLinksDialogComponent, EditDocLinksDialogData,
-      boolean>(EditDocLinksDialogComponent, {
+    this.dialog.open<EditLinksDialogComponent, EditLinksDialogData,
+      boolean>(EditLinksDialogComponent, {
       disableClose: true,
       autoFocus: false,
       data: {
-        docLinks: this.documentationLinks
+        mode: 'quickLinks',
+        links: this.quickLinks
       },
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
     }).afterClosed().subscribe(
       (result) => {
         if (result) {
-          this.loadDocLinks();
+          this.loadQuickLinks();
         }
-      }); */
+      });
   }
 
   addLink() {
-   /* this.dialog.open<AddDocLinkDialogComponent, any,
-      DocumentationLink>(AddDocLinkDialogComponent, {
+    this.dialog.open<AddQuickLinkDialogComponent, any,
+      string>(AddQuickLinkDialogComponent, {
       disableClose: true,
       autoFocus: false,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
     }).afterClosed().subscribe(
-      (docLink) => {
-        if (docLink) {
-          this.documentationLinks.links.push(docLink);
+      (link) => {
+        if (link) {
+          this.quickLinks.links.push(link);
           this.cd.markForCheck();
-          this.userSettingsService.updateDocumentationLinks(this.documentationLinks).subscribe();
+          this.userSettingsService.updateQuickLinks(this.quickLinks).subscribe();
         }
-      }); */
+      });
   }
 }

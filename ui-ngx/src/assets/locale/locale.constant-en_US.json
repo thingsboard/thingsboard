@@ -5146,6 +5146,10 @@
         "quick-links": {
             "title": "Quick links",
             "add-link": "Add link",
+            "add-link-title": "Add quick link",
+            "quick-link": "Quick link",
+            "quick-link-required": "Quick link is required.",
+            "no-links-matching": "No links matching '{{name}}' were found.",
             "columns": "Columns"
         },
         "configured-features": {
