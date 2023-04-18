@@ -315,8 +315,8 @@ public class DefaultTransportApiService implements TransportApiService {
 
     private ListenableFuture<TransportApiResponseMsg> handle(GetOrCreateDeviceFromGatewayRequestMsg requestMsg) {
         DeviceId gatewayId = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
-        ListenableFuture<Device> gatewayFuture = deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, gatewayId);
-        return Futures.transform(gatewayFuture, gateway -> {
+        return dbCallbackExecutorService.submit(() -> {
+            Device gateway = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, gatewayId);
             Lock deviceCreationLock = deviceCreationLocks.computeIfAbsent(requestMsg.getDeviceName(), id -> new ReentrantLock());
             deviceCreationLock.lock();
             try {
@@ -382,7 +382,7 @@ public class DefaultTransportApiService implements TransportApiService {
             } finally {
                 deviceCreationLock.unlock();
             }
-        }, dbCallbackExecutorService);
+        });
     }
 
     private ListenableFuture<TransportApiResponseMsg> handle(ProvisionDeviceRequestMsg requestMsg) {
@@ -521,30 +521,31 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceCredentials credentials) {
-        return Futures.transform(deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, credentials.getDeviceId()), device -> {
-            if (device == null) {
-                log.trace("[{}] Failed to lookup device by id", credentials.getDeviceId());
-                return getEmptyTransportApiResponse();
+        Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, credentials.getDeviceId());
+        if (device == null) {
+            log.trace("[{}] Failed to lookup device by id", credentials.getDeviceId());
+            return getEmptyTransportApiResponseFuture();
+        }
+        try {
+            ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
+            builder.setDeviceInfo(getDeviceInfoProto(device));
+            DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
+            if (deviceProfile != null) {
+                builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
+            } else {
+                log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
             }
-            try {
-                ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
-                builder.setDeviceInfo(getDeviceInfoProto(device));
-                DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
-                if (deviceProfile != null) {
-                    builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
-                } else {
-                    log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
-                }
-                if (!StringUtils.isEmpty(credentials.getCredentialsValue())) {
-                    builder.setCredentialsBody(credentials.getCredentialsValue());
-                }
-                return TransportApiResponseMsg.newBuilder()
-                        .setValidateCredResponseMsg(builder.build()).build();
-            } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to lookup device by id", credentials.getDeviceId(), e);
-                return getEmptyTransportApiResponse();
+            if (!StringUtils.isEmpty(credentials.getCredentialsValue())) {
+                builder.setCredentialsBody(credentials.getCredentialsValue());
             }
-        }, MoreExecutors.directExecutor());
+            return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
+                    .setValidateCredResponseMsg(builder.build()).build());
+        } catch (JsonProcessingException e) {
+            log.warn("[{}] Failed to lookup device by id", credentials.getDeviceId(), e);
+            return getEmptyTransportApiResponseFuture();
+        } catch (Exception e) {
+            return Futures.immediateFailedFuture(e);
+        }
     }
 
     private DeviceInfoProto getDeviceInfoProto(Device device) throws JsonProcessingException {

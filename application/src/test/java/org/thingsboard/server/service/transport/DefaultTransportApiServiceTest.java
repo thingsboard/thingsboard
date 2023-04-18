@@ -123,7 +123,7 @@ public class DefaultTransportApiServiceTest {
     @Test
     public void validateExistingDeviceByX509CertificateStrategy() {
         var device = createDevice();
-        when(deviceService.findDeviceByIdAsync(any(), any())).thenReturn(Futures.immediateFuture(device));
+        when(deviceService.findDeviceById(any(), any())).thenReturn(device);
 
         var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
         when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(deviceCredentials);
@@ -139,7 +139,7 @@ public class DefaultTransportApiServiceTest {
 
         var device = createDevice();
         when(deviceService.findDeviceByTenantIdAndName(any(), any())).thenReturn(device);
-        when(deviceService.findDeviceByIdAsync(any(), any())).thenReturn(Futures.immediateFuture(device));
+        when(deviceService.findDeviceById(any(), any())).thenReturn(device);
 
         var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
         when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(null);
@@ -150,7 +150,7 @@ public class DefaultTransportApiServiceTest {
 
         service.validateOrCreateDeviceX509Certificate(certificateChain);
         verify(deviceProfileService, times(1)).findDeviceProfileByProvisionDeviceKey(any());
-        verify(deviceService, times(1)).findDeviceByIdAsync(any(), any());
+        verify(deviceService, times(1)).findDeviceById(any(), any());
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByCredentialsId(any());
         verify(deviceProvisionService, times(1)).provisionDeviceViaX509Chain(any(), any());
     }
