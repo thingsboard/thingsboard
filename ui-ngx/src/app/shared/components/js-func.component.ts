@@ -39,6 +39,7 @@ import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { beautifyJs } from '@shared/models/beautify.models';
+import {ScriptLanguage} from "@shared/models/rule-node.models";
 
 @Component({
   selector: 'tb-js-func',
@@ -93,6 +94,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   @Input() disableUndefinedCheck = false;
 
   @Input() helpId: string;
+
+  @Input() scriptLanguage: ScriptLanguage = ScriptLanguage.TBEL;
 
   private noValidateValue: boolean;
   get noValidate(): boolean {
@@ -152,11 +155,14 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     }
     const editorElement = this.javascriptEditorElmRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
-      mode: 'ace/mode/javascript',
-      showGutter: true,
-      showPrintMargin: true,
-      readOnly: this.disabled
+        mode: 'ace/mode/javascript',
+        showGutter: true,
+        showPrintMargin: true,
+        readOnly: this.disabled
     };
+    if (ScriptLanguage.TBEL === this.scriptLanguage) {
+      editorOptions.mode = 'ace/mode/tbel';
+    }
 
     const advancedOptions = {
       enableSnippets: true,
