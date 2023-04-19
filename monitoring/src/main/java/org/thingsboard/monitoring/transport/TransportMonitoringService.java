@@ -17,29 +17,42 @@ package org.thingsboard.monitoring.transport;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.client.WsClient;
 import org.thingsboard.monitoring.client.WsClientFactory;
 import org.thingsboard.monitoring.config.DeviceConfig;
 import org.thingsboard.monitoring.config.MonitoringTargetConfig;
+import org.thingsboard.monitoring.config.TransportType;
 import org.thingsboard.monitoring.config.service.TransportMonitoringConfig;
 import org.thingsboard.monitoring.data.Latencies;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.service.MonitoringReporter;
+import org.thingsboard.monitoring.util.ResourceUtils;
 import org.thingsboard.monitoring.util.TbStopWatch;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
+import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
 import javax.annotation.PostConstruct;
 import java.util.LinkedList;
@@ -120,13 +133,7 @@ public final class TransportMonitoringService {
             Device device = tbClient.getTenantDevice(deviceName)
                     .orElseGet(() -> {
                         log.info("Creating new device '{}'", deviceName);
-                        Device monitoringDevice = new Device();
-                        monitoringDevice.setName(deviceName);
-                        monitoringDevice.setType("default");
-                        DeviceData deviceData = new DeviceData();
-                        deviceData.setConfiguration(new DefaultDeviceConfiguration());
-                        deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
-                        return tbClient.saveDevice(monitoringDevice);
+                        return createDevice(config.getTransportType(), deviceName, tbClient);
                     });
             deviceId = device.getId();
             target.getDevice().setId(deviceId.toString());
@@ -134,10 +141,58 @@ public final class TransportMonitoringService {
             deviceId = new DeviceId(deviceConfig.getId());
         }
 
-        log.info("Loading credentials for device {}", deviceId);
+        log.info("Using device {} for {} monitoring", deviceId, config.getTransportType());
         DeviceCredentials credentials = tbClient.getDeviceCredentialsByDeviceId(deviceId)
                 .orElseThrow(() -> new IllegalArgumentException("No credentials found for device " + deviceId));
         target.getDevice().setCredentials(credentials);
+    }
+
+    private Device createDevice(TransportType transportType, String name, TbClient tbClient) {
+        Device device = new Device();
+        device.setName(name);
+
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setCredentialsId(RandomStringUtils.randomAlphabetic(20));
+
+        DeviceData deviceData = new DeviceData();
+        deviceData.setConfiguration(new DefaultDeviceConfiguration());
+        if (transportType != TransportType.LWM2M) {
+            device.setType("default");
+            deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+            credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        } else {
+            tbClient.getResources(new PageLink(1, 0, "lwm2m monitoring")).getData()
+                    .stream().findFirst()
+                    .orElseGet(() -> {
+                        TbResource newResource = ResourceUtils.getResource("lwm2m/resource.json", TbResource.class);
+                        log.info("Creating LwM2M resource");
+                        return tbClient.saveResource(newResource);
+                    });
+            String profileName = "LwM2M Monitoring";
+            DeviceProfile profile = tbClient.getDeviceProfiles(new PageLink(1, 0, profileName)).getData()
+                    .stream().findFirst()
+                    .orElseGet(() -> {
+                        DeviceProfile newProfile = ResourceUtils.getResource("lwm2m/device_profile.json", DeviceProfile.class);
+                        newProfile.setName(profileName);
+                        log.info("Creating LwM2M device profile");
+                        return tbClient.saveDeviceProfile(newProfile);
+                    });
+            device.setType(profileName);
+            device.setDeviceProfileId(profile.getId());
+            deviceData.setTransportConfiguration(new Lwm2mDeviceTransportConfiguration());
+
+            credentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
+            LwM2MDeviceCredentials lwm2mCreds = new LwM2MDeviceCredentials();
+            NoSecClientCredential client = new NoSecClientCredential();
+            client.setEndpoint(credentials.getCredentialsId());
+            lwm2mCreds.setClient(client);
+            LwM2MBootstrapClientCredentials bootstrap = new LwM2MBootstrapClientCredentials();
+            bootstrap.setBootstrapServer(new NoSecBootstrapClientCredential());
+            bootstrap.setLwm2mServer(new NoSecBootstrapClientCredential());
+            lwm2mCreds.setBootstrap(bootstrap);
+            credentials.setCredentialsValue(JacksonUtil.toString(lwm2mCreds));
+        }
+        return tbClient.saveDeviceWithCredentials(device, credentials).get();
     }
 
 }
