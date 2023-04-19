@@ -83,6 +83,25 @@
         "settingsDirective": "tb-quick-links-widget-settings",
         "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"columns\":3},\"title\":\"Quick links\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false}"
       }
+    },
+    {
+      "alias": "dashboards",
+      "name": "Dashboards",
+      "image": null,
+      "description": null,
+      "descriptor": {
+        "type": "static",
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "resources": [],
+        "templateHtml": "<tb-recent-dashboards-widget\n    [ctx]=\"ctx\">\n</tb-recent-dashboards-widget>\n",
+        "templateCss": "",
+        "controllerScript": "self.onInit = function() {\n}",
+        "settingsSchema": "",
+        "dataKeySettingsSchema": "",
+        "settingsDirective": "",
+        "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Dashboards\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false}"
+      }
     }
   ]
 }

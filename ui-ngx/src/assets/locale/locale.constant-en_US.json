@@ -3739,7 +3739,8 @@
         "time-period": "Time period",
         "hide": "Hide",
         "interval": "Interval",
-        "just-now": "Just now"
+        "just-now": "Just now",
+        "ago": "ago"
     },
     "user": {
         "user": "User",
@@ -5151,6 +5152,14 @@
             "quick-link-required": "Quick link is required.",
             "no-links-matching": "No links matching '{{name}}' were found.",
             "columns": "Columns"
+        },
+        "recent-dashboards": {
+            "title": "Dashboards",
+            "last": "Last viewed",
+            "starred": "Starred",
+            "name": "Name",
+            "last-viewed": "Last viewed",
+            "no-last-viewed-dashboards": "No last viewed dashboards yet"
         },
         "configured-features": {
             "title": "Configured features",

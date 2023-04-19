@@ -19,7 +19,7 @@ import { Observable } from 'rxjs';
 import {
   DocumentationLink, DocumentationLinks,
   GettingStarted,
-  initialUserSettings, QuickLinks,
+  initialUserSettings, QuickLinks, UserDashboardAction, UserDashboardsInfo,
   UserSettings,
   UserSettingsType
 } from '@shared/models/user-settings.models';
@@ -84,6 +84,17 @@ export class UserSettingsService {
 
   public updateGettingStarted(gettingStarted: GettingStarted, config?: RequestConfig): Observable<void> {
     return this.http.put<void>(`/api/user/settings/${UserSettingsType.GETTING_STARTED}`, gettingStarted,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getUserDashboardsInfo(config?: RequestConfig): Observable<UserDashboardsInfo> {
+    return this.http.get<UserDashboardsInfo>('/api/user/dashboards',
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public reportUserDashboardAction(dashboardId: string, action: UserDashboardAction,
+                                   config?: RequestConfig): Observable<UserDashboardsInfo> {
+    return this.http.get<UserDashboardsInfo>(`/api/user/dashboards/${dashboardId}/${action}`,
       defaultHttpOptionsFromConfig(config));
   }
 

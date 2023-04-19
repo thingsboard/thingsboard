@@ -48,3 +48,28 @@ export interface GettingStarted {
   maxSelectedIndex?: number;
   lastSelectedIndex?: number;
 }
+
+export interface AbstractUserDashboardInfo {
+  id: string;
+  title: string;
+  starred: boolean;
+}
+
+export interface LastVisitedDashboardInfo extends AbstractUserDashboardInfo {
+  lastVisited: number;
+}
+
+export interface StarredDashboardInfo extends AbstractUserDashboardInfo {
+  starredAt: number;
+}
+
+export interface UserDashboardsInfo {
+  last: Array<LastVisitedDashboardInfo>;
+  starred: Array<StarredDashboardInfo>;
+}
+
+export enum UserDashboardAction {
+  VISIT = 'VISIT',
+  STAR = 'STAR',
+  UNSTAR = 'UNSTAR'
+}

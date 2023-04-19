@@ -33,6 +33,9 @@ import { UsageInfoWidgetComponent } from '@home/components/widget/lib/home-page/
 import { QuickLinksWidgetComponent } from '@home/components/widget/lib/home-page/quick-links-widget.component';
 import { QuickLinkComponent } from '@home/components/widget/lib/home-page/quick-link.component';
 import { AddQuickLinkDialogComponent } from '@home/components/widget/lib/home-page/add-quick-link-dialog.component';
+import {
+  RecentDashboardsWidgetComponent
+} from '@home/components/widget/lib/home-page/recent-dashboards-widget.component';
 
 @NgModule({
   declarations:
@@ -50,7 +53,8 @@ import { AddQuickLinkDialogComponent } from '@home/components/widget/lib/home-pa
       UsageInfoWidgetComponent,
       QuickLinksWidgetComponent,
       QuickLinkComponent,
-      AddQuickLinkDialogComponent
+      AddQuickLinkDialogComponent,
+      RecentDashboardsWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -70,7 +74,8 @@ import { AddQuickLinkDialogComponent } from '@home/components/widget/lib/home-pa
     UsageInfoWidgetComponent,
     QuickLinksWidgetComponent,
     QuickLinkComponent,
-    AddQuickLinkDialogComponent
+    AddQuickLinkDialogComponent,
+    RecentDashboardsWidgetComponent
   ]
 })
 export class HomePageWidgetsModule { }

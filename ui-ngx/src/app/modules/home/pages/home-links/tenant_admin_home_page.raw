@@ -508,6 +508,36 @@
         "row": 0,
         "col": 0,
         "id": "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e"
+      },
+      "6d6e2b1d-6ce7-4678-3745-c6b0897b2674": {
+        "isSystemType": true,
+        "bundleAlias": "home_page_widgets",
+        "typeAlias": "dashboards",
+        "type": "static",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {},
+          "title": "Dashboards",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false,
+          "datasources": []
+        },
+        "row": 0,
+        "col": 0,
+        "id": "6d6e2b1d-6ce7-4678-3745-c6b0897b2674"
       }
     },
     "states": {
@@ -519,8 +549,8 @@
             "widgets": {
               "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
                 "sizeX": 41,
-                "sizeY": 16,
-                "row": 26,
+                "sizeY": 29,
+                "row": 13,
                 "col": 44,
                 "mobileOrder": 7,
                 "mobileHeight": 8
@@ -549,6 +579,12 @@
                 "sizeX": 28,
                 "sizeY": 16,
                 "row": 42,
+                "col": 0
+              },
+              "6d6e2b1d-6ce7-4678-3745-c6b0897b2674": {
+                "sizeX": 44,
+                "sizeY": 29,
+                "row": 13,
                 "col": 0
               }
             },

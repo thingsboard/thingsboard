@@ -19,9 +19,9 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ContentChildren,
+  ContentChildren, EventEmitter,
   Input,
-  OnInit,
+  OnInit, Output,
   QueryList,
   ViewChild
 } from '@angular/core';
@@ -53,6 +53,9 @@ export class ToggleHeaderComponent extends PageComponent implements OnInit {
 
   @Input()
   value: any;
+
+  @Output()
+  valueChange = new EventEmitter<any>();
 
   @Input()
   options: ToggleHeaderOption[];
