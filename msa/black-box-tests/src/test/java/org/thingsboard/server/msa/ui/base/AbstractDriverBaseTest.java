@@ -49,6 +49,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,6 +69,8 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     protected static final PageLink pageLink = new PageLink(10);
     private static final ContainerTestSuite instance = ContainerTestSuite.getInstance();
     private JavascriptExecutor js;
+    public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
+    private final Duration duration = Duration.ofMillis(WAIT_TIMEOUT);
 
     @BeforeClass
     public void startUp() throws MalformedURLException {
@@ -105,8 +108,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     }
 
     public String getJwtTokenFromLocalStorage() {
-        js = (JavascriptExecutor) driver;
-        return (String) js.executeScript("return window.localStorage.getItem('jwt_token');");
+        return (String) getJs().executeScript("return window.localStorage.getItem('jwt_token');");
     }
 
     public void openBaseUiUrl() {
@@ -122,7 +124,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     }
 
     protected boolean urlContains(String urlPath) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(5000));
+        WebDriverWait wait = new WebDriverWait(driver, duration);
         try {
             wait.until(ExpectedConditions.urlContains(urlPath));
         } catch (WebDriverException e) {
@@ -132,8 +134,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     }
 
     public void jsClick(WebElement element) {
-        js = (JavascriptExecutor) driver;
-        js.executeScript("arguments[0].click();", element);
+        getJs().executeScript("arguments[0].click();", element);
     }
 
     public static RuleChain getRuleChainByName(String name) {
@@ -191,6 +192,10 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             Allure.addAttachment(screenshotName,
                     new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
         }
+    }
+
+    public JavascriptExecutor getJs() {
+        return js = (JavascriptExecutor) driver;
     }
 
     public void assertIsDisplayed(WebElement element) {
