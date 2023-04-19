@@ -207,4 +207,11 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             ruleChains.forEach(rc -> testRestClient.deleteRuleChain(rc.getId()));
         }
     }
+
+    public void setRootRuleChain(String ruleChainName) {
+        List<RuleChain> ruleChains = getRuleChainsByName(ruleChainName);
+        if (!ruleChains.isEmpty()) {
+            testRestClient.setRootRuleChain(ruleChains.stream().findFirst().get().getId());
+        }
+    }
 }

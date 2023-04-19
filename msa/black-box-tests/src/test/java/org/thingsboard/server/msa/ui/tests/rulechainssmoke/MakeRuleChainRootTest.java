@@ -27,7 +27,7 @@ public class MakeRuleChainRootTest extends AbstractRuleChainTest {
 
     @AfterMethod
     public void makeRoot() {
-        testRestClient.setRootRuleChain(getRuleChainByName("Root Rule Chain").getId());
+        setRootRuleChain("Root Rule Chain");
     }
 
     @Test(priority = 10, groups = "smoke")

@@ -39,7 +39,6 @@ public class OpenRuleChainTest extends AbstractRuleChainTest {
         ruleChainsPage.entity(ruleChainName).click();
         openRuleChainPage.setHeadName();
 
-        assertThat(ruleChain).as("Rule chain created").isNotNull();
         assertThat(urlContains(ruleChain.getUuidId().toString())).as("URL contains rule chain's ID").isTrue();
         assertIsDisplayed(openRuleChainPage.headRuleChainName());
         assertIsDisplayed(openRuleChainPage.inputNode());
