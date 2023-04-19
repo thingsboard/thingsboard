@@ -41,7 +41,7 @@ public class CreateRuleChainImportTest extends AbstractRuleChainTest {
         ruleChainsPage.openImportRuleChainView();
         ruleChainsPage.browseFile().sendKeys(absolutePathToFileImportRuleChain);
 
-        Assert.assertTrue(ruleChainsPage.importingFile(IMPORT_RULE_CHAIN_FILE_NAME).isDisplayed());
+        assertIsDisplayed(ruleChainsPage.importingFile(IMPORT_RULE_CHAIN_FILE_NAME));
     }
 
     @Test(priority = 20, groups = "smoke")
@@ -63,7 +63,7 @@ public class CreateRuleChainImportTest extends AbstractRuleChainTest {
         ruleChainsPage.openImportRuleChainView();
         ruleChainsPage.browseFile().sendKeys(absolutePathToFileImportTxt);
 
-        Assert.assertTrue(ruleChainsPage.importingFile(EMPTY_IMPORT_MESSAGE).isDisplayed());
+        assertIsDisplayed(ruleChainsPage.importingFile(EMPTY_IMPORT_MESSAGE));
     }
 
     @Test(priority = 30, groups = "smoke")

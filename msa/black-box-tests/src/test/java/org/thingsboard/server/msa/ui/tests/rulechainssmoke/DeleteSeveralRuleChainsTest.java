@@ -91,6 +91,6 @@ public class DeleteSeveralRuleChainsTest extends AbstractRuleChainTest {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.deleteSelected(2);
 
-        Assert.assertTrue(ruleChainsPage.assertRuleChainsIsNotPresent(ruleChainName));
+        ruleChainsPage.assertRuleChainsIsNotPresent(ruleChainName);
     }
 }
