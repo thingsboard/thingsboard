@@ -47,8 +47,11 @@ import java.io.ByteArrayInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
@@ -137,9 +140,19 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         try {
             return testRestClient.getRuleChains(pageLink).getData().stream()
                     .filter(s -> s.getName().equals(name)).collect(Collectors.toList()).get(0);
-        } catch (Exception e) {
+        } catch (IndexOutOfBoundsException e) {
             log.error("No such rule chain with name: " + name);
             return null;
+        }
+    }
+
+    public List<RuleChain> getRuleChainsByName(String name) {
+        try {
+            return testRestClient.getRuleChains(pageLink).getData().stream()
+                    .filter(s -> s.getName().equals(name)).collect(Collectors.toList());
+        } catch (IndexOutOfBoundsException e) {
+            log.error("No such rule chain with name: " + name);
+            return Collections.emptyList();
         }
     }
 
@@ -177,6 +190,21 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         if (driver instanceof TakesScreenshot) {
             Allure.addAttachment(screenshotName,
                     new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
+        }
+    }
+
+    public void assertIsDisplayed(WebElement element) {
+        assertThat(element.isDisplayed()).as(element + " is displayed").isTrue();
+    }
+
+    public void assertIsDisable(WebElement element) {
+        assertThat(element.isEnabled()).as(element + " is disabled").isFalse();
+    }
+
+    public void deleteRuleChainByName(String ruleChainName) {
+        List<RuleChain> ruleChains = getRuleChainsByName(ruleChainName);
+        if (!ruleChains.isEmpty()) {
+            ruleChains.forEach(rc -> testRestClient.deleteRuleChain(rc.getId()));
         }
     }
 }

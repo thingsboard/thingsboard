@@ -18,52 +18,27 @@ package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
-import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
-import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
 
-public class SortByNameTest extends AbstractDriverBaseTest {
+@Feature("Sort rule chain by name")
+public class SortByNameTest extends AbstractRuleChainTest {
 
-    private SideBarMenuViewElements sideBarMenuView;
-    private RuleChainsPageHelper ruleChainsPage;
-    private String ruleChainName;
-
-    @BeforeClass
-    public void login() {
-        new LoginPageHelper(driver).authorizationTenant();
-        sideBarMenuView = new SideBarMenuViewElements(driver);
-        ruleChainsPage = new RuleChainsPageHelper(driver);
-    }
-
-    @AfterMethod
-    public void delete() {
-        if (ruleChainName != null) {
-            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
-            ruleChainName = null;
-        }
-    }
-
-    @Epic("Rule chains smoke tests")
-    @Feature("Sort rule chain by name")
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForSort")
     @Description("Sort rule chain 'UP'")
-    public void specialCharacterUp(String ruleChainName) {
+    public void specialCharacterUp(String name) {
+        ruleChainName = name;
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
-        this.ruleChainName = ruleChainName;
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.sortByNameBtn().click();
         ruleChainsPage.setRuleChainName(0);
 
-        Assert.assertEquals(ruleChainsPage.getRuleChainName(), ruleChainName);
+        assertThat(ruleChainsPage.getRuleChainName()).as("First rule chain after sort").isEqualTo(ruleChainName);
     }
 
     @Epic("Rule chains smoke tests")
@@ -71,9 +46,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description("Sort rule chain 'UP'")
     public void allSortUp(String ruleChain, String ruleChainSymbol, String ruleChainNumber) {
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol));
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainNumber));
+        RuleChainId ruleChainSymbolId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol)).getId();
+        RuleChainId ruleChainId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain)).getId();
+        RuleChainId ruleChainNumberId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainNumber)).getId();
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.sortByNameBtn().click();
@@ -84,13 +59,13 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         ruleChainsPage.setRuleChainName(2);
         String thirdRuleChain = ruleChainsPage.getRuleChainName();
 
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChain).getId());
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainNumber).getId());
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainSymbol).getId());
+        testRestClient.deleteRuleChain(ruleChainId);
+        testRestClient.deleteRuleChain(ruleChainNumberId);
+        testRestClient.deleteRuleChain(ruleChainSymbolId);
 
-        Assert.assertEquals(firstRuleChain, ruleChainSymbol);
-        Assert.assertEquals(secondRuleChain, ruleChainNumber);
-        Assert.assertEquals(thirdRuleChain, ruleChain);
+        assertThat(firstRuleChain).as("First rule chain with symbol in name").isEqualTo(ruleChainSymbol);
+        assertThat(secondRuleChain).as("Second rule chain with number in name").isEqualTo(ruleChainNumber);
+        assertThat(thirdRuleChain).as("Third rule chain with number in name").isEqualTo(ruleChain);
     }
 
     @Epic("Rule chains smoke tests")
@@ -105,7 +80,7 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         ruleChainsPage.sortByNameDown();
         ruleChainsPage.setRuleChainName(ruleChainsPage.allNames().size() - 1);
 
-        Assert.assertEquals(ruleChainsPage.getRuleChainName(), ruleChainName);
+        assertThat(ruleChainsPage.getRuleChainName()).as("Last rule chain after sort").isEqualTo(ruleChainName);
     }
 
     @Epic("Rule chains smoke tests")
@@ -113,9 +88,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description("Sort rule chain 'DOWN'")
     public void allSortDown(String ruleChain, String ruleChainSymbol, String ruleChainNumber) {
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol));
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
-        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainNumber));
+        RuleChainId ruleChainSymbolId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol)).getId();
+        RuleChainId ruleChainId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain)).getId();
+        RuleChainId ruleChainNumberId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainNumber)).getId();
 
         sideBarMenuView.ruleChainsBtn().click();
         int lastIndex = ruleChainsPage.allNames().size() - 1;
@@ -127,12 +102,12 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         ruleChainsPage.setRuleChainName(lastIndex - 2);
         String thirdRuleChain = ruleChainsPage.getRuleChainName();
 
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChain).getId());
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainNumber).getId());
-        testRestClient.deleteRuleChain(getRuleChainByName(ruleChainSymbol).getId());
+        testRestClient.deleteRuleChain(ruleChainId);
+        testRestClient.deleteRuleChain(ruleChainNumberId);
+        testRestClient.deleteRuleChain(ruleChainSymbolId);
 
-        Assert.assertEquals(firstRuleChain, ruleChainSymbol);
-        Assert.assertEquals(secondRuleChain, ruleChainNumber);
-        Assert.assertEquals(thirdRuleChain, ruleChain);
+        assertThat(firstRuleChain).as("First from the end rule chain with symbol in name").isEqualTo(ruleChainSymbol);
+        assertThat(secondRuleChain).as("Second from the end rule chain with number in name").isEqualTo(ruleChainNumber);
+        assertThat(thirdRuleChain).as("Third rule from the end chain with number in name").isEqualTo(ruleChain);
     }
 }

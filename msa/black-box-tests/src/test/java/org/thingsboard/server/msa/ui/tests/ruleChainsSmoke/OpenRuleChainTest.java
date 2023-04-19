@@ -16,81 +16,52 @@
 package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
 
 import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
-import org.thingsboard.server.msa.ui.pages.OpenRuleChainPageHelper;
-import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
-import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
-public class OpenRuleChainTest extends AbstractDriverBaseTest {
+@Feature("Open rule chain")
+public class OpenRuleChainTest extends AbstractRuleChainTest {
 
-    private SideBarMenuViewElements sideBarMenuView;
-    private RuleChainsPageHelper ruleChainsPage;
-    private OpenRuleChainPageHelper openRuleChainPage;
-    private String ruleChainName;
-
-    @BeforeClass
-    public void login() {
-        new LoginPageHelper(driver).authorizationTenant();
-        sideBarMenuView = new SideBarMenuViewElements(driver);
-        ruleChainsPage = new RuleChainsPageHelper(driver);
-        openRuleChainPage = new OpenRuleChainPageHelper(driver);
-    }
-
-    @AfterMethod
-    public void delete() {
-        if (ruleChainName != null) {
-            testRestClient.deleteRuleChain(getRuleChainByName(ruleChainName).getId());
-            ruleChainName = null;
-        }
-    }
-
-    @Epic("Rule chains smoke tests")
-    @Feature("Open rule chain")
     @Test(priority = 10, groups = "smoke")
     @Description("Open the rule chain by clicking on its name")
     public void openRuleChainByRightCornerBtn() {
-        String ruleChainName = ENTITY_NAME + random();
+        ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
-        this.ruleChainName = ruleChainName;
+        RuleChain ruleChain = getRuleChainByName(ruleChainName);
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.entity(ruleChainName).click();
         openRuleChainPage.setHeadName();
 
-        Assert.assertTrue(urlContains(String.valueOf(getRuleChainByName(ruleChainName).getId())));
-        Assert.assertTrue(openRuleChainPage.headRuleChainName().isDisplayed());
-        Assert.assertTrue(openRuleChainPage.inputNode().isDisplayed());
-        Assert.assertEquals(ruleChainName, openRuleChainPage.getHeadName());
+        assertThat(ruleChain).as("Rule chain created").isNotNull();
+        assertThat(urlContains(ruleChain.getUuidId().toString())).as("URL contains rule chain's ID").isTrue();
+        assertIsDisplayed(openRuleChainPage.headRuleChainName());
+        assertIsDisplayed(openRuleChainPage.inputNode());
+        assertThat(openRuleChainPage.getHeadName()).as("Head of opened rule chain page text").isEqualTo(ruleChainName);
     }
 
-    @Epic("Rule chains smoke tests")
-    @Feature("Open rule chain")
     @Test(priority = 10, groups = "smoke")
     @Description("Open the rule chain by clicking on the 'Open rule chain' button in the entity view")
     public void openRuleChainByViewBtn() {
-        String ruleChainName = ENTITY_NAME + random();
+        ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(EntityPrototypes.defaultRuleChainPrototype(ruleChainName));
-        this.ruleChainName = ruleChainName;
+        RuleChain ruleChain = getRuleChainByName(ruleChainName);
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.openRuleChainFromViewBtn().click();
         openRuleChainPage.setHeadName();
 
-        Assert.assertTrue(urlContains(String.valueOf(getRuleChainByName(ruleChainName).getId())));
-        Assert.assertTrue(openRuleChainPage.headRuleChainName().isDisplayed());
-        Assert.assertTrue(openRuleChainPage.inputNode().isDisplayed());
-        Assert.assertEquals(ruleChainName, openRuleChainPage.getHeadName());
+        assertThat(ruleChain).as("Rule chain created").isNotNull();
+        assertThat(urlContains(ruleChain.getUuidId().toString())).as("URL contains rule chain's ID").isTrue();
+        assertIsDisplayed(openRuleChainPage.headRuleChainName());
+        assertIsDisplayed(openRuleChainPage.inputNode());
+        assertThat(openRuleChainPage.getHeadName()).as("Head of opened rule chain page text").isEqualTo(ruleChainName);
     }
 }
