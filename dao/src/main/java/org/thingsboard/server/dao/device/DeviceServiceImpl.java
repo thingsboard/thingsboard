@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -72,11 +73,14 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -133,6 +137,17 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                         return deviceDao.findDeviceByTenantIdAndId(tenantId, deviceId.getId());
                     }
                 }, true);
+    }
+
+    @Override
+    public ListenableFuture<Device> findDeviceByIdAsync(TenantId tenantId, DeviceId deviceId) {
+        log.trace("Executing findDeviceById [{}]", deviceId);
+        validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
+        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            return deviceDao.findByIdAsync(tenantId, deviceId.getId());
+        } else {
+            return deviceDao.findDeviceByTenantIdAndIdAsync(tenantId, deviceId.getId());
+        }
     }
 
     @Override
@@ -493,20 +508,27 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public ListenableFuture<List<Device>> findDevicesByQuery(TenantId tenantId, DeviceSearchQuery query) {
         ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery());
-        return Futures.transform(relations, r -> {
+        ListenableFuture<List<Device>> devices = Futures.transformAsync(relations, r -> {
             EntitySearchDirection direction = query.toEntitySearchQuery().getParameters().getDirection();
-            List<Device> devices = new ArrayList<>();
+            List<ListenableFuture<Device>> futures = new ArrayList<>();
             for (EntityRelation relation : r) {
                 EntityId entityId = direction == EntitySearchDirection.FROM ? relation.getTo() : relation.getFrom();
                 if (entityId.getEntityType() == EntityType.DEVICE) {
-                    Device device = findDeviceById(tenantId, new DeviceId(entityId.getId()));
-                    if (query.getDeviceTypes().contains(device.getType())) {
-                        devices.add(device);
-                    }
+                    futures.add(findDeviceByIdAsync(tenantId, new DeviceId(entityId.getId())));
                 }
             }
-            return devices;
+            return Futures.successfulAsList(futures);
         }, MoreExecutors.directExecutor());
+
+        devices = Futures.transform(devices, new Function<>() {
+            @Nullable
+            @Override
+            public List<Device> apply(@Nullable List<Device> deviceList) {
+                return deviceList == null ? Collections.emptyList() : deviceList.stream().filter(device -> query.getDeviceTypes().contains(device.getType())).collect(Collectors.toList());
+            }
+        }, MoreExecutors.directExecutor());
+
+        return devices;
     }
 
     @Override
