@@ -17,7 +17,6 @@ package org.thingsboard.server.msa.ui.tests.rulechainssmoke;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
