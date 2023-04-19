@@ -21,6 +21,11 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    @media #{$mat-lt-md} {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
   }
 
   .tb-usage-list {

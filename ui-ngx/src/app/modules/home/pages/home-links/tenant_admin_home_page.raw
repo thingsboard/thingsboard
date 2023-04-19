@@ -48,7 +48,7 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div fxLayout=\"row\" fxLayoutAlign=\"space-between start\">\n        <div class=\"tb-home-widget-title\">{{ 'widgets.activity.title' | translate }}</div>\n        <tb-toggle-header #activityStates value=\"devices\" name=\"activityStates\"\n            [options]=\"[\n                {\n                    name: ctx.translate.instant('device.devices'),\n                    value: 'devices'\n                },\n                {\n                    name: ctx.translate.instant('widgets.transport-messages.title'),\n                    value: 'transportMessages'\n                }\n            ]\">\n        </tb-toggle-header>\n    </div>\n    <ng-container [ngSwitch]=\"activityStates.value\">\n        <ng-template [ngSwitchCase]=\"'devices'\">\n            <tb-dashboard-state fxFlex stateId=\"devices_activity\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n        <ng-template [ngSwitchCase]=\"'transportMessages'\">\n            <tb-dashboard-state fxFlex stateId=\"transport_messages\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n    </ng-container>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div fxLayout=\"row\" fxLayoutAlign=\"space-between start\" fxLayout.lt-md=\"column\" fxLayoutGap.lt-md=\"12px\">\n        <div class=\"tb-home-widget-title\">{{ 'widgets.activity.title' | translate }}</div>\n        <tb-toggle-header #activityStates value=\"devices\" name=\"activityStates\"\n            [options]=\"[\n                {\n                    name: ctx.translate.instant('device.devices'),\n                    value: 'devices'\n                },\n                {\n                    name: ctx.translate.instant('widgets.transport-messages.title'),\n                    value: 'transportMessages'\n                }\n            ]\">\n        </tb-toggle-header>\n    </div>\n    <ng-container [ngSwitch]=\"activityStates.value\">\n        <ng-template [ngSwitchCase]=\"'devices'\">\n            <tb-dashboard-state fxFlex stateId=\"devices_activity\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n        <ng-template [ngSwitchCase]=\"'transportMessages'\">\n            <tb-dashboard-state fxFlex stateId=\"transport_messages\" [ctx]=\"ctx\"></tb-dashboard-state>\n        </ng-template>\n    </ng-container>\n</div>",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n}\n"
           },
@@ -538,6 +538,276 @@
         "row": 0,
         "col": 0,
         "id": "6d6e2b1d-6ce7-4678-3745-c6b0897b2674"
+      },
+      "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "totalDevices",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": "42f42812-92fe-a13a-b0ba-c6e0dfab3584",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "activeDevices",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.1262449138010293,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": "39d92c21-2426-7346-4484-452829146c33",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "inactiveDevices",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.39119172615806797,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/entities/devices\">{{ 'device.devices' | translate }}</a>\n            </div>\n            <div fxLayout=\"row\" fxLayoutGap=\"12px\">\n                <a fxHide.md mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs\" target=\"_blank\">{{ 'widgets.devices.view-docs' | translate }}</a>\n                <a mat-flat-button color=\"primary\" routerLink=\"/entities/devices\" [queryParams]=\"{action: 'add'}\">{{ 'device.add' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-inactive\" routerLink=\"/entities/devices\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.inactive</div>\n                </div>\n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${inactiveDevices:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-active\" routerLink=\"/entities/devices\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.active</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${activeDevices:0}</div>\n                </div>\n            </a>\n            <a fxHide.md class=\"tb-item-card tb-total\" routerLink=\"/entities/devices\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalDevices:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: flex-start;\n    gap: 12px;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-item-cards {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n    gap: 12px;\n}\n\na.tb-item-card {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    padding: 8px 12px;\n    border: 1px solid;\n    border-radius: 10px;\n    margin-bottom: 12px;\n}\n\na.tb-item-card.tb-inactive {\n    background: rgba(209, 39, 48, 0.04);\n    border-color: rgba(209, 39, 48, 0.06);\n}\n\na.tb-item-card.tb-active {\n    background: rgba(48, 86, 128, 0.04);\n    border-color: rgba(48, 86, 128, 0.12);\n}\n\na.tb-item-card.tb-total {\n    background: rgba(0, 0, 0, 0.01);\n    border-color: rgba(0, 0, 0, 0.05);\n}\n\n.tb-item-title-container {\n    display: grid;\n}\n\n.tb-item-title {\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;    \n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-item-title.tb-home-widget-link:after {\n    position: absolute;\n    right: 0;\n}\n\na.tb-item-card:hover .tb-item-title.tb-home-widget-link:after { \n    color: rgba(0, 0, 0, 0.38);\n}\n\na.tb-item-card:hover {\n    box-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);\n}\n\n.tb-count-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    align-items: flex-start;\n    justify-content: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 24px;\n    line-height: 36px;\n    white-space: nowrap;\n    color: rgba(0, 0, 0, 0.87);\n}\n\n@media screen and (max-width: 959px) {\n    .tb-item-cards {\n        flex-direction: column;\n    }\n    a.tb-item-card {\n        margin-bottom: 0;\n    }\n}\n\n@media screen and (max-width: 1279px) {\n    a.tb-item-card {\n        flex-direction: row;\n        align-items: center;\n    }\n    .tb-item-title.tb-home-widget-link:after {\n        position: relative;\n    }\n    .tb-count-container {\n        align-items: flex-end;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-item-title {\n        font-size: 11px;\n        line-height: 16px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    a.tb-item-card {\n        padding: 4px 8px;\n        margin-bottom: 6px;\n    }\n    a.tb-item-card:hover {\n        box-shadow: 0px 2px 5px rgba(23, 33, 90, 0.08);\n    }\n}\n"
+          },
+          "title": "Devices",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6"
+      },
+      "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "totalAlarms",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": "42f42812-92fe-a13a-b0ba-c6e0dfab3584",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "assignedToMeAlarms",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.1262449138010293,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": "39d92c21-2426-7346-4484-452829146c33",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "criticalAlarms",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.39119172615806797,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/alarms\">{{ 'alarm.alarms' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-critical\" routerLink=\"/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.critical</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${criticalAlarms:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-assigned\" routerLink=\"/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.assigned-to-me</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${assignedToMeAlarms:0}</div>\n                </div>\n            </a>\n            <a fxHide.md class=\"tb-item-card tb-total\" routerLink=\"/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalAlarms:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: flex-start;\n    gap: 12px;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-item-cards {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n    gap: 12px;\n}\n\na.tb-item-card {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    padding: 8px 12px;\n    border: 1px solid;\n    border-radius: 10px;\n    margin-bottom: 12px;\n}\n\na.tb-item-card.tb-critical {\n    background: rgba(209, 39, 48, 0.04);\n    border-color: rgba(209, 39, 48, 0.06);\n}\n\na.tb-item-card.tb-assigned {\n    background: rgba(48, 86, 128, 0.04);\n    border-color: rgba(48, 86, 128, 0.12);\n}\n\na.tb-item-card.tb-total {\n    background: rgba(0, 0, 0, 0.01);\n    border-color: rgba(0, 0, 0, 0.05);\n}\n\n.tb-item-title-container {\n    display: grid;\n}\n\n.tb-item-title {\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;    \n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-item-title.tb-home-widget-link:after {\n    position: absolute;\n    right: 0;\n}\n\na.tb-item-card:hover .tb-item-title.tb-home-widget-link:after { \n    color: rgba(0, 0, 0, 0.38);\n}\n\na.tb-item-card:hover {\n    box-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);\n}\n\n.tb-count-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    align-items: flex-start;\n    justify-content: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 24px;\n    line-height: 36px;\n    white-space: nowrap;\n    color: rgba(0, 0, 0, 0.87);\n}\n\na.tb-item-card.tb-critical .tb-count:after {\n    content: \"warning\";\n    display: inline-block;\n    position: relative;\n    font-family: 'Material Icons Round';\n    color: #D12730;\n    vertical-align: bottom;\n    margin-left: 6px;\n}\n\n@media screen and (max-width: 959px) {\n    .tb-item-cards {\n        flex-direction: column;\n    }\n    a.tb-item-card {\n        margin-bottom: 0;\n    }\n}\n\n@media screen and (max-width: 1279px) {\n    a.tb-item-card {\n        flex-direction: row;\n        align-items: center;\n    }\n    .tb-item-title.tb-home-widget-link:after {\n        position: relative;\n    }\n    .tb-count-container {\n        align-items: flex-end;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-item-title {\n        font-size: 11px;\n        line-height: 16px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    a.tb-item-card {\n        padding: 4px 8px;\n        margin-bottom: 6px;\n    }\n    a.tb-item-card:hover {\n        box-shadow: 0px 2px 5px rgba(23, 33, 90, 0.08);\n    }\n    a.tb-item-card.tb-critical .tb-count:after {\n        margin-left: 2px;\n    }\n}\n"
+          },
+          "title": "Alarms",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb"
       }
     },
     "states": {
@@ -548,12 +818,12 @@
           "main": {
             "widgets": {
               "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
-                "sizeX": 41,
+                "sizeX": 42,
                 "sizeY": 29,
                 "row": 13,
-                "col": 44,
-                "mobileOrder": 7,
-                "mobileHeight": 8
+                "col": 43,
+                "mobileOrder": 4,
+                "mobileHeight": 10
               },
               "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
                 "sizeX": 29,
@@ -573,19 +843,40 @@
                 "sizeX": 28,
                 "sizeY": 16,
                 "row": 42,
-                "col": 57
+                "col": 57,
+                "mobileOrder": 3,
+                "mobileHeight": 10
               },
               "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e": {
                 "sizeX": 28,
                 "sizeY": 16,
                 "row": 42,
-                "col": 0
+                "col": 0,
+                "mobileHide": true
               },
               "6d6e2b1d-6ce7-4678-3745-c6b0897b2674": {
-                "sizeX": 44,
+                "sizeX": 43,
                 "sizeY": 29,
                 "row": 13,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 2,
+                "mobileHeight": 10
+              },
+              "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6": {
+                "sizeX": 43,
+                "sizeY": 13,
+                "row": 0,
+                "col": 0,
+                "mobileHeight": 9,
+                "mobileOrder": 1
+              },
+              "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb": {
+                "sizeX": 42,
+                "sizeY": 13,
+                "mobileHeight": 9,
+                "row": 0,
+                "col": 43,
+                "mobileOrder": 0
               }
             },
             "gridSettings": {
@@ -658,24 +949,6 @@
       }
     },
     "entityAliases": {
-      "ae870700-071f-b3bc-406c-16ba554c5a55": {
-        "id": "ae870700-071f-b3bc-406c-16ba554c5a55",
-        "alias": "Tenants",
-        "filter": {
-          "type": "entityType",
-          "resolveMultiple": true,
-          "entityType": "TENANT"
-        }
-      },
-      "ca4d90e4-f9ae-6fca-6b09-85815a48d52b": {
-        "id": "ca4d90e4-f9ae-6fca-6b09-85815a48d52b",
-        "alias": "TenantProfiles",
-        "filter": {
-          "type": "entityType",
-          "resolveMultiple": true,
-          "entityType": "TENANT"
-        }
-      },
       "a1ddb8fa-90ff-5598-e7f2-e254194d055d": {
         "id": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
         "alias": "Devices",
@@ -683,33 +956,6 @@
           "type": "entityType",
           "resolveMultiple": true,
           "entityType": "DEVICE"
-        }
-      },
-      "619cdf00-a042-3b55-124e-194c1b28c236": {
-        "id": "619cdf00-a042-3b55-124e-194c1b28c236",
-        "alias": "Assets",
-        "filter": {
-          "type": "entityType",
-          "resolveMultiple": true,
-          "entityType": "ASSET"
-        }
-      },
-      "1d97ff7f-8b42-5882-f87b-16f3d0dee4f2": {
-        "id": "1d97ff7f-8b42-5882-f87b-16f3d0dee4f2",
-        "alias": "Users",
-        "filter": {
-          "type": "entityType",
-          "resolveMultiple": true,
-          "entityType": "USER"
-        }
-      },
-      "0dd2b154-59f4-0f97-da1a-d85f5b5cfe31": {
-        "id": "0dd2b154-59f4-0f97-da1a-d85f5b5cfe31",
-        "alias": "Customers",
-        "filter": {
-          "type": "entityType",
-          "resolveMultiple": true,
-          "entityType": "CUSTOMER"
         }
       },
       "d9229b29-3f46-de8d-7fe8-eb0c43c75079": {
@@ -721,7 +967,72 @@
         }
       }
     },
-    "filters": {},
+    "filters": {
+      "42f42812-92fe-a13a-b0ba-c6e0dfab3584": {
+        "id": "42f42812-92fe-a13a-b0ba-c6e0dfab3584",
+        "filter": "Active Devices",
+        "keyFilters": [
+          {
+            "key": {
+              "type": "ATTRIBUTE",
+              "key": "active"
+            },
+            "valueType": "BOOLEAN",
+            "predicates": [
+              {
+                "keyFilterPredicate": {
+                  "operation": "EQUAL",
+                  "value": {
+                    "defaultValue": true,
+                    "dynamicValue": null
+                  },
+                  "type": "BOOLEAN"
+                },
+                "userInfo": {
+                  "editable": true,
+                  "label": "",
+                  "autogeneratedLabel": true,
+                  "order": 0
+                }
+              }
+            ]
+          }
+        ],
+        "editable": false
+      },
+      "39d92c21-2426-7346-4484-452829146c33": {
+        "id": "39d92c21-2426-7346-4484-452829146c33",
+        "filter": "Inactive Devices",
+        "keyFilters": [
+          {
+            "key": {
+              "type": "ATTRIBUTE",
+              "key": "active"
+            },
+            "valueType": "BOOLEAN",
+            "predicates": [
+              {
+                "keyFilterPredicate": {
+                  "operation": "EQUAL",
+                  "value": {
+                    "defaultValue": false,
+                    "dynamicValue": null
+                  },
+                  "type": "BOOLEAN"
+                },
+                "userInfo": {
+                  "editable": true,
+                  "label": "",
+                  "autogeneratedLabel": true,
+                  "order": 0
+                }
+              }
+            ]
+          }
+        ],
+        "editable": false
+      }
+    },
     "timewindow": {
       "displayValue": "",
       "hideInterval": false,

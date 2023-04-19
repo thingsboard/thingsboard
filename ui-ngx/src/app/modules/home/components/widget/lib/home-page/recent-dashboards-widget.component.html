@@ -18,7 +18,7 @@
 <div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
   <div class="tb-card-header">
     <a class="tb-title-link" routerLink="/dashboards">{{ 'widgets.recent-dashboards.title' | translate }}</a>
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutAlign.lt-md="space-between center" fxLayoutGap="8px">
       <tb-toggle-header #dashboardsToggle [value]="toggleValue" name="usageToggle" (valueChange)="toggleValueChange($event)" [options]="[
         {
           name: ctx.translate.instant('widgets.recent-dashboards.last'),

@@ -5207,6 +5207,17 @@
             "scheduler": "Scheduler",
             "white-labeling": "White-labeling"
         },
+        "devices": {
+            "view-docs": "View docs",
+            "inactive": "Inactive",
+            "active": "Active",
+            "total": "Total"
+        },
+        "alarms": {
+            "critical": "Critical",
+            "assigned-to-me": "Assigned to me",
+            "total": "Total"
+        },
         "getting-started": {
             "get-started": "Get started",
             "finish": "Finish",
