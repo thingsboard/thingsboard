@@ -95,7 +95,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   @Input() helpId: string;
 
-  @Input() scriptLanguage: ScriptLanguage = ScriptLanguage.TBEL;
+  @Input() scriptLanguage: ScriptLanguage = ScriptLanguage.JS;
 
   private noValidateValue: boolean;
   get noValidate(): boolean {
