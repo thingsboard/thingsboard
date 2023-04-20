@@ -91,6 +91,21 @@ monitoring:
         # monitoring.transports.http.targets[1].base_url, monitoring.transports.http.targets[1].device.id,
         # monitoring.transports.http.targets[2].base_url, monitoring.transports.http.targets[2].device.id, etc.
 
+    lwm2m:
+      # Enable LwM2M checks
+      enabled: '${LWM2M_TRANSPORT_MONITORING_ENABLED:true}'
+      # LwM2M request timeout in milliseconds
+      request_timeout_ms: '${LWM2M_REQUEST_TIMEOUT_MS:4000}'
+      targets:
+        # LwM2M base url, coap://DOMAIN:5685 by default
+        - base_url: '${LWM2M_TRANSPORT_BASE_URL:coap://${monitoring.domain}:5685}'
+          # LwM2M device to push telemetry for. If not set - device will be found or created automatically
+          device:
+            id: '${LWM2M_TRANSPORT_TARGET_DEVICE_ID:}'
+        # To add more targets, use following environment variables:
+        # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[1].device.id,
+        # monitoring.transports.lwm2m.targets[2].base_url, monitoring.transports.lwm2m.targets[2].device.id, etc.
+
   notification_channels:
     slack:
       # Enable notifying via Slack

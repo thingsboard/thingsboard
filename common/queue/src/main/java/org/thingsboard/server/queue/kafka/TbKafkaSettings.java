@@ -32,6 +32,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbProperty;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -53,34 +54,34 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.ssl.enabled:false}")
     private boolean sslEnabled;
 
-    @Value("${queue.kafka.ssl.truststore.location}")
+    @Value("${queue.kafka.ssl.truststore.location:}")
     private String sslTruststoreLocation;
 
-    @Value("${queue.kafka.ssl.truststore.password}")
+    @Value("${queue.kafka.ssl.truststore.password:}")
     private String sslTruststorePassword;
 
-    @Value("${queue.kafka.ssl.keystore.location}")
+    @Value("${queue.kafka.ssl.keystore.location:}")
     private String sslKeystoreLocation;
 
-    @Value("${queue.kafka.ssl.keystore.password}")
+    @Value("${queue.kafka.ssl.keystore.password:}")
     private String sslKeystorePassword;
 
-    @Value("${queue.kafka.ssl.key.password}")
+    @Value("${queue.kafka.ssl.key.password:}")
     private String sslKeyPassword;
 
-    @Value("${queue.kafka.acks}")
+    @Value("${queue.kafka.acks:all}")
     private String acks;
 
-    @Value("${queue.kafka.retries}")
+    @Value("${queue.kafka.retries:1}")
     private int retries;
 
     @Value("${queue.kafka.compression.type:none}")
     private String compressionType;
 
-    @Value("${queue.kafka.batch.size}")
+    @Value("${queue.kafka.batch.size:16384}")
     private int batchSize;
 
-    @Value("${queue.kafka.linger.ms}")
+    @Value("${queue.kafka.linger.ms:1}")
     private long lingerMs;
 
     @Value("${queue.kafka.max.request.size:1048576}")
@@ -89,10 +90,10 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.max.in.flight.requests.per.connection:5}")
     private int maxInFlightRequestsPerConnection;
 
-    @Value("${queue.kafka.buffer.memory}")
+    @Value("${queue.kafka.buffer.memory:33554432}")
     private long bufferMemory;
 
-    @Value("${queue.kafka.replication_factor}")
+    @Value("${queue.kafka.replication_factor:1}")
     @Getter
     private short replicationFactor;
 
@@ -108,21 +109,31 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.fetch_max_bytes:134217728}")
     private int fetchMaxBytes;
 
+    @Value("${queue.kafka.request.timeout.ms:30000}")
+    private int requestTimeoutMs;
+
+    @Value("${queue.kafka.session.timeout.ms:10000}")
+    private int sessionTimeoutMs;
+
     @Value("${queue.kafka.use_confluent_cloud:false}")
     private boolean useConfluent;
 
-    @Value("${queue.kafka.confluent.ssl.algorithm}")
+    @Value("${queue.kafka.confluent.ssl.algorithm:}")
     private String sslAlgorithm;
 
-    @Value("${queue.kafka.confluent.sasl.mechanism}")
+    @Value("${queue.kafka.confluent.sasl.mechanism:}")
     private String saslMechanism;
 
-    @Value("${queue.kafka.confluent.sasl.config}")
+    @Value("${queue.kafka.confluent.sasl.config:}")
     private String saslConfig;
 
-    @Value("${queue.kafka.confluent.security.protocol}")
+    @Value("${queue.kafka.confluent.security.protocol:}")
     private String securityProtocol;
 
+    @Value("${queue.kafka.other-inline:}")
+    private String otherInline;
+
+    @Deprecated
     @Setter
     private List<TbProperty> other;
 
@@ -134,8 +145,6 @@ public class TbKafkaSettings {
         props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(AdminClientConfig.RETRIES_CONFIG, retries);
 
-        configureSSL(props);
-
         return props;
     }
 
@@ -146,8 +155,6 @@ public class TbKafkaSettings {
         props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, maxPartitionFetchBytes);
         props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, fetchMaxBytes);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
-
-        configureSSL(props);
 
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
@@ -174,7 +181,7 @@ public class TbKafkaSettings {
         return props;
     }
 
-    private Properties toProps() {
+    Properties toProps() {
         Properties props = new Properties();
 
         if (useConfluent) {
@@ -183,6 +190,11 @@ public class TbKafkaSettings {
             props.put("sasl.jaas.config", saslConfig);
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
         }
+
+        props.put(CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
+        props.put(CommonClientConfigs.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
+
+        props.putAll(PropertyUtils.getProps(otherInline));
 
         if (other != null) {
             other.forEach(kv -> props.put(kv.getKey(), kv.getValue()));
@@ -193,7 +205,7 @@ public class TbKafkaSettings {
         return props;
     }
 
-    private void configureSSL(Properties props) {
+    void configureSSL(Properties props) {
         if (sslEnabled) {
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
             props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, sslTruststoreLocation);
