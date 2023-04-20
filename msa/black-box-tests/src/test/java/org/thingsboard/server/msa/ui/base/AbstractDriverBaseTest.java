@@ -65,8 +65,8 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private static final int WIDTH = 1680;
     private static final int HEIGHT = 1050;
     private static final String REMOTE_WEBDRIVER_HOST = "http://localhost:4444";
-    protected static final PageLink pageLink = new PageLink(10);
-    private static final ContainerTestSuite instance = ContainerTestSuite.getInstance();
+    protected final PageLink pageLink = new PageLink(10);
+    private final ContainerTestSuite instance = ContainerTestSuite.getInstance();
     private JavascriptExecutor js;
     public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     private final Duration duration = Duration.ofMillis(WAIT_TIMEOUT);
@@ -136,7 +136,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         getJs().executeScript("arguments[0].click();", element);
     }
 
-    public static RuleChain getRuleChainByName(String name) {
+    public RuleChain getRuleChainByName(String name) {
         return testRestClient.getRuleChains(pageLink).getData().stream()
                 .filter(s -> s.getName().equals(name))
                 .findFirst().orElse(null);
@@ -148,7 +148,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
                 .collect(Collectors.toList());
     }
 
-    public static Customer getCustomerByName(String name) {
+    public Customer getCustomerByName(String name) {
         try {
             return testRestClient.getCustomers(pageLink).getData().stream()
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
@@ -158,7 +158,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    public static DeviceProfile getDeviceProfileByName(String name) {
+    public DeviceProfile getDeviceProfileByName(String name) {
         try {
             return testRestClient.getDeviceProfiles(pageLink).getData().stream()
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
@@ -168,7 +168,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    public static AssetProfile getAssetProfileByName(String name) {
+    public AssetProfile getAssetProfileByName(String name) {
         try {
             return testRestClient.getAssetProfiles(pageLink).getData().stream()
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
