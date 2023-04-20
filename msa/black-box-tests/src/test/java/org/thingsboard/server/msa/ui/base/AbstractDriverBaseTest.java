@@ -47,8 +47,8 @@ import java.io.ByteArrayInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -138,23 +138,23 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     }
 
     public static RuleChain getRuleChainByName(String name) {
-        try {
-            return testRestClient.getRuleChains(pageLink).getData().stream()
-                    .filter(s -> s.getName().equals(name)).collect(Collectors.toList()).get(0);
-        } catch (IndexOutOfBoundsException e) {
-            log.error("No such rule chain with name: " + name);
+        Optional<RuleChain> ruleChain = testRestClient.getRuleChains(pageLink).getData().stream()
+                .filter(s -> s.getName().equals(name))
+                .findFirst();
+        return ruleChain.orElseGet(() -> {
+            log.error("No rule chains found with name: " + name);
             return null;
-        }
+        });
     }
 
     public List<RuleChain> getRuleChainsByName(String name) {
-        try {
-            return testRestClient.getRuleChains(pageLink).getData().stream()
-                    .filter(s -> s.getName().equals(name)).collect(Collectors.toList());
-        } catch (IndexOutOfBoundsException e) {
-            log.error("No such rule chain with name: " + name);
-            return Collections.emptyList();
+        List<RuleChain> ruleChains = testRestClient.getRuleChains(pageLink).getData().stream()
+                .filter(s -> s.getName().equals(name))
+                .collect(Collectors.toList());
+        if (ruleChains.isEmpty()) {
+            log.error("No rule chains found with name: " + name);
         }
+        return ruleChains;
     }
 
     public static Customer getCustomerByName(String name) {

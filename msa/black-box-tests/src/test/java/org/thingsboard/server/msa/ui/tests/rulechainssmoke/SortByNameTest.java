@@ -19,7 +19,6 @@ import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import org.testng.annotations.Test;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,9 +45,9 @@ public class SortByNameTest extends AbstractRuleChainTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description("Sort rule chain 'UP'")
     public void allSortUp(String ruleChain, String ruleChainSymbol, String ruleChainNumber) {
-        RuleChainId ruleChainSymbolId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol)).getId();
-        RuleChainId ruleChainId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain)).getId();
-        RuleChainId ruleChainNumberId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainNumber)).getId();
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol));
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainNumber));
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.sortByNameBtn().click();
@@ -59,9 +58,9 @@ public class SortByNameTest extends AbstractRuleChainTest {
         ruleChainsPage.setRuleChainName(2);
         String thirdRuleChain = ruleChainsPage.getRuleChainName();
 
-        testRestClient.deleteRuleChain(ruleChainId);
-        testRestClient.deleteRuleChain(ruleChainNumberId);
-        testRestClient.deleteRuleChain(ruleChainSymbolId);
+        deleteRuleChainByName(ruleChain);
+        deleteRuleChainByName(ruleChainNumber);
+        deleteRuleChainByName(ruleChainSymbol);
 
         assertThat(firstRuleChain).as("First rule chain with symbol in name").isEqualTo(ruleChainSymbol);
         assertThat(secondRuleChain).as("Second rule chain with number in name").isEqualTo(ruleChainNumber);
@@ -88,9 +87,9 @@ public class SortByNameTest extends AbstractRuleChainTest {
     @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "nameForAllSort")
     @Description("Sort rule chain 'DOWN'")
     public void allSortDown(String ruleChain, String ruleChainSymbol, String ruleChainNumber) {
-        RuleChainId ruleChainSymbolId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol)).getId();
-        RuleChainId ruleChainId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain)).getId();
-        RuleChainId ruleChainNumberId = testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainNumber)).getId();
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainSymbol));
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChain));
+        testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainNumber));
 
         sideBarMenuView.ruleChainsBtn().click();
         int lastIndex = ruleChainsPage.allNames().size() - 1;
@@ -102,9 +101,9 @@ public class SortByNameTest extends AbstractRuleChainTest {
         ruleChainsPage.setRuleChainName(lastIndex - 2);
         String thirdRuleChain = ruleChainsPage.getRuleChainName();
 
-        testRestClient.deleteRuleChain(ruleChainId);
-        testRestClient.deleteRuleChain(ruleChainNumberId);
-        testRestClient.deleteRuleChain(ruleChainSymbolId);
+        deleteRuleChainByName(ruleChain);
+        deleteRuleChainByName(ruleChainNumber);
+        deleteRuleChainByName(ruleChainSymbol);
 
         assertThat(firstRuleChain).as("First from the end rule chain with symbol in name").isEqualTo(ruleChainSymbol);
         assertThat(secondRuleChain).as("Second from the end rule chain with number in name").isEqualTo(ruleChainNumber);
