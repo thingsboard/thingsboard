@@ -18,13 +18,7 @@
     "jsx": "react",
     "typeRoots": [
       "node_modules/@types",
-      "src/typings/rawloader.typings.d.ts",
-      "src/typings/jquery.typings.d.ts",
-      "src/typings/jquery.flot.typings.d.ts",
-      "src/typings/jquery.jstree.typings.d.ts",
-      "src/typings/split.js.typings.d.ts",
-      "src/typings/leaflet-geoman-extend.d.ts",
-      "src/typings/leaflet-extend-tb.d.ts"
+      "src/typings"
     ],
     "paths": {
       "@app/*": [

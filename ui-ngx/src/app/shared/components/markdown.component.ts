@@ -23,7 +23,7 @@ import {
   EventEmitter,
   Inject,
   Injector,
-  Input,
+  Input, NgZone,
   OnChanges,
   Output,
   Renderer2,
@@ -90,6 +90,7 @@ export class TbMarkdownComponent implements OnChanges {
 
   constructor(private help: HelpService,
               private cd: ChangeDetectorRef,
+              private zone: NgZone,
               public markdownService: MarkdownService,
               @Inject(SHARED_MODULE_TOKEN) private sharedModule: Type<any>,
               private dynamicComponentFactoryService: DynamicComponentFactoryService,
@@ -97,7 +98,7 @@ export class TbMarkdownComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (isDefinedAndNotNull(this.data)) {
-      this.render(this.data);
+      this.zone.run(() => this.render(this.data));
     }
   }
 

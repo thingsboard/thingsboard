@@ -20,8 +20,6 @@ import lombok.Data;
 @Data
 public class NewPlatformVersionNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    // TODO: don't forget to create default notification configs
-
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.NEW_PLATFORM_VERSION;

@@ -31,13 +31,12 @@ message ServiceInfo {
 }
 
 message SystemInfoProto {
-  double cpuUsage = 1;
-  double totalCpuUsage = 2;
+  int64 cpuUsage = 1;
+  int64 cpuCount = 2;
   int64 memoryUsage = 3;
   int64 totalMemory = 4;
-  int64 freeMemory = 5;
-  int64 freeDiscSpace = 6;
-  int64 totalDiscSpace = 7;
+  int64 diskUsage = 5;
+  int64 totalDiscSpace = 6;
 }
 
 /**
@@ -983,6 +982,7 @@ message ToCoreNotificationMsg {
   bytes toEdgeSyncRequestMsg = 8;
   bytes fromEdgeSyncResponseMsg = 9;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 10;
+  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 11;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -1034,6 +1034,7 @@ message ToUsageStatsServiceMsg {
   repeated UsageStatsKVProto values = 5;
   int64 customerIdMSB = 6;
   int64 customerIdLSB = 7;
+  string serviceId = 8;
 }
 
 message ToOtaPackageStateServiceMsg {
@@ -1053,4 +1054,8 @@ message NotificationSchedulerServiceMsg {
   int64 requestIdMSB = 3;
   int64 requestIdLSB = 4;
   int64 ts = 5;
+}
+
+message NotificationRuleProcessorMsg {
+  bytes trigger = 1;
 }

@@ -74,7 +74,7 @@ body {
   line-height: normal;
 }
 
-a {
+a:not(.mat-mdc-button-base) {
   font-weight: 400;
   color: #106cc8;
   text-decoration: none;
@@ -85,7 +85,9 @@ a {
 
 a:hover,
 a:focus {
-  border-bottom: 1px solid #4054b2;
+  &:not(.mat-mdc-button-base) {
+    border-bottom: 1px solid #4054b2;
+  }
 }
 
 p {
@@ -111,6 +113,10 @@ fieldset {
   padding: 0;
   margin: 0;
   border: none;
+}
+
+.fields-group {
+  display: grid;
 }
 
 section.tb-header-buttons {
@@ -564,10 +570,16 @@ mat-label {
   .mat-toolbar.mat-mdc-table-toolbar .mat-mdc-form-field.mat-form-field-appearance-fill,
   .mat-mdc-form-field.mat-form-field-appearance-fill.tb-appearance-transparent {
     .mdc-text-field--filled {
+      &:before {
+        content: none;
+      }
       background-color: transparent;
       padding: 0;
     }
     .mat-mdc-form-field-focus-overlay {
+      &:before {
+        content: none;
+      }
       background-color: transparent;
     }
     .mat-mdc-select-arrow-wrapper {

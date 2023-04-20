@@ -131,7 +131,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
@@ -139,11 +139,11 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         long count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(97, count);
 
-        filter.setDeviceType("unknown");
+        filter.setDeviceTypes(List.of("unknown"));
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(0, count);
 
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("Device1");
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(11, count);
@@ -235,7 +235,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         EdgeTypeFilter filter = new EdgeTypeFilter();
-        filter.setEdgeType("default");
+        filter.setEdgeTypes(List.of("default"));
         filter.setEdgeNameFilter("");
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
@@ -243,11 +243,11 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         long count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(97, count);
 
-        filter.setEdgeType("unknown");
+        filter.setEdgeTypes(List.of("unknown"));
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(0, count);
 
-        filter.setEdgeType("default");
+        filter.setEdgeTypes(List.of("default"));
         filter.setEdgeNameFilter("Edge1");
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(11, count);
@@ -813,7 +813,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1337,7 +1337,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
     private EntityDataQuery createDeviceSearchQuery(String deviceField, StringOperation operation, String searchQuery) {
         DeviceTypeFilter deviceTypeFilter = new DeviceTypeFilter();
-        deviceTypeFilter.setDeviceType("default");
+        deviceTypeFilter.setDeviceTypes(List.of("default"));
         deviceTypeFilter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1402,7 +1402,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Futures.allAsList(attributeFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1502,7 +1502,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Futures.allAsList(attributeFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1648,7 +1648,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Futures.allAsList(timeseriesFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1780,7 +1780,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Futures.allAsList(attributeFutures).get();
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -1912,7 +1912,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -2029,7 +2029,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.DESC);

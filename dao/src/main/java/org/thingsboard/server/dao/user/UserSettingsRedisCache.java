@@ -23,14 +23,13 @@ import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.cache.TbFSTRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.UserSettings;
-import org.thingsboard.server.dao.asset.AssetCacheKey;
+import org.thingsboard.server.common.data.settings.UserSettings;
+import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("UserSettingsCache")
-public class UserSettingsRedisCache extends RedisTbTransactionalCache<UserId, UserSettings> {
+public class UserSettingsRedisCache extends RedisTbTransactionalCache<UserSettingsCompositeKey, UserSettings> {
 
     public UserSettingsRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
         super(CacheConstants.USER_SETTINGS_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbFSTRedisSerializer<>());

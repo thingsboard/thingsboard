@@ -22,15 +22,31 @@ import { Authority } from '@shared/models/authority.enum';
 import { Observable } from 'rxjs';
 import { HomeDashboard } from '@shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { map } from 'rxjs/operators';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import sysAdminHomePageDashboardJson from '!raw-loader!./sys_admin_home_page.raw';
 
 @Injectable()
 export class HomeDashboardResolver implements Resolve<HomeDashboard> {
 
-  constructor(private dashboardService: DashboardService) {
+  constructor(private dashboardService: DashboardService,
+              private store: Store<AppState>) {
   }
 
   resolve(): Observable<HomeDashboard> {
-    return this.dashboardService.getHomeDashboard();
+    return this.dashboardService.getHomeDashboard().pipe(
+      map((dashboard) => {
+        if (!dashboard) {
+          if (getCurrentAuthUser(this.store).authority === Authority.SYS_ADMIN) {
+            dashboard = JSON.parse(sysAdminHomePageDashboardJson);
+            dashboard.hideDashboardToolbar = true;
+          }
+        }
+        return dashboard;
+      })
+    );
   }
 }
 

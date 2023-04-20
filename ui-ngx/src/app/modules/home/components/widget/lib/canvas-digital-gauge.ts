@@ -16,13 +16,11 @@
 
 import * as CanvasGauges from 'canvas-gauges';
 import { FontStyle, FontWeight } from '@home/components/widget/lib/settings.models';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { ColorFormats } from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull, isString, isUndefined, padValue } from '@core/utils';
 import GenericOptions = CanvasGauges.GenericOptions;
 import BaseGauge = CanvasGauges.BaseGauge;
-
-const tinycolor = tinycolor_;
 
 export type GaugeType = 'arc' | 'donut' | 'horizontalBar' | 'verticalBar';
 

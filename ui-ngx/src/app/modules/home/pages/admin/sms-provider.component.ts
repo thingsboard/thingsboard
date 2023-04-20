@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
@@ -28,19 +28,24 @@ import { SendTestSmsDialogComponent, SendTestSmsDialogData } from '@home/pages/a
 import { NotificationSettings } from '@shared/models/notification.models';
 import { deepTrim, isEmptyStr } from '@core/utils';
 import { NotificationService } from '@core/http/notification.service';
+import { Authority } from '@shared/models/authority.enum';
+import { AuthUser } from '@shared/models/user.model';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-sms-provider',
   templateUrl: './sms-provider.component.html',
   styleUrls: ['./sms-provider.component.scss', './settings-card.scss']
 })
-export class SmsProviderComponent extends PageComponent implements OnInit, HasConfirmForm {
+export class SmsProviderComponent extends PageComponent implements HasConfirmForm {
 
   smsProvider: FormGroup;
-  adminSettings: AdminSettings<SmsProviderConfiguration>;
+  private adminSettings: AdminSettings<SmsProviderConfiguration>;
 
-  notificationSettingsForm: FormGroup;
+  slackSettingsForm: FormGroup;
   private notificationSettings: NotificationSettings;
+
+  private readonly authUser: AuthUser;
 
   constructor(protected store: Store<AppState>,
               private router: Router,
@@ -49,30 +54,30 @@ export class SmsProviderComponent extends PageComponent implements OnInit, HasCo
               private dialog: MatDialog,
               public fb: FormBuilder) {
     super(store);
-  }
-
-  ngOnInit() {
+    this.authUser = getCurrentAuthUser(this.store);
     this.buildSmsProviderForm();
     this.buildGeneralServerSettingsForm();
     this.notificationService.getNotificationSettings().subscribe(
       (settings) => {
         this.notificationSettings = settings;
-        this.notificationSettingsForm.reset(this.notificationSettings);
+        this.slackSettingsForm.reset(this.notificationSettings);
       }
     );
-    this.adminService.getAdminSettings<SmsProviderConfiguration>('sms', {ignoreErrors: true}).subscribe({
-      next: adminSettings => {
-        this.adminSettings = adminSettings;
-        this.smsProvider.reset({configuration: this.adminSettings.jsonValue});
-      },
-      error: () => {
-        this.adminSettings = {
-          key: 'sms',
-          jsonValue: null
-        };
-        this.smsProvider.reset({configuration: this.adminSettings.jsonValue});
-      }
-    });
+    if (this.isSysAdmin()) {
+      this.adminService.getAdminSettings<SmsProviderConfiguration>('sms', {ignoreErrors: true}).subscribe({
+        next: adminSettings => {
+          this.adminSettings = adminSettings;
+          this.smsProvider.reset({configuration: this.adminSettings.jsonValue});
+        },
+        error: () => {
+          this.adminSettings = {
+            key: 'sms',
+            jsonValue: null
+          };
+          this.smsProvider.reset({configuration: this.adminSettings.jsonValue});
+        }
+      });
+    }
   }
 
   private buildSmsProviderForm() {
@@ -103,23 +108,24 @@ export class SmsProviderComponent extends PageComponent implements OnInit, HasCo
   }
 
   confirmForm(): FormGroup {
-    return this.smsProvider.dirty ? this.smsProvider : this.notificationSettingsForm;
+    return this.smsProvider.dirty ? this.smsProvider : this.slackSettingsForm;
   }
 
   private buildGeneralServerSettingsForm() {
-    this.notificationSettingsForm = this.fb.group({
+    this.slackSettingsForm = this.fb.group({
       deliveryMethodsConfigs: this.fb.group({
         SLACK: this.fb.group({
           botToken: ['']
         })
       })
     });
+    this.registerDisableOnLoadFormControl(this.slackSettingsForm.get('deliveryMethodsConfigs'));
   }
 
   saveNotification(): void {
     this.notificationSettings = deepTrim({
       ...this.notificationSettings,
-      ...this.notificationSettingsForm.value
+      ...this.slackSettingsForm.value
     });
     // eslint-disable-next-line guard-for-in
     for (const method in this.notificationSettings.deliveryMethodsConfigs) {
@@ -132,8 +138,12 @@ export class SmsProviderComponent extends PageComponent implements OnInit, HasCo
     }
     this.notificationService.saveNotificationSettings(this.notificationSettings).subscribe(setting => {
       this.notificationSettings = setting;
-      this.notificationSettingsForm.reset(this.notificationSettings);
+      this.slackSettingsForm.reset(this.notificationSettings);
     });
+  }
+
+  isSysAdmin(): boolean {
+    return this.authUser.authority === Authority.SYS_ADMIN;
   }
 
 }

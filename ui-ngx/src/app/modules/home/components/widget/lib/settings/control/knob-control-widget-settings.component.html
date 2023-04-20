@@ -29,7 +29,7 @@
       <mat-label translate>widgets.rpc.initial-value</mat-label>
       <input matInput type="number" formControlName="initialValue">
     </mat-form-field>
-    <section fxLayout="row" fxLayoutGap="8px">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.rpc.min-value</mat-label>
         <input required matInput type="number" formControlName="minValue">

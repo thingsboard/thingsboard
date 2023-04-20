@@ -33,10 +33,13 @@ public class RuleEngineOriginatedNotificationInfo implements NotificationInfo {
     private EntityId msgOriginator;
     private String msgType;
     private Map<String, String> msgMetadata;
+    private Map<String, String> msgData;
 
     @Override
     public Map<String, String> getTemplateData() {
-        Map<String, String> templateData = new HashMap<>(msgMetadata);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.putAll(msgMetadata);
+        templateData.putAll(msgData);
         templateData.put("originatorType", msgOriginator.getEntityType().getNormalName());
         templateData.put("originatorId", msgOriginator.getId().toString());
         templateData.put("msgType", msgType);

@@ -91,14 +91,18 @@
                     {{ getUserInitials(alarm) }}
                   </span>
                   <span [matTooltip]="getUserDisplayName(alarm)"
-                        matTooltipPosition="above"
-                        style="text-overflow: ellipsis">
+                        matTooltipPosition="above">
                     {{ getUserDisplayName(alarm) }}
                   </span>
                 </span>
-                <span *ngIf="!alarm.assigneeId" class="unassigned-container" fxLayout="row" fxLayoutAlign="start center">
+                <span *ngIf="!alarm.assigneeId" class="unassigned-container">
                   <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
-                  <span translate>alarm.unassigned</span>
+                  <span matTooltip="{{ 'alarm.unassigned' | translate }}"
+                        matTooltipPosition="above"
+                        style="vertical-align: middle"
+                        translate>
+                    alarm.unassigned
+                  </span>
                 </span>
                 <button *ngIf="allowAssign"
                         mat-icon-button [disabled]="isLoading$ | async"

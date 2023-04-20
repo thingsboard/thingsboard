@@ -104,13 +104,14 @@ public class EdgeImitator {
         ignoredTypes = new ArrayList<>();
         this.routingKey = routingKey;
         this.routingSecret = routingSecret;
-        setEdgeCredentials("rpcHost", host);
-        setEdgeCredentials("rpcPort", port);
-        setEdgeCredentials("timeoutSecs", 3);
-        setEdgeCredentials("keepAliveTimeSec", 300);
+        updateEdgeClientFields("rpcHost", host);
+        updateEdgeClientFields("rpcPort", port);
+        updateEdgeClientFields("timeoutSecs", 3);
+        updateEdgeClientFields("keepAliveTimeSec", 300);
+        updateEdgeClientFields("maxInboundMessageSize", 4194304);
     }
 
-    private void setEdgeCredentials(String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
+    private void updateEdgeClientFields(String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
         Field fieldToSet = edgeRpcClient.getClass().getDeclaredField(fieldName);
         fieldToSet.setAccessible(true);
         fieldToSet.set(edgeRpcClient, value);

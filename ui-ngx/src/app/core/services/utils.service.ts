@@ -29,7 +29,11 @@ import {
   isDefined,
   isDefinedAndNotNull,
   isString,
-  isUndefined
+  isUndefined,
+  objToBase64,
+  objToBase64URI,
+  base64toString,
+  base64toObj
 } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -87,7 +91,7 @@ const commonMaterialIcons: Array<string> = ['more_horiz', 'more_vert', 'open_in_
   'arrow_forward', 'arrow_upwards', 'close', 'refresh', 'menu', 'show_chart', 'multiline_chart', 'pie_chart', 'insert_chart', 'people',
   'person', 'domain', 'devices_other', 'now_widgets', 'dashboards', 'map', 'pin_drop', 'my_location', 'extension', 'search',
   'settings', 'notifications', 'notifications_active', 'info', 'info_outline', 'warning', 'list', 'file_download', 'import_export',
-  'share', 'add', 'edit', 'done'];
+  'share', 'add', 'edit', 'done', 'delete'];
 
 // @dynamic
 @Injectable({
@@ -518,4 +522,21 @@ export class UtilsService {
       refCount()
     );
   }
+
+  public objToBase64(obj: any): string {
+    return objToBase64(obj);
+  }
+
+  public base64toString(b64Encoded: string): string {
+    return base64toString(b64Encoded);
+  }
+
+  public objToBase64URI(obj: any): string {
+    return objToBase64URI(obj);
+  }
+
+  public base64toObj(b64Encoded: string): any {
+    return base64toObj(b64Encoded);
+  }
+
 }

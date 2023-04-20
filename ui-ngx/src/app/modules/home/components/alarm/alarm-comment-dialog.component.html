@@ -15,13 +15,10 @@
     limitations under the License.
 
 -->
-<div style="min-width: 600px;">
+<form style="width: 600px;">
   <mat-toolbar color="primary">
-    <h2>{{ 'alarm.comments' | translate }}</h2>
     <span fxFlex></span>
-    <button mat-icon-button
-            (click)="close()"
-            type="button">
+    <button mat-icon-button (click)="close()" type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
@@ -29,16 +26,8 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content style="padding: 0">
-    <tb-alarm-comment #alarmCommentComponent [alarmId]="alarmId"
-                      [commentsHeaderEnabled]="commentsHeaderEnabled">
+    <tb-alarm-comment [alarmId]="alarmId"
+                      [alarmActivityOnly]="true">
     </tb-alarm-comment>
   </div>
-  <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end">
-    <button mat-raised-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="close()" cdkFocusInitial>
-      {{ 'action.close' | translate }}
-    </button>
-  </div>
-</div>
+</form>

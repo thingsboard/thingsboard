@@ -23,11 +23,11 @@ import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.notification.info.AlarmAssignmentNotificationInfo;
-import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig.Action;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.dao.notification.trigger.RuleEngineMsgTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 
 import java.util.Set;
 
@@ -49,7 +49,7 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
     }
 
     @Override
-    public NotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
+    public RuleOriginatedNotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger) {
         AlarmInfo alarmInfo = JacksonUtil.fromString(trigger.getMsg().getData(), AlarmInfo.class);
         AlarmAssignee assignee = alarmInfo.getAssignee();
         return AlarmAssignmentNotificationInfo.builder()
@@ -58,7 +58,9 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
                 .assigneeLastName(assignee != null ? assignee.getLastName() : null)
                 .assigneeEmail(assignee != null ? assignee.getEmail() : null)
                 .assigneeId(assignee != null ? assignee.getId() : null)
-                .userName(trigger.getMsg().getMetaData().getValue("userName"))
+                .userEmail(trigger.getMsg().getMetaData().getValue("userEmail"))
+                .userFirstName(trigger.getMsg().getMetaData().getValue("userFirstName"))
+                .userLastName(trigger.getMsg().getMetaData().getValue("userLastName"))
                 .alarmId(alarmInfo.getUuidId())
                 .alarmType(alarmInfo.getType())
                 .alarmOriginator(alarmInfo.getOriginator())

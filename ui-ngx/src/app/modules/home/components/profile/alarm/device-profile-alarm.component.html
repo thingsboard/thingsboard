@@ -59,10 +59,10 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-checkbox formControlName="propagate" style="display: block; padding-bottom: 16px;">
+        <mat-checkbox formControlName="propagate" style="display: block;">
           {{ 'device-profile.propagate-alarm' | translate }}
         </mat-checkbox>
-        <section *ngIf="alarmFormGroup.get('propagate').value === true" style="padding-bottom: 1em;">
+        <section *ngIf="alarmFormGroup.get('propagate').value === true">
           <mat-form-field floatLabel="always" class="mat-block">
             <mat-label translate>device-profile.alarm-rule-relation-types-list</mat-label>
             <mat-chip-grid #relationTypesChipList [disabled]="disabled">
@@ -82,10 +82,10 @@
             <mat-hint innerHTML="{{ 'device-profile.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
           </mat-form-field>
         </section>
-        <mat-checkbox formControlName="propagateToOwner" style="display: block; padding-bottom: 16px;">
+        <mat-checkbox formControlName="propagateToOwner" style="display: block;">
           {{ 'device-profile.propagate-alarm-to-owner' | translate }}
         </mat-checkbox>
-        <mat-checkbox formControlName="propagateToTenant" style="display: block; padding-bottom: 16px;">
+        <mat-checkbox formControlName="propagateToTenant" style="display: block;">
           {{ 'device-profile.propagate-alarm-to-tenant' | translate }}
         </mat-checkbox>
       </ng-template>

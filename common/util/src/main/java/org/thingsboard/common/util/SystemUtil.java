@@ -17,10 +17,13 @@ package org.thingsboard.common.util;
 
 import lombok.extern.slf4j.Slf4j;
 import oshi.SystemInfo;
+import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,14 +35,15 @@ public class SystemUtil {
     private static final HardwareAbstractionLayer HARDWARE;
 
     static {
-        SystemInfo si = new SystemInfo();
-        HARDWARE = si.getHardware();
+        HARDWARE = new SystemInfo().getHardware();
     }
 
-    public static Optional<Long> getMemoryUsage() {
+    public static Optional<Integer> getMemoryUsage() {
         try {
-            MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-            return Optional.of(memoryMXBean.getHeapMemoryUsage().getUsed());
+            GlobalMemory memory = HARDWARE.getMemory();
+            long total = memory.getTotal();
+            long available = memory.getAvailable();
+            return Optional.of(toPercent(total - available, total));
         } catch (Exception e) {
             log.debug("Failed to get memory usage!!!", e);
         }
@@ -55,37 +59,30 @@ public class SystemUtil {
         return Optional.empty();
     }
 
-    public static Optional<Long> getFreeMemory() {
+    public static Optional<Integer> getCpuUsage() {
         try {
-            return Optional.of(HARDWARE.getMemory().getAvailable());
-        } catch (Exception e) {
-            log.debug("Failed to get free memory!!!", e);
-        }
-        return Optional.empty();
-    }
-
-    public static Optional<Double> getCpuUsage() {
-        try {
-            return Optional.of(prepare(HARDWARE.getProcessor().getSystemLoadAverage()));
+            return Optional.of((int) (HARDWARE.getProcessor().getSystemCpuLoad() * 100.0));
         } catch (Exception e) {
             log.debug("Failed to get cpu usage!!!", e);
         }
         return Optional.empty();
     }
 
-    public static Optional<Double> getTotalCpuUsage() {
+    public static Optional<Integer> getCpuCount() {
         try {
-            return Optional.of(prepare(HARDWARE.getProcessor().getSystemCpuLoad() * 100));
+            return Optional.of(HARDWARE.getProcessor().getLogicalProcessorCount());
         } catch (Exception e) {
-            log.debug("Failed to get total cpu usage!!!", e);
+            log.debug("Failed to get total cpu count!!!", e);
         }
         return Optional.empty();
     }
 
-    public static Optional<Long> getFreeDiscSpace() {
+    public static Optional<Integer> getDiscSpaceUsage() {
         try {
             FileStore store = Files.getFileStore(Paths.get("/"));
-            return Optional.of(store.getUsableSpace());
+            long total = store.getTotalSpace();
+            long available = store.getUsableSpace();
+            return Optional.of(toPercent(total - available, total));
         } catch (Exception e) {
             log.debug("Failed to get free disc space!!!", e);
         }
@@ -102,7 +99,10 @@ public class SystemUtil {
         return Optional.empty();
     }
 
-    private static Double prepare(Double d) {
-        return (int) (d * 100) / 100.0;
+    private static int toPercent(long used, long total) {
+        BigDecimal u = new BigDecimal(used);
+        BigDecimal t = new BigDecimal(total);
+        BigDecimal i = new BigDecimal(100);
+        return u.multiply(i).divide(t, RoundingMode.HALF_UP).intValue();
     }
 }

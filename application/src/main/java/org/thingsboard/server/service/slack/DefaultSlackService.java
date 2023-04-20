@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+
 @Service
 @RequiredArgsConstructor
 public class DefaultSlackService implements SlackService {
@@ -80,7 +82,14 @@ public class DefaultSlackService implements SlackService {
                         .map(user -> {
                             SlackConversation conversation = new SlackConversation();
                             conversation.setId(user.getId());
-                            conversation.setName(String.format("@%s (%s)", user.getName(), user.getRealName()));
+                            conversation.setShortName(user.getName());
+                            conversation.setWholeName(user.getProfile() != null ? user.getProfile().getRealNameNormalized() : user.getRealName());
+                            conversation.setEmail(user.getProfile() != null ? user.getProfile().getEmail() : null);
+                            String title = "@" + conversation.getShortName();
+                            if (isNotEmpty(conversation.getWholeName()) && !conversation.getWholeName().equals(conversation.getShortName())) {
+                                title += " (" + conversation.getWholeName() + ")";
+                            }
+                            conversation.setTitle(title);
                             return conversation;
                         })
                         .collect(Collectors.toList());
@@ -99,7 +108,9 @@ public class DefaultSlackService implements SlackService {
                         .map(channel -> {
                             SlackConversation conversation = new SlackConversation();
                             conversation.setId(channel.getId());
-                            conversation.setName("#" + channel.getName());
+                            conversation.setShortName(channel.getName());
+                            conversation.setWholeName(channel.getNameNormalized());
+                            conversation.setTitle("#" + channel.getName());
                             return conversation;
                         })
                         .collect(Collectors.toList());
@@ -111,7 +122,7 @@ public class DefaultSlackService implements SlackService {
     public SlackConversation findConversation(TenantId tenantId, String token, SlackConversationType conversationType, String namePattern) {
         List<SlackConversation> conversations = listConversations(tenantId, token, conversationType);
         return conversations.stream()
-                .filter(conversation -> StringUtils.containsIgnoreCase(conversation.getName(), namePattern))
+                .filter(conversation -> StringUtils.containsIgnoreCase(conversation.getTitle(), namePattern))
                 .findFirst().orElse(null);
     }
 
@@ -144,7 +155,7 @@ public class DefaultSlackService implements SlackService {
                 String neededScope = response.getNeeded();
                 error = "bot token scope '" + neededScope + "' is needed";
             }
-            throw new RuntimeException("Failed to send message via Slack: " + error);
+            throw new RuntimeException("Slack API error: " + error);
         }
 
         return response;

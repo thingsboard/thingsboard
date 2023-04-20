@@ -42,13 +42,11 @@ import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { SharedModule } from '@shared/shared.module';
 import { MODULES_MAP } from '@shared/public-api';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import moment from 'moment';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
-
-const tinycolor = tinycolor_;
 
 @Injectable()
 export class WidgetComponentService {

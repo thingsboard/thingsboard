@@ -37,7 +37,7 @@ import { takeUntil } from 'rxjs/operators';
 import {
   RecipientNotificationDialogComponent,
   RecipientNotificationDialogData
-} from '@home/pages/notification/recipient/recipient-notification-dialog.componet';
+} from '@home/pages/notification/recipient/recipient-notification-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 
