@@ -36,6 +36,7 @@ export interface RuleNode extends BaseData<RuleNodeId> {
   type: string;
   name: string;
   debugMode: boolean;
+  singletonMode: boolean;
   configuration: RuleNodeConfiguration;
   additionalInfo?: any;
 }
@@ -318,6 +319,7 @@ export interface FcRuleNode extends FcRuleNodeType {
   additionalInfo?: any;
   configuration?: RuleNodeConfiguration;
   debugMode?: boolean;
+  singletonMode?: boolean;
   error?: string;
   highlighted?: boolean;
   componentClazz?: string;

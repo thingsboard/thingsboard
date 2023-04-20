@@ -30,9 +30,16 @@ export enum ComponentScope {
   TENANT = 'TENANT'
 }
 
+export enum ComponentSingletonSupport {
+  SUPPORTED = 'SUPPORTED',
+  NOT_SUPPORTED = 'NOT_SUPPORTED',
+  ONLY_SINGLETON = 'ONLY_SINGLETON'
+}
+
 export interface ComponentDescriptor {
   type: ComponentType | RuleNodeType;
   scope?: ComponentScope;
+  singleton: ComponentSingletonSupport;
   name: string;
   clazz: string;
   configurationDescriptor?: any;

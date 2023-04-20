@@ -36,6 +36,8 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
     @Getter @Setter private ComponentType type;
     @ApiModelProperty(position = 4, value = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "TENANT", example = "TENANT")
     @Getter @Setter private ComponentScope scope;
+    @ApiModelProperty(position = 4, value = "", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "SUPPORTED, NOT_SUPPORTEd, ONLY_SINGLETON", example = "SUPPORTED")
+    @Getter @Setter private ComponentSingletonSupport singleton;
     @Length(fieldName = "name")
     @ApiModelProperty(position = 5, value = "Name of the Rule Node. Taken from the @RuleNode annotation.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "Custom Rule Node")
     @Getter @Setter private String name;

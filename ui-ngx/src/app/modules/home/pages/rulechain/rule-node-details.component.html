@@ -39,6 +39,9 @@
         <mat-checkbox formControlName="debugMode">
           {{ 'rulenode.debug-mode' | translate }}
         </mat-checkbox>
+        <mat-checkbox *ngIf="isSingletonEditAllowed()" formControlName="singletonMode">
+          {{ 'rulenode.singleton-mode' | translate }}
+        </mat-checkbox>
       </section>
       <tb-rule-node-config #ruleNodeConfigComponent
         formControlName="configuration"
