@@ -68,11 +68,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.service.apiusage.limits.LimitedApi;
@@ -112,6 +115,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     private TbTenantProfileService tbTenantProfileService;
     @Autowired
     private RateLimitService rateLimitService;
+    @Autowired
+    private RuleChainService ruleChainService;
 
     @Before
     public void beforeEach() throws Exception {
@@ -343,6 +348,23 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             }
         }, notification -> {
             assertThat(notification.getText()).isEqualTo("Assets usage: " + threshold + "/" + limit + " (80%)");
+        });
+
+        checkNotificationAfter(() -> {
+            long present = ruleChainService.countByTenantId(tenantId);
+            for (int i = 1; i <= threshold - present; i++) {
+                RuleChain ruleChain = new RuleChain();
+                ruleChain.setName(i + "");
+                ruleChain.setRoot(false);
+                ruleChain.setDebugMode(false);
+                ruleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+                RuleChainMetaData metaData = new RuleChainMetaData();
+                metaData.setRuleChainId(ruleChain.getId());
+                metaData.setNodes(List.of());
+                doPost("/api/ruleChain/metadata", metaData);
+            }
+        }, notification -> {
+            assertThat(notification.getText()).isEqualTo("Rule chains usage: " + threshold + "/" + limit + " (80%)");
         });
 
         triggerConfig.setThreshold(1.0f);

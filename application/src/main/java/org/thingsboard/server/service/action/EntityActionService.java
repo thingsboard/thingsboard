@@ -190,7 +190,7 @@ public class EntityActionService {
                     AlarmComment comment = extractParameter(AlarmComment.class, 0, additionalInfo);
                     metaData.putValue("comment", json.writeValueAsString(comment));
                 }
-                if (actionType == ActionType.ADDED) {
+                if (actionType == ActionType.ADDED && !tenantId.isSysTenantId()) {
                     notificationRuleProcessor.process(EntitiesLimitTrigger.builder()
                             .tenantId(tenantId)
                             .entityType(entityId.getEntityType())
