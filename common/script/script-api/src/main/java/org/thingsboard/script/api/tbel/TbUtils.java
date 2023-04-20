@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2023 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,13 +96,13 @@ public class TbUtils {
         parserConfig.addImport("bytesToHex", new MethodStub(TbUtils.class.getMethod("bytesToHex",
                 ExecutionArrayList.class)));
         parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
-                Object.class, HashMap.class)));
+                ExecutionContext.class, Map.class)));
         parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
-                Object.class, HashMap.class, boolean.class)));
+                ExecutionContext.class, Map.class, boolean.class)));
         parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
-                Object.class, HashMap.class, List.class)));
+                ExecutionContext.class, Map.class, List.class)));
         parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
-                Object.class, HashMap.class, List.class, boolean.class)));
+                ExecutionContext.class, Map.class, List.class, boolean.class)));
     }
 
     public static String btoa(String input) {
@@ -240,7 +239,7 @@ public class TbUtils {
         }
         ExecutionArrayList<Byte> data = new ExecutionArrayList<>(ctx);
         for (int i = 0; i < len; i += 2) {
-            data.add((byte)((Character.digit(hex.charAt(i), 16) << 4)
+            data.add((byte) ((Character.digit(hex.charAt(i), 16) << 4)
                     + Character.digit(hex.charAt(i + 1), 16)));
         }
         return data;
@@ -332,23 +331,25 @@ public class TbUtils {
         return value;
     }
 
-    public static void toFlatMap(Object json, HashMap<String, Object> map) {
-        toFlatMap(json, map, new ArrayList<>(), true);
+    public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json) {
+        return toFlatMap(ctx, json, new ArrayList<>(), true);
     }
 
-    public static void toFlatMap(Object json, HashMap<String, Object> map, boolean pathInKey) {
-        toFlatMap(json, map, new ArrayList<>(), pathInKey);
+    public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json, boolean pathInKey) {
+        return toFlatMap(ctx, json, new ArrayList<>(), pathInKey);
     }
 
-    public static void toFlatMap(Object json, HashMap<String, Object> map, List<String> excludeList) {
-        toFlatMap(json, map, excludeList, true);
+    public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json, List<String> excludeList) {
+        return toFlatMap(ctx, json, excludeList, true);
     }
 
-    public static void toFlatMap(Object json, HashMap<String, Object> map, List<String> excludeList, boolean pathInKey) {
+    public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json, List<String> excludeList, boolean pathInKey) {
+        ExecutionHashMap<String, Object> map = new ExecutionHashMap<>(16, ctx);
         parseRecursive(json, map, excludeList, "", pathInKey);
+        return map;
     }
 
-    private static void parseRecursive(Object json, HashMap<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
+    private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
         if (json instanceof Map.Entry) {
             Map.Entry<?, ?> entry = (Map.Entry<?, ?>) json;
             if (StringUtils.isNotBlank(path)) {
