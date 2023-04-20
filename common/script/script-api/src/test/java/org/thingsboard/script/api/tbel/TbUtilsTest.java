@@ -20,7 +20,9 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TbUtilsTest {
 
@@ -85,6 +87,74 @@ public class TbUtilsTest {
         Assert.assertEquals(expected, TbUtils.parseBytesToInt(data, 0, 3, true));
         data = toList(new byte[]{(byte) 0xCC, (byte) 0xBB, (byte) 0xAA});
         Assert.assertEquals(expected, TbUtils.parseBytesToInt(data, 0, 3, false));
+    }
+
+    @Test
+    public void toFlatMap() {
+        HashMap<String, Object> inputMap = new HashMap<>();
+        inputMap.put("name", "Alice");
+        inputMap.put("age", 30);
+        inputMap.put("devices", List.of(
+                new HashMap<String, Object>() {{
+                    put("id", "dev001");
+                    put("type", "sensor");
+                }},
+                new HashMap<String, Object>() {{
+                    put("id", "dev002");
+                    put("type", "actuator");
+                }}
+        ));
+        inputMap.put("settings", new HashMap<String, Object>() {{
+            put("notifications", true);
+            put("timezone", "UTC-5");
+            put("params", new HashMap<String, Object>() {{
+                put("param1", "value1");
+                put("param2", "value2");
+                put("param3", new HashMap<String, Object>() {{
+                    put("subParam1", "value1");
+                    put("subParam2", "value2");
+                }});
+            }});
+        }});
+
+        List<String> excludeList = List.of("age", "id", "param1", "subParam2");
+
+        HashMap<String, Object> expectedMapWithPath = new HashMap<>();
+        expectedMapWithPath.put("name", "Alice");
+        expectedMapWithPath.put("devices.0.type", "sensor");
+        expectedMapWithPath.put("devices.1.type", "actuator");
+        expectedMapWithPath.put("settings.notifications", true);
+        expectedMapWithPath.put("settings.timezone", "UTC-5");
+        expectedMapWithPath.put("settings.params.param2", "value2");
+        expectedMapWithPath.put("settings.params.param3.subParam1", "value1");
+
+        HashMap<String, Object> actualMapWithPaths = new HashMap<>();
+        TbUtils.toFlatMap(inputMap, actualMapWithPaths, excludeList, true);
+
+        Assert.assertEquals(expectedMapWithPath, actualMapWithPaths);
+
+        HashMap<String, Object> expectedMapWithoutPaths = new HashMap<>();
+        expectedMapWithoutPaths.put("timezone", "UTC-5");
+        expectedMapWithoutPaths.put("name", "Alice");
+        expectedMapWithoutPaths.put("id", "dev002");
+        expectedMapWithoutPaths.put("subParam2", "value2");
+        expectedMapWithoutPaths.put("type", "actuator");
+        expectedMapWithoutPaths.put("subParam1", "value1");
+        expectedMapWithoutPaths.put("param1", "value1");
+        expectedMapWithoutPaths.put("notifications", true);
+        expectedMapWithoutPaths.put("age", 30);
+        expectedMapWithoutPaths.put("param2", "value2");
+
+        HashMap<String, Object> actualMapWithoutPaths = new HashMap<>();
+        TbUtils.toFlatMap(inputMap, actualMapWithoutPaths, new ArrayList<>(), false);
+
+        Assert.assertEquals(expectedMapWithoutPaths, actualMapWithoutPaths);
+    }
+
+
+
+    private static String keyToValue(String key, String extraSymbol) {
+        return key + "Value" + (extraSymbol == null ? "" : extraSymbol);
     }
 
     private static List<Byte> toList(byte[] data) {
