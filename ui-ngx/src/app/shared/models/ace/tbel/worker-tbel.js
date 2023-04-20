@@ -8044,29 +8044,8 @@ var JSHINT = (function() {
   }).labelled = true;
 
   blockstmt("foreach", function(context) {
-    var s, t = state.tokens.next;
+    var t = state.tokens.next;
     var letscope = false;
-    var isAsync = false;
-    var foreachtok = null;
-
-    if (t.value === "each") {
-      foreachtok = t;
-      advance("each");
-      if (!state.inMoz()) {
-        warning("W118", state.tokens.curr, "for each");
-      }
-    }
-
-    if (state.tokens.next.identifier && state.tokens.next.value === "await") {
-      advance("await");
-      isAsync = true;
-
-      if (!(context & prodParams.async)) {
-        error("E024", state.tokens.curr, "await");
-      } else if (!state.inES9()) {
-        warning("W119", state.tokens.curr, "asynchronous iteration", "9");
-      }
-    }
 
     increaseComplexityCount();
     advance("(");
@@ -8076,32 +8055,12 @@ var JSHINT = (function() {
     var bindingPower;
     var targets;
     var target;
-    var decl;
-    var afterNext = peek();
-    var functionName = this;
-
     var headContext = context | prodParams.noin;
 
-    if (state.tokens.next.id === "var") {
-      advance("var");
-      decl = state.tokens.curr.fud(headContext);
-      comma = decl.hasComma ? decl : null;
-      initializer = decl.hasInitializer ? decl : null;
-    } else if (state.tokens.next.id === "const" ||
-      (state.tokens.next.id === "let" &&
-        ((afterNext.identifier && afterNext.id !== "in") ||
-         checkPunctuators(afterNext, ["{", "["])))) {
-      advance(state.tokens.next.id);
-      letscope = true;
-      state.funct["(scope)"].stack();
-      decl = state.tokens.curr.fud(headContext);
-      comma = decl.hasComma ? decl : null;
-      initializer = decl.hasInitializer ? decl : null;
-    } else if (!checkPunctuator(state.tokens.next, ";")) {
+    if (!checkPunctuator(state.tokens.next, ";")) {
       targets = [];
 
       while (state.tokens.next.value !== ":" &&
-        state.tokens.next.value !== "of" &&
         !checkPunctuator(state.tokens.next, ";")) {
 
         if (checkPunctuators(state.tokens.next, ["{", "["])) {
@@ -8135,30 +8094,12 @@ var JSHINT = (function() {
           }
         }
       }
-      if (!initializer && !comma) {
-        targets.forEach(function(token) {
-          if (!state.funct["(scope)"].has(token.value)) {
-            warning("W288", functionName, functionName.value);
-          }
-        });
-      }
     }
 
     nextop = state.tokens.next;
 
-    if (isAsync && nextop.value !== "of") {
-      error("E066", nextop);
-    }
-    if (_.includes([":", "of"], nextop.value)) {
-      if (nextop.value === "of") {
-        bindingPower = 20;
-
-        if (!state.inES6()) {
-          warning("W104", nextop, "for of", "6");
-        }
-      } else {
+    if (_.includes([":"], nextop.value)) {
         bindingPower = 0;
-      }
       if (comma) {
         error("W133", comma, nextop.value, "more than one ForBinding");
       }
@@ -8173,54 +8114,14 @@ var JSHINT = (function() {
       expression(context, bindingPower);
       advance(")", t);
 
-      if (nextop.value === "in" && state.option.forin) {
-        state.forinifcheckneeded = true;
-
-        if (state.forinifchecks === undefined) {
-          state.forinifchecks = [];
-        }
-        state.forinifchecks.push({
-          type: "(none)"
-        });
-      }
-
       state.funct["(breakage)"] += 1;
       state.funct["(loopage)"] += 1;
 
-      s = block(context, true, true);
-
-      if (nextop.value === "in" && state.option.forin) {
-        if (state.forinifchecks && state.forinifchecks.length > 0) {
-          var check = state.forinifchecks.pop();
-
-          if (// No if statement or not the first statement in loop body
-              s && s.length > 0 && (typeof s[0] !== "object" || s[0].value !== "if") ||
-              check.type === "(positive)" && s.length > 1 ||
-              check.type === "(negative)") {
-            warning("W089", this);
-          }
-        }
-        state.forinifcheckneeded = false;
-      }
-
       state.funct["(breakage)"] -= 1;
       state.funct["(loopage)"] -= 1;
-
     } else {
-      if (foreachtok) {
-        error("E045", foreachtok);
-      }
       nolinebreak(state.tokens.curr);
       advance(";");
-      if (decl) {
-        if (decl.value === "const"  && !decl.hasInitializer) {
-          warning("E012", decl, decl.first[0].value);
-        }
-
-        decl.first.forEach(function(token) {
-          state.funct["(scope)"].initialize(token.value);
-        });
-      }
       state.funct["(loopage)"] += 1;
       if (state.tokens.next.id !== ";") {
         checkCondAssignment(expression(context, 0));
@@ -11439,7 +11340,7 @@ var warnings = {
   W086: "Expected a 'break' statement before '{a}'.",
   W087: "Forgotten 'debugger' statement?",
   W088: "Creating global 'for' variable. Should be 'for (var {a} ...'.",
-  W288: "The syntax of function '{a}' is specific to TBEL, and is not supported by JS executor.",
+  // W288: "The syntax of function '{a}' is specific to TBEL, and is not supported by JS executor.",
   W089: "The body of a for in should be wrapped in an if statement to filter " +
     "unwanted properties from the prototype.",
   W090: "'{a}' is not a statement label.",

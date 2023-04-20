@@ -39,7 +39,7 @@ import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { beautifyJs } from '@shared/models/beautify.models';
-import {ScriptLanguage} from "@shared/models/rule-node.models";
+import { ScriptLanguage } from "@shared/models/rule-node.models";
 
 @Component({
   selector: 'tb-js-func',
