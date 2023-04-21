@@ -86,9 +86,9 @@ public class TbMsgTypeSwitchNode implements TbNode {
         } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
             relationType = "Alarm Cleared";
         } else if (msg.getType().equals(DataConstants.ALARM_ASSIGN)) {
-            relationType = "Alarm Assigned";
+            relationType = "Alarm Assign";
         } else if (msg.getType().equals(DataConstants.ALARM_UNASSIGN)) {
-            relationType = "Alarm Unassigned";
+            relationType = "Alarm Unassign";
         } else if (msg.getType().equals(DataConstants.COMMENT_CREATED)) {
             relationType = "Comment Created";
         } else if (msg.getType().equals(DataConstants.COMMENT_UPDATED)) {
