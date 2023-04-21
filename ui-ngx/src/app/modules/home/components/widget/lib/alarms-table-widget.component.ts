@@ -41,6 +41,7 @@ import {
   deepClone,
   hashCode,
   isDefined,
+  isDefinedAndNotNull,
   isNumber,
   isObject,
   isUndefined
@@ -73,9 +74,9 @@ import {
   getColumnDefaultVisibility,
   getColumnSelectionAvailability,
   getColumnWidth,
+  getHeaderTitle,
   getRowStyleInfo,
   getTableCellButtonActions,
-  getHeaderTitle,
   noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
@@ -93,8 +94,8 @@ import {
 } from '@home/components/widget/lib/display-columns-panel.component';
 import {
   AlarmDataInfo,
-  alarmFields, AlarmInfo,
-  AlarmSearchStatus,
+  alarmFields,
+  AlarmInfo,
   alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmStatus,
@@ -118,23 +119,25 @@ import {
   KeyFilter
 } from '@app/shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import {
-  ALARM_FILTER_PANEL_DATA,
-  AlarmFilterPanelComponent,
-  AlarmFilterPanelData
-} from '@home/components/widget/lib/alarm-filter-panel.component';
 import { entityFields } from '@shared/models/entity.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import {
-  ALARM_ASSIGNEE_PANEL_DATA, AlarmAssigneePanelComponent,
+  ALARM_ASSIGNEE_PANEL_DATA,
+  AlarmAssigneePanelComponent,
   AlarmAssigneePanelData
 } from '@home/components/alarm/alarm-assignee-panel.component';
 import {
   AlarmCommentDialogComponent,
   AlarmCommentDialogData
 } from '@home/components/alarm/alarm-comment-dialog.component';
+import { EntityService } from '@core/http/entity.service';
+import {
+  ALARM_FILTER_CONFIG_DATA,
+  AlarmFilterConfigComponent,
+  AlarmFilterConfigData
+} from '@home/components/alarm/alarm-filter-config.component';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -254,6 +257,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private dialogService: DialogService,
+              private entityService: EntityService,
               private alarmService: AlarmService,
               private cd: ChangeDetectorRef) {
     super(store);
@@ -378,17 +382,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : 1024;
 
-    this.pageLink.searchPropagatedAlarms = isDefined(this.widgetConfig.searchPropagatedAlarms)
-      ? this.widgetConfig.searchPropagatedAlarms : true;
-    let alarmStatusList: AlarmSearchStatus[] = [];
-    if (isDefined(this.widgetConfig.alarmStatusList) && this.widgetConfig.alarmStatusList.length) {
-      alarmStatusList = this.widgetConfig.alarmStatusList;
-    } else if (isDefined(this.widgetConfig.alarmSearchStatus) && this.widgetConfig.alarmSearchStatus !== AlarmSearchStatus.ANY) {
-      alarmStatusList = [this.widgetConfig.alarmSearchStatus];
-    }
-    this.pageLink.statusList = alarmStatusList;
-    this.pageLink.severityList = isDefined(this.widgetConfig.alarmSeverityList) ? this.widgetConfig.alarmSeverityList : [];
-    this.pageLink.typeList = isDefined(this.widgetConfig.alarmTypeList) ? this.widgetConfig.alarmTypeList : [];
+    const alarmFilter = this.entityService.resolveAlarmFilter(this.widgetConfig.alarmFilterConfig);
+    this.pageLink = {...this.pageLink, ...alarmFilter};
 
     this.noDataDisplayMessageText =
       noDataMessage(this.widgetConfig.noDataDisplayMessage, 'alarm.no-alarms-prompt', this.utils, this.translate);
@@ -596,6 +591,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     const target = $event.target || $event.srcElement || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.panelClass = 'tb-alarm-filter-panel';
     config.hasBackdrop = true;
     const connectedPosition: ConnectedPosition = {
       originX: 'end',
@@ -612,12 +608,18 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     });
     const providers: StaticProvider[] = [
       {
-        provide: ALARM_FILTER_PANEL_DATA,
+        provide: ALARM_FILTER_CONFIG_DATA,
         useValue: {
-          statusList: this.pageLink.statusList,
-          severityList: this.pageLink.severityList,
-          typeList: this.pageLink.typeList
-        } as AlarmFilterPanelData
+          panelMode: true,
+          userMode: true,
+          alarmFilterConfig: {
+            statusList: deepClone(this.pageLink.statusList),
+            severityList: deepClone(this.pageLink.severityList),
+            typeList: deepClone(this.pageLink.typeList),
+            searchPropagatedAlarms: this.pageLink.searchPropagatedAlarms,
+            assignedToCurrentUser: isDefinedAndNotNull(this.pageLink.assigneeId)
+          }
+        } as AlarmFilterConfigData
       },
       {
         provide: OverlayRef,
@@ -625,14 +627,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       }
     ];
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    const componentRef = overlayRef.attach(new ComponentPortal(AlarmFilterPanelComponent,
+    const componentRef = overlayRef.attach(new ComponentPortal(AlarmFilterConfigComponent,
       this.viewContainerRef, injector));
     componentRef.onDestroy(() => {
-      if (componentRef.instance.result) {
-        const result = componentRef.instance.result;
-        this.pageLink.statusList = result.statusList;
-        this.pageLink.severityList = result.severityList;
-        this.pageLink.typeList = result.typeList;
+      if (componentRef.instance.panelResult) {
+        const result = componentRef.instance.panelResult;
+        const alarmFilter = this.entityService.resolveAlarmFilter(result);
+        this.pageLink = {...this.pageLink, ...alarmFilter};
         this.resetPageIndex();
         this.updateData();
       }

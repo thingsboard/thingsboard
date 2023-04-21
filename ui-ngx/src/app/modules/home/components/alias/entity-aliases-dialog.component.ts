@@ -107,7 +107,8 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
           } else {
             const datasources = this.utils.validateDatasources(widget.config.datasources);
             datasources.forEach((datasource) => {
-              if ([DatasourceType.entity, DatasourceType.entityCount].includes(datasource.type) && datasource.entityAliasId) {
+              if ([DatasourceType.entity, DatasourceType.entityCount, DatasourceType.alarmCount].includes(datasource.type)
+                && datasource.entityAliasId) {
                 this.addWidgetTitleToWidgetsMap(datasource.entityAliasId, widget.config.title);
               }
             });

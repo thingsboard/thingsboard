@@ -65,7 +65,7 @@ import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
 import {
   AlarmData,
-  AlarmDataQuery,
+  AlarmDataQuery, AlarmFilter, AlarmFilterConfig,
   createDefaultEntityDataPageLink,
   EntityData,
   EntityDataQuery,
@@ -91,6 +91,7 @@ import { AssetProfileService } from '@core/http/asset-profile.service';
 import { NotificationService } from '@core/http/notification.service';
 import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { NotificationType } from '@shared/models/notification.models';
+import { UserId } from '@shared/models/id/user-id';
 
 @Injectable({
   providedIn: 'root'
@@ -1010,6 +1011,24 @@ export class EntityService {
     );
   }
 
+  public resolveAlarmFilter(alarmFilterConfig?: AlarmFilterConfig): AlarmFilter {
+    const alarmFilter: AlarmFilter = {};
+    if (alarmFilterConfig) {
+      alarmFilter.typeList = alarmFilterConfig.typeList;
+      alarmFilter.severityList = alarmFilterConfig.severityList;
+      alarmFilter.statusList = alarmFilterConfig.statusList;
+      alarmFilter.searchPropagatedAlarms = isDefined(alarmFilterConfig.searchPropagatedAlarms) ?
+        alarmFilterConfig.searchPropagatedAlarms : true;
+      if (alarmFilterConfig.assignedToCurrentUser) {
+        const authUser = getCurrentAuthUser(this.store);
+        alarmFilter.assigneeId = new UserId(authUser.userId);
+      } else {
+        alarmFilter.assigneeId = alarmFilterConfig.assigneeId;
+      }
+    }
+    return alarmFilter;
+  }
+
   public saveEntityParameters(entityType: EntityType, entityData: ImportEntityData, update: boolean,
                               config?: RequestConfig): Observable<ImportEntitiesResultInfo> {
     const saveEntityObservable: Observable<BaseData<EntityId>> = this.getSaveEntityObservable(entityType, entityData, config);
@@ -1321,7 +1340,8 @@ export class EntityService {
         dataKeys: []
       };
       this.prepareEntityFilterFromSubscriptionInfo(datasource, subscriptionInfo);
-    } else if (subscriptionInfo.type === DatasourceType.function || subscriptionInfo.type === DatasourceType.entityCount) {
+    } else if (subscriptionInfo.type === DatasourceType.function || subscriptionInfo.type === DatasourceType.entityCount ||
+      subscriptionInfo.type === DatasourceType.alarmCount) {
       datasource = {
         type: subscriptionInfo.type,
         name: subscriptionInfo.name || subscriptionInfo.type,
@@ -1341,7 +1361,7 @@ export class EntityService {
       if (subscriptionInfo.alarmFields) {
         this.createDatasourceKeys(subscriptionInfo.alarmFields, DataKeyType.alarm, datasource);
       }
-      if (subscriptionInfo.type === DatasourceType.entityCount) {
+      if (subscriptionInfo.type === DatasourceType.entityCount || subscriptionInfo.type === DatasourceType.alarmCount) {
         const dataKey = this.utils.createKey({ name: 'count'}, DataKeyType.count);
         datasource.dataKeys.push(dataKey);
       }

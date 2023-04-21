@@ -13,39 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  min-width: 52px;
-  margin: 8px 0;
-  max-width: 100%;
-  .mdc-button {
-    max-width: 100%;
-  }
-  section.tb-timewindow {
-    min-height: 32px;
-    padding: 0 6px;
+package org.thingsboard.server.common.data.alarm;
 
-    span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      pointer-events: all;
-      cursor: pointer;
-    }
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.TimePageLink;
 
-    .timezone-abbr {
-      font-weight: 500;
-    }
-  }
-}
+import java.util.List;
 
-:host ::ng-deep {
-  .mdc-button {
-    .mat-icon {
-      min-width: 24px;
-    }
-    .mdc-button__label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
+@Data
+@Builder
+@AllArgsConstructor
+public class AlarmQueryV2 {
+
+    private EntityId affectedEntityId;
+    private TimePageLink pageLink;
+    private List<String> typeList;
+    private List<AlarmSearchStatus> statusList;
+    private List<AlarmSeverity> severityList;
+    private UserId assigneeId;
+
 }

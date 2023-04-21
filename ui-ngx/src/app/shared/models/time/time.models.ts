@@ -43,7 +43,8 @@ export enum RealtimeWindowType {
 export enum HistoryWindowType {
   LAST_INTERVAL,
   FIXED,
-  INTERVAL
+  INTERVAL,
+  FOR_ALL_TIME
 }
 
 export interface IntervalWindow {
@@ -187,17 +188,22 @@ export const QuickTimeIntervalTranslationMap = new Map<QuickTimeInterval, string
   [QuickTimeInterval.CURRENT_YEAR_SO_FAR, 'timeinterval.predefined.current-year-so-far']
 ]);
 
-export function historyInterval(timewindowMs: number): Timewindow {
-  return {
-    selectedTab: TimewindowType.HISTORY,
-    history: {
-      historyType: HistoryWindowType.LAST_INTERVAL,
-      timewindowMs
-    }
-  };
-}
+export const forAllTimeInterval = (): Timewindow => ({
+  selectedTab: TimewindowType.HISTORY,
+  history: {
+    historyType: HistoryWindowType.FOR_ALL_TIME
+  }
+});
 
-export function defaultTimewindow(timeService: TimeService): Timewindow {
+export const historyInterval = (timewindowMs: number): Timewindow => ({
+  selectedTab: TimewindowType.HISTORY,
+  history: {
+    historyType: HistoryWindowType.LAST_INTERVAL,
+    timewindowMs
+  }
+});
+
+export const defaultTimewindow = (timeService: TimeService): Timewindow => {
   const currentTime = moment().valueOf();
   return {
     displayValue: '',
@@ -229,17 +235,17 @@ export function defaultTimewindow(timeService: TimeService): Timewindow {
       limit: Math.floor(timeService.getMaxDatapointsLimit() / 2)
     }
   };
-}
+};
 
-function getTimewindowType(timewindow: Timewindow): TimewindowType {
+const getTimewindowType = (timewindow: Timewindow): TimewindowType => {
   if (isUndefined(timewindow.selectedTab)) {
     return isDefined(timewindow.realtime) ? TimewindowType.REALTIME : TimewindowType.HISTORY;
   } else {
     return timewindow.selectedTab;
   }
-}
+};
 
-export function initModelFromDefaultTimewindow(value: Timewindow, quickIntervalOnly: boolean, timeService: TimeService): Timewindow {
+export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalOnly: boolean, timeService: TimeService): Timewindow => {
   const model = defaultTimewindow(timeService);
   if (value) {
     model.hideInterval = value.hideInterval;
@@ -311,10 +317,10 @@ export function initModelFromDefaultTimewindow(value: Timewindow, quickIntervalO
     model.realtime.realtimeType = RealtimeWindowType.INTERVAL;
   }
   return model;
-}
+};
 
-export function toHistoryTimewindow(timewindow: Timewindow, startTimeMs: number, endTimeMs: number,
-                                    interval: number, timeService: TimeService): Timewindow {
+export const toHistoryTimewindow = (timewindow: Timewindow, startTimeMs: number, endTimeMs: number,
+                                    interval: number, timeService: TimeService): Timewindow => {
   if (timewindow.history) {
     interval = isDefined(interval) ? interval : timewindow.history.interval;
   } else if (timewindow.realtime) {
@@ -353,18 +359,20 @@ export function toHistoryTimewindow(timewindow: Timewindow, startTimeMs: number,
     },
     timezone: timewindow.timezone
   };
-}
+};
 
-export function timewindowTypeChanged(newTimewindow: Timewindow, oldTimewindow: Timewindow): boolean {
+export const timewindowTypeChanged = (newTimewindow: Timewindow, oldTimewindow: Timewindow): boolean => {
   if (!newTimewindow || !oldTimewindow) {
     return false;
   }
   const newType = getTimewindowType(newTimewindow);
   const oldType = getTimewindowType(oldTimewindow);
   return newType !== oldType;
-}
+};
 
-export function calculateTsOffset(timezone?: string): number {
+export const getTimezone = (tz: string): moment_.Moment => moment.tz(tz);
+
+export const calculateTsOffset = (timezone?: string): number => {
   if (timezone) {
     const tz = getTimezone(timezone);
     const localOffset = moment().utcOffset();
@@ -372,14 +380,156 @@ export function calculateTsOffset(timezone?: string): number {
   } else {
     return 0;
   }
-}
+};
 
-export function isHistoryTypeTimewindow(timewindow: Timewindow): boolean {
-  return getTimewindowType(timewindow) === TimewindowType.HISTORY;
-}
+export const isHistoryTypeTimewindow = (timewindow: Timewindow): boolean => getTimewindowType(timewindow) === TimewindowType.HISTORY;
 
-export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: number, stateData: boolean,
-                                             timeService: TimeService): SubscriptionTimewindow {
+export const getCurrentTime = (tz?: string): moment_.Moment => {
+  if (tz) {
+    return moment().tz(tz);
+  } else {
+    return moment();
+  }
+};
+
+const getSubscriptionRealtimeWindowFromTimeInterval = (interval: QuickTimeInterval, tz?: string): number => {
+  let currentDate;
+  switch (interval) {
+    case QuickTimeInterval.CURRENT_HOUR:
+      return HOUR;
+    case QuickTimeInterval.CURRENT_DAY:
+    case QuickTimeInterval.CURRENT_DAY_SO_FAR:
+      return DAY;
+    case QuickTimeInterval.CURRENT_WEEK:
+    case QuickTimeInterval.CURRENT_WEEK_ISO:
+    case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
+    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
+      return WEEK;
+    case QuickTimeInterval.CURRENT_MONTH:
+    case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
+      currentDate = getCurrentTime(tz);
+      return currentDate.endOf('month').diff(currentDate.clone().startOf('month'));
+    case QuickTimeInterval.CURRENT_QUARTER:
+    case QuickTimeInterval.CURRENT_QUARTER_SO_FAR:
+      currentDate = getCurrentTime(tz);
+      return currentDate.endOf('quarter').diff(currentDate.clone().startOf('quarter'));
+    case QuickTimeInterval.CURRENT_HALF_YEAR:
+    case QuickTimeInterval.CURRENT_HALF_YEAR_SO_FAR:
+      currentDate = getCurrentTime(tz);
+      if (currentDate.get('quarter') < 3) {
+        return currentDate.clone().set('quarter', 2).endOf('quarter').diff(currentDate.startOf('year'));
+      } else {
+        return currentDate.endOf('year').diff(currentDate.clone().set('quarter', 3).startOf('quarter'));
+      }
+    case QuickTimeInterval.CURRENT_YEAR:
+    case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
+      currentDate = getCurrentTime(tz);
+      return currentDate.endOf('year').diff(currentDate.clone().startOf('year'));
+  }
+};
+
+export const calculateIntervalStartTime = (interval: QuickTimeInterval, currentDate: moment_.Moment): moment_.Moment => {
+  switch (interval) {
+    case QuickTimeInterval.YESTERDAY:
+      currentDate.subtract(1, 'days');
+      return currentDate.startOf('day');
+    case QuickTimeInterval.DAY_BEFORE_YESTERDAY:
+      currentDate.subtract(2, 'days');
+      return currentDate.startOf('day');
+    case QuickTimeInterval.THIS_DAY_LAST_WEEK:
+      currentDate.subtract(1, 'weeks');
+      return currentDate.startOf('day');
+    case QuickTimeInterval.PREVIOUS_WEEK:
+      currentDate.subtract(1, 'weeks');
+      return currentDate.startOf('week');
+    case QuickTimeInterval.PREVIOUS_WEEK_ISO:
+      currentDate.subtract(1, 'weeks');
+      return currentDate.startOf('isoWeek');
+    case QuickTimeInterval.PREVIOUS_MONTH:
+      currentDate.subtract(1, 'months');
+      return currentDate.startOf('month');
+    case QuickTimeInterval.PREVIOUS_YEAR:
+      currentDate.subtract(1, 'years');
+      return currentDate.startOf('year');
+    case QuickTimeInterval.CURRENT_HOUR:
+      return currentDate.startOf('hour');
+    case QuickTimeInterval.CURRENT_DAY:
+    case QuickTimeInterval.CURRENT_DAY_SO_FAR:
+      return currentDate.startOf('day');
+    case QuickTimeInterval.CURRENT_WEEK:
+    case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
+      return currentDate.startOf('week');
+    case QuickTimeInterval.CURRENT_WEEK_ISO:
+    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
+      return currentDate.startOf('isoWeek');
+    case QuickTimeInterval.CURRENT_MONTH:
+    case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
+      return currentDate.startOf('month');
+    case QuickTimeInterval.CURRENT_QUARTER:
+    case QuickTimeInterval.CURRENT_QUARTER_SO_FAR:
+      return currentDate.startOf('quarter');
+    case QuickTimeInterval.CURRENT_HALF_YEAR:
+    case QuickTimeInterval.CURRENT_HALF_YEAR_SO_FAR:
+      if (currentDate.get('quarter') < 3) {
+        return currentDate.startOf('year');
+      } else {
+        return currentDate.clone().set('quarter', 3).startOf('quarter');
+      }
+    case QuickTimeInterval.CURRENT_YEAR:
+    case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
+      return currentDate.startOf('year');
+  }
+};
+
+export const calculateIntervalEndTime = (interval: QuickTimeInterval, startDate: moment_.Moment, tz?: string): number => {
+  switch (interval) {
+    case QuickTimeInterval.YESTERDAY:
+    case QuickTimeInterval.DAY_BEFORE_YESTERDAY:
+    case QuickTimeInterval.THIS_DAY_LAST_WEEK:
+    case QuickTimeInterval.CURRENT_DAY:
+      return startDate.add(1, 'day').valueOf();
+    case QuickTimeInterval.PREVIOUS_WEEK:
+    case QuickTimeInterval.PREVIOUS_WEEK_ISO:
+    case QuickTimeInterval.CURRENT_WEEK:
+    case QuickTimeInterval.CURRENT_WEEK_ISO:
+      return startDate.add(1, 'week').valueOf();
+    case QuickTimeInterval.PREVIOUS_MONTH:
+    case QuickTimeInterval.CURRENT_MONTH:
+      return startDate.add(1, 'month').valueOf();
+    case QuickTimeInterval.PREVIOUS_QUARTER:
+    case QuickTimeInterval.CURRENT_QUARTER:
+      return startDate.add(1, 'quarter').valueOf();
+    case QuickTimeInterval.PREVIOUS_HALF_YEAR:
+    case QuickTimeInterval.CURRENT_HALF_YEAR:
+      return startDate.add(2, 'quarters').valueOf();
+    case QuickTimeInterval.PREVIOUS_YEAR:
+    case QuickTimeInterval.CURRENT_YEAR:
+      return startDate.add(1, 'year').valueOf();
+    case QuickTimeInterval.CURRENT_HOUR:
+      return startDate.add(1, 'hour').valueOf();
+    case QuickTimeInterval.CURRENT_DAY_SO_FAR:
+    case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
+    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
+    case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
+    case QuickTimeInterval.CURRENT_QUARTER_SO_FAR:
+    case QuickTimeInterval.CURRENT_HALF_YEAR_SO_FAR:
+    case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
+      return getCurrentTime(tz).valueOf();
+  }
+};
+
+export const calculateIntervalStartEndTime = (interval: QuickTimeInterval, tz?: string): [number, number] => {
+  const startEndTs: [number, number] = [0, 0];
+  const currentDate = getCurrentTime(tz);
+  const startDate = calculateIntervalStartTime(interval, currentDate);
+  startEndTs[0] = startDate.valueOf();
+  const endDate = calculateIntervalEndTime(interval, startDate, tz);
+  startEndTs[1] = endDate.valueOf();
+  return startEndTs;
+};
+
+export const createSubscriptionTimewindow = (timewindow: Timewindow, stDiff: number, stateData: boolean,
+                                             timeService: TimeService): SubscriptionTimewindow => {
   const subscriptionTimewindow: SubscriptionTimewindow = {
     fixedWindow: null,
     realtimeWindowMs: null,
@@ -478,145 +628,9 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
     aggregation.limit = Math.ceil(aggTimewindow / subscriptionTimewindow.aggregation.interval);
   }
   return subscriptionTimewindow;
-}
+};
 
-function getSubscriptionRealtimeWindowFromTimeInterval(interval: QuickTimeInterval, tz?: string): number {
-  let currentDate;
-  switch (interval) {
-    case QuickTimeInterval.CURRENT_HOUR:
-      return HOUR;
-    case QuickTimeInterval.CURRENT_DAY:
-    case QuickTimeInterval.CURRENT_DAY_SO_FAR:
-      return DAY;
-    case QuickTimeInterval.CURRENT_WEEK:
-    case QuickTimeInterval.CURRENT_WEEK_ISO:
-    case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
-    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
-      return WEEK;
-    case QuickTimeInterval.CURRENT_MONTH:
-    case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
-      currentDate = getCurrentTime(tz);
-      return currentDate.endOf('month').diff(currentDate.clone().startOf('month'));
-    case QuickTimeInterval.CURRENT_QUARTER:
-    case QuickTimeInterval.CURRENT_QUARTER_SO_FAR:
-      currentDate = getCurrentTime(tz);
-      return currentDate.endOf('quarter').diff(currentDate.clone().startOf('quarter'));
-    case QuickTimeInterval.CURRENT_HALF_YEAR:
-    case QuickTimeInterval.CURRENT_HALF_YEAR_SO_FAR:
-      currentDate = getCurrentTime(tz);
-      if (currentDate.get('quarter') < 3) {
-        return currentDate.clone().set('quarter', 2).endOf('quarter').diff(currentDate.startOf('year'));
-      } else {
-        return currentDate.endOf('year').diff(currentDate.clone().set('quarter', 3).startOf('quarter'));
-      }
-    case QuickTimeInterval.CURRENT_YEAR:
-    case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
-      currentDate = getCurrentTime(tz);
-      return currentDate.endOf('year').diff(currentDate.clone().startOf('year'));
-  }
-}
-
-export function calculateIntervalStartEndTime(interval: QuickTimeInterval, tz?: string): [number, number] {
-  const startEndTs: [number, number] = [0, 0];
-  const currentDate = getCurrentTime(tz);
-  const startDate = calculateIntervalStartTime(interval, currentDate);
-  startEndTs[0] = startDate.valueOf();
-  const endDate = calculateIntervalEndTime(interval, startDate, tz);
-  startEndTs[1] = endDate.valueOf();
-  return startEndTs;
-}
-
-export function calculateIntervalStartTime(interval: QuickTimeInterval, currentDate: moment_.Moment): moment_.Moment {
-  switch (interval) {
-    case QuickTimeInterval.YESTERDAY:
-      currentDate.subtract(1, 'days');
-      return currentDate.startOf('day');
-    case QuickTimeInterval.DAY_BEFORE_YESTERDAY:
-      currentDate.subtract(2, 'days');
-      return currentDate.startOf('day');
-    case QuickTimeInterval.THIS_DAY_LAST_WEEK:
-      currentDate.subtract(1, 'weeks');
-      return currentDate.startOf('day');
-    case QuickTimeInterval.PREVIOUS_WEEK:
-      currentDate.subtract(1, 'weeks');
-      return currentDate.startOf('week');
-    case QuickTimeInterval.PREVIOUS_WEEK_ISO:
-      currentDate.subtract(1, 'weeks');
-      return currentDate.startOf('isoWeek');
-    case QuickTimeInterval.PREVIOUS_MONTH:
-      currentDate.subtract(1, 'months');
-      return currentDate.startOf('month');
-    case QuickTimeInterval.PREVIOUS_YEAR:
-      currentDate.subtract(1, 'years');
-      return currentDate.startOf('year');
-    case QuickTimeInterval.CURRENT_HOUR:
-      return currentDate.startOf('hour');
-    case QuickTimeInterval.CURRENT_DAY:
-    case QuickTimeInterval.CURRENT_DAY_SO_FAR:
-      return currentDate.startOf('day');
-    case QuickTimeInterval.CURRENT_WEEK:
-    case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
-      return currentDate.startOf('week');
-    case QuickTimeInterval.CURRENT_WEEK_ISO:
-    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
-      return currentDate.startOf('isoWeek');
-    case QuickTimeInterval.CURRENT_MONTH:
-    case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
-      return currentDate.startOf('month');
-    case QuickTimeInterval.CURRENT_QUARTER:
-    case QuickTimeInterval.CURRENT_QUARTER_SO_FAR:
-      return currentDate.startOf('quarter');
-    case QuickTimeInterval.CURRENT_HALF_YEAR:
-    case QuickTimeInterval.CURRENT_HALF_YEAR_SO_FAR:
-      if (currentDate.get('quarter') < 3) {
-        return currentDate.startOf('year');
-      } else {
-        return currentDate.clone().set('quarter', 3).startOf('quarter');
-      }
-    case QuickTimeInterval.CURRENT_YEAR:
-    case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
-      return currentDate.startOf('year');
-  }
-}
-
-export function calculateIntervalEndTime(interval: QuickTimeInterval, startDate: moment_.Moment, tz?: string): number {
-  switch (interval) {
-    case QuickTimeInterval.YESTERDAY:
-    case QuickTimeInterval.DAY_BEFORE_YESTERDAY:
-    case QuickTimeInterval.THIS_DAY_LAST_WEEK:
-    case QuickTimeInterval.CURRENT_DAY:
-      return startDate.add(1, 'day').valueOf();
-    case QuickTimeInterval.PREVIOUS_WEEK:
-    case QuickTimeInterval.PREVIOUS_WEEK_ISO:
-    case QuickTimeInterval.CURRENT_WEEK:
-    case QuickTimeInterval.CURRENT_WEEK_ISO:
-      return startDate.add(1, 'week').valueOf();
-    case QuickTimeInterval.PREVIOUS_MONTH:
-    case QuickTimeInterval.CURRENT_MONTH:
-      return startDate.add(1, 'month').valueOf();
-    case QuickTimeInterval.PREVIOUS_QUARTER:
-    case QuickTimeInterval.CURRENT_QUARTER:
-      return startDate.add(1, 'quarter').valueOf();
-    case QuickTimeInterval.PREVIOUS_HALF_YEAR:
-    case QuickTimeInterval.CURRENT_HALF_YEAR:
-      return startDate.add(2, 'quarters').valueOf();
-    case QuickTimeInterval.PREVIOUS_YEAR:
-    case QuickTimeInterval.CURRENT_YEAR:
-      return startDate.add(1, 'year').valueOf();
-    case QuickTimeInterval.CURRENT_HOUR:
-      return startDate.add(1, 'hour').valueOf();
-    case QuickTimeInterval.CURRENT_DAY_SO_FAR:
-    case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
-    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
-    case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
-    case QuickTimeInterval.CURRENT_QUARTER_SO_FAR:
-    case QuickTimeInterval.CURRENT_HALF_YEAR_SO_FAR:
-    case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
-      return getCurrentTime(tz).valueOf();
-  }
-}
-
-export function quickTimeIntervalPeriod(interval: QuickTimeInterval): number {
+export const quickTimeIntervalPeriod = (interval: QuickTimeInterval): number => {
   switch (interval) {
     case QuickTimeInterval.CURRENT_HOUR:
       return HOUR;
@@ -650,10 +664,10 @@ export function quickTimeIntervalPeriod(interval: QuickTimeInterval): number {
     case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
       return YEAR;
   }
-}
+};
 
-export function calculateIntervalComparisonStartTime(interval: QuickTimeInterval,
-                                                     startDate: moment_.Moment): moment_.Moment {
+export const calculateIntervalComparisonStartTime = (interval: QuickTimeInterval,
+                                                     startDate: moment_.Moment): moment_.Moment => {
   switch (interval) {
     case QuickTimeInterval.YESTERDAY:
     case QuickTimeInterval.DAY_BEFORE_YESTERDAY:
@@ -702,11 +716,11 @@ export function calculateIntervalComparisonStartTime(interval: QuickTimeInterval
       startDate.subtract(1, 'hour');
       return startDate.startOf('hour');
   }
-}
+};
 
-export function calculateIntervalComparisonEndTime(interval: QuickTimeInterval,
+export const calculateIntervalComparisonEndTime = (interval: QuickTimeInterval,
                                                    comparisonStartDate: moment_.Moment,
-                                                   endDate: moment_.Moment): number {
+                                                   endDate: moment_.Moment): number => {
   switch (interval) {
     case QuickTimeInterval.CURRENT_DAY_SO_FAR:
       return endDate.subtract(1, 'days').valueOf();
@@ -724,10 +738,10 @@ export function calculateIntervalComparisonEndTime(interval: QuickTimeInterval,
     default:
       return calculateIntervalEndTime(interval, comparisonStartDate);
   }
-}
+};
 
-export function createTimewindowForComparison(subscriptionTimewindow: SubscriptionTimewindow,
-                                              timeUnit: ComparisonDuration, customIntervalValue: number): SubscriptionTimewindow {
+export const createTimewindowForComparison = (subscriptionTimewindow: SubscriptionTimewindow,
+                                              timeUnit: ComparisonDuration, customIntervalValue: number): SubscriptionTimewindow => {
   const timewindowForComparison: SubscriptionTimewindow = {
     fixedWindow: null,
     realtimeWindowMs: null,
@@ -776,9 +790,9 @@ export function createTimewindowForComparison(subscriptionTimewindow: Subscripti
   }
 
   return timewindowForComparison;
-}
+};
 
-export function cloneSelectedTimewindow(timewindow: Timewindow): Timewindow {
+export const cloneSelectedTimewindow = (timewindow: Timewindow): Timewindow => {
   const cloned: Timewindow = {};
   cloned.hideInterval = timewindow.hideInterval || false;
   cloned.hideLastInterval = timewindow.hideLastInterval || false;
@@ -797,7 +811,7 @@ export function cloneSelectedTimewindow(timewindow: Timewindow): Timewindow {
   cloned.aggregation = deepClone(timewindow.aggregation);
   cloned.timezone = timewindow.timezone;
   return cloned;
-}
+};
 
 export interface TimeInterval {
   name: string;
@@ -937,7 +951,7 @@ export interface TimezoneInfo {
 let timezones: TimezoneInfo[] = null;
 let defaultTimezone: string = null;
 
-export function getTimezones(): TimezoneInfo[] {
+export const getTimezones = (): TimezoneInfo[] => {
   if (!timezones) {
     timezones = momentTz.tz.names().map((zoneName) => {
       const tz = momentTz.tz(zoneName);
@@ -951,9 +965,15 @@ export function getTimezones(): TimezoneInfo[] {
     });
   }
   return timezones;
-}
+};
 
-export function getTimezoneInfo(timezoneId: string, defaultTimezoneId?: string, userTimezoneByDefault?: boolean): TimezoneInfo {
+export const getDefaultTimezone = (): string => {
+  if (!defaultTimezone) {
+    defaultTimezone = momentTz.tz.guess();
+  }
+  return defaultTimezone;
+};
+export const getTimezoneInfo = (timezoneId: string, defaultTimezoneId?: string, userTimezoneByDefault?: boolean): TimezoneInfo => {
   const timezoneList = getTimezones();
   let foundTimezone = timezoneId ? timezoneList.find(timezoneInfo => timezoneInfo.id === timezoneId) : null;
   if (!foundTimezone) {
@@ -965,40 +985,20 @@ export function getTimezoneInfo(timezoneId: string, defaultTimezoneId?: string, 
     }
   }
   return foundTimezone;
-}
+};
 
-export function getDefaultTimezoneInfo(): TimezoneInfo {
+export const getDefaultTimezoneInfo = (): TimezoneInfo => {
   const userTimezone = getDefaultTimezone();
   return getTimezoneInfo(userTimezone);
-}
+};
 
-export function getDefaultTimezone(): string {
-  if (!defaultTimezone) {
-    defaultTimezone = momentTz.tz.guess();
-  }
-  return defaultTimezone;
-}
-
-export function getCurrentTime(tz?: string): moment_.Moment {
-  if (tz) {
-    return moment().tz(tz);
-  } else {
-    return moment();
-  }
-}
-
-export function getTime(ts: number, tz?: string): moment_.Moment {
+export const getTime = (ts: number, tz?: string): moment_.Moment => {
   if (tz) {
     return moment(ts).tz(tz);
   } else {
     return moment(ts);
   }
-}
+};
 
-export function getTimezone(tz: string): moment_.Moment {
-    return moment.tz(tz);
-}
-
-export function getCurrentTimeForComparison(timeForComparison: moment_.unitOfTime.DurationConstructor, tz?: string): moment_.Moment {
-  return getCurrentTime(tz).subtract(1, timeForComparison);
-}
+export const getCurrentTimeForComparison = (timeForComparison: moment_.unitOfTime.DurationConstructor, tz?: string): moment_.Moment =>
+  getCurrentTime(tz).subtract(1, timeForComparison);

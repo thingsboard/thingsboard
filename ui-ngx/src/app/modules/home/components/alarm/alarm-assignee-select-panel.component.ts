@@ -19,55 +19,42 @@ import {
   Component,
   ElementRef,
   Inject,
-  InjectionToken, OnDestroy,
+  InjectionToken,
+  OnDestroy,
   OnInit,
   ViewChild
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Observable, of, Subject } from 'rxjs';
-import {
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  share,
-  switchMap,
-  takeUntil,
-} from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, takeUntil, } from 'rxjs/operators';
 import { User, UserEmailInfo } from '@shared/models/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { UserService } from '@core/http/user.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { AlarmService } from '@core/http/alarm.service';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { UtilsService } from '@core/services/utils.service';
 
-export const ALARM_ASSIGNEE_PANEL_DATA = new InjectionToken<any>('AlarmAssigneePanelData');
+export const ALARM_ASSIGNEE_SELECT_PANEL_DATA = new InjectionToken<any>('AlarmAssigneeSelectPanelData');
 
-export interface AlarmAssigneePanelData {
-  alarmId: string;
-  assigneeId: string;
+export interface AlarmAssigneeSelectPanelData {
+  assigneeId?: string;
 }
 
 @Component({
-  selector: 'tb-alarm-assignee-panel',
+  selector: 'tb-alarm-assignee-select-panel',
   templateUrl: './alarm-assignee-panel.component.html',
   styleUrls: ['./alarm-assignee-panel.component.scss']
 })
-export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDestroy {
+export class AlarmAssigneeSelectPanelComponent implements  OnInit, AfterViewInit, OnDestroy {
 
   private dirty = false;
 
-  alarmId: string;
-
   assigneeId?: string;
 
-  assigneeNotSetText = 'alarm.unassigned';
-
-  reassigned: boolean = false;
+  assigneeNotSetText = 'alarm.assignee-not-set';
 
   selectUserFormGroup: FormGroup;
 
@@ -77,16 +64,18 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
 
   searchText = '';
 
+  userSelected = false;
+
+  result?: UserEmailInfo;
+
   private destroy$ = new Subject<void>();
 
-  constructor(@Inject(ALARM_ASSIGNEE_PANEL_DATA) public data: AlarmAssigneePanelData,
+  constructor(@Inject(ALARM_ASSIGNEE_SELECT_PANEL_DATA) public data: AlarmAssigneeSelectPanelData,
               public overlayRef: OverlayRef,
               public translate: TranslateService,
               private userService: UserService,
-              private alarmService: AlarmService,
               private fb: FormBuilder,
               private utilsService: UtilsService) {
-    this.alarmId = data.alarmId;
     this.assigneeId = data.assigneeId;
     this.selectUserFormGroup = this.fb.group({
       user: [null]
@@ -97,20 +86,18 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     this.filteredUsers = this.selectUserFormGroup.get('user').valueChanges
       .pipe(
         debounceTime(150),
-        map(value => {
-          return value ? (typeof value === 'string' ? value : '') : ''
-        }),
+        map(value => value ? (typeof value === 'string' ? value : '') : ''),
         distinctUntilChanged(),
         switchMap(name => this.fetchUsers(name)),
         share(),
         takeUntil(this.destroy$)
-    );
+      );
   }
 
   ngAfterViewInit() {
     setTimeout(() => {
       this.userInput.nativeElement.focus();
-    }, 0)
+    }, 0);
   }
 
   ngOnDestroy() {
@@ -124,28 +111,9 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
 
   selected(event: MatAutocompleteSelectedEvent): void {
     this.clear();
-    const user: User  = event.option.value;
-    if (user) {
-      this.assign(user);
-    } else {
-      this.unassign();
-    }
-  }
-
-  assign(user: User): void {
-    this.alarmService.assignAlarm(this.alarmId, user.id.id, {ignoreLoading: true}).subscribe(
-      () => {
-        this.reassigned = true;
-        this.overlayRef.dispose()
-      });
-  }
-
-  unassign(): void {
-    this.alarmService.unassignAlarm(this.alarmId, {ignoreLoading: true}).subscribe(
-      () => {
-        this.reassigned = true;
-        this.overlayRef.dispose()
-      });
+    this.userSelected = true;
+    this.result = event.option.value;
+    this.overlayRef.dispose();
   }
 
   fetchUsers(searchText?: string): Observable<Array<UserEmailInfo>> {
@@ -154,13 +122,11 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
       property: 'email',
       direction: Direction.ASC
     });
-    return this.userService.getUsersForAssign(this.alarmId, pageLink, {ignoreLoading: true})
+    return this.userService.findUsersByQuery(pageLink, {ignoreLoading: true})
       .pipe(
-      catchError(() => of(emptyPageData<UserEmailInfo>())),
-      map(pageData => {
-        return pageData.data;
-      })
-    );
+        catchError(() => of(emptyPageData<UserEmailInfo>())),
+        map(pageData => pageData.data)
+      );
   }
 
   onFocus(): void {
@@ -178,7 +144,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     }, 0);
   }
 
-  getUserDisplayName(entity: User) {
+  getUserDisplayName(entity: UserEmailInfo) {
     let displayName = '';
     if ((entity.firstName && entity.firstName.length > 0) ||
       (entity.lastName && entity.lastName.length > 0)) {
@@ -197,7 +163,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     return displayName;
   }
 
-  getUserInitials(entity: User): string {
+  getUserInitials(entity: UserEmailInfo): string {
     let initials = '';
     if (entity.firstName && entity.firstName.length ||
       entity.lastName && entity.lastName.length) {
@@ -213,7 +179,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     return initials.toUpperCase();
   }
 
-  getFullName(entity: User): string {
+  getFullName(entity: UserEmailInfo): string {
     let fullName = '';
     if ((entity.firstName && entity.firstName.length > 0) ||
       (entity.lastName && entity.lastName.length > 0)) {
@@ -230,7 +196,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     return fullName;
   }
 
-  getAvatarBgColor(entity: User) {
+  getAvatarBgColor(entity: UserEmailInfo) {
     return this.utilsService.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
   }
 

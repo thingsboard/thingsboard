@@ -687,18 +687,18 @@
         "config": {
           "datasources": [
             {
-              "type": "entityCount",
+              "type": "alarmCount",
               "name": null,
-              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "entityAliasId": null,
               "filterId": null,
               "dataKeys": [
                 {
                   "name": "count",
                   "type": "count",
                   "label": "totalAlarms",
-                  "color": "#2196f3",
+                  "color": "#ffc107",
                   "settings": {},
-                  "_hash": 0.8491768696709192,
+                  "_hash": 0.8743321483507485,
                   "aggregationType": null,
                   "units": null,
                   "decimals": null,
@@ -706,21 +706,26 @@
                   "usePostProcessing": null,
                   "postFuncBody": null
                 }
-              ]
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
             },
             {
-              "type": "entityCount",
+              "type": "alarmCount",
               "name": null,
-              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
-              "filterId": "42f42812-92fe-a13a-b0ba-c6e0dfab3584",
+              "entityAliasId": null,
+              "filterId": null,
               "dataKeys": [
                 {
                   "name": "count",
                   "type": "count",
                   "label": "assignedToMeAlarms",
-                  "color": "#4caf50",
+                  "color": "#ffc107",
                   "settings": {},
-                  "_hash": 0.1262449138010293,
+                  "_hash": 0.6392390736755882,
                   "aggregationType": null,
                   "units": null,
                   "decimals": null,
@@ -728,21 +733,27 @@
                   "usePostProcessing": null,
                   "postFuncBody": null
                 }
-              ]
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ],
+                "assignedToCurrentUser": true
+              }
             },
             {
-              "type": "entityCount",
+              "type": "alarmCount",
               "name": null,
-              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
-              "filterId": "39d92c21-2426-7346-4484-452829146c33",
+              "entityAliasId": null,
+              "filterId": null,
               "dataKeys": [
                 {
                   "name": "count",
                   "type": "count",
                   "label": "criticalAlarms",
-                  "color": "#f44336",
+                  "color": "#ffc107",
                   "settings": {},
-                  "_hash": 0.39119172615806797,
+                  "_hash": 0.8329478098552843,
                   "aggregationType": null,
                   "units": null,
                   "decimals": null,
@@ -750,7 +761,15 @@
                   "usePostProcessing": null,
                   "postFuncBody": null
                 }
-              ]
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ],
+                "severityList": [
+                  "CRITICAL"
+                ]
+              }
             }
           ],
           "timewindow": {
@@ -783,7 +802,7 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/alarms\">{{ 'alarm.alarms' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-critical\" routerLink=\"/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.critical</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${criticalAlarms:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-assigned\" routerLink=\"/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.assigned-to-me</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${assignedToMeAlarms:0}</div>\n                </div>\n            </a>\n            <a fxHide.md class=\"tb-item-card tb-total\" routerLink=\"/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalAlarms:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/alarms\">{{ 'alarm.alarms' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-critical\" routerLink=\"/alarms\" [queryParams]=\"{severityList: ['CRITICAL']}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.critical</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${criticalAlarms:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-assigned\" routerLink=\"/alarms\" [queryParams]=\"{assignedToMe: true}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.assigned-to-me</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${assignedToMeAlarms:0}</div>\n                </div>\n            </a>\n            <a fxHide.md class=\"tb-item-card tb-total\" routerLink=\"/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalAlarms:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: flex-start;\n    gap: 12px;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-item-cards {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n    gap: 12px;\n}\n\na.tb-item-card {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    padding: 8px 12px;\n    border: 1px solid;\n    border-radius: 10px;\n    margin-bottom: 12px;\n}\n\na.tb-item-card.tb-critical {\n    background: rgba(209, 39, 48, 0.04);\n    border-color: rgba(209, 39, 48, 0.06);\n}\n\na.tb-item-card.tb-assigned {\n    background: rgba(48, 86, 128, 0.04);\n    border-color: rgba(48, 86, 128, 0.12);\n}\n\na.tb-item-card.tb-total {\n    background: rgba(0, 0, 0, 0.01);\n    border-color: rgba(0, 0, 0, 0.05);\n}\n\n.tb-item-title-container {\n    display: grid;\n}\n\n.tb-item-title {\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;    \n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-item-title.tb-home-widget-link:after {\n    position: absolute;\n    right: 0;\n}\n\na.tb-item-card:hover .tb-item-title.tb-home-widget-link:after { \n    color: rgba(0, 0, 0, 0.38);\n}\n\na.tb-item-card:hover {\n    box-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);\n}\n\n.tb-count-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    align-items: flex-start;\n    justify-content: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 24px;\n    line-height: 36px;\n    white-space: nowrap;\n    color: rgba(0, 0, 0, 0.87);\n}\n\na.tb-item-card.tb-critical .tb-count:after {\n    content: \"warning\";\n    display: inline-block;\n    position: relative;\n    font-family: 'Material Icons Round';\n    color: #D12730;\n    vertical-align: bottom;\n    margin-left: 6px;\n}\n\n@media screen and (max-width: 959px) {\n    .tb-item-cards {\n        flex-direction: column;\n    }\n    a.tb-item-card {\n        margin-bottom: 0;\n    }\n}\n\n@media screen and (max-width: 1279px) {\n    a.tb-item-card {\n        flex-direction: row;\n        align-items: center;\n    }\n    .tb-item-title.tb-home-widget-link:after {\n        position: relative;\n    }\n    .tb-count-container {\n        align-items: flex-end;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-item-title {\n        font-size: 11px;\n        line-height: 16px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    a.tb-item-card {\n        padding: 4px 8px;\n        margin-bottom: 6px;\n    }\n    a.tb-item-card:hover {\n        box-shadow: 0px 2px 5px rgba(23, 33, 90, 0.08);\n    }\n    a.tb-item-card.tb-critical .tb-count:after {\n        margin-left: 2px;\n    }\n}\n"
           },
