@@ -309,6 +309,7 @@ export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
 
 export interface FcRuleNodeType extends FcNode {
   component?: RuleNodeComponentDescriptor;
+  singletonMode?: boolean;
   nodeClass?: string;
   icon?: string;
   iconUrl?: string;
@@ -319,7 +320,6 @@ export interface FcRuleNode extends FcRuleNodeType {
   additionalInfo?: any;
   configuration?: RuleNodeConfiguration;
   debugMode?: boolean;
-  singletonMode?: boolean;
   error?: string;
   highlighted?: boolean;
   componentClazz?: string;

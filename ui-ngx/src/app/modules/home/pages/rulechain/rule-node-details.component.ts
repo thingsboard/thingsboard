@@ -26,7 +26,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
 import { Router } from '@angular/router';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
-import { ComponentSingletonSupport } from "@shared/models/component-descriptor.models";
+import { ComponentSingletonSupport } from '@shared/models/component-descriptor.models';
 
 @Component({
   selector: 'tb-rule-node',
