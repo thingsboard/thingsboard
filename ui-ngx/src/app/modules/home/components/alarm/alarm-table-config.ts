@@ -125,18 +125,11 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           color: alarmSeverityColors.get(entity.severity)
         })));
     this.columns.push(
-      new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '200px',
+      new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '240px',
         (entity) => {
           return this.getAssigneeTemplate(entity)
         },
-        (entity) => {
-          return {
-            display: 'flex',
-            justifyContent: 'start',
-            alignItems: 'center',
-            height: 'inherit'
-          }
-        },
+        () => ({}),
         false,
         () => ({}),
         (entity) => undefined,
@@ -209,8 +202,10 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           <span class="user-display-name">${this.getUserDisplayName(entity)}</span>
         </span>`
         :
-        `<mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
-        <span>${this.translate.instant('alarm.unassigned')}</span>`
+        `<span class="unassigned-container">
+          <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
+          <span>${this.translate.instant('alarm.unassigned')}</span>
+        </span>`
       }
       </span>`
   }

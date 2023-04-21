@@ -160,9 +160,12 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             handleEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, null, deviceProfile.isDefault(),
                     oldDeviceProfile != null ? oldDeviceProfile.getProvisionDeviceKey() : null));
+            String unqProvisionKeyErrorMsg = DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())
+                    ? "Device profile with such certificate already exists!"
+                    : "Device profile with such provision device key already exists!";
             checkConstraintViolation(t,
                     Map.of("device_profile_name_unq_key", DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS,
-                            "device_provision_key_unq_key", "Device profile with such provision device key already exists!",
+                            "device_provision_key_unq_key", unqProvisionKeyErrorMsg,
                             "device_profile_external_id_unq_key", "Device profile with such external id already exists!"));
             throw t;
         }

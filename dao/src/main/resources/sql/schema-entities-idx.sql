@@ -20,9 +20,12 @@ CREATE INDEX IF NOT EXISTS idx_alarm_originator_created_time ON alarm(originator
 
 CREATE INDEX IF NOT EXISTS idx_alarm_tenant_created_time ON alarm(tenant_id, created_time DESC);
 
--- Drop index by 'status' column and replace with new one that has only active alarms;
+-- Drop index by 'status' column and replace with new indexes that has only active alarms;
 CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type_active
     ON alarm USING btree (originator_id, type) WHERE cleared = false;
+
+CREATE INDEX IF NOT EXISTS idx_alarm_tenant_alarm_type_active
+    ON alarm USING btree (tenant_id, type) WHERE cleared = false;
 
 CREATE INDEX IF NOT EXISTS idx_alarm_tenant_alarm_type_created_time ON alarm(tenant_id, type, created_time DESC);
 

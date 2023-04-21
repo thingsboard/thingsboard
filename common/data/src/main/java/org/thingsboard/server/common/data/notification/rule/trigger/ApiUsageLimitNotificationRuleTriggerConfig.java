@@ -15,13 +15,19 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 
 import java.util.Set;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class ApiUsageLimitNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     private Set<ApiFeature> apiFeatures;

@@ -58,6 +58,10 @@
 
     .color-input {
       flex: 1;
+      width: min-content;
+      &> * {
+        color: initial;
+      }
     }
 
     .type-btn {
