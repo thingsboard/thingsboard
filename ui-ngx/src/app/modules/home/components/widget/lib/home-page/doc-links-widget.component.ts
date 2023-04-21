@@ -84,7 +84,13 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
       ]
     }],
     [Authority.CUSTOMER_USER, {
-      links: []
+      links: [
+        {
+          icon: 'rocket',
+          name: 'Getting started',
+          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
+        }
+      ]
     }]
   ]
 );

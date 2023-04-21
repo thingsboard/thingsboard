@@ -28,6 +28,7 @@ import { map } from 'rxjs/operators';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import sysAdminHomePageDashboardJson from '!raw-loader!./sys_admin_home_page.raw';
 import tenantAdminHomePageDashboardJson from '!raw-loader!./tenant_admin_home_page.raw';
+import customerUserHomePageDashboardJson from '!raw-loader!./customer_user_home_page.raw';
 
 @Injectable()
 export class HomeDashboardResolver implements Resolve<HomeDashboard> {
@@ -49,6 +50,7 @@ export class HomeDashboardResolver implements Resolve<HomeDashboard> {
               dashboard = JSON.parse(tenantAdminHomePageDashboardJson);
               break;
             case Authority.CUSTOMER_USER:
+              dashboard = JSON.parse(customerUserHomePageDashboardJson);
               break;
           }
           if (dashboard) {
