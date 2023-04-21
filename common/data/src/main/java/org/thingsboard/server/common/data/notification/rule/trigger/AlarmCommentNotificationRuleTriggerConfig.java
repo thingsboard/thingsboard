@@ -15,13 +15,19 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
 import java.util.Set;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class AlarmCommentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     private Set<String> alarmTypes;

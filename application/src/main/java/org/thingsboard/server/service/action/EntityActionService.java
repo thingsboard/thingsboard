@@ -41,7 +41,9 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 
 import java.util.List;
 import java.util.Map;
@@ -53,6 +55,7 @@ import java.util.stream.Collectors;
 public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
+    private final NotificationRuleProcessor notificationRuleProcessor;
 
     private static final ObjectMapper json = new ObjectMapper();
 
@@ -187,6 +190,12 @@ public class EntityActionService {
                     AlarmComment comment = extractParameter(AlarmComment.class, 0, additionalInfo);
                     metaData.putValue("comment", json.writeValueAsString(comment));
                 }
+                if (actionType == ActionType.ADDED && !tenantId.isSysTenantId()) {
+                    notificationRuleProcessor.process(EntitiesLimitTrigger.builder()
+                            .tenantId(tenantId)
+                            .entityType(entityId.getEntityType())
+                            .build());
+                }
                 ObjectNode entityNode;
                 if (entity != null) {
                     entityNode = json.valueToTree(entity);
@@ -247,7 +256,7 @@ public class EntityActionService {
     }
 
     public <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
-                                                                           ActionType actionType, Exception e, Object... additionalInfo) {
+                                                                        ActionType actionType, Exception e, Object... additionalInfo) {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
         }
