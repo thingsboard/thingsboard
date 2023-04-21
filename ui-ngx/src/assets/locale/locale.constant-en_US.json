@@ -5213,9 +5213,9 @@
                     "how-to-configure-oauth2": "How to configure OAuth 2"
                 },
                 "step6": {
-                    "title": "Configure feature: Notifications",
-                    "content": "<p>Some text</p><p>Follow the documentation on how to do it:</p>",
-                    "how-to-configure-notifications": "How to configure Notifications"
+                    "title": "Configure feature: Slack",
+                    "content": "<p>Users will be able to receive notifications in Slack of events occurring in the Thingsboard system according to the notification rules you set.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-configure-notifications": "How to configure Slack"
                 }
             }
         }

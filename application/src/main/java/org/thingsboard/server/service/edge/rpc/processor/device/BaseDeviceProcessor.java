@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.processor.device;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,8 +107,8 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
     public ListenableFuture<Void> processDeviceCredentialsMsg(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
         log.debug("[{}] Executing processDeviceCredentialsMsg, deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentialsUpdateMsg);
         DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsUpdateMsg.getDeviceIdMSB(), deviceCredentialsUpdateMsg.getDeviceIdLSB()));
-        ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(tenantId, deviceId);
-        return Futures.transform(deviceFuture, device -> {
+        return dbCallbackExecutorService.submit(() -> {
+            Device device = deviceService.findDeviceById(tenantId, deviceId);
             if (device != null) {
                 log.debug("Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
                         device.getName(), deviceCredentialsUpdateMsg.getCredentialsId(), deviceCredentialsUpdateMsg.getCredentialsValue());
@@ -129,6 +128,6 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 log.warn("Can't find device by id [{}], deviceCredentialsUpdateMsg [{}]", deviceId, deviceCredentialsUpdateMsg);
             }
             return null;
-        }, dbCallbackExecutorService);
+        });
     }
 }
