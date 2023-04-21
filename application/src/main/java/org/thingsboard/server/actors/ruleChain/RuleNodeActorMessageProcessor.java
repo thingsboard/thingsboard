@@ -89,7 +89,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
             }
         } else {
             if (tbNode != null) {
-                tbNode.destroy();
+                stop(null);
                 tbNode = null;
             }
         }
@@ -107,7 +107,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     public void onPartitionChangeMsg(PartitionChangeMsg msg) throws Exception {
         if (tbNode != null) {
             if (!isMyNode()) {
-                tbNode.destroy();
+                stop(null);
                 tbNode = null;
             } else {
                 tbNode.onPartitionChangeMsg(defaultCtx, msg);
@@ -185,7 +185,6 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private boolean isMyNode() {
         return systemContext.getDiscoveryService().isMonolith()
                 || !ruleNode.isSingletonMode()
-//                || !ruleNode.getName().equals("singleton")
                 || defaultCtx.isLocalEntity(ruleNode.getId());
     }
 
