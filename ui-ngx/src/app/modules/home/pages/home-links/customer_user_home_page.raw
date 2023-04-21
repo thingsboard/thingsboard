@@ -61,7 +61,7 @@
           "settings": {
             "columns": 2
           },
-          "title": "New Quick links",
+          "title": "Quick links",
           "dropShadow": false,
           "enableFullscreen": false,
           "widgetStyle": {},
@@ -407,14 +407,18 @@
                 "sizeY": 16,
                 "row": 42,
                 "col": 78,
-                "mobileHide": true
+                "mobileHide": false,
+                "mobileOrder": 4,
+                "mobileHeight": 7
               },
               "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e": {
                 "sizeX": 42,
                 "sizeY": 16,
                 "row": 26,
                 "col": 78,
-                "mobileHide": true
+                "mobileHide": false,
+                "mobileOrder": 3,
+                "mobileHeight": 7
               },
               "6d6e2b1d-6ce7-4678-3745-c6b0897b2674": {
                 "sizeX": 78,
