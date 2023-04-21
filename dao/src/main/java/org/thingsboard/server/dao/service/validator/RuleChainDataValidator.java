@@ -25,19 +25,18 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentSingletonSupport;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.util.ReflectionUtils;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.HashMap;
@@ -62,7 +61,7 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
 
     @Override
     protected void validateCreate(TenantId tenantId, RuleChain data) {
-         validateNumberOfEntitiesPerTenant(tenantId, EntityType.RULE_CHAIN);
+        validateNumberOfEntitiesPerTenant(tenantId, EntityType.RULE_CHAIN);
     }
 
     @Override
@@ -114,6 +113,22 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
             return;
         }
         ConstraintValidator.validateFields(nodeConfig, errorPrefix);
+
+        ComponentSingletonSupport nodeConfigType = null;
+        try {
+            nodeConfigType = ReflectionUtils.getAnnotationProperty(ruleNode.getType(),
+                    "org.thingsboard.rule.engine.api.RuleNode", "singleton");
+        } catch (Exception e) {
+            log.warn("Failed to validate singleton mode: {}", ExceptionUtils.getRootCauseMessage(e));
+            return;
+        }
+        if (ComponentSingletonSupport.NOT_SUPPORTED.equals(nodeConfigType) && ruleNode.isSingletonMode()) {
+            throw new DataValidationException(String.format("Singleton mode not supported for [%s].", ruleNode.getType()));
+        }
+
+        if (ComponentSingletonSupport.ONLY_SINGLETON.equals(nodeConfigType) && !ruleNode.isSingletonMode()) {
+            throw new DataValidationException(String.format("Supported only singleton mode for [%s].", ruleNode.getType()));
+        }
     }
 
     private static void validateCircles(List<NodeConnectionInfo> connectionInfos) {

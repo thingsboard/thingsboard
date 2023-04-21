@@ -183,8 +183,8 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     private boolean isMyNode() {
-        return systemContext.getDiscoveryService().isMonolith()
-                || !ruleNode.isSingletonMode()
+        return !ruleNode.isSingletonMode()
+                || systemContext.getDiscoveryService().isMonolith()
                 || defaultCtx.isLocalEntity(ruleNode.getId());
     }
 
