@@ -96,6 +96,7 @@ public class TenantActor extends RuleChainManagerActor {
                             log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
                         }
                     } catch (Exception e) {
+                        log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
                         cantFindTenant = true;
                     }
                 }

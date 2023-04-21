@@ -17,9 +17,7 @@
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { RaphaelElement, RaphaelPaper, RaphaelSet } from 'raphael';
-import * as tinycolor_ from 'tinycolor2';
-
-const tinycolor = tinycolor_;
+import tinycolor from 'tinycolor2';
 
 interface CircleElement extends RaphaelElement {
   theGlow?: RaphaelSet;

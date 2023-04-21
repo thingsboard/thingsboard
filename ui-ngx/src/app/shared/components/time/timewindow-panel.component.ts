@@ -157,9 +157,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
         disabled: hideTimezone
       }]
     });
-    this.updateValidators();
-    this.timewindowForm.get('aggregation.type').valueChanges.subscribe(() => {
-      this.updateValidators();
+    this.updateValidators(this.timewindowForm.get('aggregation.type').value);
+    this.timewindowForm.get('aggregation.type').valueChanges.subscribe((aggregationType: AggregationType) => {
+      this.updateValidators(aggregationType);
     });
   }
 
@@ -172,8 +172,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     return limit;
   }
 
-  private updateValidators() {
-    const aggType = this.timewindowForm.get('aggregation.type').value;
+  private updateValidators(aggType: AggregationType) {
     if (aggType !== AggregationType.NONE) {
       this.timewindowForm.get('aggregation.limit').clearValidators();
     } else {

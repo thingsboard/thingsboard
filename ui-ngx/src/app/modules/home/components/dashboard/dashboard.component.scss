@@ -35,11 +35,19 @@
     left: 0;
     background: none;
     outline: none;
+    overflow-y: auto;
 
     gridster-item {
       transition: none;
       overflow: visible;
       background: none;
+    }
+
+    &.autofill-height {
+      overflow-y: hidden;
+      gridster.mobile {
+        overflow-y: hidden;
+      }
     }
   }
 

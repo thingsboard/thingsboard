@@ -151,12 +151,12 @@ public class RuleChainEditMenuTest extends AbstractDriverBaseTest {
         ruleChainsPage.editPencilBtn().click();
         ruleChainsPage.debugCheckboxEdit().click();
         ruleChainsPage.doneBtnEditView().click();
-        boolean debugMode = Boolean.parseBoolean(ruleChainsPage.debugCheckboxView().getAttribute("aria-checked"));
+        boolean debugMode = ruleChainsPage.debugCheckboxView().getAttribute("class").contains("selected");
         ruleChainsPage.editPencilBtn().click();
         ruleChainsPage.debugCheckboxEdit().click();
         ruleChainsPage.doneBtnEditView().click();
 
-        Assert.assertFalse(Boolean.parseBoolean(ruleChainsPage.debugCheckboxView().getAttribute("aria-checked")));
-        Assert.assertTrue(debugMode);
+        Assert.assertFalse(ruleChainsPage.debugCheckboxView().getAttribute("class").contains("selected"), "Debug mode disable");
+        Assert.assertTrue(debugMode, "Debug mode enable");
     }
 }

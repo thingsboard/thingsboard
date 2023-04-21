@@ -28,8 +28,8 @@
         }
         .mat-mdc-cell {
           .assignee-cell {
+            white-space: nowrap;
             .assigned-container {
-              white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
               .user-avatar {
@@ -48,7 +48,6 @@
               }
             }
             .unassigned-container {
-              white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
               .material-icons.unassigned-icon {
@@ -58,6 +57,7 @@
                 margin-right: 8px;
                 color: rgba(0, 0, 0, 0.38);
                 overflow: visible;
+                vertical-align: middle;
               }
             }
           }

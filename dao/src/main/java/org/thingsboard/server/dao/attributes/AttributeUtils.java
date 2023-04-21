@@ -19,6 +19,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.util.KvUtils;
+
+import java.util.List;
 
 public class AttributeUtils {
 
@@ -27,10 +30,13 @@ public class AttributeUtils {
         Validator.validateString(scope, "Incorrect scope " + scope);
     }
 
+    public static void validate(List<AttributeKvEntry> kvEntries) {
+        kvEntries.forEach(AttributeUtils::validate);
+    }
+
     public static void validate(AttributeKvEntry kvEntry) {
-        if (kvEntry == null) {
-            throw new IncorrectParameterException("Key value entry can't be null");
-        } else if (kvEntry.getDataType() == null) {
+        KvUtils.validate(kvEntry);
+        if (kvEntry.getDataType() == null) {
             throw new IncorrectParameterException("Incorrect kvEntry. Data type can't be null");
         } else {
             Validator.validateString(kvEntry.getKey(), "Incorrect kvEntry. Key can't be empty");

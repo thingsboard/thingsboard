@@ -271,7 +271,7 @@
               {{ 'widget-config.alarm-source' | translate }}
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div [formGroup]="alarmSourceSettings" style="padding: 0 5px;">
+          <div class="tb-datasource-params" [formGroup]="alarmSourceSettings">
             <section class="tb-datasource-section">
               <mat-form-field class="tb-datasource-type">
                 <mat-select formControlName="type">

@@ -136,25 +136,25 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
         break;
       case AliasFilterType.assetType:
         this.filterFormGroup = this.fb.group({
-          assetType: [filter ? filter.assetType : null, [Validators.required]],
+          assetTypes: [filter ? filter.assetTypes : null, [Validators.required]],
           assetNameFilter: [filter ? filter.assetNameFilter : '', []],
         });
         break;
       case AliasFilterType.deviceType:
         this.filterFormGroup = this.fb.group({
-          deviceType: [filter ? filter.deviceType : null, [Validators.required]],
+          deviceTypes: [filter ? filter.deviceTypes : null, [Validators.required]],
           deviceNameFilter: [filter ? filter.deviceNameFilter : '', []],
         });
         break;
       case AliasFilterType.edgeType:
         this.filterFormGroup = this.fb.group({
-          edgeType: [filter ? filter.edgeType : null, [Validators.required]],
+          edgeTypes: [filter ? filter.edgeTypes : null, [Validators.required]],
           edgeNameFilter: [filter ? filter.edgeNameFilter : '', []],
         });
         break;
       case AliasFilterType.entityViewType:
         this.filterFormGroup = this.fb.group({
-          entityViewType: [filter ? filter.entityViewType : null, [Validators.required]],
+          entityViewTypes: [filter ? filter.entityViewTypes : null, [Validators.required]],
           entityViewNameFilter: [filter ? filter.entityViewNameFilter : '', []],
         });
         break;

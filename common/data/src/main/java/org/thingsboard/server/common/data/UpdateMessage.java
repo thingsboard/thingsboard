@@ -38,5 +38,4 @@ public class UpdateMessage implements Serializable {
     @ApiModelProperty(position = 6, value = "Latest ThingsBoard version release notes URL.")
     private final String latestVersionReleaseNotesUrl;
 
-
 }

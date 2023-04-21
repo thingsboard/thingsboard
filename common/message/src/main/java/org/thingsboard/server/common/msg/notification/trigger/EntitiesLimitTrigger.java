@@ -28,8 +28,9 @@ public class EntitiesLimitTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
     private final EntityType entityType;
-    private final long currentCount;
-    private final long limit;
+
+    private long limit;
+    private long currentCount;
 
     @Override
     public NotificationRuleTriggerType getType() {

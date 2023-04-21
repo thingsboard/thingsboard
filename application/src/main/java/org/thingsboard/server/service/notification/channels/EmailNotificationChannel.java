@@ -48,12 +48,11 @@ public class EmailNotificationChannel implements NotificationChannel<User, Email
     }
 
     @Override
-    public boolean check(TenantId tenantId) {
+    public void check(TenantId tenantId) throws Exception {
         try {
             mailService.testConnection(tenantId);
-            return true;
         } catch (Exception e) {
-            return false;
+            throw new RuntimeException("Mail server is not available");
         }
     }
 
