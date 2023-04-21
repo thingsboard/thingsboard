@@ -76,7 +76,8 @@ public abstract class AbstractComponentDescriptorInsertRepository implements Com
                 .setParameter("name", entity.getName())
                 .setParameter("scope", entity.getScope().name())
                 .setParameter("search_text", entity.getSearchText())
-                .setParameter("type", entity.getType().name());
+                .setParameter("type", entity.getType().name())
+                .setParameter("singleton", entity.getSingleton().name());
     }
 
     private ComponentDescriptorEntity processSaveOrUpdate(ComponentDescriptorEntity entity, String query) {
