@@ -252,7 +252,7 @@ export class AliasController implements IAliasController {
         newDatasource.keyFilters = this.getKeyFilters(newDatasource.filterId);
       }
       if (newDatasource.type === DatasourceType.alarmCount) {
-        newDatasource.alarmFilter = this.entityService.resolveAlarmFilter(newDatasource.alarmFilterConfig);
+        newDatasource.alarmFilter = this.entityService.resolveAlarmFilter(newDatasource.alarmFilterConfig, false);
       }
       if (newDatasource.entityAliasId) {
         return this.getAliasInfo(newDatasource.entityAliasId).pipe(

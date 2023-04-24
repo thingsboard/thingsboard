@@ -1011,14 +1011,14 @@ export class EntityService {
     );
   }
 
-  public resolveAlarmFilter(alarmFilterConfig?: AlarmFilterConfig): AlarmFilter {
+  public resolveAlarmFilter(alarmFilterConfig?: AlarmFilterConfig, searchPropagatedByDefault = true): AlarmFilter {
     const alarmFilter: AlarmFilter = {};
     if (alarmFilterConfig) {
       alarmFilter.typeList = alarmFilterConfig.typeList;
       alarmFilter.severityList = alarmFilterConfig.severityList;
       alarmFilter.statusList = alarmFilterConfig.statusList;
       alarmFilter.searchPropagatedAlarms = isDefined(alarmFilterConfig.searchPropagatedAlarms) ?
-        alarmFilterConfig.searchPropagatedAlarms : true;
+        alarmFilterConfig.searchPropagatedAlarms : searchPropagatedByDefault;
       if (alarmFilterConfig.assignedToCurrentUser) {
         const authUser = getCurrentAuthUser(this.store);
         alarmFilter.assigneeId = new UserId(authUser.userId);
