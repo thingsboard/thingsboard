@@ -89,7 +89,7 @@ import { DebugEventType, EventType } from '@shared/models/event.models';
 import { MatMiniFabButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
-import { ComponentSingletonSupport } from '@shared/models/component-descriptor.models';
+import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
 import Timeout = NodeJS.Timeout;
 
 @Component({
@@ -470,7 +470,7 @@ export class RuleChainPageComponent extends PageComponent
         component: ruleNodeComponent,
         name: '',
         nodeClass: desc.nodeClass,
-        singletonMode: ruleNodeComponent.singleton !== ComponentSingletonSupport.NOT_SUPPORTED,
+        singletonMode: ruleNodeComponent.clusteringMode !== ComponentClusteringMode.ENABLED,
         icon,
         iconUrl,
         x: 30,

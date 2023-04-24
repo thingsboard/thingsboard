@@ -60,7 +60,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     @Override
     public void start(TbActorCtx context) throws Exception {
-        if (isMyNode()) {
+        if (isMySingletonNode()) {
             tbNode = initComponent(ruleNode);
             if (tbNode != null) {
                 state = ComponentLifecycleState.ACTIVE;
@@ -70,7 +70,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     @Override
     public void onUpdate(TbActorCtx context) throws Exception {
-        if (isMyNode()) {
+        if (isMySingletonNode()) {
             RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
             this.info = new RuleNodeInfo(entityId, ruleChainName, newRuleNode != null ? newRuleNode.getName() : "Unknown");
             boolean restartRequired = state != ComponentLifecycleState.ACTIVE ||
@@ -87,11 +87,9 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                     throw new TbRuleNodeUpdateException("Failed to update rule node", e);
                 }
             }
-        } else {
-            if (tbNode != null) {
-                stop(null);
-                tbNode = null;
-            }
+        } else if (tbNode != null) {
+            stop(null);
+            tbNode = null;
         }
     }
 
@@ -106,13 +104,13 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     @Override
     public void onPartitionChangeMsg(PartitionChangeMsg msg) throws Exception {
         if (tbNode != null) {
-            if (!isMyNode()) {
+            if (!isMySingletonNode()) {
                 stop(null);
                 tbNode = null;
             } else {
                 tbNode.onPartitionChangeMsg(defaultCtx, msg);
             }
-        } else if (isMyNode()) {
+        } else if (isMySingletonNode()) {
             start(null);
         }
     }
@@ -138,7 +136,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) throws Exception {
-        if (!isMyNode()) {
+        if (!isMySingletonNode()) {
             putToQueue(msg.getMsg());
         } else {
             msg.getMsg().getCallback().onProcessingStart(info);
@@ -182,7 +180,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         return new RuleNodeException("Rule Node is not active! Failed to initialize.", ruleChainName, ruleNode);
     }
 
-    private boolean isMyNode() {
+    private boolean isMySingletonNode() {
         return !ruleNode.isSingletonMode()
                 || systemContext.getDiscoveryService().isMonolith()
                 || defaultCtx.isLocalEntity(ruleNode.getId());

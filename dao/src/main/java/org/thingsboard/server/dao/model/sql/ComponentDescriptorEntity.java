@@ -23,7 +23,7 @@ import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
-import org.thingsboard.server.common.data.plugin.ComponentSingletonSupport;
+import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -52,8 +52,8 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
     private ComponentScope scope;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_SINGLETON_PROPERTY)
-    private ComponentSingletonSupport singleton;
+    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CLUSTERING_MODE_PROPERTY)
+    private ComponentClusteringMode clusteringMode;
 
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_NAME_PROPERTY)
     private String name;
@@ -82,7 +82,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
         this.actions = component.getActions();
         this.type = component.getType();
         this.scope = component.getScope();
-        this.singleton = component.getSingleton();
+        this.clusteringMode = component.getClusteringMode();
         this.name = component.getName();
         this.clazz = component.getClazz();
         this.configurationDescriptor = component.getConfigurationDescriptor();
@@ -95,7 +95,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
         data.setCreatedTime(createdTime);
         data.setType(type);
         data.setScope(scope);
-        data.setSingleton(singleton);
+        data.setClusteringMode(clusteringMode);
         data.setName(this.getName());
         data.setClazz(this.getClazz());
         data.setActions(this.getActions());

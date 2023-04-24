@@ -29,7 +29,7 @@ import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.rule.engine.mqtt.TbMqttNode;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
-import org.thingsboard.server.common.data.plugin.ComponentSingletonSupport;
+import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 
 import javax.net.ssl.SSLException;
@@ -39,7 +39,7 @@ import javax.net.ssl.SSLException;
         type = ComponentType.EXTERNAL,
         name = "azure iot hub",
         configClazz = TbAzureIotHubNodeConfiguration.class,
-        singleton = ComponentSingletonSupport.ONLY_SINGLETON,
+        clusteringMode = ComponentClusteringMode.SINGLETON,
         nodeDescription = "Publish messages to the Azure IoT Hub",
         nodeDetails = "Will publish message payload to the Azure IoT Hub with QoS <b>AT_LEAST_ONCE</b>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},

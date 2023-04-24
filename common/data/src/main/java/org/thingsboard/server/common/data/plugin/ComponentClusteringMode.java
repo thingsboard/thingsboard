@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.common.data.plugin;
 
-public enum ComponentSingletonSupport {
-    SUPPORTED,
-    NOT_SUPPORTED,
-    ONLY_SINGLETON
+public enum ComponentClusteringMode {
+    USER_PREFERENCE,
+    ENABLED,
+    SINGLETON
 }

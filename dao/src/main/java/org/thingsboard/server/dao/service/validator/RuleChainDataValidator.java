@@ -25,7 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentSingletonSupport;
+import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -114,19 +114,19 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
         }
         ConstraintValidator.validateFields(nodeConfig, errorPrefix);
 
-        ComponentSingletonSupport nodeConfigType = null;
+        ComponentClusteringMode nodeConfigType = null;
         try {
             nodeConfigType = ReflectionUtils.getAnnotationProperty(ruleNode.getType(),
-                    "org.thingsboard.rule.engine.api.RuleNode", "singleton");
+                    "org.thingsboard.rule.engine.api.RuleNode", "clusteringMode");
         } catch (Exception e) {
             log.warn("Failed to validate singleton mode: {}", ExceptionUtils.getRootCauseMessage(e));
             return;
         }
-        if (ComponentSingletonSupport.NOT_SUPPORTED.equals(nodeConfigType) && ruleNode.isSingletonMode()) {
+        if (ComponentClusteringMode.ENABLED.equals(nodeConfigType) && ruleNode.isSingletonMode()) {
             throw new DataValidationException(String.format("Singleton mode not supported for [%s].", ruleNode.getType()));
         }
 
-        if (ComponentSingletonSupport.ONLY_SINGLETON.equals(nodeConfigType) && !ruleNode.isSingletonMode()) {
+        if (ComponentClusteringMode.SINGLETON.equals(nodeConfigType) && !ruleNode.isSingletonMode()) {
             throw new DataValidationException(String.format("Supported only singleton mode for [%s].", ruleNode.getType()));
         }
     }

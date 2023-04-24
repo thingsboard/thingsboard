@@ -36,17 +36,17 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
     @Getter @Setter private ComponentType type;
     @ApiModelProperty(position = 4, value = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "TENANT", example = "TENANT")
     @Getter @Setter private ComponentScope scope;
-    @ApiModelProperty(position = 4, value = "", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "SUPPORTED, NOT_SUPPORTEd, ONLY_SINGLETON", example = "SUPPORTED")
-    @Getter @Setter private ComponentSingletonSupport singleton;
+    @ApiModelProperty(position = 5, value = "Clustering mode of the RuleNode. This mode represents the ability to start Rule Node in multiple microservices.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "USER_PREFERENCE, ENABLED, SINGLETON", example = "ENABLED")
+    @Getter @Setter private ComponentClusteringMode clusteringMode;
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 5, value = "Name of the Rule Node. Taken from the @RuleNode annotation.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "Custom Rule Node")
+    @ApiModelProperty(position = 6, value = "Name of the Rule Node. Taken from the @RuleNode annotation.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "Custom Rule Node")
     @Getter @Setter private String name;
-    @ApiModelProperty(position = 6, value = "Full name of the Java class that implements the Rule Engine Node interface.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "com.mycompany.CustomRuleNode")
+    @ApiModelProperty(position = 7, value = "Full name of the Java class that implements the Rule Engine Node interface.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "com.mycompany.CustomRuleNode")
     @Getter @Setter private String clazz;
-    @ApiModelProperty(position = 7, value = "Complex JSON object that represents the Rule Node configuration.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 8, value = "Complex JSON object that represents the Rule Node configuration.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Getter @Setter private transient JsonNode configurationDescriptor;
     @Length(fieldName = "actions")
-    @ApiModelProperty(position = 8, value = "Rule Node Actions. Deprecated. Always null.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 9, value = "Rule Node Actions. Deprecated. Always null.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Getter @Setter private String actions;
 
     public ComponentDescriptor() {

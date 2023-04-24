@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     scope varchar(255),
     search_text varchar(255),
     type varchar(255),
-    singleton varchar(255)
+    clustering_mode varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS customer (

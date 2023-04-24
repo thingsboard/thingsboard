@@ -19,7 +19,7 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { RuleNodeId } from '@shared/models/id/rule-node-id';
 import { RuleNode, RuleNodeComponentDescriptor, RuleNodeType } from '@shared/models/rule-node.models';
-import { ComponentSingletonSupport, ComponentType } from '@shared/models/component-descriptor.models';
+import { ComponentClusteringMode, ComponentType } from '@shared/models/component-descriptor.models';
 
 export interface RuleChain extends BaseData<RuleChainId>, ExportableEntity<RuleChainId> {
   tenantId: TenantId;
@@ -64,7 +64,7 @@ export const ruleNodeTypeComponentTypes: ComponentType[] =
 export const unknownNodeComponent: RuleNodeComponentDescriptor = {
   type: RuleNodeType.UNKNOWN,
   name: 'unknown',
-  singleton: ComponentSingletonSupport.NOT_SUPPORTED,
+  clusteringMode: ComponentClusteringMode.ENABLED,
   clazz: 'tb.internal.Unknown',
   configurationDescriptor: {
     nodeDefinition: {
@@ -81,7 +81,7 @@ export const unknownNodeComponent: RuleNodeComponentDescriptor = {
 
 export const inputNodeComponent: RuleNodeComponentDescriptor = {
   type: RuleNodeType.INPUT,
-  singleton: ComponentSingletonSupport.NOT_SUPPORTED,
+  clusteringMode: ComponentClusteringMode.ENABLED,
   name: 'Input',
   clazz: 'tb.internal.Input'
 };
