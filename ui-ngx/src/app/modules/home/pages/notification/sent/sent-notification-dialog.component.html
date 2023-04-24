@@ -62,13 +62,33 @@
               <label [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
                      class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
               <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
-              <section formGroupName="deliveryMethodsTemplates" fxLayout="row wrap" style="margin-bottom: 12px;">
-                <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
-                         [formGroupName]="deliveryMethods" fxFlex="50%" [ngClass]={even:isEven}>
-                  <mat-slide-toggle class="delivery-method" formControlName="enabled">
-                    {{ notificationDeliveryMethodTranslateMap.get(deliveryMethods) | translate }}
-                  </mat-slide-toggle>
-                </section>
+              <section formGroupName="deliveryMethodsTemplates" class="delivery-methods-container">
+                <ng-container *ngFor="let deliveryMethods of notificationDeliveryMethods">
+                  <a *ngIf="isInteractDeliveryMethod(deliveryMethods); else deliveryMethod"
+                     class="delivery-method-container interact"
+                     [routerLink]="configurationPage(deliveryMethods)"
+                     [formGroupName]="deliveryMethods"
+                     [matTooltip]="getDeliveryMethodsTooltip(deliveryMethods)"
+                     matTooltipPosition="above">
+                    <mat-slide-toggle class="delivery-method" formControlName="enabled">
+                      {{ notificationDeliveryMethodTranslateMap.get(deliveryMethods) | translate }}
+                    </mat-slide-toggle>
+                    <mat-icon *ngIf="isInteractDeliveryMethod(deliveryMethods)">
+                      chevron_right
+                    </mat-icon>
+                  </a>
+                  <ng-template #deliveryMethod>
+                    <section class="delivery-method-container"
+                             [formGroupName]="deliveryMethods"
+                             [matTooltip]="getDeliveryMethodsTooltip(deliveryMethods)"
+                             [matTooltipDisabled]="getDeliveryMethodsTemplatesControl(deliveryMethods).enabled"
+                             matTooltipPosition="above">
+                      <mat-slide-toggle class="delivery-method" formControlName="enabled">
+                        {{ notificationDeliveryMethodTranslateMap.get(deliveryMethods) | translate }}
+                      </mat-slide-toggle>
+                    </section>
+                  </ng-template>
+                </ng-container>
               </section>
             </section>
           </section>

@@ -2820,6 +2820,8 @@
             "web": "Web",
             "web-preview": "Web notification preview"
         },
+        "delivery-method-not-configure-click": "Delivery method is not configured. Click to setup.",
+        "delivery-method-not-configure-contact": "Delivery method is not configured. Contact your system administrator.",
         "delivery-methods": "Delivery methods",
         "description": "Description",
         "device-activity-trigger-settings": "Device active trigger settings",
@@ -2906,7 +2908,7 @@
         },
         "recipients": "Recipients",
         "recipients-count": "{ count, plural, =1 {1 recipient} other {# recipients} }",
-        "recipients-required": "Recipients is required",
+        "recipients-required": "Recipients are required",
         "request-search": "Request search",
         "request-status": {
             "processing": "Processing",
