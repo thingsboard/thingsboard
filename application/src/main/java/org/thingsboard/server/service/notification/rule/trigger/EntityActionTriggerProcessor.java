@@ -19,11 +19,13 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 
 import java.util.Optional;
@@ -63,15 +65,17 @@ public class EntityActionTriggerProcessor implements RuleEngineMsgNotificationRu
         ActionType actionType = msgType.equals(DataConstants.ENTITY_CREATED) ? ActionType.ADDED :
                                 msgType.equals(DataConstants.ENTITY_UPDATED) ? ActionType.UPDATED :
                                 msgType.equals(DataConstants.ENTITY_DELETED) ? ActionType.DELETED : null;
+        TbMsgMetaData metaData = msg.getMetaData();
         return EntityActionNotificationInfo.builder()
                 .entityId(msg.getOriginator())
-                .entityName(msg.getMetaData().getValue("entityName"))
+                .entityName(metaData.getValue("entityName"))
                 .actionType(actionType)
-                .userId(UUID.fromString(msg.getMetaData().getValue("userId")))
-                .userEmail(trigger.getMsg().getMetaData().getValue("userEmail"))
-                .userFirstName(trigger.getMsg().getMetaData().getValue("userFirstName"))
-                .userLastName(trigger.getMsg().getMetaData().getValue("userLastName"))
-                .entityCustomerId(msg.getCustomerId())
+                .userId(UUID.fromString(metaData.getValue("userId")))
+                .userEmail(metaData.getValue("userEmail"))
+                .userFirstName(metaData.getValue("userFirstName"))
+                .userLastName(metaData.getValue("userLastName"))
+                .entityCustomerId(Optional.ofNullable(metaData.getValue("customerId"))
+                        .map(UUID::fromString).map(CustomerId::new).orElse(null))
                 .build();
     }
 
