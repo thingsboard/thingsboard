@@ -59,9 +59,21 @@
           <ng-container *ngTemplateOutlet="recipientsList"></ng-container>
           <section formGroupName="template">
             <section formGroupName="configuration">
-              <label [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
-                     class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
-              <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
+              <div class="delivery-title">
+                <div>
+                  <label [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
+                         class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
+                  <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
+                </div>
+                <button
+                  matTooltip="Refresh allow delivery method"
+                  matTooltipPosition="above"
+                  (click)="refreshAllowDeliveryMethod()"
+                  *ngIf="showRefresh"
+                  mat-icon-button>
+                  <mat-icon>refresh</mat-icon>
+                </button>
+              </div>
               <section formGroupName="deliveryMethodsTemplates" class="delivery-methods-container">
                 <ng-container *ngFor="let deliveryMethods of notificationDeliveryMethods">
                   <a *ngIf="isInteractDeliveryMethod(deliveryMethods); else deliveryMethod"

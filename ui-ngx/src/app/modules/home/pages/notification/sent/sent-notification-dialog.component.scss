@@ -60,6 +60,13 @@
     }
   }
 
+  .delivery-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .delivery-methods-container {
     margin-bottom: 20px;
     display: flex;
