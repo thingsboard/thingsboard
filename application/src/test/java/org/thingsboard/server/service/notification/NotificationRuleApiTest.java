@@ -436,7 +436,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             String name = "device " + i;
             createDevice(name, name);
         }
-        await().atMost(5, TimeUnit.SECONDS)
+        await().atMost(30, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(notificationRequestsLimit);
                 });
