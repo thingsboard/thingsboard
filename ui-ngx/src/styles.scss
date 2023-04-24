@@ -846,6 +846,12 @@ mat-label {
   }
 
   .mat-mdc-icon-button {
+    &.tb-mat-20 {
+      @include tb-mat-icon-button-size(20);
+      .mat-icon {
+        @include tb-mat-icon-size(20);
+      }
+    }
     &.tb-mat-28 {
       @include tb-mat-icon-button-size(28);
     }
