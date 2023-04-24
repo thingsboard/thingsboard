@@ -1,4 +1,4 @@
-#### Entity count limit notification templatization
+#### Rule engine notification templatization
 
 <div class="divider"></div>
 <br/>
@@ -9,12 +9,11 @@ See the available types and parameters below:
 
 Available template parameters:
 
-* `entityType` - one of: 'Device', 'Asset', 'User', etc.;
-* `currentCount` - the current count of entities;
-* `limit` - the limit on number of entities;
-* `percents` - the percent from the notification rule configuration;
-* `tenantId` - id of the tenant;
-* `tenantName` - name of the tenant;
+* values from the incoming message metadata;
+* values from the incoming message data;
+* `originatorType` - type of the originator, e.g. 'Device';
+* `originatorId` - id of the originator
+* `msgType` - type of the message
 * `recipientTitle` - title of the recipient (first and last name if specified, email otherwise)
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
@@ -31,18 +30,27 @@ You may also modify the value of the parameter with one of the suffixes:
 
 ##### Examples
 
-Let's assume the tenant created 400 devices with the max allowed number is 500 and rule threshold 0.8 (80%).
+Let's assume the incoming message to Rule node has the following data:
+
+```json
+{
+  "building_1": {
+    "temperature": 24
+  }
+}
+```
+
 The following template:
 
 ```text
-${entityType:capitalize}s usage: ${currentCount}/${limit} (${percents}%)
+Building 1: temperature is ${building_1.temperature} 
 {:copy-code}
 ```
 
 will be transformed to:
 
 ```text
-Devices usage: 400/500 (80%)
+Building 1: temperature is 24
 ```
 
 <br>
