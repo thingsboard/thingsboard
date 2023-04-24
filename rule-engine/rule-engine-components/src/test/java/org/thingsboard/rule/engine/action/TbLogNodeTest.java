@@ -111,6 +111,19 @@ public class TbLogNodeTest {
     }
 
     @Test
+    void backwardCompatibility_whenScriptLangIsNull() throws TbNodeException {
+        TbLogNodeConfiguration config = new TbLogNodeConfiguration().defaultConfiguration();
+        TbLogNode node = spy(new TbLogNode());
+        TbNodeConfiguration tbNodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        TbContext ctx = mock(TbContext.class);
+        node.init(ctx, tbNodeConfiguration);
+
+        assertThat(node.isStandard(config)).as("Script is standard for language JS").isTrue();
+        verify(node, never()).createScriptEngine(any(), any());
+        verify(ctx, never()).createScriptEngine(any(), anyString());
+    }
+
+    @Test
     void givenScriptEngineEnum_whenNewAdded_thenFailed() {
         assertThat(ScriptLanguage.values().length).as("only two ScriptLanguage supported").isEqualTo(2);
     }
