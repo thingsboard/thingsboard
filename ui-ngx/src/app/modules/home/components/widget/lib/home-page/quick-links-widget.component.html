@@ -35,7 +35,7 @@
             <mat-icon *ngIf="!quickLink.isMdiIcon" color="primary">{{ quickLink.icon }}</mat-icon>
             <mat-icon *ngIf="quickLink.isMdiIcon" color="primary" [svgIcon]="quickLink.icon"></mat-icon>
           </div>
-          <div class="tb-link-text">{{ quickLink.name | translate }}</div>
+          <div class="tb-link-text">{{ (quickLink.fullName || quickLink.name) | translate }}</div>
         </div>
       </a>
     </mat-grid-tile>

@@ -1852,6 +1852,7 @@
         "dashboard": "Edge dashboard",
         "dashboards": "Edge Dashboards",
         "rulechain-templates": "Rule chain templates",
+        "edge-rulechain-templates": "Edge rule chain templates",
         "rulechains": "Rule chains",
         "search": "Search edges",
         "selected-edges": "{ count, plural, =1 {1 edge} other {# edges} } selected",
@@ -2849,6 +2850,7 @@
         "first-recipient": "First recipient",
         "inactive": "Inactive",
         "inbox": "Inbox",
+        "notification-inbox": "Notifications / Inbox",
         "input-field-support-templatization": "Input field support templatization.",
         "input-fields-support-templatization": "Input fields support templatization.",
         "link": "Link",
@@ -2913,6 +2915,7 @@
             "users-entity-owner-hint": "Users of the entity owner hint"
         },
         "recipients": "Recipients",
+        "notification-recipients": "Notifications / Recipients",
         "recipients-count": "{ count, plural, =1 {1 recipient} other {# recipients} }",
         "recipients-required": "Recipients is required",
         "request-search": "Request search",
@@ -2930,6 +2933,7 @@
         "rule-name-required": "Name is required",
         "rule-node-filter": "Rule node filter",
         "rules": "Rules",
+        "notification-rules": "Notifications / Rules",
         "scheduler-later": "Schedule for later",
         "search-notification": "Search notifications",
         "search-recipients": "Search recipients",
@@ -2943,6 +2947,7 @@
         "selected-template": "{ count, plural, =1 {1 template} other {# templates} } selected",
         "send-notification": "Send notification",
         "sent": "Sent",
+        "notification-sent": "Notifications / Sent",
         "set-entity-from-notification": "Set entity from notification to dashboard state",
         "slack-chanel-type": "Slack channel type",
         "slack-chanel-types": {
@@ -2972,6 +2977,7 @@
             "new-platform-version": "New platform version"
         },
         "templates": "Templates",
+        "notification-templates": "Notifications / Templates",
         "tenant-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all tenant profiles",
         "tenants-list-rule-hint": "If the field is empty, the trigger will be applied to all tenants",
         "threshold": "Threshold",
@@ -3084,6 +3090,7 @@
     },
     "security": {
         "security": "Security",
+        "general-settings": "General security settings",
         "2fa": {
             "2fa": "Two-factor authentication",
             "2fa-description": "Two-factor authentication protects your account from unauthorized access. All you have to do is enter a security code when you log in.",

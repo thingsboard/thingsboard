@@ -149,6 +149,7 @@ export class MenuService {
           {
             id: 'notification_inbox',
             name: 'notification.inbox',
+            fullName: 'notification.notification-inbox',
             type: 'link',
             path: '/notification/inbox',
             icon: 'inbox'
@@ -156,6 +157,7 @@ export class MenuService {
           {
             id: 'notification_sent',
             name: 'notification.sent',
+            fullName: 'notification.notification-sent',
             type: 'link',
             path: '/notification/sent',
             icon: 'outbox'
@@ -163,6 +165,7 @@ export class MenuService {
           {
             id: 'notification_recipients',
             name: 'notification.recipients',
+            fullName: 'notification.notification-recipients',
             type: 'link',
             path: '/notification/recipients',
             icon: 'contacts'
@@ -170,6 +173,7 @@ export class MenuService {
           {
             id: 'notification_templates',
             name: 'notification.templates',
+            fullName: 'notification.notification-templates',
             type: 'link',
             path: '/notification/templates',
             icon: 'mdi:message-draw',
@@ -178,6 +182,7 @@ export class MenuService {
           {
             id: 'notification_rules',
             name: 'notification.rules',
+            fullName: 'notification.notification-rules',
             type: 'link',
             path: '/notification/rules',
             icon: 'mdi:message-cog',
@@ -195,6 +200,7 @@ export class MenuService {
           {
             id: 'general',
             name: 'admin.general',
+            fullName: 'admin.general-settings',
             type: 'link',
             path: '/settings/general',
             icon: 'settings_applications'
@@ -209,6 +215,7 @@ export class MenuService {
           {
             id: 'notification_settings',
             name: 'admin.notifications',
+            fullName: 'admin.notifications-settings',
             type: 'link',
             path: '/settings/notifications',
             icon: 'mdi:message-badge',
@@ -233,6 +240,7 @@ export class MenuService {
           {
             id: 'security_settings_general',
             name: 'admin.general',
+            fullName: 'security.general-settings',
             type: 'link',
             path: '/security-settings/general',
             icon: 'settings_applications'
@@ -444,6 +452,7 @@ export class MenuService {
             {
               id: 'edges',
               name: 'edge.instances',
+              fullName: 'edge.edge-instances',
               type: 'link',
               path: '/edgeManagement/instances',
               icon: 'router'
@@ -451,6 +460,7 @@ export class MenuService {
             {
               id: 'rulechain_templates',
               name: 'edge.rulechain-templates',
+              fullName: 'edge.edge-rulechain-templates',
               type: 'link',
               path: '/edgeManagement/ruleChains',
               icon: 'settings_ethernet'
@@ -518,6 +528,7 @@ export class MenuService {
           {
             id: 'notification_inbox',
             name: 'notification.inbox',
+            fullName: 'notification.notification-inbox',
             type: 'link',
             path: '/notification/inbox',
             icon: 'inbox'
@@ -525,6 +536,7 @@ export class MenuService {
           {
             id: 'notification_sent',
             name: 'notification.sent',
+            fullName: 'notification.notification-sent',
             type: 'link',
             path: '/notification/sent',
             icon: 'outbox'
@@ -532,6 +544,7 @@ export class MenuService {
           {
             id: 'notification_recipients',
             name: 'notification.recipients',
+            fullName: 'notification.notification-recipients',
             type: 'link',
             path: '/notification/recipients',
             icon: 'contacts'
@@ -539,6 +552,7 @@ export class MenuService {
           {
             id: 'notification_templates',
             name: 'notification.templates',
+            fullName: 'notification.notification-templates',
             type: 'link',
             path: '/notification/templates',
             icon: 'mdi:message-draw',
@@ -547,6 +561,7 @@ export class MenuService {
           {
             id: 'notification_rules',
             name: 'notification.rules',
+            fullName: 'notification.notification-rules',
             type: 'link',
             path: '/notification/rules',
             icon: 'mdi:message-cog',
@@ -571,6 +586,7 @@ export class MenuService {
           {
             id: 'home_settings',
             name: 'admin.home',
+            fullName: 'admin.home-settings',
             type: 'link',
             path: '/settings/home',
             icon: 'settings_applications'
@@ -578,6 +594,7 @@ export class MenuService {
           {
             id: 'notification_settings',
             name: 'admin.notifications',
+            fullName: 'admin.notifications-settings',
             type: 'link',
             path: '/settings/notifications',
             icon: 'mdi:message-badge',
@@ -586,6 +603,7 @@ export class MenuService {
           {
             id: 'repository_settings',
             name: 'admin.repository',
+            fullName: 'admin.repository-settings',
             type: 'link',
             path: '/settings/repository',
             icon: 'manage_history'
@@ -593,6 +611,7 @@ export class MenuService {
           {
             id: 'auto_commit_settings',
             name: 'admin.auto-commit',
+            fullName: 'admin.auto-commit-settings',
             type: 'link',
             path: '/settings/auto-commit',
             icon: 'settings_backup_restore'
@@ -839,6 +858,7 @@ export class MenuService {
         {
           id: 'edges',
           name: 'edge.edge-instances',
+          fullName: 'edge.edge-instances',
           type: 'link',
           path: '/edgeManagement/instances',
           icon: 'router'
@@ -857,6 +877,7 @@ export class MenuService {
           {
             id: 'notification_inbox',
             name: 'notification.inbox',
+            fullName: 'notification.notification-inbox',
             type: 'link',
             path: '/notification/inbox',
             icon: 'inbox'
