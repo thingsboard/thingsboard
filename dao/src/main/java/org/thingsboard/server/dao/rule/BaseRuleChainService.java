@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
@@ -50,6 +51,7 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
+import org.thingsboard.server.common.data.util.ReflectionUtils;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -146,6 +148,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
         if (nodes != null) {
             for (RuleNode node : nodes) {
+                setSingletonMode(node);
                 if (node.getId() != null) {
                     ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
                 } else {
@@ -768,5 +771,31 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     checkRuleNodesAndDelete(tenantId, entity.getId());
                 }
             };
+
+    private void setSingletonMode(RuleNode ruleNode) {
+        boolean singletonMode;
+        try {
+            ComponentClusteringMode nodeConfigType = ReflectionUtils.getAnnotationProperty(ruleNode.getType(),
+                    "org.thingsboard.rule.engine.api.RuleNode", "clusteringMode");
+
+            switch (nodeConfigType) {
+                case ENABLED:
+                    singletonMode = false;
+                    break;
+                case SINGLETON:
+                    singletonMode = true;
+                    break;
+                case USER_PREFERENCE:
+                default:
+                    singletonMode = ruleNode.isSingletonMode();
+                    break;
+            }
+        } catch (Exception e) {
+            log.warn("Failed to get clustering mode: {}", ExceptionUtils.getRootCauseMessage(e));
+            singletonMode = false;
+        }
+
+        ruleNode.setSingletonMode(singletonMode);
+    }
 
 }

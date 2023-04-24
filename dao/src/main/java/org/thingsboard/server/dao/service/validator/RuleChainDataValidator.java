@@ -25,7 +25,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -113,22 +112,6 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
             return;
         }
         ConstraintValidator.validateFields(nodeConfig, errorPrefix);
-
-        ComponentClusteringMode nodeConfigType = null;
-        try {
-            nodeConfigType = ReflectionUtils.getAnnotationProperty(ruleNode.getType(),
-                    "org.thingsboard.rule.engine.api.RuleNode", "clusteringMode");
-        } catch (Exception e) {
-            log.warn("Failed to validate singleton mode: {}", ExceptionUtils.getRootCauseMessage(e));
-            return;
-        }
-        if (ComponentClusteringMode.ENABLED.equals(nodeConfigType) && ruleNode.isSingletonMode()) {
-            throw new DataValidationException(String.format("Singleton mode not supported for [%s].", ruleNode.getType()));
-        }
-
-        if (ComponentClusteringMode.SINGLETON.equals(nodeConfigType) && !ruleNode.isSingletonMode()) {
-            throw new DataValidationException(String.format("Supported only singleton mode for [%s].", ruleNode.getType()));
-        }
     }
 
     private static void validateCircles(List<NodeConnectionInfo> connectionInfos) {
