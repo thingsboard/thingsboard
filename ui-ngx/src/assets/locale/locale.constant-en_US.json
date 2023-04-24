@@ -2909,6 +2909,7 @@
         "recipients": "Recipients",
         "recipients-count": "{ count, plural, =1 {1 recipient} other {# recipients} }",
         "recipients-required": "Recipients are required",
+        "refresh-allow-delivery-method": "Refresh allow delivery method",
         "request-search": "Request search",
         "request-status": {
             "processing": "Processing",
