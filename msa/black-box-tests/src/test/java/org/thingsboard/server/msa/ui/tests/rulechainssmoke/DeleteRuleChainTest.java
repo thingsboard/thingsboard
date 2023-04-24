@@ -13,72 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
+package org.thingsboard.server.msa.ui.tests.rulechainssmoke;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
-import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
-import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.DELETE_RULE_CHAIN_WITH_PROFILE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.ROOT_RULE_CHAIN_NAME;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultRuleChainPrototype;
 
-public class DeleteRuleChainTest extends AbstractDriverBaseTest {
-    private SideBarMenuViewElements sideBarMenuView;
-    private RuleChainsPageHelper ruleChainsPage;
+@Feature("Delete rule chain")
+public class DeleteRuleChainTest extends AbstractRuleChainTest {
 
-    @BeforeClass
-    public void login() {
-        new LoginPageHelper(driver).authorizationTenant();
-        sideBarMenuView = new SideBarMenuViewElements(driver);
-        ruleChainsPage = new RuleChainsPageHelper(driver);
-    }
-
-    @Epic("Rule chains smoke tests")
-    @Feature("Delete rule chain")
     @Test(priority = 10, groups = "smoke")
     @Description("Remove the rule chain by clicking on the trash icon in the right side of rule chain")
     public void removeRuleChainByRightSideBtn() {
-        String ruleChainName = ENTITY_NAME + random();
+        ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
         String deletedRuleChain = ruleChainsPage.deleteRuleChainTrash(ruleChainName);
         ruleChainsPage.refreshBtn().click();
 
-        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedRuleChain));
+        ruleChainsPage.assertEntityIsNotPresent(deletedRuleChain);
     }
 
-    @Epic("Rule chains smoke tests")
-    @Feature("Delete rule chain")
     @Test(priority = 20, groups = "smoke")
     @Description("Remove rule chain by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedRuleChain() {
-        String ruleChainName = ENTITY_NAME + random();
+        ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
         String deletedRuleChain = ruleChainsPage.deleteSelected(ruleChainName);
         ruleChainsPage.refreshBtn().click();
 
-        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedRuleChain));
+        ruleChainsPage.assertEntityIsNotPresent(deletedRuleChain);
     }
 
-    @Epic("Rule chains smoke tests")
-    @Feature("Delete rule chain")
     @Test(priority = 20, groups = "smoke")
     @Description("Remove the rule chain by clicking on the 'Delete rule chain' btn in the entity view")
     public void removeFromRuleChainView() {
-        String ruleChainName = ENTITY_NAME + random();
+        ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
@@ -86,21 +67,17 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
         String deletedRuleChain = ruleChainsPage.deleteRuleChainFromView(ruleChainName);
         jsClick(ruleChainsPage.refreshBtn());
 
-        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedRuleChain));
+        ruleChainsPage.assertEntityIsNotPresent(deletedRuleChain);
     }
 
-    @Epic("Rule chains smoke tests")
-    @Feature("Delete rule chain")
     @Test(priority = 20, groups = "smoke")
     @Description("Remove the root rule chain by clicking on the trash icon in the right side of rule chain")
     public void removeRootRuleChain() {
         sideBarMenuView.ruleChainsBtn().click();
 
-        Assert.assertFalse(ruleChainsPage.deleteBtn(ROOT_RULE_CHAIN_NAME).isEnabled());
+        assertIsDisable(ruleChainsPage.deleteBtn(ROOT_RULE_CHAIN_NAME));
     }
 
-    @Epic("Rule chains smoke tests")
-    @Feature("Delete rule chain")
     @Test(priority = 20, groups = "smoke")
     @Description("Remove root rule chain by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedRootRuleChain() {
@@ -117,7 +94,8 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.detailsBtn(ROOT_RULE_CHAIN_NAME).click();
 
-        Assert.assertTrue(ruleChainsPage.deleteBtnInRootRuleChainIsNotDisplayed());
+        assertThat(ruleChainsPage.deleteBtnInRootRuleChainIsNotDisplayed())
+                .as("Delete btn isn't displayed in details tab").isTrue();
     }
 
     @Epic("Rule chains smoke tests")
@@ -132,15 +110,12 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
         ruleChainsPage.warningPopUpYesBtn().click();
         ruleChainsPage.refreshBtn().click();
 
-        Assert.assertNotNull(ruleChainsPage.entity(deletedRuleChain));
-        Assert.assertTrue(ruleChainsPage.entity(deletedRuleChain).isDisplayed());
-        Assert.assertNotNull(ruleChainsPage.warningMessage());
-        Assert.assertTrue(ruleChainsPage.warningMessage().isDisplayed());
-        Assert.assertEquals(ruleChainsPage.warningMessage().getText(), DELETE_RULE_CHAIN_WITH_PROFILE_MESSAGE);
+        assertIsDisplayed(ruleChainsPage.entity(deletedRuleChain));
+        assertIsDisplayed(ruleChainsPage.warningMessage());
+        assertThat(ruleChainsPage.warningMessage().getText())
+                .as("Text of warning message").isEqualTo(DELETE_RULE_CHAIN_WITH_PROFILE_MESSAGE);
     }
 
-    @Epic("Rule chains smoke tests")
-    @Feature("Delete rule chain")
     @Test(priority = 20, groups = "smoke")
     @Description("Remove the rule chain with device profile by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedProfileRuleChain() {
@@ -148,11 +123,10 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
         String deletedRuleChain = ruleChainsPage.deleteSelected("Thermostat");
         ruleChainsPage.refreshBtn().click();
 
-        Assert.assertNotNull(ruleChainsPage.entity(deletedRuleChain));
-        Assert.assertTrue(ruleChainsPage.entity(deletedRuleChain).isDisplayed());
-        Assert.assertNotNull(ruleChainsPage.warningMessage());
-        Assert.assertTrue(ruleChainsPage.warningMessage().isDisplayed());
-        Assert.assertEquals(ruleChainsPage.warningMessage().getText(), DELETE_RULE_CHAIN_WITH_PROFILE_MESSAGE);
+        assertIsDisplayed(ruleChainsPage.entity(deletedRuleChain));
+        assertIsDisplayed(ruleChainsPage.warningMessage());
+        assertThat(ruleChainsPage.warningMessage().getText())
+                .as("Text of warning message").isEqualTo(DELETE_RULE_CHAIN_WITH_PROFILE_MESSAGE);
     }
 
     @Epic("Rule chains smoke tests")
@@ -167,10 +141,10 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
         jsClick(ruleChainsPage.deleteBtnFromView());
         ruleChainsPage.warningPopUpYesBtn().click();
 
-        Assert.assertNotNull(ruleChainsPage.entity(deletedRuleChain));
-        Assert.assertNotNull(ruleChainsPage.warningMessage());
-        Assert.assertTrue(ruleChainsPage.warningMessage().isDisplayed());
-        Assert.assertEquals(ruleChainsPage.warningMessage().getText(), DELETE_RULE_CHAIN_WITH_PROFILE_MESSAGE);
+        assertIsDisplayed(ruleChainsPage.entity(deletedRuleChain));
+        assertIsDisplayed(ruleChainsPage.warningMessage());
+        assertThat(ruleChainsPage.warningMessage().getText())
+                .as("Text of warning message").isEqualTo(DELETE_RULE_CHAIN_WITH_PROFILE_MESSAGE);
     }
 
     @Epic("Rule chains smoke tests")
@@ -178,12 +152,12 @@ public class DeleteRuleChainTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description("Remove the rule chain by clicking on the trash icon in the right side of rule chain without refresh")
     public void removeRuleChainByRightSideBtnWithoutRefresh() {
-        String ruleChainName = ENTITY_NAME + random();
+        ruleChainName = ENTITY_NAME + random();
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
         String deletedRuleChain = ruleChainsPage.deleteRuleChainTrash(ruleChainName);
 
-        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedRuleChain));
+        ruleChainsPage.assertEntityIsNotPresent(deletedRuleChain);
     }
 }
