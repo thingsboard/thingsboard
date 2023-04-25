@@ -17,7 +17,7 @@ Available template parameters:
 * `eventType` - one of: 'started', 'updated', 'stopped';
 * `action` - one of: 'start', 'update', 'stop';
 * `error` - the error text;
-* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise)
+* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
 * `recipientLastName` - last name of the recipient;

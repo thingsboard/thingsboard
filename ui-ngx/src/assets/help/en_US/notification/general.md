@@ -9,7 +9,7 @@ See the available types and parameters below:
 
 Available template parameters:
 
-* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise)
+* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
 * `recipientLastName` - last name of the recipient;

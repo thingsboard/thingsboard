@@ -17,7 +17,7 @@ Available template parameters:
 * `alarmOriginatorEntityType` - the entity type of the alarm originator, e.g. 'Device';
 * `alarmOriginatorName` - the name of the alarm originator, e.g. 'Sensor T1';
 * `alarmOriginatorId` - the alarm originator entity id as uuid string;
-* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise)
+* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
 * `recipientLastName` - last name of the recipient;

@@ -18,7 +18,7 @@ Available template parameters:
 * `currentValue` - current number of used units;
 * `tenantId` - id of the tenant;
 * `tenantName` - name of the tenant;
-* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise)
+* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
 * `recipientLastName` - last name of the recipient;

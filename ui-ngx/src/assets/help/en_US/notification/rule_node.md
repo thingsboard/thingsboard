@@ -14,7 +14,7 @@ Available template parameters:
 * `originatorType` - type of the originator, e.g. 'Device';
 * `originatorId` - id of the originator
 * `msgType` - type of the message
-* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise)
+* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
 * `recipientLastName` - last name of the recipient;

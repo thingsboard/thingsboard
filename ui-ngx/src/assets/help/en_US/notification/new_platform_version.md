@@ -14,7 +14,7 @@ Available template parameters:
 * `upgradeInstructionsUrl` - upgrade instructions link for latest version;
 * `currentVersion` - the current platform version
 * `currentVersionReleaseNotesUrl` - release notes link for current version;
-* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise)
+* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
 * `recipientLastName` - last name of the recipient;

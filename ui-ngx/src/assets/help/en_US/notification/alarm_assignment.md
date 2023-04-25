@@ -26,7 +26,7 @@ Available template parameters:
 * `userFirstName` - first name of the user who made the action;
 * `userLastName` - last name of the user who made the action;
 * `action` - one of: 'assigned', 'unassigned';
-* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise)
+* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
 * `recipientLastName` - last name of the recipient;
