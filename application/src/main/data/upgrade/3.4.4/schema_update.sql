@@ -615,7 +615,7 @@ $$;
 
 ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS singleton_mode bool DEFAULT false;
 
-UPDATE rule_node SET singleton_mode = true WHERE type = 'org.thingsboard.rule.engine.mqtt.azure.TbAzureIotHubNode';
+UPDATE rule_node SET singleton_mode = true WHERE type IN ('org.thingsboard.rule.engine.mqtt.azure.TbAzureIotHubNode', 'org.thingsboard.rule.engine.mqtt.TbMqttNode');
 
 ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS clustering_mode varchar(255) DEFAULT 'ENABLED';
 
