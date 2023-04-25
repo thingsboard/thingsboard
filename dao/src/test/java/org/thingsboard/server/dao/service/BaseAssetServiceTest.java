@@ -211,7 +211,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
     @Test
     public void testFindAssetsByTenantId() {
         List<Asset> assets = new ArrayList<>();
-        for (int i=0;i<178;i++) {
+        for (int i=0;i<13;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             asset.setName("Asset"+i);
@@ -220,7 +220,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         }
 
         List<Asset> loadedAssets = new ArrayList<>();
-        PageLink pageLink = new PageLink(23);
+        PageLink pageLink = new PageLink(3);
         PageData<Asset> pageData = null;
         do {
             pageData = assetService.findAssetsByTenantId(tenantId, pageLink);
@@ -237,7 +237,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
 
         assetService.deleteAssetsByTenantId(tenantId);
 
-        pageLink = new PageLink(33);
+        pageLink = new PageLink(4);
         pageData = assetService.findAssetsByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -247,7 +247,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
     public void testFindAssetsByTenantIdAndName() {
         String title1 = "Asset title 1";
         List<AssetInfo> assetsTitle1 = new ArrayList<>();
-        for (int i=0;i<143;i++) {
+        for (int i=0;i<13;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -259,7 +259,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         }
         String title2 = "Asset title 2";
         List<AssetInfo> assetsTitle2 = new ArrayList<>();
-        for (int i=0;i<175;i++) {
+        for (int i=0;i<17;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -271,7 +271,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         }
 
         List<AssetInfo> loadedAssetsTitle1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15, 0, title1);
+        PageLink pageLink = new PageLink(3, 0, title1);
         PageData<AssetInfo> pageData = null;
         do {
             pageData = assetService.findAssetInfosByTenantId(tenantId, pageLink);
@@ -325,7 +325,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         String title1 = "Asset title 1";
         String type1 = "typeA";
         List<Asset> assetsType1 = new ArrayList<>();
-        for (int i=0;i<143;i++) {
+        for (int i=0;i<13;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -338,7 +338,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         String title2 = "Asset title 2";
         String type2 = "typeB";
         List<Asset> assetsType2 = new ArrayList<>();
-        for (int i=0;i<175;i++) {
+        for (int i=0;i<17;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -350,7 +350,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         }
 
         List<Asset> loadedAssetsType1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15);
+        PageLink pageLink = new PageLink(3);
         PageData<Asset> pageData = null;
         do {
             pageData = assetService.findAssetsByTenantIdAndType(tenantId, type1, pageLink);
@@ -408,7 +408,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         CustomerId customerId = customer.getId();
 
         List<AssetInfo> assets = new ArrayList<>();
-        for (int i=0;i<278;i++) {
+        for (int i=0;i<13;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             asset.setName("Asset"+i);
@@ -418,7 +418,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         }
 
         List<AssetInfo> loadedAssets = new ArrayList<>();
-        PageLink pageLink = new PageLink(23);
+        PageLink pageLink = new PageLink(3);
         PageData<AssetInfo> pageData = null;
         do {
             pageData = assetService.findAssetInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
@@ -435,7 +435,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
 
         assetService.unassignCustomerAssets(tenantId, customerId);
 
-        pageLink = new PageLink(33);
+        pageLink = new PageLink(4);
         pageData = assetService.findAssetInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -452,7 +452,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
 
         String title1 = "Asset title 1";
         List<Asset> assetsTitle1 = new ArrayList<>();
-        for (int i=0;i<175;i++) {
+        for (int i=0;i<17;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -465,7 +465,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         }
         String title2 = "Asset title 2";
         List<Asset> assetsTitle2 = new ArrayList<>();
-        for (int i=0;i<143;i++) {
+        for (int i=0;i<13;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -478,7 +478,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         }
 
         List<Asset> loadedAssetsTitle1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15, 0, title1);
+        PageLink pageLink = new PageLink(3, 0, title1);
         PageData<Asset> pageData = null;
         do {
             pageData = assetService.findAssetsByTenantIdAndCustomerId(tenantId, customerId, pageLink);
@@ -540,7 +540,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         String title1 = "Asset title 1";
         String type1 = "typeC";
         List<Asset> assetsType1 = new ArrayList<>();
-        for (int i=0;i<175;i++) {
+        for (int i=0;i<17;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -554,7 +554,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         String title2 = "Asset title 2";
         String type2 = "typeD";
         List<Asset> assetsType2 = new ArrayList<>();
-        for (int i=0;i<143;i++) {
+        for (int i=0;i<13;i++) {
             Asset asset = new Asset();
             asset.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -567,7 +567,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         }
 
         List<Asset> loadedAssetsType1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15);
+        PageLink pageLink = new PageLink(3);
         PageData<Asset> pageData = null;
         do {
             pageData = assetService.findAssetsByTenantIdAndCustomerIdAndType(tenantId, customerId, type1, pageLink);

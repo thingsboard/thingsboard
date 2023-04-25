@@ -25,7 +25,7 @@ import {
   AlarmData,
   AlarmDataQuery, EntityCountQuery,
   EntityData,
-  EntityDataQuery,
+  EntityDataQuery, EntityFilter,
   EntityKey,
   TsValue
 } from '@shared/models/query/query.models';
@@ -596,6 +596,27 @@ export class TelemetrySubscriber extends WsSubscriber {
     }
     const subscriber = new TelemetrySubscriber(telemetryService, zone);
     subscriber.subscriptionCommands.push(subscriptionCommand);
+    return subscriber;
+  }
+
+  public static createEntityFilterLatestSubscription(telemetryService: TelemetryWebsocketService,
+                                                     entityFilter: EntityFilter, zone: NgZone,
+                                                     latestKeys: EntityKey[] = null): TelemetrySubscriber {
+    const entityDataQuery: EntityDataQuery = {
+      entityFilter,
+      pageLink: {
+        pageSize: 1,
+        page: 0
+      },
+      latestValues: latestKeys || []
+    };
+    const cmd = new EntityDataCmd();
+    cmd.query = entityDataQuery;
+    cmd.latestCmd = {
+      keys: latestKeys || []
+    };
+    const subscriber = new TelemetrySubscriber(telemetryService, zone);
+    subscriber.subscriptionCommands.push(cmd);
     return subscriber;
   }
 

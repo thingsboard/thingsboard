@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import io.grpc.Server;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
@@ -35,6 +37,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
@@ -66,6 +71,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
+import static org.thingsboard.server.common.data.DataConstants.CONNECT_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.DISCONNECT_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
+
 @Service
 @Slf4j
 @ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
@@ -89,11 +98,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private String privateKeyResource;
     @Value("${edges.state.persistToTelemetry:false}")
     private boolean persistToTelemetry;
-    @Value("${edges.rpc.client_max_keep_alive_time_sec}")
+    @Value("${edges.rpc.client_max_keep_alive_time_sec:1}")
     private int clientMaxKeepAliveTimeSec;
     @Value("${edges.rpc.max_inbound_message_size:4194304}")
     private int maxInboundMessageSize;
-
+    @Value("${edges.rpc.keep_alive_time_sec:10}")
+    private int keepAliveTimeSec;
+    @Value("${edges.rpc.keep_alive_timeout_sec:5}")
+    private int keepAliveTimeoutSec;
     @Value("${edges.scheduler_pool_size}")
     private int schedulerPoolSize;
 
@@ -122,6 +134,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         log.info("Initializing Edge RPC service!");
         NettyServerBuilder builder = NettyServerBuilder.forPort(rpcPort)
                 .permitKeepAliveTime(clientMaxKeepAliveTimeSec, TimeUnit.SECONDS)
+                .keepAliveTime(keepAliveTimeSec, TimeUnit.SECONDS)
+                .keepAliveTimeout(keepAliveTimeoutSec, TimeUnit.SECONDS)
+                .permitKeepAliveWithoutCalls(true)
                 .maxInboundMessageSize(maxInboundMessageSize)
                 .addService(this);
         if (sslEnabled) {
@@ -174,7 +189,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> outputStream) {
-        return new EdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect, sendDownlinkExecutorService).getInputStream();
+        return new EdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect, sendDownlinkExecutorService, this.maxInboundMessageSize).getInputStream();
     }
 
     @Override
@@ -261,7 +276,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             newEventLock.unlock();
         }
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
-        save(edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, System.currentTimeMillis());
+        long lastConnectTs = System.currentTimeMillis();
+        save(edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, lastConnectTs);
+        pushRuleEngineMessage(edgeGrpcSession.getEdge().getTenantId(), edgeId, lastConnectTs, CONNECT_EVENT);
         cancelScheduleEdgeEventsCheck(edgeId);
         scheduleEdgeEventsCheck(edgeGrpcSession);
     }
@@ -271,7 +288,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         if (session != null) {
             boolean success = false;
             if (session.isConnected()) {
-                session.startSyncProcess(tenantId, edgeId, true);
+                session.startSyncProcess(true);
                 success = true;
             }
             clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success));
@@ -365,7 +382,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private void onEdgeDisconnect(EdgeId edgeId) {
         log.info("[{}] edge disconnected!", edgeId);
-        sessions.remove(edgeId);
+        EdgeGrpcSession removed = sessions.remove(edgeId);
         final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
         newEventLock.lock();
         try {
@@ -374,7 +391,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             newEventLock.unlock();
         }
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
-        save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, System.currentTimeMillis());
+        long lastDisconnectTs = System.currentTimeMillis();
+        save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, lastDisconnectTs);
+        pushRuleEngineMessage(removed.getEdge().getTenantId(), edgeId, lastDisconnectTs, DISCONNECT_EVENT);
         cancelScheduleEdgeEventsCheck(edgeId);
     }
 
@@ -421,6 +440,28 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         @Override
         public void onFailure(Throwable t) {
             log.warn("[{}] Failed to update attribute [{}] with value [{}]", edgeId, key, value, t);
+        }
+    }
+
+    private void pushRuleEngineMessage(TenantId tenantId, EdgeId edgeId, long ts, String msgType) {
+        try {
+            ObjectNode edgeState = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            if (msgType.equals(CONNECT_EVENT)) {
+                edgeState.put(DefaultDeviceStateService.ACTIVITY_STATE, true);
+                edgeState.put(DefaultDeviceStateService.LAST_CONNECT_TIME, ts);
+            } else {
+                edgeState.put(DefaultDeviceStateService.ACTIVITY_STATE, false);
+                edgeState.put(DefaultDeviceStateService.LAST_DISCONNECT_TIME, ts);
+            }
+            String data = JacksonUtil.toString(edgeState);
+            TbMsgMetaData md = new TbMsgMetaData();
+            if (!persistToTelemetry) {
+                md.putValue(DataConstants.SCOPE, SERVER_SCOPE);
+            }
+            TbMsg tbMsg = TbMsg.newMsg(msgType, edgeId, md, TbMsgDataType.JSON, data);
+            clusterService.pushMsgToRuleEngine(tenantId, edgeId, tbMsg, null);
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to push {}", tenantId, edgeId, msgType, e);
         }
     }
 }

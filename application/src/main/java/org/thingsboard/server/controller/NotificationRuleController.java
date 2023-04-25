@@ -67,7 +67,11 @@ public class NotificationRuleController extends BaseController {
             throw new IllegalArgumentException("Trigger type " + triggerType + " is not available");
         }
 
-        return doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
+        boolean created = notificationRule.getId() == null;
+        notificationRule = doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
+        tbClusterService.broadcastEntityStateChangeEvent(user.getTenantId(), notificationRule.getId(), created ?
+                ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        return notificationRule;
     }
 
     @GetMapping("/rule/{id}")

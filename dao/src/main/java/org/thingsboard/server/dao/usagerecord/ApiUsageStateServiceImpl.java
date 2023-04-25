@@ -126,6 +126,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
             List<TsKvEntry> profileThresholds = new ArrayList<>();
             for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+                if (key.getApiLimitKey() == null) continue;
                 profileThresholds.add(new BasicTsKvEntry(saved.getCreatedTime(), new LongDataEntry(key.getApiLimitKey(), configuration.getProfileThreshold(key))));
             }
             tsService.save(tenantId, saved.getId(), profileThresholds, 0L);

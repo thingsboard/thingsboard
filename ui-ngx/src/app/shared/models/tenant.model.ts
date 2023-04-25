@@ -44,6 +44,7 @@ export interface DefaultTenantProfileConfiguration {
   tenantEntityExportRateLimit?: string;
   tenantEntityImportRateLimit?: string;
   tenantNotificationRequestsRateLimit?: string;
+  tenantNotificationRequestsPerRuleRateLimit?: string;
 
   maxTransportMessages: number;
   maxTransportDataPoints: number;

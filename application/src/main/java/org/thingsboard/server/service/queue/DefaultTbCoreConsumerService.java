@@ -35,12 +35,12 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.stats.StatsFactory;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
@@ -274,9 +274,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                     TransportProtos.NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = toCoreMsg.getNotificationSchedulerServiceMsg();
                                     log.trace("[{}] Forwarding message to notification scheduler service {}", id, toCoreMsg.getNotificationSchedulerServiceMsg());
                                     forwardToNotificationSchedulerService(notificationSchedulerServiceMsg, callback);
-                                } else if (toCoreMsg.hasNotificationRuleProcessorMsg()) {
-                                    Optional<NotificationRuleTrigger> notificationRuleTrigger = encodingService.decode(toCoreMsg.getNotificationRuleProcessorMsg().getTrigger().toByteArray());
-                                    notificationRuleTrigger.ifPresent(notificationRuleProcessor::process);
                                 }
                             } catch (Throwable e) {
                                 log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -361,6 +358,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             callback.onSuccess();
         } else if (toCoreNotification.hasToSubscriptionMgrMsg()) {
             forwardToSubMgrService(toCoreNotification.getToSubscriptionMgrMsg(), callback);
+        } else if (toCoreNotification.hasNotificationRuleProcessorMsg()) {
+            Optional<NotificationRuleTrigger> notificationRuleTrigger = encodingService.decode(toCoreNotification
+                    .getNotificationRuleProcessorMsg().getTrigger().toByteArray());
+            notificationRuleTrigger.ifPresent(notificationRuleProcessor::process);
+            callback.onSuccess();
         }
         if (statsEnabled) {
             stats.log(toCoreNotification);

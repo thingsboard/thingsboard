@@ -49,8 +49,10 @@ public class SmsNotificationChannel implements NotificationChannel<User, SmsDeli
     }
 
     @Override
-    public boolean check(TenantId tenantId) {
-        return smsService.isConfigured(tenantId);
+    public void check(TenantId tenantId) throws Exception {
+        if (!smsService.isConfigured(tenantId)) {
+            throw new RuntimeException("SMS provider is not configured");
+        }
     }
 
     @Override

@@ -18,12 +18,10 @@ import * as CanvasGauges from 'canvas-gauges';
 import { FontSettings, getFontFamily } from '@home/components/widget/lib/settings.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefined } from '@core/utils';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import Highlight = CanvasGauges.Highlight;
 import BaseGauge = CanvasGauges.BaseGauge;
 import GenericOptions = CanvasGauges.GenericOptions;
-
-const tinycolor = tinycolor_;
 
 export type AnimationRule = 'linear' | 'quad' | 'quint' | 'cycle'
                             | 'bounce' | 'elastic' | 'dequad' | 'dequint'

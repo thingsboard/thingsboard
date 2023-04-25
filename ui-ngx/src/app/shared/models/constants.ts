@@ -67,7 +67,8 @@ export const MediaBreakpoints = {
   'gt-sm': 'screen and (min-width: 960px)',
   'gt-md': 'screen and (min-width: 1280px)',
   'gt-lg': 'screen and (min-width: 1920px)',
-  'gt-xl': 'screen and (min-width: 5001px)'
+  'gt-xl': 'screen and (min-width: 5001px)',
+  'md-lg': 'screen and (min-width: 960px) and (max-width: 1819px)'
 };
 
 export const helpBaseUrl = 'https://thingsboard.io';
@@ -132,6 +133,7 @@ export const HelpLinks = {
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
     ruleNodeSendSms: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-sms-node',
     ruleNodeMath: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#math-function-node',
+    ruleNodeCalculateDelta: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#calculate-delta',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
     tenantProfiles: helpBaseUrl + '/docs/user-guide/ui/tenant-profiles',
     customers: helpBaseUrl + '/docs/user-guide/ui/customers',

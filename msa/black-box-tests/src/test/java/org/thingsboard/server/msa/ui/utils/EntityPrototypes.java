@@ -43,6 +43,13 @@ public class EntityPrototypes {
         return customer;
     }
 
+    public static Customer defaultCustomerPrototype(String entityName, int number) {
+        Customer customer = new Customer();
+        customer.setTitle(entityName);
+        customer.setPhone("+1" + number);
+        return customer;
+    }
+
     public static RuleChain defaultRuleChainPrototype(String entityName) {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName(entityName);

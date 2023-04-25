@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.service.apiusage.limits;
 
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface RateLimitService {
 
-    boolean checkRateLimit(TenantId tenantId, LimitedApi api);
+    boolean checkRateLimit(LimitedApi api, TenantId tenantId);
+
+    boolean checkRateLimit(LimitedApi api, TenantId tenantId, EntityId entityId);
 
 }

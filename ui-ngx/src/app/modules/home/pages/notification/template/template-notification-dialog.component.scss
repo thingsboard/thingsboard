@@ -27,6 +27,23 @@
   .tb-title {
     font-size: 16px;
     line-height: 24px;
+
+    &.tb-required::after {
+      font-size: initial;
+      content: "*";
+    }
+
+    &.tb-error {
+      color: var(--mdc-theme-error, #f44336);
+
+      &.tb-required::after {
+        color: var(--mdc-theme-error, #f44336);
+      }
+    }
+  }
+
+  .tb-mat-error {
+    font-size: 13px;
   }
 
   .tb-hint {

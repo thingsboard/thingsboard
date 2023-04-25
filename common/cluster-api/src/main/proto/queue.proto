@@ -179,6 +179,10 @@ message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
 }
 
+message ValidateOrCreateDeviceX509CertRequestMsg {
+  string certificateChain = 1;
+}
+
 message ValidateBasicMqttCredRequestMsg {
   string clientId = 1;
   string userName = 2;
@@ -942,6 +946,7 @@ message TransportApiRequestMsg {
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
   GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
+  ValidateOrCreateDeviceX509CertRequestMsg validateOrCreateX509CertRequestMsg = 15;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -968,7 +973,6 @@ message ToCoreMsg {
   EdgeNotificationMsgProto edgeNotificationMsg = 5;
   DeviceActivityProto deviceActivityMsg = 6;
   NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 7;
-  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 8;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -983,6 +987,7 @@ message ToCoreNotificationMsg {
   bytes toEdgeSyncRequestMsg = 8;
   bytes fromEdgeSyncResponseMsg = 9;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 10;
+  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 11;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -1034,6 +1039,7 @@ message ToUsageStatsServiceMsg {
   repeated UsageStatsKVProto values = 5;
   int64 customerIdMSB = 6;
   int64 customerIdLSB = 7;
+  string serviceId = 8;
 }
 
 message ToOtaPackageStateServiceMsg {
