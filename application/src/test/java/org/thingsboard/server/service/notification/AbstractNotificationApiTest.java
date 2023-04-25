@@ -35,6 +35,10 @@ import org.thingsboard.server.common.data.notification.NotificationRequestConfig
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationType;
+import org.thingsboard.server.common.data.notification.rule.DefaultNotificationRuleRecipientsConfig;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
@@ -52,6 +56,7 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.DaoUtil;
 
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -193,6 +198,32 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     protected List<Notification> getMyNotifications(boolean unreadOnly, int limit) throws Exception {
         return doGetTypedWithPageLink("/api/notifications?unreadOnly={unreadOnly}&", new TypeReference<PageData<Notification>>() {},
                 new PageLink(limit, 0), unreadOnly).getData();
+    }
+
+    protected NotificationRule createNotificationRule(NotificationRuleTriggerConfig triggerConfig, String subject, String text, NotificationTargetId... targets) {
+        NotificationTemplate template = createNotificationTemplate(NotificationType.valueOf(triggerConfig.getTriggerType().toString()), subject, text, NotificationDeliveryMethod.WEB);
+
+        NotificationRule rule = new NotificationRule();
+        rule.setName(triggerConfig.getTriggerType() + " [" + Arrays.toString(targets) + "]");
+        rule.setTemplateId(template.getId());
+        rule.setTriggerType(triggerConfig.getTriggerType());
+        rule.setTriggerConfig(triggerConfig);
+
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
+        recipientsConfig.setTriggerType(triggerConfig.getTriggerType());
+        recipientsConfig.setTargets(DaoUtil.toUUIDs(List.of(targets)));
+        rule.setRecipientsConfig(recipientsConfig);
+
+        return saveNotificationRule(rule);
+    }
+
+    protected NotificationRule saveNotificationRule(NotificationRule notificationRule) {
+        return doPost("/api/notification/rule", notificationRule, NotificationRule.class);
+    }
+
+    protected PageData<NotificationRuleInfo> findNotificationRules() throws Exception {
+        PageLink pageLink = new PageLink(10);
+        return doGetTypedWithPageLink("/api/notification/rules?", new TypeReference<PageData<NotificationRuleInfo>>() {}, pageLink);
     }
 
     @Override
