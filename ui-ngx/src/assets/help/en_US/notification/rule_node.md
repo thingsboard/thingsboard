@@ -9,8 +9,8 @@ See the available types and parameters below:
 
 Available template parameters:
 
-* values from the incoming message metadata;
-* values from the incoming message data;
+* values from the incoming message metadata referenced using the metadata key name;
+* values from the incoming message data referenced using the data key name;
 * `originatorType` - type of the originator, e.g. 'Device';
 * `originatorId` - id of the originator
 * `msgType` - type of the message

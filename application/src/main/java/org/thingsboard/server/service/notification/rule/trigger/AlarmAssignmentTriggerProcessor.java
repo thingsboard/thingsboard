@@ -39,7 +39,7 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
 
     @Override
     public boolean matchesFilter(RuleEngineMsgTrigger trigger, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
-        Action action = trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGN) ? Action.ASSIGNED : Action.UNASSIGNED;
+        Action action = trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGNED) ? Action.ASSIGNED : Action.UNASSIGNED;
         if (!triggerConfig.getNotifyOn().contains(action)) {
             return false;
         }
@@ -54,7 +54,7 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
         AlarmInfo alarmInfo = JacksonUtil.fromString(trigger.getMsg().getData(), AlarmInfo.class);
         AlarmAssignee assignee = alarmInfo.getAssignee();
         return AlarmAssignmentNotificationInfo.builder()
-                .action(trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGN) ? "assigned" : "unassigned")
+                .action(trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGNED) ? "assigned" : "unassigned")
                 .assigneeFirstName(assignee != null ? assignee.getFirstName() : null)
                 .assigneeLastName(assignee != null ? assignee.getLastName() : null)
                 .assigneeEmail(assignee != null ? assignee.getEmail() : null)
@@ -79,7 +79,7 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
 
     @Override
     public Set<String> getSupportedMsgTypes() {
-        return Set.of(DataConstants.ALARM_ASSIGN, DataConstants.ALARM_UNASSIGN);
+        return Set.of(DataConstants.ALARM_ASSIGNED, DataConstants.ALARM_UNASSIGNED);
     }
 
 }

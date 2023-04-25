@@ -74,8 +74,8 @@ public class DataConstants {
     public static final String TIMESERIES_DELETED = "TIMESERIES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
-    public static final String ALARM_ASSIGN = "ALARM_ASSIGN";
-    public static final String ALARM_UNASSIGN = "ALARM_UNASSIGN";
+    public static final String ALARM_ASSIGNED = "ALARM_ASSIGNED";
+    public static final String ALARM_UNASSIGNED = "ALARM_UNASSIGNED";
     public static final String ALARM_DELETE = "ALARM_DELETE";
     public static final String COMMENT_CREATED = "COMMENT_CREATED";
     public static final String COMMENT_UPDATED = "COMMENT_UPDATED";

@@ -63,6 +63,13 @@ public class EntityPrototypes {
         return ruleChain;
     }
 
+    public static RuleChain defaultRuleChainPrototype(String entityName, boolean debugMode) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName(entityName);
+        ruleChain.setDebugMode(debugMode);
+        return ruleChain;
+    }
+
     public static DeviceProfile defaultDeviceProfile(String entityName) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(entityName);
