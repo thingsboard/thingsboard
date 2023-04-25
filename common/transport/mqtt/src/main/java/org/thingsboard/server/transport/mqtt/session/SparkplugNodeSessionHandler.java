@@ -173,7 +173,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
                                 public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
                                     TransportProtos.PostAttributeMsg kvListProto = attributesMsg.getMsg();
                                     try {
-                                        TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto.toByteArray());
+                                        TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto);
                                         processPostAttributesMsg(deviceCtx, postAttributeMsg, deviceName, msgId);
                                     } catch (Throwable e) {
                                         log.warn("[{}][{}] Failed to process device attributes command: {}", gateway.getDeviceId(), deviceName, kvListProto, e);
@@ -286,6 +286,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         if (keyValueProtoOpt.isPresent()) {
             TransportProtos.PostAttributeMsg.Builder builder = TransportProtos.PostAttributeMsg.newBuilder();
             builder.addKv(keyValueProtoOpt.get());
+            builder.setShared(true);
             return Optional.of(builder.build());
         }
         return Optional.empty();
