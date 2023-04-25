@@ -253,9 +253,9 @@ public class ThingsboardInstallService {
                                 log.info("Skipping default notification configs creation");
                             }
                             installScripts.loadSystemLwm2mResources();
-                        case "3.5":
-                            log.info("Upgrading ThingsBoard from version 3.5 to 3.5.1 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.5");
+                        case "3.5.0":
+                            log.info("Upgrading ThingsBoard from version 3.5.0 to 3.5.1 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.5.0");
                             log.info("Updating system data...");
                             systemDataLoaderService.createMailConfigTemplates();
                             systemDataLoaderService.updateSystemWidgets();
