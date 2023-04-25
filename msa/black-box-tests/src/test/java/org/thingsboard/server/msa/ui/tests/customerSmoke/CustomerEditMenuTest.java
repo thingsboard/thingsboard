@@ -18,6 +18,7 @@ package org.thingsboard.server.msa.ui.tests.customerSmoke;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import org.openqa.selenium.Keys;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -306,5 +307,25 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(customerPage.address2EntityView().getAttribute("value"), text);
         Assert.assertEquals(customerPage.phoneNumberEntityView().getAttribute("value"), "+1" + number);
         Assert.assertEquals(customerPage.emailEntityView().getAttribute("value"), email);
+    }
+
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
+    @Test(groups = "smoke")
+    @Description("Delete phone number")
+    public void deletePhoneNumber() {
+        String customerName = ENTITY_NAME;
+        int number = 2015550123;
+        testRestClient.postCustomer(defaultCustomerPrototype(customerName, number));
+        this.customerName = customerName;
+
+        sideBarMenuView.customerBtn().click();
+        customerPage.entity(customerName).click();
+        customerPage.editPencilBtn().click();
+        customerPage.phoneNumberEntityView().click();
+        customerPage.phoneNumberEntityView().sendKeys(Keys.CONTROL + "A" + Keys.BACK_SPACE);
+        customerPage.doneBtnEditView().click();
+
+        Assert.assertTrue(customerPage.phoneNumberEntityView().getAttribute("value").isEmpty(), "Phone field is empty");
     }
 }

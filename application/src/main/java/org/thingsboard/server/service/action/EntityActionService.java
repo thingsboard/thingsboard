@@ -41,7 +41,9 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 
 import java.util.List;
 import java.util.Map;
@@ -53,6 +55,7 @@ import java.util.stream.Collectors;
 public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
+    private final NotificationRuleProcessor notificationRuleProcessor;
 
     private static final ObjectMapper json = new ObjectMapper();
 
@@ -87,11 +90,11 @@ public class EntityActionService {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
-            case ALARM_ASSIGN:
-                msgType = DataConstants.ALARM_ASSIGN;
+            case ALARM_ASSIGNED:
+                msgType = DataConstants.ALARM_ASSIGNED;
                 break;
-            case ALARM_UNASSIGN:
-                msgType = DataConstants.ALARM_UNASSIGN;
+            case ALARM_UNASSIGNED:
+                msgType = DataConstants.ALARM_UNASSIGNED;
                 break;
             case ALARM_DELETE:
                 msgType = DataConstants.ALARM_DELETE;
@@ -187,6 +190,12 @@ public class EntityActionService {
                     AlarmComment comment = extractParameter(AlarmComment.class, 0, additionalInfo);
                     metaData.putValue("comment", json.writeValueAsString(comment));
                 }
+                if (actionType == ActionType.ADDED && !tenantId.isSysTenantId()) {
+                    notificationRuleProcessor.process(EntitiesLimitTrigger.builder()
+                            .tenantId(tenantId)
+                            .entityType(entityId.getEntityType())
+                            .build());
+                }
                 ObjectNode entityNode;
                 if (entity != null) {
                     entityNode = json.valueToTree(entity);
@@ -247,7 +256,7 @@ public class EntityActionService {
     }
 
     public <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
-                                                                           ActionType actionType, Exception e, Object... additionalInfo) {
+                                                                        ActionType actionType, Exception e, Object... additionalInfo) {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
         }

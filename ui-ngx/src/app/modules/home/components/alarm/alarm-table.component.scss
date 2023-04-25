@@ -21,10 +21,10 @@
       }
     }
     .assignee-cell {
-      display: flex;
-      justify-content: flex-start;
-      align-items: center;
+      line-height: normal;
       .assigned-container {
+        display: inline-block;
+        vertical-align: baseline;
         max-width: 180px;
         overflow: hidden;
         white-space: nowrap;
@@ -44,14 +44,19 @@
           font-weight: 700;
         }
       }
-      .material-icons.unassigned-icon {
-        width: 28px;
-        height: 28px;
-        font-size: 28px;
-        margin-right: 8px;
-        color: rgba(0, 0, 0, 0.38);
-        overflow: visible;
+      .unassigned-container {
+        display: inline-flex;
+        align-items: center;
+        .material-icons.unassigned-icon {
+          width: 28px;
+          height: 28px;
+          font-size: 28px;
+          margin-right: 8px;
+          color: rgba(0, 0, 0, 0.38);
+          overflow: visible;
+        }
       }
+
     }
   }
 }

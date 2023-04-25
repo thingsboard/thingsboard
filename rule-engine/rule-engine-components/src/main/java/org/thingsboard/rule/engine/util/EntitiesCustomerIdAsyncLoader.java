@@ -31,7 +31,6 @@ public class EntitiesCustomerIdAsyncLoader {
 
 
     public static ListenableFuture<CustomerId> findEntityIdAsync(TbContext ctx, EntityId original) {
-
         switch (original.getEntityType()) {
             case CUSTOMER:
                 return Futures.immediateFuture((CustomerId) original);
@@ -40,7 +39,7 @@ public class EntitiesCustomerIdAsyncLoader {
             case ASSET:
                 return getCustomerAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) original));
             case DEVICE:
-                return getCustomerAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) original));
+                return getCustomerAsync(Futures.immediateFuture(ctx.getDeviceService().findDeviceById(ctx.getTenantId(), (DeviceId) original)));
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original.getEntityType()));
         }

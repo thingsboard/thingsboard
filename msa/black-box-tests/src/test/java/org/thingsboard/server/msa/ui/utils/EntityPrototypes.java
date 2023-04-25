@@ -57,6 +57,13 @@ public class EntityPrototypes {
         return customer;
     }
 
+    public static Customer defaultCustomerPrototype(String entityName, int number) {
+        Customer customer = new Customer();
+        customer.setTitle(entityName);
+        customer.setPhone("+1" + number);
+        return customer;
+    }
+
     public static RuleChain defaultRuleChainPrototype(String entityName) {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName(entityName);
@@ -67,6 +74,13 @@ public class EntityPrototypes {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName(entityName);
         ruleChain.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
+        return ruleChain;
+    }
+
+    public static RuleChain defaultRuleChainPrototype(String entityName, boolean debugMode) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName(entityName);
+        ruleChain.setDebugMode(debugMode);
         return ruleChain;
     }
 

@@ -98,7 +98,7 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
 
         Assert.assertNotNull(profilesPage.importingFile(EMPTY_IMPORT_MESSAGE));
         Assert.assertTrue(profilesPage.importingFile(EMPTY_IMPORT_MESSAGE).isDisplayed());
-        Assert.assertTrue(profilesPage.entityIsNotPresent(IMPORT_DEVICE_PROFILE_NAME));
+        Assert.assertTrue(profilesPage.assertEntityIsNotPresent(IMPORT_DEVICE_PROFILE_NAME));
     }
 
     @Epic("Device profile smoke tests")

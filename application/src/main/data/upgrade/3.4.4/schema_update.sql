@@ -47,10 +47,14 @@ UPDATE alarm SET acknowledged = true, cleared = false WHERE status = 'ACTIVE_ACK
 UPDATE alarm SET acknowledged = false, cleared = true WHERE status = 'CLEARED_UNACK';
 UPDATE alarm SET acknowledged = false, cleared = false WHERE status = 'ACTIVE_UNACK';
 
--- Drop index by 'status' column and replace with new one that has only active alarms;
+-- Drop index by 'status' column and replace with new indexes that has only active alarms;
 DROP INDEX IF EXISTS idx_alarm_originator_alarm_type_active;
 CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type_active
     ON alarm USING btree (originator_id, type) WHERE cleared = false;
+
+DROP INDEX IF EXISTS idx_alarm_tenant_alarm_type_active;
+CREATE INDEX IF NOT EXISTS idx_alarm_tenant_alarm_type_active
+    ON alarm USING btree (tenant_id, type) WHERE cleared = false;
 
 -- Cover index by alarm type to optimize propagated alarm queries;
 DROP INDEX IF EXISTS idx_entity_alarm_entity_id_alarm_type_created_time_alarm_id;
@@ -610,3 +614,16 @@ END
 $$;
 
 -- TTL DROP PARTITIONS FUNCTIONS UPDATE END
+
+-- RULE NODE SINGLETON MODE SUPPORT
+
+ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS singleton_mode bool DEFAULT false;
+
+UPDATE rule_node SET singleton_mode = true WHERE type IN ('org.thingsboard.rule.engine.mqtt.azure.TbAzureIotHubNode', 'org.thingsboard.rule.engine.mqtt.TbMqttNode');
+
+ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS clustering_mode varchar(255) DEFAULT 'ENABLED';
+
+UPDATE component_descriptor SET clustering_mode = 'USER_PREFERENCE' WHERE clazz = 'org.thingsboard.rule.engine.mqtt.TbMqttNode';
+
+UPDATE component_descriptor SET clustering_mode = 'SINGLETON' WHERE clazz = 'org.thingsboard.rule.engine.mqtt.azure.TbAzureIotHubNode';
+
