@@ -376,7 +376,14 @@ public class TbUtils {
             if (pathInKey) {
                 map.put(path, json);
             } else {
-                String key = path.contains(".") ? path.substring(path.lastIndexOf('.') + 1) : path;
+                String key = path.substring(path.lastIndexOf('.') + 1);
+                if (StringUtils.isNumeric(key)) {
+                    int pos = path.length();
+                    for (int i = 0; i < 2; i++) {
+                        pos = path.lastIndexOf('.', pos - 1);
+                    }
+                    key = path.substring(pos + 1);
+                }
                 map.put(key, json);
             }
         }
