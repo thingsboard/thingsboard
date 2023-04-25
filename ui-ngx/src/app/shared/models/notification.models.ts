@@ -35,7 +35,7 @@ export interface Notification {
   readonly type: NotificationType;
   readonly subject: string;
   readonly text: string;
-  readonly info: NotificationInfo;
+  readonly info?: NotificationInfo;
   readonly status: NotificationStatus;
   readonly createdTime: number;
   readonly additionalConfig?: WebDeliveryMethodAdditionalConfig;
