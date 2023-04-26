@@ -397,8 +397,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         NotificationRule rule = new NotificationRule();
         rule.setName("Device created");
         rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
-        NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Device created", "Device created",
-                NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.SMS);
+        NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION,
+                "Device created", "Device created", NotificationDeliveryMethod.WEB);
         rule.setTemplateId(template.getId());
         EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
         triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
@@ -411,14 +411,16 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         rule.setRecipientsConfig(recipientsConfig);
         rule = saveNotificationRule(rule);
 
+        getWsClient().subscribeForUnreadNotificationsCount().waitForReply();
+        getWsClient().registerWaitForUpdate(notificationRequestsLimit);
         for (int i = 0; i < notificationRequestsLimit; i++) {
             String name = "device " + i;
             createDevice(name, name);
+            TimeUnit.MILLISECONDS.sleep(200);
         }
-        await().atMost(40, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    assertThat(getMyNotifications(false, 100)).size().isEqualTo(notificationRequestsLimit);
-                });
+        getWsClient().waitForUpdate(true);
+        assertThat(getWsClient().getLastCountUpdate().getTotalUnreadCount()).isEqualTo(notificationRequestsLimit);
+
         for (int i = 0; i < 5; i++) {
             String name = "device " + (notificationRequestsLimit + i);
             createDevice(name, name);
@@ -428,7 +430,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         assertThat(rateLimitExceeded).isTrue();
 
         TimeUnit.SECONDS.sleep(3);
-        assertThat(getMyNotifications(false, 100)).size().isEqualTo(notificationRequestsLimit);
+        assertThat(getWsClient().getLastCountUpdate().getTotalUnreadCount()).isEqualTo(notificationRequestsLimit);
     }
 
     private <R> R checkNotificationAfter(Callable<R> action, BiConsumer<Notification, R> check) throws Exception {
