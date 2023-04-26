@@ -25,7 +25,7 @@ import {
 } from '@angular/core';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
 import { BehaviorSubject, ReplaySubject, Subscription } from 'rxjs';
-import { distinctUntilChanged, share, tap } from 'rxjs/operators';
+import { distinctUntilChanged, map, share, tap } from 'rxjs/operators';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ShowNotificationPopoverComponent } from '@home/components/notification/show-notification-popover.component';
@@ -47,6 +47,7 @@ export class NotificationBellComponent implements OnDestroy {
 
   count$ = this.countSubject.asObservable().pipe(
     distinctUntilChanged(),
+    map((value) => value >= 100 ? '99+' : value),
     tap(() => setTimeout(() => this.cd.markForCheck())),
     share({
       connector: () => new ReplaySubject(1)
