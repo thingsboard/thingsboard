@@ -55,6 +55,11 @@
                 "output": "/"
               },
               {
+                "glob": "worker-tbel.js",
+                "input": "./src/app/shared/models/ace/tbel/",
+                "output": "/"
+              },
+              {
                 "glob": "**/*",
                 "input": "node_modules/tinymce",
                 "output": "/assets/tinymce/"
