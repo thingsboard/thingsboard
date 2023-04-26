@@ -74,7 +74,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     @ApiModelProperty(position = 1, value = "JSON object with the User Id. " +
             "Specify this field to update the device. " +
             "Referencing non-existing User Id will cause error. " +
-            "Omit this field to create new customer." )
+            "Omit this field to create new customer.")
     @Override
     public UserId getId() {
         return super.getId();
@@ -169,6 +169,10 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
 
     @JsonIgnore
     public String getTitle() {
+        return getTitle(email, firstName, lastName);
+    }
+
+    public static String getTitle(String email, String firstName, String lastName) {
         String title = "";
         if (isNotEmpty(firstName)) {
             title += firstName;

@@ -26,6 +26,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
 import { Router } from '@angular/router';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
+import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
 
 @Component({
   selector: 'tb-rule-node',
@@ -78,6 +79,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
       this.ruleNodeFormGroup = this.fb.group({
         name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*'), Validators.maxLength(255)]],
         debugMode: [this.ruleNode.debugMode, []],
+        singletonMode: [this.ruleNode.singletonMode, []],
         configuration: [this.ruleNode.configuration, [Validators.required]],
         additionalInfo: this.fb.group(
           {
@@ -129,5 +131,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
         this.router.navigateByUrl(`/ruleChains/${ruleChainId}`);
       }
     }
+  }
+
+  isSingletonEditAllowed() {
+    return this.ruleNode.component.clusteringMode === ComponentClusteringMode.USER_PREFERENCE;
   }
 }

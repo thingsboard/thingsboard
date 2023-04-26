@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -122,6 +123,8 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, parent.getTenantId(), parent.getId())
                         .newByTopic(msgProducer.getDefaultTopic());
                 msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), statsMsg.build()), null);
+            } catch (TenantNotFoundException e) {
+                log.debug("Couldn't report usage stats for non-existing tenant: {}", e.getTenantId());
             } catch (Exception e) {
                 log.warn("Failed to report usage stats for tenant {}", parent.getTenantId(), e);
             }

@@ -47,11 +47,13 @@ import org.thingsboard.server.common.data.notification.targets.NotificationRecip
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
@@ -230,7 +232,8 @@ public class NotificationController extends BaseController {
             NotificationTargetType targetType = target.getConfiguration().getType();
             if (targetType == NotificationTargetType.PLATFORM_USERS) {
                 PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(),
-                        (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize));
+                        (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize, 0, null,
+                                new SortOrder("createdTime", SortOrder.Direction.DESC)));
                 recipientsCount = (int) recipients.getTotalElements();
                 recipientsPart = recipients.getData().stream().map(r -> (NotificationRecipient) r).collect(Collectors.toList());
             } else {
@@ -240,7 +243,15 @@ public class NotificationController extends BaseController {
             firstRecipient.putIfAbsent(targetType, !recipientsPart.isEmpty() ? recipientsPart.get(0) : null);
             for (NotificationRecipient recipient : recipientsPart) {
                 if (recipientsPreview.size() < recipientsPreviewSize) {
-                    recipientsPreview.add(recipient.getTitle());
+                    String title = recipient.getTitle();
+                    if (recipient instanceof SlackConversation) {
+                        title = ((SlackConversation) recipient).getPointer() + title;
+                    } else if (recipient instanceof User) {
+                        if (!title.equals(recipient.getEmail())) {
+                            title += " (" + recipient.getEmail() + ")";
+                        }
+                    }
+                    recipientsPreview.add(title);
                 } else {
                     break;
                 }

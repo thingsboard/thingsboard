@@ -13,39 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.ruleChainsSmoke;
+package org.thingsboard.server.msa.ui.tests.rulechainssmoke;
 
 import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
-import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
-import org.thingsboard.server.msa.ui.pages.RuleChainsPageHelper;
-import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 
-public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    private SideBarMenuViewElements sideBarMenuView;
-    private RuleChainsPageHelper ruleChainsPage;
-
-    @BeforeClass
-    public void login() {
-        new LoginPageHelper(driver).authorizationTenant();
-        sideBarMenuView = new SideBarMenuViewElements(driver);
-        ruleChainsPage = new RuleChainsPageHelper(driver);
-    }
+@Feature("Make rule chain root")
+public class MakeRuleChainRootTest extends AbstractRuleChainTest {
 
     @AfterMethod
     public void makeRoot() {
-        testRestClient.setRootRuleChain(getRuleChainByName("Root Rule Chain").getId());
+        setRootRuleChain("Root Rule Chain");
     }
 
-    @Epic("Rule chains smoke tests")
-    @Feature("Make rule chain root")
     @Test(priority = 10, groups = "smoke")
     @Description("Make rule chain root by clicking on the 'Make rule chain root' icon in the right corner")
     public void makeRuleChainRootByRightCornerBtn() {
@@ -55,11 +39,9 @@ public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
         ruleChainsPage.makeRootBtn(ruleChain).click();
         ruleChainsPage.warningPopUpYesBtn().click();
 
-        Assert.assertTrue(ruleChainsPage.rootCheckBoxEnable(ruleChain).isDisplayed());
+        assertIsDisplayed(ruleChainsPage.rootCheckBoxEnable(ruleChain));
     }
 
-    @Epic("Rule chains smoke tests")
-    @Feature("Make rule chain root")
     @Test(priority = 20, groups = "smoke")
     @Description("Make rule chain root by clicking on the 'Make rule chain root' button in the entity view")
     public void makeRuleChainRootFromView() {
@@ -71,11 +53,9 @@ public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
         ruleChainsPage.warningPopUpYesBtn().click();
         ruleChainsPage.closeEntityViewBtn().click();
 
-        Assert.assertTrue(ruleChainsPage.rootCheckBoxEnable(ruleChain).isDisplayed());
+        assertIsDisplayed(ruleChainsPage.rootCheckBoxEnable(ruleChain));
     }
 
-    @Epic("Rule chains smoke tests")
-    @Feature("Make rule chain root")
     @Test(priority = 30, groups = "smoke")
     @Description("Make multiple root rule chains (only one rule chain can be root)")
     public void multiplyRoot() {
@@ -87,6 +67,6 @@ public class MakeRuleChainRootTest extends AbstractDriverBaseTest {
         ruleChainsPage.warningPopUpYesBtn().click();
         ruleChainsPage.closeEntityViewBtn().click();
 
-        Assert.assertEquals(ruleChainsPage.rootCheckBoxesEnable().size(), 1);
+        assertThat(ruleChainsPage.rootCheckBoxesEnable()).as("Enable only 1 root checkbox").hasSize(1);
     }
 }
