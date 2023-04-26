@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.slack;
+package org.thingsboard.server.common.data.exception;
 
+import lombok.Getter;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
-import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
 
-import java.util.List;
+public class TenantNotFoundException extends RuntimeException {
 
-public interface SlackService {
+    @Getter
+    private final TenantId tenantId;
 
-    void sendMessage(TenantId tenantId, String token, String conversationId, String message);
-
-    List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversationType conversationType);
-
-    String getToken(TenantId tenantId);
+    public TenantNotFoundException(TenantId tenantId) {
+        super("Tenant with id " + tenantId + " not found");
+        this.tenantId = tenantId;
+    }
 
 }

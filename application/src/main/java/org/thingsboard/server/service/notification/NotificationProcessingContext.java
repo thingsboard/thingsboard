@@ -128,6 +128,7 @@ public class NotificationProcessingContext {
 
     private Map<String, String> createTemplateContextForRecipient(NotificationRecipient recipient) {
         return Map.of(
+                "recipientTitle", recipient.getTitle(),
                 "recipientEmail", Strings.nullToEmpty(recipient.getEmail()),
                 "recipientFirstName", Strings.nullToEmpty(recipient.getFirstName()),
                 "recipientLastName", Strings.nullToEmpty(recipient.getLastName())
