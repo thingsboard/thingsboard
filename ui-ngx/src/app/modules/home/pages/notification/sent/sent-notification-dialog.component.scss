@@ -60,19 +60,35 @@
     }
   }
 
-  .delivery-method-container {
-    padding-bottom: 8px;
+  .delivery-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 
-    &.even {
-      padding-right: 8px;
-    }
+  .delivery-methods-container {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 
-    .delivery-method {
+    .delivery-method-container {
+      display: inline-flex;
+      flex: 1 1 calc(50% - 8px);
       padding: 16px 12px;
       border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 6px;
-      width: 100%;
-      height: 100%;
+
+      &.interact {
+        cursor: pointer;
+        color: inherit;
+      }
+
+      .delivery-method {
+        width: 100%;
+        height: 100%;
+      }
     }
   }
 
@@ -254,6 +270,16 @@
       .html-content,
       .html-content * {
         all: revert;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .delivery-methods-container {
+    .delivery-method-container {
+      &.interact * {
+        cursor: pointer;
       }
     }
   }

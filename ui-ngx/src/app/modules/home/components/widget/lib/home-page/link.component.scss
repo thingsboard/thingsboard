@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 :host {
-  .tb-edit-doc-link {
+  .tb-edit-link {
     padding: 16px;
     border: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
@@ -23,7 +23,7 @@
       border: 1px solid rgba(48, 86, 128, 0.32);
     }
   }
-  .tb-doc-link {
+  .tb-link {
     height: 55px;
     display: flex;
     flex-direction: column;
@@ -33,18 +33,18 @@
     border: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
     border-radius: 10px;
-    .tb-doc-container {
+    .tb-link-container {
       display: flex;
       flex-direction: row;
       align-items: center;
-      .tb-doc-icon-container {
+      .tb-link-icon-container {
         height: 40px;
         padding: 8px;
         background: #F3F6FA;
         border-radius: 6px;
         margin-right: 8px;
       }
-      .tb-doc-text {
+      .tb-link-text {
         font-weight: 400;
         font-size: 14px;
         line-height: 20px;

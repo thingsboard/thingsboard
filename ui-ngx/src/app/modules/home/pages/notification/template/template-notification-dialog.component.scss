@@ -61,19 +61,23 @@
     }
   }
 
-  .delivery-method-container {
-    padding-bottom: 8px;
+  .delivery-methods-container {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 
-    &.even {
-      padding-right: 8px;
-    }
-
-    .delivery-method {
+    .delivery-method-container {
+      display: inline-flex;
+      flex: 1 1 calc(50% - 8px);
       padding: 16px 12px;
       border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 6px;
-      width: 100%;
-      height: 100%;
+
+      .delivery-method {
+        width: 100%;
+        height: 100%;
+      }
     }
   }
 

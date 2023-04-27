@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 :host {
-  width: 100%;
-  height: 100%;
-  min-width: 300px;
+  display: block;
   overflow: hidden;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow:
-    0 7px 8px -4px rgba(0, 0, 0, .2),
-    0 13px 19px 2px rgba(0, 0, 0, .14),
-    0 5px 24px 4px rgba(0, 0, 0, .12);
-
-  .mat-content {
-    overflow: hidden;
-    background-color: #fff;
+  max-width: 100%;
+  .mdc-button {
+    max-width: 100%;
   }
+}
 
-  .mat-padding {
-    padding: 16px;
+:host ::ng-deep {
+  .mdc-button {
+    .mat-icon {
+      min-width: 24px;
+    }
+    .mdc-button__label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }

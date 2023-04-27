@@ -21,12 +21,12 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   AbstractControl,
+  FormGroupDirective,
+  NgForm,
   UntypedFormArray,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  FormGroupDirective,
-  NgForm,
   Validators
 } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -107,7 +107,8 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
           } else {
             const datasources = this.utils.validateDatasources(widget.config.datasources);
             datasources.forEach((datasource) => {
-              if (datasource.type === DatasourceType.entity && datasource.entityAliasId) {
+              if ([DatasourceType.entity, DatasourceType.entityCount, DatasourceType.alarmCount].includes(datasource.type)
+                && datasource.entityAliasId) {
                 this.addWidgetTitleToWidgetsMap(datasource.entityAliasId, widget.config.title);
               }
             });

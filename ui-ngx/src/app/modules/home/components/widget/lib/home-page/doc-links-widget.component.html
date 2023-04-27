@@ -26,20 +26,20 @@
       <mat-icon>edit</mat-icon>
     </button>
   </div>
-  <mat-grid-list class="tb-docs-list" fxFlex [cols]="columns" [rowHeight]="rowHeight" [gutterSize]="gutterSize">
-    <mat-grid-tile class="tb-docs-tile" *ngFor="let docLink of documentationLinks?.links">
-      <a fxFlex class="tb-doc-button"
+  <mat-grid-list class="tb-links-list" fxFlex [cols]="columns" [rowHeight]="rowHeight" [gutterSize]="gutterSize">
+    <mat-grid-tile class="tb-links-tile" *ngFor="let docLink of documentationLinks?.links">
+      <a fxFlex class="tb-link-button"
          [href]="docLink.link" target="_blank">
-        <div class="tb-doc-container">
-          <div class="tb-doc-icon-container">
+        <div class="tb-link-container">
+          <div class="tb-link-icon-container">
             <mat-icon color="primary">{{ docLink.icon }}</mat-icon>
           </div>
-          <div class="tb-doc-text">{{ docLink.name }}</div>
+          <div class="tb-link-text">{{ docLink.name }}</div>
         </div>
       </a>
     </mat-grid-tile>
-    <mat-grid-tile class="tb-docs-tile">
-      <div fxFlex class="tb-add-doc-button"
+    <mat-grid-tile class="tb-links-tile">
+      <div fxFlex class="tb-add-link-button"
            matTooltip="{{ 'widgets.documentation.add-link' | translate }}"
            matTooltipPosition="above"
            (click)="addLink()">

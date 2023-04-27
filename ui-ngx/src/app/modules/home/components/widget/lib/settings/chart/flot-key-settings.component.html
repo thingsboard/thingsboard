@@ -51,9 +51,13 @@
             <mat-label translate>widgets.chart.line-width</mat-label>
             <input matInput type="number" min="0" formControlName="lineWidth">
           </mat-form-field>
-          <mat-checkbox fxFlex formControlName="fillLines">
+          <mat-checkbox formControlName="fillLines">
             {{ 'widgets.chart.fill-line' | translate }}
           </mat-checkbox>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.chart.fill-line-opacity</mat-label>
+            <input matInput type="number" min="0" max="1" step="0.1" formControlName="fillLinesOpacity">
+          </mat-form-field>
         </section>
       </ng-template>
     </mat-expansion-panel>
