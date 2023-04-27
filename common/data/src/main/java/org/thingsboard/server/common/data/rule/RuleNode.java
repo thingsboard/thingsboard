@@ -48,7 +48,9 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
     private String name;
     @ApiModelProperty(position = 6, value = "Enable/disable debug. ", example = "false")
     private boolean debugMode;
-    @ApiModelProperty(position = 7, value = "JSON with the rule node configuration. Structure depends on the rule node implementation.", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @ApiModelProperty(position = 7, value = "Enable/disable singleton mode. ", example = "false")
+    private boolean singletonMode;
+    @ApiModelProperty(position = 8, value = "JSON with the rule node configuration. Structure depends on the rule node implementation.", dataType = "com.fasterxml.jackson.databind.JsonNode")
     private transient JsonNode configuration;
     @JsonIgnore
     private byte[] configurationBytes;
@@ -69,6 +71,7 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
         this.debugMode = ruleNode.isDebugMode();
+        this.singletonMode = ruleNode.isSingletonMode();
         this.setConfiguration(ruleNode.getConfiguration());
         this.externalId = ruleNode.getExternalId();
     }

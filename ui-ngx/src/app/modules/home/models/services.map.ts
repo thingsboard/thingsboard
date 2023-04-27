@@ -35,6 +35,7 @@ import { Router } from '@angular/router';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
+import { AssetProfileService } from '@core/http/asset-profile.service';
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { AuthService } from '@core/auth/auth.service';
 import { ResourceService } from '@core/http/resource.service';
@@ -67,6 +68,7 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['router', Router],
    ['importExport', ImportExportService],
    ['deviceProfileService', DeviceProfileService],
+   ['assetProfileService', AssetProfileService],
    ['otaPackageService', OtaPackageService],
    ['authService', AuthService],
    ['resourceService', ResourceService],

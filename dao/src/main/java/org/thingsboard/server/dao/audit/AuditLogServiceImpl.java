@@ -166,8 +166,8 @@ public class AuditLogServiceImpl implements AuditLogService {
             case UPDATED:
             case ALARM_ACK:
             case ALARM_CLEAR:
-            case ALARM_ASSIGN:
-            case ALARM_UNASSIGN:
+            case ALARM_ASSIGNED:
+            case ALARM_UNASSIGNED:
             case RELATIONS_DELETED:
             case ASSIGNED_TO_TENANT:
                 if (entity != null) {

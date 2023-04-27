@@ -41,7 +41,10 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.EntityActionTrigger;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 
 import java.util.List;
 import java.util.Map;
@@ -53,6 +56,7 @@ import java.util.stream.Collectors;
 public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
+    private final NotificationRuleProcessor notificationRuleProcessor;
 
     private static final ObjectMapper json = new ObjectMapper();
 
@@ -87,11 +91,11 @@ public class EntityActionService {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
-            case ALARM_ASSIGN:
-                msgType = DataConstants.ALARM_ASSIGN;
+            case ALARM_ASSIGNED:
+                msgType = DataConstants.ALARM_ASSIGNED;
                 break;
-            case ALARM_UNASSIGN:
-                msgType = DataConstants.ALARM_UNASSIGN;
+            case ALARM_UNASSIGNED:
+                msgType = DataConstants.ALARM_UNASSIGNED;
                 break;
             case ALARM_DELETE:
                 msgType = DataConstants.ALARM_DELETE;
@@ -233,12 +237,28 @@ public class EntityActionService {
                         entityNode = json.valueToTree(extractParameter(EntityRelation.class, 0, additionalInfo));
                     }
                 }
-                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+
                 if (tenantId == null || tenantId.isNullUid()) {
                     if (entity instanceof HasTenantId) {
                         tenantId = ((HasTenantId) entity).getTenantId();
                     }
                 }
+                if (tenantId != null && !tenantId.isSysTenantId()) {
+                    if (actionType == ActionType.ADDED) {
+                        notificationRuleProcessor.process(EntitiesLimitTrigger.builder()
+                                .tenantId(tenantId)
+                                .entityType(entityId.getEntityType())
+                                .build());
+                    }
+                    notificationRuleProcessor.process(EntityActionTrigger.builder()
+                            .tenantId(tenantId)
+                            .entityId(entityId)
+                            .entity(entity)
+                            .actionType(actionType)
+                            .user(user)
+                            .build());
+                }
+                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
                 tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
@@ -247,7 +267,7 @@ public class EntityActionService {
     }
 
     public <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
-                                                                           ActionType actionType, Exception e, Object... additionalInfo) {
+                                                                        ActionType actionType, Exception e, Object... additionalInfo) {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
         }

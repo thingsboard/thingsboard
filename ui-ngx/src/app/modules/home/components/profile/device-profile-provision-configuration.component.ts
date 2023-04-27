@@ -107,7 +107,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
         }
         const certificateRegExPattern: string = this.provisionConfigurationFormGroup.get('certificateRegExPattern').value;
         if (!certificateRegExPattern || !certificateRegExPattern.length) {
-          this.provisionConfigurationFormGroup.get('certificateRegExPattern').patchValue('[\\w]*', {emitEvent: false});
+          this.provisionConfigurationFormGroup.get('certificateRegExPattern').patchValue('(.*)', {emitEvent: false});
         }
         const allowCreateNewDevicesByX509Certificate: boolean | null = this.provisionConfigurationFormGroup.get('allowCreateNewDevicesByX509Certificate').value;
         if (!isBoolean(allowCreateNewDevicesByX509Certificate)) {

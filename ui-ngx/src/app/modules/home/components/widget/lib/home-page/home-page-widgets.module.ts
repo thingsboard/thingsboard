@@ -23,11 +23,19 @@ import { VersionInfoComponent } from '@home/components/widget/lib/home-page/vers
 import { DocLinksWidgetComponent } from '@home/components/widget/lib/home-page/doc-links-widget.component';
 import { DocLinkComponent } from '@home/components/widget/lib/home-page/doc-link.component';
 import { AddDocLinkDialogComponent } from '@home/components/widget/lib/home-page/add-doc-link-dialog.component';
-import { EditDocLinksDialogComponent } from '@home/components/widget/lib/home-page/edit-doc-links-dialog.component';
+import { EditLinksDialogComponent } from '@home/components/widget/lib/home-page/edit-links-dialog.component';
 import { GettingStartedWidgetComponent } from '@home/components/widget/lib/home-page/getting-started-widget.component';
 import {
   GettingStartedCompletedDialogComponent
 } from '@home/components/widget/lib/home-page/getting-started-completed-dialog.component';
+import { ToggleHeaderComponent } from '@home/components/widget/lib/home-page/toggle-header.component';
+import { UsageInfoWidgetComponent } from '@home/components/widget/lib/home-page/usage-info-widget.component';
+import { QuickLinksWidgetComponent } from '@home/components/widget/lib/home-page/quick-links-widget.component';
+import { QuickLinkComponent } from '@home/components/widget/lib/home-page/quick-link.component';
+import { AddQuickLinkDialogComponent } from '@home/components/widget/lib/home-page/add-quick-link-dialog.component';
+import {
+  RecentDashboardsWidgetComponent
+} from '@home/components/widget/lib/home-page/recent-dashboards-widget.component';
 
 @NgModule({
   declarations:
@@ -38,9 +46,15 @@ import {
       DocLinksWidgetComponent,
       DocLinkComponent,
       AddDocLinkDialogComponent,
-      EditDocLinksDialogComponent,
+      EditLinksDialogComponent,
       GettingStartedWidgetComponent,
-      GettingStartedCompletedDialogComponent
+      GettingStartedCompletedDialogComponent,
+      ToggleHeaderComponent,
+      UsageInfoWidgetComponent,
+      QuickLinksWidgetComponent,
+      QuickLinkComponent,
+      AddQuickLinkDialogComponent,
+      RecentDashboardsWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -53,9 +67,15 @@ import {
     DocLinksWidgetComponent,
     DocLinkComponent,
     AddDocLinkDialogComponent,
-    EditDocLinksDialogComponent,
+    EditLinksDialogComponent,
     GettingStartedWidgetComponent,
-    GettingStartedCompletedDialogComponent
+    GettingStartedCompletedDialogComponent,
+    ToggleHeaderComponent,
+    UsageInfoWidgetComponent,
+    QuickLinksWidgetComponent,
+    QuickLinkComponent,
+    AddQuickLinkDialogComponent,
+    RecentDashboardsWidgetComponent
   ]
 })
 export class HomePageWidgetsModule { }

@@ -27,8 +27,6 @@ public interface SlackService {
 
     List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversationType conversationType);
 
-    SlackConversation findConversation(TenantId tenantId, String token, SlackConversationType conversationType, String namePattern);
-
     String getToken(TenantId tenantId);
 
 }

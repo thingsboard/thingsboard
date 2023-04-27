@@ -331,6 +331,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   }
 
   configureAddActions(deviceScope: string): Array<HeaderActionDescriptor> {
+    this.config.addEntity = null;
     const actions: Array<HeaderActionDescriptor> = [];
     if (deviceScope === 'tenant') {
       actions.push(
@@ -347,6 +348,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           onAction: ($event) => this.importDevices($event)
         },
       );
+      this.config.addEntity = () => {this.deviceWizard(null); return of(null); };
     }
     if (deviceScope === 'customer') {
       actions.push(

@@ -174,7 +174,16 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        Assertions.assertEquals(inputMsgs.get(0), newMsgCaptor.getValue());
+
+        TbMsg firstMsg = inputMsgs.get(0);
+        TbMsg actualMsg = newMsgCaptor.getValue();
+        // msg ids should be different because we create new msg before enqueueForTellNext
+        Assertions.assertNotEquals(firstMsg.getId(), actualMsg.getId());
+        Assertions.assertEquals(firstMsg.getOriginator(), actualMsg.getOriginator());
+        Assertions.assertEquals(firstMsg.getCustomerId(), actualMsg.getCustomerId());
+        Assertions.assertEquals(firstMsg.getData(), actualMsg.getData());
+        Assertions.assertEquals(firstMsg.getMetaData(), actualMsg.getMetaData());
+        Assertions.assertEquals(firstMsg.getType(), actualMsg.getType());
     }
 
     @Test
@@ -213,7 +222,15 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        Assertions.assertEquals(msgWithLatestTs, newMsgCaptor.getValue());
+
+        TbMsg actualMsg = newMsgCaptor.getValue();
+        // msg ids should be different because we create new msg before enqueueForTellNext
+        Assertions.assertNotEquals(msgWithLatestTs.getId(), actualMsg.getId());
+        Assertions.assertEquals(msgWithLatestTs.getOriginator(), actualMsg.getOriginator());
+        Assertions.assertEquals(msgWithLatestTs.getCustomerId(), actualMsg.getCustomerId());
+        Assertions.assertEquals(msgWithLatestTs.getData(), actualMsg.getData());
+        Assertions.assertEquals(msgWithLatestTs.getMetaData(), actualMsg.getMetaData());
+        Assertions.assertEquals(msgWithLatestTs.getType(), actualMsg.getType());
     }
 
     @Test
@@ -350,8 +367,24 @@ public class TbMsgDeduplicationNodeTest {
 
         List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
         Assertions.assertEquals(2, resultMsgs.size());
-        Assertions.assertTrue(resultMsgs.contains(msgWithLatestTsInFirstPack));
-        Assertions.assertTrue(resultMsgs.contains(msgWithLatestTsInSecondPack));
+
+        // verify that newMsg is called but content of messages is the same as in the last msg for the first pack.
+        TbMsg actualMsg = resultMsgs.get(0);
+        Assertions.assertNotEquals(msgWithLatestTsInFirstPack.getId(), actualMsg.getId());
+        Assertions.assertEquals(msgWithLatestTsInFirstPack.getOriginator(), actualMsg.getOriginator());
+        Assertions.assertEquals(msgWithLatestTsInFirstPack.getCustomerId(), actualMsg.getCustomerId());
+        Assertions.assertEquals(msgWithLatestTsInFirstPack.getData(), actualMsg.getData());
+        Assertions.assertEquals(msgWithLatestTsInFirstPack.getMetaData(), actualMsg.getMetaData());
+        Assertions.assertEquals(msgWithLatestTsInFirstPack.getType(), actualMsg.getType());
+
+        // verify that newMsg is called but content of messages is the same as in the last msg for the second pack.
+        actualMsg = resultMsgs.get(1);
+        Assertions.assertNotEquals(msgWithLatestTsInSecondPack.getId(), actualMsg.getId());
+        Assertions.assertEquals(msgWithLatestTsInSecondPack.getOriginator(), actualMsg.getOriginator());
+        Assertions.assertEquals(msgWithLatestTsInSecondPack.getCustomerId(), actualMsg.getCustomerId());
+        Assertions.assertEquals(msgWithLatestTsInSecondPack.getData(), actualMsg.getData());
+        Assertions.assertEquals(msgWithLatestTsInSecondPack.getMetaData(), actualMsg.getMetaData());
+        Assertions.assertEquals(msgWithLatestTsInSecondPack.getType(), actualMsg.getType());
     }
 
     private TbMsg getMsgWithLatestTs(List<TbMsg> firstMsgPack) {

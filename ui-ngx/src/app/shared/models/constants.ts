@@ -133,6 +133,7 @@ export const HelpLinks = {
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
     ruleNodeSendSms: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-sms-node',
     ruleNodeMath: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#math-function-node',
+    ruleNodeCalculateDelta: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#calculate-delta',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
     tenantProfiles: helpBaseUrl + '/docs/user-guide/ui/tenant-profiles',
     customers: helpBaseUrl + '/docs/user-guide/ui/customers',
@@ -160,7 +161,11 @@ export const HelpLinks = {
     queue: helpBaseUrl + '/docs/user-guide/queue',
     repositorySettings: helpBaseUrl + '/docs/user-guide/version-control/#git-settings-configuration',
     autoCommitSettings: helpBaseUrl + '/docs/user-guide/version-control/#auto-commit',
-    twoFactorAuthentication: helpBaseUrl + '/docs/user-guide/two-factor-authentication'
+    twoFactorAuthentication: helpBaseUrl + '/docs/user-guide/two-factor-authentication',
+    sentNotification: helpBaseUrl + '/docs/user-guide/notifications/#send-notification',
+    templateNotifications: helpBaseUrl + '/docs/user-guide/notifications/#templates',
+    recipientNotifications: helpBaseUrl + '/docs/user-guide/notifications/#recipients',
+    ruleNotifications: helpBaseUrl + '/docs/user-guide/notifications/#rules',
   }
 };
 
