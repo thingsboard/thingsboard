@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.Tenant;
@@ -83,6 +84,7 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ACTIVE_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_INFO_DESCRIPTION;
@@ -333,6 +335,8 @@ public class DeviceController extends BaseController {
             @RequestParam(required = false) String type,
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
+            @ApiParam(value = DEVICE_ACTIVE_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean active,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES)
@@ -342,14 +346,15 @@ public class DeviceController extends BaseController {
     ) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        DeviceInfoFilter.DeviceInfoFilterBuilder filter = DeviceInfoFilter.builder();
+        filter.tenantId(tenantId);
+        filter.active(active);
         if (type != null && type.trim().length() > 0) {
-            return checkNotNull(deviceService.findDeviceInfosByTenantIdAndType(tenantId, type, pageLink));
+            filter.type(type);
         } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
-            DeviceProfileId profileId = new DeviceProfileId(toUUID(deviceProfileId));
-            return checkNotNull(deviceService.findDeviceInfosByTenantIdAndDeviceProfileId(tenantId, profileId, pageLink));
-        } else {
-            return checkNotNull(deviceService.findDeviceInfosByTenantId(tenantId, pageLink));
+            filter.deviceProfileId(new DeviceProfileId(toUUID(deviceProfileId)));
         }
+        return checkNotNull(deviceService.findDeviceInfosByFilter(filter.build(), pageLink));
     }
 
     @ApiOperation(value = "Get Tenant Device (getTenantDevice)",
@@ -415,6 +420,8 @@ public class DeviceController extends BaseController {
             @RequestParam(required = false) String type,
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
+            @ApiParam(value = DEVICE_ACTIVE_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean active,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES)
@@ -426,14 +433,16 @@ public class DeviceController extends BaseController {
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         checkCustomerId(customerId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        DeviceInfoFilter.DeviceInfoFilterBuilder filter = DeviceInfoFilter.builder();
+        filter.tenantId(tenantId);
+        filter.customerId(customerId);
+        filter.active(active);
         if (type != null && type.trim().length() > 0) {
-            return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+            filter.type(type);
         } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
-            DeviceProfileId profileId = new DeviceProfileId(toUUID(deviceProfileId));
-            return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerIdAndDeviceProfileId(tenantId, customerId, profileId, pageLink));
-        } else {
-            return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            filter.deviceProfileId(new DeviceProfileId(toUUID(deviceProfileId)));
         }
+        return checkNotNull(deviceService.findDeviceInfosByFilter(filter.build(), pageLink));
     }
 
     @ApiOperation(value = "Get Devices By Ids (getDevicesByIds)",

@@ -859,6 +859,16 @@ CREATE TABLE IF NOT EXISTS user_settings (
     CONSTRAINT user_settings_pkey PRIMARY KEY (user_id, type)
 );
 
+CREATE OR REPLACE VIEW device_info_view as
+SELECT d.*
+       , c.title as customer_title
+       , c.additional_info::json->>'isPublic' as customer_is_public
+       , d.type as device_profile_name
+       , (select bool_v from attribute_kv da where da.entity_id = d.id and da.attribute_key = 'active') as attribute_active
+       , (select bool_v from ts_kv_latest dt where dt.entity_id = d.id and dt.key = (select key_id from ts_kv_dictionary where key = 'active')) as ts_active
+FROM device d
+         LEFT JOIN customer c ON c.id = d.customer_id;
+
 DROP VIEW IF EXISTS alarm_info CASCADE;
 CREATE VIEW alarm_info AS
 SELECT a.*,

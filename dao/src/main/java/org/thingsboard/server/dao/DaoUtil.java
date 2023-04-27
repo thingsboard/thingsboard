@@ -18,6 +18,7 @@ package org.thingsboard.server.dao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
@@ -44,6 +45,12 @@ public abstract class DaoUtil {
         List<T> data = convertDataList(page.getContent());
         return new PageData<>(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
     }
+
+    public static <T> PageData<T> toPageData(Page<? extends ToData<T>> page, Object... params) {
+        List<T> data = convertDataList(page.getContent(), params);
+        return new PageData<>(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
+    }
+
 
     public static <T> PageData<T> pageToPageData(Page<T> page) {
         return new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
@@ -78,6 +85,19 @@ public abstract class DaoUtil {
         return list;
     }
 
+    public static <T> List<T> convertDataList(Collection<? extends ToData<T>> toDataList, Object... params) {
+        List<T> list = Collections.emptyList();
+        if (toDataList != null && !toDataList.isEmpty()) {
+            list = new ArrayList<>();
+            for (ToData<T> object : toDataList) {
+                if (object != null) {
+                    list.add(object.toData(params));
+                }
+            }
+        }
+        return list;
+    }
+
     public static <T> T getData(ToData<T> data) {
         T object = null;
         if (data != null) {
@@ -85,6 +105,15 @@ public abstract class DaoUtil {
         }
         return object;
     }
+
+    public static <T> T getData(ToData<T> data, Object... params) {
+        T object = null;
+        if (data != null) {
+            object = data.toData(params);
+        }
+        return object;
+    }
+
 
     public static <T> T getData(Optional<? extends ToData<T>> data) {
         T object = null;
@@ -128,4 +157,11 @@ public abstract class DaoUtil {
         } while (hasNextBatch);
     }
 
+    public static String getStringId(UUIDBased id) {
+        if (id != null) {
+            return id.toString();
+        } else {
+            return null;
+        }
+    }
 }

@@ -30,6 +30,8 @@ public class DeviceInfo extends Device {
     private boolean customerIsPublic;
     @ApiModelProperty(position = 15, value = "Name of the corresponding Device Profile.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String deviceProfileName;
+    @ApiModelProperty(position = 16, value = "Device active flag.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private boolean active;
 
     public DeviceInfo() {
         super();
@@ -39,10 +41,11 @@ public class DeviceInfo extends Device {
         super(deviceId);
     }
 
-    public DeviceInfo(Device device, String customerTitle, boolean customerIsPublic, String deviceProfileName) {
+    public DeviceInfo(Device device, String customerTitle, boolean customerIsPublic, String deviceProfileName, boolean active) {
         super(device);
         this.customerTitle = customerTitle;
         this.customerIsPublic = customerIsPublic;
         this.deviceProfileName = deviceProfileName;
+        this.active = active;
     }
 }

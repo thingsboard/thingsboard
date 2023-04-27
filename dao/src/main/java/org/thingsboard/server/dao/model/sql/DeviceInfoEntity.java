@@ -15,48 +15,57 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Immutable;
 import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.dao.model.ModelConstants;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Entity
+@Immutable
+@Table(name = ModelConstants.DEVICE_INFO_VIEW_COLUMN_FAMILY_NAME)
 public class DeviceInfoEntity extends AbstractDeviceEntity<DeviceInfo> {
 
-    public static final Map<String,String> deviceInfoColumnMap = new HashMap<>();
+    public static final Map<String, String> attrActiveColumnMap = new HashMap<>();
+    public static final Map<String, String> tsActiveColumnMap = new HashMap<>();
     static {
-        deviceInfoColumnMap.put("customerTitle", "c.title");
-        deviceInfoColumnMap.put("deviceProfileName", "p.name");
+        attrActiveColumnMap.put("active", "attributeActive");
+        tsActiveColumnMap.put("active", "tsActive");
     }
 
+    @Column(name = ModelConstants.DEVICE_CUSTOMER_TITLE_PROPERTY)
     private String customerTitle;
-    private boolean customerIsPublic;
+    @Column(name = ModelConstants.DEVICE_CUSTOMER_IS_PUBLIC_PROPERTY)
+    private Boolean customerIsPublic;
+    @Column(name = ModelConstants.DEVICE_DEVICE_PROFILE_NAME_PROPERTY)
     private String deviceProfileName;
+    @Column(name = ModelConstants.DEVICE_ATTR_ACTIVE_PROPERTY)
+    private Boolean attributeActive;
+    @Column(name = ModelConstants.DEVICE_TS_ACTIVE_PROPERTY)
+    private Boolean tsActive;
 
     public DeviceInfoEntity() {
         super();
     }
 
-    public DeviceInfoEntity(DeviceEntity deviceEntity,
-                            String customerTitle,
-                            Object customerAdditionalInfo,
-                            String deviceProfileName) {
-        super(deviceEntity);
-        this.customerTitle = customerTitle;
-        if (customerAdditionalInfo != null && ((JsonNode)customerAdditionalInfo).has("isPublic")) {
-            this.customerIsPublic = ((JsonNode)customerAdditionalInfo).get("isPublic").asBoolean();
-        } else {
-            this.customerIsPublic = false;
-        }
-        this.deviceProfileName = deviceProfileName;
-    }
 
     @Override
     public DeviceInfo toData() {
-        return new DeviceInfo(super.toDevice(), customerTitle, customerIsPublic, deviceProfileName);
+        return toData(false);
+    }
+
+    @Override
+    public DeviceInfo toData(Object... persistToTelemetry) {
+        boolean attr = persistToTelemetry.length == 0 || !(Boolean) persistToTelemetry[0];
+        return new DeviceInfo(super.toDevice(), customerTitle, Boolean.TRUE.equals(customerIsPublic), deviceProfileName,
+                attr ? Boolean.TRUE.equals(attributeActive) : Boolean.TRUE.equals(tsActive));
     }
 }
