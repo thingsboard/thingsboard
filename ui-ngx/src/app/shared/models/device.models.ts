@@ -368,6 +368,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
           deviceAttributesTopic: 'v1/devices/me/attributes',
           deviceAttributesSubscribeTopic: 'v1/devices/me/attributes',
           sparkplug: false,
+          sparkplugAttributesMetricNames: ['Node Control/*', 'Device Control/*', 'Properties/*'],
           sendAckOnValidationException: false,
           transportPayloadTypeConfiguration: {
             transportPayloadType: TransportPayloadType.JSON,

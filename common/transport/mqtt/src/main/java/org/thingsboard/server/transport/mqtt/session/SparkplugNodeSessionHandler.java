@@ -233,7 +233,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         try {
             List<TransportProtos.PostTelemetryMsg> msgs = new ArrayList<>();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
-                if (attributesMetricNames == null || !attributesMetricNames.contains(protoMetric.getName())) {
+                if (attributesMetricNames == null || !matches(attributesMetricNames, protoMetric)) {
                     long ts = protoMetric.getTimestamp();
                     String key = "bdSeq".equals(protoMetric.getName()) ?
                             topicTypeName + " " + protoMetric.getName() : protoMetric.getName();
@@ -264,7 +264,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         try {
             List<TransportApiProtos.AttributesMsg> msgs = new ArrayList<>();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
-                if (attributesMetricNames.contains(protoMetric.getName())) {
+                if (matches(attributesMetricNames, protoMetric)) {
                     TransportApiProtos.AttributesMsg.Builder deviceAttributesMsgBuilder = TransportApiProtos.AttributesMsg.newBuilder();
                     Optional<TransportProtos.PostAttributeMsg> msgOpt = getPostAttributeMsg(protoMetric);
                     if (msgOpt.isPresent()) {
@@ -279,6 +279,18 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
             log.error("Failed to decode post telemetry request", e);
             throw new AdaptorException(e);
         }
+    }
+
+    private boolean matches(Set<String> attributesMetricNames, SparkplugBProto.Payload.Metric protoMetric) {
+        String metricName = protoMetric.getName();
+        for (String attributeMetricFilter : attributesMetricNames) {
+            if (metricName.equals(attributeMetricFilter) ||
+                    (attributeMetricFilter.endsWith("*") && metricName.startsWith(
+                            attributeMetricFilter.substring(0, attributeMetricFilter.length() - 1)))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Optional<TransportProtos.PostAttributeMsg> getPostAttributeMsg(SparkplugBProto.Payload.Metric protoMetric) throws ThingsboardException {
