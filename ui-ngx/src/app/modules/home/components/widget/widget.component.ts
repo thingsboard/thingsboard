@@ -1479,28 +1479,29 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private loadCustomActionResources(actionNamespace: string, customCss: string, customResources: Array<WidgetResource>, actionDescriptor: WidgetActionDescriptor): Observable<any> {
+    const resourceTasks: Observable<string>[] = [];
+    const modulesTasks: Observable<ModulesWithFactories | string>[] = [];
+
     if (isDefined(customCss) && customCss.length > 0) {
       this.cssParser.cssPreviewNamespace = actionNamespace;
       this.cssParser.createStyleElement(actionNamespace, customCss, 'nonamespace');
     }
-    const resourceTasks: Observable<string>[] = [];
-    const modulesTasks: Observable<ModulesWithFactories | string>[] = [];
+
     if (isDefined(customResources) && customResources.length > 0) {
-      customResources.filter(r => r.isModule).forEach(
-        (resource) => {
+      customResources.forEach(resource => {
+        if (resource.isModule) {
           modulesTasks.push(
             this.resources.loadFactories(resource.url, this.modulesMap).pipe(
               catchError((e: Error) => of(e?.message ? e.message : `Failed to load custom action resource module: '${resource.url}'`))
             )
           );
+        } else {
+          resourceTasks.push(
+            this.resources.loadResource(resource.url).pipe(
+              catchError(() => of(`Failed to load custom action resource: '${resource.url}'`))
+            )
+          );
         }
-      );
-      customResources.filter(r => !r.isModule).forEach((resource) => {
-        resourceTasks.push(
-          this.resources.loadResource(resource.url).pipe(
-            catchError(e => of(`Failed to load custom action resource: '${resource.url}'`))
-          )
-        );
       });
 
       if (modulesTasks.length) {
@@ -1521,28 +1522,24 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         );
 
         resourceTasks.push(modulesObservable.pipe(
-          mergeMap((resolvedModules) => {
+          map((resolvedModules) => {
             if (typeof resolvedModules === 'string') {
-              return of(resolvedModules);
+              return resolvedModules;
             } else {
               actionDescriptor.customModules = resolvedModules;
-              return of(null);
+              return null;
             }
           })));
       }
 
       return forkJoin(resourceTasks).pipe(
         switchMap(msgs => {
-            let errors: string[];
-            if (msgs && msgs.length) {
-              errors = msgs.filter(msg => msg && msg.length > 0);
-            }
-            if (errors && errors.length) {
-              return throwError(errors);
-            } else {
-              return of(null);
-            }
-          }
+          const errors = msgs.filter(msg => msg && msg.length > 0);
+          if (errors.length > 0) {
+            return throwError(() => errors);
+          } else {
+            return of(null);
+          }}
         ));
     } else {
       return of(null);

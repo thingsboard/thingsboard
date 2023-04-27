@@ -49,7 +49,7 @@ export class CustomDialogService {
                config?: MatDialogConfig): Observable<any> {
     const modules = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule];
     if (isObject(data) && data.hasOwnProperty('customModules')) {
-      modules.push(data.customModules);
+      modules.push(...data.customModules);
     }
     return this.dynamicComponentFactoryService.createDynamicComponentFactory(
       class CustomDialogComponentInstance extends CustomDialogComponent {}, template, modules).pipe(
