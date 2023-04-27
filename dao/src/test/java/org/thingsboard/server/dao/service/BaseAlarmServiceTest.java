@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmPropagationInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmQueryV2;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -213,6 +214,115 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         alarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.CLEARED_ACK).pageLink(
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
+    }
+
+    @Test
+    public void testFindAlarmV2() throws ExecutionException, InterruptedException {
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
+
+        EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
+
+        Assert.assertTrue(relationService.saveRelationAsync(tenantId, relation).get());
+
+        long ts = System.currentTimeMillis();
+        AlarmApiCallResult result = alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.builder()
+                .tenantId(tenantId)
+                .originator(childId)
+                .type(TEST_ALARM)
+                .severity(AlarmSeverity.CRITICAL)
+                .startTs(ts).build());
+        AlarmInfo created = result.getAlarm();
+
+        // Check child relation
+        PageData<AlarmInfo> alarms = alarmService.findAlarmsV2(tenantId, AlarmQueryV2.builder()
+                .affectedEntityId(childId)
+                        .severityList(Arrays.asList(AlarmSeverity.CRITICAL))
+                        .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
+
+        // Check parent relation
+        alarms = alarmService.findAlarmsV2(tenantId, AlarmQueryV2.builder()
+                .affectedEntityId(parentId)
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL))
+                .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(0, alarms.getData().size());
+
+        created.setPropagate(true);
+        result = alarmService.updateAlarm(AlarmUpdateRequest.fromAlarm(created));
+        created = result.getAlarm();
+
+        // Check child relation
+        alarms = alarmService.findAlarmsV2(tenantId, AlarmQueryV2.builder()
+                .affectedEntityId(childId)
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL))
+                .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
+
+        // Check parent relation
+        alarms = alarmService.findAlarmsV2(tenantId, AlarmQueryV2.builder()
+                .affectedEntityId(parentId)
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL))
+                .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
+
+        alarmService.acknowledgeAlarm(tenantId, created.getId(), System.currentTimeMillis());
+        created = alarmService.findAlarmInfoById(tenantId, created.getId());
+
+        alarms = alarmService.findAlarmsV2(tenantId, AlarmQueryV2.builder()
+                .affectedEntityId(childId)
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL))
+                .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.ACK)).pageLink(
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
+
+        // Check not existing relation
+        alarms = alarmService.findAlarmsV2(tenantId, AlarmQueryV2.builder()
+                .affectedEntityId(childId)
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL))
+                .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
+                        new TimePageLink(1, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(0, alarms.getData().size());
+
+        alarmService.clearAlarm(tenantId, created.getId(), System.currentTimeMillis(), null);
+        created = alarmService.findAlarmInfoById(tenantId, created.getId());
+
+        alarms = alarmService.findAlarmsV2(tenantId, AlarmQueryV2.builder()
+                .affectedEntityId(childId)
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL))
+                .statusList(Arrays.asList(AlarmSearchStatus.CLEARED, AlarmSearchStatus.ACK)).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
                 ).build()).get();

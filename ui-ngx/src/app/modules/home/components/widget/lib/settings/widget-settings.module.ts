@@ -262,6 +262,9 @@ import {
 import {
   DocLinksWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/home-page/doc-links-widget-settings.component';
+import {
+  QuickLinksWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/home-page/quick-links-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -361,7 +364,8 @@ import {
     MapWidgetSettingsComponent,
     RouteMapWidgetSettingsComponent,
     TripAnimationWidgetSettingsComponent,
-    DocLinksWidgetSettingsComponent
+    DocLinksWidgetSettingsComponent,
+    QuickLinksWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -465,7 +469,8 @@ import {
     MapWidgetSettingsComponent,
     RouteMapWidgetSettingsComponent,
     TripAnimationWidgetSettingsComponent,
-    DocLinksWidgetSettingsComponent
+    DocLinksWidgetSettingsComponent,
+    QuickLinksWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -533,5 +538,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-map-widget-settings': MapWidgetSettingsComponent,
   'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
   'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent,
-  'tb-doc-links-widget-settings': DocLinksWidgetSettingsComponent
+  'tb-doc-links-widget-settings': DocLinksWidgetSettingsComponent,
+  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent
 };

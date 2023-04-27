@@ -217,6 +217,7 @@ export interface TbFlotKeySettings {
   removeFromLegend: boolean;
   showLines: boolean;
   fillLines: boolean;
+  fillLinesOpacity: number;
   showPoints: boolean;
   showPointShape: string;
   pointShapeFormatter: string;

@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  width: 100%;
-  height: 100%;
-  min-width: 300px;
-  overflow: hidden;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow:
-    0 7px 8px -4px rgba(0, 0, 0, .2),
-    0 13px 19px 2px rgba(0, 0, 0, .14),
-    0 5px 24px 4px rgba(0, 0, 0, .12);
+package org.thingsboard.server.common.data.exception;
 
-  .mat-content {
-    overflow: hidden;
-    background-color: #fff;
-  }
+import lombok.Getter;
+import org.thingsboard.server.common.data.id.TenantId;
 
-  .mat-padding {
-    padding: 16px;
-  }
+public class TenantNotFoundException extends RuntimeException {
+
+    @Getter
+    private final TenantId tenantId;
+
+    public TenantNotFoundException(TenantId tenantId) {
+        super("Tenant with id " + tenantId + " not found");
+        this.tenantId = tenantId;
+    }
+
 }

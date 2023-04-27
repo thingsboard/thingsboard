@@ -27,7 +27,7 @@ import {
 } from '@home/components/widget/lib/home-page/getting-started-completed-dialog.component';
 import { GettingStarted } from '@shared/models/user-settings.models';
 import { CdkStep, StepperSelectionEvent } from '@angular/cdk/stepper';
-import { isUndefined } from '@core/utils';
+import { baseUrl, isUndefined } from '@core/utils';
 import { MatStepper } from '@angular/material/stepper';
 import { first } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
@@ -53,6 +53,8 @@ export class GettingStartedWidgetComponent extends PageComponent implements OnIn
     maxSelectedIndex: 0
   };
   allCompleted = false;
+
+  baseUrl = baseUrl();
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
