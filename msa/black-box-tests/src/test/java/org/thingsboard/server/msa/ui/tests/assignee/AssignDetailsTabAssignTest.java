@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.msa.ui.tests.assignee;
 
+import io.qameta.allure.Description;
+import io.qameta.allure.Feature;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -32,6 +34,7 @@ import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 
+@Feature("Assign from details tab of entity (by tenant)")
 public class AssignDetailsTabAssignTest extends AbstractAssignTest {
 
     private AssetId assetId;
@@ -41,7 +44,6 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     private AlarmId assetAlarmId;
     private AlarmId entityViewAlarmId;
     private EntityViewId entityViewId;
-
     private String assetName;
     private String entityViewName;
     private String propagateAlarmType;
@@ -49,7 +51,6 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     private String customerAlarmType;
     private String assetAlarmType;
     private String entityViewAlarmType;
-
     private AssetPageHelper assetPage;
     private EntityViewPageHelper entityViewPage;
 
@@ -81,17 +82,16 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
 
     @AfterClass
     public void deleteTestEntities() {
-        testRestClient.deleteAlarm(customerAlarmId);
-        testRestClient.deleteAlarm(assetAlarmId);
-        testRestClient.deleteAlarm(entityViewAlarmId);
-        testRestClient.deleteAsset(assetId);
-        testRestClient.deleteEntityView(entityViewId);
+        deleteAlarmById(customerAlarmId);
+        deleteAlarmById(assetAlarmId);
+        deleteAlarmById(entityViewAlarmId);
+        deleteAssetById(assetId);
+        deleteEntityView(entityViewId);
     }
 
     @AfterMethod
     public void deleteTestAlarms() {
-        testRestClient.deleteAlarm(propageteAlarmId);
-        testRestClient.deleteAlarm(propageteAssigneAlarmId);
+        deleteAlarmsByIds(propageteAlarmId, propageteAssigneAlarmId);
     }
 
     @DataProvider
@@ -108,6 +108,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
                 {propagateAssignedAlarmType}};
     }
 
+    @Description("Can assign alarm to yourself/Can assign propagate alarm to yourself")
     @Test(dataProvider = "alarms")
     public void assignAlarmToYourself(String alarm) {
         sideBarMenuView.goToDevicesPage();
@@ -117,6 +118,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.assignedUser(Const.TENANT_EMAIL));
     }
 
+    @Description("Can assign alarm to another user/Can assign propagate alarm to another user")
     @Test(dataProvider = "alarms")
     public void assignAlarmToAnotherUser(String alarm) {
         sideBarMenuView.goToDevicesPage();
@@ -126,6 +128,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.assignedUser(userEmail));
     }
 
+    @Description("Can unassign alarm/Can unassign propagate alarm")
     @Test(dataProvider = "assignedAlarms")
     public void unassignedAlarm(String assignedAlarm) {
         sideBarMenuView.goToDevicesPage();
@@ -135,6 +138,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.unassigned(assignedAlarm));
     }
 
+    @Description("Can reassign alarm to another user/Can reassign propagate alarm to another user")
     @Test(dataProvider = "assignedAlarms")
     public void reassignAlarm(String assignedAlarm) {
         sideBarMenuView.goToDevicesPage();
@@ -144,6 +148,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.assignedUser(Const.TENANT_EMAIL));
     }
 
+    @Description("Search by email")
     @Test
     public void searchByEmail() {
         sideBarMenuView.goToDevicesPage();
@@ -155,6 +160,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         alarmPage.assignUsers().forEach(this::assertIsDisplayed);
     }
 
+    @Description("Search by name")
     @Test(groups = "broken")
     public void searchByName() {
         sideBarMenuView.goToDevicesPage();
@@ -166,6 +172,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         alarmPage.assignUsers().forEach(this::assertIsDisplayed);
     }
 
+    @Description("Assign alarm to yourself from details of alarm")
     @Test
     public void assignAlarmToYourselfFromDetails() {
         sideBarMenuView.goToDevicesPage();
@@ -177,6 +184,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.assignedUser(Const.TENANT_EMAIL));
     }
 
+    @Description("Assign alarm to another user from details of alarm")
     @Test
     public void assignAlarmToAnotherUserFromDetails() {
         sideBarMenuView.goToDevicesPage();
@@ -188,6 +196,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.assignedUser(userEmail));
     }
 
+    @Description("Unassign alarm from details of alarm")
     @Test
     public void unassignedAlarmFromDetails() {
         sideBarMenuView.goToDevicesPage();
@@ -199,6 +208,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.unassigned(assignedAlarmType));
     }
 
+    @Description("Reassign alarm to another user from details of alarm")
     @Test
     public void reassignAlarmFromDetails() {
         sideBarMenuView.goToDevicesPage();
@@ -210,6 +220,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.assignedUser(Const.TENANT_EMAIL));
     }
 
+    @Description("Assign alarm to yourself for Customer entity details")
     @Test
     public void assignCustomerAlarmToYourself() {
         sideBarMenuView.customerBtn().click();
@@ -219,6 +230,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.assignedUser(Const.TENANT_EMAIL));
     }
 
+    @Description("Assign alarm to yourself for Asset details")
     @Test
     public void assignAssetAlarmToYourself() {
         sideBarMenuView.goToAssetsPage();
@@ -228,6 +240,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
         assertIsDisplayed(alarmPage.assignedUser(Const.TENANT_EMAIL));
     }
 
+    @Description("Assign alarm to yourself for Entity view details")
     @Test
     public void assignEntityViewsAlarmToYourself() {
         sideBarMenuView.goToEntityViewsPage();

@@ -36,11 +36,8 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.data.settings.UserSettings;
 
 public class EntityPrototypes {
 
@@ -179,14 +176,14 @@ public class EntityPrototypes {
         return user;
     }
 
-    public static Device defaultDevicePrototype(String name){
+    public static Device defaultDevicePrototype(String name) {
         Device device = new Device();
         device.setName(name + RandomStringUtils.randomAlphanumeric(7));
         device.setType("DEFAULT");
         return device;
     }
 
-    public static Device defaultDevicePrototype(String name, CustomerId id){
+    public static Device defaultDevicePrototype(String name, CustomerId id) {
         Device device = new Device();
         device.setName(name + RandomStringUtils.randomAlphanumeric(7));
         device.setCustomerId(id);
@@ -194,7 +191,7 @@ public class EntityPrototypes {
         return device;
     }
 
-    public static Asset defaultAssetPrototype(String name, CustomerId id){
+    public static Asset defaultAssetPrototype(String name, CustomerId id) {
         Asset asset = new Asset();
         asset.setName(name + RandomStringUtils.randomAlphanumeric(7));
         asset.setCustomerId(id);
@@ -202,7 +199,7 @@ public class EntityPrototypes {
         return asset;
     }
 
-    public static EntityView defaultEntityViewPrototype(String name, String type, String entityType){
+    public static EntityView defaultEntityViewPrototype(String name, String type, String entityType) {
         EntityView entityView = new EntityView();
         entityView.setName(name + RandomStringUtils.randomAlphanumeric(7));
         entityView.setType(type + RandomStringUtils.randomAlphanumeric(7));

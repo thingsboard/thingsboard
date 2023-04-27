@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.msa.ui.tests.assignee;
 
+import io.qameta.allure.Epic;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -34,6 +35,7 @@ import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 
+@Epic("Alarm assign")
 abstract public class AbstractAssignTest extends AbstractDriverBaseTest {
 
     protected AlarmId alarmId;
@@ -42,7 +44,6 @@ abstract public class AbstractAssignTest extends AbstractDriverBaseTest {
     protected UserId userId;
     protected UserId userWithNameId;
     protected CustomerId customerId;
-
     protected String deviceName;
     protected String userName;
     protected String customerTitle;
@@ -50,7 +51,6 @@ abstract public class AbstractAssignTest extends AbstractDriverBaseTest {
     protected String userWithNameEmail;
     protected String alarmType;
     protected String assignedAlarmType;
-
     protected SideBarMenuViewHelper sideBarMenuView;
     protected AlarmDetailsEntityTabHelper alarmPage;
     protected DevicePageHelper devicePage;
@@ -82,8 +82,8 @@ abstract public class AbstractAssignTest extends AbstractDriverBaseTest {
 
     @AfterClass
     public void deleteCommonEntities() {
-        testRestClient.deleteCustomer(customerId);
-        testRestClient.deleteDevice(deviceId);
+        deleteCustomerById(customerId);
+        deleteDeviceById(deviceId);
     }
 
     @BeforeMethod
@@ -94,8 +94,7 @@ abstract public class AbstractAssignTest extends AbstractDriverBaseTest {
 
     @AfterMethod
     public void deleteCommonCreatedAlarms() {
-        testRestClient.deleteAlarm(alarmId);
-        testRestClient.deleteAlarm(assignedAlarmId);
+        deleteAlarmsByIds(alarmId, assignedAlarmId);
     }
 
     public void loginByUser(String userEmail) {

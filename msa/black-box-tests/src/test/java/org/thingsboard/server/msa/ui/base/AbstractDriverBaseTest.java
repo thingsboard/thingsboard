@@ -39,6 +39,11 @@ import org.testng.annotations.BeforeMethod;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
@@ -220,5 +225,41 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     public void clearStorage() {
         getWebStorage().getLocalStorage().clear();
         getWebStorage().getSessionStorage().clear();
+    }
+
+    public void deleteAlarmById(AlarmId alarmId) {
+        if (alarmId != null) {
+            testRestClient.deleteAlarm(alarmId);
+        }
+    }
+
+    public void deleteAlarmsByIds(AlarmId... alarmIds) {
+        for (AlarmId alarmId : alarmIds) {
+            deleteAlarmById(alarmId);
+        }
+    }
+
+    public void deleteCustomerById(CustomerId customerId) {
+        if (customerId != null) {
+            testRestClient.deleteCustomer(customerId);
+        }
+    }
+
+    public void deleteDeviceById(DeviceId deviceId) {
+        if (deviceId != null) {
+            testRestClient.deleteDevice(deviceId);
+        }
+    }
+
+    public void deleteAssetById(AssetId assetId) {
+        if (assetId != null) {
+            testRestClient.deleteAsset(assetId);
+        }
+    }
+
+    public void deleteEntityView(EntityViewId entityViewId) {
+        if (entityViewId != null) {
+            testRestClient.deleteEntityView(entityViewId);
+        }
     }
 }
