@@ -32,8 +32,6 @@ public interface NotificationCenter {
 
     void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
 
-    void sendBasicNotification(TenantId tenantId, UserId recipientId, String subject, String text);
-
     void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
     void markAllNotificationsAsRead(TenantId tenantId, UserId recipientId);

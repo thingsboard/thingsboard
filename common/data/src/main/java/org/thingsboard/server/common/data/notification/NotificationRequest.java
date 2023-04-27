@@ -55,7 +55,6 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     private NotificationTemplate template;
     @Valid
     private NotificationInfo info;
-    @NotNull
     @Valid
     private NotificationRequestConfig additionalConfig;
 
