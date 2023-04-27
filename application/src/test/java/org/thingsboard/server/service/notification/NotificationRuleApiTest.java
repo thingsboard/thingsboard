@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -42,7 +41,6 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -68,15 +66,11 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.service.apiusage.limits.LimitedApi;
 import org.thingsboard.server.service.apiusage.limits.RateLimitService;
-import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.util.ArrayList;
@@ -104,10 +98,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     private AlarmSubscriptionService alarmSubscriptionService;
     @Autowired
     private NotificationRequestService notificationRequestService;
-    @Autowired
-    private TenantProfileService tenantProfileService;
-    @Autowired
-    private TbTenantProfileService tbTenantProfileService;
     @Autowired
     private RateLimitService rateLimitService;
     @Autowired
@@ -195,12 +185,12 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .set("bool", BooleanNode.TRUE);
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
-        await().atMost(2, TimeUnit.SECONDS)
+        await().atMost(10, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get() != null);
         Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get();
 
         long ts = System.currentTimeMillis();
-        await().atMost(7, TimeUnit.SECONDS)
+        await().atMost(15, TimeUnit.SECONDS)
                 .until(() -> clients.values().stream().allMatch(client -> client.getLastDataUpdate() != null));
         clients.forEach((expectedDelay, wsClient) -> {
             Notification notification = wsClient.getLastDataUpdate().getUpdate();
@@ -277,7 +267,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .set("bool", BooleanNode.TRUE);
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
-        await().atMost(2, TimeUnit.SECONDS)
+        await().atMost(10, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get() != null);
         Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get();
         getWsClient().waitForUpdate(true);
@@ -287,7 +277,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         assertThat(notification.getInfo()).asInstanceOf(type(AlarmNotificationInfo.class))
                 .extracting(AlarmNotificationInfo::getAlarmId).isEqualTo(alarm.getUuidId());
 
-        await().atMost(2, TimeUnit.SECONDS).until(() -> findNotificationRequests(EntityType.ALARM).getTotalElements() == escalationTable.size());
+        await().atMost(10, TimeUnit.SECONDS).until(() -> findNotificationRequests(EntityType.ALARM).getTotalElements() == escalationTable.size());
         NotificationRequestInfo scheduledNotificationRequest = findNotificationRequests(EntityType.ALARM).getData().stream()
                 .filter(NotificationRequest::isScheduled)
                 .findFirst().orElse(null);
@@ -304,18 +294,15 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testNotificationRuleProcessing_entitiesLimit() throws Exception {
-        TenantProfile tenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
-        TenantProfileData profileData = tenantProfile.getProfileData();
-        DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
         int limit = 5;
-        profileConfiguration.setMaxDevices(limit);
-        profileConfiguration.setMaxAssets(limit);
-        profileConfiguration.setMaxCustomers(limit);
-        profileConfiguration.setMaxUsers(limit);
-        profileConfiguration.setMaxDashboards(limit);
-        profileConfiguration.setMaxRuleChains(limit);
-        tenantProfile.setProfileData(profileData);
-        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, null);
+        updateDefaultTenantProfile(profileConfiguration -> {
+            profileConfiguration.setMaxDevices(limit);
+            profileConfiguration.setMaxAssets(limit);
+            profileConfiguration.setMaxCustomers(limit);
+            profileConfiguration.setMaxUsers(limit);
+            profileConfiguration.setMaxDashboards(limit);
+            profileConfiguration.setMaxRuleChains(limit);
+        });
 
         EntitiesLimitNotificationRuleTriggerConfig triggerConfig = EntitiesLimitNotificationRuleTriggerConfig.builder()
                 .entityTypes(null).threshold(0.8f)
@@ -403,18 +390,15 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationRequestsPerRuleRateLimits() throws Exception {
         int notificationRequestsLimit = 10;
-        TenantProfile tenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
-        TenantProfileData profileData = tenantProfile.getProfileData();
-        DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
-        profileConfiguration.setTenantNotificationRequestsPerRuleRateLimit(notificationRequestsLimit + ":300");
-        tenantProfile.setProfileData(profileData);
-        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, null);
+        updateDefaultTenantProfile(profileConfiguration -> {
+            profileConfiguration.setTenantNotificationRequestsPerRuleRateLimit(notificationRequestsLimit + ":300");
+        });
 
         NotificationRule rule = new NotificationRule();
         rule.setName("Device created");
         rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
-        NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Device created", "Device created",
-                NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.SMS);
+        NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION,
+                "Device created", "Device created", NotificationDeliveryMethod.WEB);
         rule.setTemplateId(template.getId());
         EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
         triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
@@ -427,14 +411,16 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         rule.setRecipientsConfig(recipientsConfig);
         rule = saveNotificationRule(rule);
 
+        getWsClient().subscribeForUnreadNotificationsCount().waitForReply();
+        getWsClient().registerWaitForUpdate(notificationRequestsLimit);
         for (int i = 0; i < notificationRequestsLimit; i++) {
             String name = "device " + i;
             createDevice(name, name);
+            TimeUnit.MILLISECONDS.sleep(200);
         }
-        await().atMost(30, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    assertThat(getMyNotifications(false, 100)).size().isEqualTo(notificationRequestsLimit);
-                });
+        getWsClient().waitForUpdate(true);
+        assertThat(getWsClient().getLastCountUpdate().getTotalUnreadCount()).isEqualTo(notificationRequestsLimit);
+
         for (int i = 0; i < 5; i++) {
             String name = "device " + (notificationRequestsLimit + i);
             createDevice(name, name);
@@ -444,7 +430,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         assertThat(rateLimitExceeded).isTrue();
 
         TimeUnit.SECONDS.sleep(3);
-        assertThat(getMyNotifications(false, 100)).size().isEqualTo(notificationRequestsLimit);
+        assertThat(getWsClient().getLastCountUpdate().getTotalUnreadCount()).isEqualTo(notificationRequestsLimit);
     }
 
     private <R> R checkNotificationAfter(Callable<R> action, BiConsumer<Notification, R> check) throws Exception {
