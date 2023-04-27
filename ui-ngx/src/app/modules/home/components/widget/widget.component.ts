@@ -91,7 +91,7 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { ActivatedRoute, Router } from '@angular/router';
 import cssjs from '@core/css/css';
-import { ResourcesService } from '@core/services/resources.service';
+import { ModulesWithFactories, ResourcesService } from '@core/services/resources.service';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TimeService } from '@core/services/time.service';
@@ -1484,12 +1484,12 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.cssParser.createStyleElement(actionNamespace, customCss, 'nonamespace');
     }
     const resourceTasks: Observable<string>[] = [];
-    const modulesTasks: Observable<Type<any>[] | string>[] = [];
+    const modulesTasks: Observable<ModulesWithFactories | string>[] = [];
     if (isDefined(customResources) && customResources.length > 0) {
       customResources.filter(r => r.isModule).forEach(
         (resource) => {
           modulesTasks.push(
-            this.resources.loadModules(resource.url, this.modulesMap).pipe(
+            this.resources.loadFactories(resource.url, this.modulesMap).pipe(
               catchError((e: Error) => of(e?.message ? e.message : `Failed to load custom action resource module: '${resource.url}'`))
             )
           );
@@ -1504,13 +1504,18 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       });
 
       if (modulesTasks.length) {
-        let modulesObservable: Observable<string | Type<any>[]> = forkJoin(modulesTasks).pipe(
+        const modulesObservable: Observable<string | Type<any>[]> = forkJoin(modulesTasks).pipe(
           map(res => {
             const msg = res.find(r => typeof r === 'string');
             if (msg) {
               return msg as string;
             } else {
-              return (res as Type<any>[][]).flat();
+              const modulesWithFactoriesList = res as ModulesWithFactories[];
+              const resModulesWithFactories: ModulesWithFactories = {
+                modules: modulesWithFactoriesList.map(mf => mf.modules).flat(),
+                factories: modulesWithFactoriesList.map(mf => mf.factories).flat()
+              };
+              return resModulesWithFactories.modules;
             }
           })
         );
