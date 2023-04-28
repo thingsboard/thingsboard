@@ -16,14 +16,15 @@
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.WebDriver;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.testng.internal.ConstructorOrMethod;
 
 @Slf4j
 public class TestListener implements ITestListener {
 
-    WebDriver driver;
+    public final int MAX_FAILED_TESTS = 10;
+    private int failedTestsCount = 0;
 
     @Override
     public void onTestStart(ITestResult result) {
@@ -45,6 +46,16 @@ public class TestListener implements ITestListener {
     @Override
     public void onTestFailure(ITestResult result) {
         log.info("<<<=== Test failed: " + result.getName());
+        ConstructorOrMethod consOrMethod = result.getMethod().getConstructorOrMethod();
+        DisableUIListeners disable = consOrMethod.getMethod().getDeclaringClass().getAnnotation(DisableUIListeners.class);
+        if (disable != null) {
+            return;
+        }
+        failedTestsCount++;
+        if (failedTestsCount >= MAX_FAILED_TESTS) {
+            System.setProperty("blackBoxTests.ui.skip", "true");
+            log.error("Too many test failures {}. Skipping remaining tests.", failedTestsCount);
+        }
     }
 
     /**

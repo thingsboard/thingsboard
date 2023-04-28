@@ -31,6 +31,7 @@ import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -70,6 +71,13 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private JavascriptExecutor js;
     public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     private final Duration duration = Duration.ofMillis(WAIT_TIMEOUT);
+
+    @BeforeClass
+    public void checkFailureTests() {
+        if (Boolean.parseBoolean(System.getProperty("blackBoxTests.ui.skip"))) {
+            throw new SkipException("Too many test failures. Skipping remaining tests.");
+        }
+    }
 
     @BeforeClass
     public void startUp() throws MalformedURLException {
