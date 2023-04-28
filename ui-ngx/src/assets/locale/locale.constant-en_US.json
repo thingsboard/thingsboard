@@ -1853,7 +1853,7 @@
         "dashboards": "Edge Dashboards",
         "rulechain-templates": "Rule chain templates",
         "edge-rulechain-templates": "Edge rule chain templates",
-        "rulechains": "Rule chains",
+        "rulechains": "Edge rule chains",
         "search": "Search edges",
         "selected-edges": "{ count, plural, =1 {1 edge} other {# edges} } selected",
         "any-edge": "Any edge",

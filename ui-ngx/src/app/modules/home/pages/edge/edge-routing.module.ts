@@ -260,7 +260,7 @@ const routes: Routes = [
             path: ':edgeId/ruleChains',
             data: {
               breadcrumb: {
-                label: 'edge.edge-rulechains',
+                label: 'edge.rulechains',
                 icon: 'settings_ethernet'
               }
             },
