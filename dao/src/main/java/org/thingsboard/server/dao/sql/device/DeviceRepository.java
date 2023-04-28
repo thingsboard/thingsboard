@@ -21,10 +21,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.DeviceIdInfo;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
 import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
@@ -125,7 +121,7 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
             "AND (:customerId IS NULL OR d.customerId = uuid(:customerId)) " +
             "AND ((:deviceType) IS NULL OR d.type = :deviceType) " +
             "AND (:deviceProfileId IS NULL OR d.deviceProfileId = uuid(:deviceProfileId)) " +
-            "AND ((:filterByActive) IS FALSE OR (((:persistToTelemetry) IS TRUE AND d.tsActive = :deviceActive) OR ((:persistToTelemetry) IS FALSE AND d.attributeActive = :deviceActive))) " +
+            "AND ((:filterByActive) IS FALSE OR d.active = :deviceActive) " +
             "AND (LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
             "OR LOWER(d.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
             "OR LOWER(d.type) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
@@ -135,7 +131,6 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
                                                    @Param("deviceType") String type,
                                                    @Param("deviceProfileId") String deviceProfileId,
                                                    @Param("filterByActive") boolean filterByActive,
-                                                   @Param("persistToTelemetry") boolean persistToTelemetry,
                                                    @Param("deviceActive") boolean active,
                                                    @Param("textSearch") String textSearch,
                                                    Pageable pageable);
@@ -178,7 +173,7 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
     /**
      * Count devices by tenantId.
      * Custom query applied because default QueryDSL produces slow count(id).
-     * <p>
+     *
      * There is two way to count devices.
      * OPTIMAL: count(*)
      * - returns _row_count_ and use index-only scan (super fast).

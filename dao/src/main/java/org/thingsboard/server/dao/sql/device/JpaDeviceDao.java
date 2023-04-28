@@ -64,11 +64,6 @@ import java.util.UUID;
 @Slf4j
 public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device> implements DeviceDao {
 
-    @Value("${state.persistToTelemetry:false}")
-    private boolean persistToTelemetry;
-
-    private Map<String, String> activeColumnMap;
-
     @Autowired
     private DeviceRepository deviceRepository;
 
@@ -85,14 +80,9 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
         return deviceRepository;
     }
 
-    @PostConstruct
-    public void init() {
-        activeColumnMap = persistToTelemetry ? DeviceInfoEntity.tsActiveColumnMap : DeviceInfoEntity.attrActiveColumnMap;
-    }
-
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, UUID deviceId) {
-        return DaoUtil.getData(deviceRepository.findDeviceInfoById(deviceId), persistToTelemetry);
+        return DaoUtil.getData(deviceRepository.findDeviceInfoById(deviceId));
     }
 
     @Override
@@ -128,10 +118,9 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         filter.getType(),
                         DaoUtil.getStringId(filter.getDeviceProfileId()),
                         filter.getActive() != null,
-                        persistToTelemetry,
                         Boolean.TRUE.equals(filter.getActive()),
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink, activeColumnMap)), persistToTelemetry);
+                        DaoUtil.toPageable(pageLink)));
     }
 
     @Override

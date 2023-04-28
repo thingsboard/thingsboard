@@ -46,12 +46,6 @@ public abstract class DaoUtil {
         return new PageData<>(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
     }
 
-    public static <T> PageData<T> toPageData(Page<? extends ToData<T>> page, Object... params) {
-        List<T> data = convertDataList(page.getContent(), params);
-        return new PageData<>(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
-    }
-
-
     public static <T> PageData<T> pageToPageData(Page<T> page) {
         return new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
     }
@@ -85,19 +79,6 @@ public abstract class DaoUtil {
         return list;
     }
 
-    public static <T> List<T> convertDataList(Collection<? extends ToData<T>> toDataList, Object... params) {
-        List<T> list = Collections.emptyList();
-        if (toDataList != null && !toDataList.isEmpty()) {
-            list = new ArrayList<>();
-            for (ToData<T> object : toDataList) {
-                if (object != null) {
-                    list.add(object.toData(params));
-                }
-            }
-        }
-        return list;
-    }
-
     public static <T> T getData(ToData<T> data) {
         T object = null;
         if (data != null) {
@@ -105,15 +86,6 @@ public abstract class DaoUtil {
         }
         return object;
     }
-
-    public static <T> T getData(ToData<T> data, Object... params) {
-        T object = null;
-        if (data != null) {
-            object = data.toData(params);
-        }
-        return object;
-    }
-
 
     public static <T> T getData(Optional<? extends ToData<T>> data) {
         T object = null;

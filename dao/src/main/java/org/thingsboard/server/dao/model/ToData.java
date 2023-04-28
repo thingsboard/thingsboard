@@ -29,7 +29,4 @@ public interface ToData<T> {
      */
     T toData();
 
-    default T toData(Object... params) {
-        return toData();
-    }
 }

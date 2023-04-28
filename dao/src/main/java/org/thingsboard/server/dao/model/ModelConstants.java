@@ -172,8 +172,7 @@ public class ModelConstants {
     public static final String DEVICE_CUSTOMER_TITLE_PROPERTY = "customer_title";
     public static final String DEVICE_CUSTOMER_IS_PUBLIC_PROPERTY = "customer_is_public";
     public static final String DEVICE_DEVICE_PROFILE_NAME_PROPERTY = "device_profile_name";
-    public static final String DEVICE_ATTR_ACTIVE_PROPERTY = "attribute_active";
-    public static final String DEVICE_TS_ACTIVE_PROPERTY = "ts_active";
+    public static final String DEVICE_ACTIVE_PROPERTY = "active";
 
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
