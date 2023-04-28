@@ -153,6 +153,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
             scannedComponent.setName(ruleNodeAnnotation.name());
             scannedComponent.setScope(ruleNodeAnnotation.scope());
+            scannedComponent.setClusteringMode(ruleNodeAnnotation.clusteringMode());
             NodeDefinition nodeDefinition = prepareNodeDefinition(ruleNodeAnnotation);
             ObjectNode configurationDescriptor = JacksonUtil.newObjectNode();
             JsonNode node = JacksonUtil.valueToTree(nodeDefinition);

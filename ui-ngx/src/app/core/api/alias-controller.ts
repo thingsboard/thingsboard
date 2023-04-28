@@ -24,6 +24,8 @@ import { AliasFilterType, EntityAliases, SingleEntityFilter } from '@shared/mode
 import { EntityInfo } from '@shared/models/entity.models';
 import { map, mergeMap } from 'rxjs/operators';
 import {
+  AlarmFilter,
+  AlarmFilterConfig,
   createDefaultEntityDataPageLink,
   Filter, FilterInfo, filterInfoToKeyFilters, Filters, KeyFilter, singleEntityDataPageLink,
   updateDatasourceFromEntityInfo
@@ -244,9 +246,13 @@ export class AliasController implements IAliasController {
 
   private resolveDatasource(datasource: Datasource, forceFilter = false): Observable<Datasource> {
     const newDatasource = deepClone(datasource);
-    if (newDatasource.type === DatasourceType.entity || newDatasource.type === DatasourceType.entityCount) {
+    if (newDatasource.type === DatasourceType.entity || newDatasource.type === DatasourceType.entityCount
+      || newDatasource.type === DatasourceType.alarmCount) {
       if (newDatasource.filterId) {
         newDatasource.keyFilters = this.getKeyFilters(newDatasource.filterId);
+      }
+      if (newDatasource.type === DatasourceType.alarmCount) {
+        newDatasource.alarmFilter = this.entityService.resolveAlarmFilter(newDatasource.alarmFilterConfig, false);
       }
       if (newDatasource.entityAliasId) {
         return this.getAliasInfo(newDatasource.entityAliasId).pipe(
@@ -336,22 +342,30 @@ export class AliasController implements IAliasController {
       map((result) => {
         let functionIndex = 0;
         let entityCountIndex = 0;
+        let alarmCountIndex = 0;
         result.forEach((datasource) => {
-          if (datasource.type === DatasourceType.function || datasource.type === DatasourceType.entityCount) {
+          if (datasource.type === DatasourceType.function || datasource.type === DatasourceType.entityCount ||
+            datasource.type === DatasourceType.alarmCount) {
             let name: string;
             if (datasource.name && datasource.name.length) {
               name = datasource.name;
             } else {
+              name = this.translate.instant(datasourceTypeTranslationMap.get(datasource.type));
               if (datasource.type === DatasourceType.function) {
                 functionIndex++;
-              } else {
+                if (functionIndex > 1) {
+                  name += ' ' + functionIndex;
+                }
+              } else if (datasource.type === DatasourceType.entityCount) {
                 entityCountIndex++;
-              }
-              name = this.translate.instant(datasourceTypeTranslationMap.get(datasource.type));
-              if (datasource.type === DatasourceType.function && functionIndex > 1) {
-                name += ' ' + functionIndex;
-              } else if (datasource.type === DatasourceType.entityCount && entityCountIndex > 1) {
-                name += ' ' + entityCountIndex;
+                if (entityCountIndex > 1) {
+                  name += ' ' + entityCountIndex;
+                }
+              } else {
+                alarmCountIndex++;
+                if (alarmCountIndex > 1) {
+                  name += ' ' + alarmCountIndex;
+                }
               }
             }
             datasource.name = name;

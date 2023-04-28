@@ -23,7 +23,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import {
   Alarm,
   AlarmInfo,
-  AlarmQuery,
+  AlarmQuery, AlarmQueryV2,
   AlarmSearchStatus,
   AlarmSeverity,
   AlarmStatus
@@ -78,10 +78,22 @@ export class AlarmService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getAlarmsV2(query: AlarmQueryV2,
+                     config?: RequestConfig): Observable<PageData<AlarmInfo>> {
+    return this.http.get<PageData<AlarmInfo>>(`/api/v2/alarm${query.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getAllAlarms(query: AlarmQuery,
                       config?: RequestConfig): Observable<PageData<AlarmInfo>> {
     return this.http.get<PageData<AlarmInfo>>(`/api/alarms${query.toQuery()}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAllAlarmsV2(query: AlarmQueryV2,
+      config?: RequestConfig): Observable<PageData<AlarmInfo>> {
+      return this.http.get<PageData<AlarmInfo>>(`/api/v2/alarms${query.toQuery()}`,
+        defaultHttpOptionsFromConfig(config));
   }
 
   public getHighestAlarmSeverity(entityId: EntityId, alarmSearchStatus: AlarmSearchStatus, alarmStatus: AlarmStatus,

@@ -23,6 +23,8 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
@@ -30,7 +32,6 @@ import org.thingsboard.server.common.data.notification.targets.platform.Platform
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.notification.NotificationTargetDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -41,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
-public class NotificationTargetApiTest extends AbstractControllerTest {
+public class NotificationTargetApiTest extends AbstractNotificationApiTest {
 
     @Autowired
     private NotificationTargetDao notificationTargetDao;
@@ -146,6 +147,26 @@ public class NotificationTargetApiTest extends AbstractControllerTest {
 
         deleteDifferentTenant();
         assertThat(notificationTargetDao.findByTenantIdAndPageLink(differentTenantId, new PageLink(10)).getData()).isEmpty();
+    }
+
+    @Test
+    public void whenDeletingTargetUsedByRule_thenReturnError() throws Exception {
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+        createNotificationRule(new EntityActionNotificationRuleTriggerConfig(), "Test", "Test", target.getId());
+
+        String error = getErrorMessage(doDelete("/api/notification/target/" + target.getId())
+                .andExpect(status().isBadRequest()));
+        assertThat(error).containsIgnoringCase("used in notification rule");
+    }
+
+    @Test
+    public void whenDeletingTargetUsedByScheduledNotificationRequest_thenReturnError() throws Exception {
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+        submitNotificationRequest(target.getId(), "Test", 100, NotificationDeliveryMethod.WEB);
+
+        String error = getErrorMessage(doDelete("/api/notification/target/" + target.getId())
+                .andExpect(status().isBadRequest()));
+        assertThat(error).containsIgnoringCase("referenced by scheduled notification request");
     }
 
     private String saveAndGetError(NotificationTarget notificationTarget, ResultMatcher statusMatcher) throws Exception {

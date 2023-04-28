@@ -46,10 +46,14 @@ export class NodeScriptTestService {
           let msgType: string;
           if (debugIn) {
             if (debugIn.data) {
-              msg = JSON.parse(debugIn.data);
+              try {
+                msg = JSON.parse(debugIn.data);
+              } catch (e) {}
             }
             if (debugIn.metadata) {
-              metadata = JSON.parse(debugIn.metadata);
+              try {
+                metadata = JSON.parse(debugIn.metadata);
+              } catch (e) {}
             }
             msgType = debugIn.msgType;
           }

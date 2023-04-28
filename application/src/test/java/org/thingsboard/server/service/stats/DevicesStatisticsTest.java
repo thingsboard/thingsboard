@@ -28,6 +28,7 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,17 +36,14 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
         "usage.stats.report.enabled=true",
-        "transport.http.enabled=true",
         "usage.stats.report.interval=2",
         "usage.stats.gauge_report_interval=1",
         "state.defaultStateCheckIntervalInSec=3",
         "state.defaultInactivityTimeoutInSec=10"
-
 })
 public class DevicesStatisticsTest extends AbstractControllerTest {
 
@@ -53,6 +51,8 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
     private TbApiUsageStateService apiUsageStateService;
     @Autowired
     private TimeseriesService timeseriesService;
+    @Autowired
+    private DeviceStateService deviceStateService;
 
     private ApiUsageStateId apiUsageStateId;
 
@@ -86,7 +86,7 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
                 });
 
         for (Device device : activeDevices) {
-            postTelemetry(device.getName(), "{\"dp\":1}");
+            deviceStateService.onDeviceActivity(tenantId, device.getId(), System.currentTimeMillis());
         }
 
         await().atMost(40, TimeUnit.SECONDS)
@@ -100,11 +100,6 @@ public class DevicesStatisticsTest extends AbstractControllerTest {
     private Long getLatestStats(ApiUsageRecordKey key, boolean hourly) {
         return timeseriesService.findLatest(tenantId, apiUsageStateId, List.of(key.getApiCountKey() + (hourly ? "Hourly" : "")))
                 .get().stream().findFirst().flatMap(KvEntry::getLongValue).orElse(null);
-    }
-
-    @SneakyThrows
-    private void postTelemetry(String accessToken, String json) {
-        doPost("/api/v1/" + accessToken + "/telemetry", json, new String[0]).andExpect(status().isOk());
     }
 
 }

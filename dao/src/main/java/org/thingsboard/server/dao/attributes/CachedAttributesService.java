@@ -70,9 +70,6 @@ public class CachedAttributesService implements AttributesService {
     @Value("${cache.type:caffeine}")
     private String cacheType;
 
-    @Value("${sql.attributes.noxss_validation_enabled:true}")
-    private boolean noxssValidationEnabled;
-
     public CachedAttributesService(AttributesDao attributesDao,
                                    StatsFactory statsFactory,
                                    CacheExecutorService cacheExecutorService,
@@ -215,7 +212,7 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
         validate(entityId, scope);
-        AttributeUtils.validate(attribute, noxssValidationEnabled);
+        AttributeUtils.validate(attribute);
         ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
         return Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor);
     }
@@ -223,7 +220,7 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
-        AttributeUtils.validate(attributes, noxssValidationEnabled);
+        AttributeUtils.validate(attributes);
 
         List<ListenableFuture<String>> futures = new ArrayList<>(attributes.size());
         for (var attribute : attributes) {

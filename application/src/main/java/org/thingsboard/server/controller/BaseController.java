@@ -794,8 +794,10 @@ public abstract class BaseController {
 
     protected <E extends HasName & HasId<? extends EntityId>> void logEntityAction(SecurityUser user, EntityType entityType, E entity, E savedEntity, ActionType actionType, Exception e) {
         EntityId entityId = savedEntity != null ? savedEntity.getId() : emptyId(entityType);
-        entityActionService.logEntityAction(user, entityId, savedEntity != null ? savedEntity : entity,
-                user.getCustomerId(), actionType, e);
+        if (!user.isSystemAdmin()) {
+            entityActionService.logEntityAction(user, entityId, savedEntity != null ? savedEntity : entity,
+                    user.getCustomerId(), actionType, e);
+        }
     }
 
     protected <E extends HasName & HasId<? extends EntityId>> E doSaveAndLog(EntityType entityType, E entity, BiFunction<TenantId, E, E> savingFunction) throws Exception {

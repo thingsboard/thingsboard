@@ -309,10 +309,10 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                 return EdgeEventActionType.ALARM_ACK;
             case ALARM_CLEAR:
                 return EdgeEventActionType.ALARM_CLEAR;
-            case ALARM_ASSIGN:
-                return EdgeEventActionType.ALARM_ASSIGN;
-            case ALARM_UNASSIGN:
-                return EdgeEventActionType.ALARM_UNASSIGN;
+            case ALARM_ASSIGNED:
+                return EdgeEventActionType.ALARM_ASSIGNED;
+            case ALARM_UNASSIGNED:
+                return EdgeEventActionType.ALARM_UNASSIGNED;
             case DELETED:
                 return EdgeEventActionType.DELETED;
             case RELATION_ADD_OR_UPDATE:

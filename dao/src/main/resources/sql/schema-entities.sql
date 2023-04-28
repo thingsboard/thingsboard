@@ -125,7 +125,8 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     name varchar(255),
     scope varchar(255),
     search_text varchar(255),
-    type varchar(255)
+    type varchar(255),
+    clustering_mode varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS customer (
@@ -187,6 +188,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     type varchar(255),
     name varchar(255),
     debug_mode boolean,
+    singleton_mode boolean,
     search_text varchar(255),
     external_id uuid
 );
