@@ -234,7 +234,6 @@ public class EntityActionService {
                         entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(extractParameter(EntityRelation.class, 0, additionalInfo));
                     }
                 }
-                    TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
 
                 if (tenantId == null || tenantId.isNullUid()) {
                     if (entity instanceof HasTenantId) {
@@ -256,7 +255,7 @@ public class EntityActionService {
                             .user(user)
                             .build());
                 }
-                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
                 tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
