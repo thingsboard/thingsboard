@@ -162,7 +162,7 @@
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'attribute.key' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
             <div fxLayout="row" style="align-items: center">
-              <span>{{ attribute.key }}</span>
+              <span class="ellipsis">{{ attribute.key }}</span>
               <tb-copy-button
                 [disabled]="isLoading$ | async"
                 [copyText]="attribute.key"
@@ -180,9 +180,9 @@
           <mat-cell *matCellDef="let attribute"
                     class="tb-value-cell"
                     (click)="editAttribute($event, attribute)">
-            <div fxLayout="row" style="align-items: center">
-              <div fxFlex>
-                <span style="overflow: hidden;text-overflow: ellipsis;">{{attribute.value | tbJson}}</span>
+            <div fxFlex fxLayout="row" style="align-items: center">
+              <div fxFlex fxLayout="row"  class="ellipsis" style="align-items: center;">
+                <span class="ellipsis">{{attribute.value | tbJson}}</span>
                 <tb-copy-button
                   [disabled]="isLoading$ | async"
                   [copyText]="attribute.value | tbJson"
