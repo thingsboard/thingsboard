@@ -591,7 +591,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     const target = $event.target || $event.srcElement || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.panelClass = 'tb-alarm-filter-panel';
+    config.panelClass = 'tb-filter-panel';
     config.hasBackdrop = true;
     const connectedPosition: ConnectedPosition = {
       originX: 'end',

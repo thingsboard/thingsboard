@@ -181,6 +181,7 @@ import { SendNotificationButtonComponent } from '@home/components/notification/s
 import { AlarmFilterConfigComponent } from '@home/components/alarm/alarm-filter-config.component';
 import { AlarmAssigneeSelectPanelComponent } from '@home/components/alarm/alarm-assignee-select-panel.component';
 import { AlarmAssigneeSelectComponent } from '@home/components/alarm/alarm-assignee-select.component';
+import { DeviceInfoFilterComponent } from '@home/components/device/device-info-filter.component';
 
 @NgModule({
   declarations:
@@ -282,6 +283,7 @@ import { AlarmAssigneeSelectComponent } from '@home/components/alarm/alarm-assig
       DeviceProfileComponent,
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
+      DeviceInfoFilterComponent,
       AssetProfileComponent,
       AssetProfileDialogComponent,
       AssetProfileAutocompleteComponent,
@@ -425,6 +427,7 @@ import { AlarmAssigneeSelectComponent } from '@home/components/alarm/alarm-assig
     DeviceProfileComponent,
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,
+    DeviceInfoFilterComponent,
     RuleChainAutocompleteComponent,
     DeviceWizardDialogComponent,
     AssetProfileComponent,
