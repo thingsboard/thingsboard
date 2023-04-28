@@ -410,6 +410,7 @@ public class DefaultTbClusterService implements TbClusterService {
         if (entityType.equals(EntityType.TENANT)
                 || entityType.equals(EntityType.TENANT_PROFILE)
                 || entityType.equals(EntityType.DEVICE_PROFILE)
+                || entityType.equals(EntityType.ASSET)
                 || entityType.equals(EntityType.ASSET_PROFILE)
                 || entityType.equals(EntityType.API_USAGE_STATE)
                 || (entityType.equals(EntityType.DEVICE) && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
