@@ -689,6 +689,10 @@ public class DeviceController extends BaseController {
             @RequestParam int page,
             @ApiParam(value = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
+            @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
+            @RequestParam(required = false) String deviceProfileId,
+            @ApiParam(value = DEVICE_ACTIVE_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean active,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES)
@@ -707,8 +711,11 @@ public class DeviceController extends BaseController {
         DeviceInfoFilter.DeviceInfoFilterBuilder filter = DeviceInfoFilter.builder();
         filter.tenantId(tenantId);
         filter.edgeId(edgeId);
+        filter.active(active);
         if (type != null && type.trim().length() > 0) {
             filter.type(type);
+        } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
+            filter.deviceProfileId(new DeviceProfileId(toUUID(deviceProfileId)));
         }
         return checkNotNull(deviceService.findDeviceInfosByFilter(filter.build(), pageLink));
     }

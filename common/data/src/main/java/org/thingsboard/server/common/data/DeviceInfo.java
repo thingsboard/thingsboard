@@ -18,11 +18,15 @@ package org.thingsboard.server.common.data;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.DeviceId;
 
 @ApiModel
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class DeviceInfo extends Device {
+
+    private static final long serialVersionUID = -3004579925090663691L;
 
     @ApiModelProperty(position = 13, value = "Title of the Customer that owns the device.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String customerTitle;
