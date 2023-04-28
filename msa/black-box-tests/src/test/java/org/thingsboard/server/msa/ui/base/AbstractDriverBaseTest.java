@@ -74,7 +74,8 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     @BeforeClass
     public void checkFailureTests() {
-        if (Boolean.parseBoolean(System.getProperty("blackBoxTests.ui.skip"))) {
+        if (Boolean.parseBoolean(System.getProperty("blackBoxTests.ui.skip.failure", "true")) &&
+                Boolean.parseBoolean(System.getProperty("blackBoxTests.ui.failure"))) {
             throw new SkipException("Too many test failures. Skipping remaining tests.");
         }
     }
