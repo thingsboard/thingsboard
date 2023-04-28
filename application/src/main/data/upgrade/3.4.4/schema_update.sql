@@ -16,16 +16,27 @@
 
 -- DEVICE INFO VIEW START
 
-DROP VIEW IF EXISTS device_info_view CASCADE;
-CREATE OR REPLACE VIEW device_info_view as
+DROP VIEW IF EXISTS device_info_active_attribute_view CASCADE;
+CREATE OR REPLACE VIEW device_info_active_attribute_view AS
 SELECT d.*
        , c.title as customer_title
-       , c.additional_info::json->>'isPublic' as customer_is_public
+       , COALESCE((c.additional_info::json->>'isPublic')::bool, FALSE) as customer_is_public
        , d.type as device_profile_name
-       , (select bool_v from attribute_kv da where da.entity_id = d.id and da.attribute_key = 'active') as attribute_active
-       , (select bool_v from ts_kv_latest dt where dt.entity_id = d.id and dt.key = (select key_id from ts_kv_dictionary where key = 'active')) as ts_active
+       , COALESCE(da.bool_v, FALSE) as active
 FROM device d
-         LEFT JOIN customer c ON c.id = d.customer_id;
+         LEFT JOIN customer c ON c.id = d.customer_id
+         LEFT JOIN attribute_kv da ON da.entity_id = d.id and da.attribute_key = 'active';
+
+DROP VIEW IF EXISTS device_info_active_ts_view CASCADE;
+CREATE OR REPLACE VIEW device_info_active_ts_view AS
+SELECT d.*
+       , c.title as customer_title
+       , COALESCE((c.additional_info::json->>'isPublic')::bool, FALSE) as customer_is_public
+       , d.type as device_profile_name
+       , COALESCE(dt.bool_v, FALSE) as active
+FROM device d
+         LEFT JOIN customer c ON c.id = d.customer_id
+         LEFT JOIN ts_kv_latest dt ON dt.entity_id = d.id and dt.key = (select key_id from ts_kv_dictionary where key = 'active');
 
 -- DEVICE INFO VIEW END
 

@@ -680,7 +680,7 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Device> getEdgeDevices(
+    public PageData<DeviceInfo> getEdgeDevices(
             @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(EDGE_ID) String strEdgeId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
@@ -704,25 +704,13 @@ public class DeviceController extends BaseController {
         EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
         checkEdgeId(edgeId, Operation.READ);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-        PageData<Device> nonFilteredResult;
+        DeviceInfoFilter.DeviceInfoFilterBuilder filter = DeviceInfoFilter.builder();
+        filter.tenantId(tenantId);
+        filter.edgeId(edgeId);
         if (type != null && type.trim().length() > 0) {
-            nonFilteredResult = deviceService.findDevicesByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink);
-        } else {
-            nonFilteredResult = deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
+            filter.type(type);
         }
-        List<Device> filteredDevices = nonFilteredResult.getData().stream().filter(device -> {
-            try {
-                accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, device.getId(), device);
-                return true;
-            } catch (ThingsboardException e) {
-                return false;
-            }
-        }).collect(Collectors.toList());
-        PageData<Device> filteredResult = new PageData<>(filteredDevices,
-                nonFilteredResult.getTotalPages(),
-                nonFilteredResult.getTotalElements(),
-                nonFilteredResult.hasNext());
-        return checkNotNull(filteredResult);
+        return checkNotNull(deviceService.findDeviceInfosByFilter(filter.build(), pageLink));
     }
 
     @ApiOperation(value = "Count devices by device profile  (countByDeviceProfileAndEmptyOtaPackage)",
