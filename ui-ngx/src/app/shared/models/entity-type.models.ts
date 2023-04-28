@@ -477,7 +477,7 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
     [
       EntityType.TB_RESOURCE,
       {
-        helpLinkId: 'resources'
+        helpLinkId: 'lwm2mResourceLibrary'
       }
     ],
     [
