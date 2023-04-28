@@ -1296,6 +1296,14 @@
         "unable-delete-device-alias-text": "Device alias '{{deviceAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "is-gateway": "Is gateway",
         "overwrite-activity-time": "Overwrite activity time for connected device",
+        "device-filter": "Device filter",
+        "device-filter-title": "Device Filter",
+        "filter-title": "Filter",
+        "device-state": "Device state",
+        "state": "State",
+        "any": "Any",
+        "active": "Active",
+        "inactive": "Inactive",
         "public": "Public",
         "device-public": "Device is public",
         "select-device": "Select device",
@@ -5130,6 +5138,9 @@
             "font-weight-lighter": "Lighter",
             "color": "Color",
             "shadow-color": "Shadow color"
+        },
+        "home": {
+            "no-data-available": "No data available"
         },
         "system-info": {
             "cpu": "CPU",
