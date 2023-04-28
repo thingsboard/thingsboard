@@ -161,7 +161,18 @@
         <ng-container matColumnDef="key">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'attribute.key' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
-            {{ attribute.key }}
+            <div fxLayout="row" style="align-items: center">
+              <span>{{ attribute.key }}</span>
+              <tb-copy-button
+                [disabled]="isLoading$ | async"
+                [copyText]="attribute.key"
+                tooltipText="{{ 'attribute.copy-key' | translate }}"
+                tooltipPosition="above"
+                icon="content_copy"
+                [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+              >
+              </tb-copy-button>
+            </div>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="value">
@@ -170,7 +181,18 @@
                     class="tb-value-cell"
                     (click)="editAttribute($event, attribute)">
             <div fxLayout="row" style="align-items: center">
-              <span style="overflow: hidden;text-overflow: ellipsis;" fxFlex>{{attribute.value | tbJson}}</span>
+              <div fxFlex>
+                <span style="overflow: hidden;text-overflow: ellipsis;">{{attribute.value | tbJson}}</span>
+                <tb-copy-button
+                  [disabled]="isLoading$ | async"
+                  [copyText]="attribute.value | tbJson"
+                  tooltipText="{{ 'attribute.copy-value' | translate }}"
+                  tooltipPosition="above"
+                  icon="content_copy"
+                  [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+                >
+                </tb-copy-button>
+              </div>
               <span [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)">
                 <mat-icon>edit</mat-icon>
               </span>
