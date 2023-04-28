@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
@@ -104,6 +105,7 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -147,6 +149,9 @@ public class DefaultTransportApiService implements TransportApiService {
     private final QueueService queueService;
 
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
+
+    @Value("${cache.ota.maxChunkSize}")
+    private int maxChunkSize;
 
     private static boolean checkIsMqttCredentials(DeviceCredentials credentials) {
         return credentials != null && DeviceCredentialsType.MQTT_BASIC.equals(credentials.getCredentialsType());
@@ -642,7 +647,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 builder.setContentType(otaPackageInfo.getContentType());
                 if (!otaPackageDataCache.has(otaPackageId.toString())) {
                     OtaPackage otaPackage = otaPackageService.findOtaPackageById(tenantId, otaPackageId);
-                    otaPackageDataCache.put(otaPackageId.toString(), otaPackage.getData().array());
+                    putOtaPackageDataToCache(otaPackageId.toString(), otaPackage.getData());
                 }
             }
         }
@@ -711,4 +716,22 @@ public class DefaultTransportApiService implements TransportApiService {
                 null);
     }
 
+    private void putOtaPackageDataToCache(String otaPackageId, ByteBuffer data) {
+        int index = 0;
+        StringBuilder firmwareElementIndexes = new StringBuilder();
+        while (data.remaining() > 0) {
+            int readSize = Math.min(maxChunkSize, data.remaining());
+            byte[] chunk = new byte[readSize];
+            data.get(chunk);
+            calculateIndexAndPutToCache(otaPackageId, index++, firmwareElementIndexes, chunk);
+        }
+        otaPackageDataCache.put(otaPackageId, firmwareElementIndexes.toString().getBytes());
+    }
+
+    private void calculateIndexAndPutToCache(String otaPackageId, int index, StringBuilder firmwareElements, byte[] filePart) {
+        String firmwareIdIndex = String.format("%s_%d", otaPackageId, index);
+        firmwareElements.append(firmwareIdIndex).append(" ");
+
+        otaPackageDataCache.put(firmwareIdIndex, filePart);
+    }
 }

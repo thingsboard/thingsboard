@@ -18,18 +18,20 @@ package org.thingsboard.server.service.entitiy.ota;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.OtaPackage;
+import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.ota.util.ChecksumUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -64,12 +66,12 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
 
     @Override
     public OtaPackageInfo saveOtaPackageData(OtaPackageInfo otaPackageInfo, String checksum, ChecksumAlgorithm checksumAlgorithm,
-                                             byte[] data, String filename, String contentType, User user) throws ThingsboardException {
+                                             MultipartFile file, User user) {
         TenantId tenantId = otaPackageInfo.getTenantId();
         OtaPackageId otaPackageId = otaPackageInfo.getId();
         try {
             if (StringUtils.isEmpty(checksum)) {
-                checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(data));
+                checksum = ChecksumUtil.generateChecksum(checksumAlgorithm, file.getInputStream());
             }
             OtaPackage otaPackage = new OtaPackage(otaPackageId);
             otaPackage.setCreatedTime(otaPackageInfo.getCreatedTime());
@@ -82,10 +84,10 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             otaPackage.setAdditionalInfo(otaPackageInfo.getAdditionalInfo());
             otaPackage.setChecksumAlgorithm(checksumAlgorithm);
             otaPackage.setChecksum(checksum);
-            otaPackage.setFileName(filename);
-            otaPackage.setContentType(contentType);
-            otaPackage.setData(ByteBuffer.wrap(data));
-            otaPackage.setDataSize((long) data.length);
+            otaPackage.setFileName(file.getOriginalFilename());
+            otaPackage.setContentType(file.getContentType());
+            otaPackage.setDataSize(file.getSize());
+            otaPackage.setData(ByteBuffer.wrap(file.getInputStream().readAllBytes()));
             OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedOtaPackage.getId(),
                     savedOtaPackage, user, ActionType.UPDATED, true, null);
@@ -93,7 +95,7 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), ActionType.UPDATED,
                     user, e, otaPackageId.toString());
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 

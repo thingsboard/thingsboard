@@ -28,7 +28,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,8 +37,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
@@ -65,9 +66,21 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 
@@ -126,6 +139,11 @@ public class DeviceApiController implements TbTransportService {
 
     @Autowired
     private HttpTransportContext transportContext;
+
+    private final ConcurrentMap<String, String> httpStreamPartFile = new ConcurrentHashMap<>();
+    private BufferedInputStream stream = new BufferedInputStream(InputStream.nullInputStream());
+    private final ReentrantLock lock = new ReentrantLock();
+    private boolean streamIsClosed;
 
     @ApiOperation(value = "Get attributes (getDeviceAttributes)",
             notes = "Returns all attributes that belong to device. "
@@ -510,7 +528,10 @@ public class DeviceApiController implements TbTransportService {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
             } else if (title.equals(otaPackageResponseMsg.getTitle()) && version.equals(otaPackageResponseMsg.getVersion())) {
                 String otaPackageId = new UUID(otaPackageResponseMsg.getOtaPackageIdMSB(), otaPackageResponseMsg.getOtaPackageIdLSB()).toString();
-                ByteArrayResource resource = new ByteArrayResource(transportContext.getOtaPackageDataCache().get(otaPackageId, chuckSize, chuck));
+                if (!httpStreamPartFile.containsKey(otaPackageId)) {
+                    createTempFileWithOtaPackageData(new OtaPackageId(UUID.fromString(otaPackageId)));
+                }
+                ByteArrayResource resource = new ByteArrayResource(readTempFileByChunks(otaPackageId, chuckSize, chuck));
                 ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackageResponseMsg.getFileName())
                         .header("x-filename", otaPackageResponseMsg.getFileName())
@@ -527,6 +548,52 @@ public class DeviceApiController implements TbTransportService {
         public void onError(Throwable e) {
             log.warn("Failed to process request", e);
             responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+
+        private void createTempFileWithOtaPackageData(OtaPackageId otaPackageId) {
+            try {
+                String absolutePath = transportContext.getBaseFileCacheService().getTempFileAbsolutePath(otaPackageId.getId().toString());
+                lock.tryLock(60, TimeUnit.SECONDS);
+                if (Files.notExists(Path.of(absolutePath))) {
+                    try (BufferedOutputStream outputStream = transportContext.getBaseFileCacheService().createTempFile(otaPackageId)) {
+                        String[] firmwareIndexParts = new String(transportContext.getOtaPackageDataCache().get(otaPackageId.toString()), StandardCharsets.UTF_8).split(" ");
+                        for (String fip : firmwareIndexParts) {
+                            byte[] temp = transportContext.getOtaPackageDataCache().get(fip.trim());
+                            outputStream.write(temp);
+                            outputStream.flush();
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        httpStreamPartFile.put(otaPackageId.getId().toString(), absolutePath);
+                        lock.unlock();
+                    }
+                }
+            } catch (InterruptedException e) {
+                lock.unlock();
+                throw new RuntimeException(e);
+            }
+        }
+
+        private byte[] readTempFileByChunks(String firmwareId, int chunkSize, int chunk) {
+            try {
+                if (chunk == 0) {
+                    stream = new BufferedInputStream(new FileInputStream(httpStreamPartFile.get(firmwareId)));
+                    streamIsClosed = false;
+                }
+                if (!streamIsClosed && stream.available() > 0) {
+                    int actualChunkSize = Math.min(chunkSize, stream.available());
+                    byte[] chunkData = stream.readNBytes(actualChunkSize);
+                    if (stream.available() == 0) {
+                        stream.close();
+                        streamIsClosed = true;
+                    }
+                    return chunkData;
+                }
+                return new byte[0];
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

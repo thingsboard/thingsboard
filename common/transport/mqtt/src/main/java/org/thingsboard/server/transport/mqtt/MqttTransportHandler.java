@@ -89,8 +89,14 @@ import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugRpcResponse
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -103,6 +109,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -150,6 +157,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private final ConcurrentHashMap<String, String> otaPackSessions;
     private final ConcurrentHashMap<String, Integer> chunkSizes;
     private final ConcurrentMap<Integer, TransportProtos.ToDeviceRpcRequestMsg> rpcAwaitingAck;
+    private final ConcurrentMap<String, String> mqttStreamPartFile;
+    private final ReentrantLock lock;
+    private BufferedInputStream stream;
 
     private TopicType attrSubTopicType;
     private TopicType rpcSubTopicType;
@@ -167,6 +177,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         this.otaPackSessions = new ConcurrentHashMap<>();
         this.chunkSizes = new ConcurrentHashMap<>();
         this.rpcAwaitingAck = new ConcurrentHashMap<>();
+        this.mqttStreamPartFile = new ConcurrentHashMap<>();
+        this.lock = new ReentrantLock();
+        this.stream = new BufferedInputStream(FileInputStream.nullInputStream());
     }
 
     @Override
@@ -640,6 +653,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         public void onSuccess(TransportProtos.GetOtaPackageResponseMsg response) {
             if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())) {
                 OtaPackageId firmwareId = new OtaPackageId(new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB()));
+                if (!mqttStreamPartFile.containsKey(firmwareId.toString())) {
+                    createTempFileWithOtaPackageData(firmwareId);
+                }
                 otaPackSessions.put(requestId, firmwareId.toString());
                 sendOtaPackage(ctx, msgId, firmwareId.toString(), requestId, chunkSize, chunk, OtaPackageType.valueOf(response.getType()));
             } else {
@@ -658,7 +674,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Send firmware [{}] to device!", sessionId, firmwareId);
         ack(ctx, msgId, ReturnCode.SUCCESS);
         try {
-            byte[] firmwareChunk = context.getOtaPackageDataCache().get(firmwareId, chunkSize, chunk);
+            byte[] firmwareChunk = readTempFileByChunks(firmwareId, chunkSize, chunk);
             deviceSessionCtx.getPayloadAdaptor()
                     .convertToPublish(deviceSessionCtx, firmwareChunk, requestId, chunk, type)
                     .ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
@@ -1330,6 +1346,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         ctx.close();
     }
 
+
     public void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ThingsboardErrorCode result, String errorMsg) {
         String payload = JacksonUtil.toString(SparkplugRpcResponseBody.builder().result(result.name()).error(errorMsg).build());
         TransportProtos.ToDeviceRpcResponseMsg msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setError(payload).build();
@@ -1340,6 +1357,50 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         String payload = JacksonUtil.toString(SparkplugRpcResponseBody.builder().result(result.getName()).result(successMsg).build());
         TransportProtos.ToDeviceRpcResponseMsg msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setError(payload).build();
         transportService.process(sessionInfo, msg, null);
+    }
+
+    private void createTempFileWithOtaPackageData(OtaPackageId otaPackageId) {
+        try {
+            String absolutePath = context.getBaseFileCacheService().getTempFileAbsolutePath(otaPackageId.getId().toString());
+            lock.tryLock(60, TimeUnit.SECONDS);
+            if (Files.notExists(Path.of(absolutePath))) {
+                try (BufferedOutputStream outputStream = context.getBaseFileCacheService().createTempFile(otaPackageId)) {
+                    String[] firmwareIndexParts = new String(context.getOtaPackageDataCache().get(otaPackageId.toString()), StandardCharsets.UTF_8).split(" ");
+                    for (String fip : firmwareIndexParts) {
+                        byte[] temp = context.getOtaPackageDataCache().get(fip.trim());
+                        outputStream.write(temp);
+                        outputStream.flush();
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    mqttStreamPartFile.put(otaPackageId.toString(), absolutePath);
+                    lock.unlock();
+                }
+            }
+        } catch (InterruptedException e) {
+            lock.unlock();
+            throw new RuntimeException(e);
+        }
+    }
+
+    private byte[] readTempFileByChunks(String firmwareId, int chunkSize, int chunk) {
+        try {
+            if (chunk == 0) {
+                stream = new BufferedInputStream(new FileInputStream(mqttStreamPartFile.get(firmwareId)));
+            }
+            if (stream.available() > 0) {
+                int actualChunkSize = Math.min(chunkSize, stream.available());
+                byte[] chunkData = stream.readNBytes(actualChunkSize);
+                if (stream.available() == 0) {
+                    stream.close();
+                }
+                return chunkData;
+            }
+            return new byte[0];
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

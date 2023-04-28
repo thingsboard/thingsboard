@@ -490,6 +490,8 @@ cache:
   rateLimits:
     timeToLiveInMinutes: "${CACHE_SPECS_RATE_LIMITS_TTL:60}"
     maxSize: "${CACHE_SPECS_RATE_LIMITS_MAX_SIZE:100000}"
+  ota:
+    maxChunkSize: "${CACHE_OTA_MAX_CHUNK_SIZE:104857600}" # max chunk size in bytes that we put in cache to update device with Ota Package software or firmware
 
 #Disable this because it is not required.
 spring.data.redis.repositories.enabled: false
@@ -1255,3 +1257,5 @@ management:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
 
+files:
+  temporary_files_directory: "${TEMPORARY_FILES_DIRECTORY:${java.io.tmpdir}}"

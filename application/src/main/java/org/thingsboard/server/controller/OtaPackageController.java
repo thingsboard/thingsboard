@@ -47,8 +47,6 @@ import org.thingsboard.server.service.entitiy.ota.TbOtaPackageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.io.IOException;
-
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
@@ -93,14 +91,17 @@ public class OtaPackageController extends BaseController {
         if (otaPackage.hasUrl()) {
             return ResponseEntity.badRequest().build();
         }
-
-        ByteArrayResource resource = new ByteArrayResource(otaPackage.getData().array());
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackage.getFileName())
-                .header("x-filename", otaPackage.getFileName())
-                .contentLength(resource.contentLength())
-                .contentType(parseMediaType(otaPackage.getContentType()))
-                .body(resource);
+        try {
+            ByteArrayResource resource = new ByteArrayResource(otaPackage.getData().array());
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackage.getFileName())
+                    .header("x-filename", otaPackage.getFileName())
+                    .contentLength(otaPackage.getDataSize())
+                    .contentType(parseMediaType(otaPackage.getContentType()))
+                    .body(resource);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @ApiOperation(value = "Get OTA Package Info (getOtaPackageInfoById)",
@@ -164,15 +165,13 @@ public class OtaPackageController extends BaseController {
                                              @ApiParam(value = "OTA Package checksum algorithm.", allowableValues = OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES)
                                              @RequestParam(CHECKSUM_ALGORITHM) String checksumAlgorithmStr,
                                              @ApiParam(value = "OTA Package data.")
-                                             @RequestPart MultipartFile file) throws ThingsboardException, IOException {
+                                             @RequestPart MultipartFile file) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
         OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
         OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.READ);
         ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
-        byte[] data = file.getBytes();
-        return tbOtaPackageService.saveOtaPackageData(otaPackageInfo, checksum, checksumAlgorithm,
-                data, file.getOriginalFilename(), file.getContentType(), getCurrentUser());
+        return tbOtaPackageService.saveOtaPackageData(otaPackageInfo, checksum, checksumAlgorithm, file, getCurrentUser());
     }
 
     @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",

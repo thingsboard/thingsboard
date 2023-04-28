@@ -25,6 +25,7 @@ import org.eclipse.californium.core.server.resources.Resource;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
@@ -34,9 +35,20 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class OtaPackageTransportResource extends AbstractCoapTransportResource {
@@ -44,9 +56,16 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
 
     private final OtaPackageType otaPackageType;
 
+    private final ConcurrentMap<String, String> coapStreamPartFile;
+    private final ReentrantLock lock = new ReentrantLock();
+    private BufferedInputStream stream;
+    private boolean streamIsClosed;
+
     public OtaPackageTransportResource(CoapTransportContext ctx, OtaPackageType otaPackageType) {
         super(ctx, otaPackageType.getKeyPrefix());
         this.otaPackageType = otaPackageType;
+        this.coapStreamPartFile = new ConcurrentHashMap<>();
+        this.stream = new BufferedInputStream(FileInputStream.nullInputStream());
 
         this.setObservable(true);
     }
@@ -117,11 +136,14 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
             if (msg.getResponseStatus().equals(TransportProtos.ResponseStatus.SUCCESS)) {
                 String firmwareId = new UUID(msg.getOtaPackageIdMSB(), msg.getOtaPackageIdLSB()).toString();
                 if ((title == null || msg.getTitle().equals(title)) && (version == null || msg.getVersion().equals(version))) {
+                    if (!coapStreamPartFile.containsKey(firmwareId)) {
+                        createTempFileWithOtaPackageData(new OtaPackageId(UUID.fromString(firmwareId)));
+                    }
                     String strChunkSize = exchange.getQueryParameter("size");
                     String strChunk = exchange.getQueryParameter("chunk");
                     int chunkSize = StringUtils.isEmpty(strChunkSize) ? 0 : Integer.parseInt(strChunkSize);
                     int chunk = StringUtils.isEmpty(strChunk) ? 0 : Integer.parseInt(strChunk);
-                    respondOtaPackage(exchange, transportContext.getOtaPackageDataCache().get(firmwareId, chunkSize, chunk));
+                    respondOtaPackage(exchange, readTempFileByChunks(firmwareId, chunkSize, chunk));
                 } else {
                     exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
                 }
@@ -147,6 +169,52 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
                 response.getOptions().setBlock2(chunkSize, lastFlag, 0);
             }
             transportContext.getExecutor().submit(() -> exchange.respond(response));
+        }
+    }
+
+    private void createTempFileWithOtaPackageData(OtaPackageId otaPackageId) {
+        try {
+            String absolutePath = transportContext.getBaseFileCacheService().getTempFileAbsolutePath(otaPackageId.getId().toString());
+            lock.tryLock(60, TimeUnit.SECONDS);
+            if (Files.notExists(Path.of(absolutePath))) {
+                try (BufferedOutputStream outputStream = transportContext.getBaseFileCacheService().createTempFile(otaPackageId)) {
+                    String[] firmwareIndexParts = new String(transportContext.getOtaPackageDataCache().get(otaPackageId.toString()), StandardCharsets.UTF_8).split(" ");
+                    for (String fip : firmwareIndexParts) {
+                        byte[] temp = transportContext.getOtaPackageDataCache().get(fip.trim());
+                        outputStream.write(temp);
+                        outputStream.flush();
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    coapStreamPartFile.put(otaPackageId.getId().toString(), absolutePath);
+                    lock.unlock();
+                }
+            }
+        } catch (InterruptedException e) {
+            lock.unlock();
+            throw new RuntimeException(e);
+        }
+    }
+
+    private byte[] readTempFileByChunks(String firmwareId, int chunkSize, int chunk) {
+        try {
+            if (chunk == 0) {
+                stream = new BufferedInputStream(new FileInputStream(coapStreamPartFile.get(firmwareId)));
+                streamIsClosed = false;
+            }
+            if (!streamIsClosed && stream.available() > 0) {
+                int actualChunkSize = Math.min(chunkSize, stream.available());
+                byte[] chunkData = stream.readNBytes(actualChunkSize);
+                if (stream.available() == 0) {
+                    stream.close();
+                    streamIsClosed = true;
+                }
+                return chunkData;
+            }
+            return new byte[0];
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

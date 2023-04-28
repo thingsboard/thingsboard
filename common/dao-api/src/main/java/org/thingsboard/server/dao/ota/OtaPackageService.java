@@ -21,21 +21,16 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
-
-import java.nio.ByteBuffer;
 
 public interface OtaPackageService extends EntityDaoService {
 
     OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl);
 
     OtaPackage saveOtaPackage(OtaPackage otaPackage);
-
-    String generateChecksum(ChecksumAlgorithm checksumAlgorithm, ByteBuffer data);
 
     OtaPackage findOtaPackageById(TenantId tenantId, OtaPackageId otaPackageId);
 

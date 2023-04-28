@@ -317,3 +317,6 @@ management:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+
+files:
+  temporary_files_directory: "${TEMPORARY_FILES_DIRECTORY:${java.io.tmpdir}}"

@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.ota;
 
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +22,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
+import org.thingsboard.server.cache.ota.files.BaseFileCacheService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
@@ -33,7 +32,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -42,7 +40,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
-import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -60,6 +57,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     private final OtaPackageDataCache otaPackageDataCache;
     private final DataValidator<OtaPackageInfo> otaPackageInfoValidator;
     private final DataValidator<OtaPackage> otaPackageValidator;
+    private final BaseFileCacheService baseFileCacheService;
 
     @TransactionalEventListener(classes = OtaPackageCacheEvictEvent.class)
     @Override
@@ -116,37 +114,6 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             } else {
                 throw t;
             }
-        }
-    }
-
-    @Override
-    public String generateChecksum(ChecksumAlgorithm checksumAlgorithm, ByteBuffer data) {
-        if (data == null || !data.hasArray() || data.array().length == 0) {
-            throw new DataValidationException("OtaPackage data should be specified!");
-        }
-
-        return getHashFunction(checksumAlgorithm).hashBytes(data.array()).toString();
-    }
-
-    @SuppressWarnings("deprecation")
-    private HashFunction getHashFunction(ChecksumAlgorithm checksumAlgorithm) {
-        switch (checksumAlgorithm) {
-            case MD5:
-                return Hashing.md5();
-            case SHA256:
-                return Hashing.sha256();
-            case SHA384:
-                return Hashing.sha384();
-            case SHA512:
-                return Hashing.sha512();
-            case CRC32:
-                return Hashing.crc32();
-            case MURMUR3_32:
-                return Hashing.murmur3_32();
-            case MURMUR3_128:
-                return Hashing.murmur3_128();
-            default:
-                throw new DataValidationException("Unknown checksum algorithm!");
         }
     }
 

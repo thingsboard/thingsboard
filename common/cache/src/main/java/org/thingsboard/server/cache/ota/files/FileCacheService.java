@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ota;
+package org.thingsboard.server.cache.ota.files;
 
-import lombok.Getter;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 
-public enum ChecksumAlgorithm {
+import java.io.OutputStream;
 
-    MD5("MD5"),
-    SHA256("SHA-256"),
-    SHA384("SHA-384"),
-    SHA512("SHA-512"),
-    CRC32("CRC32"),
-    MURMUR3_32("MURMUR3-32"),
-    MURMUR3_128("MURMUR3_128");
+public interface FileCacheService {
 
-    @Getter
-    final String name;
+    OutputStream createTempFile(OtaPackageId otaPackageId);
 
-    ChecksumAlgorithm(String name) {
-        this.name = name;
-    }
+    String getTempFileAbsolutePath(String otaPackageId);
 }

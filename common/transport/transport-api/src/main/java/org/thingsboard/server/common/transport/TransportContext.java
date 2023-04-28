@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
+import org.thingsboard.server.cache.ota.files.BaseFileCacheService;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
@@ -54,6 +55,9 @@ public abstract class TransportContext {
     @Getter
     @Autowired
     private OtaPackageDataCache otaPackageDataCache;
+
+    @Autowired
+    private BaseFileCacheService baseFileCacheService;
 
     @Autowired
     private TransportResourceCache transportResourceCache;
