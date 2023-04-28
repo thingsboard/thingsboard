@@ -881,6 +881,9 @@ FROM device d
          LEFT JOIN customer c ON c.id = d.customer_id
          LEFT JOIN ts_kv_latest dt ON dt.entity_id = d.id and dt.key = (select key_id from ts_kv_dictionary where key = 'active');
 
+DROP VIEW IF EXISTS device_info_view CASCADE;
+CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_attribute_view;
+
 DROP VIEW IF EXISTS alarm_info CASCADE;
 CREATE VIEW alarm_info AS
 SELECT a.*,

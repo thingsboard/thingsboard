@@ -115,6 +115,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                 deviceRepository.findDeviceInfosByFilter(
                         filter.getTenantId().getId(),
                         DaoUtil.getStringId(filter.getCustomerId()),
+                        DaoUtil.getStringId(filter.getEdgeId()),
                         filter.getType(),
                         DaoUtil.getStringId(filter.getDeviceProfileId()),
                         filter.getActive() != null,

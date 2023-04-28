@@ -119,6 +119,7 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
     @Query("SELECT d FROM DeviceInfoEntity d " +
             "WHERE d.tenantId = :tenantId " +
             "AND (:customerId IS NULL OR d.customerId = uuid(:customerId)) " +
+            "AND (:edgeId IS NULL OR d.id IN (SELECT re.toId FROM RelationEntity re WHERE re.toType = 'DEVICE' AND re.relationTypeGroup = 'EDGE' AND re.relationType = 'Contains' AND re.fromType = 'EDGE' AND re.fromId = uuid(:edgeId))) " +
             "AND ((:deviceType) IS NULL OR d.type = :deviceType) " +
             "AND (:deviceProfileId IS NULL OR d.deviceProfileId = uuid(:deviceProfileId)) " +
             "AND ((:filterByActive) IS FALSE OR d.active = :deviceActive) " +
@@ -128,6 +129,7 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
             "OR LOWER(d.customerTitle) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
     Page<DeviceInfoEntity> findDeviceInfosByFilter(@Param("tenantId") UUID tenantId,
                                                    @Param("customerId") String customerId,
+                                                   @Param("edgeId") String edgeId,
                                                    @Param("deviceType") String type,
                                                    @Param("deviceProfileId") String deviceProfileId,
                                                    @Param("filterByActive") boolean filterByActive,
