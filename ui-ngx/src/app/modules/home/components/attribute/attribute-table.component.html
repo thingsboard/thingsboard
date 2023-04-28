@@ -181,7 +181,7 @@
                     class="tb-value-cell"
                     (click)="editAttribute($event, attribute)">
             <div fxFlex fxLayout="row" style="align-items: center">
-              <div fxFlex fxLayout="row"  class="ellipsis" style="align-items: center;">
+              <div fxFlex fxLayout="row" style="overflow: hidden; align-items: center;">
                 <span class="ellipsis">{{attribute.value | tbJson}}</span>
                 <tb-copy-button
                   [disabled]="isLoading$ | async"
