@@ -82,7 +82,7 @@
         <div class="boolean-value-input" fxLayout="column" fxLayoutAlign="center start" fxFlex>
           <label class="checkbox-label">Boolean Value</label>
           <mat-checkbox formControlName="booleanValue" style="margin-bottom: 40px;">
-
+            {{ (addEntityFormGroup.get('attributes.booleanValue').value ? "value.true" : "value.false") | translate }}
           </mat-checkbox>
         </div>
       </div>
@@ -98,7 +98,7 @@
                   <mat-label>Direction</mat-label>
                   <mat-select formControlName="direction" name="direction">
                     <mat-option *ngFor="let direction of entitySearchDirection | keyvalue" [value]="direction.value">
-
+                      {{ ("relation.search-direction." + direction.value) | translate}}
                     </mat-option>
                   </mat-select>
                   <mat-error *ngIf="relation.get('direction').hasError('required')">
