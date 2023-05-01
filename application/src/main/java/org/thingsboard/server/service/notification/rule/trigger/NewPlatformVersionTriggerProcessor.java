@@ -18,26 +18,18 @@ package org.thingsboard.server.service.notification.rule.trigger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.UpdateMessage;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.NewPlatformVersionNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.queue.discovery.PartitionService;
 
 @Service
 @RequiredArgsConstructor
 public class NewPlatformVersionTriggerProcessor implements NotificationRuleTriggerProcessor<NewPlatformVersionTrigger, NewPlatformVersionNotificationRuleTriggerConfig> {
 
-    private final PartitionService partitionService;
-
     @Override
     public boolean matchesFilter(NewPlatformVersionTrigger trigger, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
-        if (!partitionService.isMyPartition(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID)) {
-            return false;
-        }
         return trigger.getUpdateInfo().isUpdateAvailable();
     }
 
