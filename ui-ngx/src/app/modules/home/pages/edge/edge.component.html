@@ -117,7 +117,7 @@
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openInstructions')"
-            [fxShow]="!isEdit">
+            [fxShow]="!isEdit && edgeScope !== 'customer_user'">
       <mat-icon>info_outline</mat-icon>
       <span>{{ 'edge.install-connect-instructions' | translate }}</span>
     </button>
