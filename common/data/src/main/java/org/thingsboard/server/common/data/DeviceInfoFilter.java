@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
+package org.thingsboard.server.common.data;
 
-/**
- * The interface To dto.
- *
- * @param <T> the type parameter
- */
-public interface ToData<T> {
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    /**
-     * This method convert domain model object to data transfer object.
-     *
-     * @return the dto object
-     */
-    T toData();
+@Data
+@Builder
+public class DeviceInfoFilter {
+
+    private TenantId tenantId;
+    private CustomerId customerId;
+    private EdgeId edgeId;
+    private String type;
+    private DeviceProfileId deviceProfileId;
+    private Boolean active;
 
 }

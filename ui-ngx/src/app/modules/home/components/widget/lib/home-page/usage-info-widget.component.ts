@@ -44,6 +44,8 @@ export class UsageInfoWidgetComponent extends PageComponent implements OnInit, O
   entityItemCritical: {[key: string]: boolean} = {};
   apiCallItemCritical: {[key: string]: boolean} = {};
 
+  hasUsageInfoAccess = true;
+
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private shortNumberPipe: ShortNumberPipe,
@@ -52,41 +54,43 @@ export class UsageInfoWidgetComponent extends PageComponent implements OnInit, O
   }
 
   ngOnInit() {
-    (this.authUser.authority === Authority.TENANT_ADMIN ?
-      this.usageInfoService.getUsageInfo() : of(null)).subscribe(
-      (usageInfo) => {
-        this.usageInfo = usageInfo;
-        this.entityItemCritical.devices = this.isItemCritical(this.usageInfo?.devices, this.usageInfo?.maxDevices);
-        this.entityItemCritical.assets = this.isItemCritical(this.usageInfo?.assets, this.usageInfo?.maxAssets);
-        this.entityItemCritical.users = this.isItemCritical(this.usageInfo?.users, this.usageInfo?.maxUsers);
-        this.entityItemCritical.dashboards = this.isItemCritical(this.usageInfo?.dashboards, this.usageInfo?.maxDashboards);
-        this.entityItemCritical.customers = this.isItemCritical(this.usageInfo?.customers, this.usageInfo?.maxCustomers);
-        this.apiCallItemCritical.transportMessages = this.isItemCritical(this.usageInfo?.transportMessages,
-          this.usageInfo?.maxTransportMessages);
-        this.apiCallItemCritical.jsExecutions = this.isItemCritical(this.usageInfo?.jsExecutions, this.usageInfo?.maxJsExecutions);
-        this.apiCallItemCritical.alarms = this.isItemCritical(this.usageInfo?.alarms, this.usageInfo?.maxAlarms);
-        this.apiCallItemCritical.emails = this.isItemCritical(this.usageInfo?.emails, this.usageInfo?.maxEmails);
-        this.apiCallItemCritical.sms = this.isItemCritical(this.usageInfo?.sms, this.usageInfo?.maxSms);
-        let entitiesHasCriticalItem = false;
-        let apiCallsHasCriticalItem = false;
-        for (const key of Object.keys(this.entityItemCritical)) {
-          if (this.entityItemCritical[key]) {
-            entitiesHasCriticalItem = true;
-            break;
+    this.hasUsageInfoAccess = this.authUser.authority === Authority.TENANT_ADMIN;
+    if (this.hasUsageInfoAccess) {
+      this.usageInfoService.getUsageInfo().subscribe(
+        (usageInfo) => {
+          this.usageInfo = usageInfo;
+          this.entityItemCritical.devices = this.isItemCritical(this.usageInfo?.devices, this.usageInfo?.maxDevices);
+          this.entityItemCritical.assets = this.isItemCritical(this.usageInfo?.assets, this.usageInfo?.maxAssets);
+          this.entityItemCritical.users = this.isItemCritical(this.usageInfo?.users, this.usageInfo?.maxUsers);
+          this.entityItemCritical.dashboards = this.isItemCritical(this.usageInfo?.dashboards, this.usageInfo?.maxDashboards);
+          this.entityItemCritical.customers = this.isItemCritical(this.usageInfo?.customers, this.usageInfo?.maxCustomers);
+          this.apiCallItemCritical.transportMessages = this.isItemCritical(this.usageInfo?.transportMessages,
+            this.usageInfo?.maxTransportMessages);
+          this.apiCallItemCritical.jsExecutions = this.isItemCritical(this.usageInfo?.jsExecutions, this.usageInfo?.maxJsExecutions);
+          this.apiCallItemCritical.alarms = this.isItemCritical(this.usageInfo?.alarms, this.usageInfo?.maxAlarms);
+          this.apiCallItemCritical.emails = this.isItemCritical(this.usageInfo?.emails, this.usageInfo?.maxEmails);
+          this.apiCallItemCritical.sms = this.isItemCritical(this.usageInfo?.sms, this.usageInfo?.maxSms);
+          let entitiesHasCriticalItem = false;
+          let apiCallsHasCriticalItem = false;
+          for (const key of Object.keys(this.entityItemCritical)) {
+            if (this.entityItemCritical[key]) {
+              entitiesHasCriticalItem = true;
+              break;
+            }
           }
-        }
-        for (const key of Object.keys(this.apiCallItemCritical)) {
-          if (this.apiCallItemCritical[key]) {
-            apiCallsHasCriticalItem = true;
-            break;
+          for (const key of Object.keys(this.apiCallItemCritical)) {
+            if (this.apiCallItemCritical[key]) {
+              apiCallsHasCriticalItem = true;
+              break;
+            }
           }
+          if (apiCallsHasCriticalItem && !entitiesHasCriticalItem) {
+            this.toggleValue = 'apiCalls';
+          }
+          this.cd.markForCheck();
         }
-        if (apiCallsHasCriticalItem && !entitiesHasCriticalItem) {
-          this.toggleValue = 'apiCalls';
-        }
-        this.cd.markForCheck();
-      }
-    );
+      );
+    }
   }
 
   maxValue(max: number): number | string {
