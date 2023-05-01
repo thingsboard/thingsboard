@@ -18,7 +18,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { HttpClient } from '@angular/common/http';
 
-import { forkJoin, Observable, of, ReplaySubject, throwError } from 'rxjs';
+import { Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
 import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
@@ -31,25 +31,17 @@ import { ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated 
 import { getCurrentAuthState, getCurrentAuthUser } from './auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { ActionSettingsChangeLanguage } from '@app/core/settings/settings.actions';
-import { AuthPayload, AuthState, SysParamsState } from '@core/auth/auth.models';
+import { AuthPayload, AuthState, SysParams, SysParamsState } from '@core/auth/auth.models';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthUser } from '@shared/models/user.model';
 import { TimeService } from '@core/services/time.service';
 import { UtilsService } from '@core/services/utils.service';
-import { DashboardService } from '@core/http/dashboard.service';
-import { PageLink } from '@shared/models/page/page-link';
-import { DashboardInfo } from '@shared/models/dashboard.models';
-import { PageData } from '@app/shared/models/page/page-data';
-import { AdminService } from '@core/http/admin.service';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
 import { isMobileApp } from '@core/utils';
 import { TwoFactorAuthProviderType, TwoFaProviderInfo } from '@shared/models/two-factor-auth.models';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
-import { UserSettings } from '@shared/models/user-settings.models';
-import { UserSettingsService } from '@core/http/user-settings.service';
 
 @Injectable({
     providedIn: 'root'
@@ -65,10 +57,7 @@ export class AuthService {
     private route: ActivatedRoute,
     private zone: NgZone,
     private utils: UtilsService,
-    private dashboardService: DashboardService,
-    private adminService: AdminService,
     private translate: TranslateService,
-    private userSettingsService: UserSettingsService,
     private dialog: MatDialog
   ) {
   }
@@ -400,7 +389,7 @@ export class AuthService {
           authPayload.forceFullscreen = true;
         }
         if (authPayload.authUser.isPublic) {
-          this.loadSystemParams(authPayload).subscribe(
+          this.loadSystemParams().subscribe(
             (sysParams) => {
               authPayload = {...authPayload, ...sysParams};
               loadUserSubject.next(authPayload);
@@ -421,7 +410,7 @@ export class AuthService {
               if (this.userForceFullscreen(authPayload)) {
                 authPayload.forceFullscreen = true;
               }
-              this.loadSystemParams(authPayload).subscribe(
+              this.loadSystemParams().subscribe(
                 (sysParams) => {
                   authPayload = {...authPayload, ...sysParams};
                   let userLang;
@@ -455,57 +444,14 @@ export class AuthService {
     return loadUserSubject;
   }
 
-  private loadIsUserTokenAccessEnabled(authUser: AuthUser): Observable<boolean> {
-    if (authUser.authority === Authority.SYS_ADMIN ||
-        authUser.authority === Authority.TENANT_ADMIN) {
-      return this.http.get<boolean>('/api/user/tokenAccessEnabled', defaultHttpOptions());
-    } else {
-      return of(false);
-    }
-  }
-
-  public loadIsEdgesSupportEnabled(): Observable<boolean> {
-    return this.http.get<boolean>('/api/edges/enabled', defaultHttpOptions());
-  }
-
-  private loadHasRepository(authUser: AuthUser): Observable<boolean> {
-    if (authUser.authority === Authority.TENANT_ADMIN) {
-      return this.http.get<boolean>('/api/admin/repositorySettings/exists', defaultHttpOptions());
-    } else {
-      return of(false);
-    }
-  }
-
-  private loadTbelEnabled(authUser: AuthUser): Observable<boolean> {
-    if (authUser.authority === Authority.TENANT_ADMIN) {
-      return this.http.get<boolean>('/api/ruleChain/tbelEnabled', defaultHttpOptions());
-    } else {
-      return of(false);
-    }
-  }
-
-  private loadUserSettings(): Observable<UserSettings> {
-    return this.userSettingsService.loadUserSettings();
-  }
-
-  private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
-    const sources = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
-                     this.fetchAllowedDashboardIds(authPayload),
-                     this.loadIsEdgesSupportEnabled(),
-                     this.loadHasRepository(authPayload.authUser),
-                     this.loadTbelEnabled(authPayload.authUser),
-                     this.loadUserSettings(),
-                     this.timeService.loadMaxDatapointsLimit()];
-    return forkJoin(sources)
-      .pipe(map((data) => {
-        const userTokenAccessEnabled: boolean = data[0] as boolean;
-        const allowedDashboardIds: string[] = data[1] as string[];
-        const edgesSupportEnabled: boolean = data[2] as boolean;
-        const hasRepository: boolean = data[3] as boolean;
-        const tbelEnabled: boolean = data[4] as boolean;
-        const userSettings = data[5] as UserSettings;
-        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository, tbelEnabled, userSettings};
-      }, catchError((err) => of({}))));
+  private loadSystemParams(): Observable<SysParamsState> {
+    return this.http.get<SysParams>('/api/system/params', defaultHttpOptions()).pipe(
+      map((sysParams) => {
+        this.timeService.setMaxDatapointsLimit(sysParams.maxDatapointsLimit);
+        return sysParams;
+      }),
+      catchError(() => of({} as SysParamsState))
+    );
   }
 
   public refreshJwtToken(loadUserElseStoreJwtToken = true): Observable<LoginResponse> {
@@ -689,24 +635,4 @@ export class AuthService {
     }
   }
 
-  private fetchAllowedDashboardIds(authPayload: AuthPayload): Observable<string[]> {
-    if (authPayload.forceFullscreen && (authPayload.authUser.authority === Authority.TENANT_ADMIN ||
-      authPayload.authUser.authority === Authority.CUSTOMER_USER)) {
-      const pageLink = new PageLink(100);
-      let fetchDashboardsObservable: Observable<PageData<DashboardInfo>>;
-      if (authPayload.authUser.authority === Authority.TENANT_ADMIN) {
-        fetchDashboardsObservable = this.dashboardService.getTenantDashboards(pageLink);
-      } else {
-        fetchDashboardsObservable = this.dashboardService.getCustomerDashboards(authPayload.authUser.customerId, pageLink);
-      }
-      return fetchDashboardsObservable.pipe(
-        map((result) => {
-          const dashboards = result.data;
-          return dashboards.map(dashboard => dashboard.id.id);
-        })
-      );
-    } else {
-      return of([]);
-    }
-  }
 }
