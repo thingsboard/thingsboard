@@ -16,17 +16,22 @@
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
-import org.thingsboard.server.msa.ui.utils.Const;
 
-public class LoginPageHelper extends LoginPageElements {
-    public LoginPageHelper(WebDriver driver) {
+public class DevicePageHelper extends DevicePageElements {
+    public DevicePageHelper(WebDriver driver) {
         super(driver);
     }
 
-    public void authorizationTenant() {
-        emailField().sendKeys(Const.TENANT_EMAIL);
-        passwordField().sendKeys(Const.TENANT_PASSWORD);
-        submitBtn().click();
-        waitUntilUrlContainsText("/home");
+    public void openDeviceAlarms(String deviceName) {
+        if (!deviceDetailsView().isDisplayed()) {
+            device(deviceName).click();
+        }
+        deviceDetailsAlarmsBtn().click();
+    }
+
+    public void assignToCustomer(String customerTitle) {
+        chooseCustomerForAssignField().click();
+        customerFromAssignDropdown(customerTitle).click();
+        submitAssignToCustomerBtn().click();
     }
 }

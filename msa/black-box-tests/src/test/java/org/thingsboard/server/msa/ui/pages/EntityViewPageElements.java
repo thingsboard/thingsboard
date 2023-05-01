@@ -16,17 +16,22 @@
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
-import org.thingsboard.server.msa.ui.utils.Const;
+import org.openqa.selenium.WebElement;
 
-public class LoginPageHelper extends LoginPageElements {
-    public LoginPageHelper(WebDriver driver) {
+public class EntityViewPageElements extends OtherPageElementsHelper {
+    public EntityViewPageElements(WebDriver driver) {
         super(driver);
     }
 
-    public void authorizationTenant() {
-        emailField().sendKeys(Const.TENANT_EMAIL);
-        passwordField().sendKeys(Const.TENANT_PASSWORD);
-        submitBtn().click();
-        waitUntilUrlContainsText("/home");
+    private static final String ENTITY_VIEW_DETAILS_VIEW = "//tb-details-panel";
+    private static final String ENTITY_VIEW_DETAILS_ALARMS = ENTITY_VIEW_DETAILS_VIEW + "//span[text()='Alarms']";
+
+    public WebElement entityViewDetailsView() {
+        return waitUntilPresenceOfElementLocated(ENTITY_VIEW_DETAILS_VIEW);
     }
+
+    public WebElement entityViewDetailsAlarmsBtn() {
+        return waitUntilElementToBeClickable(ENTITY_VIEW_DETAILS_ALARMS);
+    }
+
 }

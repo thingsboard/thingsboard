@@ -30,6 +30,15 @@ public class SideBarMenuViewElements extends AbstractBasePage {
     private static final String PROFILES_BTN = "//mat-toolbar//mat-icon[text()='badge']/ancestor::tb-menu-toggle";
     private static final String DEVICE_PROFILE_BTN = "//mat-toolbar//a[@href='/profiles/deviceProfiles']";
     private static final String ASSET_PROFILE_BTN = "//mat-toolbar//a[@href='/profiles/assetProfiles']";
+    private static final String ALARMS_BTN = "//mat-toolbar//a[@href='/alarms']";
+    private static final String ENTITIES_DROPDOWN = "//mat-toolbar//mat-icon[text()='category']/ancestor::a//span[contains(@class,'pull-right')]";
+    private static final String DEVICES_BTN = "//ul[@id='docs-menu-entity.entities']//span[text()='Devices']";
+    private static final String ASSETS_BTN = "//ul[@id='docs-menu-entity.entities']//span[text()='Assets']";
+    private static final String ENTITY_VIEWS_BTN = "//ul[@id='docs-menu-entity.entities']//span[text()='Entity Views']";
+
+    public WebElement entitiesDropdown() {
+        return waitUntilElementToBeClickable(ENTITIES_DROPDOWN);
+    }
 
     public WebElement ruleChainsBtn() {
         return waitUntilElementToBeClickable(RULE_CHAINS_BTN);
@@ -53,5 +62,21 @@ public class SideBarMenuViewElements extends AbstractBasePage {
 
     public WebElement assetProfileBtn() {
         return waitUntilElementToBeClickable(ASSET_PROFILE_BTN);
+    }
+
+    public WebElement alarmsBtn() {
+        return waitUntilElementToBeClickable(ALARMS_BTN);
+    }
+
+    public WebElement devicesBtn() {
+        return waitUntilElementToBeClickable(DEVICES_BTN);
+    }
+
+    public WebElement assetsBtn() {
+        return waitUntilElementToBeClickable(ASSETS_BTN);
+    }
+
+    public WebElement entityViewsBtn() {
+        return waitUntilElementToBeClickable(ENTITY_VIEWS_BTN);
     }
 }
