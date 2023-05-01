@@ -71,12 +71,13 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private JavascriptExecutor js;
     public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     private final Duration duration = Duration.ofMillis(WAIT_TIMEOUT);
-
+    public final int MAX_FAILED_TESTS = 20;
+    public static int failedTestsCount = 0;
     @BeforeClass
     public void checkFailureTests() {
         if (Boolean.parseBoolean(System.getProperty("blackBoxTests.ui.skip.failure", "true")) &&
-                Boolean.parseBoolean(System.getProperty("blackBoxTests.ui.failure"))) {
-            throw new SkipException("Too many test failures. Skipping remaining tests.");
+                failedTestsCount >= MAX_FAILED_TESTS) {
+            throw new SkipException(String.format("Too many test failures (%d). Skipping remaining tests.", failedTestsCount));
         }
     }
 

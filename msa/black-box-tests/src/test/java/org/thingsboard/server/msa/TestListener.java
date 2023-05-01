@@ -20,11 +20,10 @@ import org.testng.ITestListener;
 import org.testng.ITestResult;
 import org.testng.internal.ConstructorOrMethod;
 
+import static org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest.failedTestsCount;
+
 @Slf4j
 public class TestListener implements ITestListener {
-
-    public final int MAX_FAILED_TESTS = 10;
-    private int failedTestsCount = 0;
 
     @Override
     public void onTestStart(ITestResult result) {
@@ -52,10 +51,6 @@ public class TestListener implements ITestListener {
             return;
         }
         failedTestsCount++;
-        if (failedTestsCount >= MAX_FAILED_TESTS) {
-            System.setProperty("blackBoxTests.ui.skip", "true");
-            log.error("Too many test failures {}. Skipping remaining tests.", failedTestsCount);
-        }
     }
 
     /**
