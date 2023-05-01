@@ -116,6 +116,8 @@ import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.sql.SQLException;
@@ -927,9 +929,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected static void setStaticFinalFieldValue(Class<?> targetCls, String fieldName, Object value) throws Exception {
         Field field = targetCls.getDeclaredField(fieldName);
         field.setAccessible(true);
-        Field modifiers = Field.class.getDeclaredField("modifiers");
-        modifiers.setAccessible(true);
-        modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+        // Get the VarHandle for the 'modifiers' field in the Field class
+        MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Field.class, MethodHandles.lookup());
+        VarHandle modifiersHandle = lookup.findVarHandle(Field.class, "modifiers", int.class);
+
+        // Remove the final modifier from the field
+        int currentModifiers = field.getModifiers();
+        modifiersHandle.set(field, currentModifiers & ~Modifier.FINAL);
+
+        // Set the new value
         field.set(null, value);
     }
 

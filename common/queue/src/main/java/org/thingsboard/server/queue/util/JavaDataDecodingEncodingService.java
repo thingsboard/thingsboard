@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache;
+package org.thingsboard.server.queue.util;
 
-import org.springframework.data.redis.serializer.SerializationException;
-import org.thingsboard.server.common.data.FSTUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.JavaSerDesUtil;
 
-public class TbFSTRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
+import java.util.Optional;
 
+@Slf4j
+@Service
+public class JavaDataDecodingEncodingService implements DataDecodingEncodingService {
     @Override
-    public byte[] serialize(V value) throws SerializationException {
-        return FSTUtils.encode(value);
+    public <T> Optional<T> decode(byte[] byteArray) {
+        return Optional.ofNullable(JavaSerDesUtil.decode(byteArray));
     }
 
     @Override
-    public V deserialize(K key, byte[] bytes) throws SerializationException {
-        return FSTUtils.decode(bytes);
+    public <T> byte[] encode(T msq) {
+        return JavaSerDesUtil.encode(msq);
     }
 }
