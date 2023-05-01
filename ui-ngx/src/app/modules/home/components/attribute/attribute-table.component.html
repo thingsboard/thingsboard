@@ -161,9 +161,10 @@
         <ng-container matColumnDef="key">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'attribute.key' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
-            <div fxLayout="row" style="align-items: center">
+            <div class="attribute" fxLayout="row" style="align-items: center">
               <span class="ellipsis">{{ attribute.key }}</span>
               <tb-copy-button
+                class="attribute-copy"
                 [disabled]="isLoading$ | async"
                 [copyText]="attribute.key"
                 tooltipText="{{ 'attribute.copy-key' | translate }}"
@@ -181,9 +182,10 @@
                     class="tb-value-cell"
                     (click)="editAttribute($event, attribute)">
             <div fxFlex fxLayout="row" style="align-items: center">
-              <div fxFlex fxLayout="row" style="overflow: hidden; align-items: center;">
+              <div class="attribute" fxFlex fxLayout="row" style="overflow: hidden; align-items: center;">
                 <span class="ellipsis">{{attribute.value | tbJson}}</span>
                 <tb-copy-button
+                  class="attribute-copy"
                   [disabled]="isLoading$ | async"
                   [copyText]="attribute.value | tbJson"
                   tooltipText="{{ 'attribute.copy-value' | translate }}"
