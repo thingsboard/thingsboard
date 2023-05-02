@@ -92,7 +92,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { ActivatedRoute, Router } from '@angular/router';
 import cssjs from '@core/css/css';
 import { ModulesWithFactories, ResourcesService } from '@core/services/resources.service';
-import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TimeService } from '@core/services/time.service';
 import { DeviceService } from '@app/core/http/device.service';
@@ -1165,25 +1165,26 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         if (isDefined(customHtml) && customHtml.length > 0) {
           htmlTemplate = customHtml;
         }
-        this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe(
-          () => {
+        this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe({
+          next: () => {
             if (isDefined(customPrettyFunction) && customPrettyFunction.length > 0) {
               try {
                 if (!additionalParams) {
                   additionalParams = {};
                 }
                 const customActionPrettyFunction = new Function('$event', 'widgetContext', 'entityId',
-                  'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', 'customModules', customPrettyFunction);
-                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel, descriptor.customModules);
+                  'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', customPrettyFunction);
+                this.widgetContext.customDialog.setAdditionalModules(descriptor.customModules);
+                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
               } catch (e) {
                 console.error(e);
               }
             }
           },
-          (errorMessages: string[]) => {
+          error: (errorMessages: string[]) => {
             this.processResourcesLoadErrors(errorMessages);
           }
-        );
+        });
         break;
       case WidgetActionType.mobileAction:
         const mobileAction = descriptor.mobileAction;

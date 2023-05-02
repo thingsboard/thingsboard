@@ -29,10 +29,11 @@ import {
 } from '@home/components/widget/dialog/custom-dialog-container.component';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 import { HOME_COMPONENTS_MODULE_TOKEN, SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
-import { isObject } from '@core/utils';
 
 @Injectable()
 export class CustomDialogService {
+
+  private customModules: Array<Type<any>>
 
   constructor(
     private translate: TranslateService,
@@ -45,11 +46,15 @@ export class CustomDialogService {
   ) {
   }
 
+  setAdditionalModules(modules: Array<Type<any>>) {
+    this.customModules = modules;
+  }
+
   customDialog(template: string, controller: (instance: CustomDialogComponent) => void, data?: any,
                config?: MatDialogConfig): Observable<any> {
     const modules = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule];
-    if (isObject(data) && data.hasOwnProperty('customModules')) {
-      modules.push(...data.customModules);
+    if (Array.isArray(this.customModules)) {
+      modules.push(...this.customModules);
     }
     return this.dynamicComponentFactoryService.createDynamicComponentFactory(
       class CustomDialogComponentInstance extends CustomDialogComponent {}, template, modules).pipe(
