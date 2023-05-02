@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.util.Pair;
 import org.thingsboard.script.api.AbstractScriptInvokeService;
 import org.thingsboard.script.api.RuleNodeScriptFactory;
 import org.thingsboard.script.api.ScriptType;

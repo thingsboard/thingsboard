@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.user;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 
 @Data

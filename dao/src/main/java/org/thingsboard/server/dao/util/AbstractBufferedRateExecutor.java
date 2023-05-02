@@ -44,7 +44,6 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;

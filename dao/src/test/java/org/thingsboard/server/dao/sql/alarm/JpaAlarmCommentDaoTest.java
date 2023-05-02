@@ -23,7 +23,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -35,6 +34,7 @@ import org.thingsboard.server.dao.alarm.AlarmCommentDao;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 
 import java.util.UUID;
+
 import static org.junit.Assert.assertEquals;
 
 @Slf4j
