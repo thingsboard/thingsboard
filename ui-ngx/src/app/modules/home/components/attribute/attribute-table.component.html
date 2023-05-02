@@ -160,8 +160,8 @@
         </ng-container>
         <ng-container matColumnDef="key">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'attribute.key' | translate }} </mat-header-cell>
-          <mat-cell *matCellDef="let attribute">
-            <div class="attribute" fxLayout="row" style="align-items: center">
+          <mat-cell *matCellDef="let attribute" class="attribute">
+            <div fxLayout="row" style="align-items: center">
               <span class="ellipsis">{{ attribute.key }}</span>
               <tb-copy-button
                 class="attribute-copy"
@@ -179,10 +179,10 @@
         <ng-container matColumnDef="value">
           <mat-header-cell *matHeaderCellDef style="width: 60%"> {{ 'attribute.value' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute"
-                    class="tb-value-cell"
+                    class="tb-value-cell attribute"
                     (click)="editAttribute($event, attribute)">
             <div fxFlex fxLayout="row" style="align-items: center">
-              <div class="attribute" fxFlex fxLayout="row" style="overflow: hidden; align-items: center;">
+              <div fxFlex fxLayout="row" style="overflow: hidden; align-items: center;">
                 <span class="ellipsis">{{attribute.value | tbJson}}</span>
                 <tb-copy-button
                   class="attribute-copy"
