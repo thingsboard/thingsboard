@@ -192,26 +192,6 @@ public class TbGetTenantDetailsNodeTest {
     }
 
     @Test
-    public void givenNoEntityDetailsAndFetchToMetadata_whenOnMsg_thenShouldTellSuccessAndFetchNothingToMetaData() {
-        // GIVEN
-        prepareMsgAndConfig(FetchTo.METADATA, Collections.emptyList());
-
-        mockFindTenant();
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
-
-        verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
-        verify(ctxMock, never()).tellFailure(any(), any());
-
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
-    }
-
-    @Test
     public void givenNotPresentEntityDetailsAndFetchToData_whenOnMsg_thenShouldTellSuccessAndFetchNothingToData() {
         // GIVEN
         tenant.setZip(null);

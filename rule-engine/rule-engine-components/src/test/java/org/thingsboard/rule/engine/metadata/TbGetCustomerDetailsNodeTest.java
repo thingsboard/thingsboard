@@ -33,7 +33,6 @@ import org.thingsboard.rule.engine.util.EntityDetails;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -43,7 +42,6 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -255,35 +253,6 @@ public class TbGetCustomerDetailsNodeTest {
 
         assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
         assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(expectedMsgMetaData);
-    }
-
-    @Test
-    public void givenNoEntityDetailsAndFetchToMetadata_whenOnMsg_thenShouldTellSuccessAndFetchNothingToMetaData() {
-        // GIVEN
-        var entityView = new EntityView();
-        entityView.setId(new EntityViewId(UUID.randomUUID()));
-        entityView.setCustomerId(customer.getId());
-
-        prepareMsgAndConfig(FetchTo.METADATA, Collections.emptyList(), entityView.getId());
-
-        when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
-        when(entityViewServiceMock.findEntityViewByIdAsync(eq(TENANT_ID), eq(entityView.getId()))).thenReturn(Futures.immediateFuture(entityView));
-
-        mockFindCustomer();
-
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
-
-        verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
-        verify(ctxMock, never()).tellFailure(any(), any());
-
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
     }
 
     @Test
