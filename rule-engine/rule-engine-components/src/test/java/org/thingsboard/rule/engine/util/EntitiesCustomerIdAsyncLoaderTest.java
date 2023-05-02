@@ -140,7 +140,7 @@ public class EntitiesCustomerIdAsyncLoaderTest {
         device.setCustomerId(expectedCustomerId);
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
-        doReturn(Futures.immediateFuture(device)).when(deviceServiceMock).findDeviceByIdAsync(any(), any());
+        doReturn(device).when(deviceServiceMock).findDeviceById(any(), any());
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         // WHEN

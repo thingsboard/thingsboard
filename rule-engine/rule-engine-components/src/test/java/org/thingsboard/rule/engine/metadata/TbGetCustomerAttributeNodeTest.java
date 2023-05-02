@@ -257,7 +257,7 @@ public class TbGetCustomerAttributeNodeTest {
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
-        doReturn(Futures.immediateFuture(device)).when(deviceServiceMock).findDeviceByIdAsync(eq(TENANT_ID), eq(device.getId()));
+        doReturn(device).when(deviceServiceMock).findDeviceById(eq(TENANT_ID), eq(device.getId()));
 
         when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
         when(attributesServiceMock.find(eq(TENANT_ID), eq(CUSTOMER_ID), eq(SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
