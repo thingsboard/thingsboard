@@ -18,7 +18,7 @@ package org.thingsboard.server.msa.ui.pages;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-public class AlarmWidgetElements extends AlarmDetailsEntityTabHelper{
+public class AlarmWidgetElements extends AlarmDetailsEntityTabHelper {
     public AlarmWidgetElements(WebDriver driver) {
         super(driver);
     }
