@@ -37,7 +37,7 @@ public class EntitiesCustomerIdAsyncLoader {
             case ASSET:
                 return toCustomerIdAsync(ctx, ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) originator));
             case DEVICE:
-                return toCustomerIdAsync(ctx, ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) originator));
+                return toCustomerIdAsync(ctx, Futures.immediateFuture(ctx.getDeviceService().findDeviceById(ctx.getTenantId(), (DeviceId) originator)));
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected originator EntityType: " + originator.getEntityType()));
         }

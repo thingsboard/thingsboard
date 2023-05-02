@@ -33,10 +33,10 @@
       <span fxFlex="5"></span>
       <div fxFlex="95" fxLayout="row" fxLayoutAlign="start center">
         <div class="tb-header-label" translate fxFlex>filter.filter</div>
-        <div class="tb-header-label" translate fxFlex="120px"
+        <div class="tb-header-label" translate fxFlex="80px"
              fxLayout="column" fxLayoutAlign="center center"
-             style="padding-left: 30px;">filter.editable</div>
-        <div style="min-width: 80px;"></div>
+             style="padding-left: 5px;">filter.editable</div>
+        <div style="min-width: 132px;"></div>
       </div>
     </div>
     <fieldset [disabled]="isLoading$ | async">
@@ -47,7 +47,7 @@
         <span fxFlex="5">{{$index + 1}}.</span>
         <div class="mat-elevation-z4 tb-filter" fxFlex="95" fxLayout="row" fxLayoutAlign="start center">
           <mat-label fxFlex>{{filterControl.get('filter').value}}</mat-label>
-          <section fxFlex="120px" style="padding-left: 10px;"
+          <section fxFlex="80px" style="padding-left: 10px;"
                    class="tb-editable-switch"
                    fxLayout="column"
                    fxLayoutAlign="center center">

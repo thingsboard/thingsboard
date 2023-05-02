@@ -21,7 +21,10 @@ import org.thingsboard.server.common.data.notification.info.EntitiesLimitNotific
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
+import org.thingsboard.server.dao.entity.EntityCountService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
@@ -30,6 +33,8 @@ import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 @RequiredArgsConstructor
 public class EntitiesLimitTriggerProcessor implements NotificationRuleTriggerProcessor<EntitiesLimitTrigger, EntitiesLimitNotificationRuleTriggerConfig> {
 
+    private final EntityCountService entityCountService;
+    private final TbTenantProfileCache tenantProfileCache;
     private final TenantService tenantService;
 
     @Override
@@ -37,7 +42,15 @@ public class EntitiesLimitTriggerProcessor implements NotificationRuleTriggerPro
         if (isNotEmpty(triggerConfig.getEntityTypes()) && !triggerConfig.getEntityTypes().contains(trigger.getEntityType())) {
             return false;
         }
-        return (int) (trigger.getLimit() * triggerConfig.getThreshold()) == trigger.getCurrentCount(); // strict comparing not to send notification on each new entity
+        DefaultTenantProfileConfiguration profileConfiguration = tenantProfileCache.get(trigger.getTenantId()).getDefaultProfileConfiguration();
+        long limit = profileConfiguration.getEntitiesLimit(trigger.getEntityType());
+        if (limit <= 0) {
+            return false;
+        }
+        long currentCount = entityCountService.countByTenantIdAndEntityType(trigger.getTenantId(), trigger.getEntityType());
+        trigger.setLimit(limit);
+        trigger.setCurrentCount(currentCount);
+        return (int) (limit * triggerConfig.getThreshold()) == currentCount; // strict comparing not to send notification on each new entity
     }
 
     @Override

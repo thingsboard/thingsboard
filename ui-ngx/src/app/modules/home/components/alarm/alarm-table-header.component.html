@@ -15,12 +15,8 @@
     limitations under the License.
 
 -->
-<mat-form-field class="mat-block">
-  <mat-label translate>alarm.alarm-status</mat-label>
-  <mat-select [ngModel]="alarmTableConfig.searchStatus"
-              (ngModelChange)="searchStatusChanged($event)">
-    <mat-option *ngFor="let status of alarmSearchStatusTypes" [value]="status">
-      {{ alarmSearchStatusTranslationsMap.get(alarmSearchStatusEnum[status]) | translate }}
-    </mat-option>
-  </mat-select>
-</mat-form-field>
+<tb-alarm-filter-config [ngModel]="alarmTableConfig.alarmFilterConfig"
+                        (ngModelChange)="alarmFilterChanged($event)"
+                        propagatedFilter="false"
+                        userMode>
+</tb-alarm-filter-config>

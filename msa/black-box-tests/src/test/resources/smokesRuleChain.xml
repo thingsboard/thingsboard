@@ -29,7 +29,7 @@
             </run>
         </groups>
         <packages>
-            <package name="org.thingsboard.server.msa.ui.tests.ruleChainsSmoke"/>
+            <package name="org.thingsboard.server.msa.ui.tests.rulechainssmoke"/>
         </packages>
     </test>
 </suite>

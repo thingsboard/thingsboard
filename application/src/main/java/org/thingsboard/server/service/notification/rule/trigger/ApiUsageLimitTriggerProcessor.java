@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 import org.thingsboard.server.common.msg.notification.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.dao.tenant.TenantService;
 
-import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;
 
 @Service
 @RequiredArgsConstructor
@@ -34,8 +34,8 @@ public class ApiUsageLimitTriggerProcessor implements NotificationRuleTriggerPro
 
     @Override
     public boolean matchesFilter(ApiUsageLimitTrigger trigger, ApiUsageLimitNotificationRuleTriggerConfig triggerConfig) {
-        return (isEmpty(triggerConfig.getApiFeatures()) || triggerConfig.getApiFeatures().contains(trigger.getState().getApiFeature())) &&
-                (isEmpty(triggerConfig.getNotifyOn()) || triggerConfig.getNotifyOn().contains(trigger.getStatus()));
+        return emptyOrContains(triggerConfig.getApiFeatures(), trigger.getState().getApiFeature()) &&
+                emptyOrContains(triggerConfig.getNotifyOn(), trigger.getStatus());
     }
 
     @Override

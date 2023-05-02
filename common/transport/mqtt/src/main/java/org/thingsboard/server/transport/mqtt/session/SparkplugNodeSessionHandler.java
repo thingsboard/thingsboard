@@ -221,7 +221,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
 
     private ListenableFuture<SparkplugDeviceSessionContext> onDeviceConnectProto(SparkplugTopic topic) throws ThingsboardException {
         try {
-            String deviceType = this.gateway.getDeviceType() + "-node";
+            String deviceType = this.gateway.getDeviceType() + " device";
             return onDeviceConnect(topic.getNodeDeviceName(), deviceType);
         } catch (RuntimeException e) {
             log.error("Failed Sparkplug Device connect proto!", e);

@@ -134,7 +134,7 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
-        attributeKeys =  new LinkedHashSet<>(attributeKeys); // deduplicate the attributes
+        attributeKeys = new LinkedHashSet<>(attributeKeys); // deduplicate the attributes
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
 
         Map<String, TbCacheValueWrapper<AttributeKvEntry>> wrappedCachedAttributes = findCachedAttributes(entityId, scope, attributeKeys);
@@ -220,7 +220,7 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
-        attributes.forEach(AttributeUtils::validate);
+        AttributeUtils.validate(attributes);
 
         List<ListenableFuture<String>> futures = new ArrayList<>(attributes.size());
         for (var attribute : attributes) {

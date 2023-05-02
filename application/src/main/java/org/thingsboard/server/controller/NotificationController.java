@@ -47,11 +47,13 @@ import org.thingsboard.server.common.data.notification.targets.NotificationRecip
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
@@ -64,7 +66,9 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.validation.Valid;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -201,9 +205,6 @@ public class NotificationController extends BaseController {
     public NotificationRequestPreview getNotificationRequestPreview(@RequestBody @Valid NotificationRequest request,
                                                                     @RequestParam(defaultValue = "20") int recipientsPreviewSize,
                                                                     @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        NotificationRequestPreview preview = new NotificationRequestPreview();
-
-        request.setOriginatorEntityId(user.getId());
         NotificationTemplate template;
         if (request.getTemplateId() != null) {
             template = checkEntityId(request.getTemplateId(), notificationTemplateService::findNotificationTemplateById, Operation.READ);
@@ -213,55 +214,69 @@ public class NotificationController extends BaseController {
         if (template == null) {
             throw new IllegalArgumentException("Template is missing");
         }
-        NotificationProcessingContext tmpProcessingCtx = NotificationProcessingContext.builder()
-                .tenantId(user.getTenantId())
-                .request(request)
-                .template(template)
-                .settings(null)
-                .build();
+        request.setOriginatorEntityId(user.getId());
+        List<NotificationTarget> targets = request.getTargets().stream()
+                .map(NotificationTargetId::new)
+                .map(targetId -> notificationTargetService.findNotificationTargetById(user.getTenantId(), targetId))
+                .sorted(Comparator.comparing(target -> target.getConfiguration().getType()))
+                .collect(Collectors.toList());
 
-        Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = tmpProcessingCtx.getDeliveryMethods().stream()
-                .collect(Collectors.toMap(m -> m, deliveryMethod -> {
-                    NotificationRecipient recipient = null;
-                    if (NotificationTargetType.PLATFORM_USERS.getSupportedDeliveryMethods().contains(deliveryMethod)) {
-                        recipient = userService.findUserById(user.getTenantId(), user.getId());
-                    }
-                    return tmpProcessingCtx.getProcessedTemplate(deliveryMethod, recipient);
-                }));
-        preview.setProcessedTemplates(processedTemplates);
+        NotificationRequestPreview preview = new NotificationRequestPreview();
 
-        // generic permission
         Set<String> recipientsPreview = new LinkedHashSet<>();
-        Map<String, Integer> recipientsCountByTarget = new HashMap<>();
-
-        List<NotificationTarget> targets = notificationTargetService.findNotificationTargetsByTenantIdAndIds(user.getTenantId(),
-                request.getTargets().stream().map(NotificationTargetId::new).collect(Collectors.toList()));
+        Map<String, Integer> recipientsCountByTarget = new LinkedHashMap<>();
+        Map<NotificationTargetType, NotificationRecipient> firstRecipient = new HashMap<>();
         for (NotificationTarget target : targets) {
             int recipientsCount;
             List<NotificationRecipient> recipientsPart;
-            if (target.getConfiguration().getType() == NotificationTargetType.PLATFORM_USERS) {
+            NotificationTargetType targetType = target.getConfiguration().getType();
+            if (targetType == NotificationTargetType.PLATFORM_USERS) {
                 PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(),
-                        (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize));
+                        (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize, 0, null,
+                                new SortOrder("createdTime", SortOrder.Direction.DESC)));
                 recipientsCount = (int) recipients.getTotalElements();
                 recipientsPart = recipients.getData().stream().map(r -> (NotificationRecipient) r).collect(Collectors.toList());
             } else {
                 recipientsCount = 1;
                 recipientsPart = List.of(((SlackNotificationTargetConfig) target.getConfiguration()).getConversation());
             }
-
+            firstRecipient.putIfAbsent(targetType, !recipientsPart.isEmpty() ? recipientsPart.get(0) : null);
             for (NotificationRecipient recipient : recipientsPart) {
                 if (recipientsPreview.size() < recipientsPreviewSize) {
-                    recipientsPreview.add(recipient.getTitle());
+                    String title = recipient.getTitle();
+                    if (recipient instanceof SlackConversation) {
+                        title = ((SlackConversation) recipient).getPointer() + title;
+                    } else if (recipient instanceof User) {
+                        if (!title.equals(recipient.getEmail())) {
+                            title += " (" + recipient.getEmail() + ")";
+                        }
+                    }
+                    recipientsPreview.add(title);
                 } else {
                     break;
                 }
             }
             recipientsCountByTarget.put(target.getName(), recipientsCount);
         }
-
         preview.setRecipientsPreview(recipientsPreview);
         preview.setRecipientsCountByTarget(recipientsCountByTarget);
         preview.setTotalRecipientsCount(recipientsCountByTarget.values().stream().mapToInt(Integer::intValue).sum());
+
+        Set<NotificationDeliveryMethod> deliveryMethods = template.getConfiguration().getDeliveryMethodsTemplates().entrySet()
+                .stream().filter(entry -> entry.getValue().isEnabled()).map(Map.Entry::getKey).collect(Collectors.toSet());
+        NotificationProcessingContext ctx = NotificationProcessingContext.builder()
+                .tenantId(user.getTenantId())
+                .request(request)
+                .deliveryMethods(deliveryMethods)
+                .template(template)
+                .settings(null)
+                .build();
+        Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = ctx.getDeliveryMethods().stream()
+                .collect(Collectors.toMap(m -> m, deliveryMethod -> {
+                    NotificationTargetType targetType = NotificationTargetType.forDeliveryMethod(deliveryMethod);
+                    return ctx.getProcessedTemplate(deliveryMethod, firstRecipient.get(targetType));
+                }));
+        preview.setProcessedTemplates(processedTemplates);
 
         return preview;
     }

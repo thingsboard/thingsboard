@@ -117,7 +117,7 @@ abstract public class AbstractBasePage {
         try {
             return wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOfElementLocated(By.xpath(locator))));
         } catch (WebDriverException e) {
-            return fail("Element is present");
+            return fail("Element is present: " + locator);
         }
     }
 
@@ -125,7 +125,7 @@ abstract public class AbstractBasePage {
         try {
             return wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath(locator))));
         } catch (WebDriverException e) {
-            return fail("Elements is present");
+            return fail("Elements is present: " + locator);
         }
     }
 

@@ -1,0 +1,31 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="assigneeFormGroup">
+  <mat-form-field fxFlex class="mat-block" style="margin-bottom: 25px"
+                  (click)="openAlarmAssigneeSelectPanel($event)"
+                  subscriptSizing="dynamic">
+    <mat-label translate>alarm.assignee</mat-label>
+    <input matInput readonly formControlName="assignee">
+    <span *ngIf="assignee" matPrefix class="user-avatar"
+          [style.backgroundColor]="getAvatarBgColor()">
+      {{ getUserInitials() }}
+    </span>
+    <mat-icon *ngIf="!assignee" matPrefix class="unassigned-icon">account_circle</mat-icon>
+    <mat-icon *ngIf="!disabled" matSuffix>arrow_drop_down</mat-icon>
+  </mat-form-field>
+</ng-container>

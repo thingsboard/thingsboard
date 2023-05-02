@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.usagerecord;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -25,8 +24,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
@@ -36,8 +33,6 @@ public class DefaultApiLimitService implements ApiLimitService {
 
     private final EntityService entityService;
     private final TbTenantProfileCache tenantProfileCache;
-    @Autowired(required = false)
-    private NotificationRuleProcessor notificationRuleProcessor;
 
     @Override
     public boolean checkEntitiesLimit(TenantId tenantId, EntityType entityType) {
@@ -47,14 +42,6 @@ public class DefaultApiLimitService implements ApiLimitService {
             EntityTypeFilter filter = new EntityTypeFilter();
             filter.setEntityType(entityType);
             long currentCount = entityService.countEntitiesByQuery(tenantId, new CustomerId(EntityId.NULL_UUID), new EntityCountQuery(filter));
-            if (notificationRuleProcessor != null) {
-                notificationRuleProcessor.process(EntitiesLimitTrigger.builder()
-                        .tenantId(tenantId)
-                        .entityType(entityType)
-                        .currentCount(currentCount)
-                        .limit(limit)
-                        .build());
-            }
             return currentCount < limit;
         } else {
             return true;

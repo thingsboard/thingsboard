@@ -65,6 +65,8 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
 
   assigneeId?: string;
 
+  assigneeNotSetText = 'alarm.unassigned';
+
   reassigned: boolean = false;
 
   selectUserFormGroup: FormGroup;

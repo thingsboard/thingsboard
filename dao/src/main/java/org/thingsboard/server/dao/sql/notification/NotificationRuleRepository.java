@@ -22,7 +22,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.dao.model.sql.NotificationRuleEntity;
 import org.thingsboard.server.dao.model.sql.NotificationRuleInfoEntity;
@@ -42,7 +41,10 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);
 
-    boolean existsByTenantIdAndRecipientsConfigContaining(UUID tenantId, String searchString);
+    @Query("SELECT count(r) > 0 FROM NotificationRuleEntity r WHERE r.tenantId = :tenantId " +
+            "AND CAST(r.recipientsConfig AS text) LIKE concat('%', :searchString, '%')")
+    boolean existsByTenantIdAndRecipientsConfigContaining(@Param("tenantId") UUID tenantId,
+                                                          @Param("searchString") String searchString);
 
     List<NotificationRuleEntity> findAllByTenantIdAndTriggerType(UUID tenantId, NotificationRuleTriggerType triggerType);
 

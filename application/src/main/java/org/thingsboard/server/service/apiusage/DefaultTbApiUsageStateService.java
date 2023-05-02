@@ -48,7 +48,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.notification.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;

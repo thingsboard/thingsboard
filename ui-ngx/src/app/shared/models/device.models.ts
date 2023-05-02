@@ -62,7 +62,8 @@ export enum CoapTransportDeviceType {
 export enum DeviceProvisionType {
   DISABLED = 'DISABLED',
   ALLOW_CREATE_NEW_DEVICES = 'ALLOW_CREATE_NEW_DEVICES',
-  CHECK_PRE_PROVISIONED_DEVICES = 'CHECK_PRE_PROVISIONED_DEVICES'
+  CHECK_PRE_PROVISIONED_DEVICES = 'CHECK_PRE_PROVISIONED_DEVICES',
+  X509_CERTIFICATE_CHAIN = 'X509_CERTIFICATE_CHAIN'
 }
 
 export interface DeviceConfigurationFormInfo {
@@ -110,7 +111,8 @@ export const deviceProvisionTypeTranslationMap = new Map<DeviceProvisionType, st
   [
     [DeviceProvisionType.DISABLED, 'device-profile.provision-strategy-disabled'],
     [DeviceProvisionType.ALLOW_CREATE_NEW_DEVICES, 'device-profile.provision-strategy-created-new'],
-    [DeviceProvisionType.CHECK_PRE_PROVISIONED_DEVICES, 'device-profile.provision-strategy-check-pre-provisioned']
+    [DeviceProvisionType.CHECK_PRE_PROVISIONED_DEVICES, 'device-profile.provision-strategy-check-pre-provisioned'],
+    [DeviceProvisionType.X509_CERTIFICATE_CHAIN, 'device-profile.provision-strategy-x509.certificate-chain']
   ]
 );
 
@@ -242,6 +244,7 @@ export interface DefaultDeviceProfileTransportConfiguration {
 export interface MqttDeviceProfileTransportConfiguration {
   deviceTelemetryTopic?: string;
   deviceAttributesTopic?: string;
+  deviceAttributesSubscribeTopic?: string;
   sparkplug?: boolean;
   sendAckOnValidationException?: boolean;
   transportPayloadTypeConfiguration?: {
@@ -320,6 +323,9 @@ export interface DeviceProvisionConfiguration {
   type: DeviceProvisionType;
   provisionDeviceSecret?: string;
   provisionDeviceKey?: string;
+  certificateValue?: string;
+  certificateRegExPattern?: string;
+  allowCreateNewDevicesByX509Certificate?: boolean;
 }
 
 export function createDeviceProfileConfiguration(type: DeviceProfileType): DeviceProfileConfiguration {
@@ -360,6 +366,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
           deviceAttributesTopic: 'v1/devices/me/attributes',
+          deviceAttributesSubscribeTopic: 'v1/devices/me/attributes',
           sparkplug: false,
           sendAckOnValidationException: false,
           transportPayloadTypeConfiguration: {

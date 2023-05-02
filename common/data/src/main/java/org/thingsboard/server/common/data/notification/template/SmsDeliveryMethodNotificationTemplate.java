@@ -20,6 +20,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 @NoArgsConstructor
@@ -29,6 +31,13 @@ public class SmsDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
 
     public SmsDeliveryMethodNotificationTemplate(SmsDeliveryMethodNotificationTemplate other) {
         super(other);
+    }
+
+    @NoXss(fieldName = "SMS message")
+    @Length(fieldName = "SMS message", max = 320, message = "cannot be longer than 320 chars")
+    @Override
+    public String getBody() {
+        return super.getBody();
     }
 
     @Override
