@@ -178,7 +178,7 @@ public class TbGetOriginatorFieldsNodeTest {
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
-        when(deviceServiceMock.findDeviceByIdAsync(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+        when(deviceServiceMock.findDeviceById(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(device);
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
@@ -221,7 +221,7 @@ public class TbGetOriginatorFieldsNodeTest {
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
-        when(deviceServiceMock.findDeviceByIdAsync(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+        when(deviceServiceMock.findDeviceById(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(device);
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
@@ -269,7 +269,7 @@ public class TbGetOriginatorFieldsNodeTest {
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
-        when(deviceServiceMock.findDeviceByIdAsync(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+        when(deviceServiceMock.findDeviceById(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(device);
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 

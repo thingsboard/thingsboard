@@ -214,11 +214,11 @@ public class EntitiesFieldsAsyncLoaderTest {
 
                 break;
             case DEVICE:
-                var device = Futures.immediateFuture(entityDoesNotExist ? null : new Device(new DeviceId(RANDOM_UUID)));
+                var device = entityDoesNotExist ? null : new Device(new DeviceId(RANDOM_UUID));
 
                 when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
                 when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
-                doReturn(device).when(deviceServiceMock).findDeviceByIdAsync(eq(TENANT_ID), any());
+                doReturn(device).when(deviceServiceMock).findDeviceById(eq(TENANT_ID), any());
 
                 break;
             case ALARM:
