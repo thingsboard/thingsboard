@@ -15,11 +15,14 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -39,46 +42,33 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.BDDMockito.willReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.thingsboard.server.common.data.security.DeviceCredentialsType.ACCESS_TOKEN;
 
+@ExtendWith(MockitoExtension.class)
 public class TbFetchDeviceCredentialsNodeTest {
-    final ObjectMapper mapper = new ObjectMapper();
 
-    DeviceId deviceId;
-    TbFetchDeviceCredentialsNode node;
-    TbFetchDeviceCredentialsNodeConfiguration config;
-    TbNodeConfiguration nodeConfiguration;
-    TbContext ctx;
-    TbMsgCallback callback;
-    DeviceCredentialsService deviceCredentialsService;
+    @Mock
+    private TbContext ctxMock;
+    @Mock
+    private TbMsgCallback callbackMock;
+    @Mock
+    private DeviceCredentialsService deviceCredentialsServiceMock;
+    @Spy
+    private TbFetchDeviceCredentialsNode node;
+    private DeviceId deviceId;
+    private TbFetchDeviceCredentialsNodeConfiguration config;
 
     @BeforeEach
     void setUp() throws TbNodeException {
         deviceId = new DeviceId(UUID.randomUUID());
-        callback = mock(TbMsgCallback.class);
-        ctx = mock(TbContext.class);
         config = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
         config.setFetchTo(FetchTo.METADATA);
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
-        node = spy(new TbFetchDeviceCredentialsNode());
-        node.init(ctx, nodeConfiguration);
-        deviceCredentialsService = mock(DeviceCredentialsService.class);
-
-        willReturn(deviceCredentialsService).given(ctx).getDeviceCredentialsService();
-        willAnswer(invocation -> {
-            DeviceCredentials deviceCredentials = new DeviceCredentials();
-            deviceCredentials.setCredentialsType(ACCESS_TOKEN);
-            return deviceCredentials;
-        }).given(deviceCredentialsService).findDeviceCredentialsByDeviceId(any(), any());
-        willAnswer(invocation -> {
-            return JacksonUtil.newObjectNode();
-        }).given(deviceCredentialsService).toCredentialsInfo(any());
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
     }
 
     @AfterEach
@@ -94,20 +84,31 @@ public class TbFetchDeviceCredentialsNodeTest {
 
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
-        TbFetchDeviceCredentialsNodeConfiguration defaultConfig = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
+        var defaultConfig = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
         assertThat(defaultConfig.getFetchTo()).isEqualTo(FetchTo.METADATA);
     }
 
     @Test
-    void givenMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        node.onMsg(ctx, getTbMsg(deviceId));
+    void givenValidMsg_whenOnMsg_thenVerifyOutput() throws Exception {
+        // GIVEN
+        doReturn(deviceCredentialsServiceMock).when(ctxMock).getDeviceCredentialsService();
+        doAnswer(invocation -> {
+            DeviceCredentials deviceCredentials = new DeviceCredentials();
+            deviceCredentials.setCredentialsType(ACCESS_TOKEN);
+            return deviceCredentials;
+        }).when(deviceCredentialsServiceMock).findDeviceCredentialsByDeviceId(any(), any());
+        doAnswer(invocation -> JacksonUtil.newObjectNode()).when(deviceCredentialsServiceMock).toCredentialsInfo(any());
 
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
-        verify(ctx, never()).tellFailure(any(), any());
-        verify(deviceCredentialsService, times(1)).findDeviceCredentialsByDeviceId(any(), any());
+        // WHEN
+        node.onMsg(ctxMock, getTbMsg(deviceId));
 
-        TbMsg newMsg = newMsgCaptor.getValue();
+        // THEN
+        var newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctxMock, never()).tellFailure(any(), any());
+        verify(deviceCredentialsServiceMock, times(1)).findDeviceCredentialsByDeviceId(any(), any());
+
+        var newMsg = newMsgCaptor.getValue();
         assertThat(newMsg).isNotNull();
 
         assertThat(newMsg.getMetaData().getData().containsKey("credentials")).isEqualTo(true);
@@ -115,29 +116,36 @@ public class TbFetchDeviceCredentialsNodeTest {
     }
 
     @Test
-    void givenUnsupportedOriginatorType_whenOnMsg_thenTellFailure() throws Exception {
-        node.onMsg(ctx, getTbMsg(new CustomerId(UUID.randomUUID())));
+    void givenUnsupportedOriginatorType_whenOnMsg_thenShouldTellFailure() throws Exception {
+        // GIVEN
+        var randomCustomerId = new CustomerId(UUID.randomUUID());
 
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
-        verify(ctx, never()).tellSuccess(any());
-        verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
+        // WHEN
+        node.onMsg(ctxMock, getTbMsg(randomCustomerId));
+
+        // THEN
+        var newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        var exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        verify(ctxMock, never()).tellSuccess(any());
+        verify(ctxMock, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
 
         assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);
     }
 
     @Test
-    void givenGetDeviceCredentials_whenOnMsg_thenTellFailure() throws Exception {
-        willAnswer(invocation -> {
-            return null;
-        }).given(deviceCredentialsService).findDeviceCredentialsByDeviceId(any(), any());
+    void givenGetDeviceCredentials_whenOnMsg_thenShouldTellFailure() throws Exception {
+        // GIVEN
+        doReturn(deviceCredentialsServiceMock).when(ctxMock).getDeviceCredentialsService();
+        willAnswer(invocation -> null).given(deviceCredentialsServiceMock).findDeviceCredentialsByDeviceId(any(), any());
 
-        node.onMsg(ctx, getTbMsg(deviceId));
+        // WHEN
+        node.onMsg(ctxMock, getTbMsg(deviceId));
 
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
-        verify(ctx, never()).tellSuccess(any());
-        verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
+        // THEN
+        var newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        var exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        verify(ctxMock, never()).tellSuccess(any());
+        verify(ctxMock, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
 
         assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);
     }
@@ -148,9 +156,10 @@ public class TbFetchDeviceCredentialsNodeTest {
                 "city", "NY"
         );
 
-        final TbMsgMetaData metaData = new TbMsgMetaData(mdMap);
+        final var metaData = new TbMsgMetaData(mdMap);
         final String data = "{\"TestAttribute_1\": \"humidity\", \"TestAttribute_2\": \"voltage\"}";
 
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, metaData, data, callback);
+        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, metaData, data, callbackMock);
     }
+
 }

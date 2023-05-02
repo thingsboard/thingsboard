@@ -22,7 +22,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.ContactBased;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -44,7 +44,7 @@ public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGet
     @Override
     protected TbGetTenantDetailsNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbGetTenantDetailsNodeConfiguration.class);
-        checkIfDetailsListIsNotEmptyOrThrow(config);
+        checkIfDetailsListIsNotEmptyOrElseThrow(config.getDetailsList());
         return config;
     }
 
@@ -54,7 +54,7 @@ public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGet
     }
 
     @Override
-    protected ListenableFuture<? extends ContactBased<TenantId>> getContactBasedFuture(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<Tenant> getContactBasedFuture(TbContext ctx, TbMsg msg) {
         return ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), ctx.getTenantId());
     }
 

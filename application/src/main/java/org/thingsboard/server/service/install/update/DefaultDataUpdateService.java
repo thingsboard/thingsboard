@@ -29,15 +29,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.metadata.FetchTo;
-import org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode;
-import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
-import org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode;
-import org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode;
-import org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode;
-import org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode;
-import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
-import org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode;
-import org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
 import org.thingsboard.server.common.data.DataConstants;
@@ -228,19 +219,19 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     private void updateEnrichmentRuleNodes() {
         try {
-            var ruleNodeTypesToUpdate = List.of(
-                    TbGetOriginatorFieldsNode.class.getName(),
-                    TbFetchDeviceCredentialsNode.class.getName(),
-                    TbGetAttributesNode.class.getName(),
-                    TbGetDeviceAttrNode.class.getName(),
-                    TbGetRelatedAttributeNode.class.getName(),
-                    TbGetTenantAttributeNode.class.getName(),
-                    TbGetCustomerAttributeNode.class.getName(),
-                    TbGetCustomerDetailsNode.class.getName(),
-                    TbGetTenantDetailsNode.class.getName()
-            );
             var ruleChainIdToTenantId = new HashMap<RuleChainId, TenantId>();
-            ruleNodeTypesToUpdate.forEach(ruleNodeType -> {
+            var allNodesToUpdate = List.of(
+                    "org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode",
+                    "org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode",
+                    "org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode",
+                    "org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode",
+                    "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+                    "org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode",
+                    "org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode",
+                    "org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode",
+                    "org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode"
+            );
+            allNodesToUpdate.forEach(ruleNodeType -> {
                 var ruleNodes = new PageDataIterable<>(
                         pageLink -> ruleChainService.findAllRuleNodesByType(ruleNodeType, pageLink), 1024
                 );
@@ -257,53 +248,42 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         continue;
                     }
                     var configObjectNode = (ObjectNode) configuration;
-                    var fetchTo = FetchTo.METADATA;
-                    if (configObjectNode.has("fetchToMetadata")) {
-                        var fetchToMetadata = configObjectNode.get("fetchToMetadata").asText();
-                        if ("true".equals(fetchToMetadata)) {
+
+                    FetchTo fetchTo;
+
+                    switch (ruleNodeType) {
+                        case "org.thingsboard.rule.engine.metadata.TbGetAttributesNode":
+                        case "org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode":
+                            fetchTo = checkEnrichmentNodeFetchProperty(configObjectNode, "fetchToData", FetchTo.DATA, FetchTo.METADATA);
+                            break;
+                        case "org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode":
+                        case "org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode":
+                            fetchTo = checkEnrichmentNodeFetchProperty(configObjectNode, "addToMetadata", FetchTo.METADATA, FetchTo.DATA);
+                            break;
+                        case "org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode":
+                            fetchTo = checkEnrichmentNodeFetchProperty(configObjectNode, "fetchToMetadata", FetchTo.METADATA, FetchTo.DATA);
+                            break;
+                        case "org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode":
+                        case "org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode":
+                        case "org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode":
+                        case "org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode":
                             fetchTo = FetchTo.METADATA;
-                        } else if ("false".equals(fetchToMetadata)) {
-                            fetchTo = FetchTo.DATA;
-                        } else {
-                            log.error("Failed to updated rule node: [{}] with id: [{}] " +
-                                    "Reason: fetchToMetadata property has unexpected value: {} Allowed values: true or false!",
-                                    ruleNodeType, ruleNode.getId(), fetchToMetadata);
+                            break;
+                        default:
+                            log.error("Failed to update rule node: [{}] with id: [{}] " +
+                                    "Reason: Unexpected rule node type!", ruleNodeType, ruleNode.getId());
                             continue;
-                        }
-                        configObjectNode.remove("fetchToMetadata");
                     }
-                    if (configObjectNode.has("fetchToData")) {
-                        var fetchToData = configObjectNode.get("fetchToData").asText();
-                        if ("true".equals(fetchToData)) {
-                            fetchTo = FetchTo.DATA;
-                        } else if ("false".equals(fetchToData)) {
-                            fetchTo = FetchTo.METADATA;
-                        } else {
-                            log.error("Failed to updated rule node: [{}] with id: [{}] " +
-                                    "Reason: fetchToData property has unexpected value: {} Allowed values: true or false!",
-                                    ruleNodeType, ruleNode.getId(), fetchToData);
-                            continue;
-                        }
-                        configObjectNode.remove("fetchToData");
+
+                    if (fetchTo == null) {
+                        log.error("Failed to update rule node: [{}] with id: [{}]", ruleNodeType, ruleNode.getId());
+                        continue;
                     }
-                    if (configObjectNode.has("addToMetadata")) {
-                        var addToMetadata = configObjectNode.get("addToMetadata").asText();
-                        if ("true".equals(addToMetadata)) {
-                            fetchTo = FetchTo.METADATA;
-                        } else if ("false".equals(addToMetadata)) {
-                            fetchTo = FetchTo.DATA;
-                        } else {
-                            log.error("Failed to updated rule node: [{}] with id: [{}] " +
-                                    "Reason: addToMetadata property has unexpected value: {} Allowed values: true or false!",
-                                    ruleNodeType, ruleNode.getId(), addToMetadata);
-                            continue;
-                        }
-                        configObjectNode.remove("addToMetadata");
-                    }
+
                     configObjectNode.put("fetchTo", fetchTo.name());
                     ruleNode.setConfiguration(configObjectNode);
-                    RuleChainId ruleChainId = ruleNode.getRuleChainId();
-                    TenantId tenantId = ruleChainIdToTenantId.computeIfAbsent(ruleChainId,
+                    var ruleChainId = ruleNode.getRuleChainId();
+                    var tenantId = ruleChainIdToTenantId.computeIfAbsent(ruleChainId,
                             id -> {
                                 RuleChain ruleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, id);
                                 if (ruleChain == null) {
@@ -319,6 +299,25 @@ public class DefaultDataUpdateService implements DataUpdateService {
             });
         } catch (Exception e) {
             log.error("Unexpected error during enrichment rule nodes updating!", e);
+        }
+    }
+
+    private FetchTo checkEnrichmentNodeFetchProperty(ObjectNode config, String property, FetchTo ifTrue, FetchTo ifFalse) {
+        if (config.has(property)) {
+            var value = config.get(property).asText();
+            if ("true".equals(value)) {
+                config.remove(property);
+                return ifTrue;
+            } else if ("false".equals(value)) {
+                config.remove(property);
+                return ifFalse;
+            } else {
+                log.error(property + " property has unexpected value: {} Allowed values: true or false!", value);
+                return null;
+            }
+        } else {
+            log.error(property + " property is not present!");
+            return null;
         }
     }
 

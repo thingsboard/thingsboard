@@ -32,7 +32,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -46,7 +46,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -54,8 +53,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class TbGetOriginatorFieldsNodeTest {
-    private static final EntityId DUMMY_ENTITY_ID = new DeviceId(UUID.randomUUID());
-    public static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
+
+    private static final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
+    private static final TenantId DUMMY_TENANT_ID = new TenantId(UUID.randomUUID());
+    private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
         @Override
         public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
             try {
@@ -73,7 +74,7 @@ public class TbGetOriginatorFieldsNodeTest {
     @Mock
     private TbContext ctxMock;
     @Mock
-    private DeviceService deviceService;
+    private DeviceService deviceServiceMock;
     private TbGetOriginatorFieldsNode node;
     private TbGetOriginatorFieldsConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
@@ -81,15 +82,14 @@ public class TbGetOriginatorFieldsNodeTest {
 
     @BeforeEach
     public void setUp() {
-        config = new TbGetOriginatorFieldsConfiguration();
         node = new TbGetOriginatorFieldsNode();
+        config = new TbGetOriginatorFieldsConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
     }
 
     @Test
-    public void givenConfigWithNullFetchTo_whenOnInit_thenException() {
+    public void givenConfigWithNullFetchTo_whenInit_thenException() {
         // GIVEN
-        config = config.defaultConfiguration();
         config.setFetchTo(null);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
@@ -97,17 +97,13 @@ public class TbGetOriginatorFieldsNodeTest {
         var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
 
         // THEN
-        assertThat(exception.getMessage()).isEqualTo("FetchTo cannot be NULL!");
+        assertThat(exception.getMessage()).isEqualTo("FetchTo cannot be null!");
         verify(ctxMock, never()).tellSuccess(any());
     }
 
     @Test
     public void givenDefaultConfig_whenInit_thenOK() throws TbNodeException {
-        // GIVEN
-        config = config.defaultConfiguration();
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-
-        // WHEN
+        // GIVEN-WHEN
         node.init(ctxMock, nodeConfiguration);
 
         // THEN
@@ -116,6 +112,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "name", "originatorName",
                 "type", "originatorType"));
         assertThat(config.isIgnoreNullStrings()).isEqualTo(false);
+        assertThat(config.getFetchTo()).isEqualTo(FetchTo.METADATA);
         assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
     }
 
@@ -123,9 +120,9 @@ public class TbGetOriginatorFieldsNodeTest {
     public void givenCustomConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
         config.setFieldsMapping(Map.of(
-                "sourceField1", "targetKey1",
-                "sourceField2", "targetKey2",
-                "sourceField3", "targetKey3"));
+                "email", "originatorEmail",
+                "title", "originatorTitle",
+                "country", "originatorCountry"));
         config.setIgnoreNullStrings(true);
         config.setFetchTo(FetchTo.DATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -136,10 +133,11 @@ public class TbGetOriginatorFieldsNodeTest {
         // THEN
         assertThat(node.config).isEqualTo(config);
         assertThat(config.getFieldsMapping()).isEqualTo(Map.of(
-                "sourceField1", "targetKey1",
-                "sourceField2", "targetKey2",
-                "sourceField3", "targetKey3"));
+                "email", "originatorEmail",
+                "title", "originatorTitle",
+                "country", "originatorCountry"));
         assertThat(config.isIgnoreNullStrings()).isEqualTo(true);
+        assertThat(config.getFetchTo()).isEqualTo(FetchTo.DATA);
         assertThat(node.fetchTo).isEqualTo(FetchTo.DATA);
     }
 
@@ -147,7 +145,7 @@ public class TbGetOriginatorFieldsNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = FetchTo.DATA;
-        msg = TbMsg.newMsg("SOME_MESSAGE_TYPE", DUMMY_ENTITY_ID, new TbMsgMetaData(), "[]");
+        msg = TbMsg.newMsg("SOME_MESSAGE_TYPE", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "[]");
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
@@ -158,28 +156,10 @@ public class TbGetOriginatorFieldsNodeTest {
     }
 
     @Test
-    public void givenEntityThatDoesNotBelongToTheCurrentTenant_whenOnMsg_thenException() {
-        // SETUP
-        var expectedExceptionMessage = "Entity with id: '" + DUMMY_ENTITY_ID +
-                "' specified in the configuration doesn't belong to the current tenant.";
-
-        // GIVEN
-        doThrow(new RuntimeException(expectedExceptionMessage)).when(ctxMock).checkTenantEntity(DUMMY_ENTITY_ID);
-        msg = TbMsg.newMsg("SOME_MESSAGE_TYPE", DUMMY_ENTITY_ID, new TbMsgMetaData(), "{}");
-
-        // WHEN
-        var exception = assertThrows(RuntimeException.class, () -> node.onMsg(ctxMock, msg));
-
-        // THEN
-        assertThat(exception.getMessage()).isEqualTo(expectedExceptionMessage);
-        verify(ctxMock, never()).tellSuccess(any());
-    }
-
-    @Test
     public void givenValidMsgAndFetchToData_whenOnMsg_thenShouldTellSuccessAndFetchToData() {
         // GIVEN
         var device = new Device();
-        device.setId((DeviceId) DUMMY_ENTITY_ID);
+        device.setId(DUMMY_DEVICE_ORIGINATOR);
         device.setName("Test device");
         device.setType("Test device type");
 
@@ -194,10 +174,11 @@ public class TbGetOriginatorFieldsNodeTest {
         node.fetchTo = FetchTo.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_ENTITY_ID, msgMetaData, msgData);
+        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
-        when(ctxMock.getDeviceService()).thenReturn(deviceService);
-        when(deviceService.findDeviceByIdAsync(any(), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+        when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
+        when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
+        when(deviceServiceMock.findDeviceByIdAsync(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
@@ -219,7 +200,7 @@ public class TbGetOriginatorFieldsNodeTest {
     public void givenValidMsgAndFetchToMetaData_whenOnMsg_thenShouldTellSuccessAndFetchToMetaData() {
         // GIVEN
         var device = new Device();
-        device.setId((DeviceId) DUMMY_ENTITY_ID);
+        device.setId(DUMMY_DEVICE_ORIGINATOR);
         device.setName("Test device");
         device.setType("Test device type");
 
@@ -236,10 +217,11 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_ENTITY_ID, msgMetaData, msgData);
+        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
-        when(ctxMock.getDeviceService()).thenReturn(deviceService);
-        when(deviceService.findDeviceByIdAsync(any(), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+        when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
+        when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
+        when(deviceServiceMock.findDeviceByIdAsync(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
@@ -266,7 +248,7 @@ public class TbGetOriginatorFieldsNodeTest {
     public void givenNullEntityFieldsAndIgnoreNullStringsFalse_whenOnMsg_thenShouldTellSuccessAndFetchNullField() {
         // GIVEN
         var device = new Device();
-        device.setId((DeviceId) DUMMY_ENTITY_ID);
+        device.setId(DUMMY_DEVICE_ORIGINATOR);
         device.setName("Test device");
         device.setType("Test device type");
 
@@ -283,10 +265,11 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_ENTITY_ID, msgMetaData, msgData);
+        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
-        when(ctxMock.getDeviceService()).thenReturn(deviceService);
-        when(deviceService.findDeviceByIdAsync(any(), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+        when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
+        when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
+        when(deviceServiceMock.findDeviceByIdAsync(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
@@ -311,35 +294,17 @@ public class TbGetOriginatorFieldsNodeTest {
     }
 
     @Test
-    public void givenEmptyFieldsMapping_whenOnMsg_thenShouldTellSuccessWithSameMsg() {
+    public void givenEmptyFieldsMapping_whenInit_thenException() {
         // GIVEN
         config.setFieldsMapping(Collections.emptyMap());
-        config.setIgnoreNullStrings(false);
-        config.setFetchTo(FetchTo.METADATA);
-
-        node.config = config;
-        node.fetchTo = FetchTo.METADATA;
-        var msgMetaData = new TbMsgMetaData(Map.of(
-                "testKey1", "testValue1",
-                "testKey2", "123"));
-        var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_ENTITY_ID, msgMetaData, msgData);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
-        node.onMsg(ctxMock, msg);
+        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
 
         // THEN
-        var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
-        verify(ctxMock, never()).tellFailure(any(), any());
-
-        var expectedMsgMetaData = new TbMsgMetaData(Map.of(
-                "testKey1", "testValue1",
-                "testKey2", "123"
-        ));
-
-        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msgData);
-        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(expectedMsgMetaData);
+        assertThat(exception.getMessage()).isEqualTo("At least one field mapping should be specified!");
+        verify(ctxMock, never()).tellSuccess(any());
     }
 
     @Test
@@ -373,4 +338,5 @@ public class TbGetOriginatorFieldsNodeTest {
         assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msgData);
         assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msgMetaData);
     }
+
 }

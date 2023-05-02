@@ -46,7 +46,7 @@ public class TbGetRelatedAttributeNode extends TbAbstractGetEntityAttrNode<Entit
     @Override
     public TbGetRelatedAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbGetRelatedAttrNodeConfiguration.class);
-        checkIfMappingIsNotEmptyOrThrow(config);
+        checkIfMappingIsNotEmptyOrElseThrow(config.getAttrMapping());
         return config;
     }
 

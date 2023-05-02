@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -34,13 +34,14 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.common.util.JacksonUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
@@ -54,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
 public class CalculateDeltaNode implements TbNode {
+
     private Map<EntityId, ValueWithTs> cache;
     private CalculateDeltaNodeConfiguration config;
     private TbContext ctx;
@@ -74,51 +76,53 @@ public class CalculateDeltaNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
-            JsonNode json = JacksonUtil.toJsonNode(msg.getData());
-            String inputKey = config.getInputValueKey();
-            if (json.has(inputKey)) {
-                DonAsynchron.withCallback(getLastValue(msg.getOriginator()),
-                        previousData -> {
-                            double currentValue = json.get(inputKey).asDouble();
-                            long currentTs = msg.getMetaDataTs();
-
-                            if (useCache) {
-                                cache.put(msg.getOriginator(), new ValueWithTs(currentTs, currentValue));
-                            }
-
-                            BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
-
-                            if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
-                                ctx.tellNext(msg, TbRelationTypes.FAILURE);
-                                return;
-                            }
-
-
-                            if (config.getRound() != null) {
-                                delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
-                            }
-
-                            ObjectNode result = (ObjectNode) json;
-                            if (delta.stripTrailingZeros().scale() > 0) {
-                                result.put(config.getOutputValueKey(), delta.doubleValue());
-                            } else {
-                                result.put(config.getOutputValueKey(), delta.longValueExact());
-                            }
-
-                            if (config.isAddPeriodBetweenMsgs()) {
-                                long period = previousData != null ? currentTs - previousData.ts : 0;
-                                result.put(config.getPeriodValueKey(), period);
-                            }
-                            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(result)));
-                        },
-                        t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
-            } else {
-                ctx.tellNext(msg, "Other");
-            }
-        } else {
+        if (!msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
             ctx.tellNext(msg, "Other");
+            return;
         }
+        JsonNode json = JacksonUtil.toJsonNode(msg.getData());
+        if (!json.isObject()) {
+            throw new IllegalArgumentException("Message body is not an object!");
+        }
+        String inputKey = config.getInputValueKey();
+        if (!json.has(inputKey)) {
+            ctx.tellNext(msg, "Other");
+            return;
+        }
+        withCallback(getLastValue(msg.getOriginator()),
+                previousData -> {
+                    double currentValue = json.get(inputKey).asDouble();
+                    long currentTs = msg.getMetaDataTs();
+
+                    if (useCache) {
+                        cache.put(msg.getOriginator(), new ValueWithTs(currentTs, currentValue));
+                    }
+
+                    BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
+
+                    if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
+                        ctx.tellNext(msg, TbRelationTypes.FAILURE);
+                        return;
+                    }
+
+                    if (config.getRound() != null) {
+                        delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
+                    }
+
+                    ObjectNode result = (ObjectNode) json;
+                    if (delta.stripTrailingZeros().scale() > 0) {
+                        result.put(config.getOutputValueKey(), delta.doubleValue());
+                    } else {
+                        result.put(config.getOutputValueKey(), delta.longValueExact());
+                    }
+
+                    if (config.isAddPeriodBetweenMsgs()) {
+                        long period = previousData != null ? currentTs - previousData.ts : 0;
+                        result.put(config.getPeriodValueKey(), period);
+                    }
+                    ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(result)));
+                },
+                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
     @Override
@@ -181,4 +185,5 @@ public class CalculateDeltaNode implements TbNode {
             this.value = value;
         }
     }
+
 }

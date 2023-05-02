@@ -16,6 +16,8 @@
 package org.thingsboard.rule.engine.metadata;
 
 public enum FetchTo {
+
     DATA,
     METADATA
+
 }

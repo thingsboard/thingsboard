@@ -42,6 +42,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
 public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {
+
     @Override
     protected TbGetAttributesNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbGetAttributesNodeConfiguration.class);
@@ -51,4 +52,5 @@ public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttrib
     protected ListenableFuture<EntityId> findEntityIdAsync(TbContext ctx, TbMsg msg) {
         return Futures.immediateFuture(msg.getOriginator());
     }
+
 }

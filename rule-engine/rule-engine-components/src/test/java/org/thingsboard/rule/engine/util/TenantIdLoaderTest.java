@@ -69,7 +69,6 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
-import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
@@ -134,8 +133,6 @@ public class TenantIdLoaderTest {
     private NotificationTemplateService notificationTemplateService;
     @Mock
     private NotificationRequestService notificationRequestService;
-    @Mock
-    private NotificationService notificationService;
     @Mock
     private NotificationRuleService notificationRuleService;
 
@@ -393,4 +390,5 @@ public class TenantIdLoaderTest {
     public void test_findEntityIdAsync_other_tenant() {
         checkTenant(new TenantId(UUID.randomUUID()), false);
     }
+
 }

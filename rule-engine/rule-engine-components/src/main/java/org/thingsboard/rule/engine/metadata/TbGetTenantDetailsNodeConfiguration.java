@@ -27,7 +27,7 @@ public class TbGetTenantDetailsNodeConfiguration extends TbAbstractGetEntityDeta
 
     @Override
     public TbGetTenantDetailsNodeConfiguration defaultConfiguration() {
-        TbGetTenantDetailsNodeConfiguration configuration = new TbGetTenantDetailsNodeConfiguration();
+        var configuration = new TbGetTenantDetailsNodeConfiguration();
         configuration.setDetailsList(Collections.emptyList());
         configuration.setFetchTo(FetchTo.DATA);
         return configuration;
