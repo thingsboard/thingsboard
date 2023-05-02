@@ -190,7 +190,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
       $event.stopPropagation();
     }
     const config = new OverlayConfig({
-      panelClass: 'tb-alarm-filter-panel',
+      panelClass: 'tb-filter-panel',
       backdropClass: 'cdk-overlay-transparent-backdrop',
       hasBackdrop: true,
       maxHeight: '80vh',

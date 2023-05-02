@@ -53,6 +53,9 @@ public class ThingsboardInstallService {
     @Value("${install.load_demo:false}")
     private Boolean loadDemo;
 
+    @Value("${state.persistToTelemetry:false}")
+    private boolean persistToTelemetry;
+
     @Autowired
     private EntityDatabaseSchemaService entityDatabaseSchemaService;
 
@@ -247,6 +250,7 @@ public class ThingsboardInstallService {
                         case "3.4.4":
                             log.info("Upgrading ThingsBoard from version 3.4.4 to 3.5.0 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.4.4");
+                            entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             if (!getEnv("SKIP_DEFAULT_NOTIFICATION_CONFIGS_CREATION", false)) {
@@ -271,6 +275,8 @@ public class ThingsboardInstallService {
                 log.info("Installing DataBase schema for entities...");
 
                 entityDatabaseSchemaService.createDatabaseSchema();
+
+                entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
 
                 log.info("Installing DataBase schema for timeseries...");
 

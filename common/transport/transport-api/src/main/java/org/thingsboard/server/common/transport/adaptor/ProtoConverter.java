@@ -67,13 +67,15 @@ public class ProtoConverter {
         }
     }
 
-    public static TransportProtos.PostAttributeMsg validatePostAttributeMsg(byte[] bytes) throws IllegalArgumentException, InvalidProtocolBufferException {
-        TransportProtos.PostAttributeMsg proto = TransportProtos.PostAttributeMsg.parseFrom(bytes);
-        List<TransportProtos.KeyValueProto> kvList = proto.getKvList();
-        if (!CollectionUtils.isEmpty(kvList)) {
+    public static TransportProtos.PostAttributeMsg validatePostAttributeMsg(TransportProtos.PostAttributeMsg msg) throws IllegalArgumentException, InvalidProtocolBufferException {
+        if (!CollectionUtils.isEmpty(msg.getKvList())) {
+            byte[] bytes = msg.toByteArray();
+            TransportProtos.PostAttributeMsg proto = TransportProtos.PostAttributeMsg.parseFrom(bytes);
+            List<TransportProtos.KeyValueProto> kvList = proto.getKvList();
             List<TransportProtos.KeyValueProto> keyValueProtos = validateKeyValueProtos(kvList);
             TransportProtos.PostAttributeMsg.Builder result = TransportProtos.PostAttributeMsg.newBuilder();
             result.addAllKv(keyValueProtos);
+            result.setShared(msg.getShared());
             return result.build();
         } else {
             throw new IllegalArgumentException("KeyValue list is empty!");

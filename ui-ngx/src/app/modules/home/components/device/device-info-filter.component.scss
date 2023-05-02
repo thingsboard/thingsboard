@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
+:host {
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  .mdc-button {
+    max-width: 100%;
+  }
+}
 
-/**
- * The interface To dto.
- *
- * @param <T> the type parameter
- */
-public interface ToData<T> {
-
-    /**
-     * This method convert domain model object to data transfer object.
-     *
-     * @return the dto object
-     */
-    T toData();
-
+:host ::ng-deep {
+  .mdc-button {
+    .mat-icon {
+      min-width: 24px;
+    }
+    .mdc-button__label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
 }

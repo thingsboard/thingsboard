@@ -27,6 +27,7 @@ const emptyUserAuthState: AuthPayload = {
   edgesSupportEnabled: false,
   hasRepository: false,
   tbelEnabled: false,
+  persistDeviceStateToTelemetry: false,
   userSettings: initialUserSettings
 };
 

@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
+package org.thingsboard.server.common.data;
 
-/**
- * The interface To dto.
- *
- * @param <T> the type parameter
- */
-public interface ToData<T> {
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Data;
 
-    /**
-     * This method convert domain model object to data transfer object.
-     *
-     * @return the dto object
-     */
-    T toData();
+import java.util.List;
 
+@Data
+public class SystemParams {
+    boolean userTokenAccessEnabled;
+    List<String> allowedDashboardIds;
+    boolean edgesSupportEnabled;
+    boolean hasRepository;
+    boolean tbelEnabled;
+    boolean persistDeviceStateToTelemetry;
+    JsonNode userSettings;
+    long maxDatapointsLimit;
 }
