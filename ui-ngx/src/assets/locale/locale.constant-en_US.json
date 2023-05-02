@@ -691,7 +691,9 @@
         "selected-attributes": "{ count, plural, =1 {1 attribute} other {# attributes} } selected",
         "selected-telemetry": "{ count, plural, =1 {1 telemetry unit} other {# telemetry units} } selected",
         "no-attributes-text": "No attributes found",
-        "no-telemetry-text": "No telemetry found"
+        "no-telemetry-text": "No telemetry found",
+        "copy-key": "Copy key",
+        "copy-value": "Copy value"
     },
     "api-usage": {
         "api-features": "API features",
