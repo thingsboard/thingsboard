@@ -26,7 +26,7 @@ import { mergeMap, Observable, of } from 'rxjs';
 import { Dashboard } from '@app/shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { UserDashboardAction } from '@shared/models/user-settings.models';
 import { Store } from '@ngrx/store';
@@ -47,7 +47,9 @@ export class DashboardResolver implements Resolve<Dashboard> {
     return this.dashboardService.getDashboard(dashboardId).pipe(
       mergeMap((dashboard) =>
         (getCurrentAuthUser(this.store).isPublic ? of(null) :
-          this.userSettingService.reportUserDashboardAction(dashboardId, UserDashboardAction.VISIT, {ignoreLoading: true})).pipe(
+          this.userSettingService.reportUserDashboardAction(dashboardId, UserDashboardAction.VISIT,
+            {ignoreLoading: true, ignoreErrors: true})).pipe(
+          catchError(() => of(dashboard)),
           map(() => dashboard)
         )),
       map((dashboard) => this.dashboardUtils.validateAndUpdateDashboard(dashboard))
