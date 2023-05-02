@@ -18,8 +18,6 @@ package org.thingsboard.server.service.ws;
 import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
-import org.thingsboard.server.service.ws.SessionEvent;
-import org.thingsboard.server.service.ws.WebSocketSessionRef;
 
 /**
  * Created by ashvayka on 27.03.18.

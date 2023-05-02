@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.delay;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.EntityType;
 
 @Data
 public class TbMsgDelayNodeConfiguration implements NodeConfiguration<TbMsgDelayNodeConfiguration> {

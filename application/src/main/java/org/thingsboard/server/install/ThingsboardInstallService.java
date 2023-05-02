@@ -35,7 +35,6 @@ import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
-import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import static org.thingsboard.server.service.install.update.DefaultDataUpdateService.getEnv;
 
