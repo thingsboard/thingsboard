@@ -42,7 +42,7 @@ const routes: Routes = [
       title: 'alarm.alarms',
       breadcrumb: {
         label: 'alarm.alarms',
-        icon: 'notifications'
+        icon: 'mdi:alert-outline'
       },
       isPage: true,
       alarmsMode: AlarmsMode.ALL
