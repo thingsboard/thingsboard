@@ -9,7 +9,6 @@
 }
 
 .edit-entity-form .boolean-value-input .checkbox-label {
-    margin-bottom: 8px;
     color: rgba(0,0,0,0.54);
     font-size: 12px;
 }
@@ -61,7 +60,6 @@
 }
 
 .add-entity-form .boolean-value-input .checkbox-label {
-    margin-bottom: 8px;
     color: rgba(0,0,0,0.54);
     font-size: 12px;
 }
