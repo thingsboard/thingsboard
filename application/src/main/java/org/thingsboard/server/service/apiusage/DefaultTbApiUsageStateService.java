@@ -129,7 +129,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     @Value("${usage.stats.check.cycle:60000}")
     private long nextCycleCheckInterval;
 
-    @Value("${usage.stats.gauge_report_interval:180000}")
+    @Value("${usage.stats.gauge_report_interval:420000}")
     private long gaugeReportInterval;
 
     private final Lock updateLock = new ReentrantLock();
@@ -192,11 +192,14 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(statsItem.getKey());
 
                 StatsCalculationResult calculationResult = usageState.calculate(recordKey, statsItem.getValue(), serviceId);
-                long newValue = calculationResult.getNewValue();
-                long newHourlyValue = calculationResult.getNewHourlyValue();
-
-                updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
-                updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
+                if (calculationResult.isValueChanged()) {
+                    long newValue = calculationResult.getNewValue();
+                    updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
+                }
+                if (calculationResult.isHourlyValueChanged()) {
+                    long newHourlyValue = calculationResult.getNewHourlyValue();
+                    updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
+                }
                 if (recordKey.getApiFeature() != null) {
                     apiFeatures.add(recordKey.getApiFeature());
                 }

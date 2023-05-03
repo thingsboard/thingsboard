@@ -30,6 +30,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -439,7 +440,6 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     void checkStates() {
         try {
             final long ts = System.currentTimeMillis();
-            Map<TenantId, Pair<AtomicInteger, AtomicInteger>> devicesActivity = new HashMap<>();
             partitionedEntities.forEach((tpi, deviceIds) -> {
                 log.debug("Calculating state updates. tpi {} for {} devices", tpi.getFullTopicName(), deviceIds.size());
                 Set<DeviceId> idsFromRemovedTenant = new HashSet<>();
@@ -456,33 +456,41 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     } catch (Exception e) {
                         if (e instanceof TenantNotFoundException) {
                             idsFromRemovedTenant.add(deviceId);
-                            continue;
                         } else {
                             log.warn("[{}] Failed to update inactivity state [{}]", deviceId, e.getMessage());
                         }
                     }
-                    Pair<AtomicInteger, AtomicInteger> tenantDevicesActivity = devicesActivity.computeIfAbsent(stateData.getTenantId(),
-                            tenantId -> Pair.of(new AtomicInteger(), new AtomicInteger()));
-                    if (stateData.getState().isActive()) {
-                        tenantDevicesActivity.getLeft().incrementAndGet();
-                    } else {
-                        tenantDevicesActivity.getRight().incrementAndGet();
-                    }
                 }
                 deviceIds.removeAll(idsFromRemovedTenant);
-            });
-            devicesActivity.forEach((tenantId, tenantDevicesActivity) -> {
-                int active = tenantDevicesActivity.getLeft().get();
-                int inactive = tenantDevicesActivity.getRight().get();
-                apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.ACTIVE_DEVICES, active);
-                apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.INACTIVE_DEVICES, inactive);
-                if (active > 0) {
-                    log.info("[{}] Active devices: {}, inactive devices: {}", tenantId, active, inactive);
-                }
             });
         } catch (Throwable t) {
             log.warn("Failed to check devices states", t);
         }
+    }
+
+    @Scheduled(initialDelayString = "${usage.stats.devices.report_interval:180}",
+            fixedDelayString = "${usage.stats.devices.report_interval:180}", timeUnit = TimeUnit.SECONDS)
+    public void reportActivityStats() {
+        Map<TenantId, Pair<AtomicInteger, AtomicInteger>> stats = new HashMap<>();
+        for (DeviceStateData stateData : deviceStates.values()) {
+            Pair<AtomicInteger, AtomicInteger> tenantDevicesActivity = stats.computeIfAbsent(stateData.getTenantId(),
+                    tenantId -> Pair.of(new AtomicInteger(), new AtomicInteger()));
+            if (stateData.getState().isActive()) {
+                tenantDevicesActivity.getLeft().incrementAndGet();
+            } else {
+                tenantDevicesActivity.getRight().incrementAndGet();
+            }
+        }
+
+        stats.forEach((tenantId, tenantDevicesActivity) -> {
+            int active = tenantDevicesActivity.getLeft().get();
+            int inactive = tenantDevicesActivity.getRight().get();
+            apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.ACTIVE_DEVICES, active);
+            apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.INACTIVE_DEVICES, inactive);
+            if (active > 0) {
+                log.info("[{}] Active devices: {}, inactive devices: {}", tenantId, active, inactive);
+            }
+        });
     }
 
     void updateInactivityStateIfExpired(long ts, DeviceId deviceId, DeviceStateData stateData) {
