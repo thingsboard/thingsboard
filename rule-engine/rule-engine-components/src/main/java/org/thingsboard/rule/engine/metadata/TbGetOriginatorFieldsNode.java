@@ -51,7 +51,7 @@ public class TbGetOriginatorFieldsNode extends TbAbstractNodeWithFetchTo<TbGetOr
     protected TbGetOriginatorFieldsConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbGetOriginatorFieldsConfiguration.class);
         if (config.getFieldsMapping() == null || config.getFieldsMapping().isEmpty()) {
-            throw new TbNodeException("At least one field mapping should be specified!");
+            throw new TbNodeException("At least one mapping entry should be specified!");
         }
         return config;
     }

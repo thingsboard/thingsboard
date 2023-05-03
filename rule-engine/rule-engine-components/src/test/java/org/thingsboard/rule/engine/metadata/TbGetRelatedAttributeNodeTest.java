@@ -197,7 +197,7 @@ public class TbGetRelatedAttributeNodeTest {
     @Test
     public void givenEmptyAttributesMapping_whenInit_thenException() {
         // GIVEN
-        var expectedExceptionMessage = "At least one attribute mapping should be specified!";
+        var expectedExceptionMessage = "At least one mapping entry should be specified!";
 
         config.setAttrMapping(Collections.emptyMap());
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));

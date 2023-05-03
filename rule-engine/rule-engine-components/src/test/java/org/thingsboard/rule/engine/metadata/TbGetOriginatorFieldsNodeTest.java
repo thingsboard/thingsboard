@@ -303,7 +303,7 @@ public class TbGetOriginatorFieldsNodeTest {
         var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
 
         // THEN
-        assertThat(exception.getMessage()).isEqualTo("At least one field mapping should be specified!");
+        assertThat(exception.getMessage()).isEqualTo("At least one mapping entry should be specified!");
         verify(ctxMock, never()).tellSuccess(any());
     }
 

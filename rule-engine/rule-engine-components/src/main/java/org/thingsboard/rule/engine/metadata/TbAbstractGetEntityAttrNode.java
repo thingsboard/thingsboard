@@ -50,7 +50,7 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
 
     protected void checkIfMappingIsNotEmptyOrElseThrow(Map<String, String> attrMapping) throws TbNodeException {
         if (attrMapping == null || attrMapping.isEmpty()) {
-            throw new TbNodeException("At least one attribute mapping should be specified!");
+            throw new TbNodeException("At least one mapping entry should be specified!");
         }
     }
 
