@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
+import org.thingsboard.server.common.data.sync.vc.VcUtils;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
@@ -307,6 +308,7 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/autoCommitSettings")
     public AutoCommitSettings saveAutoCommitSettings(@RequestBody AutoCommitSettings settings) throws ThingsboardException {
+        settings.values().forEach(config -> VcUtils.checkBranchName(config.getBranch()));
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
         return autoCommitSettingsService.save(getTenantId(), settings);
     }
