@@ -34,7 +34,7 @@ import {
 } from '@shared/models/device.models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { isDefinedAndNotNull } from '@core/utils';
+import { generateSecret, isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-device-credentials',
@@ -180,5 +180,9 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
         break;
     }
+  }
+
+  public generate(formControlName: string) {
+    this.deviceCredentialsFormGroup.get(formControlName).patchValue(generateSecret(12));
   }
 }

@@ -1241,6 +1241,7 @@
         "generate-client-id": "Generate Client ID",
         "generate-user-name": "Generate User name",
         "generate-password": "Generate Password",
+        "generate-access-token": "Generate Access Token",
         "lwm2m-security-config": {
           "identity": "Client Identity",
           "identity-required": "Client Identity is required.",
