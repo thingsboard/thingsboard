@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -114,6 +115,7 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @Service
 @TbCoreComponent
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultDeviceStateService extends AbstractPartitionBasedService<DeviceId> implements DeviceStateService {
 
     public static final String ACTIVITY_STATE = "active";
@@ -148,13 +150,11 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             new EntityKey(EntityKeyType.ENTITY_FIELD, "label"),
             new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"));
 
-    private final TenantService tenantService;
     private final DeviceService deviceService;
     private final AttributesService attributesService;
     private final TimeseriesService tsService;
     private final TbClusterService clusterService;
     private final PartitionService partitionService;
-    private final TbServiceInfoProvider serviceInfoProvider;
     private final EntityQueryRepository entityQueryRepository;
     private final DbTypeInfoComponent dbTypeInfoComponent;
     private final TbApiUsageReportClient apiUsageReportClient;
@@ -175,6 +175,10 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     @Getter
     private int defaultStateCheckIntervalInSec;
 
+    @Value("${usage.stats.devices.report_interval:60}")
+    @Getter
+    private int defaultActivityStatsIntervalInSec;
+
     @Value("${state.persistToTelemetry:false}")
     @Getter
     @Setter
@@ -188,31 +192,13 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
 
-    public DefaultDeviceStateService(TenantService tenantService, DeviceService deviceService,
-                                     AttributesService attributesService, TimeseriesService tsService,
-                                     TbClusterService clusterService, PartitionService partitionService,
-                                     TbServiceInfoProvider serviceInfoProvider,
-                                     EntityQueryRepository entityQueryRepository,
-                                     DbTypeInfoComponent dbTypeInfoComponent,
-                                     TbApiUsageReportClient apiUsageReportClient) {
-        this.tenantService = tenantService;
-        this.deviceService = deviceService;
-        this.attributesService = attributesService;
-        this.tsService = tsService;
-        this.clusterService = clusterService;
-        this.partitionService = partitionService;
-        this.serviceInfoProvider = serviceInfoProvider;
-        this.entityQueryRepository = entityQueryRepository;
-        this.dbTypeInfoComponent = dbTypeInfoComponent;
-        this.apiUsageReportClient = apiUsageReportClient;
-    }
-
     @PostConstruct
     public void init() {
         super.init();
         deviceStateExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
                 Math.max(4, Runtime.getRuntime().availableProcessors()), "device-state"));
-        scheduledExecutor.scheduleAtFixedRate(this::checkStates, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleWithFixedDelay(this::checkStates, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleWithFixedDelay(this::reportActivityStats, defaultActivityStatsIntervalInSec, defaultActivityStatsIntervalInSec, TimeUnit.SECONDS);
     }
 
     @PreDestroy
@@ -468,29 +454,31 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
     }
 
-    @Scheduled(initialDelayString = "${usage.stats.devices.report_interval:180}",
-            fixedDelayString = "${usage.stats.devices.report_interval:180}", timeUnit = TimeUnit.SECONDS)
-    public void reportActivityStats() {
-        Map<TenantId, Pair<AtomicInteger, AtomicInteger>> stats = new HashMap<>();
-        for (DeviceStateData stateData : deviceStates.values()) {
-            Pair<AtomicInteger, AtomicInteger> tenantDevicesActivity = stats.computeIfAbsent(stateData.getTenantId(),
-                    tenantId -> Pair.of(new AtomicInteger(), new AtomicInteger()));
-            if (stateData.getState().isActive()) {
-                tenantDevicesActivity.getLeft().incrementAndGet();
-            } else {
-                tenantDevicesActivity.getRight().incrementAndGet();
+    void reportActivityStats() {
+        try{
+            Map<TenantId, Pair<AtomicInteger, AtomicInteger>> stats = new HashMap<>();
+            for (DeviceStateData stateData : deviceStates.values()) {
+                Pair<AtomicInteger, AtomicInteger> tenantDevicesActivity = stats.computeIfAbsent(stateData.getTenantId(),
+                        tenantId -> Pair.of(new AtomicInteger(), new AtomicInteger()));
+                if (stateData.getState().isActive()) {
+                    tenantDevicesActivity.getLeft().incrementAndGet();
+                } else {
+                    tenantDevicesActivity.getRight().incrementAndGet();
+                }
             }
-        }
 
-        stats.forEach((tenantId, tenantDevicesActivity) -> {
-            int active = tenantDevicesActivity.getLeft().get();
-            int inactive = tenantDevicesActivity.getRight().get();
-            apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.ACTIVE_DEVICES, active);
-            apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.INACTIVE_DEVICES, inactive);
-            if (active > 0) {
-                log.info("[{}] Active devices: {}, inactive devices: {}", tenantId, active, inactive);
-            }
-        });
+            stats.forEach((tenantId, tenantDevicesActivity) -> {
+                int active = tenantDevicesActivity.getLeft().get();
+                int inactive = tenantDevicesActivity.getRight().get();
+                apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.ACTIVE_DEVICES, active);
+                apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.INACTIVE_DEVICES, inactive);
+                if (active > 0) {
+                    log.info("[{}] Active devices: {}, inactive devices: {}", tenantId, active, inactive);
+                }
+            });
+        } catch (Throwable t) {
+            log.warn("Failed to report activity states", t);
+        }
     }
 
     void updateInactivityStateIfExpired(long ts, DeviceId deviceId, DeviceStateData stateData) {
