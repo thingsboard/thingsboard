@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.msa.ui.tests.devicessmoke;
 
+import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -33,26 +34,41 @@ public class DeleteDeviceTest extends AbstractDeviceTest {
     }
 
     @Test(groups = "smoke")
+    @Description("Remove the device by clicking on the trash icon in the right side of device")
     public void deleteDeviceByRightSideBtn() {
         sideBarMenuView.devicesBtn().click();
         devicePage.deleteDeviceByRightSideBtn(deviceName);
+        devicePage.refreshBtn().click();
 
         devicePage.assertEntityIsNotPresent(deviceName);
     }
 
     @Test(groups = "smoke")
+    @Description("Remove device by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void deleteSelectedDevice() {
         sideBarMenuView.devicesBtn().click();
         devicePage.deleteSelected(deviceName);
+        devicePage.refreshBtn().click();
 
         devicePage.assertEntityIsNotPresent(deviceName);
     }
 
     @Test(groups = "smoke")
+    @Description("Remove the device by clicking on the 'Delete device' btn in the entity view")
     public void deleteDeviceFromDetailsTab() {
         sideBarMenuView.devicesBtn().click();
         devicePage.entity(deviceName).click();
         devicePage.deleteDeviceFromDetailsTab();
+        devicePage.refreshBtn();
+
+        devicePage.assertEntityIsNotPresent(deviceName);
+    }
+
+    @Test(groups = "smoke")
+    @Description("Remove the device by clicking on the trash icon in the right side of device without refresh")
+    public void deleteDeviceWithoutRefresh() {
+        sideBarMenuView.devicesBtn().click();
+        devicePage.deleteDeviceByRightSideBtn(deviceName);
 
         devicePage.assertEntityIsNotPresent(deviceName);
     }
