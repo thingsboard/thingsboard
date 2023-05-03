@@ -47,7 +47,6 @@
                   matTooltipPosition="above">
             <mat-icon>close</mat-icon>
           </button>
-        </div>
       </div>
     </div>
   </div>
@@ -55,15 +54,14 @@
         <span fxLayoutAlign="center center"
               class="tb-prompt" translate>relation.any-relation</span>
   </div>
-  <div>
-    <button mat-raised-button color="primary"
+  <div style="margin-top: 8px">
+    <button mat-stroked-button color="primary"
             [disabled]="isLoading$ | async"
             (click)="addFilter()"
             type="button"
             matTooltip="{{ 'relation.add-relation-filter' | translate }}"
             matTooltipPosition="above">
-      <mat-icon>add</mat-icon>
-      {{ 'action.add' | translate }}
+      {{ 'relation.add-relation-filter' | translate }}
     </button>
   </div>
 </div>
