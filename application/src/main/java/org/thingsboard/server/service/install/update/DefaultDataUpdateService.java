@@ -206,8 +206,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     log.info("Skipping edge events migration");
                 }
                 break;
-            case "3.4.4":
-                log.info("Updating data from version 3.4.4 to 3.5.0 ...");
+            case "3.5.0":
+                log.info("Updating data from version 3.5.0 to 3.5.1 ...");
                 log.info("Starting enrichment rule nodes update ...");
                 updateEnrichmentRuleNodes();
                 log.info("Finished enrichment rule nodes update!");
