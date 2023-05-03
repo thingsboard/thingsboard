@@ -40,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
@@ -48,7 +49,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbChangeOriginatorNodeTest {
@@ -154,8 +154,12 @@ public class TbChangeOriginatorNodeTest {
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(null));
 
+        ArgumentCaptor<NoSuchElementException> exceptionCaptor = ArgumentCaptor.forClass(NoSuchElementException.class);
+
         node.onMsg(ctx, msg);
-        verify(ctx).tellNext(same(msg), same(FAILURE));
+        verify(ctx).tellFailure(same(msg), exceptionCaptor.capture());
+
+        assertEquals("Failed to find new originator!", exceptionCaptor.getValue().getMessage());
     }
 
     public void init() throws TbNodeException {
