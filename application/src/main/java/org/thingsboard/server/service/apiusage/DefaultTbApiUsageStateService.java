@@ -129,7 +129,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     @Value("${usage.stats.check.cycle:60000}")
     private long nextCycleCheckInterval;
 
-    @Value("${usage.stats.gauge_report_interval:420000}")
+    @Value("${usage.stats.gauge_report_interval:180000}")
     private long gaugeReportInterval;
 
     private final Lock updateLock = new ReentrantLock();
