@@ -32,7 +32,7 @@ public class KvUtils {
     static {
         validatedKeys = Caffeine.newBuilder()
                 .weakKeys()
-                .expireAfterAccess(60, TimeUnit.MINUTES)
+                .expireAfterAccess(24, TimeUnit.HOURS)
                 .maximumSize(100000).build();
     }
 
