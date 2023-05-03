@@ -37,6 +37,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -145,6 +146,12 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
 
     public RuleChain getRuleChainByName(String name) {
         return testRestClient.getRuleChains(pageLink).getData().stream()
+                .filter(s -> s.getName().equals(name))
+                .findFirst().orElse(null);
+    }
+
+    public Device getDeviceByName(String name) {
+        return testRestClient.getDevices(pageLink).getData().stream()
                 .filter(s -> s.getName().equals(name))
                 .findFirst().orElse(null);
     }
@@ -260,6 +267,13 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     public void deleteEntityView(EntityViewId entityViewId) {
         if (entityViewId != null) {
             testRestClient.deleteEntityView(entityViewId);
+        }
+    }
+
+    public void deleteDeviceByName(String deviceName) {
+        Device device = getDeviceByName(deviceName);
+        if (device != null) {
+            testRestClient.deleteDevice(device.getId());
         }
     }
 }

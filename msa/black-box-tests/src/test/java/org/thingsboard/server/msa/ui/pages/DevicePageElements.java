@@ -18,7 +18,7 @@ package org.thingsboard.server.msa.ui.pages;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-public class DevicePageElements extends OtherPageElements {
+public class DevicePageElements extends OtherPageElementsHelper {
     public DevicePageElements(WebDriver driver) {
         super(driver);
     }
@@ -32,6 +32,12 @@ public class DevicePageElements extends OtherPageElements {
     private static final String CUSTOMER_FROM_ASSIGN_DROPDOWN = "//div[@role = 'listbox']//span[text() = '%s']";
     private static final String CLOSE_DEVICE_DETAILS_VIEW = "//header//mat-icon[contains(text(),'close')]/parent::button";
     private static final String SUBMIT_ASSIGN_TO_CUSTOMER_BTN = "//button[@type='submit']";
+    private static final String ADD_DEVICE_BTN = "//mat-icon[text() = 'insert_drive_file']/parent::button";
+    private static final String CREATE_DEVICE_NAME_FIELD = "//tb-device-wizard//input[@formcontrolname='name']";
+    private static final String HEADER_NAME_VIEW = "//header//div[@class='tb-details-title']/span";
+    private static final String DESCRIPTION_FIELD_CREATE_VIEW = "//tb-device-wizard//textarea[@formcontrolname='description']";
+    private static final String ADD_DEVICE_VIEW = "//tb-device-wizard";
+    private static final String DELETE_BTN_DETAILS_TAB = "//span[contains(text(),'Delete device')]/parent::button";
 
     public WebElement device(String deviceName) {
         return waitUntilElementToBeClickable(String.format(DEVICE, deviceName));
@@ -63,5 +69,29 @@ public class DevicePageElements extends OtherPageElements {
 
     public WebElement submitAssignToCustomerBtn() {
         return waitUntilElementToBeClickable(SUBMIT_ASSIGN_TO_CUSTOMER_BTN);
+    }
+
+    public WebElement addDeviceBtn() {
+        return waitUntilElementToBeClickable(ADD_DEVICE_BTN);
+    }
+
+    public WebElement nameField() {
+        return waitUntilElementToBeClickable(CREATE_DEVICE_NAME_FIELD);
+    }
+
+    public WebElement headerNameView() {
+        return waitUntilVisibilityOfElementLocated(HEADER_NAME_VIEW);
+    }
+
+    public WebElement descriptionFieldCreateField() {
+        return waitUntilElementToBeClickable(DESCRIPTION_FIELD_CREATE_VIEW);
+    }
+
+    public WebElement addDeviceView() {
+        return waitUntilPresenceOfElementLocated(ADD_DEVICE_VIEW);
+    }
+
+    public WebElement deleteBtnDetailsTab() {
+        return waitUntilElementToBeClickable(DELETE_BTN_DETAILS_TAB);
     }
 }

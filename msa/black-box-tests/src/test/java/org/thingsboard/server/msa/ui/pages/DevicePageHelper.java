@@ -34,4 +34,29 @@ public class DevicePageHelper extends DevicePageElements {
         customerFromAssignDropdown(customerTitle).click();
         submitAssignToCustomerBtn().click();
     }
+
+    public void openCreateDeviceView() {
+        plusBtn().click();
+        addDeviceBtn().click();
+    }
+
+    public void enterName(String deviceName) {
+        nameField().click();
+        nameField().sendKeys(deviceName);
+    }
+
+    public void enterDescription(String description) {
+        descriptionFieldCreateField().click();
+        descriptionFieldCreateField().sendKeys(description);
+    }
+
+    public void deleteDeviceByRightSideBtn(String deviceName) {
+        deleteBtn(deviceName).click();
+        warningPopUpYesBtn().click();
+    }
+
+    public void deleteDeviceFromDetailsTab() {
+        deleteBtnDetailsTab().click();
+        warningPopUpYesBtn().click();
+    }
 }
