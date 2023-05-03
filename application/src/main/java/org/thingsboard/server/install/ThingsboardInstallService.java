@@ -255,8 +255,8 @@ public class ThingsboardInstallService {
                             installScripts.loadSystemLwm2mResources();
                         case "3.5.0":
                             log.info("Upgrading ThingsBoard from version 3.5.0 to 3.5.1 ...");
-                            log.info("Updating system data...");
                             dataUpdateService.updateData("3.5.0");
+                            log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             //TODO update CacheCleanupService on the next version upgrade
                         default:
