@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../theme";
+
 :host {
-  .mat-mdc-icon-button{
+  .table-cell-action {
     height: 32px;
     width: 32px;
     line-height: 32px;
     padding: 4px;
     vertical-align: middle;
-    .mat-icon.copied{
-      color: #00C851 !important;
-    }
+  }
+
+  .mat-icon.copied{
+    color: #00C851 !important;
   }
   &:hover{
     .mat-icon{
-      color: #28567E !important;
+      color: $tb-primary-color !important;
     }
   }
 }
