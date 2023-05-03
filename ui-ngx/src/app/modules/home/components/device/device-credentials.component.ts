@@ -183,6 +183,6 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
   }
 
   public generate(formControlName: string) {
-    this.deviceCredentialsFormGroup.get(formControlName).patchValue(generateSecret(12));
+    this.deviceCredentialsFormGroup.get(formControlName).patchValue(generateSecret(20));
   }
 }
