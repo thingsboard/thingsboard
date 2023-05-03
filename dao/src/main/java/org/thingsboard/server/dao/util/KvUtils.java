@@ -51,15 +51,16 @@ public class KvUtils {
             throw new DataValidationException("Key can't be null");
         }
 
+        if (key.length() > 255) {
+            throw new DataValidationException("Validation error: key length must be equal or less than 255");
+        }
+
         if (validatedKeys.getIfPresent(key) != null) {
             return;
         }
 
         if (!NoXssValidator.isValid(key)) {
             throw new DataValidationException("Validation error: key is malformed");
-        }
-        if (key.length() > 255) {
-            throw new DataValidationException("Validation error: key length must be equal or less than 255");
         }
 
         validatedKeys.put(key, Boolean.TRUE);
