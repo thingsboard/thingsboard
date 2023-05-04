@@ -14,7 +14,13 @@
 /// limitations under the License.
 ///
 
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import {
+  coerceArray,
+  coerceBooleanProperty,
+  coerceCssPixelValue,
+  coerceNumberProperty,
+  coerceStringArray
+} from '@angular/cdk/coercion';
 
 export const coerceBoolean = () => (target: any, key: string): void => {
   const getter = function() {
@@ -23,6 +29,74 @@ export const coerceBoolean = () => (target: any, key: string): void => {
 
   const setter = function(next: any) {
     this['__' + key] = coerceBooleanProperty(next);
+  };
+
+  Object.defineProperty(target, key, {
+    get: getter,
+    set: setter,
+    enumerable: true,
+    configurable: true,
+  });
+};
+
+export const coerceNumber = () => (target: any, key: string): void => {
+  const getter = function(): number {
+    return this['__' + key];
+  };
+
+  const setter = function(next: any) {
+    this['__' + key] = coerceNumberProperty(next);
+  };
+
+  Object.defineProperty(target, key, {
+    get: getter,
+    set: setter,
+    enumerable: true,
+    configurable: true,
+  });
+};
+
+export const coerceCssPixelProperty = () => (target: any, key: string): void => {
+  const getter = function(): string {
+    return this['__' + key];
+  };
+
+  const setter = function(next: any) {
+    this['__' + key] = coerceCssPixelValue(next);
+  };
+
+  Object.defineProperty(target, key, {
+    get: getter,
+    set: setter,
+    enumerable: true,
+    configurable: true,
+  });
+};
+
+export const coerceArrayProperty = () => (target: any, key: string): void => {
+  const getter = function(): any[] {
+    return this['__' + key];
+  };
+
+  const setter = function(next: any) {
+    this['__' + key] = coerceArray(next);
+  };
+
+  Object.defineProperty(target, key, {
+    get: getter,
+    set: setter,
+    enumerable: true,
+    configurable: true,
+  });
+};
+
+export const coerceStringArrayProperty = (separator?: string | RegExp) => (target: any, key: string): void => {
+  const getter = function(): string[] {
+    return this['__' + key];
+  };
+
+  const setter = function(next: any) {
+    this['__' + key] = coerceStringArray(next, separator);
   };
 
   Object.defineProperty(target, key, {
