@@ -21,10 +21,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import io.grpc.stub.StreamObserver;
-import kotlin.Pair;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -385,7 +385,7 @@ public final class EdgeGrpcSession implements Closeable {
                                 EdgeEvent latestEdgeEvent = pageData.getData().get(pageData.getData().size() - 1);
                                 UUID ifOffset = latestEdgeEvent.getUuidId();
                                 Long seqId = latestEdgeEvent.getSeqId();
-                                result.set(new Pair<>(ifOffset, seqId));
+                                result.set(Pair.of(ifOffset, seqId));
                             }
                         }
                     }
@@ -527,7 +527,7 @@ public final class EdgeGrpcSession implements Closeable {
                     queueStartSeqId = attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
                 }
             }
-            return new Pair<>(queueStartTs, queueStartSeqId);
+            return Pair.of(queueStartTs, queueStartSeqId);
         }, ctx.getGrpcCallbackExecutorService());
     }
 
