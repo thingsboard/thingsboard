@@ -49,7 +49,8 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
-public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
     @Autowired
     DeviceProfileService deviceProfileService;

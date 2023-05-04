@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -28,7 +29,8 @@ import java.util.Optional;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-abstract public class BaseCustomerEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseCustomerEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testCreateUpdateDeleteCustomer() throws Exception {

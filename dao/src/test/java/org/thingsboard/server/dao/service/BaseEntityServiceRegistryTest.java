@@ -25,7 +25,8 @@ import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
 @Slf4j
-public abstract class BaseEntityServiceRegistryTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseEntityServiceRegistryTest extends AbstractServiceTest {
 
     @Autowired
     EntityServiceRegistry entityServiceRegistry;

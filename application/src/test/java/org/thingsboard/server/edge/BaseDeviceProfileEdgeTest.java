@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
 import org.thingsboard.server.common.data.transport.snmp.config.impl.TelemetryQueryingSnmpCommunicationConfig;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
@@ -54,7 +55,8 @@ import java.util.Optional;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-abstract public class BaseDeviceProfileEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseDeviceProfileEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testDeviceProfiles() throws Exception {

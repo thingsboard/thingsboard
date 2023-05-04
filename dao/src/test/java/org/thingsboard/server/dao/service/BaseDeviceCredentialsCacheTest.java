@@ -41,7 +41,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseDeviceCredentialsCacheTest extends AbstractServiceTest {
 
     private final String CREDENTIALS_ID_1 = StringUtils.randomAlphanumeric(20);
     private final String CREDENTIALS_ID_2 = StringUtils.randomAlphanumeric(20);

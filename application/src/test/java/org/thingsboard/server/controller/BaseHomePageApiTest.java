@@ -57,6 +57,7 @@ import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
@@ -73,7 +74,8 @@ import java.util.concurrent.TimeUnit;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public abstract class BaseHomePageApiTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseHomePageApiTest extends AbstractControllerTest {
 
     @Autowired
     private TbApiUsageStateClient apiUsageStateClient;

@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.audit.AuditLogDao;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.service.ttl.AuditLogsCleanUpService;
 
@@ -50,7 +51,8 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public abstract class BaseAuditLogControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseAuditLogControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;

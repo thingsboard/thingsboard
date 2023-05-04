@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
@@ -35,7 +36,8 @@ import java.nio.ByteBuffer;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
-abstract public class BaseOtaPackageEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseOtaPackageEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testOtaPackages_usesUrl() throws Exception {

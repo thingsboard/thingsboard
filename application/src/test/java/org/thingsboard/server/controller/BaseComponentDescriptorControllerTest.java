@@ -28,12 +28,14 @@ import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public abstract class BaseComponentDescriptorControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseComponentDescriptorControllerTest extends AbstractControllerTest {
 
     private static final int AMOUNT_OF_DEFAULT_FILTER_NODES = 4;
     private Tenant savedTenant;

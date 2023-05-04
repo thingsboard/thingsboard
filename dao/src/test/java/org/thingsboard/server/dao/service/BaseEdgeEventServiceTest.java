@@ -42,7 +42,8 @@ import java.util.List;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
 
-public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseEdgeEventServiceTest extends AbstractServiceTest {
 
     @Autowired
     EdgeEventService edgeEventService;

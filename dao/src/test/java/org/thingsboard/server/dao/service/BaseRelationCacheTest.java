@@ -39,7 +39,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.CacheConstants.RELATIONS_CACHE;
 
-public abstract class BaseRelationCacheTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseRelationCacheTest extends AbstractServiceTest {
 
     private static final EntityId ENTITY_ID_FROM = new DeviceId(UUID.randomUUID());
     private static final EntityId ENTITY_ID_TO = new DeviceId(UUID.randomUUID());

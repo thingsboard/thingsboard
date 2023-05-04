@@ -42,7 +42,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public abstract class BaseRelationServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseRelationServiceTest extends AbstractServiceTest {
 
     @Autowired
     RelationService relationService;

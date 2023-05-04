@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
@@ -39,7 +40,8 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-abstract public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseTelemetryEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testTimeseriesWithFailures() throws Exception {

@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.settings.StarredDashboardInfo;
 import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserDao;
 
 import java.util.ArrayList;
@@ -67,7 +68,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.dao.model.ModelConstants.SYSTEM_TENANT;
 
 @ContextConfiguration(classes = {BaseUserControllerTest.Config.class})
-public abstract class BaseUserControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseUserControllerTest extends AbstractControllerTest {
 
     private IdComparator<User> idComparator = new IdComparator<>();
     private IdComparator<UserEmailInfo> userDataIdComparator = new IdComparator<>();

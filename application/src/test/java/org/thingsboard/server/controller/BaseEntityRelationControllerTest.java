@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +51,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public abstract class BaseEntityRelationControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseEntityRelationControllerTest extends AbstractControllerTest {
 
     public static final String BASE_DEVICE_NAME = "Test dummy device";
 

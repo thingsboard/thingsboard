@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
@@ -31,7 +32,8 @@ import java.util.Set;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-abstract public class BaseDashboardEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseDashboardEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testDashboards() throws Exception {

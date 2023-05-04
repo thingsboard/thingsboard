@@ -47,7 +47,8 @@ import java.util.List;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseEdgeServiceTest extends AbstractServiceTest {
 
     @Autowired
     CustomerService customerService;

@@ -49,7 +49,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
-public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     public static final String TITLE = "My firmware";
     private static final String FILE_NAME = "filename.txt";

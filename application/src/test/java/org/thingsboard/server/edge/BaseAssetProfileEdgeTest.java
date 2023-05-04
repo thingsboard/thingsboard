@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
@@ -28,7 +29,8 @@ import java.nio.charset.StandardCharsets;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-abstract public class BaseAssetProfileEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseAssetProfileEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testAssetProfiles() throws Exception {

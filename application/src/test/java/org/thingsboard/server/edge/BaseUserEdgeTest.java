@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
@@ -35,7 +36,8 @@ import java.util.Optional;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-abstract public class BaseUserEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseUserEdgeTest extends AbstractEdgeTest {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,7 +37,8 @@ import java.util.List;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseWidgetTypeControllerTest extends AbstractControllerTest {
 
     private IdComparator<WidgetType> idComparator = new IdComparator<>();
 

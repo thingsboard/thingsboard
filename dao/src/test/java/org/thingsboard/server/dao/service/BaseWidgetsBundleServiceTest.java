@@ -33,7 +33,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
 
     @Autowired
     WidgetsBundleService widgetsBundleService;

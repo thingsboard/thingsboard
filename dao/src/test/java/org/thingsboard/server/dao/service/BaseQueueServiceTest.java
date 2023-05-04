@@ -43,7 +43,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class BaseQueueServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseQueueServiceTest extends AbstractServiceTest {
 
     @Autowired
     TenantProfileService tenantProfileService;

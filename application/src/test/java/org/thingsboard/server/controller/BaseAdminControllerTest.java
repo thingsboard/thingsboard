@@ -24,6 +24,7 @@ import org.mockito.Mockito;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -39,7 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public abstract class BaseAdminControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseAdminControllerTest extends AbstractControllerTest {
     final JwtSettings defaultJwtSettings = new JwtSettings(9000, 604800, "thingsboard.io", "thingsboardDefaultSigningKey");
 
     @Test

@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -28,7 +29,8 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import java.util.Optional;
 import java.util.UUID;
 
-abstract public class BaseEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testEdge_assignToCustomer_unassignFromCustomer() throws Exception {

@@ -24,12 +24,14 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-abstract public class BaseQueueEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseQueueEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testQueues() throws Exception {

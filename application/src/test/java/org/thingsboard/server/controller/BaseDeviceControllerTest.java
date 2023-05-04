@@ -68,6 +68,7 @@ import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 
 import java.util.ArrayList;
@@ -85,7 +86,8 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @ContextConfiguration(classes = {BaseDeviceControllerTest.Config.class})
-public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseDeviceControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<Device>> PAGE_DATA_DEVICE_TYPE_REF = new TypeReference<>() {
     };
 

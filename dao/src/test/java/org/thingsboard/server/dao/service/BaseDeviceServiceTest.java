@@ -57,7 +57,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseDeviceServiceTest extends AbstractServiceTest {
 
     @Autowired
     CustomerService customerService;

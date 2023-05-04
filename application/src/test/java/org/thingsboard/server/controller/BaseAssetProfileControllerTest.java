@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +53,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ContextConfiguration(classes = {BaseAssetProfileControllerTest.Config.class})
-public abstract class BaseAssetProfileControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseAssetProfileControllerTest extends AbstractControllerTest {
 
     private IdComparator<AssetProfile> idComparator = new IdComparator<>();
     private IdComparator<AssetProfileInfo> assetProfileInfoIdComparator = new IdComparator<>();

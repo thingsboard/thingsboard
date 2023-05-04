@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 
 import java.util.ArrayList;
@@ -57,7 +58,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @ContextConfiguration(classes = {BaseAssetControllerTest.Config.class})
-public abstract class BaseAssetControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseAssetControllerTest extends AbstractControllerTest {
 
     private IdComparator<Asset> idComparator = new IdComparator<>();
 

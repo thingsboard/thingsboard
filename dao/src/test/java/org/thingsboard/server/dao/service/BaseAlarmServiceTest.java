@@ -62,7 +62,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseAlarmServiceTest extends AbstractServiceTest {
 
     @Autowired
     AlarmService alarmService;

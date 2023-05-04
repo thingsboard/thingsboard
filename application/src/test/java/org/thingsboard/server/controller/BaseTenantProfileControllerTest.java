@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,7 +48,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public abstract class BaseTenantProfileControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseTenantProfileControllerTest extends AbstractControllerTest {
 
     private IdComparator<TenantProfile> idComparator = new IdComparator<>();
     private IdComparator<EntityInfo> tenantProfileInfoIdComparator = new IdComparator<>();

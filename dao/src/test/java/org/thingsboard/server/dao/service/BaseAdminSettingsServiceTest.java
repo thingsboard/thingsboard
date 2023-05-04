@@ -31,7 +31,8 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-public abstract class BaseAdminSettingsServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseAdminSettingsServiceTest extends AbstractServiceTest {
 
     @Autowired
     AdminSettingsService adminSettingsService;

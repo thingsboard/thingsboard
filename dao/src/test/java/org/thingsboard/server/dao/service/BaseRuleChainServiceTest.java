@@ -44,7 +44,8 @@ import java.util.List;
 /**
  * Created by igor on 3/13/18.
  */
-public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseRuleChainServiceTest extends AbstractServiceTest {
 
     @Autowired
     EdgeService edgeService;

@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.alarm.AlarmDao;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -49,7 +50,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Slf4j
 @ContextConfiguration(classes = {BaseAlarmCommentControllerTest.Config.class})
-public abstract class BaseAlarmCommentControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseAlarmCommentControllerTest extends AbstractControllerTest {
 
     protected Device customerDevice;
     protected Alarm alarm;

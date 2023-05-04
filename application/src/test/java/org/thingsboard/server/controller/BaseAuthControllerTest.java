@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import org.junit.Test;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +25,8 @@ import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public abstract class BaseAuthControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseAuthControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetUser() throws Exception {

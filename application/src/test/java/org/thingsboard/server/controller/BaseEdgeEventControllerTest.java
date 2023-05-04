@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.service.ttl.EdgeEventsCleanUpService;
 
@@ -59,7 +60,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "edges.enabled=true",
 })
 @Slf4j
-public abstract class BaseEdgeEventControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseEdgeEventControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;

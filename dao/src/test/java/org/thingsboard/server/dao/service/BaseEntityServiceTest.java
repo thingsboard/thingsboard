@@ -97,7 +97,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 
 @Slf4j
-public abstract class BaseEntityServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseEntityServiceTest extends AbstractServiceTest {
 
     static final int ENTITY_COUNT = 5;
 

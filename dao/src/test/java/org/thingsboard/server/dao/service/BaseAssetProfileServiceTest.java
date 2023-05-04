@@ -40,7 +40,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-public abstract class BaseAssetProfileServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseAssetProfileServiceTest extends AbstractServiceTest {
 
     private IdComparator<AssetProfile> idComparator = new IdComparator<>();
     private IdComparator<AssetProfileInfo> assetProfileInfoIdComparator = new IdComparator<>();

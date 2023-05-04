@@ -20,10 +20,12 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public abstract class BaseTelemetryControllerTest extends AbstractControllerTest {
+@DaoSqlTest
+public class BaseTelemetryControllerTest extends AbstractControllerTest {
 
     @Test
     public void testConstraintValidator() throws Exception {

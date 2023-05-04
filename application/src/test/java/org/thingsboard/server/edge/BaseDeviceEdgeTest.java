@@ -52,6 +52,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
@@ -79,7 +80,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "transport.mqtt.enabled=true"
 })
-abstract public class BaseDeviceEdgeTest extends AbstractEdgeTest {
+@DaoSqlTest
+public class BaseDeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testDevices() throws Exception {

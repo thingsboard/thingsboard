@@ -40,7 +40,8 @@ import java.util.List;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-public abstract class BaseAssetServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseAssetServiceTest extends AbstractServiceTest {
 
     @Autowired
     AssetService assetService;

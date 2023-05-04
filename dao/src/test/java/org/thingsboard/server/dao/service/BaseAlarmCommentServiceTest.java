@@ -43,7 +43,8 @@ import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.common.data.alarm.AlarmCommentType.OTHER;
 
-public abstract class BaseAlarmCommentServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseAlarmCommentServiceTest extends AbstractServiceTest {
 
     @Autowired
     AlarmService alarmService;
