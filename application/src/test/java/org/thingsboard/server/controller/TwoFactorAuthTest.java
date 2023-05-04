@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.EmailTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFaAccountConfig;
@@ -51,7 +52,6 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
-import org.thingsboard.server.common.data.security.model.JwtPair;
 
 import java.time.Duration;
 import java.util.Arrays;

@@ -16,11 +16,8 @@
 package org.thingsboard.server.dao.sqlts;
 
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;

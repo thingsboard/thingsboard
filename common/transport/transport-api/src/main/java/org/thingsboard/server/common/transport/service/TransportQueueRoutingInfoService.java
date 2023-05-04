@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.common.transport.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;

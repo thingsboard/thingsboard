@@ -17,12 +17,10 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
-import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 

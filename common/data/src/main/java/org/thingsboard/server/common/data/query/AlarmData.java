@@ -18,8 +18,6 @@ package org.thingsboard.server.common.data.query;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmAssignee;
-import org.thingsboard.server.common.data.alarm.AlarmAssigneeUpdate;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 

@@ -19,8 +19,6 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.HasTitle;
-import org.thingsboard.server.common.data.id.DashboardId;
 
 import java.io.Serializable;
 
