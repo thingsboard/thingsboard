@@ -29,7 +29,7 @@ public class DevicePageElements extends OtherPageElementsHelper {
     private static final String ASSIGN_TO_CUSTOMER_BTN = "//mat-cell[contains(@class,'name')]/span[text()='%s']" +
             "/ancestor::mat-row//mat-icon[contains(text(),'assignment_ind')]/parent::button";
     private static final String CHOOSE_CUSTOMER_FOR_ASSIGN_FIELD = "//input[@formcontrolname='entity']";
-    private static final String CUSTOMER_FROM_ASSIGN_DROPDOWN = "//div[@role = 'listbox']//span[text() = '%s']";
+    private static final String ENTITY_FROM_DROPDOWN = "//div[@role = 'listbox']//span[text() = '%s']";
     private static final String CLOSE_DEVICE_DETAILS_VIEW = "//header//mat-icon[contains(text(),'close')]/parent::button";
     private static final String SUBMIT_ASSIGN_TO_CUSTOMER_BTN = "//button[@type='submit']";
     private static final String ADD_DEVICE_BTN = "//mat-icon[text() = 'insert_drive_file']/parent::button";
@@ -38,6 +38,12 @@ public class DevicePageElements extends OtherPageElementsHelper {
     private static final String DESCRIPTION_FIELD_CREATE_VIEW = "//tb-device-wizard//textarea[@formcontrolname='description']";
     private static final String ADD_DEVICE_VIEW = "//tb-device-wizard";
     private static final String DELETE_BTN_DETAILS_TAB = "//span[contains(text(),'Delete device')]/parent::button";
+    private static final String CHECKBOX_GATEWAY_EDIT = "//mat-checkbox[@formcontrolname='gateway']//label";
+    private static final String CHECKBOX_OVERWRITE_ACTIVITY_TIME_EDIT = "//mat-checkbox[@formcontrolname='overwriteActivityTime']//label";
+    private static final String CHECKBOX_GATEWAY_DETAILS = "//mat-checkbox[@formcontrolname='gateway']//input";
+    private static final String CHECKBOX_OVERWRITE_ACTIVITY_TIME_DETAILS = "//mat-checkbox[@formcontrolname='overwriteActivityTime']//input";
+    private static final String CLEAR_PROFILE_FIELD_BTN = "//button[@aria-label='Clear']";
+    private static final String DEVICE_PROFILE_REDIRECTED_BTN = "//a[@aria-label='Open device profile']";
 
     public WebElement device(String deviceName) {
         return waitUntilElementToBeClickable(String.format(DEVICE, deviceName));
@@ -59,8 +65,8 @@ public class DevicePageElements extends OtherPageElementsHelper {
         return waitUntilElementToBeClickable(CHOOSE_CUSTOMER_FOR_ASSIGN_FIELD);
     }
 
-    public WebElement customerFromAssignDropdown(String customerTitle) {
-        return waitUntilElementToBeClickable(String.format(CUSTOMER_FROM_ASSIGN_DROPDOWN, customerTitle));
+    public WebElement entityFromDropdown(String customerTitle) {
+        return waitUntilElementToBeClickable(String.format(ENTITY_FROM_DROPDOWN, customerTitle));
     }
 
     public WebElement closeDeviceDetailsViewBtn() {
@@ -93,5 +99,29 @@ public class DevicePageElements extends OtherPageElementsHelper {
 
     public WebElement deleteBtnDetailsTab() {
         return waitUntilElementToBeClickable(DELETE_BTN_DETAILS_TAB);
+    }
+
+    public WebElement checkboxGatewayEdit() {
+        return waitUntilElementToBeClickable(CHECKBOX_GATEWAY_EDIT);
+    }
+
+    public WebElement checkboxOverwriteActivityTimeEdit() {
+        return waitUntilElementToBeClickable(CHECKBOX_OVERWRITE_ACTIVITY_TIME_EDIT);
+    }
+
+    public WebElement checkboxGatewayDetailsTab() {
+        return waitUntilPresenceOfElementLocated(CHECKBOX_GATEWAY_DETAILS);
+    }
+
+    public WebElement checkboxOverwriteActivityTimeDetails() {
+        return waitUntilPresenceOfElementLocated(CHECKBOX_OVERWRITE_ACTIVITY_TIME_DETAILS);
+    }
+
+    public WebElement clearProfileFieldBtn() {
+        return waitUntilElementToBeClickable(CLEAR_PROFILE_FIELD_BTN);
+    }
+
+    public WebElement deviceProfileRedirectedBtn() {
+        return waitUntilElementToBeClickable(DEVICE_PROFILE_REDIRECTED_BTN);
     }
 }

@@ -191,6 +191,32 @@ public class EntityPrototypes {
         return device;
     }
 
+    public static Device defaultDevicePrototype(String name, String description) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, boolean gateway) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode().put("gateway", gateway));
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, boolean gateway, boolean overwriteActivityTime) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode()
+                .put("gateway", gateway)
+                .put("overwriteActivityTime", overwriteActivityTime));
+        return device;
+    }
+
     public static Asset defaultAssetPrototype(String name, CustomerId id) {
         Asset asset = new Asset();
         asset.setName(name + RandomStringUtils.randomAlphanumeric(7));

@@ -22,6 +22,8 @@ public class DevicePageHelper extends DevicePageElements {
         super(driver);
     }
 
+    private String description;
+
     public void openDeviceAlarms(String deviceName) {
         if (!deviceDetailsView().isDisplayed()) {
             device(deviceName).click();
@@ -31,7 +33,7 @@ public class DevicePageHelper extends DevicePageElements {
 
     public void assignToCustomer(String customerTitle) {
         chooseCustomerForAssignField().click();
-        customerFromAssignDropdown(customerTitle).click();
+        entityFromDropdown(customerTitle).click();
         submitAssignToCustomerBtn().click();
     }
 
@@ -58,5 +60,19 @@ public class DevicePageHelper extends DevicePageElements {
     public void deleteDeviceFromDetailsTab() {
         deleteBtnDetailsTab().click();
         warningPopUpYesBtn().click();
+    }
+
+    public void setDescription() {
+        scrollToElement(descriptionEntityView());
+        description = descriptionEntityView().getAttribute("value");
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void changeDeviceProfile(String deviceProfileName) {
+        clearProfileFieldBtn().click();
+        entityFromDropdown(deviceProfileName).click();
     }
 }
