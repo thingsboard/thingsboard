@@ -32,7 +32,7 @@ import { AppState } from '@app/core/core.state';
 import { Subject } from 'rxjs';
 import { NonConfirmedNotificationEscalation } from '@shared/models/notification.models';
 import { takeUntil } from 'rxjs/operators';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-escalations-component',
