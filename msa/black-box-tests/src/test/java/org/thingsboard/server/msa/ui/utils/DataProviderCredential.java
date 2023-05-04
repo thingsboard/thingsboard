@@ -151,7 +151,7 @@ public class DataProviderCredential {
     }
 
     @DataProvider
-    public static Object[][] debugMode() {
+    public static Object[][] enable() {
         return new Object[][]{
                 {false},
                 {true}};
