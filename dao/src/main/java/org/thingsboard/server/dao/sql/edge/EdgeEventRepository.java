@@ -30,8 +30,9 @@ public interface EdgeEventRepository extends JpaRepository<EdgeEventEntity, UUID
     @Query("SELECT e FROM EdgeEventEntity e WHERE " +
             "e.tenantId = :tenantId " +
             "AND e.edgeId = :edgeId " +
-            "AND (:startTime IS NULL OR e.createdTime > :startTime) " +
+            "AND (:startTime IS NULL OR e.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
+            "AND e.seqId > :startSeqId " +
             "AND LOWER(e.edgeEventType) LIKE LOWER(CONCAT('%', :textSearch, '%'))"
     )
     Page<EdgeEventEntity> findEdgeEventsByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
@@ -39,6 +40,7 @@ public interface EdgeEventRepository extends JpaRepository<EdgeEventEntity, UUID
                                                             @Param("textSearch") String textSearch,
                                                             @Param("startTime") Long startTime,
                                                             @Param("endTime") Long endTime,
+                                                            @Param("startSeqId") Long startSeqId,
                                                             Pageable pageable);
 
     @Query("SELECT e FROM EdgeEventEntity e WHERE " +

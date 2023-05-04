@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
 
     private final Long queueStartTs;
+    private final Long queueStartSeqId;
     private final EdgeEventService edgeEventService;
 
     @Override
@@ -39,11 +40,11 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
                 null,
                 new SortOrder("createdTime", SortOrder.Direction.ASC),
                 queueStartTs,
-                null);
+                System.currentTimeMillis());
     }
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        return edgeEventService.findEdgeEvents(tenantId, edge.getId(), (TimePageLink) pageLink, true);
+        return edgeEventService.findEdgeEvents(tenantId, edge.getId(), queueStartSeqId, (TimePageLink) pageLink, true);
     }
 }

@@ -28,6 +28,8 @@ public interface EdgeEventService {
 
     PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
 
+    PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, Long startSeqId, TimePageLink pageLink, boolean withTsUpdate);
+
     /**
      * Executes stored procedure to cleanup old edge events.
      * @param ttl the ttl for edge events in seconds

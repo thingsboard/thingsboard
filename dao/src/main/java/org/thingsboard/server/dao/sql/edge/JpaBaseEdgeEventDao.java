@@ -171,7 +171,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
 
 
     @Override
-    public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
+    public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long startSeqId, TimePageLink pageLink, boolean withTsUpdate) {
         if (withTsUpdate) {
             return DaoUtil.toPageData(
                     edgeEventRepository
@@ -181,6 +181,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
                                     Objects.toString(pageLink.getTextSearch(), ""),
                                     pageLink.getStartTime(),
                                     pageLink.getEndTime(),
+                                    startSeqId,
                                     DaoUtil.toPageable(pageLink)));
         } else {
             return DaoUtil.toPageData(

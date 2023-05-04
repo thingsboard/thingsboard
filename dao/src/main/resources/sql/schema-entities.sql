@@ -733,6 +733,7 @@ CREATE TABLE IF NOT EXISTS edge (
 );
 
 CREATE TABLE IF NOT EXISTS edge_event (
+    seq_id INT GENERATED ALWAYS AS IDENTITY,
     id uuid NOT NULL,
     created_time bigint NOT NULL,
     edge_id uuid,
