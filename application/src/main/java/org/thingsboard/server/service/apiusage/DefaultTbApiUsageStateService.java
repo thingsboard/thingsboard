@@ -192,11 +192,14 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(statsItem.getKey());
 
                 StatsCalculationResult calculationResult = usageState.calculate(recordKey, statsItem.getValue(), serviceId);
-                long newValue = calculationResult.getNewValue();
-                long newHourlyValue = calculationResult.getNewHourlyValue();
-
-                updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
-                updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
+                if (calculationResult.isValueChanged()) {
+                    long newValue = calculationResult.getNewValue();
+                    updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
+                }
+                if (calculationResult.isHourlyValueChanged()) {
+                    long newHourlyValue = calculationResult.getNewHourlyValue();
+                    updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
+                }
                 if (recordKey.getApiFeature() != null) {
                     apiFeatures.add(recordKey.getApiFeature());
                 }
