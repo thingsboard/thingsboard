@@ -38,6 +38,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -72,7 +73,6 @@ import org.thingsboard.server.service.gateway_device.GatewayNotificationsService
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1287,8 +1287,8 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
                 savedDevice.getId().getId().toString(), savedEdge.getId().getId().toString(), savedEdge.getName());
         testNotificationUpdateGatewayNever();
 
-        pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId() + "/devices?",
-                PAGE_DATA_DEVICE_TYPE_REF, new PageLink(100));
+        PageData<DeviceInfo> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId() + "/devices?",
+                new TypeReference<>() {}, new PageLink(100));
 
         Assert.assertEquals(1, pageData.getData().size());
 
@@ -1303,7 +1303,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         testNotificationUpdateGatewayNever();
 
         pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId() + "/devices?",
-                PAGE_DATA_DEVICE_TYPE_REF, new PageLink(100));
+                new TypeReference<>() {}, new PageLink(100));
 
         Assert.assertEquals(0, pageData.getData().size());
     }

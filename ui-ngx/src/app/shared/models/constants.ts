@@ -146,7 +146,7 @@ export const HelpLinks = {
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
     entitiesImport: helpBaseUrl + '/docs/user-guide/bulk-provisioning',
     rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
-    resources: helpBaseUrl + '/docs/user-guide/ui/resources',
+    lwm2mResourceLibrary: helpBaseUrl + '/docs/reference/lwm2m-api',
     dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
     otaUpdates: helpBaseUrl + '/docs/user-guide/ota-updates',
     widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles',

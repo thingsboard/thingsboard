@@ -15,10 +15,8 @@
  */
 package org.thingsboard.server.service.security.permission;
 
-import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Arrays;

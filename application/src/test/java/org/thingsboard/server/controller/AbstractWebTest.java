@@ -74,6 +74,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
@@ -103,16 +104,20 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -123,6 +128,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -199,6 +205,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @Autowired
     private TenantProfileService tenantProfileService;
+
+    @Autowired
+    private TbTenantProfileService tbTenantProfileService;
 
     @Autowired
     public TimeseriesService tsService;
@@ -901,15 +910,24 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         throw new AssertionError("Unexpected status " + mvcResult.getResponse().getStatus());
     }
 
-    protected <T> T getFieldValue(Object target, String fieldName) throws Exception {
+    protected static <T> T getFieldValue(Object target, String fieldName) throws Exception {
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         return (T) field.get(target);
     }
 
-    protected void setStaticFieldValue(Class<?> targetCls, String fieldName, Object value) throws Exception {
+    protected static void setStaticFieldValue(Class<?> targetCls, String fieldName, Object value) throws Exception {
         Field field = targetCls.getDeclaredField(fieldName);
         field.setAccessible(true);
+        field.set(null, value);
+    }
+
+    protected static void setStaticFinalFieldValue(Class<?> targetCls, String fieldName, Object value) throws Exception {
+        Field field = targetCls.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        Field modifiers = Field.class.getDeclaredField("modifiers");
+        modifiers.setAccessible(true);
+        modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
         field.set(null, value);
     }
 
@@ -947,6 +965,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         TbActorMailbox actorMailbox = actors.get(new TbEntityActorId(deviceId));
         DeviceActor actor = (DeviceActor) ReflectionTestUtils.getField(actorMailbox, "actor");
         return (DeviceActorMessageProcessor) ReflectionTestUtils.getField(actor, "processor");
+    }
+
+    protected void updateDefaultTenantProfile(Consumer<DefaultTenantProfileConfiguration> updater) throws ThingsboardException {
+        TenantProfile tenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
+        TenantProfileData profileData = tenantProfile.getProfileData();
+        DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
+        updater.accept(profileConfiguration);
+        tenantProfile.setProfileData(profileData);
+        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, null);
     }
 
 }

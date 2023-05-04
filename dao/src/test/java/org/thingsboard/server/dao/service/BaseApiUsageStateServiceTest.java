@@ -18,8 +18,8 @@ package org.thingsboard.server.dao.service;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 
 

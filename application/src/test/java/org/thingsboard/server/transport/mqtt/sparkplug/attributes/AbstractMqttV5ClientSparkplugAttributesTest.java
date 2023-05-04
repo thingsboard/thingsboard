@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
+import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt32;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NCMD;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
@@ -409,7 +409,7 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
     protected void processClientNodeWithCorrectAccessTokenPublish_AttributesInProfileContainsKeyAttributes() throws Exception {
         clientWithCorrectNodeAccessTokenWithNDEATH();
         connectionWithNBirth(metricBirthDataType_Int32, metricBirthName_Int32, nextInt32());
-        String urlTemplate = "/api/plugins/telemetry/DEVICE/" + savedGateway.getId().getId() + "/keys/attributes/" + CLIENT_SCOPE;
+        String urlTemplate = "/api/plugins/telemetry/DEVICE/" + savedGateway.getId().getId() + "/keys/attributes/" + SHARED_SCOPE;
         AtomicReference<List<String>> actualKeys = new AtomicReference<>();
         await(alias + SparkplugMessageType.NBIRTH.name())
                 .atMost(40, TimeUnit.SECONDS)
@@ -424,7 +424,7 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
     protected void processClientDeviceWithCorrectAccessTokenPublish_AttributesInProfileContainsKeyAttributes() throws Exception {
         long ts = calendar.getTimeInMillis();
         List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(1, ts);
-        String urlTemplate = "/api/plugins/telemetry/DEVICE/" + devices.get(0).getId().getId() + "/keys/attributes/" + CLIENT_SCOPE;
+        String urlTemplate = "/api/plugins/telemetry/DEVICE/" + devices.get(0).getId().getId() + "/keys/attributes/" + SHARED_SCOPE;
         AtomicReference<List<String>> actualKeys = new AtomicReference<>();
         await(alias + SparkplugMessageType.DBIRTH.name())
                 .atMost(40, TimeUnit.SECONDS)
