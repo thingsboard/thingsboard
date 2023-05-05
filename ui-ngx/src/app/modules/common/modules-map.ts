@@ -93,6 +93,10 @@ import * as NospacePipe from '@shared/pipe/nospace.pipe';
 import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
 import * as KeyboardShortcutPipe from '@shared/pipe/keyboard-shortcut.pipe';
 
+import * as coercion from '@shared/decorators/coercion';
+import * as enumerable from '@shared/decorators/enumerable';
+import * as TbInject from '@shared/decorators/tb-inject';
+
 import * as FooterComponent from '@shared/components/footer.component';
 import * as LogoComponent from '@shared/components/logo.component';
 import * as FooterFabButtonsComponent from '@shared/components/footer-fab-buttons.component';
@@ -383,6 +387,10 @@ class ModulesMap implements IModulesMap {
     '@shared/pipe/nospace.pipe': NospacePipe,
     '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
     '@shared/pipe/keyboard-shortcut.pipe': KeyboardShortcutPipe,
+
+    '@shared/decorators/coercion': coercion,
+    '@shared/decorators/enumerable': enumerable,
+    '@shared/decorators/tb-inject': TbInject,
 
     '@shared/components/footer.component': FooterComponent,
     '@shared/components/logo.component': LogoComponent,
