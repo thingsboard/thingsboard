@@ -204,7 +204,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         NotificationTemplate template = createNotificationTemplate(NotificationType.valueOf(triggerConfig.getTriggerType().toString()), subject, text, NotificationDeliveryMethod.WEB);
 
         NotificationRule rule = new NotificationRule();
-        rule.setName(triggerConfig.getTriggerType() + " [" + Arrays.toString(targets) + "]");
+        rule.setName(triggerConfig.getTriggerType() + " " + Arrays.toString(targets));
         rule.setTemplateId(template.getId());
         rule.setTriggerType(triggerConfig.getTriggerType());
         rule.setTriggerConfig(triggerConfig);

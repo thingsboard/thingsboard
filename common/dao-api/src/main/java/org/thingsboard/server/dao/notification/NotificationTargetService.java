@@ -50,4 +50,6 @@ public interface NotificationTargetService {
 
     void deleteNotificationTargetsByTenantId(TenantId tenantId);
 
+    long countNotificationTargetsByTenantId(TenantId tenantId);
+
 }

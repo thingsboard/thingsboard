@@ -13,30 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.common.data.sync.vc;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
-@Getter
-@RequiredArgsConstructor
-public enum NotificationRuleTriggerType {
+public class VcUtils {
 
-    ENTITY_ACTION,
-    ALARM,
-    ALARM_COMMENT,
-    ALARM_ASSIGNMENT,
-    DEVICE_ACTIVITY,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    NEW_PLATFORM_VERSION(false, true),
-    ENTITIES_LIMIT(false, false),
-    API_USAGE_LIMIT(false, false);
+    private VcUtils() {}
 
-    private final boolean tenantLevel;
-    private final boolean deduplicate;
+    public static void checkBranchName(String branch) {
+        if (StringUtils.isEmpty(branch)) return;
 
-    NotificationRuleTriggerType() {
-        this(true, false);
+        boolean invalid = StringUtils.containsWhitespace(branch) ||
+                StringUtils.containsAny(branch, "..", "~", "^", ":", "\\") ||
+                StringUtils.endsWithAny(branch, "/", ".lock");
+        if (invalid) {
+            throw new IllegalArgumentException("Branch name is invalid");
+        }
     }
 
 }

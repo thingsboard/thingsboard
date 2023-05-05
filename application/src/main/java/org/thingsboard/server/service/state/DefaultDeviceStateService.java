@@ -473,7 +473,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.ACTIVE_DEVICES, active);
                 apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.INACTIVE_DEVICES, inactive);
                 if (active > 0) {
-                    log.info("[{}] Active devices: {}, inactive devices: {}", tenantId, active, inactive);
+                    log.debug("[{}] Active devices: {}, inactive devices: {}", tenantId, active, inactive);
                 }
             });
         } catch (Throwable t) {
