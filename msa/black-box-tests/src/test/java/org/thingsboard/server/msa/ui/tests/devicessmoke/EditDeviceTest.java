@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.ui.tests.devicessmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Feature;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
@@ -25,6 +26,7 @@ import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumbe
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_DEVICE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
+@Feature("Edit device")
 public class EditDeviceTest extends AbstractDeviceTest {
 
     @Test(groups = "smoke")
@@ -158,5 +160,20 @@ public class EditDeviceTest extends AbstractDeviceTest {
         devicePage.clearProfileFieldBtn().click();
 
         assertIsDisable(devicePage.doneBtnEditViewVisible());
+    }
+
+    @Test(groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "editDeviceLabel")
+    @Description("Write the label and save the changes/Change the label and save the changes/Delete the label and save the changes")
+    public void editLabel(String label, String newLabel, String finalLabel) {
+        deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME, "", label)).getName();
+
+        sideBarMenuView.devicesBtn().click();
+        devicePage.entity(deviceName).click();
+        devicePage.editPencilBtn().click();
+        devicePage.deviceLabelEditField().sendKeys(newLabel);
+        devicePage.doneBtnEditView().click();
+        devicePage.setLabel();
+
+        assertThat(devicePage.getLabel()).as("The label changed correctly").isEqualTo(finalLabel);
     }
 }

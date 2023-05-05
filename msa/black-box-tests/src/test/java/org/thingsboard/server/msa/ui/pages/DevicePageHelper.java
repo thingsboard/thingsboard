@@ -23,6 +23,7 @@ public class DevicePageHelper extends DevicePageElements {
     }
 
     private String description;
+    private String label;
 
     public void openDeviceAlarms(String deviceName) {
         if (!deviceDetailsView().isDisplayed()) {
@@ -43,13 +44,15 @@ public class DevicePageHelper extends DevicePageElements {
     }
 
     public void enterName(String deviceName) {
-        nameField().click();
-        nameField().sendKeys(deviceName);
+        enterText(nameField(), deviceName);
     }
 
     public void enterDescription(String description) {
-        descriptionFieldCreateField().click();
-        descriptionFieldCreateField().sendKeys(description);
+        enterText(descriptionFieldCreateField(), description);
+    }
+
+    public void enterLabel(String label) {
+        enterText(deviceLabelFieldCreate(), label);
     }
 
     public void deleteDeviceByRightSideBtn(String deviceName) {
@@ -67,12 +70,28 @@ public class DevicePageHelper extends DevicePageElements {
         description = descriptionEntityView().getAttribute("value");
     }
 
+    public void setLabel() {
+        label = deviceLabelDetailsField().getAttribute("value");
+    }
+
     public String getDescription() {
         return description;
+    }
+
+    public String getLabel() {
+        return label;
     }
 
     public void changeDeviceProfile(String deviceProfileName) {
         clearProfileFieldBtn().click();
         entityFromDropdown(deviceProfileName).click();
+    }
+
+    public void assignOnCustomer(String customerTitle) {
+        customerOptionBtn().click();
+        assignOnCustomerField().click();
+        entityFromList(customerTitle).click();
+        customerOptionBtn().click();
+        sleep(1);
     }
 }

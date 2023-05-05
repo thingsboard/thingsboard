@@ -23,6 +23,7 @@ import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
+import static org.thingsboard.server.msa.ui.utils.Const.DEVICE_PROFILE_IS_REQUIRED_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_DEVICE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.NAME_IS_REQUIRED_MESSAGE;
@@ -89,7 +90,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
         assertIsDisplayed(devicePage.addDeviceView());
     }
 
-    @Test(priority = 20, groups = "smoke")
+    @Test(groups = "smoke")
     @Description("Create a device with the same name")
     public void createRuleChainWithSameName() {
         Device device = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME));
@@ -105,7 +106,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
         assertIsDisplayed(devicePage.addDeviceView());
     }
 
-    @Test(priority = 30, groups = "smoke")
+    @Test(groups = "smoke")
     @Description("Add device after specifying the name (text/numbers /special characters) without refresh")
     public void createDeviceWithoutRefresh() {
         deviceName = ENTITY_NAME + random();
@@ -118,7 +119,88 @@ public class CreateDeviceTest extends AbstractDeviceTest {
         assertIsDisplayed(devicePage.entity(deviceName));
     }
 
-    @Test(priority = 40, groups = "smoke")
+    @Test(groups = "smoke")
+    @Description("Add device without device profile")
+    public void createDeviceWithoutDeviceProfile() {
+        deviceName = ENTITY_NAME + random();
+
+        sideBarMenuView.devicesBtn().click();
+        devicePage.openCreateDeviceView();
+        devicePage.enterName(deviceName);
+        devicePage.clearProfileFieldBtn().click();
+        devicePage.addBtnC().click();
+
+        assertIsDisplayed(devicePage.errorMessage());
+        assertThat(devicePage.errorMessage().getText()).as("Text of warning message").isEqualTo(DEVICE_PROFILE_IS_REQUIRED_MESSAGE);
+        assertIsDisplayed(devicePage.addDeviceView());
+    }
+
+    @Test(groups = "smoke")
+    @Description("Add device with enabled gateway")
+    public void createDeviceWithEnableGateway() {
+        deviceName = ENTITY_NAME + random();
+
+        sideBarMenuView.devicesBtn().click();
+        devicePage.openCreateDeviceView();
+        devicePage.enterName(deviceName);
+        devicePage.checkboxGatewayCreate().click();
+        devicePage.addBtnC().click();
+
+        assertIsDisplayed(devicePage.device(deviceName));
+        assertIsDisplayed(devicePage.checkboxGatewayPage(deviceName));
+    }
+
+    @Test(groups = "smoke")
+    @Description("Add device with enabled overwrite activity time for connected")
+    public void createDeviceWithEnableOverwriteActivityTimeForConnected() {
+        deviceName = ENTITY_NAME + random();
+
+        sideBarMenuView.devicesBtn().click();
+        devicePage.openCreateDeviceView();
+        devicePage.enterName(deviceName);
+        devicePage.checkboxGatewayCreate().click();
+        devicePage.checkboxOverwriteActivityTimeCreate().click();
+        devicePage.addBtnC().click();
+        devicePage.device(deviceName).click();
+
+        assertThat(devicePage.checkboxOverwriteActivityTimeDetails().getAttribute("class").contains("selected"))
+                .as("Overwrite activity time for connected is enable").isTrue();
+    }
+
+    @Test(groups = "smoke")
+    @Description("Add device with label")
+    public void createDeviceWithLabel() {
+        deviceName = ENTITY_NAME + random();
+        String deviceLabel = "device label " + random();
+
+        sideBarMenuView.devicesBtn().click();
+        devicePage.openCreateDeviceView();
+        devicePage.enterName(deviceName);
+        devicePage.enterLabel(deviceLabel);
+        devicePage.addBtnC().click();
+
+        assertIsDisplayed(devicePage.deviceLabelOnPage(deviceName));
+        assertThat(devicePage.deviceLabelOnPage(deviceName).getText()).as("Label added correctly").isEqualTo(deviceLabel);
+    }
+
+    @Test(groups = "smoke")
+    @Description("Add device with assignee on customer")
+    public void createDeviceWithAssignee() {
+        deviceName = ENTITY_NAME + random();
+        String customer = "Customer A";
+
+        sideBarMenuView.devicesBtn().click();
+        devicePage.openCreateDeviceView();
+        devicePage.enterName(deviceName);
+        devicePage.assignOnCustomer(customer);
+        devicePage.addBtnC().click();
+
+        assertIsDisplayed(devicePage.deviceCustomerOnPage(deviceName));
+        assertThat(devicePage.deviceCustomerOnPage(deviceName).getText())
+                .as("Customer added correctly").isEqualTo(customer);
+    }
+
+    @Test(groups = "smoke")
     @Description("Go to devices documentation page")
     public void documentation() {
         String urlPath = "docs/user-guide/ui/devices/";

@@ -44,4 +44,5 @@ public class Const {
     public static final String SAME_NAME_WARNING_DEVICE_MESSAGE = "Device with such name already exists!";
     public static final String PHONE_NUMBER_ERROR_MESSAGE = "Phone number is invalid or not possible";
     public static final String NAME_IS_REQUIRED_MESSAGE = "Name is required.";
+    public static final String DEVICE_PROFILE_IS_REQUIRED_MESSAGE = "Device profile is required";
 }

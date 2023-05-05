@@ -39,11 +39,20 @@ public class DevicePageElements extends OtherPageElementsHelper {
     private static final String ADD_DEVICE_VIEW = "//tb-device-wizard";
     private static final String DELETE_BTN_DETAILS_TAB = "//span[contains(text(),'Delete device')]/parent::button";
     private static final String CHECKBOX_GATEWAY_EDIT = "//mat-checkbox[@formcontrolname='gateway']//label";
+    private static final String CHECKBOX_GATEWAY_CREATE = "//tb-device-wizard//mat-checkbox[@formcontrolname='gateway']//label";
     private static final String CHECKBOX_OVERWRITE_ACTIVITY_TIME_EDIT = "//mat-checkbox[@formcontrolname='overwriteActivityTime']//label";
+    private static final String CHECKBOX_OVERWRITE_ACTIVITY_TIME_CREATE = "//tb-device-wizard//mat-checkbox[@formcontrolname='overwriteActivityTime']//label";
     private static final String CHECKBOX_GATEWAY_DETAILS = "//mat-checkbox[@formcontrolname='gateway']//input";
+    private static final String CHECKBOX_GATEWAY_PAGE = DEVICE + "/ancestor::mat-row//mat-cell[contains(@class,'cdk-column-gateway')]//mat-icon[text() = 'check_box']";
     private static final String CHECKBOX_OVERWRITE_ACTIVITY_TIME_DETAILS = "//mat-checkbox[@formcontrolname='overwriteActivityTime']//input";
     private static final String CLEAR_PROFILE_FIELD_BTN = "//button[@aria-label='Clear']";
     private static final String DEVICE_PROFILE_REDIRECTED_BTN = "//a[@aria-label='Open device profile']";
+    private static final String DEVICE_LABEL_FIELD_CREATE = "//tb-device-wizard//input[@formcontrolname='label']";
+    private static final String DEVICE_LABEL_PAGE = DEVICE + "/ancestor::mat-row//mat-cell[contains(@class,'cdk-column-label')]/span";
+    private static final String DEVICE_CUSTOMER_PAGE = DEVICE + "/ancestor::mat-row//mat-cell[contains(@class,'cdk-column-customerTitle')]/span";
+    private static final String CUSTOMER_OPTION_BNT = "//div[text() = 'Customer']/ancestor::mat-step-header";
+    private static final String ASSIGN_ON_CUSTOMER_FIELD = "//input[@formcontrolname='entity']";
+    private static final String DEVICE_LABEL_EDIT = "//input[@formcontrolname='label']";
 
     public WebElement device(String deviceName) {
         return waitUntilElementToBeClickable(String.format(DEVICE, deviceName));
@@ -105,12 +114,24 @@ public class DevicePageElements extends OtherPageElementsHelper {
         return waitUntilElementToBeClickable(CHECKBOX_GATEWAY_EDIT);
     }
 
+    public WebElement checkboxGatewayCreate() {
+        return waitUntilElementToBeClickable(CHECKBOX_GATEWAY_CREATE);
+    }
+
     public WebElement checkboxOverwriteActivityTimeEdit() {
         return waitUntilElementToBeClickable(CHECKBOX_OVERWRITE_ACTIVITY_TIME_EDIT);
     }
 
+    public WebElement checkboxOverwriteActivityTimeCreate() {
+        return waitUntilElementToBeClickable(CHECKBOX_OVERWRITE_ACTIVITY_TIME_CREATE);
+    }
+
     public WebElement checkboxGatewayDetailsTab() {
         return waitUntilPresenceOfElementLocated(CHECKBOX_GATEWAY_DETAILS);
+    }
+
+    public WebElement checkboxGatewayPage(String deviceName) {
+        return waitUntilPresenceOfElementLocated(String.format(CHECKBOX_GATEWAY_PAGE, deviceName));
     }
 
     public WebElement checkboxOverwriteActivityTimeDetails() {
@@ -123,5 +144,33 @@ public class DevicePageElements extends OtherPageElementsHelper {
 
     public WebElement deviceProfileRedirectedBtn() {
         return waitUntilElementToBeClickable(DEVICE_PROFILE_REDIRECTED_BTN);
+    }
+
+    public WebElement deviceLabelFieldCreate() {
+        return waitUntilElementToBeClickable(DEVICE_LABEL_FIELD_CREATE);
+    }
+
+    public WebElement deviceLabelOnPage(String deviceName) {
+        return waitUntilVisibilityOfElementLocated(String.format(DEVICE_LABEL_PAGE, deviceName));
+    }
+
+    public WebElement customerOptionBtn() {
+        return waitUntilElementToBeClickable(CUSTOMER_OPTION_BNT);
+    }
+
+    public WebElement assignOnCustomerField() {
+        return waitUntilElementToBeClickable(ASSIGN_ON_CUSTOMER_FIELD);
+    }
+
+    public WebElement deviceCustomerOnPage(String deviceName) {
+        return waitUntilVisibilityOfElementLocated(String.format(DEVICE_CUSTOMER_PAGE, deviceName));
+    }
+
+    public WebElement deviceLabelEditField() {
+        return waitUntilElementToBeClickable(DEVICE_LABEL_EDIT);
+    }
+
+    public WebElement deviceLabelDetailsField() {
+        return waitUntilVisibilityOfElementLocated(DEVICE_LABEL_EDIT);
     }
 }

@@ -199,6 +199,15 @@ public class EntityPrototypes {
         return device;
     }
 
+    public static Device defaultDevicePrototype(String name, String description, String label) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
+        device.setLabel(label);
+        return device;
+    }
+
     public static Device defaultDevicePrototype(String name, boolean gateway) {
         Device device = new Device();
         device.setName(name + RandomStringUtils.randomAlphanumeric(7));
