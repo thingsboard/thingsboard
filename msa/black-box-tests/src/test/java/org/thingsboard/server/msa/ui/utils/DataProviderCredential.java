@@ -156,4 +156,14 @@ public class DataProviderCredential {
                 {false},
                 {true}};
     }
+
+    @DataProvider
+    public static Object[][] editDeviceLabel() {
+        String newLabel = "Label" + getRandomNumber();
+        String label = "Label";
+        return new Object[][]{
+                {"", newLabel, newLabel},
+                {label, newLabel, label + newLabel},
+                {label, Keys.CONTROL + "A" + Keys.BACK_SPACE, ""}};
+    }
 }
