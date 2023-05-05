@@ -17,8 +17,8 @@ package org.thingsboard.client.tools.migrator;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.File;
 import java.io.IOException;

@@ -144,7 +144,11 @@ usage:
       interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
     check:
       cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
+    # In milliseconds. Default value is 3 minutes
     gauge_report_interval: "${USAGE_STATS_GAUGE_REPORT_INTERVAL:180000}"
+    devices:
+      # In seconds, default value is 1 minutes. When changing, in cluster mode, make sure usage.stats.gauge_report_interval is set to x2-x3 of this value
+      report_interval: "${DEVICES_STATS_REPORT_INTERVAL:60}"
 
 # UI parameters
 ui:
@@ -445,6 +449,9 @@ cache:
     notificationSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_SETTINGS_TTL:10}"
       maxSize: "${CACHE_SPECS_NOTIFICATION_SETTINGS_MAX_SIZE:1000}"
+    sentNotifications:
+      timeToLiveInMinutes: "${CACHE_SPECS_SENT_NOTIFICATIONS_TTL:1440}"
+      maxSize: "${CACHE_SPECS_SENT_NOTIFICATIONS_MAX_SIZE:10000}"
     attributes:
       timeToLiveInMinutes: "${CACHE_SPECS_ATTRIBUTES_TTL:1440}"
       maxSize: "${CACHE_SPECS_ATTRIBUTES_MAX_SIZE:100000}"
@@ -645,6 +652,10 @@ state:
   # Should be greater then transport.sessions.report_timeout
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:600}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:60}"
+  # Controls whether we store device 'active' flag in attributes (default) or telemetry.
+  # If you device to change this parameter, you should re-create the device info view as one of the following:
+  # If 'persistToTelemetry' is changed from 'false' to 'true': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_ts_view;'
+  # If 'persistToTelemetry' is changed from 'true' to 'false': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_attribute_view;'
   persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
 
 tbel:

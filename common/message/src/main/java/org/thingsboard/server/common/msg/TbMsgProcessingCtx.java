@@ -21,8 +21,6 @@ import org.thingsboard.server.common.msg.gen.MsgProtos;
 
 import java.io.Serializable;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

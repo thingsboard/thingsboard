@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
-
 import java.io.Serializable;
 
 @ApiModel

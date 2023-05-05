@@ -15,10 +15,6 @@
     limitations under the License.
 
 -->
-<tb-device-profile-autocomplete
-  subscriptSizing="dynamic"
-  [ngModel]="entitiesTableConfig.componentsData.deviceProfileId"
-  (ngModelChange)="deviceProfileChanged($event)"
-  [displayAllOnEmpty]="true"
-  [editProfileEnabled]="false">
-</tb-device-profile-autocomplete>
+<tb-device-info-filter [ngModel]="entitiesTableConfig.componentsData.deviceInfoFilter"
+                       (ngModelChange)="deviceInfoFilterChanged($event)">
+</tb-device-info-filter>

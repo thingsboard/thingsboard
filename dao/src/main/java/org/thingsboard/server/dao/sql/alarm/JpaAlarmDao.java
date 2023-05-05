@@ -27,6 +27,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -49,7 +50,6 @@ import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
@@ -137,10 +137,6 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
         AlarmStatusFilter asf = AlarmStatusFilter.from(query);
-        String assigneeId = null;
-        if (query.getAssigneeId() != null) {
-            assigneeId = query.getAssigneeId().toString();
-        }
         if (affectedEntity != null) {
             return DaoUtil.toPageData(
                     alarmRepository.findAlarms(
@@ -153,7 +149,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                             asf.hasClearFilter() && asf.getClearFilter(),
                             asf.hasAckFilter(),
                             asf.hasAckFilter() && asf.getAckFilter(),
-                            assigneeId,
+                            DaoUtil.getStringId(query.getAssigneeId()),
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())
                     )
@@ -168,7 +164,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                             asf.hasClearFilter() && asf.getClearFilter(),
                             asf.hasAckFilter(),
                             asf.hasAckFilter() && asf.getAckFilter(),
-                            assigneeId,
+                            DaoUtil.getStringId(query.getAssigneeId()),
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())
                     )
@@ -180,10 +176,6 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     public PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
         log.trace("Try to find customer alarms by status [{}] and pageLink [{}]", query.getStatus(), query.getPageLink());
         AlarmStatusFilter asf = AlarmStatusFilter.from(query);
-        String assigneeId = null;
-        if (query.getAssigneeId() != null) {
-            assigneeId = query.getAssigneeId().toString();
-        }
         return DaoUtil.toPageData(
                 alarmRepository.findCustomerAlarms(
                         tenantId.getId(),
@@ -194,7 +186,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                         asf.hasClearFilter() && asf.getClearFilter(),
                         asf.hasAckFilter(),
                         asf.hasAckFilter() && asf.getAckFilter(),
-                        assigneeId,
+                        DaoUtil.getStringId(query.getAssigneeId()),
                         Objects.toString(query.getPageLink().getTextSearch(), ""),
                         DaoUtil.toPageable(query.getPageLink())
                 )
@@ -208,10 +200,6 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         List<String> typeList = query.getTypeList() != null && !query.getTypeList().isEmpty() ? query.getTypeList() : null;
         List<AlarmSeverity> severityList = query.getSeverityList() != null && !query.getSeverityList().isEmpty() ? query.getSeverityList() : null;
         AlarmStatusFilter asf = AlarmStatusFilter.from(query.getStatusList());
-        String assigneeId = null;
-        if (query.getAssigneeId() != null) {
-            assigneeId = query.getAssigneeId().toString();
-        }
         if (affectedEntity != null) {
             return DaoUtil.toPageData(
                     alarmRepository.findAlarmsV2(
@@ -226,7 +214,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                             asf.hasClearFilter() && asf.getClearFilter(),
                             asf.hasAckFilter(),
                             asf.hasAckFilter() && asf.getAckFilter(),
-                            assigneeId,
+                            DaoUtil.getStringId(query.getAssigneeId()),
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())
                     )
@@ -243,7 +231,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                             asf.hasClearFilter() && asf.getClearFilter(),
                             asf.hasAckFilter(),
                             asf.hasAckFilter() && asf.getAckFilter(),
-                            assigneeId,
+                            DaoUtil.getStringId(query.getAssigneeId()),
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())
                     )
@@ -257,10 +245,6 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         List<String> typeList = query.getTypeList() != null && !query.getTypeList().isEmpty() ? query.getTypeList() : null;
         List<AlarmSeverity> severityList = query.getSeverityList() != null && !query.getSeverityList().isEmpty() ? query.getSeverityList() : null;
         AlarmStatusFilter asf = AlarmStatusFilter.from(query.getStatusList());
-        String assigneeId = null;
-        if (query.getAssigneeId() != null) {
-            assigneeId = query.getAssigneeId().toString();
-        }
         return DaoUtil.toPageData(
                 alarmRepository.findCustomerAlarmsV2(
                         tenantId.getId(),
@@ -273,7 +257,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                         asf.hasClearFilter() && asf.getClearFilter(),
                         asf.hasAckFilter(),
                         asf.hasAckFilter() && asf.getAckFilter(),
-                        assigneeId,
+                        DaoUtil.getStringId(query.getAssigneeId()),
                         Objects.toString(query.getPageLink().getTextSearch(), ""),
                         DaoUtil.toPageable(query.getPageLink())
                 )

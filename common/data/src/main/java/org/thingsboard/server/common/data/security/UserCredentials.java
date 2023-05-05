@@ -21,11 +21,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
-
-import java.util.Arrays;
-import java.util.Objects;
 
 import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.getJson;
 import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.setJson;

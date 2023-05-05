@@ -5,7 +5,7 @@
 <form #editEntityForm="ngForm" [formGroup]="editEntityFormGroup"
       (ngSubmit)="save()"  class="edit-entity-form">
   <mat-toolbar fxLayout="row" color="primary">
-    <h2>Edit  </h2>
+    <h2>Edit {{entityType.toLowerCase()}} {{entityName}}</h2>
     <span fxFlex></span>
     <button mat-icon-button (click)="cancel()" type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -67,7 +67,7 @@
         <div class="boolean-value-input" fxLayout="column" fxLayoutAlign="center start" fxFlex>
           <label class="checkbox-label">Boolean Value</label>
           <mat-checkbox formControlName="booleanValue" style="margin-bottom: 40px;">
-
+            {{ (editEntityFormGroup.get('attributes.booleanValue').value ? "value.true" : "value.false") | translate }}
           </mat-checkbox>
         </div>
       </div>
@@ -84,7 +84,7 @@
                   <mat-label>Direction</mat-label>
                   <mat-select formControlName="direction" name="direction">
                     <mat-option *ngFor="let direction of entitySearchDirection | keyvalue" [value]="direction.value">
-
+                      {{ ("relation.search-direction." + direction.value) | translate}}
                     </mat-option>
                   </mat-select>
                   <mat-error *ngIf="relation.get('direction').hasError('required')">
@@ -109,7 +109,7 @@
               <button mat-icon-button color="primary"
                       aria-label="Remove"
                       type="button"
-                      (click)="removeOldRelation(i)"
+                      (click)="removeOldRelation(i, relation.value)"
                       matTooltip="Remove relation"
                       matTooltipPosition="above">
                 <mat-icon>close</mat-icon>
@@ -130,7 +130,7 @@
                   <mat-label>Direction</mat-label>
                   <mat-select formControlName="direction" name="direction">
                     <mat-option *ngFor="let direction of entitySearchDirection | keyvalue" [value]="direction.value">
-
+                      {{ ("relation.search-direction." + direction.value) | translate}}
                     </mat-option>
                   </mat-select>
                   <mat-error *ngIf="relation.get('direction').hasError('required')">

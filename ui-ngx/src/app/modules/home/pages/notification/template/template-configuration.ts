@@ -190,7 +190,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
   protected getNotificationTemplateValue(): NotificationTemplate {
     const template: NotificationTemplate = deepClone(this.templateNotificationForm.value);
     this.notificationDeliveryMethods.forEach(method => {
-      if (template.configuration.deliveryMethodsTemplates[method].enabled) {
+      if (template.configuration.deliveryMethodsTemplates[method]?.enabled) {
         Object.assign(template.configuration.deliveryMethodsTemplates[method], this.deliveryMethodFormsMap.get(method).value, {method});
       } else {
         delete template.configuration.deliveryMethodsTemplates[method];

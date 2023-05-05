@@ -20,7 +20,6 @@ package org.thingsboard.client.tools;
  * This class is intended for manual MQTT SSL Testing
  */
 
-import com.google.common.io.Resources;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -28,10 +27,11 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.thingsboard.server.common.data.ResourceUtils;
 
-import javax.net.ssl.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.net.URL;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.security.KeyStore;
 
 @Slf4j

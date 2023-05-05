@@ -19,10 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbRuleEngineActorMsg;
-import org.thingsboard.server.common.msg.queue.RuleNodeException;
 
 /**
  * Created by ashvayka on 19.03.18.
