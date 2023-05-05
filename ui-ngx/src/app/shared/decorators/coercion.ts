@@ -15,11 +15,11 @@
 ///
 
 import {
-  coerceArray,
+  coerceArray as coerceArrayAngular,
   coerceBooleanProperty,
-  coerceCssPixelValue,
+  coerceCssPixelValue as coerceCssPixelValueAngular,
   coerceNumberProperty,
-  coerceStringArray
+  coerceStringArray as coerceStringArrayAngular
 } from '@angular/cdk/coercion';
 
 export const coerceBoolean = () => (target: any, key: string): void => {
@@ -56,13 +56,13 @@ export const coerceNumber = () => (target: any, key: string): void => {
   });
 };
 
-export const coerceCssPixelProperty = () => (target: any, key: string): void => {
+export const coerceCssPixelValue = () => (target: any, key: string): void => {
   const getter = function(): string {
     return this['__' + key];
   };
 
   const setter = function(next: any) {
-    this['__' + key] = coerceCssPixelValue(next);
+    this['__' + key] = coerceCssPixelValueAngular(next);
   };
 
   Object.defineProperty(target, key, {
@@ -73,13 +73,13 @@ export const coerceCssPixelProperty = () => (target: any, key: string): void => 
   });
 };
 
-export const coerceArrayProperty = () => (target: any, key: string): void => {
+export const coerceArray = () => (target: any, key: string): void => {
   const getter = function(): any[] {
     return this['__' + key];
   };
 
   const setter = function(next: any) {
-    this['__' + key] = coerceArray(next);
+    this['__' + key] = coerceArrayAngular(next);
   };
 
   Object.defineProperty(target, key, {
@@ -90,13 +90,13 @@ export const coerceArrayProperty = () => (target: any, key: string): void => {
   });
 };
 
-export const coerceStringArrayProperty = (separator?: string | RegExp) => (target: any, key: string): void => {
+export const coerceStringArray = (separator?: string | RegExp) => (target: any, key: string): void => {
   const getter = function(): string[] {
     return this['__' + key];
   };
 
   const setter = function(next: any) {
-    this['__' + key] = coerceStringArray(next, separator);
+    this['__' + key] = coerceStringArrayAngular(next, separator);
   };
 
   Object.defineProperty(target, key, {
