@@ -198,6 +198,11 @@
                   <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('required')">
                     {{ 'notification.button-text-required' | translate }}
                   </mat-error>
+                  <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('maxlength')">
+                    {{ 'notification.button-text-max-length' | translate :
+                    {length: webTemplateForm.get('additionalConfig.actionButtonConfig.text').getError('maxlength').requiredLength}
+                    }}
+                  </mat-error>
                 </mat-form-field>
               </div>
               <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
