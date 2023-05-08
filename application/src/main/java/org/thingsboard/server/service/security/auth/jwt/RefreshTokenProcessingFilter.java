@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.auth.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -24,7 +25,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.service.security.auth.RefreshAuthenticationToken;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
@@ -42,12 +42,14 @@ public class RefreshTokenProcessingFilter extends AbstractAuthenticationProcessi
     private final AuthenticationSuccessHandler successHandler;
     private final AuthenticationFailureHandler failureHandler;
 
+    private final ObjectMapper objectMapper;
 
     public RefreshTokenProcessingFilter(String defaultProcessUrl, AuthenticationSuccessHandler successHandler,
-                                        AuthenticationFailureHandler failureHandler) {
+                                        AuthenticationFailureHandler failureHandler, ObjectMapper mapper) {
         super(defaultProcessUrl);
         this.successHandler = successHandler;
         this.failureHandler = failureHandler;
+        this.objectMapper = mapper;
     }
 
     @Override
@@ -62,7 +64,7 @@ public class RefreshTokenProcessingFilter extends AbstractAuthenticationProcessi
 
         RefreshTokenRequest refreshTokenRequest;
         try {
-            refreshTokenRequest = JacksonUtil.fromReader(request.getReader(), RefreshTokenRequest.class);
+            refreshTokenRequest = objectMapper.readValue(request.getReader(), RefreshTokenRequest.class);
         } catch (Exception e) {
             throw new AuthenticationServiceException("Invalid refresh token request payload");
         }

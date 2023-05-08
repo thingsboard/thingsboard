@@ -815,7 +815,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private ListenableFuture<Void> saveRpcRequestToEdgeQueue(ToDeviceRpcRequest msg, Integer requestId) {
-        ObjectNode body = JacksonUtil.newObjectNode();
+        ObjectNode body = mapper.createObjectNode();
         body.put("requestId", requestId);
         body.put("requestUUID", msg.getId().toString());
         body.put("oneway", msg.isOneway());

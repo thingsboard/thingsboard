@@ -16,11 +16,11 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -276,7 +276,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         RuleNode ruleNode4 = new RuleNode();
         ruleNode4.setName("name4");
         ruleNode4.setType("type4");
-        ruleNode4.setConfiguration(JacksonUtil.toJsonNode("\"key4\": \"val4\""));
+        ruleNode4.setConfiguration(mapper.readTree("\"key4\": \"val4\""));
 
         ruleNodes.set(name3Index, ruleNode4);
 
@@ -369,20 +369,22 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
 
+        ObjectMapper mapper = new ObjectMapper();
+
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
         ruleNode1.setType("type1");
-        ruleNode1.setConfiguration(JacksonUtil.toJsonNode("\"key1\": \"val1\""));
+        ruleNode1.setConfiguration(mapper.readTree("\"key1\": \"val1\""));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
         ruleNode2.setType("type2");
-        ruleNode2.setConfiguration(JacksonUtil.toJsonNode("\"key2\": \"val2\""));
+        ruleNode2.setConfiguration(mapper.readTree("\"key2\": \"val2\""));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
         ruleNode3.setType("type3");
-        ruleNode3.setConfiguration(JacksonUtil.toJsonNode("\"key3\": \"val3\""));
+        ruleNode3.setConfiguration(mapper.readTree("\"key3\": \"val3\""));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(ruleNode1);
@@ -408,20 +410,22 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
 
+        ObjectMapper mapper = new ObjectMapper();
+
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
         ruleNode1.setType("type1");
-        ruleNode1.setConfiguration(JacksonUtil.toJsonNode("\"key1\": \"val1\""));
+        ruleNode1.setConfiguration(mapper.readTree("\"key1\": \"val1\""));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
         ruleNode2.setType("type2");
-        ruleNode2.setConfiguration(JacksonUtil.toJsonNode("\"key2\": \"val2\""));
+        ruleNode2.setConfiguration(mapper.readTree("\"key2\": \"val2\""));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
         ruleNode3.setType("type3");
-        ruleNode3.setConfiguration(JacksonUtil.toJsonNode("\"key3\": \"val3\""));
+        ruleNode3.setConfiguration(mapper.readTree("\"key3\": \"val3\""));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(ruleNode1);
@@ -447,20 +451,22 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
 
+        ObjectMapper mapper = new ObjectMapper();
+
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
         ruleNode1.setType("type1");
-        ruleNode1.setConfiguration(JacksonUtil.toJsonNode("\"key1\": \"val1\""));
+        ruleNode1.setConfiguration(mapper.readTree("\"key1\": \"val1\""));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
         ruleNode2.setType("type2");
-        ruleNode2.setConfiguration(JacksonUtil.toJsonNode("\"key2\": \"val2\""));
+        ruleNode2.setConfiguration(mapper.readTree("\"key2\": \"val2\""));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
         ruleNode3.setType("type3");
-        ruleNode3.setConfiguration(JacksonUtil.toJsonNode("\"key3\": \"val3\""));
+        ruleNode3.setConfiguration(mapper.readTree("\"key3\": \"val3\""));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(ruleNode1);

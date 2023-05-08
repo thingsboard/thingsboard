@@ -17,8 +17,8 @@ package org.thingsboard.rule.engine.api.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.StringUtils;
@@ -37,13 +37,14 @@ import java.util.stream.Collectors;
  */
 public class TbNodeUtils {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final Pattern DATA_PATTERN = Pattern.compile("(\\$\\[)(.*?)(])");
 
     public static <T> T convert(TbNodeConfiguration configuration, Class<T> clazz) throws TbNodeException {
         try {
-            return JacksonUtil.treeToValue(configuration.getData(), clazz);
-        } catch (IllegalArgumentException e) {
+            return mapper.treeToValue(configuration.getData(), clazz);
+        } catch (JsonProcessingException e) {
             throw new TbNodeException(e);
         }
     }
@@ -58,7 +59,7 @@ public class TbNodeUtils {
     public static String processPattern(String pattern, TbMsg tbMsg) {
         try {
             String result = processPattern(pattern, tbMsg.getMetaData());
-            JsonNode json = JacksonUtil.toJsonNode(tbMsg.getData());
+            JsonNode json = mapper.readTree(tbMsg.getData());
             if (json.isObject()) {
                 Matcher matcher = DATA_PATTERN.matcher(result);
                 while (matcher.find()) {

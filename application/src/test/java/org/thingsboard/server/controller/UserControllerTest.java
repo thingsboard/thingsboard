@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -30,7 +31,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -121,7 +121,7 @@ public class UserControllerTest extends AbstractControllerTest {
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + this.currentActivateToken));
 
-        JsonNode activateRequest = JacksonUtil.newObjectNode()
+        JsonNode activateRequest = new ObjectMapper().createObjectNode()
                 .put("activateToken", this.currentActivateToken)
                 .put("password", "testPassword");
 
@@ -213,7 +213,7 @@ public class UserControllerTest extends AbstractControllerTest {
         User savedUser = createUserAndLogin(user, "testPassword1");
         resetTokens();
 
-        JsonNode resetPasswordByEmailRequest = JacksonUtil.newObjectNode()
+        JsonNode resetPasswordByEmailRequest = new ObjectMapper().createObjectNode()
                 .put("email", email);
 
         doPost("/api/noauth/resetPasswordByEmail", resetPasswordByEmailRequest)
@@ -223,7 +223,7 @@ public class UserControllerTest extends AbstractControllerTest {
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/resetPassword?resetToken=" + this.currentResetPasswordToken));
 
-        JsonNode resetPasswordRequest = JacksonUtil.newObjectNode()
+        JsonNode resetPasswordRequest = new ObjectMapper().createObjectNode()
                 .put("resetToken", this.currentResetPasswordToken)
                 .put("password", "testPassword2");
 
@@ -772,7 +772,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testSaveUserSettings() throws Exception {
         loginCustomerUser();
 
-        JsonNode userSettings = JacksonUtil.toJsonNode("{\"A\":5, \"B\":10, \"E\":18}");
+        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":10, \"E\":18}");
         JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
         Assert.assertEquals(userSettings, savedSettings);
 
@@ -784,10 +784,10 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testShouldNotSaveJsonWithRestrictedSymbols() throws Exception {
         loginCustomerUser();
 
-        JsonNode userSettings = JacksonUtil.toJsonNode("{\"A.B\":5, \"E\":18}");
+        JsonNode userSettings = mapper.readTree("{\"A.B\":5, \"E\":18}");
         doPost("/api/user/settings", userSettings).andExpect(status().isBadRequest());
 
-        userSettings = JacksonUtil.toJsonNode("{\"A,B\":5, \"E\":18}");
+        userSettings = mapper.readTree("{\"A,B\":5, \"E\":18}");
         doPost("/api/user/settings", userSettings).andExpect(status().isBadRequest());
     }
 
@@ -795,38 +795,38 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testUpdateUserSettings() throws Exception {
         loginCustomerUser();
 
-        JsonNode userSettings = JacksonUtil.toJsonNode("{\"A\":5, \"B\":{\"C\":true, \"D\":\"stringValue\"}}");
+        JsonNode userSettings = mapper.readTree("{\"A\":5, \"B\":{\"C\":true, \"D\":\"stringValue\"}}");
         JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
         Assert.assertEquals(userSettings, savedSettings);
 
-        JsonNode newSettings = JacksonUtil.toJsonNode("{\"A\":10}");
+        JsonNode newSettings = mapper.readTree("{\"A\":10}");
         doPut("/api/user/settings", newSettings);
         JsonNode updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        JsonNode expectedSettings = JacksonUtil.toJsonNode("{\"A\":10, \"B\":{\"C\":true, \"D\":\"stringValue\"}}");
+        JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"B\":{\"C\":true, \"D\":\"stringValue\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        JsonNode patchedSettings = JacksonUtil.toJsonNode("{\"A\":11, \"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
+        JsonNode patchedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
         doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = JacksonUtil.toJsonNode("{\"A\":11, \"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
+        expectedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\":\"stringValue2\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        patchedSettings = JacksonUtil.toJsonNode("{\"B.D\": \"stringValue3\"}");
+        patchedSettings = mapper.readTree("{\"B.D\": \"stringValue3\"}");
         doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = JacksonUtil.toJsonNode("{\"A\":11, \"B\":{\"C\":false, \"D\": \"stringValue3\"}}");
+        expectedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\": \"stringValue3\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        patchedSettings = JacksonUtil.toJsonNode("{\"B.D\": {\"E\": 76, \"F\": 92}}");
+        patchedSettings = mapper.readTree("{\"B.D\": {\"E\": 76, \"F\": 92}}");
         doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = JacksonUtil.toJsonNode("{\"A\":11, \"B\":{\"C\":false, \"D\": {\"E\":76, \"F\": 92}}}");
+        expectedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\": {\"E\":76, \"F\": 92}}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        patchedSettings = JacksonUtil.toJsonNode("{\"B.D.E\": 100}");
+        patchedSettings = mapper.readTree("{\"B.D.E\": 100}");
         doPut("/api/user/settings", patchedSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = JacksonUtil.toJsonNode("{\"A\":11, \"B\":{\"C\":false, \"D\": {\"E\":100, \"F\": 92}}}");
+        expectedSettings = mapper.readTree("{\"A\":11, \"B\":{\"C\":false, \"D\": {\"E\":100, \"F\": 92}}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
     }
 
@@ -834,38 +834,38 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testShouldCreatePathIfNotExists() throws Exception {
         loginCustomerUser();
 
-        JsonNode userSettings = JacksonUtil.toJsonNode("{\"A\":5}");
+        JsonNode userSettings = mapper.readTree("{\"A\":5}");
         JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
         Assert.assertEquals(userSettings, savedSettings);
 
-        JsonNode newSettings = JacksonUtil.toJsonNode("{\"B\":{\"C\": 10}}");
+        JsonNode newSettings = mapper.readTree("{\"B\":{\"C\": 10}}");
         doPut("/api/user/settings", newSettings);
         JsonNode updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        JsonNode expectedSettings = JacksonUtil.toJsonNode("{\"A\":5, \"B\":{\"C\": 10}}");
+        JsonNode expectedSettings = mapper.readTree("{\"A\":5, \"B\":{\"C\": 10}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        newSettings = JacksonUtil.toJsonNode("{\"B.K\":true}");
+        newSettings = mapper.readTree("{\"B.K\":true}");
         doPut("/api/user/settings", newSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = JacksonUtil.toJsonNode("{\"A\":5, \"B\":{\"C\": 10, \"K\": true}}");
+        expectedSettings = mapper.readTree("{\"A\":5, \"B\":{\"C\": 10, \"K\": true}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        newSettings = JacksonUtil.toJsonNode("{\"B\":{}}");
+        newSettings = mapper.readTree("{\"B\":{}}");
         doPut("/api/user/settings", newSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = JacksonUtil.toJsonNode("{\"A\":5, \"B\":{}}");
+        expectedSettings = mapper.readTree("{\"A\":5, \"B\":{}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        newSettings = JacksonUtil.toJsonNode("{\"F.G\":\"string\"}");
+        newSettings = mapper.readTree("{\"F.G\":\"string\"}");
         doPut("/api/user/settings", newSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = JacksonUtil.toJsonNode("{\"A\":5, \"B\":{}, \"F\":{\"G\": \"string\"}}");
+        expectedSettings = mapper.readTree("{\"A\":5, \"B\":{}, \"F\":{\"G\": \"string\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
 
-        newSettings = JacksonUtil.toJsonNode("{\"F\":{\"G\":\"string2\"}}");
+        newSettings = mapper.readTree("{\"F\":{\"G\":\"string2\"}}");
         doPut("/api/user/settings", newSettings);
         updatedSettings = doGet("/api/user/settings", JsonNode.class);
-        expectedSettings = JacksonUtil.toJsonNode("{\"A\":5, \"B\":{}, \"F\":{\"G\": \"string2\"}}");
+        expectedSettings = mapper.readTree("{\"A\":5, \"B\":{}, \"F\":{\"G\": \"string2\"}}");
         Assert.assertEquals(expectedSettings, updatedSettings);
     }
 
@@ -873,14 +873,14 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testDeleteUserSettings() throws Exception {
         loginCustomerUser();
 
-        JsonNode userSettings = JacksonUtil.toJsonNode("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}}");
+        JsonNode userSettings = mapper.readTree("{\"A\":10, \"B\":10, \"C\":{\"D\": 16}}");
         JsonNode savedSettings = doPost("/api/user/settings", userSettings, JsonNode.class);
         Assert.assertEquals(userSettings, savedSettings);
 
         doDelete("/api/user/settings/C.D,B");
 
         JsonNode retrievedSettings = doGet("/api/user/settings", JsonNode.class);
-        JsonNode expectedSettings = JacksonUtil.toJsonNode("{\"A\":10, \"C\":{}}");
+        JsonNode expectedSettings = mapper.readTree("{\"A\":10, \"C\":{}}");
         Assert.assertEquals(expectedSettings, retrievedSettings);
     }
 

@@ -16,11 +16,11 @@
 package org.thingsboard.server.service.rpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -56,6 +56,8 @@ import java.util.function.Consumer;
 @Slf4j
 @TbCoreComponent
 public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
+
+    private static final ObjectMapper json = new ObjectMapper();
 
     private final DeviceService deviceService;
     private final TbClusterService clusterService;
@@ -157,7 +159,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
     }
 
     private void sendRpcRequestToRuleEngine(ToDeviceRpcRequest msg, SecurityUser currentUser) {
-        ObjectNode entityNode = JacksonUtil.newObjectNode();
+        ObjectNode entityNode = json.createObjectNode();
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("requestUUID", msg.getId().toString());
         metaData.putValue("originServiceId", serviceId);
@@ -182,9 +184,9 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         entityNode.put(DataConstants.ADDITIONAL_INFO, msg.getAdditionalInfo());
 
         try {
-            TbMsg tbMsg = TbMsg.newMsg(DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null), metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
+            TbMsg tbMsg = TbMsg.newMsg(DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null), metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
             clusterService.pushMsgToRuleEngine(msg.getTenantId(), msg.getDeviceId(), tbMsg, null);
-        } catch (IllegalArgumentException e) {
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }

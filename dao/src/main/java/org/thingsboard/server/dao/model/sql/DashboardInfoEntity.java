@@ -17,10 +17,10 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -44,8 +44,9 @@ import java.util.UUID;
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements SearchTextEntity<DashboardInfo> {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final JavaType assignedCustomersType =
-            JacksonUtil.constructCollectionType(HashSet.class, ShortCustomerInfo.class);
+            objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
 
     @Column(name = ModelConstants.DASHBOARD_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -84,8 +85,8 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
         this.image = dashboardInfo.getImage();
         if (dashboardInfo.getAssignedCustomers() != null) {
             try {
-                this.assignedCustomers = JacksonUtil.toString(dashboardInfo.getAssignedCustomers());
-            } catch (IllegalArgumentException e) {
+                this.assignedCustomers = objectMapper.writeValueAsString(dashboardInfo.getAssignedCustomers());
+            } catch (JsonProcessingException e) {
                 log.error("Unable to serialize assigned customers to string!", e);
             }
         }
@@ -118,8 +119,8 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
         dashboardInfo.setImage(image);
         if (!StringUtils.isEmpty(assignedCustomers)) {
             try {
-                dashboardInfo.setAssignedCustomers(JacksonUtil.fromString(assignedCustomers, assignedCustomersType));
-            } catch (IllegalArgumentException e) {
+                dashboardInfo.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
+            } catch (IOException e) {
                 log.warn("Unable to parse assigned customers!", e);
             }
         }

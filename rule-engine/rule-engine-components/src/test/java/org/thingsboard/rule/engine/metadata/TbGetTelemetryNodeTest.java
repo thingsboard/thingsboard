@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
@@ -43,7 +44,8 @@ public class TbGetTelemetryNodeTest {
         node = spy(new TbGetTelemetryNode());
         config = new TbGetTelemetryNodeConfiguration();
         config.setFetchMode("ALL");
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
         willCallRealMethod().given(node).parseAggregationConfig(any());
