@@ -71,7 +71,7 @@ public class TenantApiUsageState extends BaseApiUsageState {
             long threshold = getProfileThreshold(recordKey);
             long warnThreshold = getProfileWarnThreshold(recordKey);
             ApiUsageStateValue tmpValue;
-            if (true) {
+            if (featureEnabled) {
                 if (threshold == 0 || value == 0 || value < warnThreshold) {
                     tmpValue = ApiUsageStateValue.ENABLED;
                 } else if (value < threshold) {
