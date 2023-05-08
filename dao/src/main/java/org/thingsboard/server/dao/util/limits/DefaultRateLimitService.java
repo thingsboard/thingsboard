@@ -37,13 +37,13 @@ public class DefaultRateLimitService implements RateLimitService {
     private final TbTenantProfileCache tenantProfileCache;
 
     public DefaultRateLimitService(TbTenantProfileCache tenantProfileCache,
-                                   @Value("${cache.rateLimits.timeToLiveInMinutes:60}") int rateLimitsTtl,
-                                   @Value("${cache.rateLimits.maxSize:100000}") int rateLimitsCacheMaxSize) {
+                                   @Value("${cache.rateLimits.timeToLiveInMinutes:120}") int rateLimitsTtl,
+                                   @Value("${cache.rateLimits.maxSize:200000}") int rateLimitsCacheMaxSize) {
         this.tenantProfileCache = tenantProfileCache;
         this.rateLimits = Caffeine.newBuilder()
                 .expireAfterAccess(rateLimitsTtl, TimeUnit.MINUTES)
                 .maximumSize(rateLimitsCacheMaxSize)
-                .build();
+                 .build();
     }
 
     private final Cache<RateLimitKey, TbRateLimits> rateLimits;

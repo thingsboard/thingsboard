@@ -40,7 +40,6 @@ import org.thingsboard.server.transport.coap.AbstractCoapTransportResource;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 import org.thingsboard.server.transport.coap.callback.CoapEfentoCallback;
-import org.thingsboard.server.transport.coap.callback.CoapOkCallback;
 import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
 
 import java.nio.ByteBuffer;

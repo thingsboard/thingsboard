@@ -361,7 +361,8 @@ export class MenuService {
         name: 'alarm.alarms',
         type: 'link',
         path: '/alarms',
-        icon: 'notifications'
+        icon: 'mdi:alert-outline',
+        isMdiIcon: true
       },
       {
         id: 'dashboards',
@@ -813,7 +814,8 @@ export class MenuService {
         name: 'alarm.alarms',
         type: 'link',
         path: '/alarms',
-        icon: 'notifications'
+        icon: 'mdi:alert-outline',
+        isMdiIcon: true
       },
       {
         id: 'dashboards',

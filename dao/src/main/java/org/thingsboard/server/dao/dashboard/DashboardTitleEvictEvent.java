@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.dashboard;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 
 @Data
 public class DashboardTitleEvictEvent {

@@ -691,7 +691,9 @@
         "selected-attributes": "{ count, plural, =1 {1 attribute} other {# attributes} } selected",
         "selected-telemetry": "{ count, plural, =1 {1 telemetry unit} other {# telemetry units} } selected",
         "no-attributes-text": "No attributes found",
-        "no-telemetry-text": "No telemetry found"
+        "no-telemetry-text": "No telemetry found",
+        "copy-key": "Copy key",
+        "copy-value": "Copy value"
     },
     "api-usage": {
         "api-features": "API features",
@@ -1296,6 +1298,14 @@
         "unable-delete-device-alias-text": "Device alias '{{deviceAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "is-gateway": "Is gateway",
         "overwrite-activity-time": "Overwrite activity time for connected device",
+        "device-filter": "Device filter",
+        "device-filter-title": "Device Filter",
+        "filter-title": "Filter",
+        "device-state": "Device state",
+        "state": "State",
+        "any": "Any",
+        "active": "Active",
+        "inactive": "Inactive",
         "public": "Public",
         "device-public": "Device is public",
         "select-device": "Select device",
@@ -1853,7 +1863,7 @@
         "dashboards": "Edge Dashboards",
         "rulechain-templates": "Rule chain templates",
         "edge-rulechain-templates": "Edge rule chain templates",
-        "rulechains": "Rule chains",
+        "rulechains": "Edge rule chains",
         "search": "Search edges",
         "selected-edges": "{ count, plural, =1 {1 edge} other {# edges} } selected",
         "any-edge": "Any edge",
@@ -5131,6 +5141,9 @@
             "color": "Color",
             "shadow-color": "Shadow color"
         },
+        "home": {
+            "no-data-available": "No data available"
+        },
         "system-info": {
             "cpu": "CPU",
             "ram": "RAM",
@@ -5245,45 +5258,45 @@
             "done-welcome-text": "You did great with it!",
             "sys-admin": {
                 "step1": {
-                    "title": "Create Tenant and Tenant Administrator",
-                    "content": "<p>A tenant is an individual or organization that owns or produces devices and assets. Tenants can create Tenant administrator users.</p><p>Follow the documentation on how to do it:</p>",
-                    "how-to-create-tenant": "How to create Tenant"
+                    "title": "Create Tenant & Tenant Administrator",
+                    "content": "<p>A tenant is an individual or an organization that owns or produces devices and assets. The tenant may have multiple tenant administrator users, customers, devices, and assets.</p><p>The Tenant Administrator can create and manage devices, assets, customers, and dashboards within the tenant account.</p><p>Follow the documentation on how to do it:</p>",
+                    "how-to-create-tenant": "How to create Tenant & Tenant Administrator"
                 },
                 "step2": {
                     "title": "Configure feature: Mail server",
-                    "content": "<p>Users will receive activation and password reset emails from the System Administrator via an SMTP server.</p><p>Follow the documentation on how to do it:</p>",
+                    "content": "<p>Mail server configuration is essential for user activation, password recovery, and alarm notification delivery.</p><p>Follow the documentation on how to do it:</p>",
                     "how-to-configure-mail-server": "How to configure Mail server"
                 },
                 "step3": {
                     "title": "Configure feature: SMS provider",
-                    "content": "<p>To distribute SMS messages about alarms, the System Administrator can configure SMS providers.</p><p>Follow the documentation on how to do it:</p>",
+                    "content": "<p>Configure SMS providers to notify the customers about the alarms via SMS.</p><p>Follow the documentation on how to do it:</p>",
                     "how-to-configure-sms-provider": "How to configure SMS provider"
                 },
                 "step4": {
                     "title": "Configure feature: 2FA",
-                    "content": "<p>Adding two-factor authentication to your account increases security and prevents malicious access.</p><p>Follow the documentation on how to do it:</p>",
+                    "content": "<p>Improve security of the platform accounts with two-factor authentication.</p><p>Follow the documentation on how to do it:</p>",
                     "how-to-configure-2fa": "How to configure 2FA"
                 },
                 "step5": {
                     "title": "Configure feature: OAuth 2",
-                    "content": "<p>You can provide your customers with Single Sign-On functionality and automatically create tenants, customers, or sub-customers by using external user management platforms that support OAuth 2.0.</p><p>Follow the documentation on how to do it:</p>",
+                    "content": "<p>Simplify login for the tenant and customer users with Single Sign-On functionality via OAuth 2.0.</p><p>Follow the documentation on how to do it:</p>",
                     "how-to-configure-oauth2": "How to configure OAuth 2"
                 },
                 "step6": {
                     "title": "Configure feature: Slack",
-                    "content": "<p>Users will be able to receive notifications in Slack of events occurring in the Thingsboard system according to the notification rules you set.</p><p>Follow the documentation on how to do it:</p>",
+                    "content": "<p>Distribute notifications to the tenant and customer users via Slack according to the notification rules you set.</p><p>Follow the documentation on how to do it:</p>",
                     "how-to-configure-notifications": "How to configure Slack"
                 }
             },
             "tenant-admin": {
                 "step1": {
                     "title": "Create device",
-                    "content": "<p>We will manually provision the device using the UI. Follow the documentation on how to do it:</p>",
+                    "content": "<p>Let's provision your first device to the platform via UI. Follow the documentation on how to do it:</p>",
                     "how-to-create-device": "How to create Device"
                 },
                 "step2": {
                     "title": "Connect device",
-                    "content-before": "<p>To connect the device you need to get the device credentials. But we recommend using the default auto-generated one.</p><ul><li>Go to device table</li><li>Click on the device row to open device details</li><li>Press the button \"Copy access token\"</li></ul><p>Use simple commands to publish data over HTTP:</p>",
+                    "content-before": "<p>To connect the device you need to get the device credentials. We recommend using default auto-generated credentials which is access token for this guide.</p><ul><li>Go to device table</li><li>Click on the device row to open device details</li><li>Press the button \"Copy access token\"</li></ul><p>Use simple commands to publish data over HTTP. Don't forget to replace <em>$ACCESS_TOKEN</em> with your device access token:</p>",
                     "ubuntu": {
                         "install-curl": "Install cURL for Ubuntu:"
                     },
@@ -5305,7 +5318,7 @@
                 "step4": {
                     "title": "Configure alarm rules",
                     "alarm-rules": "Alarm rules",
-                    "content": "<p>When the temperature reaches 25°C, we will raise an alarm. Follow the documentation on how to do it:</p>",
+                    "content": "<p>Let's raise an alarm when the temperature reaches 25°C. Follow the documentation on how to do it:</p>",
                     "how-to-configure-alarm-rules": "How to configure Alarm rules"
                 },
                 "step5": {

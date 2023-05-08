@@ -39,7 +39,6 @@ import org.thingsboard.server.common.data.notification.NotificationRequestConfig
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
-import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
@@ -292,24 +291,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .notification(notification)
                 .build();
         return onNotificationUpdate(recipient.getTenantId(), recipient.getId(), update);
-    }
-
-    @Override
-    public void sendBasicNotification(TenantId tenantId, UserId recipientId, String subject, String text) {
-        Notification notification = Notification.builder()
-                .recipientId(recipientId)
-                .type(NotificationType.GENERAL)
-                .subject(subject)
-                .text(text)
-                .status(NotificationStatus.SENT)
-                .build();
-        notification = notificationService.saveNotification(TenantId.SYS_TENANT_ID, notification);
-
-        NotificationUpdate update = NotificationUpdate.builder()
-                .created(true)
-                .notification(notification)
-                .build();
-        onNotificationUpdate(tenantId, recipientId, update);
     }
 
     @Override
