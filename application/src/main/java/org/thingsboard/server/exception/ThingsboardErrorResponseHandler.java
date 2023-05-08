@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.exception;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -35,7 +36,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.util.WebUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
@@ -90,6 +90,9 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         return errorCodeToStatusMap.getOrDefault(errorCode, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Autowired
+    private ObjectMapper mapper;
+
     @Override
     @ExceptionHandler(AccessDeniedException.class)
     public void handle(HttpServletRequest request, HttpServletResponse response,
@@ -98,7 +101,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         if (!response.isCommitted()) {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setStatus(HttpStatus.FORBIDDEN.value());
-            JacksonUtil.writeValue(response.getWriter(),
+            mapper.writeValue(response.getWriter(),
                     ThingsboardErrorResponse.of("You don't have permission to perform this operation!",
                             ThingsboardErrorCode.PERMISSION_DENIED, HttpStatus.FORBIDDEN));
         }
@@ -126,7 +129,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                     handleAuthenticationException((AuthenticationException) exception, response);
                 } else {
                     response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-                    JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(exception.getMessage(),
+                    mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of(exception.getMessage(),
                             ThingsboardErrorCode.GENERAL, HttpStatus.INTERNAL_SERVER_ERROR));
                 }
             } catch (IOException e) {
@@ -151,26 +154,26 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         ThingsboardErrorCode errorCode = thingsboardException.getErrorCode();
         HttpStatus status = errorCodeToStatus(errorCode);
         response.setStatus(status.value());
-        JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(thingsboardException.getMessage(), errorCode, status));
+        mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of(thingsboardException.getMessage(), errorCode, status));
     }
 
     private void handleRateLimitException(HttpServletResponse response, TbRateLimitsException exception) throws IOException {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         String message = "Too many requests for current " + exception.getEntityType().name().toLowerCase() + "!";
-        JacksonUtil.writeValue(response.getWriter(),
+        mapper.writeValue(response.getWriter(),
                 ThingsboardErrorResponse.of(message,
                         ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS));
     }
 
     private void handleSubscriptionException(ThingsboardException subscriptionException, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.FORBIDDEN.value());
-        JacksonUtil.writeValue(response.getWriter(),
-                JacksonUtil.fromBytes(((HttpClientErrorException) subscriptionException.getCause()).getResponseBodyAsByteArray(), Object.class));
+        mapper.writeValue(response.getWriter(),
+                (new ObjectMapper()).readValue(((HttpClientErrorException) subscriptionException.getCause()).getResponseBodyAsByteArray(), Object.class));
     }
 
     private void handleAccessDeniedException(HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.FORBIDDEN.value());
-        JacksonUtil.writeValue(response.getWriter(),
+        mapper.writeValue(response.getWriter(),
                 ThingsboardErrorResponse.of("You don't have permission to perform this operation!",
                         ThingsboardErrorCode.PERMISSION_DENIED, HttpStatus.FORBIDDEN));
 
@@ -179,21 +182,21 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
     private void handleAuthenticationException(AuthenticationException authenticationException, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         if (authenticationException instanceof BadCredentialsException || authenticationException instanceof UsernameNotFoundException) {
-            JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
+            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof DisabledException) {
-            JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
+            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof LockedException) {
-            JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
+            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof JwtExpiredTokenException) {
-            JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED));
+            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof AuthMethodNotSupportedException) {
-            JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(authenticationException.getMessage(), ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
+            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of(authenticationException.getMessage(), ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof UserPasswordExpiredException) {
             UserPasswordExpiredException expiredException = (UserPasswordExpiredException) authenticationException;
             String resetToken = expiredException.getResetToken();
-            JacksonUtil.writeValue(response.getWriter(), ThingsboardCredentialsExpiredResponse.of(expiredException.getMessage(), resetToken));
+            mapper.writeValue(response.getWriter(), ThingsboardCredentialsExpiredResponse.of(expiredException.getMessage(), resetToken));
         } else {
-            JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
+            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         }
     }
 

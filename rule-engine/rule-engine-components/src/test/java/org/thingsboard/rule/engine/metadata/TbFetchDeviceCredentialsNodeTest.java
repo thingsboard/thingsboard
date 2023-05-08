@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,8 @@ import static org.mockito.Mockito.verify;
 import static org.thingsboard.server.common.data.security.DeviceCredentialsType.ACCESS_TOKEN;
 
 public class TbFetchDeviceCredentialsNodeTest {
+    final ObjectMapper mapper = new ObjectMapper();
+
     DeviceId deviceId;
     TbFetchDeviceCredentialsNode node;
     TbFetchDeviceCredentialsNodeConfiguration config;
@@ -62,7 +65,7 @@ public class TbFetchDeviceCredentialsNodeTest {
         ctx = mock(TbContext.class);
         config = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
         config.setFetchToMetadata(true);
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node = spy(new TbFetchDeviceCredentialsNode());
         node.init(ctx, nodeConfiguration);
         deviceCredentialsService = mock(DeviceCredentialsService.class);

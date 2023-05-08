@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,7 +142,8 @@ public class SystemInfoController extends BaseController {
     }
 
     private JsonNode buildInfoObject() {
-        ObjectNode infoObject = JacksonUtil.newObjectNode();
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode infoObject = objectMapper.createObjectNode();
         if (buildProperties != null) {
             infoObject.put("version", buildProperties.getVersion());
             infoObject.put("artifact", buildProperties.getArtifact());

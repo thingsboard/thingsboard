@@ -16,12 +16,12 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -92,6 +92,8 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
     @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
     private UUID externalId;
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     public AbstractEntityViewEntity() {
         super();
     }
@@ -114,8 +116,8 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         this.type = entityView.getType();
         this.name = entityView.getName();
         try {
-            this.keys = JacksonUtil.toString(entityView.getKeys());
-        } catch (IllegalArgumentException e) {
+            this.keys = mapper.writeValueAsString(entityView.getKeys());
+        } catch (IOException e) {
             log.error("Unable to serialize entity view keys!", e);
         }
         this.startTs = entityView.getStartTimeMs();
@@ -170,8 +172,8 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         entityView.setType(type);
         entityView.setName(name);
         try {
-            entityView.setKeys(JacksonUtil.fromString(keys, TelemetryEntityView.class));
-        } catch (IllegalArgumentException e) {
+            entityView.setKeys(mapper.readValue(keys, TelemetryEntityView.class));
+        } catch (IOException e) {
             log.error("Unable to read entity view keys!", e);
         }
         entityView.setStartTimeMs(startTs);

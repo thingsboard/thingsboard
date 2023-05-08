@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.user;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -92,7 +93,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserSettingsC
             for (String s : jsonPaths) {
                 dcSettings = dcSettings.delete("$." + s);
             }
-            userSettings.setSettings(JacksonUtil.fromString(dcSettings.jsonString(), ObjectNode.class));
+            userSettings.setSettings(new ObjectMapper().readValue(dcSettings.jsonString(), ObjectNode.class));
         } catch (Exception t) {
             handleEvictEvent(new UserSettingsEvictEvent(key));
             throw new RuntimeException(t);

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -28,7 +29,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
@@ -116,6 +116,7 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     public static final String CUSTOMER_CRED = "customer";
     public static final String DEFAULT_DEVICE_TYPE = "default";
     public static final String ACTIVITY_STATE = "active";
@@ -250,7 +251,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AdminSettings generalSettings = new AdminSettings();
         generalSettings.setTenantId(TenantId.SYS_TENANT_ID);
         generalSettings.setKey("general");
-        ObjectNode node = JacksonUtil.newObjectNode();
+        ObjectNode node = objectMapper.createObjectNode();
         node.put("baseUrl", "http://localhost:8080");
         node.put("prohibitDifferentUrl", false);
         generalSettings.setJsonValue(node);
@@ -259,7 +260,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AdminSettings mailSettings = new AdminSettings();
         mailSettings.setTenantId(TenantId.SYS_TENANT_ID);
         mailSettings.setKey("mail");
-        node = JacksonUtil.newObjectNode();
+        node = objectMapper.createObjectNode();
         node.put("mailFrom", "ThingsBoard <sysadmin@localhost.localdomain>");
         node.put("smtpProtocol", "smtp");
         node.put("smtpHost", "localhost");
@@ -542,7 +543,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         device.setDeviceProfileId(deviceProfileId);
         device.setName(name);
         if (description != null) {
-            ObjectNode additionalInfo = JacksonUtil.newObjectNode();
+            ObjectNode additionalInfo = objectMapper.createObjectNode();
             additionalInfo.put("description", description);
             device.setAdditionalInfo(additionalInfo);
         }

@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbSplitArrayMsgNodeTest {
+    final ObjectMapper mapper = new ObjectMapper();
+
     DeviceId deviceId;
     TbSplitArrayMsgNode node;
     EmptyNodeConfiguration config;
@@ -58,7 +61,7 @@ public class TbSplitArrayMsgNodeTest {
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
         config = new EmptyNodeConfiguration();
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
         node = spy(new TbSplitArrayMsgNode());
         node.init(ctx, nodeConfiguration);
     }
