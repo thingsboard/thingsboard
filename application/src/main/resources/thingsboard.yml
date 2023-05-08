@@ -132,7 +132,7 @@ security:
     githubMapper:
       emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
   java_cacerts:
-    path: "${SECURITY_JAVA_CACERTS_PATH:${java.home}${file.separator}lib${file.separator}security${file.separator}cacerts}"
+    path: "${SECURITY_JAVA_CACERTS_PATH:${java.home}/lib/security/cacerts}"
     password: "${SECURITY_JAVA_CACERTS_PASSWORD:changeit}"
 
 # Usage statistics parameters
