@@ -33,7 +33,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { MatCheckbox } from '@angular/material/checkbox';
+import { MatCheckbox, MatCheckboxChange } from '@angular/material/checkbox';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { RemoveOtherEntitiesConfirmComponent } from '@home/components/vc/remove-other-entities-confirm.component';
 
@@ -210,12 +210,11 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
     return res;
   }
 
-  onRemoveOtherEntities(removeOtherEntitiesCheckbox: MatCheckbox, entityTypeControl: AbstractControl, $event: Event) {
+  onRemoveOtherEntities(removeOtherEntitiesCheckbox: MatCheckbox, entityTypeControl: AbstractControl) {
     const removeOtherEntities: boolean = entityTypeControl.get('config.removeOtherEntities').value;
-    if (!removeOtherEntities) {
-      $event.preventDefault();
-      $event.stopPropagation();
-      const trigger = $('.mat-checkbox-frame', removeOtherEntitiesCheckbox._elementRef.nativeElement)[0];
+    if (removeOtherEntities) {
+      entityTypeControl.get('config').get('removeOtherEntities').patchValue(false, {emitEvent: false});
+      const trigger = $('.mdc-checkbox__background', removeOtherEntitiesCheckbox._elementRef.nativeElement)[0];
       if (this.popoverService.hasPopover(trigger)) {
         this.popoverService.hidePopover(trigger);
       } else {

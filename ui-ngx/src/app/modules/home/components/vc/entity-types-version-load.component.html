@@ -55,7 +55,7 @@
               <div fxFlex fxLayout="column">
                 <mat-checkbox #removeOtherEntitiesCheckbox
                               formControlName="removeOtherEntities"
-                              (click)="onRemoveOtherEntities(removeOtherEntitiesCheckbox, entityTypeFormGroup, $event)">
+                              (change)="onRemoveOtherEntities(removeOtherEntitiesCheckbox, entityTypeFormGroup)">
                   {{ 'version-control.remove-other-entities' | translate }}
                 </mat-checkbox>
                 <mat-checkbox formControlName="findExistingEntityByName">
