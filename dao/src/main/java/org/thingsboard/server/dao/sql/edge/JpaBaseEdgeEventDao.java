@@ -171,30 +171,16 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
 
 
     @Override
-    public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long startSeqId, TimePageLink pageLink, boolean withTsUpdate) {
-        if (withTsUpdate) {
-            return DaoUtil.toPageData(
-                    edgeEventRepository
-                            .findEdgeEventsByTenantIdAndEdgeId(
-                                    tenantId,
-                                    edgeId.getId(),
-                                    Objects.toString(pageLink.getTextSearch(), ""),
-                                    pageLink.getStartTime(),
-                                    pageLink.getEndTime(),
-                                    startSeqId,
-                                    DaoUtil.toPageable(pageLink)));
-        } else {
-            return DaoUtil.toPageData(
-                    edgeEventRepository
-                            .findEdgeEventsByTenantIdAndEdgeIdWithoutTimeseriesUpdated(
-                                    tenantId,
-                                    edgeId.getId(),
-                                    Objects.toString(pageLink.getTextSearch(), ""),
-                                    pageLink.getStartTime(),
-                                    pageLink.getEndTime(),
-                                    DaoUtil.toPageable(pageLink)));
-
-        }
+    public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                edgeEventRepository
+                        .findEdgeEventsByTenantIdAndEdgeId(
+                                tenantId,
+                                edgeId.getId(),
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
+                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override

@@ -42,13 +42,8 @@ public class BaseEdgeEventService implements EdgeEventService {
     }
 
     @Override
-    public PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
-        return findEdgeEvents(tenantId, edgeId, 0L, pageLink, withTsUpdate);
-    }
-
-    @Override
-    public PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, Long startSeqId, TimePageLink pageLink, boolean withTsUpdate) {
-        return edgeEventDao.findEdgeEvents(tenantId.getId(), edgeId, startSeqId, pageLink, withTsUpdate);
+    public PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+        return edgeEventDao.findEdgeEvents(tenantId.getId(), edgeId, pageLink);
     }
 
     @Override
