@@ -201,8 +201,9 @@ public class AdminController extends BaseController {
     public void sendTestSms(
             @ApiParam(value = "A JSON value representing the Test SMS request.")
             @RequestBody TestSmsRequest testSmsRequest) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-        smsService.sendTestSms(testSmsRequest);
+        SecurityUser currentUser = getCurrentUser();
+        accessControlService.checkPermission(currentUser, Resource.ADMIN_SETTINGS, Operation.READ);
+        smsService.sendTestSms(currentUser, testSmsRequest);
     }
 
     @ApiOperation(value = "Get repository settings (getRepositorySettings)",

@@ -25,6 +25,8 @@ import org.thingsboard.rule.engine.api.sms.SmsSender;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -32,6 +34,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sms.config.SmsProviderConfiguration;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
@@ -46,14 +49,16 @@ public class DefaultSmsService implements SmsService {
     private final AdminSettingsService adminSettingsService;
     private final TbApiUsageStateService apiUsageStateService;
     private final TbApiUsageReportClient apiUsageClient;
+    private final AuditLogService auditLogService;
 
     private SmsSender smsSender;
 
-    public DefaultSmsService(SmsSenderFactory smsSenderFactory, AdminSettingsService adminSettingsService, TbApiUsageStateService apiUsageStateService, TbApiUsageReportClient apiUsageClient) {
+    public DefaultSmsService(SmsSenderFactory smsSenderFactory, AdminSettingsService adminSettingsService, TbApiUsageStateService apiUsageStateService, TbApiUsageReportClient apiUsageClient, AuditLogService auditLogService) {
         this.smsSenderFactory = smsSenderFactory;
         this.adminSettingsService = adminSettingsService;
         this.apiUsageStateService = apiUsageStateService;
         this.apiUsageClient = apiUsageClient;
+        this.auditLogService = auditLogService;
     }
 
     @PostConstruct
@@ -94,6 +99,25 @@ public class DefaultSmsService implements SmsService {
     }
 
     @Override
+    public void sendSmsFromUser(User user, String numberTo, String message) throws ThingsboardException {
+        if (this.smsSender == null) {
+            throw new ThingsboardException("Unable to send SMS: no SMS provider configured!", ThingsboardErrorCode.GENERAL);
+        }
+        if (apiUsageStateService.getApiUsageState(user.getTenantId()).isSmsSendEnabled()) {
+            int smsCount = 0;
+            try {
+                smsCount += sendSmsAndLogEntityAction(user, numberTo, message, this.smsSender);
+            } finally {
+                if (smsCount > 0) {
+                    apiUsageClient.report(user.getTenantId(), user.getCustomerId(), ApiUsageRecordKey.SMS_EXEC_COUNT, smsCount);
+                }
+            }
+        } else {
+            throw new RuntimeException("SMS sending is disabled due to API limits!");
+        }
+    }
+
+    @Override
     public void sendSms(TenantId tenantId, CustomerId customerId, String[] numbersTo, String message) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isSmsSendEnabled()) {
             int smsCount = 0;
@@ -112,15 +136,26 @@ public class DefaultSmsService implements SmsService {
     }
 
     @Override
-    public void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException {
+    public void sendTestSms(User user, TestSmsRequest testSmsRequest) throws ThingsboardException {
         SmsSender testSmsSender;
         try {
             testSmsSender = this.smsSenderFactory.createSmsSender(testSmsRequest.getProviderConfiguration());
         } catch (Exception e) {
             throw handleException(e);
         }
-        this.sendSms(testSmsSender, testSmsRequest.getNumberTo(), testSmsRequest.getMessage());
+        sendSmsAndLogEntityAction(user, testSmsRequest.getNumberTo(), testSmsRequest.getMessage(), testSmsSender);
         testSmsSender.destroy();
+    }
+
+    private int sendSmsAndLogEntityAction(User user, String numberTo, String message, SmsSender smsSender) throws ThingsboardException {
+        try {
+            int sentSms = smsSender.sendSms(numberTo, message);
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, null, numberTo);
+            return sentSms;
+        } catch (Exception e) {
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, e, numberTo);
+            throw handleException(e);
+        }
     }
 
     @Override
@@ -130,7 +165,9 @@ public class DefaultSmsService implements SmsService {
 
     private int sendSms(SmsSender smsSender, String numberTo, String message) throws ThingsboardException {
         try {
-            return smsSender.sendSms(numberTo, message);
+            int sentSms = smsSender.sendSms(numberTo, message);
+            log.trace("Successfully sent sms to number: {}", numberTo);
+            return sentSms;
         } catch (Exception e) {
             throw handleException(e);
         }

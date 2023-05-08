@@ -57,7 +57,7 @@ public class SmsTwoFaProvider extends OtpBasedTwoFaProvider<SmsTwoFaProviderConf
         String message = TbNodeUtils.processTemplate(providerConfig.getSmsVerificationMessageTemplate(), messageData);
         String phoneNumber = accountConfig.getPhoneNumber();
 
-        smsService.sendSms(user.getTenantId(), user.getCustomerId(), new String[]{phoneNumber}, message);
+        smsService.sendSmsFromUser(user, phoneNumber, message);
     }
 
     @Override

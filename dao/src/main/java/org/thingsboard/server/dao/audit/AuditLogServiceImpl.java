@@ -326,6 +326,10 @@ public class AuditLogServiceImpl implements AuditLogService {
                 actionData.put("unassignedEdgeId", strEdgeId);
                 actionData.put("unassignedEdgeName", strEdgeName);
                 break;
+            case SMS_SENT:
+                String number = extractParameter(String.class, 0, additionalInfo);
+                actionData.put("Sms to ", number);
+                break;
         }
         return actionData;
     }
