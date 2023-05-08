@@ -38,13 +38,16 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
 import javax.annotation.PostConstruct;
+import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -73,9 +76,12 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
             for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
                 stats.put(key, new ConcurrentHashMap<>());
             }
+            List<ApiUsageRecordKey> apiUsageKeys = Arrays.stream(ApiUsageRecordKey.values()).filter(apiUsageRecordKey -> !apiUsageRecordKey.isReportImmediately())
+                    .collect(Collectors.toList());
+
             scheduler.scheduleWithFixedDelay(() -> {
                 try {
-                    reportStats();
+                    reportStats(apiUsageKeys);
                 } catch (Exception e) {
                     log.warn("Failed to report statistics: ", e);
                 }
@@ -83,10 +89,11 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
         }
     }
 
-    private void reportStats() {
+
+    private void reportStats(List<ApiUsageRecordKey> apiUsageKeys) {
         ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
-        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+        for (ApiUsageRecordKey key : apiUsageKeys) {
             ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
             statsForKey.forEach((reportLevel, statsValue) -> {
                 long value = statsValue.get();
@@ -166,6 +173,9 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
             } else {
                 n.set(value);
             }
+        }
+        if (key.isReportImmediately()) {
+            reportStats(List.of(key));
         }
     }
 

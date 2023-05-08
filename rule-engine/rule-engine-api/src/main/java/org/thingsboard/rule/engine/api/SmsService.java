@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.rule.engine.api.sms.SmsSender;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,7 +28,9 @@ public interface SmsService {
 
     void sendSms(TenantId tenantId, CustomerId customerId, String[] numbersTo, String message) throws ThingsboardException;;
 
-    void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException;
+    void sendSmsFromUser(User user, String numbersTo, String message) throws ThingsboardException;;
+
+    void sendTestSms(User user, TestSmsRequest testSmsRequest) throws ThingsboardException;
 
     boolean isConfigured(TenantId tenantId);
 

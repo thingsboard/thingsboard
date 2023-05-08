@@ -25,7 +25,7 @@ public enum ApiUsageRecordKey {
     RE_EXEC_COUNT(ApiFeature.RE, "ruleEngineExecutionCount", "ruleEngineExecutionLimit", "Rule Engine execution"),
     JS_EXEC_COUNT(ApiFeature.JS, "jsExecutionCount", "jsExecutionLimit", "JavaScript execution"),
     EMAIL_EXEC_COUNT(ApiFeature.EMAIL, "emailCount", "emailLimit", "email message"),
-    SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit", "SMS message"),
+    SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit", "SMS message", true, true),
     CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit", "alarm"),
     ACTIVE_DEVICES("activeDevicesCount"),
     INACTIVE_DEVICES("inactiveDevicesCount");
@@ -48,21 +48,24 @@ public enum ApiUsageRecordKey {
     private final String unitLabel;
     @Getter
     private final boolean counter;
+    @Getter
+    private final boolean reportImmediately;
 
     ApiUsageRecordKey(ApiFeature apiFeature, String apiCountKey, String apiLimitKey, String unitLabel) {
-        this(apiFeature, apiCountKey, apiLimitKey, unitLabel, true);
+        this(apiFeature, apiCountKey, apiLimitKey, unitLabel, true, false);
     }
 
     ApiUsageRecordKey(String apiCountKey) {
-        this(null, apiCountKey, null, null, false);
+        this(null, apiCountKey, null, null, false, false);
     }
 
-    ApiUsageRecordKey(ApiFeature apiFeature, String apiCountKey, String apiLimitKey, String unitLabel, boolean counter) {
+    ApiUsageRecordKey(ApiFeature apiFeature, String apiCountKey, String apiLimitKey, String unitLabel, boolean counter, boolean reportImmediately) {
         this.apiFeature = apiFeature;
         this.apiCountKey = apiCountKey;
         this.apiLimitKey = apiLimitKey;
         this.unitLabel = unitLabel;
         this.counter = counter;
+        this.reportImmediately = reportImmediately;
     }
 
     public static ApiUsageRecordKey[] getKeys(ApiFeature feature) {

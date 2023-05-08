@@ -55,6 +55,10 @@ public class TenantApiUsageState extends BaseApiUsageState {
         return tenantProfileData.getConfiguration().getProfileThreshold(key);
     }
 
+    public boolean getProfileFeatureEnabled(ApiUsageRecordKey key) {
+        return tenantProfileData.getConfiguration().getProfileFeatureEnabled(key);
+    }
+
     public long getProfileWarnThreshold(ApiUsageRecordKey key) {
         return tenantProfileData.getConfiguration().getWarnThreshold(key);
     }
@@ -63,13 +67,18 @@ public class TenantApiUsageState extends BaseApiUsageState {
         ApiUsageStateValue featureValue = ApiUsageStateValue.ENABLED;
         for (ApiUsageRecordKey recordKey : ApiUsageRecordKey.getKeys(feature)) {
             long value = get(recordKey);
+            boolean featureEnabled = getProfileFeatureEnabled(recordKey);
             long threshold = getProfileThreshold(recordKey);
             long warnThreshold = getProfileWarnThreshold(recordKey);
             ApiUsageStateValue tmpValue;
-            if (threshold == 0 || value == 0 || value < warnThreshold) {
-                tmpValue = ApiUsageStateValue.ENABLED;
-            } else if (value < threshold) {
-                tmpValue = ApiUsageStateValue.WARNING;
+            if (true) {
+                if (threshold == 0 || value == 0 || value < warnThreshold) {
+                    tmpValue = ApiUsageStateValue.ENABLED;
+                } else if (value < threshold) {
+                    tmpValue = ApiUsageStateValue.WARNING;
+                } else {
+                    tmpValue = ApiUsageStateValue.DISABLED;
+                }
             } else {
                 tmpValue = ApiUsageStateValue.DISABLED;
             }
