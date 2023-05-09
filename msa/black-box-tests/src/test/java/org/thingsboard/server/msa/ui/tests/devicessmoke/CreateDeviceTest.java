@@ -37,7 +37,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDevice() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(deviceName);
         devicePage.addBtnC().click();
@@ -51,7 +51,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithDescription() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(deviceName);
         devicePage.enterDescription(deviceName);
@@ -68,7 +68,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Add device without the name")
     public void createDeviceWithoutName() {
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.nameField().click();
         devicePage.addBtnC().click();
@@ -80,7 +80,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Create device only with spase in name")
     public void createDeviceWithOnlySpace() {
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(" ");
         devicePage.addBtnC().click();
@@ -96,7 +96,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
         Device device = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME));
         deviceName = device.getName();
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(deviceName);
         devicePage.addBtnC().click();
@@ -111,7 +111,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithoutRefresh() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(deviceName);
         devicePage.addBtnC().click();
@@ -124,7 +124,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithoutDeviceProfile() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(deviceName);
         devicePage.clearProfileFieldBtn().click();
@@ -140,7 +140,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithEnableGateway() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(deviceName);
         devicePage.checkboxGatewayCreate().click();
@@ -155,7 +155,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithEnableOverwriteActivityTimeForConnected() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(deviceName);
         devicePage.checkboxGatewayCreate().click();
@@ -173,7 +173,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
         deviceName = ENTITY_NAME + random();
         String deviceLabel = "device label " + random();
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(deviceName);
         devicePage.enterLabel(deviceLabel);
@@ -189,7 +189,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
         deviceName = ENTITY_NAME + random();
         String customer = "Customer A";
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.openCreateDeviceView();
         devicePage.enterName(deviceName);
         devicePage.assignOnCustomer(customer);
@@ -205,7 +205,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void documentation() {
         String urlPath = "docs/user-guide/ui/devices/";
 
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.entity("Thermostat T1").click();
         devicePage.goToHelpPage();
 
