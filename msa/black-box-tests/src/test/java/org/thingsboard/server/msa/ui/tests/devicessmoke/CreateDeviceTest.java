@@ -92,7 +92,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
 
     @Test(groups = "smoke")
     @Description("Create a device with the same name")
-    public void createRuleChainWithSameName() {
+    public void createDeviceWithSameName() {
         Device device = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME));
         deviceName = device.getName();
 

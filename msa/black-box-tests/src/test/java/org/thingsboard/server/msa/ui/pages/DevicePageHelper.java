@@ -91,7 +91,6 @@ public class DevicePageHelper extends DevicePageElements {
         customerOptionBtn().click();
         assignOnCustomerField().click();
         entityFromList(customerTitle).click();
-        customerOptionBtn().click();
-        sleep(1);
+        sleep(2); //waiting for the action to count
     }
 }
