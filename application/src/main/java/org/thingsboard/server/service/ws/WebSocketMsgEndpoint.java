@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.ws;
 
 import org.springframework.web.socket.CloseStatus;
-import org.thingsboard.server.service.ws.WebSocketSessionRef;
 
 import java.io.IOException;
 

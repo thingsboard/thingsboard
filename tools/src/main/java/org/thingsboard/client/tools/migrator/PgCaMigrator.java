@@ -19,8 +19,8 @@ import com.google.common.collect.Lists;
 import org.apache.cassandra.io.sstable.CQLSSTableWriter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
-import org.thingsboard.server.common.data.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.File;
 import java.io.IOException;

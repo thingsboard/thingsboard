@@ -16,10 +16,8 @@
 package org.thingsboard.server.common.msg.tools;
 
 import org.awaitility.pollinterval.FixedPollInterval;
-import org.awaitility.pollinterval.PollInterval;
 import org.junit.Test;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;

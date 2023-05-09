@@ -143,7 +143,7 @@ public class DefaultNotifications {
             .rule(DefaultRule.builder()
                     .name("New platform version")
                     .triggerConfig(new NewPlatformVersionNotificationRuleTriggerConfig())
-                    .description("Send notification to system admins and tenant admins when new platform version is available")
+                    .description("Send notification to system admins when new platform version is available")
                     .build())
             .build();
 

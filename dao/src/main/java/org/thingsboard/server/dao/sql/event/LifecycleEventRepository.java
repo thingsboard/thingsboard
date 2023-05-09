@@ -24,7 +24,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.dao.model.sql.LifecycleEventEntity;
-import org.thingsboard.server.dao.model.sql.RuleChainDebugEventEntity;
 
 import java.util.List;
 import java.util.UUID;

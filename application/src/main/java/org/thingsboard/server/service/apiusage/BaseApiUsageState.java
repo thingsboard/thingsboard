@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.apiusage;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -61,20 +62,25 @@ public abstract class BaseApiUsageState {
         long currentValue = get(key);
         long currentHourlyValue = getHourly(key);
 
-        long newValue;
-        long newHourlyValue;
+        StatsCalculationResult result;
         if (key.isCounter()) {
-            newValue = currentValue + value;
-            newHourlyValue = currentHourlyValue + value;
+            result = StatsCalculationResult.builder()
+                    .newValue(currentValue + value).valueChanged(true)
+                    .newHourlyValue(currentHourlyValue + value).hourlyValueChanged(true)
+                    .build();
         } else {
             Long newGaugeValue = calculateGauge(key, value, serviceId);
-            newValue = newGaugeValue != null ? newGaugeValue : currentValue;
-            newHourlyValue = newGaugeValue != null ? Math.max(newGaugeValue, currentHourlyValue) : currentHourlyValue;
+            long newValue = newGaugeValue != null ? newGaugeValue : currentValue;
+            long newHourlyValue = newGaugeValue != null ? Math.max(newGaugeValue, currentHourlyValue) : currentHourlyValue;
+            result = StatsCalculationResult.builder()
+                    .newValue(newValue).valueChanged(newValue != currentValue || !currentCycleValues.containsKey(key))
+                    .newHourlyValue(newHourlyValue).hourlyValueChanged(newHourlyValue != currentHourlyValue || !currentHourValues.containsKey(key))
+                    .build();
         }
-        set(key, newValue);
-        setHourly(key, newHourlyValue);
 
-        return StatsCalculationResult.of(newValue, newHourlyValue);
+        set(key, result.getNewValue());
+        setHourly(key, result.getNewHourlyValue());
+        return result;
     }
 
     private Long calculateGauge(ApiUsageRecordKey key, long value, String serviceId) {
@@ -188,10 +194,13 @@ public abstract class BaseApiUsageState {
         return getApiUsageState().getEntityId();
     }
 
-    @Data(staticConstructor = "of")
+    @Data
+    @Builder
     public static class StatsCalculationResult {
         private final long newValue;
+        private final boolean valueChanged;
         private final long newHourlyValue;
+        private final boolean hourlyValueChanged;
     }
 
 }
