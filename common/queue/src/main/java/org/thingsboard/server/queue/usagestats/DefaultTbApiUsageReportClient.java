@@ -104,7 +104,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
             statsForKey.clear();
         }
 
-        report(report);
+        sendReport(report);
     }
 
     private void putMessageToReport(ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report, ReportLevel reportLevel, ApiUsageRecordKey key, long value) {
@@ -131,7 +131,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
         statsMsg.addValues(statsItem.build());
     }
 
-    private void report(ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report) {
+    private void sendReport(ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report) {
         report.forEach(((parent, statsMsg) -> {
             //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
             try {
@@ -168,9 +168,9 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 if (level == null) continue;
                 putMessageToReport(report, level, key, value);
             }
-            report(report);
+            sendReport(report);
         } else {
-            putInReport(key, value, reportLevels);
+            saveStats(key, value, reportLevels);
         }
     }
 
@@ -179,7 +179,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
         report(tenantId, customerId, key, 1);
     }
 
-    private void putInReport(ApiUsageRecordKey key, long value, ReportLevel... levels) {
+    private void saveStats(ApiUsageRecordKey key, long value, ReportLevel... levels) {
         ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
         for (ReportLevel level : levels) {
             if (level == null) continue;
