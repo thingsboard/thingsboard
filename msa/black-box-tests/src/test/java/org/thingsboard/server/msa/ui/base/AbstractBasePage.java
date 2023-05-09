@@ -185,4 +185,8 @@ abstract public class AbstractBasePage {
         String s = "~`!@#$^&*()_+=-";
         return s.charAt(rand.nextInt(s.length()));
     }
+
+    public void pull(WebElement element, int xOffset, int yOffset) {
+        actions.clickAndHold(element).moveByOffset(xOffset, yOffset).release().perform();
+    }
 }

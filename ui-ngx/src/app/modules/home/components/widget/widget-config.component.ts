@@ -538,17 +538,17 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
   }
 
-  public dataKeysOptional(datasource?: Datasource): boolean {
+  public dataKeysOptional(type?: DatasourceType): boolean {
     if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
       return true;
     } else {
       return this.modelValue.typeParameters && this.modelValue.typeParameters.dataKeysOptional
-        && datasource?.type !== DatasourceType.entityCount && datasource?.type !== DatasourceType.alarmCount;
+        && type !== DatasourceType.entityCount && type !== DatasourceType.alarmCount;
     }
   }
 
   private buildDatasourceForm(datasource?: Datasource): UntypedFormGroup {
-    const dataKeysRequired = !this.dataKeysOptional(datasource);
+    const dataKeysRequired = !this.dataKeysOptional(datasource?.type);
     const datasourceFormGroup = this.fb.group(
       {
         type: [datasource ? datasource.type : null, [Validators.required]],
@@ -569,7 +569,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       datasourceFormGroup.get('entityAliasId').setValidators(
         (type === DatasourceType.entity || type === DatasourceType.entityCount) ? [Validators.required] : []
       );
-      const newDataKeysRequired = !this.dataKeysOptional(datasourceFormGroup.value);
+      const newDataKeysRequired = !this.dataKeysOptional(type);
       datasourceFormGroup.get('dataKeys').setValidators(newDataKeysRequired ? [Validators.required] : []);
       datasourceFormGroup.get('entityAliasId').updateValueAndValidity();
       datasourceFormGroup.get('dataKeys').updateValueAndValidity();

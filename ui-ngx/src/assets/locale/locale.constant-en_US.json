@@ -2808,6 +2808,7 @@
         "basic-settings": "Basic settings",
         "button-text": "Button text",
         "button-text-required": "Button text is required",
+        "button-text-max-length": "Button text should be less than or equal to {{ length }} characters",
         "compose": "Compose",
         "conversation": "Conversation",
         "conversation-required": "Conversation is required",

@@ -37,7 +37,7 @@ import { MatStepper } from '@angular/material/stepper';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 export interface ToggleHeaderOption {
   name: string;
