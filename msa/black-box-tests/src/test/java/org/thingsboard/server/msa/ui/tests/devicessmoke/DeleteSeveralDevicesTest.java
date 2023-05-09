@@ -50,7 +50,7 @@ public class DeleteSeveralDevicesTest extends AbstractDeviceTest {
     @Description("Remove several devices by mark in the checkbox and then click on the trash can icon in the menu " +
             "that appears at the top")
     public void deleteSeveralDevicesByTopBtn() {
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.deleteSelected(2);
         devicePage.refreshBtn().click();
 
@@ -62,7 +62,7 @@ public class DeleteSeveralDevicesTest extends AbstractDeviceTest {
     @Description("Remove several devices by mark all the devices on the page by clicking in the topmost checkbox" +
             " and then clicking on the trash icon in the menu that appears")
     public void selectAllDevices() {
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.selectAllCheckBox().click();
         devicePage.deleteSelectedBtn().click();
 
@@ -75,7 +75,7 @@ public class DeleteSeveralDevicesTest extends AbstractDeviceTest {
     @Description("Remove several devices by mark in the checkbox and then click on the trash can icon in the menu " +
             "that appears at the top without refresh")
     public void deleteSeveralWithoutRefresh() {
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.deleteSelected(2);
 
         devicePage.assertEntityIsNotPresent(deviceName1);

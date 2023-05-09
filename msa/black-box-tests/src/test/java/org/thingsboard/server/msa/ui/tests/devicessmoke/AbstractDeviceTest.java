@@ -21,19 +21,19 @@ import org.testng.annotations.BeforeClass;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.DevicePageHelper;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
-import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
+import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 
 @Epic("Device smoke tests")
 abstract public class AbstractDeviceTest extends AbstractDriverBaseTest {
 
-    protected SideBarMenuViewElements sideBarMenuView;
+    protected SideBarMenuViewHelper sideBarMenuView;
     protected DevicePageHelper devicePage;
     protected String deviceName;
 
     @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
-        sideBarMenuView = new SideBarMenuViewElements(driver);
+        sideBarMenuView = new SideBarMenuViewHelper(driver);
         devicePage = new DevicePageHelper(driver);
     }
 

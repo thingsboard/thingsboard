@@ -36,7 +36,7 @@ public class DeleteDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Remove the device by clicking on the trash icon in the right side of device")
     public void deleteDeviceByRightSideBtn() {
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.deleteDeviceByRightSideBtn(deviceName);
         devicePage.refreshBtn().click();
 
@@ -46,7 +46,7 @@ public class DeleteDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Remove device by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void deleteSelectedDevice() {
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.deleteSelected(deviceName);
         devicePage.refreshBtn().click();
 
@@ -56,7 +56,7 @@ public class DeleteDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Remove the device by clicking on the 'Delete device' btn in the entity view")
     public void deleteDeviceFromDetailsTab() {
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.entity(deviceName).click();
         devicePage.deleteDeviceFromDetailsTab();
         devicePage.refreshBtn();
@@ -67,7 +67,7 @@ public class DeleteDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Remove the device by clicking on the trash icon in the right side of device without refresh")
     public void deleteDeviceWithoutRefresh() {
-        sideBarMenuView.devicesBtn().click();
+        sideBarMenuView.goToDevicesPage();
         devicePage.deleteDeviceByRightSideBtn(deviceName);
 
         devicePage.assertEntityIsNotPresent(deviceName);
