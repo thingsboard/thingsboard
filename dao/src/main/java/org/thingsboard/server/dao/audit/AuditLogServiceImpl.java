@@ -328,7 +328,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 break;
             case SMS_SENT:
                 String number = extractParameter(String.class, 0, additionalInfo);
-                actionData.put("Sms to ", number);
+                actionData.put("recipientNumber", number);
                 break;
         }
         return actionData;

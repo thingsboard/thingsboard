@@ -321,8 +321,8 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         String verificationCode = cacheManager.getCache(CacheConstants.TWO_FA_VERIFICATION_CODES_CACHE)
                 .get(tenantAdminUserId, OtpBasedTwoFaProvider.Otp.class).getValue();
 
-        verify(smsService).sendSmsFromUser(any(), argThat(phoneNumber -> {
-            return phoneNumber.equals(smsTwoFaAccountConfig.getPhoneNumber());
+        verify(smsService).sendSms(eq(tenantId), any(), argThat(phoneNumbers -> {
+            return phoneNumbers[0].equals(smsTwoFaAccountConfig.getPhoneNumber());
         }), eq("Here is your verification code: " + verificationCode));
     }
 
@@ -359,8 +359,8 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         ArgumentCaptor<String> verificationCodeCaptor = ArgumentCaptor.forClass(String.class);
         doPost("/api/2fa/account/config/submit", smsTwoFaAccountConfig).andExpect(status().isOk());
 
-        verify(smsService).sendSmsFromUser(any(), argThat(phoneNumber -> {
-            return phoneNumber.equals(smsTwoFaAccountConfig.getPhoneNumber());
+        verify(smsService).sendSms(eq(tenantId), any(), argThat(phoneNumbers -> {
+            return phoneNumbers[0].equals(smsTwoFaAccountConfig.getPhoneNumber());
         }), verificationCodeCaptor.capture());
 
         String correctVerificationCode = verificationCodeCaptor.getValue();
@@ -398,8 +398,8 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         ArgumentCaptor<String> verificationCodeCaptor = ArgumentCaptor.forClass(String.class);
         doPost("/api/2fa/account/config/submit", initialSmsTwoFaAccountConfig).andExpect(status().isOk());
 
-        verify(smsService).sendSmsFromUser(any(), argThat(phoneNumber -> {
-            return phoneNumber.equals(initialSmsTwoFaAccountConfig.getPhoneNumber());
+        verify(smsService).sendSms(eq(tenantId), any(), argThat(phoneNumbers -> {
+            return phoneNumbers[0].equals(initialSmsTwoFaAccountConfig.getPhoneNumber());
         }), verificationCodeCaptor.capture());
 
         String correctVerificationCode = verificationCodeCaptor.getValue();

@@ -99,31 +99,39 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 long value = statsValue.get();
                 if (value == 0 && key.isCounter()) return;
 
-                ToUsageStatsServiceMsg.Builder statsMsg = report.computeIfAbsent(reportLevel.getParentEntity(), parent -> {
-                    ToUsageStatsServiceMsg.Builder newStatsMsg = ToUsageStatsServiceMsg.newBuilder();
-
-                    TenantId tenantId = parent.getTenantId();
-                    newStatsMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
-                    newStatsMsg.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-
-                    CustomerId customerId = parent.getCustomerId();
-                    if (customerId != null) {
-                        newStatsMsg.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-                        newStatsMsg.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
-                    }
-
-                    newStatsMsg.setServiceId(serviceInfoProvider.getServiceId());
-                    return newStatsMsg;
-                });
-
-                UsageStatsKVProto.Builder statsItem = UsageStatsKVProto.newBuilder()
-                        .setKey(key.name())
-                        .setValue(value);
-                statsMsg.addValues(statsItem.build());
+                putMessageToReport(report, reportLevel, key, value);
             });
             statsForKey.clear();
         }
 
+        report(report);
+    }
+
+    private void putMessageToReport(ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report, ReportLevel reportLevel, ApiUsageRecordKey key, long value) {
+        ToUsageStatsServiceMsg.Builder statsMsg = report.computeIfAbsent(reportLevel.getParentEntity(), parent -> {
+            ToUsageStatsServiceMsg.Builder newStatsMsg = ToUsageStatsServiceMsg.newBuilder();
+
+            TenantId tenantId = parent.getTenantId();
+            newStatsMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+            newStatsMsg.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+
+            CustomerId customerId = parent.getCustomerId();
+            if (customerId != null) {
+                newStatsMsg.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
+                newStatsMsg.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+            }
+
+            newStatsMsg.setServiceId(serviceInfoProvider.getServiceId());
+            return newStatsMsg;
+        });
+
+        UsageStatsKVProto.Builder statsItem = UsageStatsKVProto.newBuilder()
+                .setKey(key.name())
+                .setValue(value);
+        statsMsg.addValues(statsItem.build());
+    }
+
+    private void report(ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report) {
         report.forEach(((parent, statsMsg) -> {
             //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
             try {
@@ -154,7 +162,16 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
         if (enabledPerCustomer && customerId != null && !customerId.isNullUid()) {
             reportLevels[2] = ReportLevel.of(tenantId, customerId);
         }
-        report(key, value, reportLevels);
+        if (key.isReportImmediately()) {
+            ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
+            for (ReportLevel level : reportLevels) {
+                if (level == null) continue;
+                putMessageToReport(report, level, key, value);
+            }
+            report(report);
+        } else {
+            putInReport(key, value, reportLevels);
+        }
     }
 
     @Override
@@ -162,7 +179,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
         report(tenantId, customerId, key, 1);
     }
 
-    private void report(ApiUsageRecordKey key, long value, ReportLevel... levels) {
+    private void putInReport(ApiUsageRecordKey key, long value, ReportLevel... levels) {
         ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
         for (ReportLevel level : levels) {
             if (level == null) continue;
@@ -173,9 +190,6 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
             } else {
                 n.set(value);
             }
-        }
-        if (key.isReportImmediately()) {
-            reportStats(List.of(key));
         }
     }
 
