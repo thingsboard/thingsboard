@@ -807,7 +807,8 @@
         "type-provision-success": "Device provisioned",
         "type-provision-failure": "Device provisioning was failed",
         "type-timeseries-updated": "Telemetry updated",
-        "type-timeseries-deleted": "Telemetry deleted"
+        "type-timeseries-deleted": "Telemetry deleted",
+        "type-sms-sent": "SMS sent"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
