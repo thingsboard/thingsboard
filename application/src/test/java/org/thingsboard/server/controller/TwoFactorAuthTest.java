@@ -140,7 +140,7 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
 
         ArgumentCaptor<String> verificationCodeCaptor = ArgumentCaptor.forClass(String.class);
-        verify(smsService).sendSms(eq(tenantId), any(), any(), verificationCodeCaptor.capture());
+        verify(smsService).sendSmsFromUser(any(), any(), verificationCodeCaptor.capture());
         String correctVerificationCode = verificationCodeCaptor.getValue();
 
         JsonNode tokenPair = readResponse(doPost("/api/auth/2fa/verification/check?providerType=SMS&verificationCode=" + correctVerificationCode)
@@ -275,7 +275,7 @@ public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
         ArgumentCaptor<String> verificationCodeCaptor = ArgumentCaptor.forClass(String.class);
         doPost("/api/auth/2fa/verification/send?providerType=SMS").andExpect(status().isOk());
-        verify(smsService).sendSms(eq(tenantId), any(), any(), verificationCodeCaptor.capture());
+        verify(smsService).sendSmsFromUser(any(), any(), verificationCodeCaptor.capture());
 
         String correctVerificationCode = verificationCodeCaptor.getValue();
 
