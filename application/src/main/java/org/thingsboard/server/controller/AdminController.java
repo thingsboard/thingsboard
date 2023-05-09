@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.FeaturesInfo;
 import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.UpdateMessage;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.JwtPair;
@@ -51,6 +52,7 @@ import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
@@ -85,6 +87,7 @@ public class AdminController extends BaseController {
     private final TbAutoCommitSettingsService autoCommitSettingsService;
     private final UpdateService updateService;
     private final SystemInfoService systemInfoService;
+    private final AuditLogService auditLogService;
 
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Get the Administration Settings object using specified string key. Referencing non-existing key will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -201,9 +204,15 @@ public class AdminController extends BaseController {
     public void sendTestSms(
             @ApiParam(value = "A JSON value representing the Test SMS request.")
             @RequestBody TestSmsRequest testSmsRequest) throws ThingsboardException {
-        SecurityUser currentUser = getCurrentUser();
-        accessControlService.checkPermission(currentUser, Resource.ADMIN_SETTINGS, Operation.READ);
-        smsService.sendTestSms(currentUser, testSmsRequest);
+        SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
+        try {
+            smsService.sendTestSms(testSmsRequest);
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, null, testSmsRequest.getNumberTo());
+        } catch (ThingsboardException e) {
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, e, testSmsRequest.getNumberTo());
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Get repository settings (getRepositorySettings)",
