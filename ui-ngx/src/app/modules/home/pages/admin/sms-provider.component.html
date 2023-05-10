@@ -58,7 +58,7 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <mat-card-content style="padding-top: 16px;">
-    <form [formGroup]="slackSettingsForm" (ngSubmit)="saveNotification()">
+    <form [formGroup]="notificationSettingsForm" (ngSubmit)="saveNotification()">
       <fieldset [disabled]="isLoading$ | async" formGroupName="deliveryMethodsConfigs">
         <section formGroupName="SLACK">
           <mat-form-field class="mat-block">
@@ -66,8 +66,29 @@
             <input matInput formControlName="botToken" />
           </mat-form-field>
         </section>
+      </fieldset>
+    </form>
+  </mat-card-content>
+  <mat-card-header>
+    <mat-card-title>
+      <span class="mat-headline-5" translate>admin.mobile-settings</span>
+    </mat-card-title>
+    <span fxFlex></span>
+<!--    <div tb-help="slackSettings"></div>-->
+  </mat-card-header>
+  <mat-card-content style="padding-top: 16px;">
+    <form [formGroup]="notificationSettingsForm" (ngSubmit)="saveNotification()">
+      <fieldset [disabled]="isLoading$ | async" formGroupName="deliveryMethodsConfigs">
+        <section formGroupName="MOBILE">
+          <tb-file-input style="margin-bottom: 16px;"
+                         required
+                         formControlName="firebaseServiceAccountCredentials"
+                         dropLabel="{{ 'admin.select-firebase-service-account-file' | translate }}"
+                         [label]="'admin.firebase-service-account-file' | translate">
+          </tb-file-input>
+        </section>
         <div fxLayout="row" fxLayoutAlign="end center" class="layout-wrap">
-          <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || slackSettingsForm.invalid || !slackSettingsForm.dirty"
+          <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || notificationSettingsForm.invalid || !notificationSettingsForm.dirty"
                   type="submit">{{'action.save' | translate}}
           </button>
         </div>

@@ -42,7 +42,7 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
   smsProvider: FormGroup;
   private adminSettings: AdminSettings<SmsProviderConfiguration>;
 
-  slackSettingsForm: FormGroup;
+  notificationSettingsForm: FormGroup;
   private notificationSettings: NotificationSettings;
 
   private readonly authUser: AuthUser;
@@ -60,7 +60,7 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
     this.notificationService.getNotificationSettings().subscribe(
       (settings) => {
         this.notificationSettings = settings;
-        this.slackSettingsForm.reset(this.notificationSettings);
+        this.notificationSettingsForm.reset(this.notificationSettings);
       }
     );
     if (this.isSysAdmin()) {
@@ -108,24 +108,28 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
   }
 
   confirmForm(): FormGroup {
-    return this.smsProvider.dirty ? this.smsProvider : this.slackSettingsForm;
+    return this.smsProvider.dirty ? this.smsProvider : this.notificationSettingsForm;
   }
 
   private buildGeneralServerSettingsForm() {
-    this.slackSettingsForm = this.fb.group({
+    this.notificationSettingsForm = this.fb.group({
       deliveryMethodsConfigs: this.fb.group({
         SLACK: this.fb.group({
           botToken: ['']
+        }),
+        MOBILE: this.fb.group({
+          firebaseServiceAccountCredentialsFileName: [''],
+          firebaseServiceAccountCredentials: ['']
         })
       })
     });
-    this.registerDisableOnLoadFormControl(this.slackSettingsForm.get('deliveryMethodsConfigs'));
+    this.registerDisableOnLoadFormControl(this.notificationSettingsForm.get('deliveryMethodsConfigs'));
   }
 
   saveNotification(): void {
     this.notificationSettings = deepTrim({
       ...this.notificationSettings,
-      ...this.slackSettingsForm.value
+      ...this.notificationSettingsForm.value
     });
     // eslint-disable-next-line guard-for-in
     for (const method in this.notificationSettings.deliveryMethodsConfigs) {
@@ -138,7 +142,7 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
     }
     this.notificationService.saveNotificationSettings(this.notificationSettings).subscribe(setting => {
       this.notificationSettings = setting;
-      this.slackSettingsForm.reset(this.notificationSettings);
+      this.notificationSettingsForm.reset(this.notificationSettings);
     });
   }
 

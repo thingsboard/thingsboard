@@ -334,6 +334,40 @@
         </mat-form-field>
       </form>
     </mat-step>
+    <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
+                     notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.MOBILE.enabled').value"
+              [stepControl]="mobileTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.delivery-method.mobile' | translate }}</ng-template>
+      <div class="tb-hint-available-params mat-body-2">
+        <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '820px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
+      </div>
+      <form [formGroup]="mobileTemplateForm" fxLayoutGap="8px">
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.subject</mat-label>
+          <input matInput formControlName="subject">
+          <mat-error *ngIf="mobileTemplateForm.get('subject').hasError('required')">
+            {{ 'notification.subject-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.message</mat-label>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cols="1"
+                    cdkAutosizeMinRows="1"
+                    formControlName="body">
+          </textarea>
+          <mat-error *ngIf="mobileTemplateForm.get('body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </form>
+    </mat-step>
     <mat-step>
       <ng-template matStepLabel>{{ 'notification.review' | translate }}</ng-template>
       <mat-progress-spinner color="warn" mode="indeterminate"
@@ -376,6 +410,15 @@
           </div>
           <div class="notification-content">
             {{ preview.processedTemplates.SLACK.body }}
+          </div>
+        </section>
+        <section class="preview-group notification" *ngIf="preview.processedTemplates.MOBILE?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <mat-icon class="tb-mat-18" svgIcon="mdi:smartphone"></mat-icon>
+            <div class="group-title" translate>notification.delivery-method.mobile-preview</div>
+          </div>
+          <div class="notification-content">
+            {{ preview.processedTemplates.MOBILE.body }}
           </div>
         </section>
         <section class="preview-group">

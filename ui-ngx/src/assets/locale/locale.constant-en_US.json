@@ -420,7 +420,10 @@
         "notifications-settings": "Notifications settings",
         "slack-api-token": "Slack API token",
         "slack": "Slack",
-        "slack-settings": "Slack settings"
+        "slack-settings": "Slack settings",
+        "mobile-settings": "Mobile settings",
+        "firebase-service-account-file": "Firebase service account credentials JSON file",
+        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or "
       },
     "alarm": {
         "alarm": "Alarm",
@@ -2847,7 +2850,9 @@
             "sms": "SMS",
             "sms-preview": "SMS notification preview",
             "web": "Web",
-            "web-preview": "Web notification preview"
+            "web-preview": "Web notification preview",
+            "mobile": "Mobile",
+            "mobile-preview": "Mobile notification preview"
         },
         "delivery-method-not-configure-click": "Delivery method is not configured. Click to setup.",
         "delivery-method-not-configure-contact": "Delivery method is not configured. Contact your system administrator.",

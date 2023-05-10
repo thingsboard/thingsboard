@@ -43,6 +43,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
   emailTemplateForm: FormGroup;
   smsTemplateForm: FormGroup;
   slackTemplateForm: FormGroup;
+  mobileTemplateForm: FormGroup;
 
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
@@ -163,11 +164,17 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       body: ['', Validators.required]
     });
 
+    this.mobileTemplateForm = this.fb.group({
+      subject: ['', Validators.required],
+      body: ['', Validators.required]
+    });
+
     this.deliveryMethodFormsMap = new Map<NotificationDeliveryMethod, FormGroup>([
       [NotificationDeliveryMethod.WEB, this.webTemplateForm],
       [NotificationDeliveryMethod.EMAIL, this.emailTemplateForm],
       [NotificationDeliveryMethod.SMS, this.smsTemplateForm],
-      [NotificationDeliveryMethod.SLACK, this.slackTemplateForm]
+      [NotificationDeliveryMethod.SLACK, this.slackTemplateForm],
+      [NotificationDeliveryMethod.MOBILE, this.mobileTemplateForm]
     ]);
   }
 

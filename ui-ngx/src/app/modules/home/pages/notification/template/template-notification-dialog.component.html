@@ -259,6 +259,32 @@
         </mat-form-field>
       </form>
     </mat-step>
+    <mat-step *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.MOBILE.enabled').value"
+              [stepControl]="mobileTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.delivery-method.mobile' | translate }}</ng-template>
+      <div class="tb-hint-available-params mat-body-2">
+        <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
+        <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).helpId }}"
+              tb-help-popup-placement="bottom"
+              trigger-style="letter-spacing:0.25px"
+              [tb-help-popup-style]="{maxWidth: '800px'}"
+              trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
+      </div>
+      <form [formGroup]="mobileTemplateForm" fxLayoutGap="8px">
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.message</mat-label>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cols="1"
+                    cdkAutosizeMinRows="1"
+                    formControlName="body">
+          </textarea>
+          <mat-error *ngIf="mobileTemplateForm.get('body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </form>
+    </mat-step>
   </mat-horizontal-stepper>
 </div>
 <mat-divider></mat-divider>

@@ -89,13 +89,17 @@ export interface NotificationSettings {
   deliveryMethodsConfigs: { [key in NotificationDeliveryMethod]: NotificationDeliveryMethodConfig };
 }
 
-export interface NotificationDeliveryMethodConfig extends Partial<SlackNotificationDeliveryMethodConfig>{
+export interface NotificationDeliveryMethodConfig extends Partial<SlackNotificationDeliveryMethodConfig & MobileNotificationDeliveryMethodConfig>{
   enabled: boolean;
   method: NotificationDeliveryMethod;
 }
 
 interface SlackNotificationDeliveryMethodConfig {
   botToken: string;
+}
+
+interface MobileNotificationDeliveryMethodConfig {
+  firebaseServiceAccountCredentials: string;
 }
 
 export interface SlackConversation {
@@ -292,7 +296,8 @@ interface NotificationTemplateConfig {
 }
 
 export interface DeliveryMethodNotificationTemplate extends
-  Partial<WebDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
+  Partial<WebDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate &
+    SlackDeliveryMethodNotificationTemplate & MobileDeliveryMethodNotificationTemplate> {
   body?: string;
   enabled: boolean;
   method: NotificationDeliveryMethod;
@@ -329,6 +334,10 @@ interface SlackDeliveryMethodNotificationTemplate {
   conversationId: string;
 }
 
+interface MobileDeliveryMethodNotificationTemplate {
+  subject: string;
+}
+
 export enum NotificationStatus {
   SENT = 'SENT',
   READ = 'READ'
@@ -338,14 +347,16 @@ export enum NotificationDeliveryMethod {
   WEB = 'WEB',
   SMS = 'SMS',
   EMAIL = 'EMAIL',
-  SLACK = 'SLACK'
+  SLACK = 'SLACK',
+  MOBILE = 'MOBILE'
 }
 
 export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
   [NotificationDeliveryMethod.WEB, 'notification.delivery-method.web'],
   [NotificationDeliveryMethod.SMS, 'notification.delivery-method.sms'],
   [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method.email'],
-  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack']
+  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack'],
+  [NotificationDeliveryMethod.MOBILE, 'notification.delivery-method.mobile']
 ]);
 
 export enum NotificationRequestStatus {

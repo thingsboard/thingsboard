@@ -315,7 +315,7 @@ export class SentNotificationDialogComponent extends
     if(this.isSysAdmin()) {
       return true;
     } else if (this.isTenantAdmin()) {
-      return deliveryMethod === NotificationDeliveryMethod.SLACK;
+      return deliveryMethod === NotificationDeliveryMethod.SLACK || deliveryMethod === NotificationDeliveryMethod.MOBILE;
     }
     return false;
   }
@@ -330,6 +330,7 @@ export class SentNotificationDialogComponent extends
         return '/settings/outgoing-mail';
       case NotificationDeliveryMethod.SMS:
       case NotificationDeliveryMethod.SLACK:
+      case NotificationDeliveryMethod.MOBILE:
         return '/settings/notifications';
     }
   }
