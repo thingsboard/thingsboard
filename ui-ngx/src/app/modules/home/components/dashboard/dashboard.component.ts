@@ -225,6 +225,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       defaultItemRows: 6,
       resizable: {enabled: this.isEdit},
       draggable: {enabled: this.isEdit},
+      useTransformPositioning: false,
       itemChangeCallback: item => this.dashboardWidgets.sortWidgets(),
       itemInitCallback: (item, itemComponent) => {
         (itemComponent.item as DashboardWidget).gridsterItemComponent = itemComponent;
