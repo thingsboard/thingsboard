@@ -87,7 +87,7 @@ public class DefaultSmsService implements SmsService {
         }
     }
 
-    public int sendSms(String numberTo, String message) throws ThingsboardException {
+    protected int sendSms(String numberTo, String message) throws ThingsboardException {
         if (this.smsSender == null) {
             throw new ThingsboardException("Unable to send SMS: no SMS provider configured!", ThingsboardErrorCode.GENERAL);
         }
@@ -131,7 +131,7 @@ public class DefaultSmsService implements SmsService {
 
     private int sendSms(SmsSender smsSender, String numberTo, String message) throws ThingsboardException {
         try {
-            int sentSms = 1; //smsSender.sendSms(numberTo, message);
+            int sentSms = smsSender.sendSms(numberTo, message);
             log.trace("Successfully sent sms to number: {}", numberTo);
             return sentSms;
         } catch (Exception e) {
