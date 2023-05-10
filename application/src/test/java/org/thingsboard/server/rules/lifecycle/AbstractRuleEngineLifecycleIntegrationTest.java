@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -94,7 +95,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         ruleNode.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
         configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey"));
-        ruleNode.setConfiguration(mapper.valueToTree(configuration));
+        ruleNode.setConfiguration(JacksonUtil.valueToTree(configuration));
 
         metaData.setNodes(Collections.singletonList(ruleNode));
         metaData.setFirstNodeIndex(0);
