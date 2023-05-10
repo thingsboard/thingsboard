@@ -59,7 +59,7 @@ public class SystemUtil {
 
     public static Optional<Integer> getCpuUsage() {
         try {
-            return Optional.of((int) (HARDWARE.getProcessor().getSystemCpuLoad() * 100.0));
+            return Optional.of((int) (HARDWARE.getProcessor().getSystemCpuLoad(1000) * 100.0));
         } catch (Exception e) {
             log.debug("Failed to get cpu usage!!!", e);
         }
