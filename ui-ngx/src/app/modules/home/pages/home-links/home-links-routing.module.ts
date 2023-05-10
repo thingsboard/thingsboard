@@ -19,16 +19,21 @@ import { Resolve, RouterModule, Routes } from '@angular/router';
 
 import { HomeLinksComponent } from './home-links.component';
 import { Authority } from '@shared/models/authority.enum';
-import { Observable } from 'rxjs';
+import { mergeMap, Observable, of } from 'rxjs';
 import { HomeDashboard } from '@shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
-import { Store } from '@ngrx/store';
+import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { map } from 'rxjs/operators';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import {
+  getCurrentAuthUser,
+  selectHasRepository,
+  selectPersistDeviceStateToTelemetry
+} from '@core/auth/auth.selectors';
 import sysAdminHomePageDashboardJson from '!raw-loader!./sys_admin_home_page.raw';
 import tenantAdminHomePageDashboardJson from '!raw-loader!./tenant_admin_home_page.raw';
 import customerUserHomePageDashboardJson from '!raw-loader!./customer_user_home_page.raw';
+import { EntityKeyType } from '@shared/models/query/query.models';
 
 @Injectable()
 export class HomeDashboardResolver implements Resolve<HomeDashboard> {
@@ -39,22 +44,43 @@ export class HomeDashboardResolver implements Resolve<HomeDashboard> {
 
   resolve(): Observable<HomeDashboard> {
     return this.dashboardService.getHomeDashboard().pipe(
-      map((dashboard) => {
+      mergeMap((dashboard) => {
         if (!dashboard) {
+          let dashboard$: Observable<HomeDashboard>;
           const authority = getCurrentAuthUser(this.store).authority;
           switch (authority) {
             case Authority.SYS_ADMIN:
-              dashboard = JSON.parse(sysAdminHomePageDashboardJson);
+              dashboard$ = of(JSON.parse(sysAdminHomePageDashboardJson));
               break;
             case Authority.TENANT_ADMIN:
-              dashboard = JSON.parse(tenantAdminHomePageDashboardJson);
+              dashboard$ = this.updateDeviceActivityKeyFilterIfNeeded(JSON.parse(tenantAdminHomePageDashboardJson));
               break;
             case Authority.CUSTOMER_USER:
-              dashboard = JSON.parse(customerUserHomePageDashboardJson);
+              dashboard$ = this.updateDeviceActivityKeyFilterIfNeeded(JSON.parse(customerUserHomePageDashboardJson));
               break;
           }
-          if (dashboard) {
-            dashboard.hideDashboardToolbar = true;
+          if (dashboard$) {
+            return dashboard$.pipe(
+              map((homeDashboard) => {
+                homeDashboard.hideDashboardToolbar = true;
+                return homeDashboard;
+              })
+            );
+          }
+        }
+        return of(dashboard);
+      })
+    );
+  }
+
+  private updateDeviceActivityKeyFilterIfNeeded(dashboard: HomeDashboard): Observable<HomeDashboard> {
+    return this.store.pipe(select(selectPersistDeviceStateToTelemetry)).pipe(
+      map((persistToTelemetry) => {
+        if (persistToTelemetry) {
+          for (const filterId of Object.keys(dashboard.configuration.filters)) {
+            if (['Active Devices', 'Inactive Devices'].includes(dashboard.configuration.filters[filterId].filter)) {
+              dashboard.configuration.filters[filterId].keyFilters[0].key.type = EntityKeyType.TIME_SERIES;
+            }
           }
         }
         return dashboard;

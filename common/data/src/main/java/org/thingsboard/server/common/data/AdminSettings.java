@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;

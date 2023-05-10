@@ -16,74 +16,85 @@
 
 -->
 <div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
-  <div class="tb-card-header">
-    <a class="tb-title-link" routerLink="/usage">{{ 'widgets.usage-info.title' | translate }}</a>
-    <tb-toggle-header #usageToggle [value]="toggleValue" name="usageToggle" [options]="[
-      {
-        name: ctx.translate.instant('widgets.usage-info.entities'),
-        value: 'entities'
-      },
-      {
-        name: ctx.translate.instant('widgets.usage-info.api-calls'),
-        value: 'apiCalls'
-      }
-    ]">
-    </tb-toggle-header>
-  </div>
-  <ng-container [ngSwitch]="usageToggle.value">
-    <ng-template [ngSwitchCase]="'entities'">
-      <div fxFlex class="tb-usage-list">
-        <div class="tb-usage-items">
-          <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.devices}" translate>device.devices</div>
-          <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.assets}" translate>asset.assets</div>
-          <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.users}" translate>user.users</div>
-          <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.dashboards}" translate>dashboard.dashboards</div>
-          <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.customers}"  translate>customer.customers</div>
-        </div>
-        <div class="tb-usage-items-values">
-          <div class="tb-usage-items-counts">
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.devices}">{{ usageInfo?.devices | shortNumber }} / {{ maxValue(usageInfo?.maxDevices) }}</div>
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.assets}">{{ usageInfo?.assets | shortNumber }} / {{ maxValue(usageInfo?.maxAssets) }}</div>
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.users}">{{ usageInfo?.users | shortNumber }} / {{ maxValue(usageInfo?.maxUsers) }}</div>
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.dashboards}">{{ usageInfo?.dashboards | shortNumber }} / {{ maxValue(usageInfo?.maxDashboards) }}</div>
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.customers}">{{ usageInfo?.customers | shortNumber }} / {{ maxValue(usageInfo?.maxCustomers) }}</div>
+  <ng-container *ngIf="hasUsageInfoAccess; else noDataAvailable">
+    <div class="tb-card-header">
+      <a class="tb-title-link" routerLink="/usage">{{ 'widgets.usage-info.title' | translate }}</a>
+      <tb-toggle-header #usageToggle [value]="toggleValue" name="usageToggle" [options]="[
+        {
+          name: ctx.translate.instant('widgets.usage-info.entities'),
+          value: 'entities'
+        },
+        {
+          name: ctx.translate.instant('widgets.usage-info.api-calls'),
+          value: 'apiCalls'
+        }
+      ]">
+      </tb-toggle-header>
+    </div>
+    <ng-container [ngSwitch]="usageToggle.value">
+      <ng-template [ngSwitchCase]="'entities'">
+        <div fxFlex class="tb-usage-list">
+          <div class="tb-usage-items">
+            <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.devices}" translate>device.devices</div>
+            <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.assets}" translate>asset.assets</div>
+            <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.users}" translate>user.users</div>
+            <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.dashboards}" translate>dashboard.dashboards</div>
+            <div class="tb-usage-item" [ngClass]="{'critical': entityItemCritical.customers}"  translate>customer.customers</div>
           </div>
-          <div class="tb-usage-items-progress">
-            <mat-progress-bar [ngClass]="{'critical': entityItemCritical.devices}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.devices, usageInfo?.maxDevices)"></mat-progress-bar>
-            <mat-progress-bar [ngClass]="{'critical': entityItemCritical.assets}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.assets, usageInfo?.maxAssets)"></mat-progress-bar>
-            <mat-progress-bar [ngClass]="{'critical': entityItemCritical.users}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.users, usageInfo?.maxUsers)"></mat-progress-bar>
-            <mat-progress-bar [ngClass]="{'critical': entityItemCritical.dashboards}"color="primary" mode="determinate" [value]="progressValue(usageInfo?.dashboards, usageInfo?.maxDashboards)"></mat-progress-bar>
-            <mat-progress-bar [ngClass]="{'critical': entityItemCritical.customers}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.customers, usageInfo?.maxCustomers)"></mat-progress-bar>
-          </div>
-        </div>
-      </div>
-    </ng-template>
-    <ng-template [ngSwitchCase]="'apiCalls'">
-      <div fxFlex class="tb-usage-list">
-        <div class="tb-usage-items">
-          <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.transportMessages}" translate>api-usage.transport-messages</div>
-          <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.jsExecutions}" translate>api-usage.javascript</div>
-          <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.alarms}" translate>api-usage.alarms-created</div>
-          <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.emails}" translate>api-usage.email</div>
-          <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.sms}"  translate>api-usage.sms</div>
-        </div>
-        <div class="tb-usage-items-values">
-          <div class="tb-usage-items-counts">
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.transportMessages}">{{ usageInfo?.transportMessages | shortNumber }} / {{ maxValue(usageInfo?.maxTransportMessages) }}</div>
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.jsExecutions}">{{ usageInfo?.jsExecutions | shortNumber }} / {{ maxValue(usageInfo?.maxJsExecutions) }}</div>
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.alarms}">{{ usageInfo?.alarms | shortNumber }} / {{ maxValue(usageInfo?.maxAlarms) }}</div>
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.emails}">{{ usageInfo?.emails | shortNumber }} / {{ maxValue(usageInfo?.maxEmails) }}</div>
-            <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.sms}">{{ usageInfo?.sms | shortNumber }} / {{ maxValue(usageInfo?.maxSms) }}</div>
-          </div>
-          <div class="tb-usage-items-progress">
-            <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.transportMessages}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.transportMessages, usageInfo?.maxTransportMessages)"></mat-progress-bar>
-            <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.jsExecutions}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.jsExecutions, usageInfo?.maxJsExecutions)"></mat-progress-bar>
-            <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.alarms}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.alarms, usageInfo?.maxAlarms)"></mat-progress-bar>
-            <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.emails}"color="primary" mode="determinate" [value]="progressValue(usageInfo?.emails, usageInfo?.maxEmails)"></mat-progress-bar>
-            <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.sms}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.sms, usageInfo?.maxSms)"></mat-progress-bar>
+          <div class="tb-usage-items-values">
+            <div class="tb-usage-items-counts">
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.devices}">{{ usageInfo?.devices | shortNumber }} / {{ maxValue(usageInfo?.maxDevices) }}</div>
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.assets}">{{ usageInfo?.assets | shortNumber }} / {{ maxValue(usageInfo?.maxAssets) }}</div>
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.users}">{{ usageInfo?.users | shortNumber }} / {{ maxValue(usageInfo?.maxUsers) }}</div>
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.dashboards}">{{ usageInfo?.dashboards | shortNumber }} / {{ maxValue(usageInfo?.maxDashboards) }}</div>
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': entityItemCritical.customers}">{{ usageInfo?.customers | shortNumber }} / {{ maxValue(usageInfo?.maxCustomers) }}</div>
+            </div>
+            <div class="tb-usage-items-progress">
+              <mat-progress-bar [ngClass]="{'critical': entityItemCritical.devices}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.devices, usageInfo?.maxDevices)"></mat-progress-bar>
+              <mat-progress-bar [ngClass]="{'critical': entityItemCritical.assets}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.assets, usageInfo?.maxAssets)"></mat-progress-bar>
+              <mat-progress-bar [ngClass]="{'critical': entityItemCritical.users}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.users, usageInfo?.maxUsers)"></mat-progress-bar>
+              <mat-progress-bar [ngClass]="{'critical': entityItemCritical.dashboards}"color="primary" mode="determinate" [value]="progressValue(usageInfo?.dashboards, usageInfo?.maxDashboards)"></mat-progress-bar>
+              <mat-progress-bar [ngClass]="{'critical': entityItemCritical.customers}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.customers, usageInfo?.maxCustomers)"></mat-progress-bar>
+            </div>
           </div>
         </div>
-      </div>
-    </ng-template>
+      </ng-template>
+      <ng-template [ngSwitchCase]="'apiCalls'">
+        <div fxFlex class="tb-usage-list">
+          <div class="tb-usage-items">
+            <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.transportMessages}" translate>api-usage.transport-messages</div>
+            <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.jsExecutions}" translate>api-usage.javascript</div>
+            <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.alarms}" translate>api-usage.alarms-created</div>
+            <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.emails}" translate>api-usage.email</div>
+            <div class="tb-usage-item" [ngClass]="{'critical': apiCallItemCritical.sms}"  translate>api-usage.sms</div>
+          </div>
+          <div class="tb-usage-items-values">
+            <div class="tb-usage-items-counts">
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.transportMessages}">{{ usageInfo?.transportMessages | shortNumber }} / {{ maxValue(usageInfo?.maxTransportMessages) }}</div>
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.jsExecutions}">{{ usageInfo?.jsExecutions | shortNumber }} / {{ maxValue(usageInfo?.maxJsExecutions) }}</div>
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.alarms}">{{ usageInfo?.alarms | shortNumber }} / {{ maxValue(usageInfo?.maxAlarms) }}</div>
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.emails}">{{ usageInfo?.emails | shortNumber }} / {{ maxValue(usageInfo?.maxEmails) }}</div>
+              <div class="tb-usage-item-counts" [ngClass]="{'critical': apiCallItemCritical.sms}">{{ usageInfo?.sms | shortNumber }} / {{ maxValue(usageInfo?.maxSms) }}</div>
+            </div>
+            <div class="tb-usage-items-progress">
+              <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.transportMessages}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.transportMessages, usageInfo?.maxTransportMessages)"></mat-progress-bar>
+              <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.jsExecutions}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.jsExecutions, usageInfo?.maxJsExecutions)"></mat-progress-bar>
+              <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.alarms}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.alarms, usageInfo?.maxAlarms)"></mat-progress-bar>
+              <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.emails}"color="primary" mode="determinate" [value]="progressValue(usageInfo?.emails, usageInfo?.maxEmails)"></mat-progress-bar>
+              <mat-progress-bar [ngClass]="{'critical': apiCallItemCritical.sms}" color="primary" mode="determinate" [value]="progressValue(usageInfo?.sms, usageInfo?.maxSms)"></mat-progress-bar>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </ng-container>
   </ng-container>
+  <ng-template #noDataAvailable>
+    <div class="tb-card-header">
+      <div class="tb-title">{{ 'widgets.usage-info.title' | translate }}</div>
+    </div>
+    <div class="tb-no-data-available">
+      <div class="tb-no-data-bg"></div>
+      <div class="tb-no-data-text" translate>widgets.home.no-data-available</div>
+    </div>
+  </ng-template>
 </div>
