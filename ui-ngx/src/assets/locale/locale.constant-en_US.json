@@ -3633,6 +3633,7 @@
         "max-emails": "Emails sent maximum number",
         "max-emails-required": "Emails sent maximum number is required.",
         "max-emails-range": "Emails sent maximum number can't be negative",
+        "sms-enabled": "SMS enabled",
         "max-sms": "SMS sent maximum number",
         "max-sms-required": "SMS sent maximum number is required.",
         "max-sms-range": "SMS sent maximum number can't be negative",
