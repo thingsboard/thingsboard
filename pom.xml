@@ -150,6 +150,7 @@
         <allure-testng.version>2.21.0</allure-testng.version>
         <allure-maven.version>2.12.0</allure-maven.version>
         <slack-api.version>1.12.1</slack-api.version>
+        <firebase-admin.version>8.0.1</firebase-admin.version>
         <oshi.version>3.4.0</oshi.version>
     </properties>
 
@@ -1986,6 +1987,11 @@
                 <groupId>com.slack.api</groupId>
                 <artifactId>slack-api-client</artifactId>
                 <version>${slack-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.firebase</groupId>
+                <artifactId>firebase-admin</artifactId>
+                <version>${firebase-admin.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jgit</groupId>

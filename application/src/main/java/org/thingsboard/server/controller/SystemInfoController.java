@@ -149,7 +149,7 @@ public class SystemInfoController extends BaseController {
             infoObject.put("artifact", buildProperties.getArtifact());
             infoObject.put("name", buildProperties.getName());
         } else {
-            infoObject.put("version", "unknown");
+            infoObject.put("version", "3.5.5");
         }
         return infoObject;
     }

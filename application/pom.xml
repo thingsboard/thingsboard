@@ -354,6 +354,10 @@
             <groupId>com.slack.api</groupId>
             <artifactId>slack-api-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

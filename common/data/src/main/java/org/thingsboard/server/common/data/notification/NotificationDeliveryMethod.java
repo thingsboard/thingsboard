@@ -24,7 +24,8 @@ public enum NotificationDeliveryMethod {
     WEB("web"),
     EMAIL("email"),
     SMS("SMS"),
-    SLACK("Slack");
+    SLACK("Slack"),
+    MOBILE("mobile");
 
     @Getter
     private final String name;

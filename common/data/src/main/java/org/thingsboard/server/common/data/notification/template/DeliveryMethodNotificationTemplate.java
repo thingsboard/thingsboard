@@ -33,7 +33,8 @@ import javax.validation.constraints.NotEmpty;
         @Type(name = "WEB", value = WebDeliveryMethodNotificationTemplate.class),
         @Type(name = "EMAIL", value = EmailDeliveryMethodNotificationTemplate.class),
         @Type(name = "SMS", value = SmsDeliveryMethodNotificationTemplate.class),
-        @Type(name = "SLACK", value = SlackDeliveryMethodNotificationTemplate.class)
+        @Type(name = "SLACK", value = SlackDeliveryMethodNotificationTemplate.class),
+        @Type(name = "MOBILE", value = MobileDeliveryMethodNotificationTemplate.class)
 })
 @Data
 @NoArgsConstructor
