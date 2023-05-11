@@ -64,7 +64,8 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
 
     @After
     public void after() throws Exception {
-        saveTenantProfileWitConfiguration(tenantProfile, new DefaultTenantProfileConfiguration());
+        DefaultTenantProfileConfiguration config = createTenantProfileConfigurationWithSmsLimits(0, true);
+        saveTenantProfileWitConfiguration(tenantProfile, config);
         resetTokens();
     }
 
