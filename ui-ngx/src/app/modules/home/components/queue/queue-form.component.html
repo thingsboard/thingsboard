@@ -40,7 +40,7 @@
         <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="16px" formGroupName="submitStrategy">
           <div fxFlex>
             <label class="group-label" translate>queue.submit-strategy</label>
-            <mat-radio-group fxFlex fxLayout="column" fxLayoutGap="15px" formControlName="type" required>
+            <mat-radio-group fxFlex fxLayout="column" formControlName="type" required>
               <mat-radio-button *ngFor="let strategy of submitStrategies" [value]="strategy">
                 {{ queueSubmitStrategyTypesMap.get(queueSubmitStrategyTypes[strategy]).label | translate }}
                 <mat-icon
@@ -78,7 +78,7 @@
         <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="16px" formGroupName="processingStrategy">
           <div fxFlex>
             <label class="group-label" translate>queue.processing-strategy</label>
-              <mat-radio-group fxFlex fxLayout="column" fxLayoutGap="15px" formControlName="type" required>
+              <mat-radio-group fxFlex fxLayout="column" formControlName="type" required>
                 <mat-radio-button *ngFor="let strategy of processingStrategies" [value]="strategy">
                   {{ queueProcessingStrategyTypesMap.get(queueProcessingStrategyTypes[strategy]).label | translate }}
                   <mat-icon
