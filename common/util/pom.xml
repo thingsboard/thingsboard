@@ -89,7 +89,7 @@
             <artifactId>data</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.dblock</groupId>
+            <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
         </dependency>
     </dependencies>
