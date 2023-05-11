@@ -202,7 +202,7 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
     const type: QueueSubmitStrategyTypes = form.get('type').value;
     const batchSizeField = form.get('batchSize');
     if (type === QueueSubmitStrategyTypes.BATCH) {
-      batchSizeField.patchValue(1000, {emitEvent: false});
+      batchSizeField.patchValue(batchSizeField.value ? batchSizeField.value : 1000, {emitEvent: false});
       batchSizeField.setValidators([Validators.min(1), Validators.required]);
       batchSizeField.updateValueAndValidity({emitEvent: false});
       this.hideBatchSize = true;
