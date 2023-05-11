@@ -21,12 +21,15 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.FeaturesInfo;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -34,6 +37,7 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfigurat
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +57,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class DefaultSmsServiceTest extends AbstractControllerTest {
     @SpyBean
     private DefaultSmsService defaultSmsService;
+    @Autowired
+    private AdminSettingsService adminSettingsService;
 
     private TenantProfile tenantProfile;
 
@@ -64,8 +70,8 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
 
     @After
     public void after() throws Exception {
-        DefaultTenantProfileConfiguration config = createTenantProfileConfigurationWithSmsLimits(0, true);
-        saveTenantProfileWitConfiguration(tenantProfile, config);
+        saveTenantProfileWitConfiguration(tenantProfile, new DefaultTenantProfileConfiguration());
+        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, "sms");
         resetTokens();
     }
 
