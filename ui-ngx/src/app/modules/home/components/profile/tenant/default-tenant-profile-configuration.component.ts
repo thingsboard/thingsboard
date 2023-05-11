@@ -108,19 +108,22 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
     this.defaultTenantProfileConfigurationFormGroup.get('smsEnabled').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value: boolean) => {
-        if (value) {
-          this.defaultTenantProfileConfigurationFormGroup.get('maxSms').addValidators([Validators.required, Validators.min(0)]);
-        } else {
-          this.defaultTenantProfileConfigurationFormGroup.get('maxSms').clearValidators();
-        }
-        this.defaultTenantProfileConfigurationFormGroup.get('maxSms').updateValueAndValidity({emitEvent: false});
+        this.maxSmsValidation(value);
       }
     );
-
 
     this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
+  }
+
+  private maxSmsValidation(smsEnabled: boolean) {
+    if (smsEnabled) {
+      this.defaultTenantProfileConfigurationFormGroup.get('maxSms').addValidators([Validators.required, Validators.min(0)]);
+    } else {
+      this.defaultTenantProfileConfigurationFormGroup.get('maxSms').clearValidators();
+    }
+    this.defaultTenantProfileConfigurationFormGroup.get('maxSms').updateValueAndValidity({emitEvent: false});
   }
 
   ngOnDestroy(): void {
@@ -149,6 +152,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
 
   writeValue(value: DefaultTenantProfileConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
+      this.maxSmsValidation(value.smsEnabled);
       this.defaultTenantProfileConfigurationFormGroup.patchValue(value, {emitEvent: false});
     }
   }
