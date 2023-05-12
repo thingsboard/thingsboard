@@ -24,10 +24,11 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.ExportableEntityDao;
 
 import java.util.List;
 
-public interface NotificationRuleDao extends Dao<NotificationRule> {
+public interface NotificationRuleDao extends Dao<NotificationRule>, ExportableEntityDao<NotificationRuleId, NotificationRule> {
 
     PageData<NotificationRule> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
 

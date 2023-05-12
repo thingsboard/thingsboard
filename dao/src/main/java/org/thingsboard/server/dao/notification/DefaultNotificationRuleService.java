@@ -99,6 +99,11 @@ public class DefaultNotificationRuleService extends AbstractEntityService implem
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteNotificationRuleById(tenantId, (NotificationRuleId) id);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_RULE;
     }

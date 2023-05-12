@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.NotificationRuleEntity;
 import org.thingsboard.server.dao.model.sql.NotificationRuleInfoEntity;
 
@@ -30,7 +31,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface NotificationRuleRepository extends JpaRepository<NotificationRuleEntity, UUID> {
+public interface NotificationRuleRepository extends JpaRepository<NotificationRuleEntity, UUID>, ExportableEntityRepository<NotificationRuleEntity> {
 
     String RULE_INFO_QUERY = "SELECT new org.thingsboard.server.dao.model.sql.NotificationRuleInfoEntity(r, t.name, t.configuration) " +
             "FROM NotificationRuleEntity r INNER JOIN NotificationTemplateEntity t ON r.templateId = t.id";
@@ -58,5 +59,12 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
 
     @Transactional
     void deleteByTenantId(UUID tenantId);
+
+    NotificationRuleEntity findByTenantIdAndName(UUID tenantId, String name);
+
+    Page<NotificationRuleEntity> findByTenantId(UUID tenantId, Pageable pageable);
+
+    @Query("SELECT externalId FROM NotificationRuleEntity WHERE id = :id")
+    UUID getExternalIdByInternal(@Param("id") UUID internalId);
 
 }
