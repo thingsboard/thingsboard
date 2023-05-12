@@ -66,10 +66,10 @@
                 <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
                   {{ 'version-control.export-credentials' | translate }}
                 </mat-checkbox>
-                <mat-checkbox formControlName="saveAttributes">
+                <mat-checkbox *ngIf="!entityTypesWithNoRelatedData.includes(entityTypeFormGroup.get('entityType').value)" formControlName="saveAttributes">
                   {{ 'version-control.export-attributes' | translate }}
                 </mat-checkbox>
-                <mat-checkbox formControlName="saveRelations">
+                <mat-checkbox *ngIf="!entityTypesWithNoRelatedData.includes(entityTypeFormGroup.get('entityType').value)" formControlName="saveRelations">
                   {{ 'version-control.export-relations' | translate }}
                 </mat-checkbox>
               </div>

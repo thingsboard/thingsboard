@@ -30,8 +30,17 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.DEVICE_PROFILE,
   EntityType.ASSET_PROFILE,
   EntityType.RULE_CHAIN,
-  EntityType.WIDGETS_BUNDLE
+  EntityType.WIDGETS_BUNDLE,
+  EntityType.NOTIFICATION_TEMPLATE,
+  EntityType.NOTIFICATION_TARGET,
+  EntityType.NOTIFICATION_RULE
 ];
+
+export const entityTypesWithNoRelatedData: Array<EntityType> = [
+  EntityType.NOTIFICATION_TEMPLATE,
+  EntityType.NOTIFICATION_TARGET,
+  EntityType.NOTIFICATION_RULE
+]
 
 export interface VersionCreateConfig {
   saveRelations: boolean;

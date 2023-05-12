@@ -2060,9 +2060,15 @@
         "type-queue": "Queue",
         "type-notification": "Notification",
         "type-notification-rule": "Notification rule",
+        "type-notification-rules": "Notification rules",
+        "list-of-notification-rules": "{ count, plural, =1 {One notification rule} other {List of # notification rules} }",
         "type-notification-target": "Notification recipient",
+        "type-notification-targets": "Notification recipients",
+        "list-of-notification-targets": "{ count, plural, =1 {One notification recipient} other {List of # notification recipients} }",
         "type-notification-request": "Notification request",
-        "type-notification-template": "Notification template"
+        "type-notification-template": "Notification template",
+        "type-notification-templates": "Notification templates",
+        "list-of-notification-templates": "{ count, plural, =1 {One notification template} other {List of # notification templates} }"
     },
     "entity-field": {
         "created-time": "Created time",
