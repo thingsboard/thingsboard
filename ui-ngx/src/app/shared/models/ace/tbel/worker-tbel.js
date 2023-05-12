@@ -4484,7 +4484,7 @@ var JSHINT = (function() {
   function advance(expected, relatedToken) {
     var nextToken = state.tokens.next;
 
-    if (expected && nextToken.id !== expected) {
+    if (expected && nextToken.id !== expected && state.tokens.curr.value !== "?") {
       if (relatedToken) {
         if (nextToken.id === "(end)") {
           error("E019", relatedToken, relatedToken.id);
@@ -5090,8 +5090,9 @@ var JSHINT = (function() {
     if (i) {
       return i;
     }
-
-    error("E030", state.tokens.next, state.tokens.next.value);
+    if (!(state.tokens.curr.value === "." && state.tokens.next.value === "?")) {
+      error("E030", state.tokens.next, state.tokens.next.value);
+    }
     if (state.tokens.next.id !== ";") {
       advance();
     }
@@ -5131,11 +5132,13 @@ var JSHINT = (function() {
                        state.tokens.next.id !== "(end)";
       var blockEnd = checkPunctuator(state.tokens.next, "}");
 
-      if (isSameLine && !blockEnd && !(stmt.id === "do" && state.inES6(true))) {
-        errorAt("E058", state.tokens.curr.line, state.tokens.curr.character);
-      } else if (!state.option.asi) {
-        if (!(blockEnd && isSameLine && state.option.lastsemic)) {
-          warningAt("W033", state.tokens.curr.line, state.tokens.curr.character);
+      if (state.tokens.curr.value !== "?"){
+        if (isSameLine && !blockEnd && !(stmt.id === "do" && state.inES6(true))) {
+          errorAt("E058", state.tokens.curr.line, state.tokens.curr.character);
+        } else if (!state.option.asi) {
+          if (!(blockEnd && isSameLine && state.option.lastsemic)) {
+            warningAt("W033", state.tokens.curr.line, state.tokens.curr.character);
+          }
         }
       }
     } else {
