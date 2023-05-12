@@ -19,7 +19,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TimeInterval, TimeService } from '@core/services/time.service';
 import { coerceNumberProperty } from '@angular/cdk/coercion';
 import { SubscriptSizing } from '@angular/material/form-field';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-timeinterval',

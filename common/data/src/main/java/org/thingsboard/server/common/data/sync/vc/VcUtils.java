@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../../../../theme";
+package org.thingsboard.server.common.data.sync.vc;
 
-:host {
-  .mini-button {
-    height: 32px;
-    width: 32px;
-    line-height: 32px;
-    padding: 4px;
-    vertical-align: middle;
-  }
+import org.apache.commons.lang3.StringUtils;
 
-  .mat-icon.copied{
-    color: #00C851 !important;
-  }
-  &:hover{
-    .mat-icon{
-      color: $tb-primary-color !important;
+public class VcUtils {
+
+    private VcUtils() {}
+
+    public static void checkBranchName(String branch) {
+        if (StringUtils.isEmpty(branch)) return;
+
+        boolean invalid = StringUtils.containsWhitespace(branch) ||
+                StringUtils.containsAny(branch, "..", "~", "^", ":", "\\") ||
+                StringUtils.endsWithAny(branch, "/", ".lock");
+        if (invalid) {
+            throw new IllegalArgumentException("Branch name is invalid");
+        }
     }
-  }
+
 }

@@ -29,7 +29,7 @@ import { alarmSeverityTranslations } from '@shared/models/alarm.models';
 import tinycolor from 'tinycolor2';
 import { StateObject } from '@core/api/widget-api.models';
 import { objToBase64URI } from '@core/utils';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-notification',
