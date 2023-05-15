@@ -478,7 +478,7 @@ public class RuleChainController extends BaseController {
     private String msgToOutput(List<TbMsg> msgs) throws Exception {
         JsonNode resultNode;
         if (msgs.size() > 1) {
-            resultNode = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+            resultNode = JacksonUtil.newArrayNode();
             for (TbMsg msg : msgs) {
                 JsonNode convertedData = convertMsgToOut(msg);
                 ((ArrayNode) resultNode).add(convertedData);
@@ -492,7 +492,7 @@ public class RuleChainController extends BaseController {
     private JsonNode convertMsgToOut(TbMsg msg) throws Exception {
         ObjectNode msgData = JacksonUtil.newObjectNode();
         if (!StringUtils.isEmpty(msg.getData())) {
-            msgData.set("msg", JacksonUtil.valueToTree(msg.getData()));
+            msgData.set("msg", JacksonUtil.toJsonNode(msg.getData()));
         }
         Map<String, String> metadata = msg.getMetaData().getData();
         msgData.set("metadata", JacksonUtil.valueToTree(metadata));

@@ -643,22 +643,22 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     @Test
     public void testEntityCountCmd_filterTypeSingularCompatibilityTest() {
-        ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.newObjectNode();
         oldFormatDeviceTypeFilterSingular.put("type", "deviceType");
         oldFormatDeviceTypeFilterSingular.put("deviceType", "default");
         oldFormatDeviceTypeFilterSingular.put("deviceNameFilter", "Device");
 
-        ObjectNode query = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode query = JacksonUtil.newObjectNode();
         query.set("entityFilter", oldFormatDeviceTypeFilterSingular);
 
-        ObjectNode entityCountCmd = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode entityCountCmd = JacksonUtil.newObjectNode();
         entityCountCmd.put("cmdId", 1);
         entityCountCmd.set("query", query);
 
-        ArrayNode entityCountCmds = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+        ArrayNode entityCountCmds = JacksonUtil.newArrayNode();
         entityCountCmds.add(entityCountCmd);
 
-        ObjectNode wrapperNode = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode wrapperNode = JacksonUtil.newObjectNode();
         wrapperNode.set("entityCountCmds", entityCountCmds);
 
         getWsClient().send(JacksonUtil.toString(wrapperNode));

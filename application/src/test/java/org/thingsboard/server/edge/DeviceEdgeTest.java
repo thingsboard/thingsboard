@@ -699,7 +699,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
         Assert.assertTrue(onUpdateCallback.getSubscribeLatch().await(30, TimeUnit.SECONDS));
 
-        Assert.assertEquals(JacksonUtil.OBJECT_MAPPER.createObjectNode().put(attrKey, attrValue),
+        Assert.assertEquals(JacksonUtil.newObjectNode().put(attrKey, attrValue),
                 JacksonUtil.fromBytes(onUpdateCallback.getPayloadBytes()));
 
         client.disconnect();

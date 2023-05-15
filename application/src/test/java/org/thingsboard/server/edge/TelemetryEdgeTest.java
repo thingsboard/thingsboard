@@ -251,7 +251,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         final String attributeKey = "key1";
-        ObjectNode attributesData = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode attributesData = JacksonUtil.newObjectNode();
         attributesData.put(attributeKey, "value1");
         doPost("/api/plugins/telemetry/ASSET/" + savedAsset.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributesData);
 
