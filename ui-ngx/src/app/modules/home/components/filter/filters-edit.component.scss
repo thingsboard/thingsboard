@@ -16,6 +16,9 @@
 @import "../../../../../scss/constants";
 
 :host {
+  &.tb-hide {
+    display: none;
+  }
   section.tb-filters-edit {
     min-height: 32px;
     padding: 0 6px;
