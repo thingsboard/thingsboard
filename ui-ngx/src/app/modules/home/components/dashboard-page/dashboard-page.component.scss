@@ -77,6 +77,11 @@ div.tb-dashboard-page {
     }
   }
 
+  .mat-divider-vertical.tb-toolbar-divider {
+    border-right-color: rgba(255,255,255,0.75);
+    height: 30px;
+  }
+
   .tb-dashboard-container {
     &.tb-dashboard-toolbar-opened {
       &.is-fullscreen {
@@ -136,6 +141,13 @@ div.tb-dashboard-page {
       @media #{$mat-gt-xl} {
         width: 60% !important;
       }
+    }
+  }
+
+  section.tb-header-buttons.tb-enter-edit-mode {
+    top: 2px;
+    .mdc-fab.tb-btn-enter-edit-mode {
+      opacity: .5;
     }
   }
 
