@@ -316,15 +316,32 @@
             </tb-dashboard-layout>
           </mat-drawer-content>
         </mat-drawer-container>
-        <section data-html2canvas-ignore fxLayout="row" class="layout-wrap tb-header-buttons tb-enter-edit-mode" fxLayoutAlign="start end" *ngIf="!readonly && hideToolbar">
-          <button color="primary"
+        <section data-html2canvas-ignore fxLayout="row" class="layout-wrap tb-header-buttons tb-enter-edit-mode" fxLayoutAlign="start end" *ngIf="!readonly && (hideToolbar || widgetEditMode)">
+          <button [fxShow]="!isEdit"
+                  color="primary"
                   mat-mini-fab
-                  class="tb-btn-header tb-btn-enter-edit-mode"
+                  class="tb-btn-header tb-btn-edit"
                   (click)="toggleDashboardEditMode()"
                   matTooltip="{{ 'action.enter-edit-mode' | translate }}"
                   matTooltipPosition="above">
             <mat-icon>edit</mat-icon>
           </button>
+          <button [fxShow]="isEdit"
+                  color="primary"
+                  mat-mini-fab
+                  class="tb-btn-header tb-btn-edit"
+                  (click)="saveDashboard()"
+                  matTooltip="{{'action.save' | translate}}"
+                  matTooltipPosition="below">
+            <mat-icon>done</mat-icon></button>
+          <button [fxShow]="isEdit"
+                  color="primary"
+                  mat-mini-fab
+                  class="tb-btn-header tb-btn-edit"
+                  (click)="toggleDashboardEditMode()"
+                  matTooltip="{{'action.cancel' | translate}}"
+                  matTooltipPosition="below">
+            <mat-icon>close</mat-icon></button>
         </section>
         <section *ngIf="!embedded" data-html2canvas-ignore class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
           <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ thingsboardVersion }}</a></span>
