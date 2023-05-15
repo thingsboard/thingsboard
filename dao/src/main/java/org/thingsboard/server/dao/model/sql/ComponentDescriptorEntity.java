@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
+import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -50,6 +51,10 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_SCOPE_PROPERTY)
     private ComponentScope scope;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CLUSTERING_MODE_PROPERTY)
+    private ComponentClusteringMode clusteringMode;
+
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_NAME_PROPERTY)
     private String name;
 
@@ -77,6 +82,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
         this.actions = component.getActions();
         this.type = component.getType();
         this.scope = component.getScope();
+        this.clusteringMode = component.getClusteringMode();
         this.name = component.getName();
         this.clazz = component.getClazz();
         this.configurationDescriptor = component.getConfigurationDescriptor();
@@ -89,6 +95,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
         data.setCreatedTime(createdTime);
         data.setType(type);
         data.setScope(scope);
+        data.setClusteringMode(clusteringMode);
         data.setName(this.getName());
         data.setClazz(this.getClazz());
         data.setActions(this.getActions());

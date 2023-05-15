@@ -24,8 +24,6 @@ import org.thingsboard.server.actors.TbActorId;
 import org.thingsboard.server.actors.TbStringActorId;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;

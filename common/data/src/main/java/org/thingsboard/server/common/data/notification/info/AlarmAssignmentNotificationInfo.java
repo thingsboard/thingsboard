@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -59,10 +60,12 @@ public class AlarmAssignmentNotificationInfo implements RuleOriginatedNotificati
     public Map<String, String> getTemplateData() {
         return mapOf(
                 "action", action,
+                "assigneeTitle", User.getTitle(assigneeEmail, assigneeFirstName, assigneeLastName),
                 "assigneeFirstName", assigneeFirstName,
                 "assigneeLastName", assigneeLastName,
                 "assigneeEmail", assigneeEmail,
                 "assigneeId", assigneeId != null ? assigneeId.toString() : null,
+                "userTitle", User.getTitle(userEmail, userFirstName, userLastName),
                 "userEmail", userEmail,
                 "userFirstName", userFirstName,
                 "userLastName", userLastName,

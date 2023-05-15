@@ -16,8 +16,6 @@
 package org.thingsboard.server.transport.mqtt.limits;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.haproxy.HAProxyMessage;
 import io.netty.handler.ipfilter.AbstractRemoteAddressFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;

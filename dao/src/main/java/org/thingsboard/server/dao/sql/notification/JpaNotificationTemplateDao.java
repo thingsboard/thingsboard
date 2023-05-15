@@ -34,8 +34,6 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.DaoUtil.getId;
-
 @Component
 @SqlDao
 @RequiredArgsConstructor

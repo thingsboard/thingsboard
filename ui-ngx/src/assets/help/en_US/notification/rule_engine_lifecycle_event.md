@@ -3,29 +3,31 @@
 <div class="divider"></div>
 <br/>
 
-Notification subject and message fields support templatization. The list of available templatization parameters depends on the template type.
+Notification subject and message fields support templatization.
+The list of available templatization parameters depends on the template type.
 See the available types and parameters below:
 
 Available template parameters:
 
-  * *recipientEmail* - email of the recipient;
-  * *recipientFirstName* - first name of the recipient;
-  * *recipientLastName* - last name of the recipient;
-  * *componentType* - one of: 'Rule chain', 'Rule node';
-  * *componentId* - the component id as uuid string;
-  * *componentName* - the rule chain or rule node name;    
-  * *ruleChainId* - the rule chain id as uuid string;
-  * *ruleChainName* - the rule chain name;
-  * *eventType* - one of: 'started', 'updated', 'stopped';
-  * *action* - one of: 'start', 'update', 'stop';    
-  * *error* - the error text;
+* `componentType` - one of: 'Rule chain', 'Rule node';
+* `componentId` - the component id as uuid string;
+* `componentName` - the rule chain or rule node name;
+* `ruleChainId` - the rule chain id as uuid string;
+* `ruleChainName` - the rule chain name;
+* `eventType` - one of: 'started', 'updated', 'stopped';
+* `action` - one of: 'start', 'update', 'stop';
+* `error` - the error text;
+* `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
+* `recipientEmail` - email of the recipient;
+* `recipientFirstName` - first name of the recipient;
+* `recipientLastName` - last name of the recipient;
 
-Parameter names must be wrapped using `${...}`. For example: `${recipientFirstName}`. 
+Parameter names must be wrapped using `${...}`. For example: `${recipientFirstName}`.
 You may also modify the value of the parameter with one of the suffixes:
 
-  * `upperCase`, for example - `${recipientFirstName:upperCase}`
-  * `lowerCase`, for example - `${recipientFirstName:lowerCase}`
-  * `capitalize`, for example - `${recipientFirstName:capitalize}`
+* `upperCase`, for example - `${recipientFirstName:upperCase}`
+* `lowerCase`, for example - `${recipientFirstName:lowerCase}`
+* `capitalize`, for example - `${recipientFirstName:capitalize}`
 
 <div class="divider"></div>
 
@@ -42,7 +44,6 @@ will be transformed to:
 
 ```text
 Rule node 'Export to Kafka' - start failure:<br/>Connection refused!
-{:copy-code}
 ```
 
 <br>

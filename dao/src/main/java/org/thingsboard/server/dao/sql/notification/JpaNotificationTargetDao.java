@@ -72,6 +72,11 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
     }
 
     @Override
+    public Long countByTenantId(TenantId tenantId) {
+        return notificationTargetRepository.countByTenantId(tenantId.getId());
+    }
+
+    @Override
     protected Class<NotificationTargetEntity> getEntityClass() {
         return NotificationTargetEntity.class;
     }

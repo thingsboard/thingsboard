@@ -19,9 +19,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.math.TbMathArgument;
-import org.thingsboard.rule.engine.math.TbMathArgumentType;
-import org.thingsboard.rule.engine.math.TbMathArgumentValue;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.Optional;

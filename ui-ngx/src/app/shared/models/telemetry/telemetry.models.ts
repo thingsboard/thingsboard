@@ -22,6 +22,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
 import {
+  AlarmCountQuery,
   AlarmData,
   AlarmDataQuery, EntityCountQuery,
   EntityData,
@@ -224,6 +225,11 @@ export class AlarmDataCmd implements WebsocketCmd {
   }
 }
 
+export class AlarmCountCmd implements WebsocketCmd {
+  cmdId: number;
+  query?: AlarmCountQuery;
+}
+
 export class EntityDataUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
 }
@@ -233,6 +239,10 @@ export class EntityCountUnsubscribeCmd implements WebsocketCmd {
 }
 
 export class AlarmDataUnsubscribeCmd implements WebsocketCmd {
+  cmdId: number;
+}
+
+export class AlarmCountUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
 }
 
@@ -248,6 +258,8 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
     this.alarmDataUnsubscribeCmds = [];
     this.entityCountCmds = [];
     this.entityCountUnsubscribeCmds = [];
+    this.alarmCountCmds = [];
+    this.alarmCountUnsubscribeCmds = [];
   }
   attrSubCmds: Array<AttributesSubscriptionCmd>;
   tsSubCmds: Array<TimeseriesSubscriptionCmd>;
@@ -258,6 +270,8 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
   alarmDataUnsubscribeCmds: Array<AlarmDataUnsubscribeCmd>;
   entityCountCmds: Array<EntityCountCmd>;
   entityCountUnsubscribeCmds: Array<EntityCountUnsubscribeCmd>;
+  alarmCountCmds: Array<AlarmCountCmd>;
+  alarmCountUnsubscribeCmds: Array<AlarmCountUnsubscribeCmd>;
 
   private static popCmds<T>(cmds: Array<T>, leftCount: number): Array<T> {
     const toPublish = Math.min(cmds.length, leftCount);
@@ -277,7 +291,9 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
       this.alarmDataCmds.length > 0 ||
       this.alarmDataUnsubscribeCmds.length > 0 ||
       this.entityCountCmds.length > 0 ||
-      this.entityCountUnsubscribeCmds.length > 0;
+      this.entityCountUnsubscribeCmds.length > 0 ||
+      this.alarmCountCmds.length > 0 ||
+      this.alarmCountUnsubscribeCmds.length > 0;
   }
 
   public clear() {
@@ -290,6 +306,8 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
     this.alarmDataUnsubscribeCmds.length = 0;
     this.entityCountCmds.length = 0;
     this.entityCountUnsubscribeCmds.length = 0;
+    this.alarmCountCmds.length = 0;
+    this.alarmCountUnsubscribeCmds.length = 0;
   }
 
   public preparePublishCommands(maxCommands: number): TelemetryPluginCmdsWrapper {
@@ -312,6 +330,10 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
     preparedWrapper.entityCountCmds = TelemetryPluginCmdsWrapper.popCmds(this.entityCountCmds, leftCount);
     leftCount -= preparedWrapper.entityCountCmds.length;
     preparedWrapper.entityCountUnsubscribeCmds = TelemetryPluginCmdsWrapper.popCmds(this.entityCountUnsubscribeCmds, leftCount);
+    leftCount -= preparedWrapper.entityCountUnsubscribeCmds.length;
+    preparedWrapper.alarmCountCmds = TelemetryPluginCmdsWrapper.popCmds(this.alarmCountCmds, leftCount);
+    leftCount -= preparedWrapper.alarmCountCmds.length;
+    preparedWrapper.alarmCountUnsubscribeCmds = TelemetryPluginCmdsWrapper.popCmds(this.alarmCountUnsubscribeCmds, leftCount);
     return preparedWrapper;
   }
 }
@@ -337,6 +359,7 @@ export interface SubscriptionUpdateMsg extends SubscriptionDataHolder {
 export enum CmdUpdateType {
   ENTITY_DATA = 'ENTITY_DATA',
   ALARM_DATA = 'ALARM_DATA',
+  ALARM_COUNT_DATA = 'ALARM_COUNT_DATA',
   COUNT_DATA = 'COUNT_DATA',
   NOTIFICATIONS_COUNT = 'NOTIFICATIONS_COUNT',
   NOTIFICATIONS = 'NOTIFICATIONS'
@@ -369,7 +392,13 @@ export interface EntityCountUpdateMsg extends CmdUpdateMsg {
   count: number;
 }
 
-export type WebsocketDataMsg = AlarmDataUpdateMsg | EntityDataUpdateMsg | EntityCountUpdateMsg | SubscriptionUpdateMsg;
+export interface AlarmCountUpdateMsg extends CmdUpdateMsg {
+  cmdUpdateType: CmdUpdateType.ALARM_COUNT_DATA;
+  count: number;
+}
+
+export type WebsocketDataMsg = AlarmDataUpdateMsg | AlarmCountUpdateMsg |
+  EntityDataUpdateMsg | EntityCountUpdateMsg | SubscriptionUpdateMsg;
 
 export const isEntityDataUpdateMsg = (message: WebsocketDataMsg): message is EntityDataUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
@@ -384,6 +413,11 @@ export const isAlarmDataUpdateMsg = (message: WebsocketDataMsg): message is Alar
 export const isEntityCountUpdateMsg = (message: WebsocketDataMsg): message is EntityCountUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.COUNT_DATA;
+};
+
+export const isAlarmCountUpdateMsg = (message: WebsocketDataMsg): message is AlarmCountUpdateMsg => {
+  const updateMsg = (message as CmdUpdateMsg);
+  return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.ALARM_COUNT_DATA;
 };
 
 export class SubscriptionUpdate implements SubscriptionUpdateMsg {
@@ -566,18 +600,29 @@ export class EntityCountUpdate extends CmdUpdate {
   }
 }
 
+export class AlarmCountUpdate extends CmdUpdate {
+  count: number;
+
+  constructor(msg: AlarmCountUpdateMsg) {
+    super(msg);
+    this.count = msg.count;
+  }
+}
+
 export class TelemetrySubscriber extends WsSubscriber {
 
   private dataSubject = new ReplaySubject<SubscriptionUpdate>(1);
   private entityDataSubject = new ReplaySubject<EntityDataUpdate>(1);
   private alarmDataSubject = new ReplaySubject<AlarmDataUpdate>(1);
   private entityCountSubject = new ReplaySubject<EntityCountUpdate>(1);
+  private alarmCountSubject = new ReplaySubject<AlarmCountUpdate>(1);
   private tsOffset = undefined;
 
   public data$ = this.dataSubject.asObservable();
   public entityData$ = this.entityDataSubject.asObservable();
   public alarmData$ = this.alarmDataSubject.asObservable();
   public entityCount$ = this.entityCountSubject.asObservable();
+  public alarmCount$ = this.alarmCountSubject.asObservable();
 
   public static createEntityAttributesSubscription(telemetryService: TelemetryWebsocketService,
                                                    entityId: EntityId, attributeScope: TelemetryType,
@@ -629,6 +674,7 @@ export class TelemetrySubscriber extends WsSubscriber {
     this.entityDataSubject.complete();
     this.alarmDataSubject.complete();
     this.entityCountSubject.complete();
+    this.alarmCountSubject.complete();
     super.complete();
   }
 
@@ -703,6 +749,18 @@ export class TelemetrySubscriber extends WsSubscriber {
       );
     } else {
       this.entityCountSubject.next(message);
+    }
+  }
+
+  public onAlarmCount(message: AlarmCountUpdate) {
+    if (this.zone) {
+      this.zone.run(
+        () => {
+          this.alarmCountSubject.next(message);
+        }
+      );
+    } else {
+      this.alarmCountSubject.next(message);
     }
   }
 

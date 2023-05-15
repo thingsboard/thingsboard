@@ -18,15 +18,14 @@ package org.thingsboard.server.service.session;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
+import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.cache.TbRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")

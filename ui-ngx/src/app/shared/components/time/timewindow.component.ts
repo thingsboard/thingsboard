@@ -40,7 +40,11 @@ import {
   TimewindowType
 } from '@shared/models/time/time.models';
 import { DatePipe } from '@angular/common';
-import { TIMEWINDOW_PANEL_DATA, TimewindowPanelComponent } from '@shared/components/time/timewindow-panel.component';
+import {
+  TIMEWINDOW_PANEL_DATA,
+  TimewindowPanelComponent,
+  TimewindowPanelData
+} from '@shared/components/time/timewindow-panel.component';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { TimeService } from '@core/services/time.service';
@@ -49,6 +53,7 @@ import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 // @dynamic
 @Component({
@@ -81,6 +86,10 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   get historyOnly() {
     return this.historyOnlyValue;
   }
+
+  @Input()
+  @coerceBoolean()
+  forAllTimeEnabled = false;
 
   alwaysDisplayTypePrefixValue = false;
 
@@ -147,6 +156,10 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   get asButton() {
     return this.asButtonValue;
   }
+
+  @Input()
+  @coerceBoolean()
+  strokedButton = false;
 
   isEditValue = false;
 
@@ -222,11 +235,12 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
         useValue: {
           timewindow: deepClone(this.innerValue),
           historyOnly: this.historyOnly,
+          forAllTimeEnabled: this.forAllTimeEnabled,
           quickIntervalOnly: this.quickIntervalOnly,
           aggregation: this.aggregation,
           timezone: this.timezone,
           isEdit: this.isEdit
-        }
+        } as TimewindowPanelData
       },
       {
         provide: OverlayRef,
@@ -296,12 +310,15 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
           this.millisecondsToTimeStringPipe.transform(this.innerValue.realtime.timewindowMs);
       }
     } else {
-      this.innerValue.displayValue = (!this.historyOnly || this.alwaysDisplayTypePrefix) ? (this.translate.instant('timewindow.history') + ' - ') : '';
+      this.innerValue.displayValue = (!this.historyOnly || this.alwaysDisplayTypePrefix) ?
+        (this.translate.instant('timewindow.history') + ' - ') : '';
       if (this.innerValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
         this.innerValue.displayValue += this.translate.instant('timewindow.last-prefix') + ' ' +
           this.millisecondsToTimeStringPipe.transform(this.innerValue.history.timewindowMs);
       } else if (this.innerValue.history.historyType === HistoryWindowType.INTERVAL) {
         this.innerValue.displayValue += this.translate.instant(QuickTimeIntervalTranslationMap.get(this.innerValue.history.quickInterval));
+      } else if (this.innerValue.history.historyType === HistoryWindowType.FOR_ALL_TIME) {
+        this.innerValue.displayValue += this.translate.instant('timewindow.for-all-time');
       } else {
         const startString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
         const endString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');

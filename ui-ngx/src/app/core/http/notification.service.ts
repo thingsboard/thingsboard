@@ -22,6 +22,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import {
   Notification,
+  NotificationDeliveryMethod,
   NotificationRequest,
   NotificationRequestInfo,
   NotificationRequestPreview,
@@ -69,6 +70,10 @@ export class NotificationService {
 
   public getNotificationRequestById(id: string, config?: RequestConfig): Observable<NotificationRequest> {
     return this.http.get<NotificationRequest>(`/api/notification/request/${id}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAvailableDeliveryMethods(config?: RequestConfig): Observable<Array<NotificationDeliveryMethod>> {
+    return this.http.get<Array<NotificationDeliveryMethod>>(`/api/notification/deliveryMethods`, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteNotificationRequest(id: string, config?: RequestConfig): Observable<void> {

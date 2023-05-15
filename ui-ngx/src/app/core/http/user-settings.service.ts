@@ -19,7 +19,7 @@ import { Observable } from 'rxjs';
 import {
   DocumentationLink, DocumentationLinks,
   GettingStarted,
-  initialUserSettings,
+  initialUserSettings, QuickLinks, UserDashboardAction, UserDashboardsInfo,
   UserSettings,
   UserSettingsType
 } from '@shared/models/user-settings.models';
@@ -67,6 +67,16 @@ export class UserSettingsService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getQuickLinks(config?: RequestConfig): Observable<QuickLinks> {
+    return this.http.get<QuickLinks>(`/api/user/settings/${UserSettingsType.QUICK_LINKS}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public updateQuickLinks(quickLinks: QuickLinks, config?: RequestConfig): Observable<void> {
+    return this.http.put<void>(`/api/user/settings/${UserSettingsType.QUICK_LINKS}`, quickLinks,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getGettingStarted(config?: RequestConfig): Observable<GettingStarted> {
     return this.http.get<GettingStarted>(`/api/user/settings/${UserSettingsType.GETTING_STARTED}`,
       defaultHttpOptionsFromConfig(config));
@@ -74,6 +84,17 @@ export class UserSettingsService {
 
   public updateGettingStarted(gettingStarted: GettingStarted, config?: RequestConfig): Observable<void> {
     return this.http.put<void>(`/api/user/settings/${UserSettingsType.GETTING_STARTED}`, gettingStarted,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getUserDashboardsInfo(config?: RequestConfig): Observable<UserDashboardsInfo> {
+    return this.http.get<UserDashboardsInfo>('/api/user/dashboards',
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public reportUserDashboardAction(dashboardId: string, action: UserDashboardAction,
+                                   config?: RequestConfig): Observable<UserDashboardsInfo> {
+    return this.http.get<UserDashboardsInfo>(`/api/user/dashboards/${dashboardId}/${action}`,
       defaultHttpOptionsFromConfig(config));
   }
 
