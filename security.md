@@ -12,8 +12,6 @@ Do not report non-security-impacting bugs through this channel. Use GitHub issue
 **Proposed Email Content**
 Provide a descriptive subject line and in the body of the email include the following information:
 
-Basic identity information, such as your name and your affiliation or company.
-Detailed steps to reproduce the vulnerability (POC scripts, screenshots, and compressed packet captures are all helpful to us).
-Description of the effects of the vulnerability on Thingsboard and the related hardware and software configurations, so that the Thingsboarf Security Team can reproduce it.
-How the vulnerability affects Thingsboard usage and an estimation of the attack surface, if there is one.
-List other projects or dependencies that were used in conjunction with Thingsboard to produce the vulnerability.
+- Basic identity information, such as your name and your affiliation or company.
+- Detailed steps to reproduce the vulnerability (log errors, screenshots are all helpful to us).
+- Description of the effects of the vulnerability on Thingsboard.
