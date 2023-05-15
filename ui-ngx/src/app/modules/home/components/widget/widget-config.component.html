@@ -42,47 +42,7 @@
         </section>
       </div>
       <div *ngIf="widgetType === widgetTypes.alarm" fxLayout="column" fxLayoutAlign="center">
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center"
-             fxLayoutGap.gt-xs="8px">
-          <mat-form-field fxFlex class="mat-block" floatLabel="always">
-            <mat-label translate>alarm.alarm-status-list</mat-label>
-            <mat-select formControlName="alarmStatusList" multiple
-                        placeholder="{{ !dataSettings.get('alarmStatusList').value?.length ? ('alarm.any-status' | translate) : '' }}">
-              <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
-                {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field fxFlex class="mat-block" floatLabel="always">
-            <mat-label translate>alarm.alarm-severity-list</mat-label>
-            <mat-select formControlName="alarmSeverityList" multiple
-                        placeholder="{{ !dataSettings.get('alarmSeverityList').value?.length ? ('alarm.any-severity' | translate) : '' }}">
-              <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
-                {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center">
-          <mat-form-field fxFlex class="mat-block" floatLabel="always">
-            <mat-label translate>alarm.alarm-type-list</mat-label>
-            <mat-chip-grid #alarmTypeChipList formControlName="alarmTypeList">
-              <mat-chip-row *ngFor="let type of alarmTypeList()"
-              [removable]="true" (removed)="removeAlarmType(type)">
-              {{type}}
-              <mat-icon matChipRemove>cancel</mat-icon>
-              </mat-chip-row>
-              <input placeholder="{{ !dataSettings.get('alarmTypeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
-                     [matChipInputFor]="alarmTypeChipList"
-                     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                     matChipInputAddOnBlur
-                     (matChipInputTokenEnd)="addAlarmType($event)">
-            </mat-chip-grid>
-          </mat-form-field>
-          <mat-checkbox fxFlex formControlName="searchPropagatedAlarms">
-            {{ 'alarm.search-propagated-alarms' | translate }}
-          </mat-checkbox>
-        </div>
+        <tb-alarm-filter-config buttonMode="false" formControlName="alarmFilterConfig"></tb-alarm-filter-config>
       </div>
       <mat-accordion multi>
         <mat-expansion-panel (opened)="extensionPanelIsOpen(true)" (closed)="extensionPanelIsOpen(false)" class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
@@ -162,8 +122,14 @@
                               </mat-form-field>
                             </ng-template>
                             <ng-template [ngSwitchCase]="datasourceControl.get('type').value === datasourceType.entity ||
-                                                   datasourceControl.get('type').value === datasourceType.entityCount ? datasourceControl.get('type').value : ''">
+                                                   datasourceControl.get('type').value === datasourceType.entityCount ||
+                                                   datasourceControl.get('type').value === datasourceType.alarmCount ? datasourceControl.get('type').value : ''">
+                              <tb-alarm-filter-config *ngIf="datasourceControl.get('type').value === datasourceType.alarmCount"
+                                                      propagatedFilter="false"
+                                                      style="height: 56px; margin-bottom: 8px;"
+                                                      [formControl]="datasourceControl.get('alarmFilterConfig')"></tb-alarm-filter-config>
                               <tb-entity-alias-select
+                                *ngIf="datasourceControl.get('type').value !== datasourceType.alarmCount"
                                 [showLabel]="true"
                                 [tbRequired]="true"
                                 [aliasController]="aliasController"
@@ -171,12 +137,13 @@
                                 [callbacks]="widgetConfigCallbacks">
                               </tb-entity-alias-select>
                               <tb-filter-select
+                                *ngIf="datasourceControl.get('type').value !== datasourceType.alarmCount"
                                 [showLabel]="true"
                                 [aliasController]="aliasController"
                                 [formControl]="datasourceControl.get('filterId')"
                                 [callbacks]="widgetConfigCallbacks">
                               </tb-filter-select>
-                              <mat-form-field *ngIf="datasourceControl.get('type').value === datasourceType.entityCount"
+                              <mat-form-field *ngIf="[datasourceType.entityCount, datasourceType.alarmCount].includes(datasourceControl.get('type').value)"
                                               fxFlex>
                                 <input matInput
                                        placeholder="{{ 'datasource.label' | translate }}"
@@ -189,7 +156,7 @@
                                           [widgetType]="widgetType"
                                           [datasourceType]="datasourceControl.get('type').value"
                                           [maxDataKeys]="modelValue?.typeParameters?.maxDataKeys"
-                                          [optDataKeys]="dataKeysOptional(datasourceControl.value)"
+                                          [optDataKeys]="dataKeysOptional(datasourceControl.get('type').value)"
                                           [aliasController]="aliasController"
                                           [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
                                           [dataKeySettingsDirective]="modelValue?.dataKeySettingsDirective"
@@ -271,7 +238,7 @@
               {{ 'widget-config.alarm-source' | translate }}
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div [formGroup]="alarmSourceSettings" style="padding: 0 5px;">
+          <div class="tb-datasource-params" [formGroup]="alarmSourceSettings">
             <section class="tb-datasource-section">
               <mat-form-field class="tb-datasource-type">
                 <mat-select formControlName="type">

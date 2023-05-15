@@ -161,4 +161,11 @@ public class CustomerPageHelper extends CustomerPageElements {
         phoneNumberEntityView().sendKeys(number);
         phoneNumberEntityView().sendKeys(Keys.TAB);
     }
+
+    public void openCustomerAlarms(String customerName) {
+        if (!customerDetailsView().isDisplayed()) {
+            customer(customerName).click();
+        }
+        customerDetailsAlarmsBtn().click();
+    }
 }

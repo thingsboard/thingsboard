@@ -20,8 +20,6 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
 
 import java.util.Set;
 

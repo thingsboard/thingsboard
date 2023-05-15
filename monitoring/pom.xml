@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.5.0-SNAPSHOT</version>
+        <version>3.6.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
 
@@ -41,6 +41,9 @@
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.implementationTitle>ThingsBoard Monitoring Service</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.monitoring.ThingsboardMonitoringApplication</pkg.mainClass>
+
+        <californium.version>2.6.1</californium.version>
+        <leshan.version>2.0.0-M4</leshan.version>
     </properties>
 
     <dependencies>
@@ -65,10 +68,12 @@
         <dependency>
             <groupId>org.eclipse.californium</groupId>
             <artifactId>californium-core</artifactId>
+            <version>${californium.version}</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.californium</groupId>
             <artifactId>scandium</artifactId>
+            <version>${californium.version}</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.paho</groupId>
@@ -77,6 +82,16 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.leshan</groupId>
+            <artifactId>leshan-client-cf</artifactId>
+            <version>${leshan.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.leshan</groupId>
+            <artifactId>leshan-core</artifactId>
+            <version>${leshan.version}</version>
         </dependency>
         <dependency>
             <groupId>org.java-websocket</groupId>

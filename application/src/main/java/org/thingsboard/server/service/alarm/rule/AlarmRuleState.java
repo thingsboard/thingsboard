@@ -17,7 +17,6 @@ package org.thingsboard.server.service.alarm.rule;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmRuleState;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
@@ -26,8 +25,8 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
-import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
 import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
+import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
@@ -42,6 +41,7 @@ import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmRuleState;
 
 import java.time.Instant;
 import java.time.ZoneId;

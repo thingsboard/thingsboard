@@ -25,6 +25,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.Optional;
@@ -35,6 +37,8 @@ import java.util.Optional;
 @ToString(callSuper = true)
 public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
+    @NoXss(fieldName = "web notification subject")
+    @Length(fieldName = "web notification subject", max = 150, message = "cannot be longer than 150 chars")
     @NotEmpty
     private String subject;
     private JsonNode additionalConfig;
@@ -45,6 +49,15 @@ public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
         this.additionalConfig = other.additionalConfig != null ? other.additionalConfig.deepCopy() : null;
     }
 
+    @NoXss(fieldName = "web notification message")
+    @Length(fieldName = "web notification message", max = 250, message = "cannot be longer than 250 chars")
+    @Override
+    public String getBody() {
+        return super.getBody();
+    }
+
+    @NoXss(fieldName = "web notification button text")
+    @Length(fieldName = "web notification button text", max = 50, message = "cannot be longer than 50 chars")
     @JsonIgnore
     public String getButtonText() {
         return getButtonConfigProperty("text");
@@ -57,6 +70,8 @@ public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
         });
     }
 
+    @NoXss(fieldName = "web notification button link")
+    @Length(fieldName = "web notification button link", max = 300, message = "cannot be longer than 300 chars")
     @JsonIgnore
     public String getButtonLink() {
         return getButtonConfigProperty("link");

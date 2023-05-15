@@ -19,17 +19,14 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.notification.DefaultNotificationSettingsService;
-import org.thingsboard.server.dao.notification.NotificationRuleService;
-import org.thingsboard.server.dao.notification.NotificationTargetService;
-import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 @Service
 @Primary
 public class MockNotificationSettingsService extends DefaultNotificationSettingsService {
 
-    public MockNotificationSettingsService(AdminSettingsService adminSettingsService, NotificationTargetService notificationTargetService, NotificationTemplateService notificationTemplateService, NotificationRuleService notificationRuleService) {
-        super(adminSettingsService, notificationTargetService, notificationTemplateService, notificationRuleService);
+    public MockNotificationSettingsService(AdminSettingsService adminSettingsService) {
+        super(adminSettingsService, null, null);
     }
 
     @Override

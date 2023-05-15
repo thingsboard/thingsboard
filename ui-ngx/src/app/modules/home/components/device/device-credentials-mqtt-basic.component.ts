@@ -29,7 +29,7 @@ import {
 import { Subject } from 'rxjs';
 import { DeviceCredentialMQTTBasic } from '@shared/models/device.models';
 import { takeUntil } from 'rxjs/operators';
-import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
+import { generateSecret, isDefinedAndNotNull, isEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-device-credentials-mqtt-basic',
@@ -127,5 +127,9 @@ export class DeviceCredentialsMqttBasicComponent implements ControlValueAccessor
 
       return hasAtLeastOne ? null : {atLeastOne: true};
     };
+  }
+
+  public generate(formControlName: string) {
+    this.deviceCredentialsMqttFormGroup.get(formControlName).patchValue(generateSecret(20));
   }
 }

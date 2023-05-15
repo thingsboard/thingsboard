@@ -54,14 +54,13 @@ import {
   TooltipValueFormatFunction
 } from './flot-widget.models';
 import * as moment_ from 'moment';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { AggregationType } from '@shared/models/time/time.models';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import Timeout = NodeJS.Timeout;
 
-const tinycolor = tinycolor_;
 const moment = moment_;
 
 export class TbFlot {
@@ -409,7 +408,7 @@ export class TbFlot {
         }
       }
       series.lines = {
-        fill: keySettings.fillLines === true
+        fill: keySettings.fillLines === true ? (keySettings.fillLinesOpacity || 0.4) : false
       };
 
       if (this.settings.stack && !this.comparisonEnabled) {

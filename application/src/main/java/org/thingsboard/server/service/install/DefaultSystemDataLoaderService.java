@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,6 +115,8 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Profile("install")
@@ -537,6 +540,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         this.deleteSystemWidgetBundle("entity_admin_widgets");
         this.deleteSystemWidgetBundle("navigation_widgets");
         this.deleteSystemWidgetBundle("edge_widgets");
+        this.deleteSystemWidgetBundle("home_page_widgets");
         installScripts.loadSystemWidgets();
     }
 
@@ -710,18 +714,29 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
+    @SneakyThrows
     public void createDefaultNotificationConfigs() {
         log.info("Creating default notification configs for system admin");
-        if (notificationTargetService.findNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID, new PageLink(1)).getTotalElements() == 0) {
+        if (notificationTargetService.countNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID) == 0) {
             notificationSettingsService.createDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
         }
         PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+        ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
         log.info("Creating default notification configs for all tenants");
+        AtomicInteger count = new AtomicInteger();
         for (TenantId tenantId : tenants) {
-            if (notificationTargetService.findNotificationTargetsByTenantId(tenantId, new PageLink(1)).getTotalElements() == 0) {
-                notificationSettingsService.createDefaultNotificationConfigs(tenantId);
-            }
+            executor.submit(() -> {
+                if (notificationTargetService.countNotificationTargetsByTenantId(tenantId) == 0) {
+                    notificationSettingsService.createDefaultNotificationConfigs(tenantId);
+                    int n = count.incrementAndGet();
+                    if (n % 500 == 0) {
+                        log.info("{} tenants processed", n);
+                    }
+                }
+            });
         }
+        executor.shutdown();
+        executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
     }
 
 }

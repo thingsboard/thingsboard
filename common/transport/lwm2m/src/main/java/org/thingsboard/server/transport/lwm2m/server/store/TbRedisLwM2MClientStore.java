@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
 import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
@@ -51,7 +52,12 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
             if (data == null) {
                 return null;
             } else {
-                return deserialize(data);
+                try {
+                    return deserialize(data);
+                } catch (Exception e) {
+                    log.warn("[{}] Failed to deserialize client from data: {}", endpoint, Hex.encodeHexString(data), e);
+                    return null;
+                }
             }
         }
     }

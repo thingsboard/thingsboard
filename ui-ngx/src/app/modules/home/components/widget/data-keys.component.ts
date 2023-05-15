@@ -102,7 +102,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   private maxDataKeysValue: number;
   get maxDataKeys(): number {
-    return this.datasourceType === DatasourceType.entityCount ? 1 : this.maxDataKeysValue;
+    return this.isCountDatasource ? 1 : this.maxDataKeysValue;
   }
 
   @Input()
@@ -136,7 +136,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   private requiredValue: boolean;
   get required(): boolean {
-    return this.requiredValue || !this.optDataKeys || this.isEntityCountDatasource;
+    return this.requiredValue || !this.optDataKeys || this.isCountDatasource;
   }
   @Input()
   set required(value: boolean) {
@@ -240,7 +240,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     if (this.maxDataKeys !== null && this.maxDataKeys > -1) {
       if (this.datasourceType === DatasourceType.function) {
         return this.translate.instant('datakey.maximum-function-types', {count: this.maxDataKeys});
-      } else if (!this.isEntityCountDatasource) {
+      } else if (!this.isCountDatasource) {
         return this.translate.instant('datakey.maximum-timeseries-or-attributes', {count: this.maxDataKeys});
       } else {
         return '';
@@ -287,7 +287,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   private reset() {
     if (this.widgetType === widgetType.alarm) {
       this.keys = this.utils.getDefaultAlarmDataKeys();
-    } else if (this.isEntityCountDatasource) {
+    } else if (this.isCountDatasource) {
       this.keys = [this.callbacks.generateDataKey('count', DataKeyType.count, this.datakeySettingsSchema)];
     } else {
       this.keys = [];
@@ -535,8 +535,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     }, 0);
   }
 
-  get isEntityCountDatasource(): boolean {
-    return this.datasourceType === DatasourceType.entityCount;
+  get isCountDatasource(): boolean {
+    return [DatasourceType.entityCount, DatasourceType.alarmCount].includes(this.datasourceType);
   }
 
   private clearSearchCache() {

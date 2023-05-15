@@ -32,19 +32,20 @@ import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigg
 import java.util.Set;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;
 
 @Service
 public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<AlarmAssignmentNotificationRuleTriggerConfig> {
 
     @Override
     public boolean matchesFilter(RuleEngineMsgTrigger trigger, AlarmAssignmentNotificationRuleTriggerConfig triggerConfig) {
-        Action action = trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGN) ? Action.ASSIGNED : Action.UNASSIGNED;
+        Action action = trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGNED) ? Action.ASSIGNED : Action.UNASSIGNED;
         if (!triggerConfig.getNotifyOn().contains(action)) {
             return false;
         }
         Alarm alarm = JacksonUtil.fromString(trigger.getMsg().getData(), Alarm.class);
-        return (isEmpty(triggerConfig.getAlarmTypes()) || triggerConfig.getAlarmTypes().contains(alarm.getType())) &&
-                (isEmpty(triggerConfig.getAlarmSeverities()) || triggerConfig.getAlarmSeverities().contains(alarm.getSeverity())) &&
+        return emptyOrContains(triggerConfig.getAlarmTypes(), alarm.getType()) &&
+                emptyOrContains(triggerConfig.getAlarmSeverities(), alarm.getSeverity()) &&
                 (isEmpty(triggerConfig.getAlarmStatuses()) || AlarmStatusFilter.from(triggerConfig.getAlarmStatuses()).matches(alarm));
     }
 
@@ -53,7 +54,7 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
         AlarmInfo alarmInfo = JacksonUtil.fromString(trigger.getMsg().getData(), AlarmInfo.class);
         AlarmAssignee assignee = alarmInfo.getAssignee();
         return AlarmAssignmentNotificationInfo.builder()
-                .action(trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGN) ? "assigned" : "unassigned")
+                .action(trigger.getMsg().getType().equals(DataConstants.ALARM_ASSIGNED) ? "assigned" : "unassigned")
                 .assigneeFirstName(assignee != null ? assignee.getFirstName() : null)
                 .assigneeLastName(assignee != null ? assignee.getLastName() : null)
                 .assigneeEmail(assignee != null ? assignee.getEmail() : null)
@@ -78,7 +79,7 @@ public class AlarmAssignmentTriggerProcessor implements RuleEngineMsgNotificatio
 
     @Override
     public Set<String> getSupportedMsgTypes() {
-        return Set.of(DataConstants.ALARM_ASSIGN, DataConstants.ALARM_UNASSIGN);
+        return Set.of(DataConstants.ALARM_ASSIGNED, DataConstants.ALARM_UNASSIGNED);
     }
 
 }

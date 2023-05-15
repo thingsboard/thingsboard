@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class JsonDataEntry extends BasicKvEntry {
+
     private final String value;
 
     public JsonDataEntry(String key, String value) {

@@ -16,9 +16,7 @@
 @import '../../../../../scss/constants';
 
 :host {
-  /*  flex: 1;
-    display: flex;
-    justify-content: flex-start; */
   padding-right: 8px;
-  min-width: 160px;
+  overflow: hidden;
+  max-width: 100%;
 }

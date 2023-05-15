@@ -1,6 +1,6 @@
 {
   "name": "thingsboard",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "scripts": {
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
@@ -31,6 +31,7 @@
     "@flowjs/flow.js": "^2.14.1",
     "@flowjs/ngx-flow": "~0.6.0",
     "@geoman-io/leaflet-geoman-free": "^2.13.0",
+    "@iplab/ngx-color-picker": "^15.0.2",
     "@juggle/resize-observer": "^3.4.0",
     "@mat-datetimepicker/core": "~11.0.3",
     "@material-ui/core": "4.12.3",
@@ -73,7 +74,6 @@
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.42",
     "ngx-clipboard": "^15.1.0",
-    "ngx-color-picker": "^14.0.0",
     "ngx-daterangepicker-material": "^6.0.4",
     "ngx-drag-drop": "^15.0.1",
     "ngx-flowchart": "https://github.com/thingsboard/ngx-flowchart.git#release/2.0.0",
@@ -97,7 +97,7 @@
     "screenfull": "^6.0.2",
     "split.js": "^1.6.5",
     "systemjs": "6.11.0",
-    "tinycolor2": "~1.4.2",
+    "tinycolor2": "^1.6.0",
     "tinymce": "~5.10.7",
     "tooltipster": "^4.2.8",
     "ts-transformer-keys": "^0.4.4",

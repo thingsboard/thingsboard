@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.bootstrap.store;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.bootstrap.ConfigurationChecker;
 import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
+
 import java.util.Map;
 
 public class LwM2MConfigurationChecker extends ConfigurationChecker {

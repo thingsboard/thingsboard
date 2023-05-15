@@ -19,7 +19,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TimeInterval, TimeService } from '@core/services/time.service';
 import { coerceNumberProperty } from '@angular/cdk/coercion';
 import { SubscriptSizing } from '@angular/material/form-field';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-timeinterval',
@@ -63,8 +63,6 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
   @Input()
   @coerceBoolean()
   isEdit = false;
-
-  hideFlagValue = false;
 
   @Input()
   @coerceBoolean()
@@ -208,7 +206,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
   }
 
   onHideFlagChange() {
-    this.hideFlagChange.emit(this.hideFlagValue);
+    this.hideFlagChange.emit(this.hideFlag);
   }
 
   onTimeInputChange(type: string) {

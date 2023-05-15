@@ -18,7 +18,6 @@ package org.thingsboard.server.service.security.permission;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 
 public enum Resource {

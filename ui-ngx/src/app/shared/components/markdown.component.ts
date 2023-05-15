@@ -23,7 +23,7 @@ import {
   EventEmitter,
   Inject,
   Injector,
-  Input,
+  Input, NgZone,
   OnChanges,
   Output,
   Renderer2,
@@ -39,6 +39,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 import { deepClone, guid, isDefinedAndNotNull } from '@core/utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 let defaultMarkdownStyle;
 
@@ -76,6 +77,10 @@ export class TbMarkdownComponent implements OnChanges {
   get fallbackToPlainMarkdown(): boolean { return this.fallbackToPlainMarkdownValue; }
   set fallbackToPlainMarkdown(value: boolean) { this.fallbackToPlainMarkdownValue = coerceBooleanProperty(value); }
 
+  @Input()
+  @coerceBoolean()
+  usePlainMarkdown = false;
+
   @Output() ready = new EventEmitter<void>();
 
   private lineNumbersValue = false;
@@ -90,6 +95,7 @@ export class TbMarkdownComponent implements OnChanges {
 
   constructor(private help: HelpService,
               private cd: ChangeDetectorRef,
+              private zone: NgZone,
               public markdownService: MarkdownService,
               @Inject(SHARED_MODULE_TOKEN) private sharedModule: Type<any>,
               private dynamicComponentFactoryService: DynamicComponentFactoryService,
@@ -97,7 +103,7 @@ export class TbMarkdownComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (isDefinedAndNotNull(this.data)) {
-      this.render(this.data);
+      this.zone.run(() => this.render(this.data));
     }
   }
 
@@ -123,13 +129,8 @@ export class TbMarkdownComponent implements OnChanges {
     }
     template = this.sanitizeCurlyBraces(template);
     this.markdownContainer.clear();
-    const parent = this;
-    let readyObservable: Observable<void>;
-    let compileModules = [this.sharedModule];
-    if (this.additionalCompileModules) {
-      compileModules = compileModules.concat(this.additionalCompileModules);
-    }
     let styles: string[] = [];
+    let readyObservable: Observable<void>;
     if (this.applyDefaultMarkdownStyle) {
       if (!defaultMarkdownStyle) {
         defaultMarkdownStyle = deepClone(TbMarkdownComponent['ɵcmp'].styles)[0].replace(/\[_nghost\-%COMP%\]/g, '')
@@ -140,68 +141,85 @@ export class TbMarkdownComponent implements OnChanges {
     if (this.additionalStyles) {
       styles = styles.concat(this.additionalStyles);
     }
-    this.dynamicComponentFactoryService.createDynamicComponentFactory(
-      class TbMarkdownInstance {
-        ngOnDestroy(): void {
-          parent.destroyMarkdownInstanceResources();
-        }
-      },
-      template,
-      compileModules,
-      true, 1, styles
-    ).subscribe((factory) => {
-      this.tbMarkdownInstanceComponentFactory = factory;
-      const injector: Injector = Injector.create({providers: [], parent: this.markdownContainer.injector});
-      try {
-        this.tbMarkdownInstanceComponentRef =
-          this.markdownContainer.createComponent(this.tbMarkdownInstanceComponentFactory, 0, injector);
-        if (this.context) {
-          for (const propName of Object.keys(this.context)) {
-            this.tbMarkdownInstanceComponentRef.instance[propName] = this.context[propName];
-          }
-        }
-        this.tbMarkdownInstanceComponentRef.instance.style = this.style;
-        readyObservable = this.handleImages(this.tbMarkdownInstanceComponentRef.location.nativeElement);
-        this.cd.detectChanges();
-        this.error = null;
-      } catch (error) {
-        readyObservable = this.handleError(template, error, styles);
-      }
-      readyObservable.subscribe(() => {
-        this.ready.emit();
-      });
-    },
-    (error) => {
-      readyObservable = this.handleError(template, error, styles);
+    if (this.usePlainMarkdown) {
+      readyObservable = this.plainMarkdown(template, styles);
       this.cd.detectChanges();
       readyObservable.subscribe(() => {
         this.ready.emit();
       });
-    });
+    } else {
+      const parent = this;
+      let compileModules = [this.sharedModule];
+      if (this.additionalCompileModules) {
+        compileModules = compileModules.concat(this.additionalCompileModules);
+      }
+      this.dynamicComponentFactoryService.createDynamicComponentFactory(
+        class TbMarkdownInstance {
+          ngOnDestroy(): void {
+            parent.destroyMarkdownInstanceResources();
+          }
+        },
+        template,
+        compileModules,
+        true, 1, styles
+      ).subscribe((factory) => {
+          this.tbMarkdownInstanceComponentFactory = factory;
+          const injector: Injector = Injector.create({providers: [], parent: this.markdownContainer.injector});
+          try {
+            this.tbMarkdownInstanceComponentRef =
+              this.markdownContainer.createComponent(this.tbMarkdownInstanceComponentFactory, 0, injector);
+            if (this.context) {
+              for (const propName of Object.keys(this.context)) {
+                this.tbMarkdownInstanceComponentRef.instance[propName] = this.context[propName];
+              }
+            }
+            this.tbMarkdownInstanceComponentRef.instance.style = this.style;
+            readyObservable = this.handleImages(this.tbMarkdownInstanceComponentRef.location.nativeElement);
+            this.cd.detectChanges();
+            this.error = null;
+          } catch (error) {
+            readyObservable = this.handleError(template, error, styles);
+          }
+          readyObservable.subscribe(() => {
+            this.ready.emit();
+          });
+        },
+        (error) => {
+          readyObservable = this.handleError(template, error, styles);
+          this.cd.detectChanges();
+          readyObservable.subscribe(() => {
+            this.ready.emit();
+          });
+        });
+    }
   }
 
   private handleError(template: string, error, styles?: string[]): Observable<void> {
     this.error = (error ? error + '' : 'Failed to render markdown!').replace(/\n/g, '<br>');
     this.markdownContainer.clear();
     if (this.fallbackToPlainMarkdownValue) {
-      const element = this.fallbackElement.nativeElement;
-      let styleElement;
-      if (styles?.length) {
-        const markdownClass = 'tb-markdown-view-' + guid();
-        let innerStyle = styles.join('\n');
-        innerStyle = innerStyle.replace(/\.tb-markdown-view/g, '.' + markdownClass);
-        template = template.replace(/tb-markdown-view/g, markdownClass);
-        styleElement = this.renderer.createElement('style');
-        styleElement.innerHTML = innerStyle;
-      }
-      element.innerHTML = template;
-      if (styleElement) {
-        this.renderer.appendChild(element, styleElement);
-      }
-      return this.handleImages(element);
+      return this.plainMarkdown(template, styles);
     } else {
       return of(null);
     }
+  }
+
+  private plainMarkdown(template: string, styles?: string[]): Observable<void> {
+    const element = this.fallbackElement.nativeElement;
+    let styleElement;
+    if (styles?.length) {
+      const markdownClass = 'tb-markdown-view-' + guid();
+      let innerStyle = styles.join('\n');
+      innerStyle = innerStyle.replace(/\.tb-markdown-view/g, '.' + markdownClass);
+      template = template.replace(/tb-markdown-view/g, markdownClass);
+      styleElement = this.renderer.createElement('style');
+      styleElement.innerHTML = innerStyle;
+    }
+    element.innerHTML = template;
+    if (styleElement) {
+      this.renderer.appendChild(element, styleElement);
+    }
+    return this.handleImages(element);
   }
 
   private handlePlugins(element: HTMLElement): void {

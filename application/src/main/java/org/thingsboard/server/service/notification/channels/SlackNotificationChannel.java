@@ -22,12 +22,12 @@ import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
-import org.thingsboard.server.dao.notification.NotificationSettingsService;
-import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
+import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
 @Component
 @RequiredArgsConstructor
@@ -47,9 +47,11 @@ public class SlackNotificationChannel implements NotificationChannel<SlackConver
     }
 
     @Override
-    public boolean check(TenantId tenantId) {
+    public void check(TenantId tenantId) throws Exception {
         NotificationSettings notificationSettings = notificationSettingsService.findNotificationSettings(tenantId);
-        return notificationSettings.getDeliveryMethodsConfigs().containsKey(NotificationDeliveryMethod.SLACK);
+        if (!notificationSettings.getDeliveryMethodsConfigs().containsKey(NotificationDeliveryMethod.SLACK)) {
+            throw new RuntimeException("Slack API token is not configured");
+        }
     }
 
     @Override

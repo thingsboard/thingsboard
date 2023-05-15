@@ -35,6 +35,7 @@ import { OverlayRef } from '@angular/cdk/overlay';
 
 export interface TimewindowPanelData {
   historyOnly: boolean;
+  forAllTimeEnabled: boolean;
   quickIntervalOnly: boolean;
   timewindow: Timewindow;
   aggregation: boolean;
@@ -52,6 +53,8 @@ export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelDat
 export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   historyOnly = false;
+
+  forAllTimeEnabled = false;
 
   quickIntervalOnly = false;
 
@@ -87,6 +90,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
               public viewContainerRef: ViewContainerRef) {
     super(store);
     this.historyOnly = data.historyOnly;
+    this.forAllTimeEnabled = data.forAllTimeEnabled;
     this.quickIntervalOnly = data.quickIntervalOnly;
     this.timewindow = data.timewindow;
     this.aggregation = data.aggregation;
@@ -157,9 +161,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
         disabled: hideTimezone
       }]
     });
-    this.updateValidators();
-    this.timewindowForm.get('aggregation.type').valueChanges.subscribe(() => {
-      this.updateValidators();
+    this.updateValidators(this.timewindowForm.get('aggregation.type').value);
+    this.timewindowForm.get('aggregation.type').valueChanges.subscribe((aggregationType: AggregationType) => {
+      this.updateValidators(aggregationType);
     });
   }
 
@@ -172,8 +176,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     return limit;
   }
 
-  private updateValidators() {
-    const aggType = this.timewindowForm.get('aggregation.type').value;
+  private updateValidators(aggType: AggregationType) {
     if (aggType !== AggregationType.NONE) {
       this.timewindowForm.get('aggregation.limit').clearValidators();
     } else {

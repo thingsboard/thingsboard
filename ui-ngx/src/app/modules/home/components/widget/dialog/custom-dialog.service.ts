@@ -16,7 +16,7 @@
 
 import { Inject, Injectable, Type } from '@angular/core';
 import { Observable } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
@@ -33,6 +33,8 @@ import { HOME_COMPONENTS_MODULE_TOKEN, SHARED_HOME_COMPONENTS_MODULE_TOKEN } fro
 @Injectable()
 export class CustomDialogService {
 
+  private customModules: Array<Type<any>>
+
   constructor(
     private translate: TranslateService,
     private authService: AuthService,
@@ -44,24 +46,35 @@ export class CustomDialogService {
   ) {
   }
 
-  customDialog(template: string, controller: (instance: CustomDialogComponent) => void, data?: any): Observable<any> {
+  setAdditionalModules(modules: Array<Type<any>>) {
+    this.customModules = modules;
+  }
+
+  customDialog(template: string, controller: (instance: CustomDialogComponent) => void, data?: any,
+               config?: MatDialogConfig): Observable<any> {
+    const modules = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule];
+    if (Array.isArray(this.customModules)) {
+      modules.push(...this.customModules);
+    }
     return this.dynamicComponentFactoryService.createDynamicComponentFactory(
-      class CustomDialogComponentInstance extends CustomDialogComponent {},
-      template,
-      [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule]).pipe(
+      class CustomDialogComponentInstance extends CustomDialogComponent {}, template, modules).pipe(
       mergeMap((factory) => {
           const dialogData: CustomDialogContainerData = {
             controller,
             customComponentFactory: factory,
             data
           };
+          let dialogConfig: MatDialogConfig = {
+            disableClose: true,
+            panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+            data: dialogData
+          };
+          if (config) {
+            dialogConfig = {...dialogConfig, ...config};
+          }
           return this.dialog.open<CustomDialogContainerComponent, CustomDialogContainerData, any>(
             CustomDialogContainerComponent,
-            {
-              disableClose: true,
-              panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-              data: dialogData
-            }).afterClosed().pipe(
+            dialogConfig).afterClosed().pipe(
             tap(() => {
               this.dynamicComponentFactoryService.destroyDynamicComponentFactory(factory);
             })

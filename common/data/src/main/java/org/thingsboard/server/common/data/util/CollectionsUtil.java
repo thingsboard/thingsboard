@@ -73,4 +73,8 @@ public class CollectionsUtil {
         return Collections.unmodifiableMap(mapOf(kvs));
     }
 
+    public static <V> boolean emptyOrContains(Collection<V> collection, V element) {
+        return isEmpty(collection) || collection.contains(element);
+    }
+
 }

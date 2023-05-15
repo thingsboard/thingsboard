@@ -148,6 +148,7 @@ message PostTelemetryMsg {
 
 message PostAttributeMsg {
   repeated KeyValueProto kv = 1;
+  bool shared = 2;
 }
 
 message GetAttributeRequestMsg {
@@ -177,6 +178,10 @@ message ValidateDeviceTokenRequestMsg {
 
 message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
+}
+
+message ValidateOrCreateDeviceX509CertRequestMsg {
+  string certificateChain = 1;
 }
 
 message ValidateBasicMqttCredRequestMsg {
@@ -942,6 +947,7 @@ message TransportApiRequestMsg {
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
   GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
+  ValidateOrCreateDeviceX509CertRequestMsg validateOrCreateX509CertRequestMsg = 15;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */

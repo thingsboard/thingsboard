@@ -19,10 +19,9 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import javax.annotation.PostConstruct;
-import java.util.HashMap;
 import java.util.Map;
 
 @Component
@@ -70,30 +69,18 @@ public class TbKafkaTopicConfigs {
 
     @PostConstruct
     private void init() {
-        coreConfigs = getConfigs(coreProperties);
-        ruleEngineConfigs = getConfigs(ruleEngineProperties);
-        transportApiRequestConfigs = getConfigs(transportApiProperties);
-        transportApiResponseConfigs = getConfigs(transportApiProperties);
+        coreConfigs = PropertyUtils.getProps(coreProperties);
+        ruleEngineConfigs = PropertyUtils.getProps(ruleEngineProperties);
+        transportApiRequestConfigs = PropertyUtils.getProps(transportApiProperties);
+        transportApiResponseConfigs = PropertyUtils.getProps(transportApiProperties);
         transportApiResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
-        notificationsConfigs = getConfigs(notificationsProperties);
-        jsExecutorRequestConfigs = getConfigs(jsExecutorProperties);
-        jsExecutorResponseConfigs = getConfigs(jsExecutorProperties);
+        notificationsConfigs = PropertyUtils.getProps(notificationsProperties);
+        jsExecutorRequestConfigs = PropertyUtils.getProps(jsExecutorProperties);
+        jsExecutorResponseConfigs = PropertyUtils.getProps(jsExecutorProperties);
         jsExecutorResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
-        fwUpdatesConfigs = getConfigs(fwUpdatesProperties);
-        vcConfigs = getConfigs(vcProperties);
-        arConfigs = getConfigs(arProperties);
+        fwUpdatesConfigs = PropertyUtils.getProps(fwUpdatesProperties);
+        vcConfigs = PropertyUtils.getProps(vcProperties);
+        arConfigs = PropertyUtils.getProps(arProperties);
     }
 
-    private Map<String, String> getConfigs(String properties) {
-        Map<String, String> configs = new HashMap<>();
-        if (StringUtils.isNotEmpty(properties)) {
-            for (String property : properties.split(";")) {
-                int delimiterPosition = property.indexOf(":");
-                String key = property.substring(0, delimiterPosition);
-                String value = property.substring(delimiterPosition + 1);
-                configs.put(key, value);
-            }
-        }
-        return configs;
-    }
 }

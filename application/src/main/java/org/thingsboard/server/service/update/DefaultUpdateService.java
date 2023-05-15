@@ -29,11 +29,10 @@ import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -80,7 +79,9 @@ public class DefaultUpdateService implements UpdateService {
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void init() {
         version = buildProperties != null ? buildProperties.getVersion() : "unknown";
-        updateMessage = new UpdateMessage(false, version, "", "", "", "");
+        updateMessage = new UpdateMessage(false, version, "", "",
+                "https://thingsboard.io/docs/reference/releases",
+                "https://thingsboard.io/docs/reference/releases");
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");

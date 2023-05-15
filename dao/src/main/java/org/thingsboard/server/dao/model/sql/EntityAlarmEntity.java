@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.Column;
@@ -31,7 +30,6 @@ import javax.persistence.IdClass;
 import javax.persistence.Table;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ASSIGNEE_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.CREATED_TIME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ALARM_COLUMN_FAMILY_NAME;

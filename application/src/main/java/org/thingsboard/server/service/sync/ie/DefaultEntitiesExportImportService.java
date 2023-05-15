@@ -26,9 +26,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
+import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -73,7 +73,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
-        if (!rateLimitService.checkRateLimit(ctx.getTenantId(), LimitedApi.ENTITY_EXPORT)) {
+        if (!rateLimitService.checkRateLimit(LimitedApi.ENTITY_EXPORT, ctx.getTenantId())) {
             throw new ThingsboardException("Rate limit for entities export is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
         }
 
@@ -85,7 +85,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(EntitiesImportCtx ctx, EntityExportData<E> exportData) throws ThingsboardException {
-        if (!rateLimitService.checkRateLimit(ctx.getTenantId(), LimitedApi.ENTITY_IMPORT)) {
+        if (!rateLimitService.checkRateLimit(LimitedApi.ENTITY_IMPORT, ctx.getTenantId())) {
             throw new ThingsboardException("Rate limit for entities import is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
         }
         if (exportData.getEntity() == null || exportData.getEntity().getId() == null) {

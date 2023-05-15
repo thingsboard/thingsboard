@@ -17,10 +17,10 @@ package org.thingsboard.server.common.msg.notification.trigger;
 
 import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 
 @Data
 @Builder

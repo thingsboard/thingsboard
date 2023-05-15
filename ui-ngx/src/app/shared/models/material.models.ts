@@ -14,9 +14,7 @@
 /// limitations under the License.
 ///
 
-import * as tinycolor_ from 'tinycolor2';
-
-const tinycolor = tinycolor_;
+import tinycolor from 'tinycolor2';
 
 export interface MaterialColorItem {
   value: string;

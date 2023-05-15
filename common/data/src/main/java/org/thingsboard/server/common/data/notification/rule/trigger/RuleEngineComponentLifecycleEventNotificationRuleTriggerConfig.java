@@ -15,13 +15,19 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 import java.util.Set;
 import java.util.UUID;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     private Set<UUID> ruleChains; // if empty - all rule chains

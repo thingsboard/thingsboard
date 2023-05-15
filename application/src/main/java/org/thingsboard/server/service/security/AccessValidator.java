@@ -27,7 +27,6 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.OtaPackageInfo;
@@ -67,6 +66,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.resource.ResourceService;
@@ -75,11 +75,11 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.exception.ToErrorResponseEntity;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
-import org.thingsboard.server.exception.ToErrorResponseEntity;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -263,8 +263,7 @@ public class AccessValidator {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
-            ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(currentUser.getTenantId(), new DeviceId(entityId.getId()));
-            Futures.addCallback(deviceFuture, getCallback(callback, device -> {
+            Futures.addCallback(Futures.immediateFuture(deviceService.findDeviceById(currentUser.getTenantId(), new DeviceId(entityId.getId()))), getCallback(callback, device -> {
                 if (device == null) {
                     return ValidationResult.entityNotFound(DEVICE_WITH_REQUESTED_ID_NOT_FOUND);
                 } else {
@@ -575,7 +574,7 @@ public class AccessValidator {
         ResponseEntity responseEntity;
         if (e instanceof ToErrorResponseEntity) {
             responseEntity = ((ToErrorResponseEntity) e).toErrorResponseEntity();
-        } else if (e instanceof IllegalArgumentException || e instanceof IncorrectParameterException) {
+        } else if (e instanceof IllegalArgumentException || e instanceof IncorrectParameterException || e instanceof DataValidationException) {
             responseEntity = new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } else {
             responseEntity = new ResponseEntity<>(defaultErrorStatus);

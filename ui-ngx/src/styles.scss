@@ -74,7 +74,7 @@ body {
   line-height: normal;
 }
 
-a {
+a:not(.mat-mdc-button-base) {
   font-weight: 400;
   color: #106cc8;
   text-decoration: none;
@@ -85,7 +85,9 @@ a {
 
 a:hover,
 a:focus {
-  border-bottom: 1px solid #4054b2;
+  &:not(.mat-mdc-button-base) {
+    border-bottom: 1px solid #4054b2;
+  }
 }
 
 p {
@@ -264,7 +266,7 @@ pre.tb-highlight {
   letter-spacing: normal;
 }
 
-.tb-timewindow-panel, .tb-legend-config-panel {
+.tb-timewindow-panel, .tb-legend-config-panel, .tb-filter-panel {
   overflow: hidden;
   background: #fff;
   border-radius: 4px;
@@ -844,6 +846,15 @@ mat-label {
   }
 
   .mat-mdc-icon-button {
+    &.tb-mat-20 {
+      @include tb-mat-icon-button-size(20);
+      .mat-icon {
+        @include tb-mat-icon-size(20);
+      }
+    }
+    &.tb-mat-24 {
+      @include tb-mat-icon-button-size(24);
+    }
     &.tb-mat-28 {
       @include tb-mat-icon-button-size(28);
     }

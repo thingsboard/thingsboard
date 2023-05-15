@@ -364,6 +364,11 @@ public class DefaultMailService implements MailService {
         mailSender.testConnection();
     }
 
+    @Override
+    public boolean isConfigured(TenantId tenantId) {
+        return mailSender != null;
+    }
+
     private String toEnabledValueLabel(ApiFeature apiFeature) {
         switch (apiFeature) {
             case DB:

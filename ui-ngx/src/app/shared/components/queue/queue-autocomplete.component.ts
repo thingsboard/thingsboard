@@ -15,7 +15,7 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -45,7 +45,7 @@ import { SubscriptSizing } from '@angular/material/form-field';
 })
 export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit {
 
-  selectQueueFormGroup: UntypedFormGroup;
+  selectQueueFormGroup: FormGroup;
 
   modelValue: string | null;
 
@@ -91,7 +91,7 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
               public truncate: TruncatePipe,
               private entityService: EntityService,
               private queueService: QueueService,
-              private fb: UntypedFormBuilder) {
+              private fb: FormBuilder) {
     this.selectQueueFormGroup = this.fb.group({
       queueName: [null]
     });
@@ -127,8 +127,6 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
       );
   }
 
-  ngAfterViewInit(): void {}
-
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
@@ -145,19 +143,19 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
   writeValue(value: string | null): void {
     this.searchText = '';
     if (value != null) {
-      this.queueService.getQueueByName(value, {ignoreLoading: true, ignoreErrors: true}).subscribe(
-        (entity) => {
+      this.queueService.getQueueByName(value, {ignoreLoading: true, ignoreErrors: true}).subscribe({
+        next: (entity) => {
           this.modelValue = entity.name;
           this.selectQueueFormGroup.get('queueName').patchValue(entity, {emitEvent: false});
         },
-        () => {
+        error: () => {
           this.modelValue = null;
           this.selectQueueFormGroup.get('queueName').patchValue('', {emitEvent: false});
           if (value !== null) {
             this.propagateChange(this.modelValue);
           }
         }
-      );
+      });
     } else {
       this.modelValue = null;
       this.selectQueueFormGroup.get('queueName').patchValue('', {emitEvent: false});
@@ -195,9 +193,7 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
     });
     return this.queueService.getTenantQueuesByServiceType(pageLink, this.queueType, {ignoreLoading: true}).pipe(
       catchError(() => of(emptyPageData<QueueInfo>())),
-      map(pageData => {
-        return pageData.data;
-      })
+      map(pageData => pageData.data)
     );
   }
 

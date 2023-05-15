@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.cache;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
 import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.Cursor;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+@Slf4j
 public class RedisUtil {
 
     public static <T> List<T> getAll(RedisConnection connection, String keyPattern, Function<byte[], T> desFunction) {
@@ -39,7 +42,13 @@ public class RedisUtil {
 
         scans.forEach(scan -> scan.forEachRemaining(key -> {
             byte[] element = connection.get(key);
-            elements.add(desFunction.apply(element));
+            if (element != null) {
+                try {
+                    elements.add(desFunction.apply(element));
+                } catch (Exception e) {
+                    log.warn("[{}] Failed to deserialize from data: {}", Hex.encodeHexString(key), Hex.encodeHexString(element), e);
+                }
+            }
         }));
         return elements;
     }

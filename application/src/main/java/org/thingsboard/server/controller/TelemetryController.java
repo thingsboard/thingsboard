@@ -75,16 +75,15 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.exception.InvalidParametersException;
+import org.thingsboard.server.exception.UncheckedApiException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.AttributeData;
 import org.thingsboard.server.service.telemetry.TsData;
-import org.thingsboard.server.exception.InvalidParametersException;
-import org.thingsboard.server.exception.UncheckedApiException;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -624,7 +623,6 @@ public class TelemetryController extends BaseController {
         }
         if (json.isObject()) {
             List<AttributeKvEntry> attributes = extractRequestAttributes(json);
-            attributes.forEach(ConstraintValidator::validateFields);
             if (attributes.isEmpty()) {
                 return getImmediateDeferredResult("No attributes data found in request body!", HttpStatus.BAD_REQUEST);
             }

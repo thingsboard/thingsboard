@@ -66,6 +66,7 @@ public class ControllerConstants {
     protected static final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
     protected static final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
     protected static final String DEVICE_TYPE_DESCRIPTION = "Device type as the name of the device profile";
+    protected static final String DEVICE_ACTIVE_PARAM_DESCRIPTION = "A boolean value representing the device active flag.";
     protected static final String ENTITY_VIEW_TYPE_DESCRIPTION = "Entity View type";
     protected static final String ASSET_TYPE_DESCRIPTION = "Asset type";
     protected static final String EDGE_TYPE_DESCRIPTION = "A string value representing the edge type. For example, 'default'";

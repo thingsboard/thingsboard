@@ -17,10 +17,13 @@ package org.thingsboard.server.dao.service.validator;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -55,10 +58,17 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Component
 public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<DeviceProfile> {
 
@@ -84,6 +94,12 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     private RuleChainService ruleChainService;
     @Autowired
     private DashboardService dashboardService;
+
+    @Value("${security.java_cacerts.path:}")
+    private String javaCacertsPath;
+
+    @Value("${security.java_cacerts.password:}")
+    private String javaCacertsPassword;
 
     @Override
     protected void validateDataImpl(TenantId tenantId, DeviceProfile deviceProfile) {
@@ -117,6 +133,11 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         }
         if (deviceProfile.getProvisionType() == null) {
             deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+        }
+        if (deviceProfile.getProvisionDeviceKey() != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
+            if (isDeviceProfileCertificateInJavaCacerts(deviceProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret())) {
+                throw new DataValidationException("Device profile certificate cannot be well known root CA!");
+            }
         }
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         transportConfiguration.validate();
@@ -194,6 +215,11 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                     message = "Can't change device profile transport type because devices referenced it!";
                 }
                 throw new DataValidationException(message);
+            }
+        }
+        if (deviceProfile.getProvisionDeviceKey() != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
+            if (isDeviceProfileCertificateInJavaCacerts(deviceProfile.getProvisionDeviceKey())) {
+                throw new DataValidationException("Device profile certificate cannot be well known root CA!");
             }
         }
         return old;
@@ -299,13 +325,13 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             if (!uris.add(uri)) {
                 throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = " + uri + ". This value must be a unique value for all servers!");
             }
-            Integer port;
+            int port;
             if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
                 port = serverConfig.isBootstrapServerIs() ? 5687 : 5685;
             } else {
                 port = serverConfig.isBootstrapServerIs() ? 5688 : 5686;
             }
-            if (serverConfig.getPort() == null || serverConfig.getPort().intValue() != port) {
+            if (serverConfig.getPort() == null || serverConfig.getPort() != port) {
                 throw new DeviceCredentialsValidationException(server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
             }
         }
@@ -347,5 +373,28 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 }
                 break;
         }
+    }
+
+    private boolean isDeviceProfileCertificateInJavaCacerts(String deviceProfileX509Secret) {
+        try {
+            FileInputStream is = new FileInputStream(javaCacertsPath);
+            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keystore.load(is, javaCacertsPassword.toCharArray());
+
+            PKIXParameters params = new PKIXParameters(keystore);
+            for (TrustAnchor ta : params.getTrustAnchors()) {
+                X509Certificate cert = ta.getTrustedCert();
+                if (getCertificateString(cert).equals(deviceProfileX509Secret)) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            log.trace("Failed to validate certificate due to: ", e);
+        }
+        return false;
+    }
+
+    private String getCertificateString(X509Certificate cert) throws CertificateEncodingException {
+        return EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
     }
 }

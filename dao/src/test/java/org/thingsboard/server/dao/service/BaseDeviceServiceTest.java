@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -446,7 +447,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             device.setName(name);
             device.setType("default");
-            devicesTitle1.add(new DeviceInfo(deviceService.saveDevice(device), null, false, "default"));
+            devicesTitle1.add(new DeviceInfo(deviceService.saveDevice(device), null, false, "default", false));
         }
         String title2 = "Device title 2";
         List<DeviceInfo> devicesTitle2 = new ArrayList<>();
@@ -458,14 +459,14 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             device.setName(name);
             device.setType("default");
-            devicesTitle2.add(new DeviceInfo(deviceService.saveDevice(device), null, false, "default"));
+            devicesTitle2.add(new DeviceInfo(deviceService.saveDevice(device), null, false, "default", false));
         }
 
         List<DeviceInfo> loadedDevicesTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
         PageData<DeviceInfo> pageData = null;
         do {
-            pageData = deviceService.findDeviceInfosByTenantId(tenantId, pageLink);
+            pageData = deviceService.findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).build(), pageLink);
             loadedDevicesTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -480,7 +481,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         List<DeviceInfo> loadedDevicesTitle2 = new ArrayList<>();
         pageLink = new PageLink(4, 0, title2);
         do {
-            pageData = deviceService.findDeviceInfosByTenantId(tenantId, pageLink);
+            pageData = deviceService.findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).build(), pageLink);
             loadedDevicesTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -497,7 +498,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         }
 
         pageLink = new PageLink(4, 0, title1);
-        pageData = deviceService.findDeviceInfosByTenantId(tenantId, pageLink);
+        pageData = deviceService.findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).build(), pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
@@ -506,7 +507,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         }
 
         pageLink = new PageLink(4, 0, title2);
-        pageData = deviceService.findDeviceInfosByTenantId(tenantId, pageLink);
+        pageData = deviceService.findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).build(), pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -605,14 +606,14 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             device.setName("Device" + i);
             device.setType("default");
             device = deviceService.saveDevice(device);
-            devices.add(new DeviceInfo(deviceService.assignDeviceToCustomer(tenantId, device.getId(), customerId), customer.getTitle(), customer.isPublic(), "default"));
+            devices.add(new DeviceInfo(deviceService.assignDeviceToCustomer(tenantId, device.getId(), customerId), customer.getTitle(), customer.isPublic(), "default", false));
         }
 
         List<DeviceInfo> loadedDevices = new ArrayList<>();
         PageLink pageLink = new PageLink(23);
         PageData<DeviceInfo> pageData = null;
         do {
-            pageData = deviceService.findDeviceInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
+            pageData = deviceService.findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).customerId(customerId).build(), pageLink);
             loadedDevices.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -627,7 +628,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         deviceService.unassignCustomerDevices(tenantId, customerId);
 
         pageLink = new PageLink(33);
-        pageData = deviceService.findDeviceInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
+        pageData = deviceService.findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).customerId(customerId).build(), pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
     }
@@ -848,7 +849,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         PageLink pageLinkWithLabel = new PageLink(100, 0, "label");
         List<DeviceInfo> deviceInfosWithLabel = deviceService
-                .findDeviceInfosByTenantId(tenantId, pageLinkWithLabel).getData();
+                .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).build(), pageLinkWithLabel).getData();
 
         Assert.assertFalse(deviceInfosWithLabel.isEmpty());
         Assert.assertTrue(
@@ -862,7 +863,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
         List<DeviceInfo> deviceInfosWithCustomer = deviceService
-                .findDeviceInfosByTenantId(tenantId, pageLinkWithCustomer).getData();
+                .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).build(), pageLinkWithCustomer).getData();
 
         Assert.assertFalse(deviceInfosWithCustomer.isEmpty());
         Assert.assertTrue(
@@ -877,7 +878,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         PageLink pageLinkWithType = new PageLink(100, 0, device.getType());
         List<DeviceInfo> deviceInfosWithType = deviceService
-                .findDeviceInfosByTenantId(tenantId, pageLinkWithType).getData();
+                .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).build(), pageLinkWithType).getData();
 
         Assert.assertFalse(deviceInfosWithType.isEmpty());
         Assert.assertTrue(
@@ -907,7 +908,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         PageLink pageLinkWithLabel = new PageLink(100, 0, "label");
         List<DeviceInfo> deviceInfosWithLabel = deviceService
-                .findDeviceInfosByTenantIdAndType(tenantId, device.getType(), pageLinkWithLabel).getData();
+                .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).type(device.getType()).build(), pageLinkWithLabel).getData();
 
         Assert.assertFalse(deviceInfosWithLabel.isEmpty());
         Assert.assertTrue(
@@ -922,7 +923,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
         List<DeviceInfo> deviceInfosWithCustomer = deviceService
-                .findDeviceInfosByTenantIdAndType(tenantId, device.getType(), pageLinkWithCustomer).getData();
+                .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).type(device.getType()).build(), pageLinkWithCustomer).getData();
 
         Assert.assertFalse(deviceInfosWithCustomer.isEmpty());
         Assert.assertTrue(
@@ -953,7 +954,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         PageLink pageLinkWithLabel = new PageLink(100, 0, "label");
         List<DeviceInfo> deviceInfosWithLabel = deviceService
-                .findDeviceInfosByTenantIdAndDeviceProfileId(tenantId, savedDevice.getDeviceProfileId(), pageLinkWithLabel).getData();
+                .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).deviceProfileId(savedDevice.getDeviceProfileId()).build(), pageLinkWithLabel).getData();
 
         Assert.assertFalse(deviceInfosWithLabel.isEmpty());
         Assert.assertTrue(
@@ -968,7 +969,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
         List<DeviceInfo> deviceInfosWithCustomer = deviceService
-                .findDeviceInfosByTenantIdAndDeviceProfileId(tenantId, savedDevice.getDeviceProfileId(), pageLinkWithCustomer).getData();
+                .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).deviceProfileId(savedDevice.getDeviceProfileId()).build(), pageLinkWithCustomer).getData();
 
         Assert.assertFalse(deviceInfosWithCustomer.isEmpty());
         Assert.assertTrue(

@@ -19,7 +19,7 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Valida
 import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-string-items-list',

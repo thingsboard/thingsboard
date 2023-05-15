@@ -25,7 +25,6 @@ import lombok.Setter;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasLabel;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasProfileId;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;

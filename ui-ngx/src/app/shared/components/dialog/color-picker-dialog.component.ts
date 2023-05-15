@@ -14,12 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 
@@ -30,22 +29,18 @@ export interface ColorPickerDialogData {
 @Component({
   selector: 'tb-color-picker-dialog',
   templateUrl: './color-picker-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ColorPickerDialogComponent}],
   styleUrls: []
 })
 export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialogComponent, string>
-  implements OnInit, ErrorStateMatcher {
+  implements OnInit {
 
-  colorPickerFormGroup: UntypedFormGroup;
-
-  submitted = false;
+  colorPickerFormGroup: FormGroup;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ColorPickerDialogData,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<ColorPickerDialogComponent, string>,
-              public fb: UntypedFormBuilder) {
+              public fb: FormBuilder) {
     super(store, router, dialogRef);
   }
 
@@ -55,23 +50,11 @@ export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialo
     });
   }
 
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = !!(control && control.invalid && this.submitted);
-    return originalErrorState || customErrorState;
-  }
-
-  onColorChange(color: string) {
-    this.colorPickerFormGroup.get('color').setValue(color);
-    this.colorPickerFormGroup.markAsDirty();
-  }
-
   cancel(): void {
     this.dialogRef.close(null);
   }
 
   select(): void {
-    this.submitted = true;
     const color: string = this.colorPickerFormGroup.get('color').value;
     this.dialogRef.close(color);
   }
