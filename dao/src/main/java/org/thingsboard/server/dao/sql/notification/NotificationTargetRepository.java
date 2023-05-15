@@ -50,4 +50,6 @@ public interface NotificationTargetRepository extends JpaRepository<Notification
     @Transactional
     void deleteByTenantId(UUID tenantId);
 
+    long countByTenantId(UUID tenantId);
+
 }

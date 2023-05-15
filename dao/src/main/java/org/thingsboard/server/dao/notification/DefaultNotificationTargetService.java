@@ -193,6 +193,11 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
     }
 
     @Override
+    public long countNotificationTargetsByTenantId(TenantId tenantId) {
+        return notificationTargetDao.countByTenantId(tenantId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findNotificationTargetById(tenantId, new NotificationTargetId(entityId.getId())));
     }

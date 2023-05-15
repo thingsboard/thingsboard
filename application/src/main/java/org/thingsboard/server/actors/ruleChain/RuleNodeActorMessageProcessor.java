@@ -70,8 +70,8 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     @Override
     public void onUpdate(TbActorCtx context) throws Exception {
-        if (isMyNodePartition()) {
-            RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
+        RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
+        if (isMyNodePartition(newRuleNode)) {
             this.info = new RuleNodeInfo(entityId, ruleChainName, newRuleNode != null ? newRuleNode.getName() : "Unknown");
             boolean restartRequired = state != ComponentLifecycleState.ACTIVE ||
                     !(ruleNode.getType().equals(newRuleNode.getType()) && ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
@@ -181,7 +181,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     private boolean isMyNodePartition() {
-        return !ruleNode.isSingletonMode()
+        return isMyNodePartition(this.ruleNode);
+    }
+
+    private boolean isMyNodePartition(RuleNode ruleNode) {
+        return ruleNode == null || !ruleNode.isSingletonMode()
                 || systemContext.getDiscoveryService().isMonolith()
                 || defaultCtx.isLocalEntity(ruleNode.getId());
     }
