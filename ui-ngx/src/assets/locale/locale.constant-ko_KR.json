@@ -1008,7 +1008,7 @@
         "advanced-settings": "Advanced settings",
         "propagate-alarm": "Propagate alarm",
         "alarm-rule-relation-types-list": "Relation types to propagate",
-        "alarm-rule-relation-types-list-hint": "If Propagate relation types are not selected, alarms will be propagated without filtering by relation type.",
+        "alarm-rule-relation-types-list-hint": "If propagate relation types are not entered, alarms will be propagated without filtering by relation type.",
         "alarm-rule-condition": "Alarm rule condition",
         "enter-alarm-rule-condition-prompt": "Please add alarm rule condition",
         "edit-alarm-rule-condition": "Edit alarm rule condition",

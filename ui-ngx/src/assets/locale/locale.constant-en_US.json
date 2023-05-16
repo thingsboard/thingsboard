@@ -1666,7 +1666,7 @@
         "alarm-rule-no-mobile-dashboard": "No dashboard selected",
         "propagate-alarm": "Propagate alarm to related entities",
         "alarm-rule-relation-types-list": "Relation types to propagate",
-        "alarm-rule-relation-types-list-hint": "If Propagate relation types are not selected, alarms will be propagated without filtering by relation type.",
+        "alarm-rule-relation-types-list-hint": "If propagate relation types are not entered, alarms will be propagated without filtering by relation type.",
         "propagate-alarm-to-owner": "Propagate alarm to entity owner (Customer or Tenant)",
         "propagate-alarm-to-tenant": "Propagate alarm to Tenant",
         "alarm-rule-condition": "Alarm rule condition",
