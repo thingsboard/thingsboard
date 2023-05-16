@@ -357,21 +357,20 @@
         <tb-details-panel *ngIf="!isEditingWidgetClosed" fxFlex
                           headerTitle="{{editingWidget?.config.title}}"
                           headerSubtitle="{{ editingWidgetSubtitle }}"
-                          [isReadOnly]="false"
-                          [isAlwaysEdit]="true"
-                          (closeDetails)="onEditWidgetClosed()"
-                          (toggleDetailsEditMode)="onRevertWidgetEdit()"
-                          (applyDetails)="saveWidget()"
-                          [theForm]="tbEditWidget.widgetFormGroup">
+                          [isReadOnly]="true"
+                          (closeDetails)="onEditWidgetClosed()">
           <div class="details-buttons">
             <div [tb-help]="helpLinkIdForWidgetType()"></div>
           </div>
           <tb-edit-widget #tbEditWidget
                           [dashboard]="dashboard"
                           [aliasController]="dashboardCtx.aliasController"
+                          [stateController]="dashboardCtx.stateController"
                           [widgetEditMode]="widgetEditMode"
                           [widget]="editingWidget"
-                          [widgetLayout]="editingWidgetLayout">
+                          [widgetLayout]="editingWidgetLayout"
+                          (revertWidgetConfig)="onRevertWidgetEdit()"
+                          (applyWidgetConfig)="saveWidget()">
           </tb-edit-widget>
         </tb-details-panel>
         <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex

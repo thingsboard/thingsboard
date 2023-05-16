@@ -35,6 +35,7 @@
         "edit-mode": "Edit mode",
         "enter-edit-mode": "Enter edit mode",
         "decline-changes": "Decline changes",
+        "decline": "Decline",
         "close": "Close",
         "back": "Back",
         "run": "Run",
@@ -4091,6 +4092,9 @@
         "data": "Data",
         "settings": "Settings",
         "advanced": "Advanced",
+        "appearance": "Appearance",
+        "widget-card": "Widget card",
+        "mobile": "Mobile",
         "title": "Title",
         "title-tooltip": "Title Tooltip",
         "general-settings": "General settings",
@@ -4151,7 +4155,8 @@
         "data-settings": "Data settings",
         "no-data-display-message": "\"No data to display\" alternative message",
         "data-page-size": "Maximum entities per datasource",
-        "settings-component-not-found": "Settings form component not found for selector '{{selector}}'"
+        "settings-component-not-found": "Settings form component not found for selector '{{selector}}'",
+        "preview": "Preview"
     },
     "widget-type": {
         "import": "Import widget type",

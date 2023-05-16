@@ -44,6 +44,8 @@ export interface ToggleHeaderOption {
   value: any;
 }
 
+export type ToggleHeaderAppearance = 'fill' | 'stroked';
+
 @Component({
   selector: 'tb-toggle-header',
   templateUrl: './toggle-header.component.html',
@@ -66,6 +68,13 @@ export class ToggleHeaderComponent extends PageComponent implements OnInit {
   @Input()
   @coerceBoolean()
   useSelectOnMdLg = true;
+
+  @Input()
+  @coerceBoolean()
+  ignoreMdLgSize = false;
+
+  @Input()
+  appearance: ToggleHeaderAppearance = 'stroked';
 
   isMdLg: boolean;
 

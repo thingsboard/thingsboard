@@ -16,6 +16,24 @@
 @import '../../../../../scss/constants';
 
 .tb-widget-config {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  .tb-widget-config-header {
+    padding: 24px 24px 8px;
+    height: 56px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tb-widget-config-content {
+    flex: 1;
+    overflow: auto;
+    & > div {
+      padding: 16px;
+    }
+  }
   .tb-panel-hint {
     font-size: 12px;
     color: #808080;
@@ -120,6 +138,11 @@
 
 :host ::ng-deep {
   .tb-widget-config {
+    .tb-widget-config-header {
+      .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+        padding: 0 20px;
+      }
+    }
     tb-alarm-filter-config {
       .mdc-button {
         width: 100%;

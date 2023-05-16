@@ -36,7 +36,6 @@ import { EditAttributeValuePanelComponent } from '@home/components/attribute/edi
 import { DashboardComponent } from '@home/components/dashboard/dashboard.component';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
-import { LegendComponent } from '@home/components/widget/legend.component';
 import { AliasesEntitySelectPanelComponent } from '@home/components/alias/aliases-entity-select-panel.component';
 import { AliasesEntitySelectComponent } from '@home/components/alias/aliases-entity-select.component';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
@@ -49,7 +48,6 @@ import { EntityAliasSelectComponent } from '@home/components/alias/entity-alias-
 import { DataKeysComponent } from '@home/components/widget/data-keys.component';
 import { DataKeyConfigDialogComponent } from '@home/components/widget/data-key-config-dialog.component';
 import { DataKeyConfigComponent } from '@home/components/widget/data-key-config.component';
-import { LegendConfigComponent } from '@home/components/widget/legend-config.component';
 import { ManageWidgetActionsComponent } from '@home/components/widget/action/manage-widget-actions.component';
 import { WidgetActionDialogComponent } from '@home/components/widget/action/widget-action-dialog.component';
 import { CustomActionPrettyResourcesTabsComponent } from '@home/components/widget/action/custom-action-pretty-resources-tabs.component';
@@ -182,6 +180,7 @@ import { AlarmFilterConfigComponent } from '@home/components/alarm/alarm-filter-
 import { AlarmAssigneeSelectPanelComponent } from '@home/components/alarm/alarm-assignee-select-panel.component';
 import { AlarmAssigneeSelectComponent } from '@home/components/alarm/alarm-assignee-select.component';
 import { DeviceInfoFilterComponent } from '@home/components/device/device-info-filter.component';
+import { WidgetPreviewComponent } from '@home/components/widget/widget-preview.component';
 
 @NgModule({
   declarations:
@@ -220,16 +219,15 @@ import { DeviceInfoFilterComponent } from '@home/components/device/device-info-f
       DashboardComponent,
       WidgetContainerComponent,
       WidgetComponent,
-      LegendComponent,
       WidgetSettingsComponent,
       WidgetConfigComponent,
+      WidgetPreviewComponent,
       EntityFilterViewComponent,
       EntityFilterComponent,
       EntityAliasSelectComponent,
       DataKeysComponent,
       DataKeyConfigComponent,
       DataKeyConfigDialogComponent,
-      LegendConfigComponent,
       ManageWidgetActionsComponent,
       WidgetActionDialogComponent,
       CustomActionPrettyResourcesTabsComponent,
@@ -371,16 +369,15 @@ import { DeviceInfoFilterComponent } from '@home/components/device/device-info-f
     DashboardComponent,
     WidgetContainerComponent,
     WidgetComponent,
-    LegendComponent,
     WidgetSettingsComponent,
     WidgetConfigComponent,
+    WidgetPreviewComponent,
     EntityFilterViewComponent,
     EntityFilterComponent,
     EntityAliasSelectComponent,
     DataKeysComponent,
     DataKeyConfigComponent,
     DataKeyConfigDialogComponent,
-    LegendConfigComponent,
     ManageWidgetActionsComponent,
     WidgetActionDialogComponent,
     CustomActionPrettyResourcesTabsComponent,

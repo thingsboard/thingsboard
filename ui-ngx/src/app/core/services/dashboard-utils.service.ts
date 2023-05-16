@@ -29,8 +29,15 @@ import {
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { isDefined, isString, isUndefined } from '@core/utils';
-import { Datasource, DatasourceType, Widget, WidgetConfig, widgetType } from '@app/shared/models/widget.models';
+import { isDefined, isDefinedAndNotNull, isString, isUndefined } from '@core/utils';
+import {
+  Datasource,
+  DatasourceType,
+  defaultLegendConfig,
+  Widget,
+  WidgetConfig,
+  widgetType
+} from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
@@ -204,8 +211,25 @@ export class DashboardUtilsService {
   public validateAndUpdateWidget(widget: Widget): Widget {
     widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
     // Temp workaround
-    if (widget.isSystemType  && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
+    if (widget.isSystemType && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
       widget.typeAlias = 'basic_timeseries';
+    }
+    if (widget.isSystemType && widget.bundleAlias === 'charts' &&
+      ['state_chart', 'basic_timeseries', 'timeseries_bars_flot'].includes(widget.typeAlias)) {
+      const widgetConfig = widget.config;
+      const widgetSettings = widget.config.settings;
+      if (isDefinedAndNotNull(widgetConfig.showLegend)) {
+        widgetSettings.showLegend = widgetConfig.showLegend;
+        delete widgetConfig.showLegend;
+      } else if (isUndefined(widgetSettings.showLegend)) {
+        widgetSettings.showLegend = true;
+      }
+      if (isDefinedAndNotNull(widgetConfig.legendConfig)) {
+        widgetSettings.legendConfig = widgetConfig.legendConfig;
+        delete widgetConfig.legendConfig;
+      } else if (isUndefined(widgetSettings.legendConfig)) {
+        widgetSettings.legendConfig = defaultLegendConfig(widget.type);
+      }
     }
     return widget;
   }

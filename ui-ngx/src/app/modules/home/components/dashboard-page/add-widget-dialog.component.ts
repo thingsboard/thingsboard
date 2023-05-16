@@ -24,13 +24,14 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { Widget, widgetTypesData } from '@shared/models/widget.models';
 import { Dashboard } from '@app/shared/models/dashboard.models';
-import { IAliasController } from '@core/api/widget-api.models';
+import { IAliasController, IStateController } from '@core/api/widget-api.models';
 import { WidgetConfigComponentData, WidgetInfo } from '@home/models/widget-component.models';
 import { isDefined, isString } from '@core/utils';
 
 export interface AddWidgetDialogData {
   dashboard: Dashboard;
   aliasController: IAliasController;
+  stateController: IStateController;
   widget: Widget;
   widgetInfo: WidgetInfo;
 }
@@ -48,7 +49,10 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
 
   dashboard: Dashboard;
   aliasController: IAliasController;
+  stateController: IStateController;
   widget: Widget;
+
+  previewMode = false;
 
   submitted = false;
 
@@ -62,6 +66,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
 
     this.dashboard = this.data.dashboard;
     this.aliasController = this.data.aliasController;
+    this.stateController = this.data.stateController;
     this.widget = this.data.widget;
 
     const widgetInfo = this.data.widgetInfo;

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -25,7 +25,6 @@ import {
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   datasourceTypeTranslationMap,
-  defaultLegendConfig,
   GroupInfo,
   JsonSchema,
   JsonSettingsSchema,
@@ -68,6 +67,7 @@ import { entityFields } from '@shared/models/entity.models';
 import { Filter } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -95,7 +95,7 @@ const defaultSettingsForm = [
     }
   ]
 })
-export class WidgetConfigComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
+export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 
   widgetTypes = widgetType;
 
@@ -134,13 +134,12 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   widgetEditMode = this.utils.widgetEditMode;
 
-  selectedTab: number;
-
   modelValue: WidgetConfigComponentData;
 
-  showLegendFieldset = true;
-
   private propagateChange = null;
+
+  headerOptions: ToggleHeaderOption[] = [];
+  selectedOption: string;
 
   public dataSettings: UntypedFormGroup;
   public targetDeviceSettings: UntypedFormGroup;
@@ -196,9 +195,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       pageSize: [1024, [Validators.min(1), Validators.pattern(/^\d*$/)]],
       units: [null, []],
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
-      noDataDisplayMessage: [null, []],
-      showLegend: [null, []],
-      legendConfig: [null, []]
+      noDataDisplayMessage: [null, []]
     });
     this.widgetSettings.get('showTitle').valueChanges.subscribe((value: boolean) => {
       if (value) {
@@ -222,13 +219,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         this.widgetSettings.get('titleIcon').disable({emitEvent: false});
         this.widgetSettings.get('iconColor').disable({emitEvent: false});
         this.widgetSettings.get('iconSize').disable({emitEvent: false});
-      }
-    });
-    this.widgetSettings.get('showLegend').valueChanges.subscribe((value: boolean) => {
-      if (value) {
-        this.widgetSettings.get('legendConfig').enable({emitEvent: false});
-      } else {
-        this.widgetSettings.get('legendConfig').disable({emitEvent: false});
       }
     });
     this.layoutSettings = this.fb.group({
@@ -370,15 +360,49 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     this.modelValue = value;
     this.removeChangeSubscriptions();
     if (this.modelValue) {
+      this.headerOptions.length = 0;
+      if (this.modelValue.widgetType !== widgetType.static) {
+        this.headerOptions.push(
+          {
+            name: this.translate.instant('widget-config.data'),
+            value: 'data'
+          }
+        );
+      }
+      if (this.displayAdvanced()) {
+        this.headerOptions.push(
+          {
+            name: this.translate.instant('widget-config.appearance'),
+            value: 'appearance'
+          }
+        );
+      }
+      this.headerOptions.push(
+        {
+          name: this.translate.instant('widget-config.widget-card'),
+          value: 'card'
+        }
+      );
+      this.headerOptions.push(
+        {
+          name: this.translate.instant('widget-config.actions'),
+          value: 'actions'
+        }
+      );
+      this.headerOptions.push(
+        {
+          name: this.translate.instant('widget-config.mobile'),
+          value: 'mobile'
+        }
+      );
+      this.selectedOption = this.headerOptions[0].value;
       if (this.widgetType !== this.modelValue.widgetType) {
         this.widgetType = this.modelValue.widgetType;
-        this.showLegendFieldset = (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.latest);
         this.buildForms();
       }
       const config = this.modelValue.config;
       const layout = this.modelValue.layout;
       if (config) {
-        this.selectedTab = 0;
         const displayWidgetTitle = isDefined(config.showTitle) ? config.showTitle : false;
         this.widgetSettings.patchValue({
             title: config.title,
@@ -403,10 +427,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             pageSize: isDefined(config.pageSize) ? config.pageSize : 1024,
             units: config.units,
             decimals: config.decimals,
-            noDataDisplayMessage: isDefined(config.noDataDisplayMessage) ? config.noDataDisplayMessage : '',
-            showLegend: isDefined(config.showLegend) ? config.showLegend :
-              this.widgetType === widgetType.timeseries,
-            legendConfig: config.legendConfig || defaultLegendConfig(this.widgetType)
+            noDataDisplayMessage: isDefined(config.noDataDisplayMessage) ? config.noDataDisplayMessage : ''
           },
           {emitEvent: false}
         );
@@ -429,12 +450,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           this.widgetSettings.get('titleIcon').disable({emitEvent: false});
           this.widgetSettings.get('iconColor').disable({emitEvent: false});
           this.widgetSettings.get('iconSize').disable({emitEvent: false});
-        }
-        const showLegend: boolean = this.widgetSettings.get('showLegend').value;
-        if (showLegend) {
-          this.widgetSettings.get('legendConfig').enable({emitEvent: false});
-        } else {
-          this.widgetSettings.get('legendConfig').disable({emitEvent: false});
         }
         const actionsData: WidgetActionsData = {
           actionsMap: config.actions || {},
@@ -812,15 +827,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   private fetchEntityKeys(entityAliasId: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
     return this.aliasController.getAliasInfo(entityAliasId).pipe(
-      mergeMap((aliasInfo) => {
-        return this.entityService.getEntityKeysByEntityFilter(
+      mergeMap((aliasInfo) => this.entityService.getEntityKeysByEntityFilter(
           aliasInfo.entityFilter,
           dataKeyTypes,
           {ignoreLoading: true, ignoreErrors: true}
         ).pipe(
           catchError(() => of([]))
-        );
-      }),
+        )),
       catchError(() => of([] as Array<DataKey>))
     );
   }

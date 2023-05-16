@@ -15,9 +15,15 @@
     limitations under the License.
 
 -->
-<mat-tab-group mat-stretch-tabs="false" class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
-  <mat-tab label="{{ 'widget-config.data' | translate }}" *ngIf="widgetType !== widgetTypes.static">
-    <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
+<div class="tb-widget-config tb-absolute-fill">
+  <div class="tb-widget-config-header">
+    <tb-toggle-header (valueChange)="selectedOption = $event" ignoreMdLgSize="true"
+                      appearance="fill" [options]="headerOptions" [value]="selectedOption" name="widgetConfigHeader" useSelectOnMdLg="false">
+    </tb-toggle-header>
+    <ng-content select=".tb-widget-config-header-suffix"></ng-content>
+  </div>
+  <div class="tb-widget-config-content">
+    <div *ngIf="widgetType !== widgetTypes.static" [fxShow]="selectedOption === 'data'" [formGroup]="dataSettings" class="mat-content" fxLayout="column" fxLayoutGap="8px">
       <div *ngIf="displayTimewindowConfig()" fxFlex="100"
            fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
         <div fxLayout="column" fxFlex.gt-xs>
@@ -55,7 +61,7 @@
                 <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
                      class="tb-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
               </div>
-              <mat-icon *ngIf = '(datasourceError.length > 0 || !datasourcesFormArray().valid) && !openExtensionPanel'
+              <mat-icon *ngIf = '(datasourceError.length > 0 || !datasourcesFormArray()?.valid) && !openExtensionPanel'
                         style = "color: red; font-size: 18px; margin-left: 5px;">
                 report_gmailerrorred
               </mat-icon>
@@ -64,7 +70,7 @@
               <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
             </mat-panel-description>
           </mat-expansion-panel-header>
-          <div *ngIf="datasourcesFormArray().length === 0; else datasourcesTemplate">
+          <div *ngIf="datasourcesFormArray()?.length === 0; else datasourcesTemplate">
                 <span translate fxLayoutAlign="center center"
                       class="tb-prompt">datasource.add-datasource-prompt</span>
           </div>
@@ -86,7 +92,7 @@
                         (cdkDropListDropped)="onDatasourceDrop($event)"
                         [cdkDropListDisabled]="disabled"
                         formArrayName="datasources">
-                <mat-list-item *ngFor="let datasourceControl of datasourcesFormArray().controls; let $index = index;"
+                <mat-list-item *ngFor="let datasourceControl of datasourcesFormArray()?.controls; let $index = index;"
                                class="tb-datasource-list-item tb-draggable" cdkDrag
                                [cdkDragDisabled]="disabled">
                   <div fxFlex fxLayout="row" fxLayoutAlign="start center">
@@ -205,7 +211,7 @@
                     type="button"
                     mat-raised-button color="primary"
                     [fxShow]="modelValue?.typeParameters &&
-                              (modelValue?.typeParameters.maxDatasources === -1 || datasourcesFormArray().controls.length < modelValue?.typeParameters.maxDatasources)"
+                              (modelValue?.typeParameters.maxDatasources === -1 || datasourcesFormArray()?.controls?.length < modelValue?.typeParameters.maxDatasources)"
                     (click)="addDatasource()"
                     matTooltip="{{ 'widget-config.add-datasource' | translate }}"
                     matTooltipPosition="above">
@@ -223,11 +229,11 @@
           </mat-expansion-panel-header>
           <div [formGroup]="targetDeviceSettings" style="padding: 0 5px;">
             <tb-entity-alias-select fxFlex
-              [tbRequired]="!widgetEditMode"
-              [aliasController]="aliasController"
-              [allowedEntityTypes]="[entityTypes.DEVICE]"
-              [callbacks]="widgetConfigCallbacks"
-              formControlName="targetDeviceAliasId">
+                                    [tbRequired]="!widgetEditMode"
+                                    [aliasController]="aliasController"
+                                    [allowedEntityTypes]="[entityTypes.DEVICE]"
+                                    [callbacks]="widgetConfigCallbacks"
+                                    formControlName="targetDeviceAliasId">
             </tb-entity-alias-select>
           </div>
         </mat-expansion-panel>
@@ -312,183 +318,148 @@
         </mat-expansion-panel>
       </mat-accordion>
     </div>
-  </mat-tab>
-  <mat-tab label="{{ 'widget-config.settings' | translate }}">
-    <div class="mat-content mat-padding" fxLayout="column">
-      <div [formGroup]="widgetSettings" fxLayout="column">
-        <fieldset class="fields-group">
-          <legend class="group-title" translate>widget-config.title</legend>
-          <mat-slide-toggle class="mat-slide" formControlName="showTitle">
-            {{ 'widget-config.display-title' | translate }}
+    <div *ngIf="displayAdvanced()" [fxShow]="selectedOption === 'appearance'" [formGroup]="advancedSettings" class="mat-content tb-advanced-widget-config"
+         fxLayout="column">
+      <tb-widget-settings
+        [aliasController]="aliasController"
+        [dashboard]="dashboard"
+        [widget]="widget"
+        formControlName="settings">
+      </tb-widget-settings>
+    </div>
+    <div [fxShow]="selectedOption === 'card'" [formGroup]="widgetSettings" class="mat-content" fxLayout="column">
+      <fieldset class="fields-group">
+        <legend class="group-title" translate>widget-config.title</legend>
+        <mat-slide-toggle class="mat-slide" formControlName="showTitle">
+          {{ 'widget-config.display-title' | translate }}
+        </mat-slide-toggle>
+        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px">
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.title</mat-label>
+            <input matInput formControlName="title">
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.title-tooltip</mat-label>
+            <input matInput formControlName="titleTooltip">
+          </mat-form-field>
+        </div>
+        <fieldset class="fields-group" fxLayoutGap.gt-xs="8px" style="margin: 0">
+          <legend class="group-title" translate>widget-config.title-icon</legend>
+          <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
+            {{ 'widget-config.display-icon' | translate }}
           </mat-slide-toggle>
           <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px">
+            <tb-material-icon-select fxFlex
+                                     formControlName="titleIcon">
+            </tb-material-icon-select>
+            <tb-color-input fxFlex
+                            label="{{'widget-config.icon-color' | translate}}"
+                            icon="format_color_fill"
+                            openOnInput
+                            formControlName="iconColor">
+            </tb-color-input>
             <mat-form-field fxFlex>
-              <mat-label translate>widget-config.title</mat-label>
-              <input matInput formControlName="title">
-            </mat-form-field>
-            <mat-form-field fxFlex>
-              <mat-label translate>widget-config.title-tooltip</mat-label>
-              <input matInput formControlName="titleTooltip">
+              <mat-label translate>widget-config.icon-size</mat-label>
+              <input matInput formControlName="iconSize">
             </mat-form-field>
           </div>
-          <fieldset class="fields-group" fxLayoutGap.gt-xs="8px" style="margin: 0">
-            <legend class="group-title" translate>widget-config.title-icon</legend>
-            <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
-              {{ 'widget-config.display-icon' | translate }}
-            </mat-slide-toggle>
-            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px">
-              <tb-material-icon-select fxFlex
-                                       formControlName="titleIcon">
-              </tb-material-icon-select>
-              <tb-color-input fxFlex
-                              label="{{'widget-config.icon-color' | translate}}"
-                              icon="format_color_fill"
-                              openOnInput
-                              formControlName="iconColor">
-              </tb-color-input>
-              <mat-form-field fxFlex>
-                <mat-label translate>widget-config.icon-size</mat-label>
-                <input matInput formControlName="iconSize">
-              </mat-form-field>
-            </div>
-          </fieldset>
-          <mat-expansion-panel class="tb-settings">
-            <mat-expansion-panel-header>
-              <mat-panel-description fxLayoutAlign="end" translate>
-                widget-config.advanced-settings
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent>
-                <tb-json-object-edit
-                  [editorStyle]="{minHeight: '100px'}"
-                  required
-                  label="{{ 'widget-config.title-style' | translate }}"
-                  formControlName="titleStyle"
-                ></tb-json-object-edit>
-              </ng-template>
-          </mat-expansion-panel>
         </fieldset>
-        <fieldset class="fields-group">
-          <legend class="group-title" translate>widget-config.widget-style</legend>
-          <div fxLayout="column" fxLayout.gt-md="row wrap" fxFlex fxLayoutGap.gt-xs="8px" class="tb-widget-style">
-            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex>
-              <tb-color-input fxFlex
-                              label="{{'widget-config.background-color' | translate}}"
-                              icon="format_color_fill"
-                              openOnInput
-                              formControlName="backgroundColor">
-              </tb-color-input>
-              <tb-color-input fxFlex
-                              label="{{'widget-config.text-color' | translate}}"
-                              icon="format_color_fill"
-                              openOnInput
-                              formControlName="color">
-              </tb-color-input>
-            </div>
-            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex>
-              <mat-form-field fxFlex>
-                <mat-label translate>widget-config.padding</mat-label>
-                <input matInput formControlName="padding">
-              </mat-form-field>
-              <mat-form-field fxFlex>
-                <mat-label translate>widget-config.margin</mat-label>
-                <input matInput formControlName="margin">
-              </mat-form-field>
-            </div>
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-description fxLayoutAlign="end" translate>
+              widget-config.advanced-settings
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <tb-json-object-edit
+              [editorStyle]="{minHeight: '100px'}"
+              required
+              label="{{ 'widget-config.title-style' | translate }}"
+              formControlName="titleStyle"
+            ></tb-json-object-edit>
+          </ng-template>
+        </mat-expansion-panel>
+      </fieldset>
+      <fieldset class="fields-group">
+        <legend class="group-title" translate>widget-config.widget-style</legend>
+        <div fxLayout="column" fxLayout.gt-md="row wrap" fxFlex fxLayoutGap.gt-xs="8px" class="tb-widget-style">
+          <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex>
+            <tb-color-input fxFlex
+                            label="{{'widget-config.background-color' | translate}}"
+                            icon="format_color_fill"
+                            openOnInput
+                            formControlName="backgroundColor">
+            </tb-color-input>
+            <tb-color-input fxFlex
+                            label="{{'widget-config.text-color' | translate}}"
+                            icon="format_color_fill"
+                            openOnInput
+                            formControlName="color">
+            </tb-color-input>
           </div>
-          <mat-slide-toggle class="slide-block" formControlName="dropShadow">
-            {{ 'widget-config.drop-shadow' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle class="slide-block" formControlName="enableFullscreen">
-            {{ 'widget-config.enable-fullscreen' | translate }}
-          </mat-slide-toggle>
-          <mat-expansion-panel class="tb-settings">
-            <mat-expansion-panel-header>
-              <mat-panel-description fxLayoutAlign="end" translate>
-                widget-config.advanced-settings
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent>
-              <tb-json-object-edit
-                [editorStyle]="{minHeight: '100px'}"
-                required
-                label="{{ 'widget-config.widget-style' | translate }}"
-                formControlName="widgetStyle"
-              ></tb-json-object-edit>
-              <tb-css
-                label="{{ 'widget-config.widget-css' | translate }}"
-                formControlName="widgetCss"
-              ></tb-css>
-            </ng-template>
-          </mat-expansion-panel>
-        </fieldset>
-        <fieldset class="fields-group fields-group-slider" *ngIf="showLegendFieldset">
-          <legend class="group-title" translate>widget-config.legend</legend>
-          <mat-expansion-panel class="tb-settings">
-            <mat-expansion-panel-header fxLayout="row wrap">
-              <mat-panel-title>
-                <mat-slide-toggle formControlName="showLegend" (click)="$event.stopPropagation()" fxLayoutAlign="center">
-                  {{ 'widget-config.display-legend' | translate }}
-                </mat-slide-toggle>
-              </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
-                widget-config.advanced-settings
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent>
-              <tb-legend-config formControlName="legendConfig"></tb-legend-config>
-            </ng-template>
-          </mat-expansion-panel>
-        </fieldset>
-        <fieldset [formGroup]="layoutSettings" class="fields-group fields-group-slider">
-          <legend class="group-title" translate>widget-config.mobile-mode-settings</legend>
-          <mat-expansion-panel class="tb-settings">
-            <mat-expansion-panel-header style="height: fit-content;">
-              <mat-panel-title fxLayout.xs="column" fxLayoutAlign.xs="center start" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex="70">
-                <mat-slide-toggle formControlName="mobileHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
-                  {{ 'widget-config.mobile-hide' | translate }}
-                </mat-slide-toggle>
-                <mat-slide-toggle formControlName="desktopHide" (click)="$event.stopPropagation()" fxLayoutAlign="center">
-                  {{ 'widget-config.desktop-hide' | translate }}
-                </mat-slide-toggle>
-              </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate fxFlex="30">
-                widget-config.advanced-settings
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent>
-              <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex>
-                <mat-form-field fxFlex>
-                  <mat-label translate>widget-config.order</mat-label>
-                  <input matInput formControlName="mobileOrder" type="number" step="1">
-                </mat-form-field>
-                <mat-form-field fxFlex>
-                  <mat-label translate>widget-config.height</mat-label>
-                  <input matInput formControlName="mobileHeight" type="number" min="1" step="1">
-                </mat-form-field>
-              </div>
-            </ng-template>
-          </mat-expansion-panel>
-        </fieldset>
+          <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex>
+            <mat-form-field fxFlex>
+              <mat-label translate>widget-config.padding</mat-label>
+              <input matInput formControlName="padding">
+            </mat-form-field>
+            <mat-form-field fxFlex>
+              <mat-label translate>widget-config.margin</mat-label>
+              <input matInput formControlName="margin">
+            </mat-form-field>
+          </div>
+        </div>
+        <mat-slide-toggle class="slide-block" formControlName="dropShadow">
+          {{ 'widget-config.drop-shadow' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle class="slide-block" formControlName="enableFullscreen">
+          {{ 'widget-config.enable-fullscreen' | translate }}
+        </mat-slide-toggle>
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-description fxLayoutAlign="end" translate>
+              widget-config.advanced-settings
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <tb-json-object-edit
+              [editorStyle]="{minHeight: '100px'}"
+              required
+              label="{{ 'widget-config.widget-style' | translate }}"
+              formControlName="widgetStyle"
+            ></tb-json-object-edit>
+            <tb-css
+              label="{{ 'widget-config.widget-css' | translate }}"
+              formControlName="widgetCss"
+            ></tb-css>
+          </ng-template>
+        </mat-expansion-panel>
+      </fieldset>
+    </div>
+    <div [fxShow]="selectedOption === 'actions'" [formGroup]="actionsSettings" class="mat-content" fxLayout="column" style="height: 100%;">
+      <tb-manage-widget-actions
+        [callbacks]="widgetConfigCallbacks"
+        [widgetType] = "modelValue.widgetType"
+        formControlName="actionsData">
+      </tb-manage-widget-actions>
+    </div>
+    <div [fxShow]="selectedOption === 'mobile'" [formGroup]="layoutSettings" class="mat-content" fxLayout="column" fxLayoutGap="16px">
+      <mat-slide-toggle formControlName="mobileHide">
+        {{ 'widget-config.mobile-hide' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle formControlName="desktopHide">
+        {{ 'widget-config.desktop-hide' | translate }}
+      </mat-slide-toggle>
+      <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px" fxFlex>
+        <mat-form-field fxFlex>
+          <mat-label translate>widget-config.order</mat-label>
+          <input matInput formControlName="mobileOrder" type="number" step="1">
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-label translate>widget-config.height</mat-label>
+          <input matInput formControlName="mobileHeight" type="number" min="1" step="1">
+        </mat-form-field>
       </div>
     </div>
-  </mat-tab>
-  <mat-tab *ngIf="displayAdvanced()" label="{{ 'widget-config.advanced' | translate }}">
-    <div [formGroup]="advancedSettings" class="mat-content mat-padding tb-advanced-widget-config"
-         fxLayout="column">
-        <tb-widget-settings
-          [aliasController]="aliasController"
-          [dashboard]="dashboard"
-          [widget]="widget"
-          formControlName="settings">
-        </tb-widget-settings>
-    </div>
-  </mat-tab>
-  <mat-tab label="{{ 'widget-config.actions' | translate }}" [formGroup]="actionsSettings">
-    <tb-manage-widget-actions
-      [callbacks]="widgetConfigCallbacks"
-      [widgetType] = "modelValue.widgetType"
-      formControlName="actionsData">
-    </tb-manage-widget-actions>
-  </mat-tab>
-</mat-tab-group>
+  </div>
+</div>
+

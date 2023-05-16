@@ -41,6 +41,8 @@ import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-wi
 import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
 import { HomePageWidgetsModule } from '@home/components/widget/lib/home-page/home-page-widgets.module';
 import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import { FlotWidgetComponent } from '@home/components/widget/lib/flot-widget.component';
+import { LegendComponent } from '@home/components/widget/lib/legend.component';
 
 @NgModule({
   declarations:
@@ -62,7 +64,9 @@ import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
       NavigationCardWidgetComponent,
       QrCodeWidgetComponent,
       MarkdownWidgetComponent,
-      SelectEntityDialogComponent
+      SelectEntityDialogComponent,
+      LegendComponent,
+      FlotWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -88,7 +92,9 @@ import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
         NavigationCardsWidgetComponent,
         NavigationCardWidgetComponent,
         QrCodeWidgetComponent,
-        MarkdownWidgetComponent
+        MarkdownWidgetComponent,
+        LegendComponent,
+        FlotWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

@@ -1176,6 +1176,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
             data: {
               dashboard: this.dashboard,
               aliasController: this.dashboardCtx.aliasController,
+              stateController: this.dashboardCtx.stateController,
               widget: newWidget,
               widgetInfo: widgetTypeInfo
             }
