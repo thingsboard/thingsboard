@@ -15,8 +15,10 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -24,8 +26,13 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 
+import java.util.Arrays;
+
+@Slf4j
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "related attributes",
@@ -47,6 +54,7 @@ public class TbGetRelatedAttributeNode extends TbAbstractGetEntityAttrNode<Entit
     public TbGetRelatedAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbGetRelatedAttrNodeConfiguration.class);
         checkIfMappingIsNotEmptyOrElseThrow(config.getAttrMapping());
+        checkDataToFetchSupportedOrElseThrow(config.getDataToFetch());
         return config;
     }
 
@@ -57,6 +65,26 @@ public class TbGetRelatedAttributeNode extends TbAbstractGetEntityAttrNode<Entit
                 EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, relatedAttrConfig.getRelationsQuery()),
                 checkIfEntityIsPresentOrThrow(RELATED_ENTITY_NOT_FOUND_MESSAGE),
                 ctx.getDbCallbackExecutor());
+    }
+
+    @Override
+    protected void checkDataToFetchSupportedOrElseThrow(DataToFetch dataToFetch) throws TbNodeException {
+        if (dataToFetch == null) {
+            throw new TbNodeException("DataToFetch property cannot be null! Supported values are: " + Arrays.toString(DataToFetch.values()));
+        }
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, JsonNode oldConfiguration) {
+        try {
+            int oldVersion = getVersionOrElseThrowTbNodeException(ruleNodeId, oldConfiguration);
+            if (oldVersion == 0) {
+                return upgradeToUseFetchToAndDataToFetch(ruleNodeId, oldConfiguration);
+            }
+        } catch (TbNodeException e) {
+            log.warn(e.getMessage());
+        }
+        return new TbPair<>(false, oldConfiguration);
     }
 
 }

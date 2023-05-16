@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -23,8 +24,10 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
@@ -56,6 +59,25 @@ public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGet
     @Override
     protected ListenableFuture<Tenant> getContactBasedFuture(TbContext ctx, TbMsg msg) {
         return ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), ctx.getTenantId());
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, JsonNode oldConfiguration) {
+        try {
+            int oldVersion = getVersionOrElseThrowTbNodeException(ruleNodeId, oldConfiguration);
+            if (oldVersion == 0) {
+                return upgradeRuleNodesWithOldPropertyToUseFetchTo(
+                        ruleNodeId,
+                        oldConfiguration,
+                        "addToMetadata",
+                        FetchTo.METADATA.name(),
+                        FetchTo.DATA.name()
+                );
+            }
+        } catch (TbNodeException e) {
+            log.warn(e.getMessage());
+        }
+        return new TbPair<>(false, oldConfiguration);
     }
 
 }

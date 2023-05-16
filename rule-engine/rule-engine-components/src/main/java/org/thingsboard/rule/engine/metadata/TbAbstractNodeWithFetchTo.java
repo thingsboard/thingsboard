@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
@@ -24,15 +25,20 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.VersionedNode;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.NoSuchElementException;
 
 @Slf4j
-public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeConfiguration> implements TbNode {
+public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeConfiguration> implements TbNode, VersionedNode {
+
+    protected final static String FETCH_TO_PROPERTY_NAME = "fetchTo";
 
     protected C config;
     protected FetchTo fetchTo;
@@ -83,6 +89,36 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
             default:
                 log.debug("Unexpected FetchTo value: {}. Allowed values: {}", fetchTo, FetchTo.values());
                 return msg;
+        }
+    }
+
+    protected TbPair<Boolean, JsonNode> upgradeRuleNodesWithOldPropertyToUseFetchTo(
+            RuleNodeId ruleNodeId,
+            JsonNode oldConfiguration,
+            String oldProperty,
+            String ifTrue,
+            String ifFalse
+    ) throws TbNodeException {
+        var newConfigObjectNode = (ObjectNode) oldConfiguration;
+        if (!newConfigObjectNode.has(oldProperty)) {
+            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
+                    "with id: [" + ruleNodeId + "] doesn't have property: [" + oldProperty + "]");
+        }
+        var value = newConfigObjectNode.get(oldProperty).asText();
+        if ("true".equals(value)) {
+            newConfigObjectNode.remove(oldProperty);
+            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, ifTrue);
+            newConfigObjectNode.put(VERSION_PROPERTY_NAME, 1);
+            return new TbPair<>(true, newConfigObjectNode);
+        } else if ("false".equals(value)) {
+            newConfigObjectNode.remove(oldProperty);
+            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, ifFalse);
+            newConfigObjectNode.put(VERSION_PROPERTY_NAME, 1);
+            return new TbPair<>(true, newConfigObjectNode);
+        } else {
+            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
+                    "with id: [" + ruleNodeId + "] has property: [" + oldProperty + "] " +
+                    "with unexpected value: [" + value + "] Allowed values: true or false!");
         }
     }
 

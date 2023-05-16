@@ -27,7 +27,7 @@ import java.util.Map;
 public class TbGetEntityAttrNodeConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbGetEntityAttrNodeConfiguration> {
 
     private Map<String, String> attrMapping;
-    private boolean isTelemetry;
+    private DataToFetch dataToFetch;
 
     @Override
     public TbGetEntityAttrNodeConfiguration defaultConfiguration() {
@@ -35,7 +35,7 @@ public class TbGetEntityAttrNodeConfiguration extends TbAbstractFetchToNodeConfi
         var attrMapping = new HashMap<String, String>();
         attrMapping.putIfAbsent("alarmThreshold", "threshold");
         configuration.setAttrMapping(attrMapping);
-        configuration.setTelemetry(false);
+        configuration.setDataToFetch(DataToFetch.ATTRIBUTES);
         configuration.setFetchTo(FetchTo.METADATA);
         return configuration;
     }

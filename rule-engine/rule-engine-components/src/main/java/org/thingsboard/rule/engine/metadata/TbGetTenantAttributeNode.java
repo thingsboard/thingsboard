@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +25,10 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 
 @Slf4j
 @RuleNode(
@@ -45,12 +48,34 @@ public class TbGetTenantAttributeNode extends TbAbstractGetEntityAttrNode<Tenant
     public TbGetEntityAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
         checkIfMappingIsNotEmptyOrElseThrow(config.getAttrMapping());
+        checkDataToFetchSupportedOrElseThrow(config.getDataToFetch());
         return config;
     }
 
     @Override
     public ListenableFuture<TenantId> findEntityAsync(TbContext ctx, EntityId originator) {
         return Futures.immediateFuture(ctx.getTenantId());
+    }
+
+    @Override
+    protected void checkDataToFetchSupportedOrElseThrow(DataToFetch dataToFetch) throws TbNodeException {
+        if (dataToFetch == null || dataToFetch.equals(DataToFetch.FIELDS)) {
+            throw new TbNodeException("DataToFetch property has invalid value: " + dataToFetch +
+                    ". Only ATTRIBUTES and LATEST_TELEMETRY values supported!");
+        }
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, JsonNode oldConfiguration) {
+        try {
+            int oldVersion = getVersionOrElseThrowTbNodeException(ruleNodeId, oldConfiguration);
+            if (oldVersion == 0) {
+                return upgradeToUseFetchToAndDataToFetch(ruleNodeId, oldConfiguration);
+            }
+        } catch (TbNodeException e) {
+            log.warn(e.getMessage());
+        }
+        return new TbPair<>(false, oldConfiguration);
     }
 
 }

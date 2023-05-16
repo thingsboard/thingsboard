@@ -26,9 +26,18 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.VersionedNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
-import org.thingsboard.rule.engine.metadata.FetchTo;
+import org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode;
+import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
+import org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode;
+import org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode;
+import org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode;
+import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
 import org.thingsboard.server.common.data.DataConstants;
@@ -209,7 +218,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
             case "3.5.0":
                 log.info("Updating data from version 3.5.0 to 3.5.1 ...");
                 log.info("Starting enrichment rule nodes update ...");
-                updateEnrichmentRuleNodes();
+                upgradeEnrichmentRuleNodesWithFetchTo();
                 log.info("Finished enrichment rule nodes update!");
                 break;
             default:
@@ -217,108 +226,46 @@ public class DefaultDataUpdateService implements DataUpdateService {
         }
     }
 
-    private void updateEnrichmentRuleNodes() {
+    private void upgradeEnrichmentRuleNodesWithFetchTo() {
         try {
             var ruleChainIdToTenantId = new HashMap<RuleChainId, TenantId>();
-            var allNodesToUpdate = List.of(
-                    "org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode",
-                    "org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode",
-                    "org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode",
-                    "org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode",
-                    "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
-                    "org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode",
-                    "org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode",
-                    "org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode",
-                    "org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode"
-            );
-            allNodesToUpdate.forEach(ruleNodeType -> {
-                var ruleNodes = new PageDataIterable<>(
-                        pageLink -> ruleChainService.findAllRuleNodesByType(ruleNodeType, pageLink), 1024
-                );
-                for (var ruleNode : ruleNodes) {
-                    var configuration = ruleNode.getConfiguration();
-                    if (configuration == null) {
-                        log.error("Failed to update rule node: [{}] with id: [{}] Node configuration is null! Skipping this node!",
-                                ruleNodeType, ruleNode.getId());
-                        continue;
-                    }
-                    if (!configuration.isObject()) {
-                        log.error("Failed to update rule node: [{}] with id: [{}] Node configuration is not an object! Skipping this node!",
-                                ruleNodeType, ruleNode.getId());
-                        continue;
-                    }
-                    var configObjectNode = (ObjectNode) configuration;
-
-                    FetchTo fetchTo;
-
-                    switch (ruleNodeType) {
-                        case "org.thingsboard.rule.engine.metadata.TbGetAttributesNode":
-                        case "org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode":
-                            fetchTo = checkEnrichmentNodeFetchProperty(configObjectNode, "fetchToData", FetchTo.DATA, FetchTo.METADATA);
-                            break;
-                        case "org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode":
-                        case "org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode":
-                            fetchTo = checkEnrichmentNodeFetchProperty(configObjectNode, "addToMetadata", FetchTo.METADATA, FetchTo.DATA);
-                            break;
-                        case "org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode":
-                            fetchTo = checkEnrichmentNodeFetchProperty(configObjectNode, "fetchToMetadata", FetchTo.METADATA, FetchTo.DATA);
-                            break;
-                        case "org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode":
-                        case "org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode":
-                        case "org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode":
-                        case "org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode":
-                            fetchTo = FetchTo.METADATA;
-                            break;
-                        default:
-                            log.error("Failed to update rule node: [{}] with id: [{}] " +
-                                    "Reason: Unexpected rule node type!", ruleNodeType, ruleNode.getId());
-                            continue;
-                    }
-
-                    if (fetchTo == null) {
-                        log.error("Failed to update rule node: [{}] with id: [{}]", ruleNodeType, ruleNode.getId());
-                        continue;
-                    }
-
-                    configObjectNode.put("fetchTo", fetchTo.name());
-                    ruleNode.setConfiguration(configObjectNode);
-                    var ruleChainId = ruleNode.getRuleChainId();
-                    var tenantId = ruleChainIdToTenantId.computeIfAbsent(ruleChainId,
-                            id -> {
-                                RuleChain ruleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, id);
-                                if (ruleChain == null) {
-                                    log.error("Failed to find rule chain by id: [{}], ruleNodeId: [{}]", ruleChainId, ruleNode.getId());
-                                    return null;
-                                }
-                                return ruleChain.getTenantId();
-                            });
-                    if (tenantId != null) {
-                        ruleChainService.saveRuleNode(tenantId, ruleNode);
-                    }
-                }
-            });
+            upgradeRuleNode(ruleChainIdToTenantId, new TbGetOriginatorFieldsNode());
+            upgradeRuleNode(ruleChainIdToTenantId, new TbGetRelatedAttributeNode());
+            upgradeRuleNode(ruleChainIdToTenantId, new TbGetTenantAttributeNode());
+            upgradeRuleNode(ruleChainIdToTenantId, new TbGetCustomerAttributeNode());
+            upgradeRuleNode(ruleChainIdToTenantId, new TbGetAttributesNode());
+            upgradeRuleNode(ruleChainIdToTenantId, new TbGetDeviceAttrNode());
+            upgradeRuleNode(ruleChainIdToTenantId, new TbGetCustomerDetailsNode());
+            upgradeRuleNode(ruleChainIdToTenantId, new TbGetTenantDetailsNode());
+            upgradeRuleNode(ruleChainIdToTenantId, new TbFetchDeviceCredentialsNode());
         } catch (Exception e) {
             log.error("Unexpected error during enrichment rule nodes updating!", e);
         }
     }
 
-    private FetchTo checkEnrichmentNodeFetchProperty(ObjectNode config, String property, FetchTo ifTrue, FetchTo ifFalse) {
-        if (config.has(property)) {
-            var value = config.get(property).asText();
-            if ("true".equals(value)) {
-                config.remove(property);
-                return ifTrue;
-            } else if ("false".equals(value)) {
-                config.remove(property);
-                return ifFalse;
-            } else {
-                log.error(property + " property has unexpected value: {} Allowed values: true or false!", value);
-                return null;
+    private void upgradeRuleNode(HashMap<RuleChainId, TenantId> ruleChainIdToTenantId, VersionedNode versionedNode) {
+        var ruleNodes = new PageDataIterable<>(
+                pageLink -> ruleChainService.findAllRuleNodesByType(versionedNode.getClass().getName(), pageLink), 1024
+        );
+        ruleNodes.forEach(ruleNode -> {
+            var upgradeRuleNodeConfigurationResult = versionedNode.upgrade(ruleNode.getId(), ruleNode.getConfiguration());
+            if (upgradeRuleNodeConfigurationResult.getFirst()) {
+                ruleNode.setConfiguration(upgradeRuleNodeConfigurationResult.getSecond());
+                var ruleChainId = ruleNode.getRuleChainId();
+                var tenantId = ruleChainIdToTenantId.computeIfAbsent(ruleChainId,
+                        id -> {
+                            RuleChain ruleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, id);
+                            if (ruleChain == null) {
+                                log.error("Failed to find rule chain by id: [{}], ruleNodeId: [{}]", ruleChainId, ruleNode.getId());
+                                return null;
+                            }
+                            return ruleChain.getTenantId();
+                        });
+                if (tenantId != null) {
+                    ruleChainService.saveRuleNode(tenantId, ruleNode);
+                }
             }
-        } else {
-            log.error(property + " property is not present!");
-            return null;
-        }
+        });
     }
 
     private final PaginatedUpdater<String, DeviceProfileEntity> deviceProfileEntityDynamicConditionsUpdater =

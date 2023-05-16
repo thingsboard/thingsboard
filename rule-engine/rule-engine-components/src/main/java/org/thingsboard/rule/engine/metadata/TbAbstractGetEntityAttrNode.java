@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -23,9 +24,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.EntitiesFieldsAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,11 +43,14 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @Slf4j
 public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends TbAbstractNodeWithFetchTo<TbGetEntityAttrNodeConfiguration> {
 
+    protected final static String DATA_TO_FETCH_PROPERTY_NAME = "dataToFetch";
+    protected static final String OLD_PROPERTY_NAME = "telemetry";
+
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(findEntityAsync(ctx, msg.getOriginator()),
-                entityId -> safeGetAttributes(ctx, msg, entityId, msgDataAsObjectNode),
+                entityId -> getData(ctx, msg, entityId, msgDataAsObjectNode),
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
@@ -54,18 +62,64 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
         }
     }
 
-    private void safeGetAttributes(TbContext ctx, TbMsg msg, T entityId, ObjectNode msgDataAsJsonNode) {
+    protected abstract void checkDataToFetchSupportedOrElseThrow(DataToFetch dataToFetch) throws TbNodeException;
+
+    private void getData(TbContext ctx, TbMsg msg, T entityId, ObjectNode msgDataAsJsonNode) {
         var mappingsMap = new HashMap<String, String>();
-        config.getAttrMapping().forEach((key, value) -> {
-            String patternProcessedSourceKey = TbNodeUtils.processPattern(key, msg);
-            String patternProcessedTargetKey = TbNodeUtils.processPattern(value, msg);
-            mappingsMap.put(patternProcessedSourceKey, patternProcessedTargetKey);
-        });
-        var sourceKeys = List.copyOf(mappingsMap.keySet());
-        withCallback(config.isTelemetry() ? getLatestTelemetryAsync(ctx, entityId, sourceKeys) : getAttributesAsync(ctx, entityId, sourceKeys),
-                data -> putDataAndTell(ctx, msg, data, mappingsMap, msgDataAsJsonNode),
-                t -> ctx.tellFailure(msg, t),
-                MoreExecutors.directExecutor());
+        if (DataToFetch.FIELDS.equals(config.getDataToFetch())) {
+            config.getAttrMapping().forEach((sourceField, targetKey) -> {
+                String patternProcessedTargetKey = TbNodeUtils.processPattern(targetKey, msg);
+                mappingsMap.put(sourceField, patternProcessedTargetKey);
+            });
+            withCallback(collectMappedEntityFieldsAsync(ctx, entityId, mappingsMap),
+                    targetKeysToSourceValuesMap -> {
+                        TbMsgMetaData msgMetaData = msg.getMetaData().copy();
+                        for (var entry : targetKeysToSourceValuesMap.entrySet()) {
+                            var targetKeyName = entry.getKey();
+                            var sourceFieldValue = entry.getValue();
+                            if (FetchTo.DATA.equals(fetchTo)) {
+                                msgDataAsJsonNode.put(targetKeyName, sourceFieldValue);
+                            } else if (FetchTo.METADATA.equals(fetchTo)) {
+                                msgMetaData.putValue(targetKeyName, sourceFieldValue);
+                            }
+                        }
+                        TbMsg outMsg = transformMessage(msg, msgDataAsJsonNode, msgMetaData);
+                        ctx.tellSuccess(outMsg);
+                    },
+                    t -> ctx.tellFailure(msg, t),
+                    MoreExecutors.directExecutor());
+        } else {
+            config.getAttrMapping().forEach((sourceKey, targetKey) -> {
+                String patternProcessedSourceKey = TbNodeUtils.processPattern(sourceKey, msg);
+                String patternProcessedTargetKey = TbNodeUtils.processPattern(targetKey, msg);
+                mappingsMap.put(patternProcessedSourceKey, patternProcessedTargetKey);
+            });
+            var sourceKeys = List.copyOf(mappingsMap.keySet());
+            withCallback(DataToFetch.LATEST_TELEMETRY.equals(config.getDataToFetch()) ?
+                            getLatestTelemetryAsync(ctx, entityId, sourceKeys) :
+                            getAttributesAsync(ctx, entityId, sourceKeys),
+                    data -> putDataAndTell(ctx, msg, data, mappingsMap, msgDataAsJsonNode),
+                    t -> ctx.tellFailure(msg, t),
+                    MoreExecutors.directExecutor());
+        }
+
+    }
+
+    private ListenableFuture<Map<String, String>> collectMappedEntityFieldsAsync(TbContext ctx, EntityId entityId, HashMap<String, String> mappingsMap) {
+        return Futures.transform(EntitiesFieldsAsyncLoader.findAsync(ctx, entityId),
+                fieldsData -> {
+                    var targetKeysToSourceValuesMap = new HashMap<String, String>();
+                    for (var mappingEntry : mappingsMap.entrySet()) {
+                        var sourceFieldName = mappingEntry.getKey();
+                        var targetKeyName = mappingEntry.getValue();
+                        var sourceFieldValue = fieldsData.getFieldValue(sourceFieldName, true);
+                        if (sourceFieldValue != null) {
+                            targetKeysToSourceValuesMap.put(targetKeyName, sourceFieldValue);
+                        }
+                    }
+                    return targetKeysToSourceValuesMap;
+                }, ctx.getDbCallbackExecutor()
+        );
     }
 
     private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId, List<String> attrKeys) {
@@ -93,6 +147,29 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
             enrichMessage(msgData, msgMetaData, entry, targetKey);
         }
         ctx.tellSuccess(transformMessage(msg, msgData, msgMetaData));
+    }
+
+    protected TbPair<Boolean, JsonNode> upgradeToUseFetchToAndDataToFetch(RuleNodeId ruleNodeId, JsonNode oldConfiguration) throws TbNodeException {
+        var newConfigObjectNode = (ObjectNode) oldConfiguration;
+        if (!newConfigObjectNode.has(OLD_PROPERTY_NAME)) {
+            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
+                    "with id: [" + ruleNodeId + "] doesn't have property: [" + OLD_PROPERTY_NAME + "]");
+        }
+        var value = newConfigObjectNode.get(OLD_PROPERTY_NAME).asText();
+        if ("true".equals(value)) {
+            newConfigObjectNode.remove(OLD_PROPERTY_NAME);
+            newConfigObjectNode.put(DATA_TO_FETCH_PROPERTY_NAME, DataToFetch.LATEST_TELEMETRY.name());
+        } else if ("false".equals(value)) {
+            newConfigObjectNode.remove(OLD_PROPERTY_NAME);
+            newConfigObjectNode.put(DATA_TO_FETCH_PROPERTY_NAME, DataToFetch.ATTRIBUTES.name());
+        } else {
+            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
+                    "with id: [" + ruleNodeId + "] has property: [" + OLD_PROPERTY_NAME + "] " +
+                    "with unexpected value: [" + value + "] Allowed values: true or false!");
+        }
+        newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, FetchTo.METADATA.name());
+        newConfigObjectNode.put(VERSION_PROPERTY_NAME, 1);
+        return new TbPair<>(true, newConfigObjectNode);
     }
 
 }

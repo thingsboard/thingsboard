@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -128,6 +129,22 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
+    public void givenInvalidMsgDataType_whenOnMsg_thenShouldTellNextOther() {
+        // GIVEN
+        var msgData = "[]";
+        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        verify(ctxMock, times(1)).tellNext(eq(msg), eq("Other"));
+        verify(ctxMock, never()).tellSuccess(any());
+        verify(ctxMock, never()).tellFailure(any(), any());
+    }
+
+
+    @Test
     public void givenInputKeyIsNotPresent_whenOnMsg_thenShouldTellNextOther() {
         // GIVEN
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "{}");
@@ -142,15 +159,16 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void givenDoubleValue_whenOnMsg_thenShouldTellSuccess() throws TbNodeException {
+    public void givenDoubleValue_whenOnMsgAndCachingOff_thenShouldTellSuccess() throws TbNodeException {
         // GIVEN
         config.setRound(1);
         config.setInputValueKey("temperature");
         config.setOutputValueKey("temp_delta");
+        config.setUseCache(false);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
 
-        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 40.5)));
+        mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 40.5)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
@@ -172,14 +190,15 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void givenLongStringValue_whenOnMsg_thenShouldTellSuccess() throws TbNodeException {
+    public void givenLongStringValue_whenOnMsgAndCachingOff_thenShouldTellSuccess() throws TbNodeException {
         // GIVEN
         config.setInputValueKey("temperature");
         config.setOutputValueKey("temp_delta");
+        config.setUseCache(false);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
 
-        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("temperature", 40L)));
+        mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("temperature", 40L)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
@@ -201,14 +220,15 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void givenValidStringValue_whenOnMsg_thenShouldTellSuccess() throws TbNodeException {
+    public void givenValidStringValue_whenOnMsgAndCachingOff_thenShouldTellSuccess() throws TbNodeException {
         // GIVEN
         config.setInputValueKey("temperature");
         config.setOutputValueKey("temp_delta");
+        config.setUseCache(false);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
 
-        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("temperature", "40.0")));
+        mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("temperature", "40.0")));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
@@ -289,14 +309,15 @@ public class CalculateDeltaNodeTest {
     }
 
     @Test
-    public void givenLastValueIsNull_whenOnMsh_thenDeltaShouldBeZero() throws TbNodeException {
+    public void givenLastValueIsNull_whenOnMsgAndCachingOff_thenDeltaShouldBeZero() throws TbNodeException {
         // GIVEN
         config.setInputValueKey("temperature");
         config.setOutputValueKey("temp_delta");
+        config.setUseCache(false);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
 
-        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", null)));
+        mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", null)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
@@ -333,10 +354,21 @@ public class CalculateDeltaNodeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        verify(ctxMock, times(1)).tellNext(msg, "Failure");
+        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        var actualExceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+
+        verify(ctxMock, times(1)).tellFailure(actualMsgCaptor.capture(), actualExceptionCaptor.capture());
         verify(ctxMock, never()).tellSuccess(any());
-        verify(ctxMock, never()).tellFailure(any(), any());
+        verify(ctxMock, never()).tellNext(any(), anyString());
         verify(ctxMock, never()).tellNext(any(), anySet());
+
+        var expectedExceptionMsg = "Delta value is negative!";
+        var actualException = actualExceptionCaptor.getValue();
+
+        assertEquals(msg, actualMsgCaptor.getValue());
+        assertInstanceOf(IllegalArgumentException.class, actualException);
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+
     }
 
     @Test
@@ -347,24 +379,10 @@ public class CalculateDeltaNodeTest {
         var msgData = "{\"pulseCounter\":\"123\"}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        var actualExceptionCaptor = ArgumentCaptor.forClass(Exception.class);
-
-        verify(ctxMock, times(1)).tellFailure(actualMsgCaptor.capture(), actualExceptionCaptor.capture());
-        verify(ctxMock, never()).tellSuccess(any());
-        verify(ctxMock, never()).tellNext(any(), anyString());
-        verify(ctxMock, never()).tellNext(any(), anySet());
-
-        var expectedExceptionMsg = "Calculation failed. Unable to parse value [high] of telemetry [pulseCounter] to Double";
-        var actualException = actualExceptionCaptor.getValue();
-
-        assertEquals(msg, actualMsgCaptor.getValue());
-        assertInstanceOf(IllegalArgumentException.class, actualException);
-        assertEquals(expectedExceptionMsg, actualException.getMessage());
+        // WHEN-THEN
+        Assertions.assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Calculation failed. Unable to parse value [high] of telemetry [pulseCounter] to Double");
     }
 
     @Test
@@ -375,24 +393,10 @@ public class CalculateDeltaNodeTest {
         var msgData = "{\"pulseCounter\":true}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        var actualExceptionCaptor = ArgumentCaptor.forClass(Exception.class);
-
-        verify(ctxMock, times(1)).tellFailure(actualMsgCaptor.capture(), actualExceptionCaptor.capture());
-        verify(ctxMock, never()).tellSuccess(any());
-        verify(ctxMock, never()).tellNext(any(), anyString());
-        verify(ctxMock, never()).tellNext(any(), anySet());
-
-        var expectedExceptionMsg = "Calculation failed. Boolean values are not supported!";
-        var actualException = actualExceptionCaptor.getValue();
-
-        assertEquals(msg, actualMsgCaptor.getValue());
-        assertInstanceOf(IllegalArgumentException.class, actualException);
-        assertEquals(expectedExceptionMsg, actualException.getMessage());
+        // WHEN-THEN
+        Assertions.assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Calculation failed. Boolean values are not supported!");
     }
 
     @Test
@@ -403,27 +407,20 @@ public class CalculateDeltaNodeTest {
         var msgData = "{\"pulseCounter\":{\"isActive\":true}}";
         var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        var actualExceptionCaptor = ArgumentCaptor.forClass(Exception.class);
-
-        verify(ctxMock, times(1)).tellFailure(actualMsgCaptor.capture(), actualExceptionCaptor.capture());
-        verify(ctxMock, never()).tellSuccess(any());
-        verify(ctxMock, never()).tellNext(any(), anyString());
-        verify(ctxMock, never()).tellNext(any(), anySet());
-
-        var expectedExceptionMsg = "Calculation failed. JSON values are not supported!";
-        var actualException = actualExceptionCaptor.getValue();
-
-        assertEquals(msg, actualMsgCaptor.getValue());
-        assertInstanceOf(IllegalArgumentException.class, actualException);
-        assertEquals(expectedExceptionMsg, actualException.getMessage());
+        // WHEN-THEN
+        Assertions.assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Calculation failed. JSON values are not supported!");
     }
 
     private void mockFindLatest(TsKvEntry tsKvEntry) {
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(timeseriesServiceMock.findLatestSync(
+                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of(tsKvEntry.getKey())))
+        )).thenReturn(List.of(tsKvEntry));
+    }
+
+    private void mockFindLatestAsync(TsKvEntry tsKvEntry) {
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(timeseriesServiceMock.findLatest(

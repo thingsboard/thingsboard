@@ -15,9 +15,12 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -25,7 +28,9 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesFieldsAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -37,6 +42,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 /**
  * Created by ashvayka on 19.01.18.
  */
+@Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator fields",
         configClazz = TbGetOriginatorFieldsConfiguration.class,
@@ -93,6 +99,22 @@ public class TbGetOriginatorFieldsNode extends TbAbstractNodeWithFetchTo<TbGetOr
                     return targetKeysToSourceValuesMap;
                 }, ctx.getDbCallbackExecutor()
         );
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, JsonNode oldConfiguration) {
+        try {
+            int oldVersion = getVersionOrElseThrowTbNodeException(ruleNodeId, oldConfiguration);
+            if (oldVersion == 0) {
+                var newConfigObjectNode = (ObjectNode) oldConfiguration;
+                newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, FetchTo.METADATA.name());
+                newConfigObjectNode.put(VERSION_PROPERTY_NAME, 1);
+                return new TbPair<>(true, newConfigObjectNode);
+            }
+        } catch (TbNodeException e) {
+            log.warn(e.getMessage());
+        }
+        return new TbPair<>(false, oldConfiguration);
     }
 
 }

@@ -116,6 +116,34 @@ public class TbGetTenantAttributeNodeTest {
     }
 
     @Test
+    public void givenConfigWithNullDataToFetch_whenInit_thenException() {
+        // GIVEN
+        config.setDataToFetch(null);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        // WHEN
+        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
+
+        // THEN
+        assertThat(exception.getMessage()).isEqualTo("DataToFetch property has invalid value: null. Only ATTRIBUTES and LATEST_TELEMETRY values supported!");
+        verify(ctxMock, never()).tellSuccess(any());
+    }
+
+    @Test
+    public void givenConfigWithUnsupportedDataToFetch_whenInit_thenException() {
+        // GIVEN
+        config.setDataToFetch(DataToFetch.FIELDS);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        // WHEN
+        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
+
+        // THEN
+        assertThat(exception.getMessage()).isEqualTo("DataToFetch property has invalid value: FIELDS. Only ATTRIBUTES and LATEST_TELEMETRY values supported!");
+        verify(ctxMock, never()).tellSuccess(any());
+    }
+
+    @Test
     public void givenDefaultConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
 
@@ -125,7 +153,7 @@ public class TbGetTenantAttributeNodeTest {
         // THEN
         assertThat(node.config).isEqualTo(config);
         assertThat(config.getAttrMapping()).isEqualTo(Map.of("alarmThreshold", "threshold"));
-        assertThat(config.isTelemetry()).isEqualTo(false);
+        assertThat(config.getDataToFetch()).isEqualTo(DataToFetch.ATTRIBUTES);
         assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
     }
 
@@ -136,7 +164,7 @@ public class TbGetTenantAttributeNodeTest {
                 "sourceAttr1", "targetKey1",
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
-        config.setTelemetry(true);
+        config.setDataToFetch(DataToFetch.LATEST_TELEMETRY);
         config.setFetchTo(FetchTo.DATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
@@ -149,7 +177,7 @@ public class TbGetTenantAttributeNodeTest {
                 "sourceAttr1", "targetKey1",
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
-        assertThat(config.isTelemetry()).isEqualTo(true);
+        assertThat(config.getDataToFetch()).isEqualTo(DataToFetch.LATEST_TELEMETRY);
         assertThat(node.fetchTo).isEqualTo(FetchTo.DATA);
     }
 
@@ -188,7 +216,7 @@ public class TbGetTenantAttributeNodeTest {
         // GIVEN
         var deviceId = new DeviceId(UUID.randomUUID());
 
-        prepareMsgAndConfig(FetchTo.DATA, false, deviceId);
+        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.ATTRIBUTES, deviceId);
 
         List<AttributeKvEntry> attributesList = List.of(
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey1", "sourceValue1"), 1L),
@@ -229,7 +257,7 @@ public class TbGetTenantAttributeNodeTest {
     @Test
     public void givenFetchAttributesToMetaData_whenOnMsg_thenShouldFetchAttributesToMetaData() {
         // GIVEN
-        prepareMsgAndConfig(FetchTo.METADATA, false, TENANT_ID);
+        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.ATTRIBUTES, TENANT_ID);
 
         List<AttributeKvEntry> attributesList = List.of(
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey1", "sourceValue1"), 1L),
@@ -272,7 +300,7 @@ public class TbGetTenantAttributeNodeTest {
         // GIVEN
         var customerId = new CustomerId(UUID.randomUUID());
 
-        prepareMsgAndConfig(FetchTo.DATA, true, customerId);
+        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.LATEST_TELEMETRY, customerId);
 
         List<TsKvEntry> timeseries = List.of(
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey1", "sourceValue1")),
@@ -315,7 +343,7 @@ public class TbGetTenantAttributeNodeTest {
         // GIVEN
         var ruleChainId = new RuleChainId(UUID.randomUUID());
 
-        prepareMsgAndConfig(FetchTo.METADATA, true, ruleChainId);
+        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.LATEST_TELEMETRY, ruleChainId);
 
         List<TsKvEntry> timeseries = List.of(
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey1", "sourceValue1")),
@@ -353,12 +381,12 @@ public class TbGetTenantAttributeNodeTest {
         assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(expectedMsgMetaData);
     }
 
-    private void prepareMsgAndConfig(FetchTo fetchTo, boolean isTelemetry, EntityId originator) {
+    private void prepareMsgAndConfig(FetchTo fetchTo, DataToFetch dataToFetch, EntityId originator) {
         config.setAttrMapping(Map.of(
                 "sourceKey1", "targetKey1",
                 "${metaDataPattern1}", "$[messageBodyPattern1]",
                 "$[messageBodyPattern2]", "${metaDataPattern2}"));
-        config.setTelemetry(isTelemetry);
+        config.setDataToFetch(dataToFetch);
         config.setFetchTo(fetchTo);
 
         node.config = config;

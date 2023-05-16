@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -24,8 +25,10 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.concurrent.ExecutionException;
@@ -83,6 +86,25 @@ public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFe
         }
         TbMsg transformedMsg = transformMessage(msg, msgDataAsObjectNode, metaData);
         ctx.tellSuccess(transformedMsg);
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, JsonNode oldConfiguration) {
+        try {
+            int oldVersion = getVersionOrElseThrowTbNodeException(ruleNodeId, oldConfiguration);
+            if (oldVersion == 0) {
+                return upgradeRuleNodesWithOldPropertyToUseFetchTo(
+                        ruleNodeId,
+                        oldConfiguration,
+                        "fetchToMetadata",
+                        FetchTo.METADATA.name(),
+                        FetchTo.DATA.name()
+                );
+            }
+        } catch (TbNodeException e) {
+            log.warn(e.getMessage());
+        }
+        return new TbPair<>(false, oldConfiguration);
     }
 
 }

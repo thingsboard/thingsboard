@@ -13,15 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.metadata;
+package org.thingsboard.rule.engine.util;
 
-import lombok.Data;
-import org.thingsboard.rule.engine.api.VersionedNodeConfiguration;
+import lombok.Getter;
 
-@Data
-public abstract class TbAbstractFetchToNodeConfiguration implements VersionedNodeConfiguration {
+public enum ContactBasedEntityDetails {
 
-    private FetchTo fetchTo;
-    private int version = 1;
+    ID("id"),
+    TITLE("title"),
+    COUNTRY("country"),
+    CITY("city"),
+    STATE("state"),
+    ZIP("zip"),
+    ADDRESS("address"),
+    ADDRESS2("address2"),
+    PHONE("phone"),
+    EMAIL("email"),
+    ADDITIONAL_INFO("additionalInfo");
+
+    @Getter
+    private final String ruleEngineName;
+
+    ContactBasedEntityDetails(String ruleEngineName) {
+        this.ruleEngineName = ruleEngineName;
+    }
 
 }

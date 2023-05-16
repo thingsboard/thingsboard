@@ -15,13 +15,8 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import lombok.Data;
-import org.thingsboard.rule.engine.api.VersionedNodeConfiguration;
+public enum DataToFetch {
 
-@Data
-public abstract class TbAbstractFetchToNodeConfiguration implements VersionedNodeConfiguration {
-
-    private FetchTo fetchTo;
-    private int version = 1;
+    ATTRIBUTES, LATEST_TELEMETRY, FIELDS
 
 }

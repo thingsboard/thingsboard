@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.rule.engine.util.EntityDetails;
+import org.thingsboard.rule.engine.util.ContactBasedEntityDetails;
 
 import java.util.List;
 
@@ -25,6 +25,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public abstract class TbAbstractGetEntityDetailsNodeConfiguration extends TbAbstractFetchToNodeConfiguration {
 
-    private List<EntityDetails> detailsList;
+    private List<ContactBasedEntityDetails> detailsList;
 
 }

@@ -32,19 +32,9 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.data.RelationsQuery;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -55,15 +45,13 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,6 +96,8 @@ public class TbGetRelatedAttributeNodeTest {
     private TimeseriesService timeseriesServiceMock;
     @Mock
     private RelationService relationServiceMock;
+    @Mock
+    private DeviceService deviceServiceMock;
     private TbGetRelatedAttributeNode node;
     private TbGetRelatedAttrNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
@@ -137,6 +127,20 @@ public class TbGetRelatedAttributeNodeTest {
     }
 
     @Test
+    public void givenConfigWithNullDataToFetch_whenInit_thenException() {
+        // GIVEN
+        config.setDataToFetch(null);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        // WHEN
+        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
+
+        // THEN
+        assertThat(exception.getMessage()).isEqualTo("DataToFetch property cannot be null! Supported values are: " + Arrays.toString(DataToFetch.values()));
+        verify(ctxMock, never()).tellSuccess(any());
+    }
+
+    @Test
     public void givenDefaultConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
 
@@ -147,7 +151,7 @@ public class TbGetRelatedAttributeNodeTest {
         var nodeConfig = (TbGetRelatedAttrNodeConfiguration) node.config;
         assertThat(nodeConfig).isEqualTo(config);
         assertThat(nodeConfig.getAttrMapping()).isEqualTo(Map.of("serialNumber", "sn"));
-        assertThat(nodeConfig.isTelemetry()).isEqualTo(false);
+        assertThat(nodeConfig.getDataToFetch()).isEqualTo(DataToFetch.ATTRIBUTES);
         assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
 
         var relationsQuery = new RelationsQuery();
@@ -166,7 +170,7 @@ public class TbGetRelatedAttributeNodeTest {
                 "sourceAttr1", "targetKey1",
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
-        config.setTelemetry(true);
+        config.setDataToFetch(DataToFetch.LATEST_TELEMETRY);
         config.setFetchTo(FetchTo.DATA);
 
         var relationsQuery = new RelationsQuery();
@@ -189,7 +193,7 @@ public class TbGetRelatedAttributeNodeTest {
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"
         ));
-        assertThat(nodeConfig.isTelemetry()).isEqualTo(true);
+        assertThat(nodeConfig.getDataToFetch()).isEqualTo(DataToFetch.LATEST_TELEMETRY);
         assertThat(node.fetchTo).isEqualTo(FetchTo.DATA);
         assertThat(nodeConfig.getRelationsQuery()).isEqualTo(relationsQuery);
     }
@@ -227,7 +231,7 @@ public class TbGetRelatedAttributeNodeTest {
     @Test
     public void givenDidNotFindEntity_whenOnMsg_thenShouldTellFailure() {
         // GIVEN
-        prepareMsgAndConfig(FetchTo.METADATA, false, DUMMY_DEVICE_ORIGINATOR);
+        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.ATTRIBUTES, DUMMY_DEVICE_ORIGINATOR);
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -263,7 +267,7 @@ public class TbGetRelatedAttributeNodeTest {
         var customer = new Customer(new CustomerId(UUID.randomUUID()));
         var user = new User(new UserId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.DATA, false, customer.getId());
+        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.ATTRIBUTES, customer.getId());
 
         entityRelation.setFrom(customer.getId());
         entityRelation.setTo(user.getId());
@@ -314,7 +318,7 @@ public class TbGetRelatedAttributeNodeTest {
         var firstCustomer = new Customer(new CustomerId(UUID.randomUUID()));
         var secondCustomer = new Customer(new CustomerId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, false, firstCustomer.getId());
+        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.ATTRIBUTES, firstCustomer.getId());
 
         entityRelation.setFrom(firstCustomer.getId());
         entityRelation.setTo(secondCustomer.getId());
@@ -365,7 +369,7 @@ public class TbGetRelatedAttributeNodeTest {
         var dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
         var entityView = new EntityView(new EntityViewId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.DATA, true, dashboard.getId());
+        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.LATEST_TELEMETRY, dashboard.getId());
 
         entityRelation.setFrom(dashboard.getId());
         entityRelation.setTo(entityView.getId());
@@ -416,7 +420,7 @@ public class TbGetRelatedAttributeNodeTest {
         var tenant = new Tenant(new TenantId(UUID.randomUUID()));
         var device = new Device(new DeviceId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, true, tenant.getId());
+        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.LATEST_TELEMETRY, tenant.getId());
 
         entityRelation.setFrom(tenant.getId());
         entityRelation.setTo(device.getId());
@@ -461,24 +465,114 @@ public class TbGetRelatedAttributeNodeTest {
         assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(expectedMsgMetaData);
     }
 
-    private void prepareMsgAndConfig(FetchTo fetchTo, boolean isTelemetry, EntityId originator) {
-        config.setAttrMapping(Map.of(
-                "sourceKey1", "targetKey1",
-                "${metaDataPattern1}", "$[messageBodyPattern1]",
-                "$[messageBodyPattern2]", "${metaDataPattern2}"));
-        config.setTelemetry(isTelemetry);
-        config.setFetchTo(fetchTo);
+    @Test
+    public void givenFetchFieldsToData_whenOnMsg_thenShouldFetchFieldsToData() {
+        // GIVEN
+        var device = new Device();
+        device.setId(new DeviceId(UUID.randomUUID()));
+        device.setName("Device Name");
+        var asset = new Asset(new AssetId(UUID.randomUUID()));
 
+        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.FIELDS, asset.getId());
+
+        entityRelation.setFrom(asset.getId());
+        entityRelation.setTo(device.getId());
+        entityRelation.setType(EntityRelation.CONTAINS_TYPE);
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+
+        when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+        doReturn(Futures.immediateFuture(List.of(entityRelation))).when(relationServiceMock).findByQuery(eq(TENANT_ID), any());
+
+        when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(deviceServiceMock.findDeviceById(eq(TENANT_ID), eq(device.getId()))).thenReturn(device);
+
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
+        verify(ctxMock, never()).tellFailure(any(), any());
+
+        var expectedMsgData = "{\"temp\":42,\"humidity\":77,\"messageBodyPattern\":\"relatedEntityId\"," +
+                "\"relatedEntityId\":\"" + device.getId().getId() + "\",\"relatedEntityName\":\"" + device.getName() + "\"}";
+
+        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(expectedMsgData);
+        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
+    }
+
+    @Test
+    public void givenFetchFieldsToMetadata_whenOnMsg_thenShouldFetchFieldsToMetadata() {
+        // GIVEN
+        var device = new Device();
+        device.setId(new DeviceId(UUID.randomUUID()));
+        device.setName("Device Name");
+        var asset = new Asset(new AssetId(UUID.randomUUID()));
+
+        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.FIELDS, asset.getId());
+
+        entityRelation.setFrom(asset.getId());
+        entityRelation.setTo(device.getId());
+        entityRelation.setType(EntityRelation.CONTAINS_TYPE);
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+
+        when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+        doReturn(Futures.immediateFuture(List.of(entityRelation))).when(relationServiceMock).findByQuery(eq(TENANT_ID), any());
+
+        when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(deviceServiceMock.findDeviceById(eq(TENANT_ID), eq(device.getId()))).thenReturn(device);
+
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
+        verify(ctxMock, never()).tellFailure(any(), any());
+
+        var expectedMsgMetadata = new TbMsgMetaData(Map.of(
+                "metaDataPattern", "relatedEntityName",
+                "relatedEntityId", device.getId().getId().toString(),
+                "relatedEntityName", device.getName()
+        ));
+
+        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
+        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(expectedMsgMetadata);
+    }
+
+    private void prepareMsgAndConfig(FetchTo fetchTo, DataToFetch dataToFetch, EntityId originator) {
+
+        config.setDataToFetch(dataToFetch);
+        config.setFetchTo(fetchTo);
         node.config = config;
         node.fetchTo = fetchTo;
-
         var msgMetaData = new TbMsgMetaData();
-        msgMetaData.putValue("metaDataPattern1", "sourceKey2");
-        msgMetaData.putValue("metaDataPattern2", "targetKey3");
+        String msgData;
+        if (dataToFetch.equals(DataToFetch.FIELDS)) {
+            config.setAttrMapping(Map.of(
+                    "id", "$[messageBodyPattern]",
+                    "name", "${metaDataPattern}"));
+            msgMetaData.putValue("metaDataPattern", "relatedEntityName");
+            msgData = "{\"temp\":42,\"humidity\":77,\"messageBodyPattern\":\"relatedEntityId\"}";
+        } else {
+            config.setAttrMapping(Map.of(
+                    "sourceKey1", "targetKey1",
+                    "${metaDataPattern1}", "$[messageBodyPattern1]",
+                    "$[messageBodyPattern2]", "${metaDataPattern2}"));
+            msgMetaData.putValue("metaDataPattern1", "sourceKey2");
+            msgMetaData.putValue("metaDataPattern2", "targetKey3");
+            msgData = "{\"temp\":42,\"humidity\":77,\"messageBodyPattern1\":\"targetKey2\",\"messageBodyPattern2\":\"sourceKey3\"}";
+        }
 
-        var msgData = "{\"temp\":42,\"humidity\":77,\"messageBodyPattern1\":\"targetKey2\",\"messageBodyPattern2\":\"sourceKey3\"}";
-
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", originator, msgMetaData, msgData);
+        msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), originator, msgMetaData, msgData);
     }
 
     @RequiredArgsConstructor

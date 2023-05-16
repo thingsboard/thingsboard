@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.util.EntityDetails;
+import org.thingsboard.rule.engine.util.ContactBasedEntityDetails;
 import org.thingsboard.server.common.data.ContactBased;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -47,7 +47,7 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     protected abstract ListenableFuture<? extends ContactBased<I>> getContactBasedFuture(TbContext ctx, TbMsg msg);
 
-    protected void checkIfDetailsListIsNotEmptyOrElseThrow(List<EntityDetails> detailsList) throws TbNodeException {
+    protected void checkIfDetailsListIsNotEmptyOrElseThrow(List<ContactBasedEntityDetails> detailsList) throws TbNodeException {
         if (detailsList == null || detailsList.isEmpty()) {
             throw new TbNodeException("No entity details selected!");
         }
@@ -60,87 +60,64 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
                 return Futures.immediateFuture(msg);
             }
             var msgMetaData = msg.getMetaData().copy();
-            setProperties(contactBased, messageData, msgMetaData);
+            fetchEntityDetailsToMsg(contactBased, messageData, msgMetaData);
             return Futures.immediateFuture(transformMessage(msg, messageData, msgMetaData));
         }, MoreExecutors.directExecutor());
     }
 
-    private void setProperties(ContactBased<I> contactBased, ObjectNode messageData, TbMsgMetaData msgMetaData) {
-        String prefix = getPrefix();
-        String property;
-        String value;
-        for (var entityDetails : config.getDetailsList()) {
-            switch (entityDetails) {
+    private void fetchEntityDetailsToMsg(ContactBased<I> contactBased, ObjectNode messageData, TbMsgMetaData msgMetaData) {
+        String value = null;
+        for (var entityDetail : config.getDetailsList()) {
+            switch (entityDetail) {
                 case ID:
-                    property = prefix + "id";
                     value = contactBased.getId().getId().toString();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case TITLE:
-                    property = prefix + "title";
                     value = contactBased.getName();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case ADDRESS:
-                    property = prefix + "address";
                     value = contactBased.getAddress();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case ADDRESS2:
-                    property = prefix + "address2";
                     value = contactBased.getAddress2();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case CITY:
-                    property = prefix + "city";
                     value = contactBased.getCity();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case COUNTRY:
-                    property = prefix + "country";
                     value = contactBased.getCountry();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case STATE:
-                    property = prefix + "state";
                     value = contactBased.getState();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case EMAIL:
-                    property = prefix + "email";
                     value = contactBased.getEmail();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case PHONE:
-                    property = prefix + "phone";
                     value = contactBased.getPhone();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case ZIP:
-                    property = prefix + "zip";
                     value = contactBased.getZip();
-                    setDetail(property, value, messageData, msgMetaData);
                     break;
                 case ADDITIONAL_INFO:
                     if (contactBased.getAdditionalInfo().hasNonNull("description")) {
-                        property = prefix + "additionalInfo";
                         value = contactBased.getAdditionalInfo().get("description").asText();
-                        setDetail(property, value, messageData, msgMetaData);
                     }
                     break;
             }
+            if (value == null) {
+                continue;
+            }
+            setDetail(entityDetail.getRuleEngineName(), value, messageData, msgMetaData);
         }
     }
 
     private void setDetail(String property, String value, ObjectNode messageData, TbMsgMetaData msgMetaData) {
-        if (value == null) {
-            return;
-        }
+        String fieldName = getPrefix() + property;
         if (FetchTo.METADATA.equals(fetchTo)) {
-            msgMetaData.putValue(property, value);
-        }
-        if (FetchTo.DATA.equals(fetchTo)) {
-            messageData.put(property, value);
+            msgMetaData.putValue(fieldName, value);
+        } else if (FetchTo.DATA.equals(fetchTo)) {
+            messageData.put(fieldName, value);
         }
     }
 

@@ -29,7 +29,7 @@ import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.util.EntityDetails;
+import org.thingsboard.rule.engine.util.ContactBasedEntityDetails;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -130,7 +130,7 @@ public class TbGetCustomerDetailsNodeTest {
     @Test
     public void givenConfigWithNullFetchTo_whenInit_thenException() {
         // GIVEN
-        config.setDetailsList(List.of(EntityDetails.ID));
+        config.setDetailsList(List.of(ContactBasedEntityDetails.ID));
         config.setFetchTo(null);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
@@ -151,7 +151,7 @@ public class TbGetCustomerDetailsNodeTest {
     @Test
     public void givenCustomConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
-        config.setDetailsList(List.of(EntityDetails.ID, EntityDetails.PHONE));
+        config.setDetailsList(List.of(ContactBasedEntityDetails.ID, ContactBasedEntityDetails.PHONE));
         config.setFetchTo(FetchTo.METADATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
@@ -160,7 +160,7 @@ public class TbGetCustomerDetailsNodeTest {
 
         // THEN
         assertThat(node.config).isEqualTo(config);
-        assertThat(config.getDetailsList()).isEqualTo(List.of(EntityDetails.ID, EntityDetails.PHONE));
+        assertThat(config.getDetailsList()).isEqualTo(List.of(ContactBasedEntityDetails.ID, ContactBasedEntityDetails.PHONE));
         assertThat(config.getFetchTo()).isEqualTo(FetchTo.METADATA);
         assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
     }
@@ -186,7 +186,7 @@ public class TbGetCustomerDetailsNodeTest {
         device.setId(new DeviceId(UUID.randomUUID()));
         device.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.values()), device.getId());
+        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.values()), device.getId());
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(deviceServiceMock.findDeviceByIdAsync(eq(TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
@@ -228,7 +228,7 @@ public class TbGetCustomerDetailsNodeTest {
         asset.setId(new AssetId(UUID.randomUUID()));
         asset.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.METADATA, List.of(EntityDetails.ID, EntityDetails.TITLE, EntityDetails.PHONE), asset.getId());
+        prepareMsgAndConfig(FetchTo.METADATA, List.of(ContactBasedEntityDetails.ID, ContactBasedEntityDetails.TITLE, ContactBasedEntityDetails.PHONE), asset.getId());
 
         when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
         when(assetServiceMock.findAssetByIdAsync(eq(TENANT_ID), eq(asset.getId()))).thenReturn(Futures.immediateFuture(asset));
@@ -266,7 +266,7 @@ public class TbGetCustomerDetailsNodeTest {
         user.setId(new UserId(UUID.randomUUID()));
         user.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2), user.getId());
+        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), user.getId());
 
         when(ctxMock.getUserService()).thenReturn(userServiceMock);
         when(userServiceMock.findUserByIdAsync(eq(TENANT_ID), eq(user.getId()))).thenReturn(Futures.immediateFuture(user));
@@ -295,7 +295,7 @@ public class TbGetCustomerDetailsNodeTest {
         edge.setId(new EdgeId(UUID.randomUUID()));
         edge.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2), edge.getId());
+        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), edge.getId());
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -327,7 +327,7 @@ public class TbGetCustomerDetailsNodeTest {
         edge.setId(new EdgeId(UUID.randomUUID()));
         edge.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2), edge.getId());
+        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), edge.getId());
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -356,7 +356,7 @@ public class TbGetCustomerDetailsNodeTest {
         device.setId(new DeviceId(UUID.randomUUID()));
         device.setName("Thermostat");
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ZIP, EntityDetails.ADDRESS, EntityDetails.ADDRESS2), device.getId());
+        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), device.getId());
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -394,7 +394,7 @@ public class TbGetCustomerDetailsNodeTest {
         device.setId(new DeviceId(UUID.randomUUID()));
         device.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(EntityDetails.ADDITIONAL_INFO), device.getId());
+        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ADDITIONAL_INFO), device.getId());
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(deviceServiceMock.findDeviceByIdAsync(eq(TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
@@ -422,7 +422,7 @@ public class TbGetCustomerDetailsNodeTest {
         var dashboard = new Dashboard();
         dashboard.setId(new DashboardId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, List.of(EntityDetails.STATE), dashboard.getId());
+        prepareMsgAndConfig(FetchTo.METADATA, List.of(ContactBasedEntityDetails.STATE), dashboard.getId());
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -444,7 +444,7 @@ public class TbGetCustomerDetailsNodeTest {
         assertThat(actualException.getMessage()).isEqualTo("Entity with entityType 'DASHBOARD' is not supported.");
     }
 
-    private void prepareMsgAndConfig(FetchTo fetchTo, List<EntityDetails> detailsList, EntityId originator) {
+    private void prepareMsgAndConfig(FetchTo fetchTo, List<ContactBasedEntityDetails> detailsList, EntityId originator) {
         config.setDetailsList(detailsList);
         config.setFetchTo(fetchTo);
 

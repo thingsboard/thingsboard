@@ -37,7 +37,7 @@ public class TbGetRelatedAttrNodeConfiguration extends TbGetEntityAttrNodeConfig
         var attrMapping = new HashMap<String, String>();
         attrMapping.putIfAbsent("serialNumber", "sn");
         configuration.setAttrMapping(attrMapping);
-        configuration.setTelemetry(false);
+        configuration.setDataToFetch(DataToFetch.ATTRIBUTES);
         configuration.setFetchTo(FetchTo.METADATA);
 
         var relationsQuery = new RelationsQuery();

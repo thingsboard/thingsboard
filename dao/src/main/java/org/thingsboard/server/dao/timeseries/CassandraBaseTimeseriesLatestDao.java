@@ -44,6 +44,7 @@ import org.thingsboard.server.dao.util.NoSqlTsLatestDao;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
@@ -67,6 +68,16 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
         return findLatest(tenantId, entityId, key, rs -> convertResultToTsKvEntry(key, rs.one()));
+    }
+
+    @Override
+    public TsKvEntry findLatestSync(TenantId tenantId, EntityId entityId, String key) {
+        try {
+            return findLatest(tenantId, entityId, key, rs -> convertResultToTsKvEntry(key, rs.one())).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("[{}][{}] Failed to get latest entry for key: {}", tenantId, entityId, key, e);
+            throw new RuntimeException(e);
+        }
     }
 
     private <T> ListenableFuture<T> findLatest(TenantId tenantId, EntityId entityId, String key, java.util.function.Function<TbResultSet, T> function) {

@@ -26,7 +26,6 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -38,6 +37,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -68,7 +68,6 @@ public class CalculateDeltaNode implements TbNode {
         this.ctx = ctx;
         this.timeseriesService = ctx.getTimeseriesService();
         this.useCache = config.isUseCache();
-
         if (useCache) {
             cache = new ConcurrentHashMap<>();
         }
@@ -81,9 +80,6 @@ public class CalculateDeltaNode implements TbNode {
             return;
         }
         JsonNode json = JacksonUtil.toJsonNode(msg.getData());
-        if (!json.isObject()) {
-            throw new IllegalArgumentException("Message body is not an object!");
-        }
         String inputKey = config.getInputValueKey();
         if (!json.has(inputKey)) {
             ctx.tellNext(msg, "Other");
@@ -101,7 +97,7 @@ public class CalculateDeltaNode implements TbNode {
                     BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
 
                     if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
-                        ctx.tellNext(msg, TbRelationTypes.FAILURE);
+                        ctx.tellFailure(msg, new IllegalArgumentException("Delta value is negative!"));
                         return;
                     }
 
@@ -132,18 +128,29 @@ public class CalculateDeltaNode implements TbNode {
         }
     }
 
-    private ListenableFuture<ValueWithTs> fetchLatestValue(EntityId entityId) {
+    private ListenableFuture<ValueWithTs> fetchLatestValueAsync(EntityId entityId) {
         return Futures.transform(timeseriesService.findLatest(ctx.getTenantId(), entityId, Collections.singletonList(config.getInputValueKey())),
                 list -> extractValue(list.get(0))
                 , ctx.getDbCallbackExecutor());
     }
 
+    private ValueWithTs fetchLatestValue(EntityId entityId) {
+        List<TsKvEntry> tsKvEntries = timeseriesService.findLatestSync(
+                ctx.getTenantId(),
+                entityId,
+                Collections.singletonList(config.getInputValueKey()));
+        return extractValue(tsKvEntries.get(0));
+    }
+
     private ListenableFuture<ValueWithTs> getLastValue(EntityId entityId) {
-        ValueWithTs latestValue;
-        if (useCache && (latestValue = cache.get(entityId)) != null) {
+        if (useCache) {
+            ValueWithTs latestValue;
+            if ((latestValue = cache.get(entityId)) == null) {
+                latestValue = fetchLatestValue(entityId);
+            }
             return Futures.immediateFuture(latestValue);
         } else {
-            return fetchLatestValue(entityId);
+            return fetchLatestValueAsync(entityId);
         }
     }
 
