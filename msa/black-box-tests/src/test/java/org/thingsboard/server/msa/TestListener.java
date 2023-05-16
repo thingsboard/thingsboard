@@ -27,7 +27,7 @@ import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 public class TestListener implements ITestListener {
 
     int failedTestsCount = 0;
-    private static final int DEFAULT_COUNT_FOR_SKIP = 5;
+    private static final int DEFAULT_COUNT_FOR_SKIP = 20;
 
     @Override
     public void onTestStart(ITestResult result) {
