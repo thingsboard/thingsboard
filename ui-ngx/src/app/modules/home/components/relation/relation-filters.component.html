@@ -17,28 +17,23 @@
 -->
 <div class="tb-relation-filters" [formGroup]="relationFiltersFormGroup">
   <div class="container">
-    <div class="header" [fxShow]="relationFiltersFormArray.length">
-      <div fxLayout="row" fxLayoutAlign="start center">
-        <span class="cell" style="width: 200px; min-width: 200px;" translate>relation.type</span>
-        <span class="cell" fxFlex translate>entity.entity-types</span>
-        <span class="cell" style="width: 40px; min-width: 40px;">&nbsp;</span>
-      </div>
-    </div>
     <div class="body" [fxShow]="relationFiltersFormArray.length">
-      <div class="row" fxFlex fxLayout="row"
+      <div style="margin-bottom: 10px;" class="row" fxFlex fxLayout="row"
            fxLayoutAlign="start center" formArrayName="relationFilters"
            *ngFor="let relationFilterControl of relationFiltersFormArray.controls; let $index = index">
-        <div class="mat-elevation-z1" fxFlex fxLayout="row" fxLayoutAlign="start center" style="padding: 8px 0;">
-          <tb-relation-type-autocomplete
-            class="cell" style="width: 200px; min-width: 200px;"
-            subscriptSizing="dynamic"
-            [formControl]="relationFilterControl.get('relationType')">
-          </tb-relation-type-autocomplete>
-          <tb-entity-type-list class="cell" fxFlex
-            subscriptSizing="dynamic"
-            [allowedEntityTypes]="allowedEntityTypes"
-            [formControl]="relationFilterControl.get('entityTypes')">
-          </tb-entity-type-list>
+        <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+          <div class="input-block" fxFlex fxLayout="row" fxLayoutAlign="start center">
+            <tb-relation-type-autocomplete
+              style="width: 200px; min-width: 200px;"
+              subscriptSizing="dynamic"
+              [formControl]="relationFilterControl.get('relationType')">
+            </tb-relation-type-autocomplete>
+            <tb-entity-type-list style="margin-left: 30px" fxFlex
+              subscriptSizing="dynamic"
+              [allowedEntityTypes]="allowedEntityTypes"
+              [formControl]="relationFilterControl.get('entityTypes')">
+            </tb-entity-type-list>
+          </div>
           <button mat-icon-button color="primary"
                   type="button"
                   (click)="removeFilter($index)"
