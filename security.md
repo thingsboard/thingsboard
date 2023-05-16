@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-Security is of the highest importance and all security vulnerabilities or suspected security vulnerabilities should be reported to Thingsbpard privately,
+Security is of the highest importance and all security vulnerabilities or suspected security vulnerabilities should be reported to Thingsboard privately,
 to minimize attacks against current users of Thingsboard before they are fixed. Vulnerabilities will be investigated and release as soon as possible.
 
 To report a vulnerability or a security-related issue, please email the private address security@thingsboard.io with the details of the vulnerability.
