@@ -69,6 +69,7 @@ public class BasicUsageInfoService implements UsageInfoService {
         usageInfo.setMaxJsExecutions(profileConfiguration.getMaxJSExecutions());
         usageInfo.setMaxEmails(profileConfiguration.getMaxEmails());
         usageInfo.setMaxSms(profileConfiguration.getMaxSms());
+        usageInfo.setSmsEnabled(profileConfiguration.getSmsEnabled());
         ApiUsageState apiUsageState = apiUsageStateService.findTenantApiUsageState(tenantId);
         if (apiUsageState != null) {
             Collection<String> keys = Arrays.asList(
