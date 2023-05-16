@@ -18,8 +18,8 @@ package org.thingsboard.server.service.ws.notification;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.notification.cmd.MarkAllNotificationsAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsReadCmd;
-import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
+import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 
 public interface NotificationCommandsHandler {

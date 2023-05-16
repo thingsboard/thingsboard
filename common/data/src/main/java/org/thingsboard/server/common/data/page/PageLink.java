@@ -17,7 +17,6 @@ package org.thingsboard.server.common.data.page;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-
 import org.springframework.data.domain.Sort;
 
 import java.util.List;

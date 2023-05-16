@@ -27,7 +27,7 @@ import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SubscriptSizing } from '@angular/material/form-field';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 interface EntityTypeInfo {
   name: string;

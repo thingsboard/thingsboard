@@ -58,7 +58,7 @@ import {
 import { distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 import { isNotEmptyStr, onParentScrollOrWindowResize } from '@core/utils';
 import { animate, AnimationBuilder, AnimationMetadata, style } from '@angular/animations';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 export type TbPopoverTrigger = 'click' | 'focus' | 'hover' | null;
 

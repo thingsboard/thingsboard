@@ -66,6 +66,11 @@ export const selectTbelEnabled = createSelector(
   (state: AuthState) => state.tbelEnabled
 );
 
+export const selectPersistDeviceStateToTelemetry = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.persistDeviceStateToTelemetry
+);
+
 export const selectUserSettings = createSelector(
   selectAuthState,
   (state: AuthState) => state.userSettings

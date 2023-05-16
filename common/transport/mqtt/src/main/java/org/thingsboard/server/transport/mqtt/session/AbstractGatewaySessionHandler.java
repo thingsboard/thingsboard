@@ -535,7 +535,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                                         throw new IllegalArgumentException("Attributes List for device: " + deviceName + " is empty!");
                                     }
                                     try {
-                                        TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto.toByteArray());
+                                        TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto);
                                         processPostAttributesMsg(deviceCtx, postAttributeMsg, deviceName, msgId);
                                     } catch (Throwable e) {
                                         log.warn("[{}][{}] Failed to process device attributes command: {}", gateway.getDeviceId(), deviceName, kvListProto, e);

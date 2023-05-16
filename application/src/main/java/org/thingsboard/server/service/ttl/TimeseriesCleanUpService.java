@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.ttl.AbstractCleanUpService;
 
 @TbCoreComponent
 @Slf4j

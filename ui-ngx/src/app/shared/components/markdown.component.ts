@@ -39,7 +39,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 import { deepClone, guid, isDefinedAndNotNull } from '@core/utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 let defaultMarkdownStyle;
 

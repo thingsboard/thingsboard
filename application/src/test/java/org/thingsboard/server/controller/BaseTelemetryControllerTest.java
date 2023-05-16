@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller;
 
 import org.junit.Test;
-import org.stringtemplate.v4.ST;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.security.DeviceCredentials;

@@ -27,6 +27,7 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.html5.WebStorage;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -39,6 +40,12 @@ import org.testng.annotations.BeforeMethod;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
@@ -71,15 +78,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private JavascriptExecutor js;
     public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     private final Duration duration = Duration.ofMillis(WAIT_TIMEOUT);
-    public final int MAX_FAILED_TESTS = 20;
-    public static int failedTestsCount = 0;
-    @BeforeClass
-    public void checkFailureTests() {
-        if (Boolean.parseBoolean(System.getProperty("blackBoxTests.ui.skip.failure", "true")) &&
-                failedTestsCount >= MAX_FAILED_TESTS) {
-            throw new SkipException(String.format("Too many test failures (%d). Skipping remaining tests.", failedTestsCount));
-        }
-    }
+    private WebStorage webStorage;
 
     @BeforeClass
     public void startUp() throws MalformedURLException {
@@ -218,6 +217,57 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         List<RuleChain> ruleChains = getRuleChainsByName(ruleChainName);
         if (!ruleChains.isEmpty()) {
             testRestClient.setRootRuleChain(ruleChains.stream().findFirst().get().getId());
+        }
+    }
+
+    public WebStorage getWebStorage() {
+        return webStorage = (WebStorage) driver;
+    }
+
+    public void clearStorage() {
+        getWebStorage().getLocalStorage().clear();
+        getWebStorage().getSessionStorage().clear();
+    }
+
+    public void deleteAlarmById(AlarmId alarmId) {
+        if (alarmId != null) {
+            testRestClient.deleteAlarm(alarmId);
+        }
+    }
+
+    public void deleteAlarmsByIds(AlarmId... alarmIds) {
+        for (AlarmId alarmId : alarmIds) {
+            deleteAlarmById(alarmId);
+        }
+    }
+
+    public void deleteCustomerById(CustomerId customerId) {
+        if (customerId != null) {
+            testRestClient.deleteCustomer(customerId);
+        }
+    }
+
+    public void deleteDeviceById(DeviceId deviceId) {
+        if (deviceId != null) {
+            testRestClient.deleteDevice(deviceId);
+        }
+    }
+
+    public void deleteAssetById(AssetId assetId) {
+        if (assetId != null) {
+            testRestClient.deleteAsset(assetId);
+        }
+    }
+
+    public void deleteEntityView(EntityViewId entityViewId) {
+        if (entityViewId != null) {
+            testRestClient.deleteEntityView(entityViewId);
+        }
+    }
+
+    public void deleteDashboardById(DashboardId dashboardId) {
+        if (dashboardId != null) {
+            testRestClient.deleteDashboard(dashboardId);
         }
     }
 }

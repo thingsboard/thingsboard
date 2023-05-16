@@ -20,7 +20,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 

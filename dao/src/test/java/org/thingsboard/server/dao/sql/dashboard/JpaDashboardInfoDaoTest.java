@@ -28,7 +28,6 @@ import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
