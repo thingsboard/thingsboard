@@ -520,4 +520,11 @@ public class TestRestClient {
                 .then()
                 .statusCode(HTTP_OK);
     }
+
+    public void setDevicePublic(DeviceId deviceId) {
+        given().spec(requestSpec)
+                .post("/api/customer/public/device/{deviceId}", deviceId.getId())
+                .then()
+                .statusCode(HTTP_OK);
+    }
 }

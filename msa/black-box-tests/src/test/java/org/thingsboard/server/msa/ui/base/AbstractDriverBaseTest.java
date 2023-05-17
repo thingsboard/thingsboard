@@ -253,6 +253,13 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
+    public void deleteCustomerByName(String customerName) {
+        Customer customer = getCustomerByName(customerName);
+        if (customer != null) {
+            testRestClient.deleteCustomer(customer.getId());
+        }
+    }
+
     public void deleteDeviceById(DeviceId deviceId) {
         if (deviceId != null) {
             testRestClient.deleteDevice(deviceId);
@@ -281,6 +288,21 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         Device device = getDeviceByName(deviceName);
         if (device != null) {
             testRestClient.deleteDevice(device.getId());
+        }
+    }
+
+    public void deleteDeviceProfileByTitle(String deviceProfileTitle) {
+        DeviceProfile deviceProfile = getDeviceProfileByName(deviceProfileTitle);
+        if (deviceProfile != null) {
+            testRestClient.deleteDeviseProfile(deviceProfile.getId());
+        }
+    }
+
+    public void assertInvisibilityOfElement(WebElement element) {
+        try {
+            new WebDriverWait(driver, duration).until(ExpectedConditions.invisibilityOf(element));
+        } catch (WebDriverException e) {
+            fail("Element " + element.toString() + " stay visible");
         }
     }
 }
