@@ -89,22 +89,14 @@ public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFe
     }
 
     @Override
-    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, JsonNode oldConfiguration) {
-        try {
-            int oldVersion = getVersionOrElseThrowTbNodeException(ruleNodeId, oldConfiguration);
-            if (oldVersion == 0) {
-                return upgradeRuleNodesWithOldPropertyToUseFetchTo(
-                        ruleNodeId,
+    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        return fromVersion == 0 ?
+                upgradeRuleNodesWithOldPropertyToUseFetchTo(
                         oldConfiguration,
                         "fetchToMetadata",
                         FetchTo.METADATA.name(),
-                        FetchTo.DATA.name()
-                );
-            }
-        } catch (TbNodeException e) {
-            log.warn(e.getMessage());
-        }
-        return new TbPair<>(false, oldConfiguration);
+                        FetchTo.DATA.name()) :
+                new TbPair<>(false, oldConfiguration);
     }
 
 }

@@ -99,6 +99,8 @@ public interface RuleChainService extends EntityDaoService {
 
     PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
 
+    PageData<RuleNode> findAllRuleNodesByTypeAndVersionLessThan(String type, int version, PageLink pageLink);
+
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);

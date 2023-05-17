@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.VersionedNode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
@@ -77,6 +78,7 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
+import static org.thingsboard.server.dao.service.Validator.validatePositiveNumber;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
 /**
@@ -189,11 +191,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-                TbPair<Boolean, JsonNode> upgradeResult = upgradeRuleNode(savedNode);
-                if (upgradeResult.getFirst()) {
-                    savedNode.setConfiguration(upgradeResult.getSecond());
-                    savedNode = ruleNodeDao.save(tenantId, savedNode);
-                }
+//                TbPair<Boolean, JsonNode> upgradeResult = upgradeRuleNode(savedNode);
+//                if (upgradeResult.getFirst()) {
+//                    savedNode.setConfiguration(upgradeResult.getSecond());
+//                    savedNode = ruleNodeDao.save(tenantId, savedNode);
+//                }
                 int index = nodes.indexOf(node);
                 nodes.set(index, savedNode);
                 ruleNodeIndexMap.put(savedNode.getId(), index);
@@ -263,24 +265,38 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         return RuleChainUpdateResult.successful(updatedRuleNodes);
     }
 
-    private TbPair<Boolean, JsonNode> upgradeRuleNode(RuleNode node) {
-        var configuration = node.getConfiguration();
-        String ruleNodeClassName = node.getType();
+    private TbPair<Boolean, JsonNode> upgradeRuleNode(RuleNode ruleNode) {
+        RuleNodeId ruleNodeId = ruleNode.getId();
+        String ruleNodeType = ruleNode.getType();
+        int fromVersion = ruleNode.getConfigurationVersion();
         try {
-            var ruleNodeClass = Class.forName(ruleNodeClassName).getConstructor().newInstance();
+            var ruleNodeClass = Class.forName(ruleNodeType).getDeclaredConstructor().newInstance();
             if (ruleNodeClass instanceof VersionedNode) {
                 VersionedNode versionedNode = (VersionedNode) ruleNodeClass;
-                return versionedNode.upgrade(node.getId(), configuration);
+                int toVersion = versionedNode.getCurrentVersion();
+                log.info("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
+                        ruleNodeId,
+                        ruleNodeType,
+                        fromVersion,
+                        toVersion);
+                try {
+                    return versionedNode.upgrade(ruleNodeId, fromVersion, ruleNode.getConfiguration());
+                } catch (TbNodeException e) {
+                    log.warn("Failed to upgrade rule node with id: {} fromVersion: {} toVersion: {} due to: ",
+                            ruleNodeId,
+                            fromVersion,
+                            toVersion,
+                            e);
+                }
             }
-        } catch (InstantiationException |
-                 IllegalAccessException |
+        } catch (ClassNotFoundException |
                  InvocationTargetException |
-                 NoSuchMethodException |
-                 ClassNotFoundException e
-        ) {
-            log.warn("Failed to upgrade rule node due to: ", e);
+                 InstantiationException |
+                 IllegalAccessException |
+                 NoSuchMethodException e) {
+            log.warn("Failed to create instance of rule node with id: {} and type: {}", ruleNodeId, ruleNodeType);
         }
-        return new TbPair<>(false, node.getConfiguration());
+        return new TbPair<>(false, ruleNode.getConfiguration());
     }
 
     @Override
@@ -726,6 +742,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         validateString(type, "Incorrect type of the rule node");
         validatePageLink(pageLink);
         return ruleNodeDao.findAllRuleNodesByType(type, pageLink);
+    }
+
+    @Override
+    public PageData<RuleNode> findAllRuleNodesByTypeAndVersionLessThan(String type, int version, PageLink pageLink) {
+        log.trace("Executing findAllRuleNodesByTypeAndVersionLessThan, type {}, pageLink {}, version {}", type, pageLink, version);
+        validateString(type, "Incorrect type of the rule node");
+        validatePositiveNumber(version, "Incorrect version to compare with. Version should be greater than 0!");
+        validatePageLink(pageLink);
+        return ruleNodeDao.findAllRuleNodesByTypeAndVersionLessThan(type, version, pageLink);
     }
 
     @Override

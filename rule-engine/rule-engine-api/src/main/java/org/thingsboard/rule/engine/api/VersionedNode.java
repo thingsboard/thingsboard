@@ -19,25 +19,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.util.TbPair;
 
-public interface VersionedNode {
+public interface VersionedNode extends TbNode {
 
-    String VERSION_PROPERTY_NAME = "version";
+    TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, int fromVersion, JsonNode oldConfiguration) throws TbNodeException;
 
-    TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, JsonNode oldConfiguration);
-
-    default int getVersionOrElseThrowTbNodeException(RuleNodeId ruleNodeId, JsonNode oldConfiguration) throws TbNodeException {
-        if (oldConfiguration == null) {
-            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
-                    "with id: [" + ruleNodeId + "] has null configuration!");
-        } else if (!oldConfiguration.isObject()) {
-            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
-                    "with id: [" + ruleNodeId + "] has non json object configuration!");
-
-        }
-        if (!oldConfiguration.has(VERSION_PROPERTY_NAME)) {
-            return 0;
-        }
-        return oldConfiguration.get(VERSION_PROPERTY_NAME).asInt();
-    }
+    int getCurrentVersion();
 
 }

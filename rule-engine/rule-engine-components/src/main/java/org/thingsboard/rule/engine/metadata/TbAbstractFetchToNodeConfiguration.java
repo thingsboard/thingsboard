@@ -16,12 +16,10 @@
 package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
-import org.thingsboard.rule.engine.api.VersionedNodeConfiguration;
 
 @Data
-public abstract class TbAbstractFetchToNodeConfiguration implements VersionedNodeConfiguration {
+public abstract class TbAbstractFetchToNodeConfiguration {
 
     private FetchTo fetchTo;
-    private int version = 1;
 
 }

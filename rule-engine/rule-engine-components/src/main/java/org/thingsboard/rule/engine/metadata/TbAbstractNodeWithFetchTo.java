@@ -36,12 +36,17 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.NoSuchElementException;
 
 @Slf4j
-public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeConfiguration> implements TbNode, VersionedNode {
+public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeConfiguration> implements VersionedNode {
 
     protected final static String FETCH_TO_PROPERTY_NAME = "fetchTo";
 
     protected C config;
     protected FetchTo fetchTo;
+
+    @Override
+    public int getCurrentVersion() {
+        return 1;
+    }
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -93,7 +98,6 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     }
 
     protected TbPair<Boolean, JsonNode> upgradeRuleNodesWithOldPropertyToUseFetchTo(
-            RuleNodeId ruleNodeId,
             JsonNode oldConfiguration,
             String oldProperty,
             String ifTrue,
@@ -101,24 +105,19 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     ) throws TbNodeException {
         var newConfigObjectNode = (ObjectNode) oldConfiguration;
         if (!newConfigObjectNode.has(oldProperty)) {
-            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
-                    "with id: [" + ruleNodeId + "] doesn't have property: [" + oldProperty + "]");
+            throw new TbNodeException("property to update: '" + oldProperty + "' doesn't exists in configuration!");
         }
         var value = newConfigObjectNode.get(oldProperty).asText();
         if ("true".equals(value)) {
             newConfigObjectNode.remove(oldProperty);
             newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, ifTrue);
-            newConfigObjectNode.put(VERSION_PROPERTY_NAME, 1);
             return new TbPair<>(true, newConfigObjectNode);
         } else if ("false".equals(value)) {
             newConfigObjectNode.remove(oldProperty);
             newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, ifFalse);
-            newConfigObjectNode.put(VERSION_PROPERTY_NAME, 1);
             return new TbPair<>(true, newConfigObjectNode);
         } else {
-            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
-                    "with id: [" + ruleNodeId + "] has property: [" + oldProperty + "] " +
-                    "with unexpected value: [" + value + "] Allowed values: true or false!");
+            throw new TbNodeException("property to update: '" + oldProperty + "' has unexpected value: " + value + ". Allowed values: true or false!");
         }
     }
 

@@ -75,16 +75,8 @@ public class TbGetRelatedAttributeNode extends TbAbstractGetEntityAttrNode<Entit
     }
 
     @Override
-    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, JsonNode oldConfiguration) {
-        try {
-            int oldVersion = getVersionOrElseThrowTbNodeException(ruleNodeId, oldConfiguration);
-            if (oldVersion == 0) {
-                return upgradeToUseFetchToAndDataToFetch(ruleNodeId, oldConfiguration);
-            }
-        } catch (TbNodeException e) {
-            log.warn(e.getMessage());
-        }
-        return new TbPair<>(false, oldConfiguration);
+    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        return fromVersion == 0 ? upgradeToUseFetchToAndDataToFetch(oldConfiguration) : new TbPair<>(false, oldConfiguration);
     }
 
 }

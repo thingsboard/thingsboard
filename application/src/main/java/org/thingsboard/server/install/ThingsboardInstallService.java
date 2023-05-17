@@ -258,6 +258,7 @@ public class ThingsboardInstallService {
                             installScripts.loadSystemLwm2mResources();
                         case "3.5.0":
                             log.info("Upgrading ThingsBoard from version 3.5.0 to 3.5.1 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.5.0");
                             dataUpdateService.updateData("3.5.0");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();

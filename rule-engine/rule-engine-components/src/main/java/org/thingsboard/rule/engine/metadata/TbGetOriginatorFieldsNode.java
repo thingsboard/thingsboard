@@ -102,17 +102,11 @@ public class TbGetOriginatorFieldsNode extends TbAbstractNodeWithFetchTo<TbGetOr
     }
 
     @Override
-    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, JsonNode oldConfiguration) {
-        try {
-            int oldVersion = getVersionOrElseThrowTbNodeException(ruleNodeId, oldConfiguration);
-            if (oldVersion == 0) {
-                var newConfigObjectNode = (ObjectNode) oldConfiguration;
-                newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, FetchTo.METADATA.name());
-                newConfigObjectNode.put(VERSION_PROPERTY_NAME, 1);
-                return new TbPair<>(true, newConfigObjectNode);
-            }
-        } catch (TbNodeException e) {
-            log.warn(e.getMessage());
+    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, int fromVersion, JsonNode oldConfiguration) {
+        if (fromVersion == 0) {
+            var newConfigObjectNode = (ObjectNode) oldConfiguration;
+            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, FetchTo.METADATA.name());
+            return new TbPair<>(true, newConfigObjectNode);
         }
         return new TbPair<>(false, oldConfiguration);
     }

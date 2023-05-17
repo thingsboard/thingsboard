@@ -184,6 +184,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     created_time bigint NOT NULL,
     rule_chain_id uuid,
     additional_info varchar,
+    configuration_version int DEFAULT 0,
     configuration varchar(10000000),
     type varchar(255),
     name varchar(255),

@@ -149,11 +149,10 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
         ctx.tellSuccess(transformMessage(msg, msgData, msgMetaData));
     }
 
-    protected TbPair<Boolean, JsonNode> upgradeToUseFetchToAndDataToFetch(RuleNodeId ruleNodeId, JsonNode oldConfiguration) throws TbNodeException {
+    protected TbPair<Boolean, JsonNode> upgradeToUseFetchToAndDataToFetch(JsonNode oldConfiguration) throws TbNodeException {
         var newConfigObjectNode = (ObjectNode) oldConfiguration;
         if (!newConfigObjectNode.has(OLD_PROPERTY_NAME)) {
-            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
-                    "with id: [" + ruleNodeId + "] doesn't have property: [" + OLD_PROPERTY_NAME + "]");
+            throw new TbNodeException("property to update: '" + OLD_PROPERTY_NAME + "' doesn't exists in configuration!");
         }
         var value = newConfigObjectNode.get(OLD_PROPERTY_NAME).asText();
         if ("true".equals(value)) {
@@ -163,12 +162,9 @@ public abstract class TbAbstractGetEntityAttrNode<T extends EntityId> extends Tb
             newConfigObjectNode.remove(OLD_PROPERTY_NAME);
             newConfigObjectNode.put(DATA_TO_FETCH_PROPERTY_NAME, DataToFetch.ATTRIBUTES.name());
         } else {
-            throw new TbNodeException("Rule node: [" + this.getClass().getName() + "] " +
-                    "with id: [" + ruleNodeId + "] has property: [" + OLD_PROPERTY_NAME + "] " +
-                    "with unexpected value: [" + value + "] Allowed values: true or false!");
+            throw new TbNodeException("property to update: '" + OLD_PROPERTY_NAME + "' has unexpected value: " + value + ". Allowed values: true or false!");
         }
         newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, FetchTo.METADATA.name());
-        newConfigObjectNode.put(VERSION_PROPERTY_NAME, 1);
         return new TbPair<>(true, newConfigObjectNode);
     }
 
