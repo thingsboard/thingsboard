@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util.limits;
+package org.thingsboard.server.common.data.limit;
 
 import lombok.Getter;
 import org.thingsboard.server.common.data.EntityType;
@@ -25,15 +25,15 @@ import java.util.function.Function;
 
 public enum LimitedApi {
 
-    ENTITY_EXPORT(DefaultTenantProfileConfiguration::getTenantEntityExportRateLimit),
-    ENTITY_IMPORT(DefaultTenantProfileConfiguration::getTenantEntityImportRateLimit),
-    NOTIFICATION_REQUESTS(DefaultTenantProfileConfiguration::getTenantNotificationRequestsRateLimit),
-    NOTIFICATION_REQUESTS_PER_RULE(DefaultTenantProfileConfiguration::getTenantNotificationRequestsPerRuleRateLimit),
+    ENTITY_EXPORT(DefaultTenantProfileConfiguration::getTenantEntityExportRateLimit, "entity version creation"),
+    ENTITY_IMPORT(DefaultTenantProfileConfiguration::getTenantEntityImportRateLimit, "entity version load"),
+    NOTIFICATION_REQUESTS(DefaultTenantProfileConfiguration::getTenantNotificationRequestsRateLimit, "notification requests"),
+    NOTIFICATION_REQUESTS_PER_RULE(DefaultTenantProfileConfiguration::getTenantNotificationRequestsPerRuleRateLimit, "notification requests per rule"),
     REST_REQUESTS((profileConfiguration, level) -> ((EntityId) level).getEntityType() == EntityType.TENANT ?
             profileConfiguration.getTenantServerRestLimitsConfiguration() :
-            profileConfiguration.getCustomerServerRestLimitsConfiguration()),
-    WS_UPDATES_PER_SESSION(DefaultTenantProfileConfiguration::getWsUpdatesPerSessionRateLimit),
-    CASSANDRA_QUERIES(DefaultTenantProfileConfiguration::getCassandraQueryTenantRateLimitsConfiguration),
+            profileConfiguration.getCustomerServerRestLimitsConfiguration(), "REST API requests"), // FIXME: different labels depending on level
+    WS_UPDATES_PER_SESSION(DefaultTenantProfileConfiguration::getWsUpdatesPerSessionRateLimit, "WS updates per session"),
+    CASSANDRA_QUERIES(DefaultTenantProfileConfiguration::getCassandraQueryTenantRateLimitsConfiguration, "Cassandra queries"),
     PASSWORD_RESET(true),
     TWO_FA_VERIFICATION_CODE_SEND(true),
     TWO_FA_VERIFICATION_CODE_CHECK(true);
@@ -41,19 +41,23 @@ public enum LimitedApi {
     private final BiFunction<DefaultTenantProfileConfiguration, Object, String> configExtractor;
     @Getter
     private final boolean refillRateLimitIntervally;
+    @Getter
+    private final String label;
 
-    LimitedApi(Function<DefaultTenantProfileConfiguration, String> configExtractor) {
-        this((profileConfiguration, level) -> configExtractor.apply(profileConfiguration));
+    LimitedApi(Function<DefaultTenantProfileConfiguration, String> configExtractor, String label) {
+        this((profileConfiguration, level) -> configExtractor.apply(profileConfiguration), label);
     }
 
-    LimitedApi(BiFunction<DefaultTenantProfileConfiguration, Object, String> configExtractor) {
+    LimitedApi(BiFunction<DefaultTenantProfileConfiguration, Object, String> configExtractor, String label) {
         this.configExtractor = configExtractor;
         this.refillRateLimitIntervally = false;
+        this.label = label;
     }
 
     LimitedApi(boolean refillRateLimitIntervally) {
         this.configExtractor = null;
         this.refillRateLimitIntervally = refillRateLimitIntervally;
+        this.label = null;
     }
 
     public String getLimitConfig(DefaultTenantProfileConfiguration profileConfiguration, Object level) {

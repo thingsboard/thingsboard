@@ -30,7 +30,8 @@ public enum NotificationRuleTriggerType {
     RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
     NEW_PLATFORM_VERSION(false, true),
     ENTITIES_LIMIT(false, false),
-    API_USAGE_LIMIT(false, false);
+    API_USAGE_LIMIT(false, false),
+    RATE_LIMITS(false, false);
 
     private final boolean tenantLevel;
     private final boolean deduplicate;

@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.util.limits.DefaultRateLimitService;
-import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 
 import java.util.List;
