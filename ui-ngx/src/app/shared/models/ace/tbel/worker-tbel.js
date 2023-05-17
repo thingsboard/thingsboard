@@ -5026,6 +5026,21 @@ var JSHINT = (function() {
       return that;
     }, 20);
   }
+  function nullSafeProperty(s) {
+    console.log("test " + s);
+    symbol(s, 20).exps = true;
+    return infix(s, function(context, left, that) {
+      if (state.option.bitwise) {
+        warning("W016", that, that.id);
+      }
+
+      checkLeftSideAssign(context, left, that);
+
+      that.right = expression(context, 10);
+
+      return that;
+    }, 20);
+  }
   function suffix(s) {
     var x = symbol(s, 150);
 
@@ -5539,6 +5554,9 @@ var JSHINT = (function() {
   bitwiseassignop("<<=");
   bitwiseassignop(">>=");
   bitwiseassignop(">>>=");
+
+  nullSafeProperty(".?");
+
   infix(",", function(context, left, that) {
     if (state.option.nocomma) {
       warning("W127", that);
@@ -9450,6 +9468,12 @@ Lexer.prototype = {
 
     switch (ch1) {
     case ".":
+      if (ch1 === "." && this.peek(1) === "?") {
+        return {
+          type: Token.Punctuator,
+          value: ".?"
+        };
+      }
       if ((/^[0-9]$/).test(this.peek(1))) {
         return null;
       }
