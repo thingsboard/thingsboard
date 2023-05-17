@@ -353,7 +353,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     public void testFindSystemTbResourcesByType() throws Exception {
         loginSysAdmin();
 
-        List<TbResourceInfo> resources = new ArrayList<>();
+        List<TbResourceInfo> jksResources = new ArrayList<>();
+        List<TbResourceInfo> lwm2mesources = new ArrayList<>();
         int jksCntEntity = 17;
         for (int i = 0; i < jksCntEntity; i++) {
             TbResource resource = new TbResource();
@@ -361,7 +362,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setData("Test Data");
-            resources.add(new TbResourceInfo(save(resource)));
+            TbResourceInfo saved = new TbResourceInfo(save(resource));
+            jksResources.add(saved);
         }
 
         int lwm2mCntEntity = 19;
@@ -371,7 +373,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setResourceType(ResourceType.PKCS_12);
             resource.setFileName(i + DEFAULT_FILE_NAME_2);
             resource.setData("Test Data");
-            save(resource);
+            TbResource saved = save(resource);
+            lwm2mesources.add(saved);
         }
 
         List<TbResourceInfo> loadedResources = new ArrayList<>();
@@ -387,21 +390,21 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(resources, idComparator);
+        Collections.sort(jksResources, idComparator);
         Collections.sort(loadedResources, idComparator);
 
-        Assert.assertEquals(resources, loadedResources);
+        Assert.assertEquals(jksResources, loadedResources);
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        int cntEntity = resources.size();
-        for (TbResourceInfo resource : resources) {
+        int cntEntity = jksResources.size();
+        for (TbResourceInfo resource : jksResources) {
             doDelete("/api/resource/" + resource.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceNeverAdditionalInfoAny(new TbResource(), new TbResource(),
-                resources.get(0).getTenantId(), null, null, SYS_ADMIN_EMAIL,
+                jksResources.get(0).getTenantId(), null, null, SYS_ADMIN_EMAIL,
                 ActionType.DELETED, cntEntity, 1);
 
         pageLink = new PageLink(27);
@@ -417,6 +420,13 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         } while (pageData.hasNext());
 
         Assert.assertTrue(loadedResources.isEmpty());
+
+        loginSysAdmin();
+
+        for (TbResourceInfo resource : lwm2mesources) {
+            doDelete("/api/resource/" + resource.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test
