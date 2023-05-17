@@ -15,14 +15,20 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.SerializationUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamClass;
 import java.util.Base64;
 import java.util.Optional;
 
+@Slf4j
 public class CookieUtils {
 
     public static Optional<Cookie> getCookie(HttpServletRequest request, String name) {
@@ -67,7 +73,22 @@ public class CookieUtils {
     }
 
     public static <T> T deserialize(Cookie cookie, Class<T> cls) {
-        return cls.cast(SerializationUtils.deserialize(
-                Base64.getUrlDecoder().decode(cookie.getValue())));
+        byte[] decodedBytes = Base64.getUrlDecoder().decode(cookie.getValue());
+        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(decodedBytes)) {
+            @Override
+            protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+                String name = desc.getName();
+                if (!cls.getName().equals(name)) {
+                    throw new ClassNotFoundException("Class not allowed for deserialization: " + name);
+                }
+                return super.resolveClass(desc);
+            }
+        }) {
+
+            return cls.cast(ois.readObject());
+        } catch (Exception e) {
+            log.debug("Failed to deserialize class from cookie.", e.getCause());
+            return null;
+        }
     }
 }
