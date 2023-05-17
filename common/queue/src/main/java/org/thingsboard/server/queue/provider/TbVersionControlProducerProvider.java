@@ -49,22 +49,22 @@ public class TbVersionControlProducerProvider implements TbQueueProducerProvider
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
+        throw new UnsupportedOperationException("Not Implemented! Should not be used by Version Control Service!");
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer() {
-         throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
+         throw new UnsupportedOperationException("Not Implemented! Should not be used by Version Control Service!");
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
+        throw new UnsupportedOperationException("Not Implemented! Should not be used by Version Control Service!");
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
+        throw new UnsupportedOperationException("Not Implemented! Should not be used by Version Control Service!");
     }
 
     @Override
@@ -74,7 +74,7 @@ public class TbVersionControlProducerProvider implements TbQueueProducerProvider
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
+        throw new UnsupportedOperationException("Not Implemented! Should not be used by Version Control Service!");
     }
 
     @Override

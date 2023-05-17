@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.notification;
+package org.thingsboard.server.common.msg.notification;
 
 import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
 

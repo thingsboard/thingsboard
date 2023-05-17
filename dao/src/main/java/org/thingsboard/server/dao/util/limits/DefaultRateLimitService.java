@@ -24,7 +24,11 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.exception.TenantProfileNotFoundException;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.notification.trigger.RateLimitsTrigger;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
@@ -35,15 +39,18 @@ import java.util.concurrent.TimeUnit;
 public class DefaultRateLimitService implements RateLimitService {
 
     private final TbTenantProfileCache tenantProfileCache;
+    private final NotificationRuleProcessor notificationRuleProcessor;
 
     public DefaultRateLimitService(TbTenantProfileCache tenantProfileCache,
+                                   NotificationRuleProcessor notificationRuleProcessor,
                                    @Value("${cache.rateLimits.timeToLiveInMinutes:120}") int rateLimitsTtl,
                                    @Value("${cache.rateLimits.maxSize:200000}") int rateLimitsCacheMaxSize) {
         this.tenantProfileCache = tenantProfileCache;
+        this.notificationRuleProcessor = notificationRuleProcessor;
         this.rateLimits = Caffeine.newBuilder()
                 .expireAfterAccess(rateLimitsTtl, TimeUnit.MINUTES)
                 .maximumSize(rateLimitsCacheMaxSize)
-                 .build();
+                .build();
     }
 
     private final Cache<RateLimitKey, TbRateLimits> rateLimits;
@@ -66,7 +73,15 @@ public class DefaultRateLimitService implements RateLimitService {
         String rateLimitConfig = tenantProfile.getProfileConfiguration()
                 .map(profileConfiguration -> api.getLimitConfig(profileConfiguration, level))
                 .orElse(null);
-        return checkRateLimit(api, level, rateLimitConfig);
+        boolean success = checkRateLimit(api, level, rateLimitConfig);
+        if (!success) {
+            notificationRuleProcessor.process(RateLimitsTrigger.builder()
+                    .tenantId(tenantId).api(api.getLabel())
+                    .limitLevel(level instanceof EntityId ? (EntityId) level : null)
+                    .limitLevelEntityName(null)
+                    .build());
+        }
+        return success;
     }
 
     @Override

@@ -64,7 +64,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;

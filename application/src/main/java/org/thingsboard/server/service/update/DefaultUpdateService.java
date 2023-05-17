@@ -29,7 +29,7 @@ import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
-import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
