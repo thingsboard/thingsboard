@@ -43,18 +43,6 @@ public class DevicePageHelper extends DevicePageElements {
         addDeviceBtn().click();
     }
 
-    public void enterName(String deviceName) {
-        enterText(nameField(), deviceName);
-    }
-
-    public void enterDescription(String description) {
-        enterText(descriptionFieldCreateField(), description);
-    }
-
-    public void enterLabel(String label) {
-        enterText(deviceLabelFieldCreate(), label);
-    }
-
     public void deleteDeviceByRightSideBtn(String deviceName) {
         deleteBtn(deviceName).click();
         warningPopUpYesBtn().click();
@@ -87,10 +75,20 @@ public class DevicePageHelper extends DevicePageElements {
         entityFromDropdown(deviceProfileName).click();
     }
 
-    public void assignOnCustomer(String customerTitle) {
-        customerOptionBtn().click();
-        assignOnCustomerField().click();
-        entityFromList(customerTitle).click();
-        sleep(2); //waiting for the action to count
+    public void unassignedDeviceByRightSideBtn(String deviceName) {
+        unassignBtn(deviceName).click();
+        warningPopUpYesBtn().click();
+    }
+
+    public void unassignedDeviceFromDetailsTab() {
+        unassignBtnDetailsTab().click();
+        warningPopUpYesBtn().click();
+    }
+
+    public void assignMarkedDevices(String... deviceNames) {
+        for (String deviceName : deviceNames) {
+            checkBox(deviceName).click();
+        }
+        assignMarkedDeviceBtn().click();
     }
 }
