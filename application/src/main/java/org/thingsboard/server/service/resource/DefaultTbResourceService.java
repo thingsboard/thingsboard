@@ -86,6 +86,16 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
+    public PageData<TbResourceInfo> findAllTenantResourcesByType(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
+        return resourceService.findAllTenantResourcesByType(tenantId, resourceType, pageLink);
+    }
+
+    @Override
+    public PageData<TbResourceInfo> findTenantResourcesByType(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
+        return resourceService.findTenantResourcesByType(tenantId, resourceType, pageLink);
+    }
+
+    @Override
     public List<LwM2mObject> findLwM2mObject(TenantId tenantId, String sortOrder, String sortProperty, String[] objectIds) {
         log.trace("Executing findByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

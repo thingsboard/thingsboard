@@ -117,6 +117,20 @@ public class BaseResourceService implements ResourceService {
     }
 
     @Override
+    public PageData<TbResourceInfo> findAllTenantResourcesByType(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
+        log.trace("Executing findAllTenantResourcesByType [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return resourceInfoDao.findAllTenantResourcesByType(tenantId.getId(), resourceType.name(), pageLink);
+    }
+
+    @Override
+    public PageData<TbResourceInfo> findTenantResourcesByType(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
+        log.trace("Executing findTenantResourcesByType [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return resourceInfoDao.findTenantResourcesByType(tenantId.getId(), resourceType.name(), pageLink);
+    }
+
+    @Override
     public List<TbResource> findTenantResourcesByResourceTypeAndObjectIds(TenantId tenantId, ResourceType resourceType, String[] objectIds) {
         log.trace("Executing findTenantResourcesByResourceTypeAndObjectIds [{}][{}][{}]", tenantId, resourceType, objectIds);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

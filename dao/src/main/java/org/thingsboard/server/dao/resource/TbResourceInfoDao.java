@@ -28,4 +28,8 @@ public interface TbResourceInfoDao extends Dao<TbResourceInfo> {
 
     PageData<TbResourceInfo> findTenantResourcesByTenantId(UUID tenantId, PageLink pageLink);
 
+    PageData<TbResourceInfo> findAllTenantResourcesByType(UUID tenantId, String resourceType, PageLink pageLink);
+
+    PageData<TbResourceInfo> findTenantResourcesByType(UUID tenantId, String resourceType, PageLink pageLink);
+
 }

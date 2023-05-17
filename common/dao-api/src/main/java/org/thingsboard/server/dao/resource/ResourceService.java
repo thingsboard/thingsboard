@@ -43,6 +43,10 @@ public interface ResourceService extends EntityDaoService {
 
     PageData<TbResourceInfo> findTenantResourcesByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<TbResourceInfo> findAllTenantResourcesByType(TenantId tenantId, ResourceType resourceType, PageLink pageLink);
+
+    PageData<TbResourceInfo> findTenantResourcesByType(TenantId tenantId, ResourceType resourceType, PageLink pageLink);
+
     List<TbResource> findTenantResourcesByResourceTypeAndObjectIds(TenantId tenantId, ResourceType lwm2mModel, String[] objectIds);
 
     PageData<TbResource> findTenantResourcesByResourceTypeAndPageLink(TenantId tenantId, ResourceType lwm2mModel, PageLink pageLink);

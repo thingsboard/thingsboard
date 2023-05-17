@@ -31,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -57,6 +59,8 @@ import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_ID_
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_TYPE;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_TYPE_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
@@ -153,6 +157,8 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam int pageSize,
                                                  @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                                  @RequestParam int page,
+                                                 @ApiParam(value = RESOURCE_TYPE, allowableValues = RESOURCE_TYPE_PROPERTY_ALLOWABLE_VALUES)
+                                                 @RequestParam(required = false) String resourceType,
                                                  @ApiParam(value = RESOURCE_TEXT_SEARCH_DESCRIPTION)
                                                  @RequestParam(required = false) String textSearch,
                                                  @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES)
@@ -161,9 +167,17 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-            return checkNotNull(resourceService.findTenantResourcesByTenantId(getTenantId(), pageLink));
+            if (StringUtils.isNotEmpty(resourceType)){
+                return checkNotNull(resourceService.findTenantResourcesByType(getTenantId(), ResourceType.valueOf(resourceType), pageLink));
+            } else {
+                return checkNotNull(resourceService.findTenantResourcesByTenantId(getTenantId(), pageLink));
+            }
         } else {
-            return checkNotNull(resourceService.findAllTenantResourcesByTenantId(getTenantId(), pageLink));
+            if (StringUtils.isNotEmpty(resourceType)){
+                return checkNotNull(resourceService.findAllTenantResourcesByType(getTenantId(), ResourceType.valueOf(resourceType), pageLink));
+            } else {
+                return checkNotNull(resourceService.findAllTenantResourcesByTenantId(getTenantId(), pageLink));
+            }
         }
     }
 
