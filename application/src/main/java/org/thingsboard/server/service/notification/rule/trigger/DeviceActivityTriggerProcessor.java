@@ -20,6 +20,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.DeviceActivityNotificationInfo;
@@ -41,6 +42,9 @@ public class DeviceActivityTriggerProcessor implements RuleEngineMsgNotification
 
     @Override
     public boolean matchesFilter(RuleEngineMsgTrigger trigger, DeviceActivityNotificationRuleTriggerConfig triggerConfig) {
+        if (trigger.getMsg().getOriginator().getEntityType() != EntityType.DEVICE) {
+            return false;
+        }
         DeviceEvent event = trigger.getMsg().getType().equals(DataConstants.ACTIVITY_EVENT) ? DeviceEvent.ACTIVE : DeviceEvent.INACTIVE;
         if (!triggerConfig.getNotifyOn().contains(event)) {
             return false;
