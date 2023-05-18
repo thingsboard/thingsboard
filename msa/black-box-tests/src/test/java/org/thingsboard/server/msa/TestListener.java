@@ -72,7 +72,11 @@ public class TestListener implements ITestListener {
     private int getCountForSkip() {
         String countForSkipProperty = System.getProperty("countForSkip");
         if (countForSkipProperty != null) {
-            return Integer.parseInt(countForSkipProperty);
+            try {
+                return Integer.parseInt(countForSkipProperty);
+            } catch (NumberFormatException e) {
+                log.warn("Invalid value for countForSkip property. Using default value.");
+            }
         }
         return DEFAULT_COUNT_FOR_SKIP;
     }
