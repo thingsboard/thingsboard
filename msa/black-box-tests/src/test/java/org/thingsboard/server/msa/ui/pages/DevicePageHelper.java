@@ -85,10 +85,20 @@ public class DevicePageHelper extends DevicePageElements {
         warningPopUpYesBtn().click();
     }
 
-    public void assignMarkedDevices(String... deviceNames) {
+    public void selectDevices(String... deviceNames) {
         for (String deviceName : deviceNames) {
             checkBox(deviceName).click();
         }
+    }
+
+    public void assignSelectedDevices(String... deviceNames) {
+        selectDevices(deviceNames);
         assignMarkedDeviceBtn().click();
+    }
+
+    public void deleteSelectedDevices(String... deviceNames) {
+        selectDevices(deviceNames);
+        deleteSelectedBtn().click();
+        warningPopUpYesBtn().click();
     }
 }

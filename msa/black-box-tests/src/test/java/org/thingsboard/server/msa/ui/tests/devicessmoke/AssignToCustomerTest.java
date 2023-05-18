@@ -107,7 +107,7 @@ public class AssignToCustomerTest extends AbstractDeviceTest {
     @Description("Assign marked device by btn on the top")
     public void assignToCustomerMarkedDevice() {
         sideBarMenuView.goToDevicesPage();
-        devicePage.assignMarkedDevices(deviceName);
+        devicePage.assignSelectedDevices(deviceName);
         assignDeviceTab.assignOnCustomer(customerName);
         assertIsDisplayed(devicePage.deviceCustomerOnPage(deviceName));
         assertThat(devicePage.deviceCustomerOnPage(deviceName).getText())
@@ -177,7 +177,7 @@ public class AssignToCustomerTest extends AbstractDeviceTest {
     @Description("Assign several devices by btn on the top")
     public void assignSeveralDevices() {
         sideBarMenuView.goToDevicesPage();
-        devicePage.assignMarkedDevices(deviceName, device1.getName());
+        devicePage.assignSelectedDevices(deviceName, device1.getName());
         assignDeviceTab.assignOnCustomer(customerName);
         assertIsDisplayed(devicePage.deviceCustomerOnPage(deviceName));
         assertThat(devicePage.deviceCustomerOnPage(deviceName).getText())
