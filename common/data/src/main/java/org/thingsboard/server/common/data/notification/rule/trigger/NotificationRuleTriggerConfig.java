@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -34,9 +35,15 @@ import java.io.Serializable;
         @Type(value = NewPlatformVersionNotificationRuleTriggerConfig.class, name = "NEW_PLATFORM_VERSION"),
         @Type(value = EntitiesLimitNotificationRuleTriggerConfig.class, name = "ENTITIES_LIMIT"),
         @Type(value = ApiUsageLimitNotificationRuleTriggerConfig.class, name = "API_USAGE_LIMIT"),
+        @Type(value = RateLimitsNotificationRuleTriggerConfig.class, name = "RATE_LIMITS"),
 })
 public interface NotificationRuleTriggerConfig extends Serializable {
 
     NotificationRuleTriggerType getTriggerType();
+
+    @JsonIgnore
+    default String getDeduplicationKey() {
+        return "#";
+    }
 
 }

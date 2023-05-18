@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.notification.rule;
 
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +30,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
@@ -39,22 +39,20 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
-import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.rule.cache.NotificationRulesCache;
 import org.thingsboard.server.service.notification.rule.trigger.NotificationRuleTriggerProcessor;
 import org.thingsboard.server.service.notification.rule.trigger.RuleEngineMsgNotificationRuleTriggerProcessor;
 
 import javax.annotation.PostConstruct;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -62,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Service
@@ -142,7 +141,7 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
                 log.debug("[{}] Rate limit for notification requests per rule was exceeded (rule '{}')", rule.getTenantId(), rule.getName());
                 return;
             }
-            if (trigger.getType().isDeduplicate() && alreadySent(rule.getId(), trigger)) {
+            if (trigger.deduplicate() && alreadySent(rule, trigger)) {
                 return;
             }
 
@@ -194,21 +193,29 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
         return triggerProcessors.get(triggerConfig.getTriggerType()).constructNotificationInfo(trigger);
     }
 
-    private boolean alreadySent(NotificationRuleId ruleId, NotificationRuleTrigger trigger) {
-        String key = ruleId + "_" + trigger.getOriginatorEntityId();
-        SentNotification sent = sentNotifications.get(key, SentNotification.class);
-        boolean alreadySent;
-        if (sent != null && sent.getTrigger().equals(trigger)) {
-            alreadySent = true;
-            log.debug("Notification for {} trigger was already sent, ignoring", trigger.getType());
-            // updating cache anyway so that the value is not removed by ttl
-        } else {
-            alreadySent = false;
-            sent = new SentNotification(trigger);
+    private boolean alreadySent(NotificationRule rule, NotificationRuleTrigger trigger) {
+        String deduplicationKey = String.join("_", rule.getDeduplicationKey(), trigger.getDeduplicationKey());
+
+        AtomicBoolean isNew = new AtomicBoolean(false);
+        Long lastSentTs = sentNotifications.get(deduplicationKey, () -> {
+            isNew.set(true);
+            log.trace("[{}] Putting to sentNotifications cache: {}", rule.getId(), trigger);
+            return System.currentTimeMillis();
+        });
+        if (isNew.get()) {
+            return false;
         }
-        log.trace("[{}] Putting to sentNotifications cache: {}", ruleId, trigger);
-        sentNotifications.put(key, sent);
-        return alreadySent;
+
+        long deduplicationDuration = trigger.getDeduplicationDuration();
+        long passed = System.currentTimeMillis() - lastSentTs;
+        if (deduplicationDuration == 0 || passed <= deduplicationDuration) {
+            log.debug("Notification for {} trigger was already sent {} ms ago, deduplication duration is {} ms. Key: '{}'",
+                    trigger.getType(), passed, deduplicationDuration, deduplicationKey);
+            sentNotifications.put(deduplicationKey, lastSentTs); // updating cache anyway so that the value is not removed by ttl
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @EventListener(ComponentLifecycleMsg.class)
@@ -243,13 +250,6 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
             }
         });
         RuleEngineMsgTrigger.msgTypeToTriggerType = ruleEngineMsgTypeToTriggerType;
-    }
-
-    @Data
-    private static class SentNotification implements Serializable {
-        private static final long serialVersionUID = 38973480405095422L;
-
-        private final NotificationRuleTrigger trigger;
     }
 
 }

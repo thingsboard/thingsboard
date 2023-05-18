@@ -43,4 +43,20 @@ public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
         return TenantId.SYS_TENANT_ID;
     }
 
+
+    @Override
+    public boolean deduplicate() {
+        return true;
+    }
+
+    @Override
+    public String getDeduplicationKey() {
+        return String.join(":", updateInfo.getCurrentVersion(), updateInfo.getLatestVersion());
+    }
+
+    @Override
+    public long getDeduplicationDuration() {
+        return 0;
+    }
+
 }
