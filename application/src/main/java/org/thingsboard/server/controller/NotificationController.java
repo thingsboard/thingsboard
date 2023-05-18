@@ -62,6 +62,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
+import org.thingsboard.server.service.notification.TemplateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -102,6 +103,7 @@ public class NotificationController extends BaseController {
     private final NotificationTargetService notificationTargetService;
     private final NotificationCenter notificationCenter;
     private final NotificationSettingsService notificationSettingsService;
+    private final TemplateService templateService;
 
     @ApiOperation(value = "Get notifications (getNotifications)",
             notes = "Returns the page of notifications for current user." + NEW_LINE +
@@ -334,6 +336,7 @@ public class NotificationController extends BaseController {
                 .deliveryMethods(deliveryMethods)
                 .template(template)
                 .settings(null)
+                .templateService(templateService)
                 .build();
         Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = ctx.getDeliveryMethods().stream()
                 .collect(Collectors.toMap(m -> m, deliveryMethod -> {
