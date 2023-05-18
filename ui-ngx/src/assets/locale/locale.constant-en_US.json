@@ -930,6 +930,7 @@
         "no-dashboards-text": "No dashboards found",
         "no-widgets": "No widgets configured",
         "add-widget": "Add new widget",
+        "add-widget-button-text": "Add widget",
         "title": "Title",
         "image": "Dashboard image",
         "mobile-app-settings": "Mobile application settings",
@@ -1058,6 +1059,7 @@
         "public-link-copied-message": "Dashboard public link has been copied to clipboard",
         "manage-states": "Manage dashboard states",
         "states": "Dashboard states",
+        "states-short": "States",
         "search-states": "Search dashboard states",
         "selected-states": "{ count, plural, =1 {1 dashboard state} other {# dashboard states} } selected",
         "edit-state": "Edit dashboard state",
@@ -1086,7 +1088,8 @@
         "unassign-dashboards-from-edge-text": "After the confirmation all selected dashboards will be unassigned and won't be accessible by the edge.",
         "assign-dashboard-to-edge": "Assign Dashboard(s) To Edge",
         "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
-        "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found"
+        "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found",
+        "edit-mode": "Edit mode"
     },
     "datakey": {
         "settings": "Settings",
@@ -1233,6 +1236,15 @@
         "access-token-invalid": "Access token length must be from 1 to 32 characters.",
         "certificate-pem-format": "Certificate in PEM format",
         "certificate-pem-format-required": "Certificate is required.",
+        "copy-access-token": "Copy Access token",
+        "copy-certificate": "Copy Certificate",
+        "copy-client-id": "Copy Client ID",
+        "copy-user-name": "Copy User name",
+        "copy-password": "Copy Password",
+        "generate-client-id": "Generate Client ID",
+        "generate-user-name": "Generate User name",
+        "generate-password": "Generate Password",
+        "generate-access-token": "Generate Access Token",
         "lwm2m-security-config": {
           "identity": "Client Identity",
           "identity-required": "Client Identity is required.",
@@ -1928,6 +1940,7 @@
         "entities-count": "Entities count",
         "alarms-count": "Alarms count",
         "aliases": "Entity aliases",
+        "aliases-short": "Aliases",
         "entity-alias": "Entity alias",
         "unable-delete-entity-alias-title": "Unable to delete entity alias",
         "unable-delete-entity-alias-text": "Entity alias '{{entityAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
@@ -2690,6 +2703,7 @@
     },
     "layout": {
         "layout": "Layout",
+        "layouts": "Layouts",
         "manage": "Manage layouts",
         "settings": "Layout settings",
         "color": "Color",
@@ -2800,6 +2814,7 @@
         "basic-settings": "Basic settings",
         "button-text": "Button text",
         "button-text-required": "Button text is required",
+        "button-text-max-length": "Button text should be less than or equal to {{ length }} characters",
         "compose": "Compose",
         "conversation": "Conversation",
         "conversation-required": "Conversation is required",
@@ -3744,6 +3759,7 @@
         "days": "Days"
     },
     "timewindow": {
+        "timewindow": "Timewindow",
         "years": "{ years, plural, =1 { year } other {# years } }",
         "months": "{ months, plural, =1 { month } other {# months } }",
         "weeks": "{ weeks, plural, =1 { week } other {# weeks } }",

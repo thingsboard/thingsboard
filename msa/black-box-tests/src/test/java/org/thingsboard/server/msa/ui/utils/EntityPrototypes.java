@@ -18,6 +18,7 @@ package org.thingsboard.server.msa.ui.utils;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -191,6 +192,41 @@ public class EntityPrototypes {
         return device;
     }
 
+    public static Device defaultDevicePrototype(String name, String description) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, String description, String label) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
+        device.setLabel(label);
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, boolean gateway) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode().put("gateway", gateway));
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, boolean gateway, boolean overwriteActivityTime) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode()
+                .put("gateway", gateway)
+                .put("overwriteActivityTime", overwriteActivityTime));
+        return device;
+    }
+
     public static Asset defaultAssetPrototype(String name, CustomerId id) {
         Asset asset = new Asset();
         asset.setName(name + RandomStringUtils.randomAlphanumeric(7));
@@ -205,5 +241,11 @@ public class EntityPrototypes {
         entityView.setType(type + RandomStringUtils.randomAlphanumeric(7));
         entityView.setAdditionalInfo(JacksonUtil.newObjectNode().put("entityType", entityType));
         return entityView;
+    }
+
+    public static Dashboard defaultDashboardPrototype(String title) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle(title + RandomStringUtils.randomAlphanumeric(7));
+        return dashboard;
     }
 }

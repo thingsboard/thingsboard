@@ -27,6 +27,7 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -128,6 +130,18 @@ public class TestRestClient {
         return getDeviceById(deviceId, HTTP_OK)
                 .extract()
                 .as(Device.class);
+    }
+
+    public PageData<Device> getDevices(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return given().spec(requestSpec).queryParams(params)
+                .get("/api/tenant/devices")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<PageData<Device>>() {
+                });
     }
 
     public DeviceCredentials getDeviceCredentialsByDeviceId(DeviceId deviceId) {
@@ -486,6 +500,23 @@ public class TestRestClient {
     public void deleteEntityView(EntityViewId entityViewId) {
         given().spec(requestSpec)
                 .delete("/api/entityView/{entityViewId}", entityViewId.getId())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public Dashboard postDashboard(Dashboard dashboard) {
+        return given().spec(requestSpec)
+                .body(dashboard)
+                .post("/api/dashboard")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Dashboard.class);
+    }
+
+    public void deleteDashboard(DashboardId dashboardId) {
+        given().spec(requestSpec)
+                .delete("/api/dashboard/{dashboardId}", dashboardId.getId())
                 .then()
                 .statusCode(HTTP_OK);
     }

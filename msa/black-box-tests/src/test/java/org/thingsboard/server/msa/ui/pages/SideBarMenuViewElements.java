@@ -27,7 +27,7 @@ public class SideBarMenuViewElements extends AbstractBasePage {
     private static final String RULE_CHAINS_BTN = "//mat-toolbar//a[@href='/ruleChains']";
     private static final String CUSTOMER_BTN = "//mat-toolbar//a[@href='/customers']";
     private static final String DASHBOARD_BTN = "//mat-toolbar//a[@href='/dashboards']";
-    private static final String PROFILES_BTN = "//mat-toolbar//mat-icon[text()='badge']/ancestor::tb-menu-toggle";
+    private static final String PROFILES_DROPDOWN = "//mat-toolbar//mat-icon[text()='badge']/ancestor::a//span[contains(@class,'pull-right')]";
     private static final String DEVICE_PROFILE_BTN = "//mat-toolbar//a[@href='/profiles/deviceProfiles']";
     private static final String ASSET_PROFILE_BTN = "//mat-toolbar//a[@href='/profiles/assetProfiles']";
     private static final String ALARMS_BTN = "//mat-toolbar//a[@href='/alarms']";
@@ -52,8 +52,8 @@ public class SideBarMenuViewElements extends AbstractBasePage {
         return waitUntilElementToBeClickable(DASHBOARD_BTN);
     }
 
-    public WebElement profilesBtn() {
-        return waitUntilElementToBeClickable(PROFILES_BTN);
+    public WebElement profilesDropdown() {
+        return waitUntilElementToBeClickable(PROFILES_DROPDOWN);
     }
 
     public WebElement deviceProfileBtn() {

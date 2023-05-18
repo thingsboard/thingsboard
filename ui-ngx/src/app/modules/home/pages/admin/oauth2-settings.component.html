@@ -95,6 +95,7 @@
                                         <input matInput [value]="redirectURI(domainInfo)" readonly>
                                         <tb-copy-button
                                           matSuffix
+                                          miniButton="false"
                                           color="primary"
                                           [copyText]="redirectURI(domainInfo)"
                                           tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
@@ -106,6 +107,7 @@
                                         <input matInput [value]="redirectURIMixed(domainInfo)" readonly>
                                         <tb-copy-button
                                           matSuffix
+                                          miniButton="false"
                                           color="primary"
                                           [copyText]="redirectURIMixed(domainInfo)"
                                           tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
@@ -164,6 +166,7 @@
                                         <textarea matInput formControlName="appSecret" rows="1" required></textarea>
                                         <tb-copy-button
                                           matSuffix
+                                          miniButton="false"
                                           color="primary"
                                           [copyText]="mobileInfo.get('appSecret').value"
                                           tooltipText="{{ 'admin.oauth2.copy-mobile-app-secret' | translate }}"

@@ -249,6 +249,7 @@ public class ThingsboardInstallService {
                         case "3.4.4":
                             log.info("Upgrading ThingsBoard from version 3.4.4 to 3.5.0 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.4.4");
+                            entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                             entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                             if (!getEnv("SKIP_DEFAULT_NOTIFICATION_CONFIGS_CREATION", false)) {
                                 systemDataLoaderService.createDefaultNotificationConfigs();
@@ -279,6 +280,7 @@ public class ThingsboardInstallService {
 
                 entityDatabaseSchemaService.createDatabaseSchema();
 
+                entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                 entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
 
                 log.info("Installing DataBase schema for timeseries...");

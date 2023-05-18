@@ -24,12 +24,12 @@ public class SideBarMenuViewHelper extends SideBarMenuViewElements {
     }
 
     public void openDeviceProfiles() {
-        profilesBtn().click();
+        openProfilesDropDown();
         deviceProfileBtn().click();
     }
 
     public void openAssetProfiles() {
-        profilesBtn().click();
+        openProfilesDropDown();
         assetProfileBtn().click();
     }
 
@@ -54,8 +54,18 @@ public class SideBarMenuViewHelper extends SideBarMenuViewElements {
         }
     }
 
+    public void openProfilesDropDown() {
+        if (profilesIsClose()) {
+            profilesDropdown().click();
+        }
+    }
+
     public boolean entitiesDropdownIsClose() {
         return dropdownIsClose(entitiesDropdown());
+    }
+
+    public boolean profilesIsClose() {
+        return dropdownIsClose(profilesDropdown());
     }
 
     private boolean dropdownIsClose(WebElement dropdown) {
