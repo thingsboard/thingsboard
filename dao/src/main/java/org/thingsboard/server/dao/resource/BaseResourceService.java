@@ -103,31 +103,17 @@ public class BaseResourceService implements ResourceService {
     }
 
     @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TenantId tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
         log.trace("Executing findAllTenantResourcesByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceInfoDao.findAllTenantResourcesByTenantId(tenantId.getId(), pageLink);
+        return resourceInfoDao.findAllTenantResourcesByTenantId(tenantId.getId(), resourceType == null ? null : resourceType.name(), pageLink);
     }
 
     @Override
-    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TenantId tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
         log.trace("Executing findTenantResourcesByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceInfoDao.findTenantResourcesByTenantId(tenantId.getId(), pageLink);
-    }
-
-    @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByType(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
-        log.trace("Executing findAllTenantResourcesByType [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceInfoDao.findAllTenantResourcesByType(tenantId.getId(), resourceType.name(), pageLink);
-    }
-
-    @Override
-    public PageData<TbResourceInfo> findTenantResourcesByType(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
-        log.trace("Executing findTenantResourcesByType [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceInfoDao.findTenantResourcesByType(tenantId.getId(), resourceType.name(), pageLink);
+        return resourceInfoDao.findTenantResourcesByTenantId(tenantId.getId(), resourceType == null ? null : resourceType.name(), pageLink);
     }
 
     @Override

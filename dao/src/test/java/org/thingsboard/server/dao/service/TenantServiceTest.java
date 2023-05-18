@@ -506,7 +506,7 @@ public class TenantServiceTest extends AbstractServiceTest {
                 .as("resource").isNull();
         PageLink pageLinkResources = new PageLink(1);
         PageData<TbResourceInfo> tenantResources =
-                resourceService.findAllTenantResourcesByTenantId(tenant.getId(), pageLinkResources);
+                resourceService.findAllTenantResourcesByTenantId(tenant.getId(), null, pageLinkResources);
         Assert.assertEquals(0, tenantResources.getTotalElements());
     }
 

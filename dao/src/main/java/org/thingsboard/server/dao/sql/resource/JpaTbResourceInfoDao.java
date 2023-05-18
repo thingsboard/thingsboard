@@ -51,42 +51,24 @@ public class JpaTbResourceInfoDao extends JpaAbstractSearchTextDao<TbResourceInf
     }
 
     @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(UUID tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(UUID tenantId, String resourceType, PageLink pageLink) {
         return DaoUtil.toPageData(resourceInfoRepository
                 .findAllTenantResourcesByTenantId(
                         tenantId,
                         TenantId.NULL_UUID,
+                        resourceType,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<TbResourceInfo> findTenantResourcesByTenantId(UUID tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> findTenantResourcesByTenantId(UUID tenantId, String resourceType, PageLink pageLink) {
         return DaoUtil.toPageData(resourceInfoRepository
                 .findTenantResourcesByTenantId(
                         tenantId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink)));
-    }
-
-    @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByType(UUID tenantId, String resourceType, PageLink pageLink) {
-        return DaoUtil.toPageData(resourceInfoRepository
-                .findAllTenantResourcesByType(
-                        tenantId,
-                        TenantId.NULL_UUID,
                         resourceType,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
 
-    @Override
-    public PageData<TbResourceInfo> findTenantResourcesByType(UUID tenantId, String resourceType, PageLink pageLink) {
-        return DaoUtil.toPageData(resourceInfoRepository
-                .findTenantResourcesByType(
-                        tenantId,
-                        resourceType,
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink)));
-    }
 }

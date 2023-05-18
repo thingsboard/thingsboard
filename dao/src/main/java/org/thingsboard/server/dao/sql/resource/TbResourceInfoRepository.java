@@ -34,30 +34,9 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
             "(SELECT sr FROM TbResourceEntity sr " +
             "WHERE sr.tenantId = :tenantId " +
             "AND tr.resourceType = sr.resourceType " +
-            "AND tr.resourceKey = sr.resourceKey)))")
-    Page<TbResourceInfoEntity> findAllTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
-                                                                @Param("systemAdminId") UUID sysadminId,
-                                                                @Param("searchText") String searchText,
-                                                                Pageable pageable);
-
-    @Query("SELECT ri FROM TbResourceInfoEntity ri WHERE " +
-            "ri.tenantId = :tenantId " +
-            "AND LOWER(ri.title) LIKE LOWER(CONCAT('%', :searchText, '%'))")
-    Page<TbResourceInfoEntity> findTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
-                                                             @Param("searchText") String searchText,
-                                                             Pageable pageable);
-
-    @Query("SELECT tr FROM TbResourceInfoEntity tr WHERE " +
-            "LOWER(tr.title) LIKE LOWER(CONCAT('%', :searchText, '%'))" +
-            "AND (tr.tenantId = :tenantId " +
-            "OR (tr.tenantId = :systemAdminId " +
-            "AND NOT EXISTS " +
-            "(SELECT sr FROM TbResourceEntity sr " +
-            "WHERE sr.tenantId = :tenantId " +
-            "AND tr.resourceType = sr.resourceType " +
             "AND tr.resourceKey = sr.resourceKey)))" +
-            "AND tr.resourceType = :resourceType")
-    Page<TbResourceInfoEntity> findAllTenantResourcesByType(@Param("tenantId") UUID tenantId,
+            "AND (:resourceType is null or tr.resourceType = :resourceType)")
+    Page<TbResourceInfoEntity> findAllTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
                                                                 @Param("systemAdminId") UUID sysadminId,
                                                                 @Param("resourceType") String resourceType,
                                                                 @Param("searchText") String searchText,
@@ -65,10 +44,11 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
 
     @Query("SELECT ri FROM TbResourceInfoEntity ri WHERE " +
             "ri.tenantId = :tenantId " +
-            "AND ri.resourceType = :resourceType " +
-            "AND LOWER(ri.title) LIKE LOWER(CONCAT('%', :searchText, '%'))")
-    Page<TbResourceInfoEntity> findTenantResourcesByType(@Param("tenantId") UUID tenantId,
-                                                         @Param("resourceType") String resourceType,
-                                                         @Param("searchText") String searchText,
+            "AND LOWER(ri.title) LIKE LOWER(CONCAT('%', :searchText, '%'))" +
+            "AND (:resourceType is null or ri.resourceType = :resourceType)")
+    Page<TbResourceInfoEntity> findTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
+                                                             @Param("resourceType") String resourceType,
+                                                             @Param("searchText") String searchText,
                                                              Pageable pageable);
+
 }

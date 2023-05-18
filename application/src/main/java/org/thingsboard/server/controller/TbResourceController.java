@@ -167,17 +167,9 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-            if (StringUtils.isNotEmpty(resourceType)){
-                return checkNotNull(resourceService.findTenantResourcesByType(getTenantId(), ResourceType.valueOf(resourceType), pageLink));
-            } else {
-                return checkNotNull(resourceService.findTenantResourcesByTenantId(getTenantId(), pageLink));
-            }
+            return checkNotNull(resourceService.findTenantResourcesByTenantId(getTenantId(), StringUtils.isNotEmpty(resourceType) ? ResourceType.valueOf(resourceType) : null, pageLink));
         } else {
-            if (StringUtils.isNotEmpty(resourceType)){
-                return checkNotNull(resourceService.findAllTenantResourcesByType(getTenantId(), ResourceType.valueOf(resourceType), pageLink));
-            } else {
-                return checkNotNull(resourceService.findAllTenantResourcesByTenantId(getTenantId(), pageLink));
-            }
+            return checkNotNull(resourceService.findAllTenantResourcesByTenantId(getTenantId(), StringUtils.isNotEmpty(resourceType) ? ResourceType.valueOf(resourceType) : null, pageLink));
         }
     }
 

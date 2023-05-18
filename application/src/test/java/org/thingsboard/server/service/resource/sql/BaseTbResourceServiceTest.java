@@ -356,7 +356,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         PageLink pageLink = new PageLink(16);
         PageData<TbResourceInfo> pageData;
         do {
-            pageData = resourceService.findTenantResourcesByTenantId(tenantId, pageLink);
+            pageData = resourceService.findTenantResourcesByTenantId(tenantId, null, pageLink);
             loadedResources.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -371,7 +371,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resourceService.deleteResourcesByTenantId(tenantId);
 
         pageLink = new PageLink(31);
-        pageData = resourceService.findTenantResourcesByTenantId(tenantId, pageLink);
+        pageData = resourceService.findTenantResourcesByTenantId(tenantId, null, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
@@ -417,7 +417,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         PageLink pageLink = new PageLink(10);
         PageData<TbResourceInfo> pageData;
         do {
-            pageData = resourceService.findAllTenantResourcesByTenantId(tenantId, pageLink);
+            pageData = resourceService.findAllTenantResourcesByTenantId(tenantId, null, pageLink);
             loadedResources.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -432,14 +432,14 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resourceService.deleteResourcesByTenantId(tenantId);
 
         pageLink = new PageLink(100);
-        pageData = resourceService.findAllTenantResourcesByTenantId(tenantId, pageLink);
+        pageData = resourceService.findAllTenantResourcesByTenantId(tenantId, null, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(pageData.getData().size(), 100);
 
         resourceService.deleteResourcesByTenantId(TenantId.SYS_TENANT_ID);
 
         pageLink = new PageLink(100);
-        pageData = resourceService.findAllTenantResourcesByTenantId(TenantId.SYS_TENANT_ID, pageLink);
+        pageData = resourceService.findAllTenantResourcesByTenantId(TenantId.SYS_TENANT_ID, null, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 

@@ -24,12 +24,8 @@ import java.util.UUID;
 
 public interface TbResourceInfoDao extends Dao<TbResourceInfo> {
 
-    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(UUID tenantId, PageLink pageLink);
+    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(UUID tenantId, String resourceType, PageLink pageLink);
 
-    PageData<TbResourceInfo> findTenantResourcesByTenantId(UUID tenantId, PageLink pageLink);
-
-    PageData<TbResourceInfo> findAllTenantResourcesByType(UUID tenantId, String resourceType, PageLink pageLink);
-
-    PageData<TbResourceInfo> findTenantResourcesByType(UUID tenantId, String resourceType, PageLink pageLink);
+    PageData<TbResourceInfo> findTenantResourcesByTenantId(UUID tenantId, String resourceType, PageLink pageLink);
 
 }
