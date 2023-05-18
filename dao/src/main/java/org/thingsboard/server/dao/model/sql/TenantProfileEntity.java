@@ -38,7 +38,7 @@ import javax.persistence.Table;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
-@Table(name = ModelConstants.TENANT_PROFILE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.TENANT_PROFILE_TABLE_NAME)
 public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> implements SearchTextEntity<TenantProfile> {
 
     @Column(name = ModelConstants.TENANT_PROFILE_NAME_PROPERTY)

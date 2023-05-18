@@ -40,7 +40,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.QUEUE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.QUEUE_TABLE_NAME)
 public class QueueEntity extends BaseSqlEntity<Queue> {
 
     private static final ObjectMapper mapper = new ObjectMapper();
