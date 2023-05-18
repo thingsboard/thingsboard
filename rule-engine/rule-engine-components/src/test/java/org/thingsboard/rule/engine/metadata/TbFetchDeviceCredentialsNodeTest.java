@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -40,6 +42,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.doAnswer;
@@ -67,7 +71,6 @@ public class TbFetchDeviceCredentialsNodeTest {
     void setUp() throws TbNodeException {
         deviceId = new DeviceId(UUID.randomUUID());
         config = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
-        config.setFetchTo(FetchTo.METADATA);
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
     }
 
@@ -148,6 +151,15 @@ public class TbFetchDeviceCredentialsNodeTest {
         verify(ctxMock, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
 
         assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void givenOldConfig_whenUpgrade_thenShouldReturnSuccessResult() throws Exception {
+        String oldConfig = "{\"fetchToMetadata\":true}";
+        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
+        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
+        assertTrue(upgrade.getFirst());
+        assertEquals(JacksonUtil.valueToTree(config), upgrade.getSecond());
     }
 
     private TbMsg getTbMsg(EntityId entityId) {

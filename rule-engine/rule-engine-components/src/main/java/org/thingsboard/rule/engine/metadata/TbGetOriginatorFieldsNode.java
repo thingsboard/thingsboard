@@ -28,7 +28,6 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesFieldsAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -102,7 +101,7 @@ public class TbGetOriginatorFieldsNode extends TbAbstractNodeWithFetchTo<TbGetOr
     }
 
     @Override
-    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, int fromVersion, JsonNode oldConfiguration) {
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) {
         if (fromVersion == 0) {
             var newConfigObjectNode = (ObjectNode) oldConfiguration;
             newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, FetchTo.METADATA.name());

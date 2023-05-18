@@ -16,10 +16,12 @@
 package org.thingsboard.rule.engine.metadata;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -39,6 +41,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -245,6 +248,23 @@ public class TbGetAttributesNodeTest {
         // THEN
         verify(ctxMock, never()).tellSuccess(any());
         assertThat(exception.getMessage()).isEqualTo("Message body is not an object!");
+    }
+
+    @Test
+    public void givenOldConfig_whenUpgrade_thenShouldReturnSuccessResult() throws Exception {
+        var defaultConfig = new TbGetAttributesNodeConfiguration().defaultConfiguration();
+        var node = new TbGetAttributesNode();
+        String oldConfig = "{\"fetchToData\":false," +
+                "\"clientAttributeNames\":[]," +
+                "\"sharedAttributeNames\":[]," +
+                "\"serverAttributeNames\":[]," +
+                "\"latestTsKeyNames\":[]," +
+                "\"tellFailureIfAbsent\":true," +
+                "\"getLatestValueWithTs\":false}";
+        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
+        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
+        Assertions.assertTrue(upgrade.getFirst());
+        Assertions.assertEquals(JacksonUtil.valueToTree(defaultConfig), upgrade.getSecond());
     }
 
     private TbMsg checkMsg(boolean checkSuccess) {

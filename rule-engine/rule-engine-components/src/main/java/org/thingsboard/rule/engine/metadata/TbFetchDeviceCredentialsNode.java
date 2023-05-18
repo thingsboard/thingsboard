@@ -25,7 +25,6 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.util.TbPair;
@@ -89,7 +88,7 @@ public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFe
     }
 
     @Override
-    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
         return fromVersion == 0 ?
                 upgradeRuleNodesWithOldPropertyToUseFetchTo(
                         oldConfiguration,

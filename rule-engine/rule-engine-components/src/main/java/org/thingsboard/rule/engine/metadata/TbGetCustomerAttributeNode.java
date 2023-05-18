@@ -27,7 +27,6 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 
@@ -72,7 +71,7 @@ public class TbGetCustomerAttributeNode extends TbAbstractGetEntityAttrNode<Cust
     }
 
     @Override
-    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
         return fromVersion == 0 ?
                 upgradeToUseFetchToAndDataToFetch(oldConfiguration) :
                 new TbPair<>(false, oldConfiguration);

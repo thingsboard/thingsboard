@@ -22,12 +22,10 @@ import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.VersionedNode;
+import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -36,7 +34,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.NoSuchElementException;
 
 @Slf4j
-public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeConfiguration> implements VersionedNode {
+public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeConfiguration> implements TbVersionedNode {
 
     protected final static String FETCH_TO_PROPERTY_NAME = "fetchTo";
 

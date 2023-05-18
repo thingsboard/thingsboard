@@ -24,7 +24,6 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
@@ -62,7 +61,7 @@ public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGet
     }
 
     @Override
-    public TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
         return fromVersion == 0 ?
                 upgradeRuleNodesWithOldPropertyToUseFetchTo(
                         oldConfiguration,

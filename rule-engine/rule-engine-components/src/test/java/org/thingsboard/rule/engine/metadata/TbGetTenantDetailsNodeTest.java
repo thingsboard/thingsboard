@@ -15,7 +15,9 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +32,7 @@ import org.thingsboard.rule.engine.util.ContactBasedEntityDetails;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -257,6 +260,17 @@ public class TbGetTenantDetailsNodeTest {
 
         assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
         assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
+    }
+
+    @Test
+    public void givenOldConfig_whenUpgrade_thenShouldReturnSuccessResult() throws Exception {
+        var defaultConfig = new TbGetTenantDetailsNodeConfiguration().defaultConfiguration();
+        var node = new TbGetTenantDetailsNode();
+        String oldConfig = "{\"detailsList\":[],\"addToMetadata\":false}";
+        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
+        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
+        Assertions.assertTrue(upgrade.getFirst());
+        Assertions.assertEquals(JacksonUtil.valueToTree(defaultConfig), upgrade.getSecond());
     }
 
     private void prepareMsgAndConfig(FetchTo fetchTo, List<ContactBasedEntityDetails> detailsList) {

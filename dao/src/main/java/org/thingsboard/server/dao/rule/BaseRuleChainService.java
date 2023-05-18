@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.VersionedNode;
+import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -185,17 +185,62 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
             updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode, newRuleNode));
         }
+        RuleChainId ruleChainId = ruleChain.getId();
         if (nodes != null) {
             for (RuleNode node : toAddOrUpdate) {
-                node.setRuleChainId(ruleChain.getId());
+                node.setRuleChainId(ruleChainId);
+                String ruleNodeType = node.getType();
+                RuleNodeId ruleNodeId = node.getId();
+                try {
+                    var ruleNodeClazz = Class.forName(ruleNodeType);
+                    if (TbVersionedNode.class.isAssignableFrom(ruleNodeClazz)) {
+                        TbVersionedNode tbVersionedNode = (TbVersionedNode) ruleNodeClazz.getDeclaredConstructor().newInstance();
+                        int fromVersion = node.getConfigurationVersion();
+                        int toVersion = tbVersionedNode.getCurrentVersion();
+                        if (fromVersion < toVersion) {
+                            log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
+                                    ruleNodeId,
+                                    ruleNodeType,
+                                    fromVersion,
+                                    toVersion);
+                            try {
+                                TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(fromVersion, node.getConfiguration());
+                                if (upgradeResult.getFirst()) {
+                                    node.setConfiguration(upgradeResult.getSecond());
+                                    log.info("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
+                                            ruleNodeId,
+                                            ruleNodeType,
+                                            ruleChainId,
+                                            fromVersion,
+                                            toVersion);
+                                }
+                                node.setConfigurationVersion(toVersion);
+                            } catch (TbNodeException e) {
+                                log.warn("Failed to upgrade rule node with id: {} type: {} rule chain id: {} fromVersion: {} toVersion: {} due to: ",
+                                        ruleNodeId,
+                                        ruleNodeType,
+                                        ruleChainId,
+                                        fromVersion,
+                                        toVersion,
+                                        e);
+                            }
+                        } else {
+                            log.debug("Rule node with id: {} type: {} ruleChainId: {} already set to latest version!",
+                                    ruleNodeId,
+                                    ruleChainId,
+                                    ruleNodeType);
+                        }
+                    }
+                } catch (ClassNotFoundException |
+                         InvocationTargetException |
+                         InstantiationException |
+                         IllegalAccessException |
+                         NoSuchMethodException e) {
+                    log.error("Failed to create instance of rule node with id: {} type: {}, rule chain id: {}", ruleNodeId, ruleNodeType, ruleChainId);
+                }
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-//                TbPair<Boolean, JsonNode> upgradeResult = upgradeRuleNode(savedNode);
-//                if (upgradeResult.getFirst()) {
-//                    savedNode.setConfiguration(upgradeResult.getSecond());
-//                    savedNode = ruleNodeDao.save(tenantId, savedNode);
-//                }
                 int index = nodes.indexOf(node);
                 nodes.set(index, savedNode);
                 ruleNodeIndexMap.put(savedNode.getId(), index);
@@ -228,7 +273,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     RuleChain targetRuleChain = findRuleChainById(TenantId.SYS_TENANT_ID, targetRuleChainId);
                     RuleNode targetNode = new RuleNode();
                     targetNode.setName(targetRuleChain != null ? targetRuleChain.getName() : "Rule Chain Input");
-                    targetNode.setRuleChainId(ruleChain.getId());
+                    targetNode.setRuleChainId(ruleChainId);
                     targetNode.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
                     var configuration = JacksonUtil.newObjectNode();
                     configuration.put("ruleChainId", targetRuleChainId.getId().toString());
@@ -241,7 +286,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     targetNode = ruleNodeDao.save(tenantId, targetNode);
 
                     EntityRelation sourceRuleChainToRuleNode = new EntityRelation();
-                    sourceRuleChainToRuleNode.setFrom(ruleChain.getId());
+                    sourceRuleChainToRuleNode.setFrom(ruleChainId);
                     sourceRuleChainToRuleNode.setTo(targetNode.getId());
                     sourceRuleChainToRuleNode.setType(EntityRelation.CONTAINS_TYPE);
                     sourceRuleChainToRuleNode.setTypeGroup(RelationTypeGroup.RULE_CHAIN);
@@ -263,40 +308,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
 
         return RuleChainUpdateResult.successful(updatedRuleNodes);
-    }
-
-    private TbPair<Boolean, JsonNode> upgradeRuleNode(RuleNode ruleNode) {
-        RuleNodeId ruleNodeId = ruleNode.getId();
-        String ruleNodeType = ruleNode.getType();
-        int fromVersion = ruleNode.getConfigurationVersion();
-        try {
-            var ruleNodeClass = Class.forName(ruleNodeType).getDeclaredConstructor().newInstance();
-            if (ruleNodeClass instanceof VersionedNode) {
-                VersionedNode versionedNode = (VersionedNode) ruleNodeClass;
-                int toVersion = versionedNode.getCurrentVersion();
-                log.info("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
-                        ruleNodeId,
-                        ruleNodeType,
-                        fromVersion,
-                        toVersion);
-                try {
-                    return versionedNode.upgrade(ruleNodeId, fromVersion, ruleNode.getConfiguration());
-                } catch (TbNodeException e) {
-                    log.warn("Failed to upgrade rule node with id: {} fromVersion: {} toVersion: {} due to: ",
-                            ruleNodeId,
-                            fromVersion,
-                            toVersion,
-                            e);
-                }
-            }
-        } catch (ClassNotFoundException |
-                 InvocationTargetException |
-                 InstantiationException |
-                 IllegalAccessException |
-                 NoSuchMethodException e) {
-            log.warn("Failed to create instance of rule node with id: {} and type: {}", ruleNodeId, ruleNodeType);
-        }
-        return new TbPair<>(false, ruleNode.getConfiguration());
     }
 
     @Override

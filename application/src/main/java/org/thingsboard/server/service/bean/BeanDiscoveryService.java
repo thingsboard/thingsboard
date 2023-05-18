@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.service.bean;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.data.util.TbPair;
+import org.springframework.beans.factory.config.BeanDefinition;
 
-public interface VersionedNode extends TbNode {
+import java.lang.annotation.Annotation;
+import java.util.Set;
 
-    TbPair<Boolean, JsonNode> upgrade(RuleNodeId ruleNodeId, int fromVersion, JsonNode oldConfiguration) throws TbNodeException;
+public interface BeanDiscoveryService {
 
-    int getCurrentVersion();
+    Set<BeanDefinition> discoverBeansByAnnotationType(Class<? extends Annotation> annotationType);
 
 }

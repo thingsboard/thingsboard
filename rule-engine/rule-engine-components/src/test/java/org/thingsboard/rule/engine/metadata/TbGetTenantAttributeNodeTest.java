@@ -15,10 +15,12 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +43,7 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -379,6 +382,17 @@ public class TbGetTenantAttributeNodeTest {
 
         assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(msg.getData());
         assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(expectedMsgMetaData);
+    }
+
+    @Test
+    public void givenOldConfig_whenUpgrade_thenShouldReturnSuccessResult() throws Exception {
+        var defaultConfig = new TbGetEntityAttrNodeConfiguration().defaultConfiguration();
+        var node = new TbGetTenantAttributeNode();
+        String oldConfig = "{\"attrMapping\":{\"alarmThreshold\":\"threshold\"},\"telemetry\":false}";
+        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
+        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
+        Assertions.assertTrue(upgrade.getFirst());
+        Assertions.assertEquals(JacksonUtil.valueToTree(defaultConfig), upgrade.getSecond());
     }
 
     private void prepareMsgAndConfig(FetchTo fetchTo, DataToFetch dataToFetch, EntityId originator) {
