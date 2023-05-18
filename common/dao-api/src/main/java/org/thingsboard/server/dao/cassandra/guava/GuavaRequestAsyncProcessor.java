@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+
 import java.util.concurrent.CompletionStage;
 
 /**

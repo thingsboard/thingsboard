@@ -145,6 +145,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   loadDataOnInit = true;
   onLoadAction: (route: ActivatedRoute) => void = null;
   useTimePageLink = false;
+  forAllTimeEnabled = false;
   defaultTimewindowInterval = historyInterval(DAY);
   entityType: EntityType = null;
   tableTitle = '';

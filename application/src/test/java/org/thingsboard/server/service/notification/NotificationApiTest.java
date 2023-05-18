@@ -362,13 +362,14 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         SlackNotificationTargetConfig slackTargetConfig = new SlackNotificationTargetConfig();
         slackTargetConfig.setConversationType(SlackConversationType.DIRECT);
         SlackConversation slackConversation = new SlackConversation();
+        slackConversation.setType(SlackConversationType.DIRECT);
         slackConversation.setId("U1234567");
-        slackConversation.setTitle("@jdoe (John Doe)");
+        slackConversation.setName("jdoe");
         slackConversation.setWholeName("John Doe");
         slackTargetConfig.setConversation(slackConversation);
         slackTarget.setConfiguration(slackTargetConfig);
         slackTarget = saveNotificationTarget(slackTarget);
-        recipients.add(slackConversation.getTitle());
+        recipients.add("@" + slackConversation.getWholeName());
 
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setNotificationType(NotificationType.GENERAL);
@@ -500,8 +501,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         notificationTarget.setName(conversationName + " in Slack");
         SlackNotificationTargetConfig targetConfig = new SlackNotificationTargetConfig();
         targetConfig.setConversation(SlackConversation.builder()
+                .type(SlackConversationType.DIRECT)
                 .id(conversationId)
-                .title(conversationName)
+                .name(conversationName)
                 .build());
         notificationTarget.setConfiguration(targetConfig);
         notificationTarget = saveNotificationTarget(notificationTarget);

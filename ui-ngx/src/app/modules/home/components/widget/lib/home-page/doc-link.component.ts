@@ -31,7 +31,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 @Component({
   selector: 'tb-doc-link',
   templateUrl: './doc-link.component.html',
-  styleUrls: ['./doc-link.component.scss'],
+  styleUrls: ['./link.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

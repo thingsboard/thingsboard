@@ -28,4 +28,5 @@ public interface ToData<T> {
      * @return the dto object
      */
     T toData();
+
 }

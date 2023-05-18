@@ -18,6 +18,7 @@
 <mat-toolbar color="primary">
   <h2>{{ dialogTitle | translate }}</h2>
   <span fxFlex></span>
+  <div tb-help="templateNotifications"></div>
   <button mat-icon-button
           (click)="cancel()"
           type="button">
@@ -57,9 +58,10 @@
           <label [ngClass]="{'tb-error': templateNotificationForm.get('configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
             class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
           <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
-          <section formGroupName="deliveryMethodsTemplates" fxLayout="row warap">
-            <section *ngFor="let deliveryMethods of notificationDeliveryMethods; even as isEven" class="delivery-method-container"
-                     [formGroupName]="deliveryMethods" fxFlex="50%" [ngClass]={even:isEven}>
+          <section formGroupName="deliveryMethodsTemplates" class="delivery-methods-container">
+            <section *ngFor="let deliveryMethods of notificationDeliveryMethods"
+                     class="delivery-method-container"
+                     [formGroupName]="deliveryMethods">
               <mat-slide-toggle class="delivery-method" formControlName="enabled">
                 {{ notificationDeliveryMethodTranslateMap.get(deliveryMethods) | translate }}
               </mat-slide-toggle>
@@ -124,6 +126,11 @@
                   <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('required')">
                     {{ 'notification.button-text-required' | translate }}
                   </mat-error>
+                  <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('maxlength')">
+                    {{ 'notification.button-text-max-length' | translate :
+                    {length: webTemplateForm.get('additionalConfig.actionButtonConfig.text').getError('maxlength').requiredLength}
+                    }}
+                  </mat-error>
                 </mat-form-field>
               </div>
               <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
@@ -187,7 +194,7 @@
           <mat-label class="tb-title tb-required"
                      [ngClass]="{'tb-error': (emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')}"
                      translate>notification.message</mat-label>
-          <editor [init]="tinyMceOptions" matInput formControlName="body"></editor>
+          <editor [init]="tinyMceOptions" formControlName="body"></editor>
           <mat-error class="tb-mat-error"
             *ngIf="(emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')">
             {{ 'notification.message-required' | translate }}

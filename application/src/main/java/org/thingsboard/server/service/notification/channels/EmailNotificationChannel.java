@@ -49,10 +49,8 @@ public class EmailNotificationChannel implements NotificationChannel<User, Email
 
     @Override
     public void check(TenantId tenantId) throws Exception {
-        try {
-            mailService.testConnection(tenantId);
-        } catch (Exception e) {
-            throw new RuntimeException("Mail server is not available");
+        if (!mailService.isConfigured(tenantId)) {
+            throw new RuntimeException("Mail server is not configured");
         }
     }
 

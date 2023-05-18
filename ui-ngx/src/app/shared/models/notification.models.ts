@@ -35,7 +35,7 @@ export interface Notification {
   readonly type: NotificationType;
   readonly subject: string;
   readonly text: string;
-  readonly info: NotificationInfo;
+  readonly info?: NotificationInfo;
   readonly status: NotificationStatus;
   readonly createdTime: number;
   readonly additionalConfig?: WebDeliveryMethodAdditionalConfig;
@@ -101,9 +101,10 @@ interface SlackNotificationDeliveryMethodConfig {
 export interface SlackConversation {
   id: string;
   title: string;
-  shortName: string;
+  name: string;
   wholeName: string;
   email: string;
+  type: string;
 }
 
 export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>{
@@ -443,7 +444,7 @@ export enum NotificationType {
   ENTITIES_LIMIT = 'ENTITIES_LIMIT',
   API_USAGE_LIMIT = 'API_USAGE_LIMIT',
   NEW_PLATFORM_VERSION = 'NEW_PLATFORM_VERSION',
-  RULE_ENGINE = 'RULE_ENGINE'
+  RULE_NODE = 'RULE_NODE'
 }
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
@@ -543,10 +544,10 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       helpId: 'notification/new_platform_version'
     }
   ],
-  [NotificationType.RULE_ENGINE,
+  [NotificationType.RULE_NODE,
     {
-      name: 'notification.template-type.rule-engine',
-      helpId: 'notification/rule_engine'
+      name: 'notification.template-type.rule-node',
+      helpId: 'notification/rule_node'
     }
   ]
 ]);

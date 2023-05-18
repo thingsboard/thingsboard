@@ -48,6 +48,7 @@ export function flotDataKeyDefaultSettings(chartType: ChartType): TbFlotKeySetti
     showLines: chartType === 'graph',
     lineWidth: 1,
     fillLines: false,
+    fillLinesOpacity: 0.4,
 
     // Points settings
     showPoints: false,
@@ -146,6 +147,7 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
       showLines: [this.chartType === 'graph', []],
       lineWidth: [1, [Validators.min(0)]],
       fillLines: [false, []],
+      fillLinesOpacity: [0.4, [Validators.min(0), Validators.max(1)]],
 
       // Points settings
 
@@ -188,15 +190,19 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
     });
 
     this.flotKeySettingsFormGroup.get('showLines').valueChanges.subscribe(() => {
-      this.updateValidators(true);
+      this.updateValidators(false);
+    });
+
+    this.flotKeySettingsFormGroup.get('fillLines').valueChanges.subscribe(() => {
+      this.updateValidators(false);
     });
 
     this.flotKeySettingsFormGroup.get('showPoints').valueChanges.subscribe(() => {
-      this.updateValidators(true);
+      this.updateValidators(false);
     });
 
     this.flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').valueChanges.subscribe(() => {
-      this.updateValidators(true);
+      this.updateValidators(false);
     });
 
     this.flotKeySettingsFormGroup.valueChanges.subscribe(() => {
@@ -254,15 +260,22 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
 
   private updateValidators(emitEvent?: boolean): void {
     const showLines: boolean = this.flotKeySettingsFormGroup.get('showLines').value;
+    const fillLines: boolean = this.flotKeySettingsFormGroup.get('fillLines').value;
     const showPoints: boolean = this.flotKeySettingsFormGroup.get('showPoints').value;
     const showValuesForComparison: boolean = this.flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value;
 
     if (showLines) {
       this.flotKeySettingsFormGroup.get('lineWidth').enable({emitEvent});
       this.flotKeySettingsFormGroup.get('fillLines').enable({emitEvent});
+      if (fillLines) {
+        this.flotKeySettingsFormGroup.get('fillLinesOpacity').enable({emitEvent});
+      } else {
+        this.flotKeySettingsFormGroup.get('fillLinesOpacity').disable({emitEvent});
+      }
     } else {
       this.flotKeySettingsFormGroup.get('lineWidth').disable({emitEvent});
       this.flotKeySettingsFormGroup.get('fillLines').disable({emitEvent});
+      this.flotKeySettingsFormGroup.get('fillLinesOpacity').disable({emitEvent});
     }
 
     if (showPoints) {
@@ -287,6 +300,7 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
 
     this.flotKeySettingsFormGroup.get('lineWidth').updateValueAndValidity({emitEvent: false});
     this.flotKeySettingsFormGroup.get('fillLines').updateValueAndValidity({emitEvent: false});
+    this.flotKeySettingsFormGroup.get('fillLinesOpacity').updateValueAndValidity({emitEvent: false});
     this.flotKeySettingsFormGroup.get('showPointsLineWidth').updateValueAndValidity({emitEvent: false});
     this.flotKeySettingsFormGroup.get('showPointsRadius').updateValueAndValidity({emitEvent: false});
     this.flotKeySettingsFormGroup.get('showPointShape').updateValueAndValidity({emitEvent: false});
