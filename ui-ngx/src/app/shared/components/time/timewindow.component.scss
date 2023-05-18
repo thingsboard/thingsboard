@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 :host {
-  min-width: 52px;
+  min-width: 48px;
   margin: 8px 0;
   max-width: 100%;
   .mdc-button {
@@ -22,7 +22,7 @@
   }
   section.tb-timewindow {
     min-height: 32px;
-    padding: 0 6px;
+    padding: 0 8px;
 
     span {
       overflow: hidden;

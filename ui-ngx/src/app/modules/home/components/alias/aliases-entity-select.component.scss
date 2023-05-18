@@ -16,9 +16,11 @@
 @import "../../../../../scss/constants";
 
 :host {
-  min-width: 52px;
-
+  &.tb-hide {
+    display: none;
+  }
   section.tb-aliases-entity-select {
+    min-width: 52px;
     min-height: 32px;
     padding: 0 6px;
 
