@@ -95,12 +95,12 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final NotificationService notificationService;
     private final NotificationTemplateService notificationTemplateService;
     private final NotificationSettingsService notificationSettingsService;
-    private final UserService userService;
     private final NotificationExecutorService notificationExecutor;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducerProvider producerProvider;
     private final RateLimitService rateLimitService;
+    private final TemplateService templateService;
 
     private Map<NotificationDeliveryMethod, NotificationChannel> channels;
 
@@ -169,6 +169,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .deliveryMethods(deliveryMethods)
                 .template(notificationTemplate)
                 .settings(settings)
+                .templateService(templateService)
                 .build();
 
         notificationExecutor.submit(() -> {

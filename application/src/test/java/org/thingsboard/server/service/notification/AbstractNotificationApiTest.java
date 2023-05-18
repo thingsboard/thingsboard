@@ -128,6 +128,12 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     protected NotificationTemplate createNotificationTemplate(NotificationType notificationType, String subject,
                                                               String text, NotificationDeliveryMethod... deliveryMethods) {
+        NotificationTemplate notificationTemplate = setUpNotificationTemplate(notificationType, subject, text, deliveryMethods);
+        return saveNotificationTemplate(notificationTemplate);
+    }
+
+    protected NotificationTemplate setUpNotificationTemplate(NotificationType notificationType, String subject,
+                                                             String text, NotificationDeliveryMethod... deliveryMethods) {
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setTenantId(tenantId);
         notificationTemplate.setName("Notification template: " + text);
@@ -161,7 +167,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
             config.getDeliveryMethodsTemplates().put(deliveryMethod, deliveryMethodNotificationTemplate);
         }
         notificationTemplate.setConfiguration(config);
-        return saveNotificationTemplate(notificationTemplate);
+        return notificationTemplate;
     }
 
     protected NotificationTemplate saveNotificationTemplate(NotificationTemplate notificationTemplate) {
