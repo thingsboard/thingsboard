@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.notification.settings.NotificationSett
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -80,13 +81,16 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     public static final NotificationType DEFAULT_NOTIFICATION_TYPE = NotificationType.GENERAL;
 
     protected NotificationTarget createNotificationTarget(UserId... usersIds) {
-        NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setTenantId(tenantId);
-        notificationTarget.setName("Users " + List.of(usersIds));
-        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         UserListFilter filter = new UserListFilter();
         filter.setUsersIds(DaoUtil.toUUIDs(List.of(usersIds)));
-        targetConfig.setUsersFilter(filter);
+        return createNotificationTarget(filter);
+    }
+
+    protected NotificationTarget createNotificationTarget(UsersFilter usersFilter) {
+        NotificationTarget notificationTarget = new NotificationTarget();
+        notificationTarget.setName(usersFilter.toString());
+        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
+        targetConfig.setUsersFilter(usersFilter);
         notificationTarget.setConfiguration(targetConfig);
         return saveNotificationTarget(notificationTarget);
     }

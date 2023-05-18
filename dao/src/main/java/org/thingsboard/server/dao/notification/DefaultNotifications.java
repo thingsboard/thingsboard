@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.EntityAction
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
@@ -134,6 +135,31 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when API feature is disabled")
                     .build())
             .build();
+    public static final DefaultNotification exceededRateLimits = DefaultNotification.builder()
+            .name("Exceeded rate limits notification for tenant")
+            .type(NotificationType.RATE_LIMITS)
+            .subject("Rate limits exceeded")
+            .text("Rate limits for ${api} #{ !limitLevelEntityType.isEmpty() ? " +
+                    "'per ${limitLevelEntityType:lowerCase} ' : '' }exceeded" +
+                    "#{ !limitLevelEntityName.isEmpty() ? ' for ${limitLevelEntityType:lowerCase} \\'${limitLevelEntityName}\\'' : " +
+                    " !limitLevelEntityId.isEmpty() ? ' for ${limitLevelEntityType:lowerCase} ${limitLevelEntityId}' : '' : '' }")
+            .icon("block").color("#e91a1a")
+            .rule(DefaultRule.builder()
+                    .name("Rate limits exceeded")
+                    .triggerConfig(new RateLimitsNotificationRuleTriggerConfig())
+                    .description("Send notification to tenant admins when some rate limits are exceeded")
+                    .build())
+            .build();
+    public static final DefaultNotification exceededRateLimitsForSysadmin = exceededRateLimits.toBuilder()
+            .name("Exceeded rate limits notification for sysadmin")
+            .subject("Rate limits exceeded for tenant ${tenantName}")
+            .button("Go to tenant").link("/tenants/${tenantId}")
+            .rule(exceededRateLimits.getRule().toBuilder()
+                    .name("Rate limits exceeded (sysadmin)")
+                    .description("Send notification to system admins when a tenant exceeds some rate limits")
+                    .build())
+            .build();
+
     public static final DefaultNotification newPlatformVersion = DefaultNotification.builder()
             .name("New platform version notification")
             .type(NotificationType.NEW_PLATFORM_VERSION)

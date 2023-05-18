@@ -23,6 +23,7 @@ import org.junit.function.ThrowingRunnable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -42,6 +43,9 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -59,6 +63,8 @@ import org.thingsboard.server.common.data.notification.rule.trigger.EntityAction
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.platform.AffectedTenantAdministratorsFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -68,13 +74,14 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
+import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.service.notification.rule.cache.DefaultNotificationRulesCache;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.util.ArrayList;
@@ -96,6 +103,9 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "transport.http.enabled=true",
+})
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @SpyBean
@@ -108,6 +118,10 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     private RuleChainService ruleChainService;
     @Autowired
     private NotificationRuleProcessor notificationRuleProcessor;
+    @Autowired
+    private DefaultNotifications defaultNotifications;
+    @Autowired
+    private DefaultNotificationRulesCache notificationRulesCache;
 
     @Before
     public void beforeEach() throws Exception {
@@ -365,6 +379,62 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             createDevice(limit + "", limit + "");
         }, notification -> {
             assertThat(notification.getText()).isEqualTo("Devices usage: " + limit + "/" + limit + " (100%)");
+        });
+    }
+
+    @Test
+    public void testNotificationRuleProcessing_exceededRateLimits() throws Exception {
+        loginSysAdmin();
+        NotificationTarget sysadmins = createNotificationTarget(new SystemAdministratorsFilter());
+        NotificationTarget affectedTenantAdmins = createNotificationTarget(new AffectedTenantAdministratorsFilter());
+        defaultNotifications.create(TenantId.SYS_TENANT_ID, DefaultNotifications.exceededRateLimitsForSysadmin, sysadmins.getId());
+        defaultNotifications.create(TenantId.SYS_TENANT_ID, DefaultNotifications.exceededRateLimits, affectedTenantAdmins.getId());
+        notificationRulesCache.evict(TenantId.SYS_TENANT_ID);
+
+        int n = 10;
+        updateDefaultTenantProfile(profileConfiguration -> {
+            profileConfiguration.setTenantEntityExportRateLimit(n + ":600");
+            profileConfiguration.setCustomerServerRestLimitsConfiguration(n + ":600");
+            profileConfiguration.setTenantNotificationRequestsPerRuleRateLimit(n + ":600");
+            profileConfiguration.setTransportDeviceTelemetryMsgRateLimit(n + ":600");
+        });
+        loginTenantAdmin();
+        UUID uuid = UUID.randomUUID();
+        Device device = createDevice("exceeded", "1234");
+        for (int i = 1; i <= n * 2; i++) {
+            rateLimitService.checkRateLimit(LimitedApi.ENTITY_EXPORT, tenantId);
+            rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS, tenantId, customerId);
+            rateLimitService.checkRateLimit(LimitedApi.NOTIFICATION_REQUESTS_PER_RULE, tenantId, new NotificationRuleId(uuid));
+            doPost("/api/v1/1234/telemetry", "{\"dp1\":123}", String.class);
+        }
+
+        loginTenantAdmin();
+        List<Notification> notifications = await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> getMyNotifications(true, 10), list -> list.size() == 4);
+        assertThat(notifications).allSatisfy(notification -> {
+            assertThat(notification.getSubject()).isEqualTo("Rate limits exceeded");
+        });
+        assertThat(notifications).anySatisfy(notification -> {
+            assertThat(notification.getText()).isEqualTo("Rate limits for entity version creation exceeded");
+        });
+        assertThat(notifications).anySatisfy(notification -> {
+            assertThat(notification.getText()).isEqualTo("Rate limits for REST API requests per customer " +
+                    "exceeded for customer " + customerId);
+        });
+        assertThat(notifications).anySatisfy(notification -> {
+            assertThat(notification.getText()).isEqualTo("Rate limits for notification requests " +
+                    "per notification rule exceeded for notification rule " + uuid);
+        });
+        assertThat(notifications).anySatisfy(notification -> {
+            assertThat(notification.getText()).isEqualTo("Rate limits for transport messages " +
+                    "per device exceeded for device '" + device.getName() + "'");
+        });
+
+        loginSysAdmin();
+        notifications = await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> getMyNotifications(true, 10), list -> list.size() == 4);
+        assertThat(notifications).allSatisfy(notification -> {
+            assertThat(notification.getSubject()).isEqualTo("Rate limits exceeded for tenant " + TEST_TENANT_NAME);
         });
     }
 

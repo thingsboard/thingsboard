@@ -17,7 +17,6 @@ package org.thingsboard.server.service.notification.rule.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,7 +49,7 @@ public class DefaultNotificationRulesCache implements NotificationRulesCache {
     private int cacheMaxSize;
     @Value("${cache.notificationRules.timeToLiveInMinutes:30}")
     private int cacheValueTtl;
-    private Cache<CacheKey, List<NotificationRule>> cache;
+    private Cache<String, List<NotificationRule>> cache;
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -96,21 +95,15 @@ public class DefaultNotificationRulesCache implements NotificationRulesCache {
         }
     }
 
-    private void evict(TenantId tenantId) {
+    public void evict(TenantId tenantId) {
         cache.invalidateAll(Arrays.stream(NotificationRuleTriggerType.values())
                 .map(triggerType -> key(tenantId, triggerType))
                 .collect(Collectors.toList()));
         log.trace("Evicted all notification rules for tenant {} from cache", tenantId);
     }
 
-    private static CacheKey key(TenantId tenantId, NotificationRuleTriggerType triggerType) {
-        return new CacheKey(tenantId, triggerType);
-    }
-
-    @Data
-    private static class CacheKey {
-        private final TenantId tenantId;
-        private final NotificationRuleTriggerType triggerType;
+    private static String key(TenantId tenantId, NotificationRuleTriggerType triggerType) {
+        return tenantId + "_" + triggerType;
     }
 
 }
