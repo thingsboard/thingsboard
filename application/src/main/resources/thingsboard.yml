@@ -622,6 +622,7 @@ audit-log:
       "device": "${AUDIT_LOG_MASK_DEVICE:W}"
       "asset": "${AUDIT_LOG_MASK_ASSET:W}"
       "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}"
+      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}"
       "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}"
       "user": "${AUDIT_LOG_MASK_USER:W}"
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
