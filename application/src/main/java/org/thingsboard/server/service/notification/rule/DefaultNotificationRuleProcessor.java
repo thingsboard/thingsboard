@@ -97,15 +97,15 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
 
         try {
             List<NotificationRule> rules = notificationRulesCache.getEnabled(tenantId, triggerType);
-            for (NotificationRule rule : rules) {
-                notificationExecutor.submit(() -> {
+            notificationExecutor.submit(() -> {
+                for (NotificationRule rule : rules) {
                     try {
                         processNotificationRule(rule, trigger);
                     } catch (Throwable e) {
                         log.error("Failed to process notification rule {} for trigger type {} with trigger object {}", rule.getId(), rule.getTriggerType(), trigger, e);
                     }
-                });
-            }
+                }
+            });
         } catch (Throwable e) {
             log.error("Failed to process notification rules for trigger: {}", trigger, e);
         }
@@ -171,14 +171,13 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
                 .ruleId(rule.getId())
                 .originatorEntityId(originatorEntityId)
                 .build();
-        notificationExecutor.submit(() -> {
-            try {
-                log.debug("Submitting notification request for rule '{}' with delay of {} sec to targets {}", rule.getName(), delayInSec, targets);
-                notificationCenter.processNotificationRequest(rule.getTenantId(), notificationRequest, null);
-            } catch (Exception e) {
-                log.error("Failed to process notification request for tenant {} for rule {}", rule.getTenantId(), rule.getId(), e);
-            }
-        });
+
+        try {
+            log.debug("Submitting notification request for rule '{}' with delay of {} sec to targets {}", rule.getName(), delayInSec, targets);
+            notificationCenter.processNotificationRequest(rule.getTenantId(), notificationRequest, null);
+        } catch (Exception e) {
+            log.error("Failed to process notification request for tenant {} for rule {}", rule.getTenantId(), rule.getId(), e);
+        }
     }
 
     private boolean matchesFilter(NotificationRuleTrigger trigger, NotificationRuleTriggerConfig triggerConfig) {
