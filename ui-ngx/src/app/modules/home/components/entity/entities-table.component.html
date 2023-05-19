@@ -224,7 +224,8 @@
                           matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
                           matTooltipPosition="above"
                           (click)="actionDescriptor.onAction($event, entity)">
-                    <mat-icon [svgIcon]="actionDescriptor.mdiIcon" [ngStyle]="actionDescriptor.style">
+                    <mat-icon svgIcon="{{ actionDescriptor.mdiIconFunction ? actionDescriptor.mdiIconFunction(entity) : actionDescriptor.mdiIcon }}"
+                              [ngStyle]="actionDescriptor.style">
                       {{actionDescriptor.icon}}</mat-icon>
                   </button>
                 </div>
@@ -239,7 +240,8 @@
                             [disabled]="isLoading$ | async"
                             [fxShow]="actionDescriptor.isEnabled(entity)"
                             (click)="actionDescriptor.onAction($event, entity)">
-                      <mat-icon [svgIcon]="actionDescriptor.mdiIcon" [ngStyle]="actionDescriptor.style">
+                      <mat-icon svgIcon="{{ actionDescriptor.mdiIconFunction ? actionDescriptor.mdiIconFunction(entity) : actionDescriptor.mdiIcon }}"
+                                [ngStyle]="actionDescriptor.style">
                         {{actionDescriptor.icon}}</mat-icon>
                       <span>{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}</span>
                     </button>

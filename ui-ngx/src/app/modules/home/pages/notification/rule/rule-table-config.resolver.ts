@@ -92,6 +92,15 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
 
   private configureCellActions(): Array<CellActionDescriptor<NotificationRule>> {
     return [{
+      name: '',
+      nameFunction: (entity) =>
+        this.translate.instant(entity.enabled ? 'notification.rule-disable' : 'notification.rule-enable'),
+      mdiIcon: 'mdi:toggle-switch',
+      isEnabled: () => true,
+      mdiIconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
+      onAction: ($event, entity) => this.toggleEnableMode($event, entity)
+    },
+    {
       name: this.translate.instant('notification.copy-rule'),
       icon: 'content_copy',
       isEnabled: () => true,
@@ -127,5 +136,22 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
         return true;
     }
     return false;
+  }
+
+  private toggleEnableMode($event: Event, rule: NotificationRule): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+
+    const modifyRule: NotificationRule = {
+      ...rule,
+      enabled: !rule.enabled
+    };
+
+    this.notificationService.saveNotificationRule(modifyRule, {ignoreLoading: true})
+      .subscribe((notificationRule) => {
+        rule.enabled = notificationRule.enabled;
+        this.config.getTable().detectChanges();
+      });
   }
 }
