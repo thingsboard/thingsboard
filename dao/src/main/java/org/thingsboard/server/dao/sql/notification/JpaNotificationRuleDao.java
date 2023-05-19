@@ -55,9 +55,9 @@ public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntit
     @Override
     public PageData<NotificationRuleInfo> findInfosByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.pageToPageData(notificationRuleRepository.findInfosByTenantIdAndSearchText(tenantId.getId(),
-                Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink, Map.of(
-                        "templateName", "t.name"
-                ))))
+                        Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink, Map.of(
+                                "templateName", "t.name"
+                        ))))
                 .mapData(NotificationRuleInfoEntity::toData);
     }
 
@@ -67,8 +67,8 @@ public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntit
     }
 
     @Override
-    public List<NotificationRule> findByTenantIdAndTriggerType(TenantId tenantId, NotificationRuleTriggerType triggerType) {
-        return DaoUtil.convertDataList(notificationRuleRepository.findAllByTenantIdAndTriggerType(tenantId.getId(), triggerType));
+    public List<NotificationRule> findByTenantIdAndTriggerTypeAndEnabled(TenantId tenantId, NotificationRuleTriggerType triggerType, boolean enabled) {
+        return DaoUtil.convertDataList(notificationRuleRepository.findAllByTenantIdAndTriggerTypeAndEnabled(tenantId.getId(), triggerType, enabled));
     }
 
     @Override

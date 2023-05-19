@@ -35,7 +35,6 @@ import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
-import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import static org.thingsboard.server.service.install.update.DefaultDataUpdateService.getEnv;
 
@@ -52,6 +51,9 @@ public class ThingsboardInstallService {
 
     @Value("${install.load_demo:false}")
     private Boolean loadDemo;
+
+    @Value("${state.persistToTelemetry:false}")
+    private boolean persistToTelemetry;
 
     @Autowired
     private EntityDatabaseSchemaService entityDatabaseSchemaService;
@@ -247,13 +249,19 @@ public class ThingsboardInstallService {
                         case "3.4.4":
                             log.info("Upgrading ThingsBoard from version 3.4.4 to 3.5.0 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.4.4");
-                            log.info("Updating system data...");
-                            systemDataLoaderService.updateSystemWidgets();
                             if (!getEnv("SKIP_DEFAULT_NOTIFICATION_CONFIGS_CREATION", false)) {
                                 systemDataLoaderService.createDefaultNotificationConfigs();
                             } else {
                                 log.info("Skipping default notification configs creation");
                             }
+                        case "3.5.0":
+                            log.info("Upgrading ThingsBoard from version 3.5.0 to 3.5.1 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.5.0");
+
+                            entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
+                            entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
+                            log.info("Updating system data...");
+                            systemDataLoaderService.updateSystemWidgets();
                             installScripts.loadSystemLwm2mResources();
                             break;
                         //TODO update CacheCleanupService on the next version upgrade
@@ -271,6 +279,9 @@ public class ThingsboardInstallService {
                 log.info("Installing DataBase schema for entities...");
 
                 entityDatabaseSchemaService.createDatabaseSchema();
+
+                entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
+                entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
 
                 log.info("Installing DataBase schema for timeseries...");
 

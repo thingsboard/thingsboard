@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -55,6 +56,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotific
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.AlarmAction;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -66,9 +68,11 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 import org.thingsboard.server.service.apiusage.limits.LimitedApi;
 import org.thingsboard.server.service.apiusage.limits.RateLimitService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
@@ -102,6 +106,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     private RateLimitService rateLimitService;
     @Autowired
     private RuleChainService ruleChainService;
+    @Autowired
+    private NotificationRuleProcessor notificationRuleProcessor;
 
     @Before
     public void beforeEach() throws Exception {
@@ -148,6 +154,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         NotificationRule notificationRule = new NotificationRule();
         notificationRule.setName("Web notification on any alarm");
+        notificationRule.setEnabled(true);
         notificationRule.setTemplateId(notificationTemplate.getId());
         notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
 
@@ -233,6 +240,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         NotificationRule notificationRule = new NotificationRule();
         notificationRule.setName("Web notification on any alarm");
+        notificationRule.setEnabled(true);
         notificationRule.setTemplateId(notificationTemplate.getId());
         notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
 
@@ -369,6 +377,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         NotificationRule rule = new NotificationRule();
         rule.setName("Test");
+        rule.setEnabled(true);
         rule.setTemplateId(template.getId());
 
         rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
@@ -396,6 +405,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         NotificationRule rule = new NotificationRule();
         rule.setName("Device created");
+        rule.setEnabled(true);
         rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
         NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION,
                 "Device created", "Device created", NotificationDeliveryMethod.WEB);
@@ -431,6 +441,65 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         TimeUnit.SECONDS.sleep(3);
         assertThat(getWsClient().getLastCountUpdate().getTotalUnreadCount()).isEqualTo(notificationRequestsLimit);
+    }
+
+    @Test
+    public void testNotificationsDeduplication() throws Exception {
+        loginSysAdmin();
+        NewPlatformVersionNotificationRuleTriggerConfig triggerConfig = new NewPlatformVersionNotificationRuleTriggerConfig();
+        createNotificationRule(triggerConfig, "Test", "Test", createNotificationTarget(tenantAdminUserId).getId());
+        loginTenantAdmin();
+
+        assertThat(getMyNotifications(false, 100)).size().isZero();
+        for (int i = 1; i <= 10; i++) {
+            notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
+                    .updateInfo(new UpdateMessage(true, "test", "test",
+                            "test", "test", "test"))
+                    .build());
+            TimeUnit.MILLISECONDS.sleep(300);
+        }
+        TimeUnit.SECONDS.sleep(5);
+        assertThat(getMyNotifications(false, 100)).size().isOne();
+
+        notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
+                .updateInfo(new UpdateMessage(true, "CHANGED", "test",
+                        "test", "test", "test"))
+                .build());
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
+                });
+    }
+
+    @Test
+    public void testNotificationRuleDisabling() throws Exception {
+        EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
+        triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
+        triggerConfig.setCreated(true);
+        NotificationRule rule = createNotificationRule(triggerConfig, "Created", "Created", createNotificationTarget(tenantAdminUserId).getId());
+
+        assertThat(getMyNotifications(false, 100)).size().isZero();
+        createDevice("Device 1", "default", "111");
+        await().atMost(15, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    assertThat(getMyNotifications(false, 100)).size().isEqualTo(1);
+                });
+
+        rule.setEnabled(false);
+        saveNotificationRule(rule);
+
+        createDevice("Device 2", "default", "222");
+        TimeUnit.SECONDS.sleep(5);
+        assertThat(getMyNotifications(false, 100)).as("No new notifications arrived").size().isEqualTo(1);
+
+        rule.setEnabled(true);
+        saveNotificationRule(rule);
+
+        createDevice("Device 3", "default", "333");
+        await().atMost(15, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
+                });
     }
 
     private <R> R checkNotificationAfter(Callable<R> action, BiConsumer<Notification, R> check) throws Exception {

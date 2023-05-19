@@ -143,7 +143,7 @@ public class DefaultNotifications {
             .rule(DefaultRule.builder()
                     .name("New platform version")
                     .triggerConfig(new NewPlatformVersionNotificationRuleTriggerConfig())
-                    .description("Send notification to system admins and tenant admins when new platform version is available")
+                    .description("Send notification to system admins when new platform version is available")
                     .build())
             .build();
 
@@ -179,13 +179,13 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when any alarm is updated or cleared")
                     .build())
             .build();
-    public static final DefaultNotification deviceAction = DefaultNotification.builder()
-            .name("Device action notification")
+    public static final DefaultNotification entityAction = DefaultNotification.builder()
+            .name("Entity action notification")
             .type(NotificationType.ENTITY_ACTION)
             .subject("${entityType} was ${actionType}")
             .text("${entityType} '${entityName}' was ${actionType} by user ${userEmail}")
             .icon("info").color(null)
-            .button("Go to device").link("/devices/${entityId}")
+            .button("Go to ${entityType:lowerCase}").link("/${entityType:lowerCase}s/${entityId}")
             .rule(DefaultRule.builder()
                     .name("Device created")
                     .triggerConfig(EntityActionNotificationRuleTriggerConfig.builder()
@@ -206,6 +206,7 @@ public class DefaultNotifications {
             .button("Go to device").link("/devices/${deviceId}")
             .rule(DefaultRule.builder()
                     .name("Device activity status change")
+                    .enabled(false)
                     .triggerConfig(DeviceActivityNotificationRuleTriggerConfig.builder()
                             .devices(null)
                             .deviceProfiles(null)
@@ -341,7 +342,8 @@ public class DefaultNotifications {
         public NotificationRule toRule(NotificationTemplateId templateId, NotificationTargetId... targets) {
             DefaultRule defaultRule = this.rule;
             NotificationRule rule = new NotificationRule();
-            rule.setName(name);
+            rule.setName(defaultRule.getName());
+            rule.setEnabled(defaultRule.getEnabled() == null || defaultRule.getEnabled());
             rule.setTemplateId(templateId);
             rule.setTriggerType(defaultRule.getTriggerConfig().getTriggerType());
             rule.setTriggerConfig(defaultRule.getTriggerConfig());
@@ -368,6 +370,7 @@ public class DefaultNotifications {
     @Builder(toBuilder = true)
     public static class DefaultRule {
         private final String name;
+        private final Boolean enabled;
         private final NotificationRuleTriggerConfig triggerConfig;
         private final String description;
     }

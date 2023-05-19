@@ -48,7 +48,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
-import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.notification.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -62,6 +61,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceM
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 import org.thingsboard.server.service.apiusage.BaseApiUsageState.StatsCalculationResult;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
@@ -192,11 +192,14 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(statsItem.getKey());
 
                 StatsCalculationResult calculationResult = usageState.calculate(recordKey, statsItem.getValue(), serviceId);
-                long newValue = calculationResult.getNewValue();
-                long newHourlyValue = calculationResult.getNewHourlyValue();
-
-                updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
-                updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
+                if (calculationResult.isValueChanged()) {
+                    long newValue = calculationResult.getNewValue();
+                    updatedEntries.add(new BasicTsKvEntry(ts, new LongDataEntry(recordKey.getApiCountKey(), newValue)));
+                }
+                if (calculationResult.isHourlyValueChanged()) {
+                    long newHourlyValue = calculationResult.getNewHourlyValue();
+                    updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
+                }
                 if (recordKey.getApiFeature() != null) {
                     apiFeatures.add(recordKey.getApiFeature());
                 }

@@ -37,8 +37,8 @@ import org.thingsboard.server.dao.audit.AuditLogDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.Objects;
@@ -60,7 +60,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     @Value("${sql.ttl.audit_logs.ttl:0}")
     private long ttlInSec;
 
-    private static final String TABLE_NAME = ModelConstants.AUDIT_LOG_COLUMN_FAMILY_NAME;
+    private static final String TABLE_NAME = ModelConstants.AUDIT_LOG_TABLE_NAME;
 
     @Override
     protected Class<AuditLogEntity> getEntityClass() {

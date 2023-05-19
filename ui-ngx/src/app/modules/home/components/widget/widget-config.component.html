@@ -156,7 +156,7 @@
                                           [widgetType]="widgetType"
                                           [datasourceType]="datasourceControl.get('type').value"
                                           [maxDataKeys]="modelValue?.typeParameters?.maxDataKeys"
-                                          [optDataKeys]="dataKeysOptional(datasourceControl.value)"
+                                          [optDataKeys]="dataKeysOptional(datasourceControl.get('type').value)"
                                           [aliasController]="aliasController"
                                           [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
                                           [dataKeySettingsDirective]="modelValue?.dataKeySettingsDirective"

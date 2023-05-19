@@ -74,6 +74,7 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
   lastVisitedDashboardsPageLink: PageLink;
 
   starredDashboardValue = null;
+  hasDashboardsAccess = true;
 
   dirty = false;
 
@@ -84,7 +85,10 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
   }
 
   ngOnInit() {
-    this.reload();
+    this.hasDashboardsAccess = [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER].includes(this.authUser.authority);
+    if (this.hasDashboardsAccess) {
+      this.reload();
+    }
   }
 
   reload() {

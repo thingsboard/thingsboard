@@ -126,6 +126,11 @@
                   <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('required')">
                     {{ 'notification.button-text-required' | translate }}
                   </mat-error>
+                  <mat-error *ngIf="webTemplateForm.get('additionalConfig.actionButtonConfig.text').hasError('maxlength')">
+                    {{ 'notification.button-text-max-length' | translate :
+                    {length: webTemplateForm.get('additionalConfig.actionButtonConfig.text').getError('maxlength').requiredLength}
+                    }}
+                  </mat-error>
                 </mat-form-field>
               </div>
               <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
@@ -189,7 +194,7 @@
           <mat-label class="tb-title tb-required"
                      [ngClass]="{'tb-error': (emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')}"
                      translate>notification.message</mat-label>
-          <editor [init]="tinyMceOptions" matInput formControlName="body"></editor>
+          <editor [init]="tinyMceOptions" formControlName="body"></editor>
           <mat-error class="tb-mat-error"
             *ngIf="(emailStep.interacted || emailTemplateForm.get('body').dirty) && emailTemplateForm.get('body').hasError('required')">
             {{ 'notification.message-required' | translate }}

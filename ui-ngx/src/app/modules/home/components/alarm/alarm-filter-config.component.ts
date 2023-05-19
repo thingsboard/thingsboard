@@ -30,7 +30,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import {
@@ -190,7 +190,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
       $event.stopPropagation();
     }
     const config = new OverlayConfig({
-      panelClass: 'tb-alarm-filter-panel',
+      panelClass: 'tb-filter-panel',
       backdropClass: 'cdk-overlay-transparent-backdrop',
       hasBackdrop: true,
       maxHeight: '80vh',
