@@ -63,7 +63,7 @@ export class NotificationComponent implements OnInit {
   currentDate = Date.now();
 
   constructor(
-    private utils: UtilsService,
+    public utils: UtilsService,
     private router: Router
   ) {
   }
