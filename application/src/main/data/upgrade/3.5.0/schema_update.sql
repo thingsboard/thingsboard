@@ -14,6 +14,8 @@
 -- limitations under the License.
 --
 
+ALTER TABLE notification_rule ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT true;
+
 -- NOTIFICATION CONFIGS VERSION CONTROL START
 
 ALTER TABLE notification_template
@@ -50,4 +52,3 @@ $$
 $$;
 
 -- NOTIFICATION CONFIGS VERSION CONTROL END
-

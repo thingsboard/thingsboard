@@ -47,7 +47,7 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
     boolean existsByTenantIdAndRecipientsConfigContaining(@Param("tenantId") UUID tenantId,
                                                           @Param("searchString") String searchString);
 
-    List<NotificationRuleEntity> findAllByTenantIdAndTriggerType(UUID tenantId, NotificationRuleTriggerType triggerType);
+    List<NotificationRuleEntity> findAllByTenantIdAndTriggerTypeAndEnabled(UUID tenantId, NotificationRuleTriggerType triggerType, boolean enabled);
 
     @Query(RULE_INFO_QUERY + " WHERE r.id = :id")
     NotificationRuleInfoEntity findInfoById(@Param("id") UUID id);

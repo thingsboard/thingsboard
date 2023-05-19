@@ -23,6 +23,6 @@ import java.util.List;
 
 public interface NotificationRulesCache {
 
-    List<NotificationRule> get(TenantId tenantId, NotificationRuleTriggerType triggerType);
+    List<NotificationRule> getEnabled(TenantId tenantId, NotificationRuleTriggerType triggerType);
 
 }

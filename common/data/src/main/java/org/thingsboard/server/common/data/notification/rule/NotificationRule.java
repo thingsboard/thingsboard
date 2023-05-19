@@ -47,6 +47,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     @NoXss
     @Length(max = 255, message = "cannot be longer than 255 chars")
     private String name;
+    private boolean enabled;
     @NotNull
     private NotificationTemplateId templateId;
 
@@ -67,6 +68,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
         super(other);
         this.tenantId = other.tenantId;
         this.name = other.name;
+        this.enabled = other.enabled;
         this.templateId = other.templateId;
         this.triggerType = other.triggerType;
         this.triggerConfig = other.triggerConfig;
