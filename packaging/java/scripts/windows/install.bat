@@ -11,7 +11,7 @@ if %jver% NEQ 110 GOTO JAVA_NOT_INSTALLED
 
 :JAVA_INSTALLED
 
-@ECHO Java 11 found!
+@ECHO Java 17 found!
 @ECHO Installing thingsboard ...
 
 SET loadDemo=false
@@ -50,8 +50,8 @@ POPD
 GOTO END
 
 :JAVA_NOT_INSTALLED
-@ECHO Java 11 is not installed. Only Java 11 is supported
-@ECHO Please go to https://adoptopenjdk.net/index.html and install Java 11. Then retry installation.
+@ECHO Java 17 is not installed. Only Java 17 is supported
+@ECHO Please go to https://adoptopenjdk.net/index.html and install Java 17. Then retry installation.
 PAUSE
 GOTO END
 

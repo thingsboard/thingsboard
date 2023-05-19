@@ -605,7 +605,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.11.0</version>
                     <configuration>
                         <release>17</release>
                         <compilerArgs>
@@ -650,7 +650,7 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.11</version>
+                    <version>1.0.12</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
