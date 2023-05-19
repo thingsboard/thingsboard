@@ -32,6 +32,7 @@ import org.thingsboard.rule.engine.action.TbCreateAlarmNode;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetRelatedDataNodeConfiguration;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -152,12 +153,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
                         "\"filters\":[{\"relationType\":\"Contains\",\"entityTypes\":[]}]," +
                         "\"fetchLastLevelOnly\":false},\"telemetry\":false}";
 
-        String newConfig = "{\"fetchTo\":\"METADATA\"," +
-                "\"attrMapping\":{\"serialNumber\":\"sn\"}," +
-                "\"dataToFetch\":\"ATTRIBUTES\"," +
-                "\"relationsQuery\":{\"direction\":\"FROM\",\"maxLevel\":1," +
-                "\"filters\":[{\"relationType\":\"Contains\",\"entityTypes\":[]}]," +
-                "\"fetchLastLevelOnly\":false}}";
+        String newConfig = JacksonUtil.toString(new TbGetRelatedDataNodeConfiguration().defaultConfiguration());
 
         var ruleChainMetaData = createRuleChainMetadataWithTbVersionedNodes(
                 ruleChainId,
