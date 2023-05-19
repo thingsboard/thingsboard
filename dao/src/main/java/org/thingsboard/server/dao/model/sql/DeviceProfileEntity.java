@@ -48,7 +48,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
-@Table(name = ModelConstants.DEVICE_PROFILE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.DEVICE_PROFILE_TABLE_NAME)
 public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> implements SearchTextEntity<DeviceProfile> {
 
     @Column(name = ModelConstants.DEVICE_PROFILE_TENANT_ID_PROPERTY)

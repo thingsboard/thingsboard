@@ -60,7 +60,7 @@ public class ModelConstants {
     /**
      * User constants.
      */
-    public static final String USER_PG_HIBERNATE_COLUMN_FAMILY_NAME = "tb_user";
+    public static final String USER_PG_HIBERNATE_TABLE_NAME = "tb_user";
     public static final String USER_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String USER_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String USER_EMAIL_PROPERTY = "email";
@@ -72,7 +72,7 @@ public class ModelConstants {
     /**
      * User_credentials constants.
      */
-    public static final String USER_CREDENTIALS_COLUMN_FAMILY_NAME = "user_credentials";
+    public static final String USER_CREDENTIALS_TABLE_NAME = "user_credentials";
     public static final String USER_CREDENTIALS_USER_ID_PROPERTY = USER_ID_PROPERTY;
     public static final String USER_CREDENTIALS_ENABLED_PROPERTY = "enabled";
     public static final String USER_CREDENTIALS_PASSWORD_PROPERTY = "password"; //NOSONAR, the constant used to identify password column name (not password value itself)
@@ -83,7 +83,7 @@ public class ModelConstants {
     /**
      * User settings constants.
      */
-    public static final String USER_SETTINGS_COLUMN_FAMILY_NAME = "user_settings";
+    public static final String USER_SETTINGS_TABLE_NAME = "user_settings";
     public static final String USER_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
     public static final String USER_SETTINGS_TYPE_PROPERTY = "type";
     public static final String USER_SETTINGS_SETTINGS = "settings";
@@ -91,7 +91,7 @@ public class ModelConstants {
     /**
      * Admin_settings constants.
      */
-    public static final String ADMIN_SETTINGS_COLUMN_FAMILY_NAME = "admin_settings";
+    public static final String ADMIN_SETTINGS_TABLE_NAME = "admin_settings";
 
     public static final String ADMIN_SETTINGS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ADMIN_SETTINGS_KEY_PROPERTY = "key";
@@ -112,7 +112,7 @@ public class ModelConstants {
     /**
      * Tenant constants.
      */
-    public static final String TENANT_COLUMN_FAMILY_NAME = "tenant";
+    public static final String TENANT_TABLE_NAME = "tenant";
     public static final String TENANT_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String TENANT_REGION_PROPERTY = "region";
     public static final String TENANT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
@@ -121,7 +121,7 @@ public class ModelConstants {
     /**
      * Tenant profile constants.
      */
-    public static final String TENANT_PROFILE_COLUMN_FAMILY_NAME = "tenant_profile";
+    public static final String TENANT_PROFILE_TABLE_NAME = "tenant_profile";
     public static final String TENANT_PROFILE_NAME_PROPERTY = "name";
     public static final String TENANT_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
     public static final String TENANT_PROFILE_DESCRIPTION_PROPERTY = "description";
@@ -131,7 +131,7 @@ public class ModelConstants {
     /**
      * Customer constants.
      */
-    public static final String CUSTOMER_COLUMN_FAMILY_NAME = "customer";
+    public static final String CUSTOMER_TABLE_NAME = "customer";
     public static final String CUSTOMER_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String CUSTOMER_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String CUSTOMER_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
@@ -139,7 +139,7 @@ public class ModelConstants {
     /**
      * Device constants.
      */
-    public static final String DEVICE_COLUMN_FAMILY_NAME = "device";
+    public static final String DEVICE_TABLE_NAME = "device";
     public static final String DEVICE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DEVICE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String DEVICE_NAME_PROPERTY = "name";
@@ -156,12 +156,12 @@ public class ModelConstants {
     public static final String DEVICE_DEVICE_PROFILE_NAME_PROPERTY = "device_profile_name";
     public static final String DEVICE_ACTIVE_PROPERTY = "active";
 
-    public static final String DEVICE_INFO_VIEW_COLUMN_FAMILY_NAME = "device_info_view";
+    public static final String DEVICE_INFO_VIEW_TABLE_NAME = "device_info_view";
 
     /**
      * Device profile constants.
      */
-    public static final String DEVICE_PROFILE_COLUMN_FAMILY_NAME = "device_profile";
+    public static final String DEVICE_PROFILE_TABLE_NAME = "device_profile";
     public static final String DEVICE_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DEVICE_PROFILE_NAME_PROPERTY = "name";
     public static final String DEVICE_PROFILE_TYPE_PROPERTY = "type";
@@ -182,7 +182,7 @@ public class ModelConstants {
     /**
      * Asset profile constants.
      */
-    public static final String ASSET_PROFILE_COLUMN_FAMILY_NAME = "asset_profile";
+    public static final String ASSET_PROFILE_TABLE_NAME = "asset_profile";
     public static final String ASSET_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ASSET_PROFILE_NAME_PROPERTY = "name";
     public static final String ASSET_PROFILE_IMAGE_PROPERTY = "image";
@@ -196,7 +196,7 @@ public class ModelConstants {
     /**
      * Entity view constants.
      */
-    public static final String ENTITY_VIEW_TABLE_FAMILY_NAME = "entity_view";
+    public static final String ENTITY_VIEW_TABLE_NAME = "entity_view";
     public static final String ENTITY_VIEW_ENTITY_ID_PROPERTY = ENTITY_ID_COLUMN;
     public static final String ENTITY_VIEW_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ENTITY_VIEW_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
@@ -209,7 +209,7 @@ public class ModelConstants {
     /**
      * Audit log constants.
      */
-    public static final String AUDIT_LOG_COLUMN_FAMILY_NAME = "audit_log";
+    public static final String AUDIT_LOG_TABLE_NAME = "audit_log";
     public static final String AUDIT_LOG_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String AUDIT_LOG_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String AUDIT_LOG_ENTITY_TYPE_PROPERTY = ENTITY_TYPE_PROPERTY;
@@ -225,7 +225,7 @@ public class ModelConstants {
     /**
      * Asset constants.
      */
-    public static final String ASSET_COLUMN_FAMILY_NAME = "asset";
+    public static final String ASSET_TABLE_NAME = "asset";
     public static final String ASSET_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ASSET_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ASSET_NAME_PROPERTY = "name";
@@ -238,8 +238,8 @@ public class ModelConstants {
     /**
      * Alarm constants.
      */
-    public static final String ENTITY_ALARM_COLUMN_FAMILY_NAME = "entity_alarm";
-    public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
+    public static final String ENTITY_ALARM_TABLE_NAME = "entity_alarm";
+    public static final String ALARM_TABLE_NAME = "alarm";
     public static final String ALARM_VIEW_NAME = "alarm_info";
     public static final String ALARM_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ALARM_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
@@ -267,7 +267,7 @@ public class ModelConstants {
     public static final String ALARM_PROPAGATE_TO_TENANT_PROPERTY = "propagate_to_tenant";
     public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
 
-    public static final String ALARM_COMMENT_COLUMN_FAMILY_NAME = "alarm_comment";
+    public static final String ALARM_COMMENT_TABLE_NAME = "alarm_comment";
     public static final String ALARM_COMMENT_ALARM_ID = "alarm_id";
     public static final String ALARM_COMMENT_USER_ID = USER_ID_PROPERTY;
     public static final String ALARM_COMMENT_TYPE = "type";
@@ -276,7 +276,7 @@ public class ModelConstants {
     /**
      * Entity relation constants.
      */
-    public static final String RELATION_COLUMN_FAMILY_NAME = "relation";
+    public static final String RELATION_TABLE_NAME = "relation";
     public static final String RELATION_FROM_ID_PROPERTY = "from_id";
     public static final String RELATION_FROM_TYPE_PROPERTY = "from_type";
     public static final String RELATION_TO_ID_PROPERTY = "to_id";
@@ -287,7 +287,7 @@ public class ModelConstants {
     /**
      * Device_credentials constants.
      */
-    public static final String DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME = "device_credentials";
+    public static final String DEVICE_CREDENTIALS_TABLE_NAME = "device_credentials";
     public static final String DEVICE_CREDENTIALS_DEVICE_ID_PROPERTY = DEVICE_ID_PROPERTY;
     public static final String DEVICE_CREDENTIALS_CREDENTIALS_TYPE_PROPERTY = "credentials_type";
     public static final String DEVICE_CREDENTIALS_CREDENTIALS_ID_PROPERTY = "credentials_id";
@@ -296,7 +296,7 @@ public class ModelConstants {
     /**
      * Widgets_bundle constants.
      */
-    public static final String WIDGETS_BUNDLE_COLUMN_FAMILY_NAME = "widgets_bundle";
+    public static final String WIDGETS_BUNDLE_TABLE_NAME = "widgets_bundle";
     public static final String WIDGETS_BUNDLE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String WIDGETS_BUNDLE_ALIAS_PROPERTY = ALIAS_PROPERTY;
     public static final String WIDGETS_BUNDLE_TITLE_PROPERTY = TITLE_PROPERTY;
@@ -306,7 +306,7 @@ public class ModelConstants {
     /**
      * Widget_type constants.
      */
-    public static final String WIDGET_TYPE_COLUMN_FAMILY_NAME = "widget_type";
+    public static final String WIDGET_TYPE_TABLE_NAME = "widget_type";
     public static final String WIDGET_TYPE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY = "bundle_alias";
     public static final String WIDGET_TYPE_ALIAS_PROPERTY = ALIAS_PROPERTY;
@@ -318,7 +318,7 @@ public class ModelConstants {
     /**
      * Dashboard constants.
      */
-    public static final String DASHBOARD_COLUMN_FAMILY_NAME = "dashboard";
+    public static final String DASHBOARD_TABLE_NAME = "dashboard";
     public static final String DASHBOARD_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DASHBOARD_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String DASHBOARD_IMAGE_PROPERTY = "image";
@@ -330,7 +330,7 @@ public class ModelConstants {
     /**
      * Plugin component metadata constants.
      */
-    public static final String COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME = "component_descriptor";
+    public static final String COMPONENT_DESCRIPTOR_TABLE_NAME = "component_descriptor";
     public static final String COMPONENT_DESCRIPTOR_TYPE_PROPERTY = "type";
     public static final String COMPONENT_DESCRIPTOR_SCOPE_PROPERTY = "scope";
     public static final String COMPONENT_DESCRIPTOR_CLUSTERING_MODE_PROPERTY = "clustering_mode";
@@ -377,7 +377,7 @@ public class ModelConstants {
     /**
      * Rule chain constants.
      */
-    public static final String RULE_CHAIN_COLUMN_FAMILY_NAME = "rule_chain";
+    public static final String RULE_CHAIN_TABLE_NAME = "rule_chain";
     public static final String RULE_CHAIN_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String RULE_CHAIN_NAME_PROPERTY = "name";
     public static final String RULE_CHAIN_TYPE_PROPERTY = "type";
@@ -388,7 +388,7 @@ public class ModelConstants {
     /**
      * Rule node constants.
      */
-    public static final String RULE_NODE_COLUMN_FAMILY_NAME = "rule_node";
+    public static final String RULE_NODE_TABLE_NAME = "rule_node";
     public static final String RULE_NODE_CHAIN_ID_PROPERTY = "rule_chain_id";
     public static final String RULE_NODE_TYPE_PROPERTY = "type";
     public static final String RULE_NODE_NAME_PROPERTY = "name";
@@ -406,18 +406,18 @@ public class ModelConstants {
     /**
      * OAuth2 client registration constants.
      */
-    public static final String OAUTH2_PARAMS_COLUMN_FAMILY_NAME = "oauth2_params";
+    public static final String OAUTH2_PARAMS_TABLE_NAME = "oauth2_params";
     public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
     public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
 
-    public static final String OAUTH2_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_registration";
-    public static final String OAUTH2_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_domain";
-    public static final String OAUTH2_MOBILE_COLUMN_FAMILY_NAME = "oauth2_mobile";
+    public static final String OAUTH2_REGISTRATION_TABLE_NAME = "oauth2_registration";
+    public static final String OAUTH2_DOMAIN_TABLE_NAME = "oauth2_domain";
+    public static final String OAUTH2_MOBILE_TABLE_NAME = "oauth2_mobile";
     public static final String OAUTH2_PARAMS_ID_PROPERTY = "oauth2_params_id";
     public static final String OAUTH2_PKG_NAME_PROPERTY = "pkg_name";
     public static final String OAUTH2_APP_SECRET_PROPERTY = "app_secret";
 
-    public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_COLUMN_FAMILY_NAME = "oauth2_client_registration_template";
+    public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_TABLE_NAME = "oauth2_client_registration_template";
     public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
     public static final String OAUTH2_DOMAIN_NAME_PROPERTY = "domain_name";
     public static final String OAUTH2_DOMAIN_SCHEME_PROPERTY = "domain_scheme";
@@ -515,7 +515,7 @@ public class ModelConstants {
     /**
      * Edge constants.
      */
-    public static final String EDGE_COLUMN_FAMILY_NAME = "edge";
+    public static final String EDGE_TABLE_NAME = "edge";
     public static final String EDGE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String EDGE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String EDGE_ROOT_RULE_CHAIN_ID_PROPERTY = "root_rule_chain_id";
@@ -530,7 +530,7 @@ public class ModelConstants {
     /**
      * Edge queue constants.
      */
-    public static final String EDGE_EVENT_COLUMN_FAMILY_NAME = "edge_event";
+    public static final String EDGE_EVENT_TABLE_NAME = "edge_event";
     public static final String EDGE_EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String EDGE_EVENT_EDGE_ID_PROPERTY = "edge_id";
     public static final String EDGE_EVENT_TYPE_PROPERTY = "edge_event_type";
@@ -544,7 +544,7 @@ public class ModelConstants {
     /**
      * User auth settings constants.
      */
-    public static final String USER_AUTH_SETTINGS_COLUMN_FAMILY_NAME = "user_auth_settings";
+    public static final String USER_AUTH_SETTINGS_TABLE_NAME = "user_auth_settings";
     public static final String USER_AUTH_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
     public static final String USER_AUTH_SETTINGS_TWO_FA_SETTINGS = "two_fa_settings";
 
@@ -581,7 +581,7 @@ public class ModelConstants {
     public static final String QUEUE_PACK_PROCESSING_TIMEOUT_PROPERTY = "pack_processing_timeout";
     public static final String QUEUE_SUBMIT_STRATEGY_PROPERTY = "submit_strategy";
     public static final String QUEUE_PROCESSING_STRATEGY_PROPERTY = "processing_strategy";
-    public static final String QUEUE_COLUMN_FAMILY_NAME = "queue";
+    public static final String QUEUE_TABLE_NAME = "queue";
     public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
     /**
@@ -612,6 +612,7 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_STATS_PROPERTY = "stats";
 
     public static final String NOTIFICATION_RULE_TABLE_NAME = "notification_rule";
+    public static final String NOTIFICATION_RULE_ENABLED_PROPERTY = "enabled";
     public static final String NOTIFICATION_RULE_TEMPLATE_ID_PROPERTY = "template_id";
     public static final String NOTIFICATION_RULE_TRIGGER_TYPE_PROPERTY = "trigger_type";
     public static final String NOTIFICATION_RULE_TRIGGER_CONFIG_PROPERTY = "trigger_config";

@@ -58,6 +58,7 @@ export interface CellActionDescriptor<T extends BaseData<HasId>> {
   nameFunction?: (entity: T) => string;
   icon?: string;
   mdiIcon?: string;
+  mdiIconFunction?: (entity: T) => string;
   style?: any;
   isEnabled: (entity: T) => boolean;
   onAction: ($event: MouseEvent, entity: T) => any;

@@ -989,6 +989,7 @@ edges:
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
 swagger:
+  enabled: "${SWAGGER_ENABLED:true}"
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api/.*}"
   security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api/.*}"
   non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/(?:noauth|v1)/.*}"

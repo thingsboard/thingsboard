@@ -44,6 +44,9 @@
             {{ 'notification.rule-name-required' | translate }}
           </mat-error>
         </mat-form-field>
+        <mat-slide-toggle formControlName="enabled" style="margin-bottom: 22px;">
+          {{ 'notification.rule-enable' | translate }}
+        </mat-slide-toggle>
         <mat-form-field class="mat-block">
           <mat-label translate>notification.trigger.trigger</mat-label>
           <mat-select formControlName="triggerType" required>

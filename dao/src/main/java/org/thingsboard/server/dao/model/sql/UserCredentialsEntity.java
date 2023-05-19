@@ -34,7 +34,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.USER_CREDENTIALS_TABLE_NAME)
 public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> implements BaseEntity<UserCredentials> {
 
     @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY, unique = true)
