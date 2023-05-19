@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
@@ -642,7 +643,7 @@ public class OAuth2ServiceTest extends AbstractServiceTest {
                 .clientAuthenticationMethod(UUID.randomUUID().toString())
                 .loginButtonLabel(label != null ? label : UUID.randomUUID().toString())
                 .loginButtonIcon(UUID.randomUUID().toString())
-                .additionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
+                .additionalInfo(JacksonUtil.newObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
                 .mapperConfig(
                         OAuth2MapperConfig.builder()
                                 .allowUserCreation(true)

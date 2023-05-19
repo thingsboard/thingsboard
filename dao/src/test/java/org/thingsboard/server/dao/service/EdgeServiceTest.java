@@ -624,14 +624,14 @@ public class EdgeServiceTest extends AbstractServiceTest {
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("Input rule node 1");
         ruleNode1.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
-        ObjectNode configuration = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode configuration = JacksonUtil.newObjectNode();
         configuration.put("ruleChainId", ruleChain1.getUuidId().toString());
         ruleNode1.setConfiguration(configuration);
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("Input rule node 2");
         ruleNode2.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
-        configuration = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        configuration = JacksonUtil.newObjectNode();
         configuration.put("ruleChainId", ruleChain2.getUuidId().toString());
         ruleNode2.setConfiguration(configuration);
 

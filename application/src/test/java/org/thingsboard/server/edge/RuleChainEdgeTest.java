@@ -18,6 +18,7 @@ package org.thingsboard.server.edge;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -142,17 +143,17 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
         ruleNode1.setType("type1");
-        ruleNode1.setConfiguration(mapper.readTree("\"key1\": \"val1\""));
+        ruleNode1.setConfiguration(JacksonUtil.toJsonNode("\"key1\": \"val1\""));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
         ruleNode2.setType("type2");
-        ruleNode2.setConfiguration(mapper.readTree("\"key2\": \"val2\""));
+        ruleNode2.setConfiguration(JacksonUtil.toJsonNode("\"key2\": \"val2\""));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
         ruleNode3.setType("type3");
-        ruleNode3.setConfiguration(mapper.readTree("\"key3\": \"val3\""));
+        ruleNode3.setConfiguration(JacksonUtil.toJsonNode("\"key3\": \"val3\""));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(ruleNode1);
