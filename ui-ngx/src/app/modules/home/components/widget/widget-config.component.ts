@@ -20,11 +20,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   DataKey,
-  Datasource,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
-  DatasourceType,
-  datasourceTypeTranslationMap,
   GroupInfo,
   JsonSchema,
   JsonSettingsSchema,
@@ -35,7 +32,6 @@ import {
   ControlValueAccessor,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormArray,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
@@ -66,7 +62,6 @@ import { Dashboard } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
 import { Filter } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 
 const emptySettingsSchema: JsonSchema = {
@@ -81,7 +76,7 @@ const defaultSettingsForm = [
 @Component({
   selector: 'tb-widget-config',
   templateUrl: './widget-config.component.html',
-  styleUrls: ['./widget-config.component.scss'],
+  styleUrls: ['./widget-config.component.scss', 'widget-config.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -120,10 +115,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   widgetType: widgetType;
 
-  datasourceType = DatasourceType;
-  datasourceTypes: Array<DatasourceType> = [];
-  datasourceTypesTranslations = datasourceTypeTranslationMap;
-
   widgetConfigCallbacks: WidgetConfigCallbacks = {
     createEntityAlias: this.createEntityAlias.bind(this),
     createFilter: this.createFilter.bind(this),
@@ -143,19 +134,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   public dataSettings: UntypedFormGroup;
   public targetDeviceSettings: UntypedFormGroup;
-  public alarmSourceSettings: UntypedFormGroup;
   public widgetSettings: UntypedFormGroup;
   public layoutSettings: UntypedFormGroup;
   public advancedSettings: UntypedFormGroup;
   public actionsSettings: UntypedFormGroup;
-  public openExtensionPanel = true;
-  public timeseriesKeyError = false;
-
-  public datasourceError: string[] = [];
 
   private dataSettingsChangesSubscription: Subscription;
   private targetDeviceSettingsSubscription: Subscription;
-  private alarmSourceSettingsSubscription: Subscription;
   private widgetSettingsSubscription: Subscription;
   private layoutSettingsSubscription: Subscription;
   private advancedSettingsSubscription: Subscription;
@@ -165,7 +150,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
               private utils: UtilsService,
               private entityService: EntityService,
               private dialog: MatDialog,
-              private translate: TranslateService,
+              public translate: TranslateService,
               private fb: UntypedFormBuilder) {
     super(store);
   }
@@ -173,7 +158,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   ngOnInit(): void {
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
-    this.alarmSourceSettings = this.fb.group({});
     this.advancedSettings = this.fb.group({});
     this.widgetSettings = this.fb.group({
       title: [null, []],
@@ -197,30 +181,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
       noDataDisplayMessage: [null, []]
     });
-    this.widgetSettings.get('showTitle').valueChanges.subscribe((value: boolean) => {
-      if (value) {
-        this.widgetSettings.get('titleStyle').enable({emitEvent: false});
-        this.widgetSettings.get('titleTooltip').enable({emitEvent: false});
-        this.widgetSettings.get('showTitleIcon').enable({emitEvent: false});
-      } else {
-        this.widgetSettings.get('titleStyle').disable({emitEvent: false});
-        this.widgetSettings.get('titleTooltip').disable({emitEvent: false});
-        this.widgetSettings.get('showTitleIcon').patchValue(false);
-        this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});
-      }
+
+    this.widgetSettings.get('showTitle').valueChanges.subscribe(() => {
+      this.updateWidgetSettingsEnabledState();
+    });
+    this.widgetSettings.get('showTitleIcon').valueChanges.subscribe(() => {
+      this.updateWidgetSettingsEnabledState();
     });
 
-    this.widgetSettings.get('showTitleIcon').valueChanges.subscribe((value: boolean) => {
-      if (value) {
-        this.widgetSettings.get('titleIcon').enable({emitEvent: false});
-        this.widgetSettings.get('iconColor').enable({emitEvent: false});
-        this.widgetSettings.get('iconSize').enable({emitEvent: false});
-      } else {
-        this.widgetSettings.get('titleIcon').disable({emitEvent: false});
-        this.widgetSettings.get('iconColor').disable({emitEvent: false});
-        this.widgetSettings.get('iconSize').disable({emitEvent: false});
-      }
-    });
     this.layoutSettings = this.fb.group({
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
       mobileHeight: [null, [Validators.min(1), Validators.pattern(/^\d*$/)]],
@@ -244,10 +212,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     if (this.targetDeviceSettingsSubscription) {
       this.targetDeviceSettingsSubscription.unsubscribe();
       this.targetDeviceSettingsSubscription = null;
-    }
-    if (this.alarmSourceSettingsSubscription) {
-      this.alarmSourceSettingsSubscription.unsubscribe();
-      this.alarmSourceSettingsSubscription = null;
     }
     if (this.widgetSettingsSubscription) {
       this.widgetSettingsSubscription.unsubscribe();
@@ -274,9 +238,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.targetDeviceSettingsSubscription = this.targetDeviceSettings.valueChanges.subscribe(
       () => this.updateTargetDeviceSettings()
     );
-    this.alarmSourceSettingsSubscription = this.alarmSourceSettings.valueChanges.subscribe(
-      () => this.updateAlarmSourceSettings()
-    );
     this.widgetSettingsSubscription = this.widgetSettings.valueChanges.subscribe(
       () => this.updateWidgetSettings()
     );
@@ -291,33 +252,55 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     );
   }
 
-  private buildForms() {
-    if (this.functionsOnly) {
-      this.datasourceTypes = [DatasourceType.function];
-    } else {
-      this.datasourceTypes = [DatasourceType.function, DatasourceType.entity];
-      if (this.widgetType === widgetType.latest) {
-        this.datasourceTypes.push(DatasourceType.entityCount);
-        this.datasourceTypes.push(DatasourceType.alarmCount);
-      }
+  private buildHeader() {
+    this.headerOptions.length = 0;
+    if (this.widgetType !== widgetType.static) {
+      this.headerOptions.push(
+        {
+          name: this.translate.instant('widget-config.data'),
+          value: 'data'
+        }
+      );
     }
+    if (this.displayAppearance) {
+      this.headerOptions.push(
+        {
+          name: this.translate.instant('widget-config.appearance'),
+          value: 'appearance'
+        }
+      );
+    }
+    this.headerOptions.push(
+      {
+        name: this.translate.instant('widget-config.widget-card'),
+        value: 'card'
+      }
+    );
+    this.headerOptions.push(
+      {
+        name: this.translate.instant('widget-config.actions'),
+        value: 'actions'
+      }
+    );
+    this.headerOptions.push(
+      {
+        name: this.translate.instant('widget-config.mobile'),
+        value: 'mobile'
+      }
+    );
+    this.selectedOption = this.headerOptions[0].value;
+  }
 
+  private buildForms() {
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
-    this.alarmSourceSettings = this.fb.group({});
     this.advancedSettings = this.fb.group({});
     if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
       this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(true));
       this.dataSettings.addControl('displayTimewindow', this.fb.control({value: true, disabled: true}));
       this.dataSettings.addControl('timewindow', this.fb.control({value: null, disabled: true}));
-      this.dataSettings.get('useDashboardTimewindow').valueChanges.subscribe((value: boolean) => {
-        if (value) {
-          this.dataSettings.get('displayTimewindow').disable({emitEvent: false});
-          this.dataSettings.get('timewindow').disable({emitEvent: false});
-        } else {
-          this.dataSettings.get('displayTimewindow').enable({emitEvent: false});
-          this.dataSettings.get('timewindow').enable({emitEvent: false});
-        }
+      this.dataSettings.get('useDashboardTimewindow').valueChanges.subscribe(() => {
+        this.updateDataSettingsEnabledState();
       });
       if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
@@ -327,22 +310,17 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       if (this.widgetType !== widgetType.rpc &&
         this.widgetType !== widgetType.alarm &&
         this.widgetType !== widgetType.static) {
-        this.dataSettings.addControl('datasources',
-          this.fb.array([]));
+        this.dataSettings.addControl('datasources', this.fb.control(null));
       } else if (this.widgetType === widgetType.rpc) {
         this.targetDeviceSettings.addControl('targetDeviceAliasId',
           this.fb.control(null,
             this.widgetEditMode ? [] : [Validators.required]));
       } else if (this.widgetType === widgetType.alarm) {
-        this.alarmSourceSettings = this.buildDatasourceForm();
+        this.dataSettings.addControl('alarmSource', this.fb.control(null));
       }
     }
     this.advancedSettings.addControl('settings',
       this.fb.control(null, []));
-  }
-
-  datasourcesFormArray(): UntypedFormArray {
-    return this.dataSettings.get('datasources') as UntypedFormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -360,46 +338,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.modelValue = value;
     this.removeChangeSubscriptions();
     if (this.modelValue) {
-      this.headerOptions.length = 0;
-      if (this.modelValue.widgetType !== widgetType.static) {
-        this.headerOptions.push(
-          {
-            name: this.translate.instant('widget-config.data'),
-            value: 'data'
-          }
-        );
-      }
-      if (this.displayAdvanced()) {
-        this.headerOptions.push(
-          {
-            name: this.translate.instant('widget-config.appearance'),
-            value: 'appearance'
-          }
-        );
-      }
-      this.headerOptions.push(
-        {
-          name: this.translate.instant('widget-config.widget-card'),
-          value: 'card'
-        }
-      );
-      this.headerOptions.push(
-        {
-          name: this.translate.instant('widget-config.actions'),
-          value: 'actions'
-        }
-      );
-      this.headerOptions.push(
-        {
-          name: this.translate.instant('widget-config.mobile'),
-          value: 'mobile'
-        }
-      );
-      this.selectedOption = this.headerOptions[0].value;
       if (this.widgetType !== this.modelValue.widgetType) {
         this.widgetType = this.modelValue.widgetType;
         this.buildForms();
       }
+      this.buildHeader();
       const config = this.modelValue.config;
       const layout = this.modelValue.layout;
       if (config) {
@@ -431,26 +374,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           },
           {emitEvent: false}
         );
-        const showTitle: boolean = this.widgetSettings.get('showTitle').value;
-        if (showTitle) {
-          this.widgetSettings.get('titleTooltip').enable({emitEvent: false});
-          this.widgetSettings.get('titleStyle').enable({emitEvent: false});
-          this.widgetSettings.get('showTitleIcon').enable({emitEvent: false});
-        } else {
-          this.widgetSettings.get('titleTooltip').disable({emitEvent: false});
-          this.widgetSettings.get('titleStyle').disable({emitEvent: false});
-          this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});
-        }
-        const showTitleIcon: boolean = this.widgetSettings.get('showTitleIcon').value;
-        if (showTitleIcon) {
-          this.widgetSettings.get('titleIcon').enable({emitEvent: false});
-          this.widgetSettings.get('iconColor').enable({emitEvent: false});
-          this.widgetSettings.get('iconSize').enable({emitEvent: false});
-        } else {
-          this.widgetSettings.get('titleIcon').disable({emitEvent: false});
-          this.widgetSettings.get('iconColor').disable({emitEvent: false});
-          this.widgetSettings.get('iconSize').disable({emitEvent: false});
-        }
+        this.updateWidgetSettingsEnabledState();
         const actionsData: WidgetActionsData = {
           actionsMap: config.actions || {},
           actionSources: this.modelValue.actionSources || {}
@@ -467,13 +391,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           this.dataSettings.patchValue(
             { useDashboardTimewindow }, {emitEvent: false}
           );
-          if (useDashboardTimewindow) {
-            this.dataSettings.get('displayTimewindow').disable({emitEvent: false});
-            this.dataSettings.get('timewindow').disable({emitEvent: false});
-          } else {
-            this.dataSettings.get('displayTimewindow').enable({emitEvent: false});
-            this.dataSettings.get('timewindow').enable({emitEvent: false});
-          }
           this.dataSettings.patchValue(
             { displayTimewindow: isDefined(config.displayTimewindow) ?
                 config.displayTimewindow : true }, {emitEvent: false}
@@ -481,18 +398,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           this.dataSettings.patchValue(
             { timewindow: config.timewindow }, {emitEvent: false}
           );
+          this.updateDataSettingsEnabledState();
         }
         if (this.modelValue.isDataEnabled) {
           if (this.widgetType !== widgetType.rpc &&
             this.widgetType !== widgetType.alarm &&
             this.widgetType !== widgetType.static) {
-            const datasourcesFormArray = this.dataSettings.get('datasources') as UntypedFormArray;
-            datasourcesFormArray.clear();
-            if (config.datasources) {
-              config.datasources.forEach((datasource) => {
-                datasourcesFormArray.push(this.buildDatasourceForm(datasource));
-              });
-            }
+            this.dataSettings.patchValue({ datasources: config.datasources},
+              {emitEvent: false});
           } else if (this.widgetType === widgetType.rpc) {
             let targetDeviceAliasId: string;
             if (config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0) {
@@ -512,16 +425,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           } else if (this.widgetType === widgetType.alarm) {
             this.dataSettings.patchValue(
               { alarmFilterConfig: isDefined(config.alarmFilterConfig) ?
-                  config.alarmFilterConfig : { statusList: [AlarmSearchStatus.ACTIVE], searchPropagatedAlarms: true } }, {emitEvent: false}
+                                         config.alarmFilterConfig :
+                                         { statusList: [AlarmSearchStatus.ACTIVE], searchPropagatedAlarms: true },
+                      alarmSource: config.alarmSource }, {emitEvent: false}
             );
-            this.alarmSourceSettings.patchValue(
-              config.alarmSource, {emitEvent: false}
-            );
-            const alarmSourceType: DatasourceType = this.alarmSourceSettings.get('type').value;
-            this.alarmSourceSettings.get('entityAliasId').setValidators(
-              alarmSourceType === DatasourceType.entity ? [Validators.required] : []
-            );
-            this.alarmSourceSettings.get('entityAliasId').updateValueAndValidity({emitEvent: false});
           }
         }
 
@@ -553,43 +460,40 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-  public dataKeysOptional(type?: DatasourceType): boolean {
-    if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
-      return true;
+  private updateWidgetSettingsEnabledState() {
+    const showTitle: boolean = this.widgetSettings.get('showTitle').value;
+    const showTitleIcon: boolean = this.widgetSettings.get('showTitleIcon').value;
+    if (showTitle) {
+      this.widgetSettings.get('title').enable({emitEvent: false});
+      this.widgetSettings.get('titleTooltip').enable({emitEvent: false});
+      this.widgetSettings.get('titleStyle').enable({emitEvent: false});
+      this.widgetSettings.get('showTitleIcon').enable({emitEvent: false});
     } else {
-      return this.modelValue.typeParameters && this.modelValue.typeParameters.dataKeysOptional
-        && type !== DatasourceType.entityCount && type !== DatasourceType.alarmCount;
+      this.widgetSettings.get('title').disable({emitEvent: false});
+      this.widgetSettings.get('titleTooltip').disable({emitEvent: false});
+      this.widgetSettings.get('titleStyle').disable({emitEvent: false});
+      this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});
+    }
+    if (showTitle && showTitleIcon) {
+      this.widgetSettings.get('titleIcon').enable({emitEvent: false});
+      this.widgetSettings.get('iconColor').enable({emitEvent: false});
+      this.widgetSettings.get('iconSize').enable({emitEvent: false});
+    } else {
+      this.widgetSettings.get('titleIcon').disable({emitEvent: false});
+      this.widgetSettings.get('iconColor').disable({emitEvent: false});
+      this.widgetSettings.get('iconSize').disable({emitEvent: false});
     }
   }
 
-  private buildDatasourceForm(datasource?: Datasource): UntypedFormGroup {
-    const dataKeysRequired = !this.dataKeysOptional(datasource?.type);
-    const datasourceFormGroup = this.fb.group(
-      {
-        type: [datasource ? datasource.type : null, [Validators.required]],
-        name: [datasource ? datasource.name : null, []],
-        entityAliasId: [datasource ? datasource.entityAliasId : null,
-          datasource && (datasource.type === DatasourceType.entity ||
-                         datasource.type === DatasourceType.entityCount) ? [Validators.required] : []],
-        filterId: [datasource ? datasource.filterId : null, []],
-        dataKeys: [datasource ? datasource.dataKeys : null, dataKeysRequired ? [Validators.required] : []],
-        alarmFilterConfig: [datasource && datasource.alarmFilterConfig ?
-          datasource.alarmFilterConfig : { statusList: [AlarmSearchStatus.ACTIVE] }]
-      }
-    );
-    if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
-      datasourceFormGroup.addControl('latestDataKeys', this.fb.control(datasource ? datasource.latestDataKeys : null));
+  private updateDataSettingsEnabledState() {
+    const useDashboardTimewindow: boolean = this.dataSettings.get('useDashboardTimewindow').value;
+    if (useDashboardTimewindow) {
+      this.dataSettings.get('displayTimewindow').disable({emitEvent: false});
+      this.dataSettings.get('timewindow').disable({emitEvent: false});
+    } else {
+      this.dataSettings.get('displayTimewindow').enable({emitEvent: false});
+      this.dataSettings.get('timewindow').enable({emitEvent: false});
     }
-    datasourceFormGroup.get('type').valueChanges.subscribe((type: DatasourceType) => {
-      datasourceFormGroup.get('entityAliasId').setValidators(
-        (type === DatasourceType.entity || type === DatasourceType.entityCount) ? [Validators.required] : []
-      );
-      const newDataKeysRequired = !this.dataKeysOptional(type);
-      datasourceFormGroup.get('dataKeys').setValidators(newDataKeysRequired ? [Validators.required] : []);
-      datasourceFormGroup.get('entityAliasId').updateValueAndValidity();
-      datasourceFormGroup.get('dataKeys').updateValueAndValidity();
-    });
-    return datasourceFormGroup;
   }
 
   private updateSchemaForm(settings?: any) {
@@ -632,16 +536,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-  private updateAlarmSourceSettings() {
-    if (this.modelValue) {
-      if (this.modelValue.config) {
-        const alarmSource: Datasource = this.alarmSourceSettings.value;
-        this.modelValue.config.alarmSource = alarmSource;
-      }
-      this.propagateChange(this.modelValue);
-    }
-  }
-
   private updateWidgetSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
@@ -663,8 +557,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private updateAdvancedSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        const settings = this.advancedSettings.get('settings').value?.model;
-        this.modelValue.config.settings = settings;
+        this.modelValue.config.settings = this.advancedSettings.get('settings').value?.model;
       }
       this.propagateChange(this.modelValue);
     }
@@ -673,25 +566,45 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private updateActionSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        const actions = (this.actionsSettings.get('actionsData').value as WidgetActionsData).actionsMap;
-        this.modelValue.config.actions = actions;
+        this.modelValue.config.actions = (this.actionsSettings.get('actionsData').value as WidgetActionsData).actionsMap;
       }
       this.propagateChange(this.modelValue);
     }
   }
 
-  public displayAdvanced(): boolean {
+  public get displayAppearance(): boolean {
+    return this.displayAppearanceDataSettings || this.displayAdvancedAppearance;
+  }
+
+  public get displayAdvancedAppearance(): boolean {
     return !!this.modelValue && (!!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema ||
         !!this.modelValue.settingsDirective && !!this.modelValue.settingsDirective.length);
   }
 
-  public displayTimewindowConfig(): boolean {
+  public get displayTimewindowConfig(): boolean {
     if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
       return true;
     } else if (this.widgetType === widgetType.latest) {
       const datasources = this.dataSettings.get('datasources').value;
       return datasourcesHasAggregation(datasources);
     }
+  }
+
+  public get displayLimits(): boolean {
+    return this.widgetType !== widgetType.rpc && this.widgetType !== widgetType.alarm &&
+      this.modelValue?.isDataEnabled && !this.modelValue?.typeParameters?.singleEntity;
+  }
+
+  public get displayAppearanceDataSettings(): boolean {
+    return this.displayUnitsConfig || this.displayNoDataDisplayMessageConfig;
+  }
+
+  public get displayUnitsConfig(): boolean {
+    return this.widgetType === widgetType.latest || this.widgetType === widgetType.timeseries;
+  }
+
+  public get displayNoDataDisplayMessageConfig(): boolean {
+    return this.widgetType !== widgetType.static && !this.modelValue?.typeParameters?.processNoDataByWidget;
   }
 
   public onlyHistoryTimewindow(): boolean {
@@ -701,33 +614,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     } else {
       return false;
     }
-  }
-
-  public onDatasourceDrop(event: CdkDragDrop<string[]>) {
-    const datasourcesFormArray = this.datasourcesFormArray();
-    const datasourceForm = datasourcesFormArray.at(event.previousIndex);
-    datasourcesFormArray.removeAt(event.previousIndex);
-    datasourcesFormArray.insert(event.currentIndex, datasourceForm);
-  }
-
-  public removeDatasource(index: number) {
-    this.datasourcesFormArray().removeAt(index);
-  }
-
-  public addDatasource() {
-    let newDatasource: Datasource;
-    if (this.functionsOnly) {
-      newDatasource = deepClone(this.utils.getDefaultDatasource(this.modelValue.dataKeySettingsSchema.schema));
-      newDatasource.dataKeys = [this.generateDataKey('Sin', DataKeyType.function, this.modelValue.dataKeySettingsSchema)];
-    } else {
-      newDatasource = { type: DatasourceType.entity,
-        dataKeys: []
-      };
-    }
-    if (this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
-      newDatasource.latestDataKeys = [];
-    }
-    this.datasourcesFormArray().push(this.buildDatasourceForm(newDatasource));
   }
 
   public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema): DataKey {
@@ -854,8 +740,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   }
 
   public validate(c: UntypedFormControl) {
-    this.timeseriesKeyError = false;
-    this.datasourceError = [];
     if (!this.dataSettings.valid) {
       return {
         dataSettings: {
@@ -874,7 +758,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           valid: false
         }
       };
-    } else if (!this.advancedSettings.valid || (this.displayAdvanced() && !this.modelValue.config.settings)) {
+    } else if (!this.advancedSettings.valid || (this.displayAdvancedAppearance && !this.modelValue.config.settings)) {
       return {
         advancedSettings: {
           valid: false
@@ -890,54 +774,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
             }
           };
         }
-      } else if (this.widgetType === widgetType.alarm && this.modelValue.isDataEnabled) {
-        if (!this.alarmSourceSettings.valid || !config.alarmSource) {
-          return {
-            alarmSource: {
-              valid: false
-            }
-          };
-        }
-      } else if (this.widgetType !== widgetType.static && this.modelValue.isDataEnabled) {
-        if (!this.modelValue.typeParameters.datasourcesOptional && (!config.datasources || !config.datasources.length)) {
-          return {
-            datasources: {
-              valid: false
-            }
-          };
-        }
-        if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
-          let valid = config.datasources.filter(datasource => datasource?.dataKeys?.length).length > 0;
-          if (!valid) {
-            this.timeseriesKeyError = true;
-            return {
-              timeseriesDataKeys: {
-                valid: false
-              }
-            };
-          } else {
-            const emptyDatasources = config.datasources.filter(datasource => !datasource?.dataKeys?.length &&
-              !datasource?.latestDataKeys?.length);
-            valid = emptyDatasources.length === 0;
-            if (!valid) {
-              for (const emptyDatasource of emptyDatasources) {
-                const i = config.datasources.indexOf(emptyDatasource);
-                this.datasourceError[i] = 'At least one data key should be specified';
-              }
-              return {
-                dataKeys: {
-                  valid: false
-                }
-              };
-            }
-          }
-        }
       }
     }
     return null;
-  }
-
-  public extensionPanelIsOpen(value) {
-    this.openExtensionPanel = value;
   }
 }

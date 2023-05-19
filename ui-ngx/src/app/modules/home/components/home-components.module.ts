@@ -181,6 +181,8 @@ import { AlarmAssigneeSelectPanelComponent } from '@home/components/alarm/alarm-
 import { AlarmAssigneeSelectComponent } from '@home/components/alarm/alarm-assignee-select.component';
 import { DeviceInfoFilterComponent } from '@home/components/device/device-info-filter.component';
 import { WidgetPreviewComponent } from '@home/components/widget/widget-preview.component';
+import { DatasourceComponent } from '@home/components/widget/datasource.component';
+import { DatasourcesComponent } from '@home/components/widget/datasources.component';
 
 @NgModule({
   declarations:
@@ -226,6 +228,8 @@ import { WidgetPreviewComponent } from '@home/components/widget/widget-preview.c
       EntityFilterComponent,
       EntityAliasSelectComponent,
       DataKeysComponent,
+      DatasourceComponent,
+      DatasourcesComponent,
       DataKeyConfigComponent,
       DataKeyConfigDialogComponent,
       ManageWidgetActionsComponent,
@@ -376,6 +380,8 @@ import { WidgetPreviewComponent } from '@home/components/widget/widget-preview.c
     EntityFilterComponent,
     EntityAliasSelectComponent,
     DataKeysComponent,
+    DatasourceComponent,
+    DatasourcesComponent,
     DataKeyConfigComponent,
     DataKeyConfigDialogComponent,
     ManageWidgetActionsComponent,

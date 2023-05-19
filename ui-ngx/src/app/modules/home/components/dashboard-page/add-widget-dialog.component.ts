@@ -39,7 +39,7 @@ export interface AddWidgetDialogData {
 @Component({
   selector: 'tb-add-widget-dialog',
   templateUrl: './add-widget-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddWidgetDialogComponent}],
+  providers: [/*{provide: ErrorStateMatcher, useExisting: AddWidgetDialogComponent}*/],
   styleUrls: []
 })
 export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogComponent, Widget>
@@ -117,7 +117,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     );
   }
 
-  ngOnInit(): void {
+  ngOnInit() {
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {

@@ -30,13 +30,14 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormGroupDirective,
   NG_VALUE_ACCESSOR,
   NgForm,
   UntypedFormBuilder,
   UntypedFormControl,
-  UntypedFormGroup,
+  UntypedFormGroup, ValidationErrors,
   Validators
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
@@ -44,7 +45,7 @@ import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { MatAutocomplete } from '@angular/material/autocomplete';
+import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatChipGrid, MatChipInputEvent, MatChipRow } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -61,11 +62,12 @@ import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
 } from '@home/components/widget/data-key-config-dialog.component';
-import { deepClone, guid, isUndefined } from '@core/utils';
+import { deepClone, guid, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { AggregationType } from '@shared/models/time/time.models';
 import { DndDropEvent } from 'ngx-drag-drop/lib/dnd-dropzone.directive';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-data-keys',
@@ -76,11 +78,11 @@ import { moveItemInArray } from '@angular/cdk/drag-drop';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => DataKeysComponent),
       multi: true
-    },
+    } /*,
     {
       provide: ErrorStateMatcher,
       useExisting: DataKeysComponent
-    }
+    } */
   ],
   encapsulation: ViewEncapsulation.None
 })
@@ -112,6 +114,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @Input()
   optDataKeys: boolean;
+
+  @Input()
+  @coerceBoolean()
+  simpleDataKeysLabel = false;
 
   @Input()
   aliasController: IAliasController;
@@ -148,6 +154,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @ViewChild('keyInput') keyInput: ElementRef<HTMLInputElement>;
   @ViewChild('keyAutocomplete') matAutocomplete: MatAutocomplete;
+  @ViewChild(MatAutocompleteTrigger) autocomplete: MatAutocompleteTrigger;
   @ViewChild('chipList') chipList: MatChipGrid;
 
   keys: Array<DataKey> = [];
@@ -189,8 +196,17 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   updateValidators() {
-    this.keysListFormGroup.get('keys').setValidators(this.required ? [Validators.required] : []);
+    this.keysListFormGroup.get('keys').setValidators(this.required ? [this.keysRequired] : []);
     this.keysListFormGroup.get('keys').updateValueAndValidity();
+  }
+
+  keysRequired(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (value && Array.isArray(value) && value.length) {
+      return null;
+    } else {
+      return {required: true};
+    }
   }
 
   registerOnChange(fn: any): void {
@@ -202,7 +218,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   ngOnInit() {
     this.keysListFormGroup = this.fb.group({
-        keys: [null, this.required ? [Validators.required] : []],
+        keys: [null, this.required ? [this.keysRequired] : []],
         key: [null]
     });
     this.alarmKeys = [];
@@ -251,37 +267,40 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   private updateParams() {
-      if (this.datasourceType === DatasourceType.function) {
-        this.dataKeyType = DataKeyType.function;
-        this.requiredText = this.translate.instant('datakey.function-types-required');
-        if (this.widgetType === widgetType.latest) {
-          this.placeholder = this.translate.instant('datakey.latest-key-functions');
-          this.secondaryPlaceholder = '+' + this.translate.instant('datakey.latest-key-function');
-        } else if (this.widgetType === widgetType.alarm) {
-          this.placeholder = this.translate.instant('datakey.alarm-key-functions');
-          this.secondaryPlaceholder = '+' + this.translate.instant('datakey.alarm-key-function');
-        } else {
-          this.placeholder = this.translate.instant('datakey.timeseries-key-functions');
-          this.secondaryPlaceholder = '+' + this.translate.instant('datakey.timeseries-key-function');
-        }
+    const singleKey = this.maxDataKeysSet && this.maxDataKeys === 1;
+    this.secondaryPlaceholder = '+' + this.translate.instant('action.add');
+    if (this.datasourceType === DatasourceType.function) {
+      this.dataKeyType = DataKeyType.function;
+      this.requiredText = this.translate.instant('datakey.function-types-required');
+      if (this.widgetType === widgetType.latest) {
+        this.placeholder = this.translate.instant(singleKey ? 'datakey.latest-key-function' : 'datakey.latest-key-functions');
+      } else if (this.widgetType === widgetType.alarm) {
+        this.placeholder = this.translate.instant(singleKey ? 'datakey.alarm-key-function' : 'datakey.alarm-key-functions');
+      } else {
+        this.placeholder = this.translate.instant(singleKey ? 'datakey.timeseries-key-function' : 'datakey.timeseries-key-functions');
+      }
+    } else {
+      if (this.widgetType !== widgetType.latest && this.widgetType !== widgetType.alarm) {
+        this.dataKeyType = DataKeyType.timeseries;
+      } else {
+        this.dataKeyType = null;
+      }
+      if (this.simpleDataKeysLabel && this.widgetType !== widgetType.alarm) {
+        this.placeholder = this.translate.instant(singleKey ? 'datakey.data-key' : 'datakey.data-keys');
+        this.requiredText = this.translate.instant(singleKey ? 'datakey.data-key-required' : 'datakey.data-keys-required');
       } else {
         if (this.widgetType === widgetType.latest) {
-          this.dataKeyType = null;
-          this.placeholder = this.translate.instant('datakey.latest-keys');
-          this.secondaryPlaceholder = '+' + this.translate.instant('datakey.latest-key');
+          this.placeholder = this.translate.instant(singleKey ? 'datakey.latest-key' : 'datakey.latest-keys');
           this.requiredText = this.translate.instant('datakey.timeseries-or-attributes-required');
         } else if (this.widgetType === widgetType.alarm) {
-          this.dataKeyType = null;
-          this.placeholder = this.translate.instant('datakey.alarm-keys');
-          this.secondaryPlaceholder = '+' + this.translate.instant('datakey.alarm-key');
+          this.placeholder = this.translate.instant(singleKey ? 'datakey.alarm-key' : 'datakey.alarm-keys');
           this.requiredText = this.translate.instant('datakey.alarm-fields-timeseries-or-attributes-required');
         } else {
-          this.dataKeyType = DataKeyType.timeseries;
-          this.placeholder = this.translate.instant('datakey.timeseries-keys');
-          this.secondaryPlaceholder = '+' + this.translate.instant('datakey.timeseries-key');
+          this.placeholder = this.translate.instant(singleKey ? 'datakey.timeseries-key' : 'datakey.timeseries-keys');
           this.requiredText = this.translate.instant('datakey.timeseries-required');
         }
       }
+    }
   }
 
   private reset() {
@@ -310,13 +329,13 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
         if (propName === 'entityAliasId') {
           this.clearSearchCache();
           this.dirty = true;
-        } else if (['widgetType', 'datasourceType'].includes(propName)) {
+        } else if (['widgetType', 'datasourceType', 'maxDataKeys', 'simpleDataKeysLabel'].includes(propName)) {
           this.clearSearchCache();
           this.updateParams();
           setTimeout(() => {
             this.reset();
           }, 1);
-        } else if (['required', 'optDataKeys'].includes('propName')) {
+        } else if (['required', 'optDataKeys'].includes(propName)) {
           this.updateValidators();
         }
       }
@@ -325,7 +344,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = this.required && !this.modelValue;
+    const customErrorState = this.required && (!this.modelValue || !this.modelValue.length);
     return originalErrorState || customErrorState;
   }
 
@@ -365,7 +384,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   addKey(key: DataKey): void {
-    if (!this.maxDataKeys || this.maxDataKeys < 0 ||
+    if (!this.maxDataKeysSet ||
         !this.modelValue || this.modelValue.length < this.maxDataKeys) {
       if (!this.modelValue) {
         this.modelValue = [];
@@ -375,17 +394,17 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       this.keysListFormGroup.get('keys').setValue(this.keys);
     }
     this.propagateChange(this.modelValue);
-    this.clear();
+    const focus = !this.maxDataKeysSet || this.modelValue.length < this.maxDataKeys;
+    this.clear('', focus);
   }
 
   add(event: MatChipInputEvent): void {
     const value = event.value;
-    if ((value || '').trim()) {
-      if (this.dataKeyType) {
-        this.addFromChipValue({name: value.trim(), type: this.dataKeyType});
-      }
+    if ((value || '').trim() && this.dataKeyType) {
+      this.addFromChipValue({name: value.trim(), type: this.dataKeyType});
+    } else {
+      this.clear();
     }
-    this.clear();
   }
 
   remove(key: DataKey) {
@@ -402,8 +421,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     }
   }
 
-  chipDragStart(index: number, chipRow: MatChipRow, placeholderChipRow: MatChipRow) {
-    this.renderer.setStyle(placeholderChipRow._elementRef.nativeElement, 'width', chipRow._elementRef.nativeElement.offsetWidth + 'px');
+  chipDragStart(index: number, chipRow: MatChipRow, placeholderChipRow: Element) {
+    this.autocomplete.closePanel();
+    this.renderer.setStyle(placeholderChipRow,
+      'width', chipRow._elementRef.nativeElement.offsetWidth + 'px');
     this.dragIndex = index;
   }
 
@@ -523,20 +544,35 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   textIsNotEmpty(text: string): boolean {
-    return (text && text != null && text.length > 0) ? true : false;
+    return text && text.length > 0;
   }
 
-  clear(value: string = '') {
+  clear(value: string = '', focus = true) {
+    this.autocomplete.closePanel();
     this.keyInput.nativeElement.value = value;
-    this.keysListFormGroup.get('key').patchValue(value, {emitEvent: true});
-    setTimeout(() => {
-      this.keyInput.nativeElement.blur();
-      this.keyInput.nativeElement.focus();
-    }, 0);
+    this.keysListFormGroup.get('key').patchValue(value, {emitEvent: focus});
+    if (focus) {
+      setTimeout(() => {
+        this.keyInput.nativeElement.blur();
+        this.keyInput.nativeElement.focus();
+      }, 0);
+    }
   }
 
   get isCountDatasource(): boolean {
     return [DatasourceType.entityCount, DatasourceType.alarmCount].includes(this.datasourceType);
+  }
+
+  get inputDisabled(): boolean {
+    return this.isCountDatasource || (this.maxDataKeysSet && this.keys.length >= this.maxDataKeys);
+  }
+
+  get dragDisabled(): boolean {
+    return this.keys.length < 2;
+  }
+
+  get maxDataKeysSet(): boolean {
+    return isDefinedAndNotNull(this.maxDataKeysValue) && this.maxDataKeysValue > -1;
   }
 
   private clearSearchCache() {

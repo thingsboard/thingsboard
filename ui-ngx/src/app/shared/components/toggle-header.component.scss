@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+@import "../../../theme";
 @import "../../../scss/constants";
 
 :host ::ng-deep {
@@ -47,8 +48,8 @@
       &.mat-button-toggle-checked {
         .mat-button-toggle-button {
           background: #F3F6FA;
-          color: #305680;
-          border: 1px solid #305680;
+          color: $tb-primary-color;
+          border: 1px solid $tb-primary-color;
           border-radius: 20px;
 
           .mat-button-toggle-label-content {
@@ -62,7 +63,7 @@
       .mat-button-toggle.mat-button-toggle-appearance-standard {
         &.mat-button-toggle-checked {
           .mat-button-toggle-button {
-            background: #305680;
+            background: $tb-primary-color;
             color: #FFFFFF;
           }
         }

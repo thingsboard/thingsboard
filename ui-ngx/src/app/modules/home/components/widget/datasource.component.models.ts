@@ -14,7 +14,8 @@
 /// limitations under the License.
 ///
 
-import { WidgetActionCallbacks } from './action/manage-widget-actions.component.models';
-import { DatasourceCallbacks } from '@home/components/widget/datasource.component.models';
+import { EntityAliasSelectCallbacks } from '@home/components/alias/entity-alias-select.component.models';
+import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
 
-export type WidgetConfigCallbacks = DatasourceCallbacks & WidgetActionCallbacks;
+export type DatasourceCallbacks = EntityAliasSelectCallbacks & FilterSelectCallbacks & DataKeysCallbacks;
