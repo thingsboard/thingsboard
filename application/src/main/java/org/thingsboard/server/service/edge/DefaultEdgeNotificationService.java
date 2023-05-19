@@ -146,7 +146,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws Exception {
         edge.setRootRuleChainId(ruleChainId);
         Edge savedEdge = edgeService.saveEdge(edge);
-        ObjectNode isRootBody = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode isRootBody = JacksonUtil.newObjectNode();
         isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
         saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, isRootBody).get();
         return savedEdge;

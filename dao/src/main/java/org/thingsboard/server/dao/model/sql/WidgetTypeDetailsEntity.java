@@ -33,7 +33,7 @@ import javax.persistence.Table;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.WIDGET_TYPE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.WIDGET_TYPE_TABLE_NAME)
 public class WidgetTypeDetailsEntity extends AbstractWidgetTypeEntity<WidgetTypeDetails> {
 
     @Column(name = ModelConstants.WIDGET_TYPE_IMAGE_PROPERTY)
