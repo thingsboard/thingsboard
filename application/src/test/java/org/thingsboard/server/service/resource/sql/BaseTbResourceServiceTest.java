@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
@@ -356,7 +357,10 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         PageLink pageLink = new PageLink(16);
         PageData<TbResourceInfo> pageData;
         do {
-            pageData = resourceService.findTenantResourcesByTenantId(tenantId, null, pageLink);
+            TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
+                    .tenantId(tenantId)
+                    .build();
+            pageData = resourceService.findTenantResourcesByTenantId(filter, pageLink);
             loadedResources.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -371,7 +375,10 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resourceService.deleteResourcesByTenantId(tenantId);
 
         pageLink = new PageLink(31);
-        pageData = resourceService.findTenantResourcesByTenantId(tenantId, null, pageLink);
+        TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
+                .tenantId(tenantId)
+                .build();
+        pageData = resourceService.findTenantResourcesByTenantId(filter, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
@@ -417,7 +424,10 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         PageLink pageLink = new PageLink(10);
         PageData<TbResourceInfo> pageData;
         do {
-            pageData = resourceService.findAllTenantResourcesByTenantId(tenantId, null, pageLink);
+            TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
+                    .tenantId(tenantId)
+                    .build();
+            pageData = resourceService.findAllTenantResourcesByTenantId(filter,  pageLink);
             loadedResources.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -432,14 +442,20 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resourceService.deleteResourcesByTenantId(tenantId);
 
         pageLink = new PageLink(100);
-        pageData = resourceService.findAllTenantResourcesByTenantId(tenantId, null, pageLink);
+        TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
+                .tenantId(tenantId)
+                .build();
+        pageData = resourceService.findAllTenantResourcesByTenantId(filter, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(pageData.getData().size(), 100);
 
         resourceService.deleteResourcesByTenantId(TenantId.SYS_TENANT_ID);
 
         pageLink = new PageLink(100);
-        pageData = resourceService.findAllTenantResourcesByTenantId(TenantId.SYS_TENANT_ID, null, pageLink);
+        filter = TbResourceInfoFilter.builder()
+                .tenantId(TenantId.SYS_TENANT_ID)
+                .build();
+        pageData = resourceService.findAllTenantResourcesByTenantId(filter, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 

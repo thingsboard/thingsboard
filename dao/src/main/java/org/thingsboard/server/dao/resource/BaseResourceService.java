@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -103,17 +104,19 @@ public class BaseResourceService implements ResourceService {
     }
 
     @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
+    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink) {
+        TenantId tenantId = tbResourceInfoFilter.getTenantId();
         log.trace("Executing findAllTenantResourcesByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceInfoDao.findAllTenantResourcesByTenantId(tenantId.getId(), resourceType == null ? null : resourceType.name(), pageLink);
+        return resourceInfoDao.findAllTenantResourcesByTenantId(tbResourceInfoFilter, pageLink);
     }
 
     @Override
-    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
+    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink) {
+        TenantId tenantId = tbResourceInfoFilter.getTenantId();
         log.trace("Executing findTenantResourcesByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceInfoDao.findTenantResourcesByTenantId(tenantId.getId(), resourceType == null ? null : resourceType.name(), pageLink);
+        return resourceInfoDao.findTenantResourcesByTenantId(tbResourceInfoFilter, pageLink);
     }
 
     @Override

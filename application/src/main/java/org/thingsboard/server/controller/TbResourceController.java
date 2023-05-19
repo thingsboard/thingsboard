@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
@@ -166,11 +167,14 @@ public class TbResourceController extends BaseController {
                                                  @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        ResourceType resourceTypeValue = StringUtils.isNotEmpty(resourceType) ? ResourceType.valueOf(resourceType) : null;
+        TbResourceInfoFilter.TbResourceInfoFilterBuilder filter = TbResourceInfoFilter.builder();
+        filter.tenantId(getTenantId());
+        filter.resourceType(StringUtils.isNotEmpty(resourceType) ? ResourceType.valueOf(resourceType) : null);
+
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-            return checkNotNull(resourceService.findTenantResourcesByTenantId(getTenantId(), resourceTypeValue, pageLink));
+            return checkNotNull(resourceService.findTenantResourcesByTenantId(filter.build(), pageLink));
         } else {
-            return checkNotNull(resourceService.findAllTenantResourcesByTenantId(getTenantId(), resourceTypeValue, pageLink));
+            return checkNotNull(resourceService.findAllTenantResourcesByTenantId(filter.build(), pageLink));
         }
     }
 

@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -76,13 +77,13 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
-        return resourceService.findAllTenantResourcesByTenantId(tenantId, resourceType, pageLink);
+    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink) {
+        return resourceService.findAllTenantResourcesByTenantId(tbResourceInfoFilter, pageLink);
     }
 
     @Override
-    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
-        return resourceService.findTenantResourcesByTenantId(tenantId, resourceType, pageLink);
+    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink) {
+        return resourceService.findTenantResourcesByTenantId(tbResourceInfoFilter, pageLink);
     }
 
     @Override
