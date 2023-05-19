@@ -41,7 +41,7 @@ import java.util.UUID;
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.DASHBOARD_TABLE_NAME)
 public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements SearchTextEntity<DashboardInfo> {
 
     private static final JavaType assignedCustomersType =

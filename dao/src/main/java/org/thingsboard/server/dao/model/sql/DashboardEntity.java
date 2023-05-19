@@ -46,7 +46,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.DASHBOARD_TABLE_NAME)
 public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements SearchTextEntity<Dashboard> {
 
     private static final JavaType assignedCustomersType =
