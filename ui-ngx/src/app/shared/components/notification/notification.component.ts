@@ -66,7 +66,7 @@ export class NotificationComponent implements OnInit {
   message = '';
 
   constructor(
-    public utils: UtilsService,
+    private utils: UtilsService,
     private router: Router
   ) {
   }
