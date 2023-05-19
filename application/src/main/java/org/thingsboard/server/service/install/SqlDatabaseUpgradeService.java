@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
+import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -758,6 +759,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     }
 
     protected boolean isOldSchema(Connection conn, long fromVersion) {
+        if (DefaultDataUpdateService.getEnv("SKIP_SCHEMA_VERSION_CHECK", false)) {
+            log.info("Skipped DB schema version check due to SKIP_SCHEMA_VERSION_CHECK set to true!");
+            return true;
+        }
         boolean isOldSchema = true;
         try {
             Statement statement = conn.createStatement();
