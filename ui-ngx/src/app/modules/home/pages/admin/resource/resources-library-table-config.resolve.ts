@@ -61,11 +61,9 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
       new DateEntityTableColumn<ResourceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<ResourceInfo>('title', 'resource.title', '60%'),
       new EntityTableColumn<ResourceInfo>('resourceType', 'resource.resource-type', '40%',
-        entity => this.resourceTypesTranslationMap.get(entity.resourceType)),
+        entity => this.translate.instant(this.resourceTypesTranslationMap.get(entity.resourceType))),
       new EntityTableColumn<ResourceInfo>('tenantId', 'resource.system', '60px',
-        entity => {
-          return checkBoxCell(entity.tenantId.id === NULL_UUID);
-        }),
+        entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
     );
 
     this.config.cellActionDescriptors.push(
@@ -124,7 +122,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
       $event.stopPropagation();
     }
     const url = this.router.createUrlTree(['resources', 'resources-library', resourceInfo.id.id]);
-    this.router.navigateByUrl(url);
+    this.router.navigateByUrl(url).then(() => {});
   }
 
   downloadResource($event: Event, resource: ResourceInfo) {

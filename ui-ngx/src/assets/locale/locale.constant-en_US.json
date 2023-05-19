@@ -3259,7 +3259,13 @@
         "system": "System",
         "title": "Title",
         "title-required": "Title is required.",
-        "title-max-length": "Title should be less than 256"
+        "title-max-length": "Title should be less than 256",
+        "type": {
+            "jks": "JKS",
+            "js-module": "JS module",
+            "lwm2m-model": "LWM2M model",
+            "pkcs-12": "PKCS #12"
+        }
     },
     "rulechain": {
         "rulechain": "Rule chain",
