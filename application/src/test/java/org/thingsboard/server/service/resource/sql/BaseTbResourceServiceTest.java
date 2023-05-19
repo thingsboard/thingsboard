@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.resource.sql;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,6 +46,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -57,6 +61,32 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
             "<ObjectID>0</ObjectID>\n" +
             "<ObjectURN></ObjectURN>\n" +
             "<ObjectVersion>1.0</ObjectVersion>\n" +
+            "<MultipleInstances>Multiple</MultipleInstances>\n" +
+            "<Mandatory>Mandatory</Mandatory>\n" +
+            "<Resources>\n" +
+            "<Item ID=\"0\">\n" +
+            "<Name>LWM2M</Name>\n" +
+            "<Operations>RW</Operations>\n" +
+            "<MultipleInstances>Single</MultipleInstances>\n" +
+            "<Mandatory>Mandatory</Mandatory>\n" +
+            "<Type>String</Type>\n" +
+            "<RangeEnumeration>0..255</RangeEnumeration>\n" +
+            "<Units></Units>\n" +
+            "<Description></Description>\n" +
+            "</Item>\n" +
+            "</Resources>\n" +
+            "<Description2></Description2>\n" +
+            "</Object>\n" +
+            "</LWM2M>";
+
+    private static final String LWM2M_TEST_MODEL_WITH_XXE = "<!DOCTYPE replace [<!ENTITY ObjectVersion SYSTEM \"file:///etc/hostname\"> ]>" +
+            "<LWM2M xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"http://www.openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd\">\n" +
+            "<Object ObjectType=\"MODefinition\">\n" +
+            "<Name>My first resource</Name>\n" +
+            "<Description1></Description1>\n" +
+            "<ObjectID>0</ObjectID>\n" +
+            "<ObjectURN></ObjectURN>\n" +
+            "<ObjectVersion>&ObjectVersion;</ObjectVersion>\n" +
             "<MultipleInstances>Multiple</MultipleInstances>\n" +
             "<Mandatory>Mandatory</Mandatory>\n" +
             "<Resources>\n" +
@@ -183,7 +213,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         Assert.assertNotNull(savedResource);
         Assert.assertNotNull(savedResource.getId());
-        Assert.assertTrue(savedResource.getCreatedTime() > 0);
+        assertTrue(savedResource.getCreatedTime() > 0);
         Assert.assertEquals(resource.getTenantId(), savedResource.getTenantId());
         Assert.assertEquals(resource.getTitle(), savedResource.getTitle());
         Assert.assertEquals(resource.getResourceKey(), savedResource.getResourceKey());
@@ -210,13 +240,27 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         Assert.assertNotNull(savedResource);
         Assert.assertNotNull(savedResource.getId());
-        Assert.assertTrue(savedResource.getCreatedTime() > 0);
+        assertTrue(savedResource.getCreatedTime() > 0);
         Assert.assertEquals(resource.getTenantId(), savedResource.getTenantId());
         Assert.assertEquals("My first resource id=0 v1.0", savedResource.getTitle());
         Assert.assertEquals("0_1.0", savedResource.getResourceKey());
         Assert.assertEquals(resource.getData(), savedResource.getData());
 
         resourceService.delete(savedResource, null);
+    }
+
+    @Test
+    public void testSaveLwm2mTbResourceWithXXE() {
+        TbResource resource = new TbResource();
+        resource.setTenantId(tenantId);
+        resource.setResourceType(ResourceType.LWM2M_MODEL);
+        resource.setFileName("xxe_test_model.xml");
+        resource.setData(Base64.getEncoder().encodeToString(LWM2M_TEST_MODEL_WITH_XXE.getBytes()));
+
+        DataValidationException thrown = assertThrows(DataValidationException.class, () -> {
+            resourceService.save(resource);
+        });
+        assertEquals("Failed to parse file xxe_test_model.xml", thrown.getMessage());
     }
 
     @Test
@@ -252,7 +296,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setData("Test Data");
 
         try {
-            Assertions.assertThrows(DataValidationException.class, () -> {
+            assertThrows(DataValidationException.class, () -> {
                 resourceService.save(resource2);
             });
         } finally {
@@ -267,7 +311,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
-        Assertions.assertThrows(DataValidationException.class, () -> {
+        assertThrows(DataValidationException.class, () -> {
             resourceService.save(resource);
         });
     }
@@ -280,7 +324,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setTitle("My resource");
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
-        Assertions.assertThrows(DataValidationException.class, () -> {
+        assertThrows(DataValidationException.class, () -> {
             resourceService.save(resource);
         });
     }
@@ -373,7 +417,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         pageLink = new PageLink(31);
         pageData = resourceService.findTenantResourcesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
-        Assert.assertTrue(pageData.getData().isEmpty());
+        assertTrue(pageData.getData().isEmpty());
 
         doDelete("/api/tenant/" + tenantId.getId().toString())
                 .andExpect(status().isOk());
@@ -441,7 +485,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         pageLink = new PageLink(100);
         pageData = resourceService.findAllTenantResourcesByTenantId(TenantId.SYS_TENANT_ID, pageLink);
         Assert.assertFalse(pageData.hasNext());
-        Assert.assertTrue(pageData.getData().isEmpty());
+        assertTrue(pageData.getData().isEmpty());
 
         doDelete("/api/tenant/" + tenantId.getId().toString())
                 .andExpect(status().isOk());
