@@ -119,6 +119,7 @@ public class CustomerPageHelper extends CustomerPageElements {
 
     public void createCustomersUser() {
         plusBtn().click();
+        addUserEmailField().click();
         addUserEmailField().sendKeys(getRandomNumber() + "@gmail.com");
         addBtnC().click();
         activateWindowOkBtn().click();

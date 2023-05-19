@@ -43,7 +43,7 @@ public class DefaultRateLimitService implements RateLimitService {
         this.rateLimits = Caffeine.newBuilder()
                 .expireAfterAccess(rateLimitsTtl, TimeUnit.MINUTES)
                 .maximumSize(rateLimitsCacheMaxSize)
-                 .build();
+                .build();
     }
 
     private final Cache<RateLimitKey, TbRateLimits> rateLimits;
