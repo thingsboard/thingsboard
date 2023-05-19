@@ -20,7 +20,6 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-
   .mat-toolbar.details-toolbar {
     padding: 0;
   }
@@ -28,11 +27,9 @@
 
 :host ::ng-deep {
 
-  .reset-style {
-    color: rgba(0, 0, 0, 0.6);;
-    //font-family: "Arial";
+  .details-panel-style {
+    color: rgba(0, 0, 0, 0.6);
     line-height: 24px;
-    //font-weight: 500;
     letter-spacing: 0.5px;
   }
 
