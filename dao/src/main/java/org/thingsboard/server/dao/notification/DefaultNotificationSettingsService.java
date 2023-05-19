@@ -25,6 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.AffectedTenantAdministratorsFilter;
@@ -35,9 +36,12 @@ import org.thingsboard.server.common.data.notification.targets.platform.Platform
 import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -46,6 +50,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
     private final AdminSettingsService adminSettingsService;
     private final NotificationTargetService notificationTargetService;
+    private final NotificationTemplateService notificationTemplateService;
     private final DefaultNotifications defaultNotifications;
 
     private static final String SETTINGS_KEY = "notifications";
@@ -117,6 +122,28 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         defaultNotifications.create(tenantId, DefaultNotifications.alarmComment, tenantAdmins.getId());
         defaultNotifications.create(tenantId, DefaultNotifications.alarmAssignment, affectedUser.getId());
         defaultNotifications.create(tenantId, DefaultNotifications.ruleEngineComponentLifecycleFailure, tenantAdmins.getId());
+    }
+
+    @Override
+    public void updateDefaultNotificationConfigs(TenantId tenantId) {
+        if (tenantId.isSysTenantId()) {
+            if (notificationTemplateService.findNotificationTemplatesByTenantIdAndNotificationTypes(tenantId,
+                    List.of(NotificationType.RATE_LIMITS), new PageLink(1)).getTotalElements() > 0) {
+                return;
+            }
+
+            NotificationTarget sysAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(tenantId, UsersFilterType.SYSTEM_ADMINISTRATORS).stream()
+                    .findFirst().orElseGet(() -> {
+                        return createTarget(tenantId, "System administrators", new SystemAdministratorsFilter(), "All system administrators");
+                    });
+            NotificationTarget affectedTenantAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(tenantId, UsersFilterType.AFFECTED_TENANT_ADMINISTRATORS).stream()
+                    .findFirst().orElseGet(() -> {
+                        return createTarget(tenantId, "Affected tenant's administrators", new AffectedTenantAdministratorsFilter(), "");
+                    });
+
+            defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimits, affectedTenantAdmins.getId());
+            defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimitsForSysadmin, sysAdmins.getId());
+        }
     }
 
     private NotificationTarget createTarget(TenantId tenantId, String name, UsersFilter filter, String description) {

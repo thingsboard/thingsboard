@@ -881,11 +881,13 @@ public class DefaultTransportService implements TransportService {
             if (callback != null) {
                 callback.onError(new TbRateLimitsException(rateLimitedEntityType));
             }
-            notificationRuleProcessor.process(RateLimitsTrigger.builder()
-                    .tenantId(tenantId).api("transport messages")
-                    .limitLevel(rateLimitedEntityType == EntityType.DEVICE ? deviceId : tenantId)
-                    .limitLevelEntityName(rateLimitedEntityType == EntityType.DEVICE ? sessionInfo.getDeviceName() : null)
-                    .build());
+            if (rateLimitedEntityType == EntityType.DEVICE || rateLimitedEntityType == EntityType.TENANT) {
+                notificationRuleProcessor.process(RateLimitsTrigger.builder()
+                        .tenantId(tenantId).api("transport messages")
+                        .limitLevel(rateLimitedEntityType == EntityType.DEVICE ? deviceId : tenantId)
+                        .limitLevelEntityName(rateLimitedEntityType == EntityType.DEVICE ? sessionInfo.getDeviceName() : null)
+                        .build());
+            }
             return false;
         }
     }

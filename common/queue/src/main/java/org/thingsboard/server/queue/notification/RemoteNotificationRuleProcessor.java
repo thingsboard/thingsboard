@@ -47,7 +47,7 @@ public class RemoteNotificationRuleProcessor implements NotificationRuleProcesso
     @Override
     public void process(NotificationRuleTrigger trigger) {
         try {
-            log.trace("Submitting notification rule trigger: {}", trigger);
+            log.debug("Submitting notification rule trigger: {}", trigger);
             TransportProtos.NotificationRuleProcessorMsg.Builder msg = TransportProtos.NotificationRuleProcessorMsg.newBuilder()
                     .setTrigger(ByteString.copyFrom(encodingService.encode(trigger)));
 

@@ -264,6 +264,7 @@ public class ThingsboardInstallService {
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             installScripts.loadSystemLwm2mResources();
+                            systemDataLoaderService.updateDefaultNotificationConfigs();
                             break;
                         //TODO update CacheCleanupService on the next version upgrade
                         default:
