@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
+import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -713,6 +714,19 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.error("Failed updating schema!!!", e);
                 }
                 break;
+            case "3.5.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    if (isOldSchema(conn, 3005000)) {
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.0", SCHEMA_UPDATE_SQL);
+                        loadSql(schemaUpdateFile, conn);
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005001;");
+                    }
+                    log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
@@ -745,6 +759,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     }
 
     protected boolean isOldSchema(Connection conn, long fromVersion) {
+        if (DefaultDataUpdateService.getEnv("SKIP_SCHEMA_VERSION_CHECK", false)) {
+            log.info("Skipped DB schema version check due to SKIP_SCHEMA_VERSION_CHECK set to true!");
+            return true;
+        }
         boolean isOldSchema = true;
         try {
             Statement statement = conn.createStatement();

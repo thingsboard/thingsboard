@@ -55,7 +55,7 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         WidgetType widgetType = new WidgetType();
         widgetType.setName("Test Widget Type");
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-        ObjectNode descriptor = mapper.createObjectNode();
+        ObjectNode descriptor = JacksonUtil.newObjectNode();
         descriptor.put("key", "value");
         widgetType.setDescriptor(descriptor);
         WidgetType savedWidgetType = doPost("/api/widgetType", widgetType, WidgetType.class);

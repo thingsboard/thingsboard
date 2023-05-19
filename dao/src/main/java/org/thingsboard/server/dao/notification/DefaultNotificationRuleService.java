@@ -79,8 +79,8 @@ public class DefaultNotificationRuleService extends AbstractEntityService implem
     }
 
     @Override
-    public List<NotificationRule> findNotificationRulesByTenantIdAndTriggerType(TenantId tenantId, NotificationRuleTriggerType triggerType) {
-        return notificationRuleDao.findByTenantIdAndTriggerType(tenantId, triggerType);
+    public List<NotificationRule> findEnabledNotificationRulesByTenantIdAndTriggerType(TenantId tenantId, NotificationRuleTriggerType triggerType) {
+        return notificationRuleDao.findByTenantIdAndTriggerTypeAndEnabled(tenantId, triggerType, true);
     }
 
     @Override

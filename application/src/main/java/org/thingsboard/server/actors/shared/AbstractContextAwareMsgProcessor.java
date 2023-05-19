@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.actors.shared;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
@@ -25,8 +24,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 @Slf4j
 public abstract class AbstractContextAwareMsgProcessor {
-
-    protected final static ObjectMapper mapper = new ObjectMapper();
 
     protected final ActorSystemContext systemContext;
 
