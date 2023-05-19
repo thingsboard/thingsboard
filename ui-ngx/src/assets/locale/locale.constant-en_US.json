@@ -2959,6 +2959,8 @@
         "rule-engine-filter": "Rule engine filter",
         "rule-name": "Rule name",
         "rule-name-required": "Name is required",
+        "rule-disable": "Disable notification rule",
+        "rule-enable": "Enable notification rule",
         "rule-node-filter": "Rule node filter",
         "rules": "Rules",
         "notification-rules": "Notifications / Rules",
