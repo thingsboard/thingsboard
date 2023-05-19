@@ -424,7 +424,7 @@ export class EntityService {
         break;
       case EntityType.NOTIFICATION_TEMPLATE:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.notificationService.getNotificationTemplates(pageLink, null, config);
+        entitiesObservable = this.notificationService.getNotificationTemplates(pageLink, subType as NotificationType, config);
         break;
       case EntityType.NOTIFICATION_RULE:
         pageLink.sortOrder.property = 'name';

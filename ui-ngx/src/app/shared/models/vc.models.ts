@@ -36,11 +36,11 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.NOTIFICATION_RULE
 ];
 
-export const entityTypesWithNoRelatedData: Array<EntityType> = [
+export const entityTypesWithoutRelatedData: Set<EntityType> = new Set([
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
   EntityType.NOTIFICATION_RULE
-]
+]);
 
 export interface VersionCreateConfig {
   saveRelations: boolean;
