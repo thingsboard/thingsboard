@@ -180,6 +180,9 @@ import { DeviceGatewayCommandComponent } from '@shared/components/device/device-
 import { GatewayConfigurationComponent } from '@shared/components/device/gateway-configuration.component';
 import { GatewayRemoteConfigurationDialogComponent } from '@shared/components/dialog/gateway-remote-configuration-dialog';
 import { GatewayConnectorComponent } from '@shared/components/device/gateway-connectors.component';
+import { GatewayLogsComponent } from '@shared/components/device/gateway-logs.component';
+import { GatewayStatisticsComponent } from '@shared/components/device/gateway-statistics.component';
+import { GatewayServiceRPCComponent } from '@shared/components/device/gateway-service-rpc.component';
 
 export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService) => markedOptionsService;
 
@@ -247,6 +250,9 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     DeviceGatewayCommandComponent,
     GatewayConfigurationComponent,
     GatewayConnectorComponent,
+    GatewayLogsComponent,
+    GatewayStatisticsComponent,
+    GatewayServiceRPCComponent,
     GatewayRemoteConfigurationDialogComponent,
     TbCheckboxComponent,
     TbSnackBarComponent,
@@ -417,6 +423,9 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     DeviceGatewayCommandComponent,
     GatewayConfigurationComponent,
     GatewayConnectorComponent,
+    GatewayLogsComponent,
+    GatewayStatisticsComponent,
+    GatewayServiceRPCComponent,
     GatewayRemoteConfigurationDialogComponent,
     TbCheckboxComponent,
     TbErrorComponent,

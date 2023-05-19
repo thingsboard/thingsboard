@@ -1,0 +1,49 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-card fxLayout="row" class="command-form" fxLayoutGap="10px" [formGroup]="commandForm">
+  <mat-form-field class="mat-block tb-value-type">
+    <mat-label>Command</mat-label>
+    <mat-select formControlName="command" *ngIf="!isConnector">
+      <mat-option *ngFor="let command of RPCCommands" [value]="command">
+        {{command}}
+      </mat-option>
+    </mat-select>
+    <input matInput formControlName="command" *ngIf="isConnector"/>
+  </mat-form-field>
+  <mat-form-field class="mat-block tb-value-type" fxFlex *ngIf="!isConnector">
+    <mat-label>Time</mat-label>
+    <input matInput formControlName="time" type="number"/>
+  </mat-form-field>
+  <mat-form-field class="mat-block tb-value-type" fxFlex *ngIf="isConnector">
+    <mat-label>Parameters</mat-label>
+    <input matInput formControlName="params" type="JSON"/>
+    <mat-icon class="material-icons-outlined" aria-hidden="false" aria-label="help-icon"
+              matSuffix style="cursor:pointer;"
+              (click)="openEditJSONDialog($event)"
+              matTooltip="Edit params">edit
+    </mat-icon>
+  </mat-form-field>
+  <button mat-raised-button color="primary" (click)="sendCommand()"
+  [disabled]="commandForm.invalid">Send</button>
+</mat-card>
+<mat-card class="result-block" [formGroup]="commandForm" >
+  <span>Result</span>
+  <mat-divider></mat-divider>
+  <tb-json-content [contentType]="contentTypes.JSON" readonly="true" formControlName="result"></tb-json-content>
+</mat-card>
+

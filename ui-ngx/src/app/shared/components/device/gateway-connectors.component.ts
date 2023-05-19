@@ -14,26 +14,40 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, NgZone, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
-import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { AttributeService } from '@core/http/attribute.service';
 import { DeviceService } from '@core/http/device.service';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin } from 'rxjs';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { forkJoin, merge } from 'rxjs';
+import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { PageComponent } from "@shared/components/page.component";
+import { PageLink } from "@shared/models/page/page-link";
+import { AttributeDatasource } from "@home/models/datasource/attribute-datasource";
+import { Direction, SortOrder } from "@shared/models/page/sort-order";
+import { MatSort } from "@angular/material/sort";
+import { tap } from "rxjs/operators";
+import { TelemetryWebsocketService } from "@core/ws/telemetry-websocket.service";
+import { MatTableDataSource } from "@angular/material/table";
+import { GatewayLogLevel } from "@shared/components/device/gateway-configuration.component";
+import { ActionNotificationShow } from "@core/notification/notification.actions";
+import { DialogService } from '@app/core/services/dialog.service';
+import { updateEntityParams, WidgetContext } from "@home/models/widget-component.models";
+import { deepClone } from "@core/utils";
 
 
 export interface gatewayConnector {
   name: string;
   type: string;
-  configuration: string;
-  jsonConfiguration: string;
-  key: string;
+  configuration?: string;
+  configurationJson: string;
+  log_level: string;
+  key?: string;
 }
 
 @Component({
@@ -41,39 +55,58 @@ export interface gatewayConnector {
   templateUrl: './gateway-connectors.component.html',
   styleUrls: ['./gateway-connectors.component.scss']
 })
-export class GatewayConnectorComponent implements OnInit {
+export class GatewayConnectorComponent extends PageComponent implements AfterViewInit {
 
-  gatewayConnectorsGroup: FormGroup;
+  pageLink: PageLink;
+
+  attributeDataSource: AttributeDatasource;
+
+  dataSource: MatTableDataSource<AttributeData>
+
+  displayedColumns = ['enabled', 'key', 'type', 'actions'];
 
   gatewayConnectorDefaultTypes: Array<string> =
     ['mqtt',
-    'modbus',
-    'grpc',
-    'opcua',
-    'opcua_asyncio',
-    'ble',
-    'request',
-    'can',
-    'bacnet',
-    'odbc',
-    'rest',
-    'snmp',
-    'ftp',
-    'socket',
-    'xmpp',
-    'ocpp'
-  ];
+      'modbus',
+      'grpc',
+      'opcua',
+      'opcua_asyncio',
+      'ble',
+      'request',
+      'can',
+      'bacnet',
+      'odbc',
+      'rest',
+      'snmp',
+      'ftp',
+      'socket',
+      'xmpp',
+      'ocpp',
+      'custom'
+    ];
 
-  selectedConnector: number;
+  @Input()
+  ctx: WidgetContext;
 
   @Input()
   device: EntityId;
 
-  @Input()
-  dialogRef: MatDialogRef<any>;
+  @ViewChild('searchInput') searchInputField: ElementRef;
+  @ViewChild(MatSort) sort: MatSort;
 
-  logSelector: FormControl;
+  connectorForm: FormGroup;
 
+  viewsInited = false;
+
+  textSearchMode: boolean;
+
+  activeConnectors: Array<string>;
+
+  inactiveConnectors: Array<string>;
+
+  InitialActiveConnectors: Array<string>;
+
+  gatewayLogLevel = Object.values(GatewayLogLevel);
 
   constructor(protected router: Router,
               protected store: Store<AppState>,
@@ -81,111 +114,244 @@ export class GatewayConnectorComponent implements OnInit {
               protected translate: TranslateService,
               protected attributeService: AttributeService,
               protected deviceService: DeviceService,
+              protected dialogService: DialogService,
+              private telemetryWsService: TelemetryWebsocketService,
+              private zone: NgZone,
               private cd: ChangeDetectorRef,
               public dialog: MatDialog) {
+    super(store);
+    const sortOrder: SortOrder = {property: 'key', direction: Direction.ASC};
+    this.pageLink = new PageLink(1000, 0, null, sortOrder);
+    this.attributeDataSource = new AttributeDatasource(this.attributeService, this.telemetryWsService, this.zone, this.translate);
+    this.dataSource = new MatTableDataSource<AttributeData>([]);
+    this.connectorForm = this.fb.group({
+      name: ['', [Validators.required]],
+      type: ['', [Validators.required]],
+      log_level: ['', [Validators.required]],
+      key: ['auto'],
+      configurationJson: [{}, [Validators.required]]
+    })
+    this.connectorForm.disable();
   }
 
-  ngOnInit() {
-    this.gatewayConnectorsGroup = this.fb.group({
-      connectors: this.fb.array([], [Validators.required])
-    });
-    this.gatewayConnectorsGroup.valueChanges.subscribe(_=>{
-      this.cd.detectChanges();
-    });
-    this.getConnectorsData();
-  }
 
-  cancel(): void {
-    if (this.dialogRef) {
-      this.dialogRef.close();
+  initialConnector: gatewayConnector;
+
+  ngAfterViewInit() {
+    console.log(this.device)
+    merge(this.sort.sortChange)
+      .pipe(
+        tap(() => this.updateData())
+      )
+      .subscribe();
+
+    this.viewsInited = true;
+    if (this.device) {
+      forkJoin(this.attributeService.getEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, ['active_connectors']),
+        this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, ['inactive_connectors'])).subscribe(attributes => {
+        if (attributes.length) {
+          this.activeConnectors = attributes[0].length ? attributes[0][0].value : [];
+          this.inactiveConnectors = attributes[1].length ? attributes[1][0].value : [];
+          this.updateData(true);
+        } else {
+          this.activeConnectors = [];
+          this.inactiveConnectors = [];
+          this.updateData(true);
+        }
+      })
     }
   }
 
-  getConnectorsData(): void {
-    forkJoin([
-      this.attributeService.getEntityAttributes(this.device, AttributeScope.SHARED_SCOPE,['implementedConnectors']),
-      this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE,['implementedConnectors']),
-      this.attributeService.getEntityAttributes(this.device, AttributeScope.SHARED_SCOPE,['connectorTypes'])
-    ]).subscribe(attributes=>{
-      if (attributes[0].length) {
-        attributes[0][0].value.forEach(connector=>this.addConnector(true, connector));
+  saveConnector(): void {
+    const value = this.connectorForm.value;
+    if (value.type !== 'grpc') {
+      delete value.key;
+    }
+    value.configuration = `${value.type}.json`
+    const attributesToSave = [{
+      key: value.name,
+      value: value
+    }];
+    const attributesToDelete = [];
+    const scope = (this.activeConnectors.includes(value.name) || !this.initialConnector) ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
+    let updateActiveConnectors = false;
+    if (this.initialConnector && this.initialConnector.name !== value.name) {
+      attributesToDelete.push({key: this.initialConnector.name});
+      updateActiveConnectors = true;
+      const activeIndex = this.activeConnectors.indexOf(this.initialConnector.name);
+      const inactiveIndex = this.inactiveConnectors.indexOf(this.initialConnector.name);
+      if (activeIndex !== -1) this.activeConnectors.splice(activeIndex, 1);
+      if (inactiveIndex !== -1) this.inactiveConnectors.splice(activeIndex, 1);
+    }
+    if (!this.activeConnectors.includes(value.name) && scope == AttributeScope.SHARED_SCOPE) {
+      this.activeConnectors.push(value.name);
+      updateActiveConnectors = true;
+    }
+    if (!this.inactiveConnectors.includes(value.name) && scope == AttributeScope.SERVER_SCOPE) {
+      this.inactiveConnectors.push(value.name);
+      updateActiveConnectors = true;
+    }
+    const tasks = [this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributesToSave)];
+    if (updateActiveConnectors) {
+      tasks.push(this.attributeService.saveEntityAttributes(this.device, scope, [{
+        key: scope == AttributeScope.SHARED_SCOPE ? 'active_connectors' : 'inactive_connectors',
+        value: scope == AttributeScope.SHARED_SCOPE ? this.activeConnectors : this.inactiveConnectors
+      }]));
+    }
+
+    if (attributesToDelete.length) {
+      tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributesToDelete));
+    }
+    forkJoin(tasks).subscribe(resp => {
+      this.showToast("Update Successful")
+      this.updateData(true);
+    })
+  }
+
+  resetSortAndFilter(update: boolean = true) {
+    this.textSearchMode = false;
+    this.pageLink.textSearch = null;
+    if (this.viewsInited) {
+      const sortable = this.sort.sortables.get('key');
+      this.sort.active = sortable.id;
+      this.sort.direction = 'asc';
+      if (update) {
+        this.updateData(true);
       }
-      if (attributes[1].length) {
-        attributes[1][0].value.forEach(connector=>this.addConnector(false, connector));
-      }
-      if(attributes[2].length) {
-        attributes[1][0].value.forEach(type=> {
-          if (this.gatewayConnectorDefaultTypes.indexOf(type) === -1) {
-            this.gatewayConnectorDefaultTypes.push(type);
+    }
+  }
+
+  updateData(reload: boolean = false) {
+    this.pageLink.sortOrder.property = this.sort.active;
+    this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
+    this.attributeDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
+      this.dataSource.data = data.data.filter(value => this.activeConnectors.includes(value.key) || this.inactiveConnectors.includes(value.key));
+    });
+  }
+
+  addAttribute(): void {
+    if (this.connectorForm.disabled) {
+      this.connectorForm.enable();
+    }
+    this.clearOutConnectorForm();
+  }
+
+  clearOutConnectorForm(): void {
+    this.connectorForm.setValue({
+      name: '',
+      type: this.gatewayConnectorDefaultTypes[0],
+      log_level: GatewayLogLevel.info,
+      key: 'auto',
+      configurationJson: {}
+    })
+    this.initialConnector = null;
+    this.connectorForm.markAsPristine();
+  }
+
+  selectConnector(attribute): void {
+    if (this.connectorForm.disabled) {
+      this.connectorForm.enable();
+    }
+    const connector = attribute.value;
+    if (!connector.key) {
+      connector.key = 'auto';
+    }
+    if (connector.configuration) {
+      delete connector.configuration;
+    }
+    this.initialConnector = connector;
+    this.connectorForm.setValue(connector);
+  }
+
+  showToast(message: string) {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message,
+        type: 'success',
+        duration: 1000,
+        verticalPosition: 'top',
+        horizontalPosition: 'right',
+        target: 'dashboardRoot',
+        // panelClass: this.widgetNamespace,
+        forceDismiss: true
+      }));
+  }
+
+  deleteConnector(attribute: AttributeData, $event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const title = `Delete connector ${attribute.key}?`;
+    const content = `All connector data will be deleted.`;
+    this.dialogService.confirm(title, content, 'Cancel', 'Delete').subscribe(result => {
+      if (result) {
+        const tasks = [];
+        const scope = (this.activeConnectors.includes(attribute.key) || !this.initialConnector) ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
+        tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [attribute]));
+        const activeIndex = this.activeConnectors.indexOf(attribute.key);
+        const inactiveIndex = this.inactiveConnectors.indexOf(attribute.key);
+        if (activeIndex !== -1) this.activeConnectors.splice(activeIndex, 1);
+        if (inactiveIndex !== -1) this.inactiveConnectors.splice(activeIndex, 1);
+        tasks.push(this.attributeService.saveEntityAttributes(this.device, scope, [{
+          key: scope == AttributeScope.SHARED_SCOPE ? 'active_connectors' : 'inactive_connectors',
+          value: scope == AttributeScope.SHARED_SCOPE ? this.activeConnectors : this.inactiveConnectors
+        }]));
+        forkJoin(tasks).subscribe(resp=>{
+          if (this.initialConnector ? this.initialConnector.name === attribute.key: true) {
+            this.clearOutConnectorForm();
+            this.cd.detectChanges();
+            this.connectorForm.disable();
           }
-        });
+          this.updateData()
+        })
       }
-      this.cd.detectChanges();
-    });
+    })
   }
 
-  saveConnectors(): void {
-    const connectors = this.gatewayConnectorsGroup.value.connectors;
-    const activeConnectors = connectors.filter(connector=>connector.active);
-    const inactiveConnectors = connectors.filter(connector=>!connector.active);
-    forkJoin([
-      this.attributeService.saveEntityAttributes(this.device, AttributeScope.SERVER_SCOPE,
-        [{key: 'implementedConnectors', value: inactiveConnectors}]),
-      this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE,
-        [{key: 'implementedConnectors', value: activeConnectors}])
-    ]).subscribe(_=> {
-      if (this.dialogRef) {
-        this.dialogRef.close();
-      } else {
-        this.gatewayConnectorsGroup.markAsPristine();
-        this.cd.detectChanges();
-      }
-    });
+  connectorLogs(attribute: AttributeData, $event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    console.log(attribute);
+    const params = deepClone(this.ctx.stateController.getStateParams());
+    params.connector_logs = attribute;
+    params.targetEntityParamName = "connector_logs";
+    this.ctx.stateController.openState("connector_logs", params);
   }
 
-  connectorsFormArray(): FormArray {
-    return this.gatewayConnectorsGroup.get('connectors') as FormArray;
+  connectorRpc(attribute: AttributeData, $event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    console.log(attribute);
+    const params = deepClone(this.ctx.stateController.getStateParams());
+    params.connector_logs = attribute;
+    params.targetEntityParamName = "connector_rpc";
+    this.ctx.stateController.openState("connector_rpc", params);
   }
 
-  addConnector(active?: boolean,connector?: gatewayConnector)  {
-    const newConnector = this.fb.group({
-      active: [!!active],
-      name: [connector?.name || '', [Validators.required]],
-      type: [connector?.type || '', [Validators.required]],
-      configuration: [connector?.configuration || '', [Validators.required]],
-      jsonConfiguration: [connector?.jsonConfiguration || {}, [Validators.required]],
-      key: [connector?.key || 'auto', [Validators.required]],
-    });
-    const connectorsFormArray = this.connectorsFormArray();
-    connectorsFormArray.push(newConnector);
-    this.selectConnector(connectorsFormArray.length-1);
-  }
 
-  removeConnector(index: number): void {
-    this.connectorsFormArray().removeAt(index);
-    if (index !== 0) {
-      this.selectedConnector = index - 1;
+
+  enableConnector(attribute): void {
+    const wasEnabled = this.activeConnectors.includes(attribute.key);
+    if (wasEnabled) {
+      let index = this.activeConnectors.indexOf(attribute.key);
+      this.activeConnectors.splice(index, 1);
+      this.inactiveConnectors.push(attribute.key);
     } else {
-      this.selectedConnector = undefined;
+      let index = this.inactiveConnectors.indexOf(attribute.key);
+      this.inactiveConnectors.splice(index, 1);
+      this.activeConnectors.push(attribute.key);
     }
+    forkJoin([this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [{
+      key: 'active_connectors',
+      value: this.activeConnectors
+    }]), this.attributeService.saveEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, [{
+      key: 'inactive_connectors',
+      value: this.inactiveConnectors
+    }]),]).subscribe(resp => {
+      this.updateData();
+    })
   }
 
-  selectConnector(index: number): void {
-    this.selectedConnector = index;
-  }
-
-  getJsonControl(selectedConnector: number): FormControl {
-    return this.connectorsFormArray().at(selectedConnector).get('jsonConfiguration') as FormControl;
-  }
-
-  generatePanelTitle(connectorControl): string{
-    const connectorValues = connectorControl.value;
-    const activeTxt = this.translate.instant(connectorValues.active ? 'gateway.connectors-active' : 'gateway.connectors-inactive');
-    let title = `${connectorValues.name} | ${connectorValues.type} `;
-    if (connectorValues.type === 'grpc') {
-      title += `| ${connectorValues.key} `;
-    }
-    title += `| ${activeTxt}`;
-    return title;
-  }
 }

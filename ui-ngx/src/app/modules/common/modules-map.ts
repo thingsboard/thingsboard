@@ -300,6 +300,9 @@ import * as DeviceGatewayCommandComponent from '@shared/components/device/device
 import * as GatewayRemoteConfigurationDialogComponent from '@shared/components/dialog/gateway-remote-configuration-dialog';
 import * as GatewayConfigurationComponent from '@shared/components/device/gateway-configuration.component';
 import * as GatewayConnectorComponent from '@shared/components/device/gateway-connectors.component';
+import * as GatewayLogsComponent from '@shared/components/device/gateway-logs.component';
+import * as GatewayStatisticsComponent from '@shared/components/device/gateway-statistics.component';
+import * as GatewayServiceRPCComponent from '@shared/components/device/gateway-service-rpc.component';
 
 
 import { IModulesMap } from '@modules/common/modules-map.models';
@@ -406,6 +409,9 @@ class ModulesMap implements IModulesMap {
     '@shared/components/device/device-gateway-command.component': DeviceGatewayCommandComponent,
     '@shared/components/device/gateway-configuration.component': GatewayConfigurationComponent,
     '@shared/components/device/gateway-connectors.component': GatewayConnectorComponent,
+    '@shared/components/device/gateway-logs.component': GatewayLogsComponent,
+    '@shared/components/device/gateway-statistics.component': GatewayStatisticsComponent,
+    '@shared/components/device/gateway-service-rpc.component': GatewayServiceRPCComponent,
     '@shared/components/device/gateway-remote-configuration-dialog': GatewayRemoteConfigurationDialogComponent,
     '@shared/components/tb-checkbox.component': TbCheckboxComponent,
     '@shared/components/toast.directive': TbToast,

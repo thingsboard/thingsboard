@@ -1,0 +1,43 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="ActionButtonsSettingsForm" fxLayout="column">
+  <mat-form-field fxFlex class="mat-block">
+    <mat-label translate>widgets.action-buttons.button-type</mat-label>
+    <mat-select required formControlName="buttonsType">
+      <mat-option *ngFor="let type of buttonTypes" [value]="type">
+        {{type}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field fxFlex class="mat-block">
+    <mat-label translate>widgets.action-buttons.button-class</mat-label>
+    <mat-select required formControlName="buttonsClass">
+      <mat-option *ngFor="let class of buttonClasses" [value]="class">
+        {{class}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field fxFlex class="mat-block">
+    <mat-label translate>widgets.action-buttons.alignment</mat-label>
+    <mat-select required formControlName="alignment">
+      <mat-option *ngFor="let type of alignment" [value]="type">
+        {{type}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</section>

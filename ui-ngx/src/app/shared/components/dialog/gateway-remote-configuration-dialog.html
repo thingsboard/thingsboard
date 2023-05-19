@@ -28,7 +28,7 @@
   </mat-toolbar>
   <div mat-dialog-content tb-toast toastTarget="activationLinkDialogContent">
     <div class="mat-content" fxLayout="column">
-      <span innerHTML="{{'gateway.configuration-delete-dialog-body' | translate}}" > </span>
+      <span innerHTML="{{'gateway.configuration-delete-dialog-body' | translate}} <b>{{gatewayName}}</b>" > </span>
       <mat-form-field  class="mat-block tb-value-type" style="flex-grow: 0">
         <mat-label translate>gateway.configuration-delete-dialog-input</mat-label>
         <input matInput [formControl]="gatewayForm" required/>

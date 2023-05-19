@@ -18,6 +18,10 @@
   height: 100%;
   display: block;
 
+  .mat-icon {
+    color: rgba(0, 0, 0, .12);
+  }
+
   .mat-toolbar {
     background: transparent;
     color: rgba(0, 0, 0, .87) !important;
@@ -126,6 +130,12 @@
     }
   }
 
+  .statistics-block {
+    margin-bottom: 15px;
+    padding-left: 15px;
+    padding-top: 15px;
+  }
+
   .first-capital {
     text-transform: capitalize;
   }
@@ -146,6 +156,37 @@
     height: 100%;
     z-index: -10;
     border-radius: 5px;
+  }
+
+  ::ng-deep.pe {
+    pointer-events: all;
+  }
+
+  ::ng-deep.mat-mdc-form-field-icon-suffix {
+    z-index: 100;
+  }
+
+  mat-panel-title {
+    display: block;
+    padding-top: 20px;
+  }
+
+  mat-panel-title span {
+    display: block;
+    padding-left: 0;
+    padding-top: 5px;
+  }
+
+  .tb-hint {
+    font-size: 13px;
+    color: rgba(0, 0, 0, .54);
+    width: fit-content;
+    cursor: pointer;
+    text-transform: none!important;
+  }
+
+  .line-break {
+    width: 100%;
   }
 }
 

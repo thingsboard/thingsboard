@@ -17,6 +17,31 @@
   width: 100%;
   height: 100%;
   display: block;
+  overflow-x: auto;
+  padding: 0;
+
+  .connector-container {
+    width: 100%;
+
+    &>mat-card, &>div {
+      min-width: 50%;
+    }
+
+    mat-card {
+      margin: 10px;
+      padding: 10px;
+      max-width: 100%;
+    }
+  }
+
+  .tb-entity-table {
+    .tb-entity-table-content {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      overflow: hidden;
+    }
+  }
 
   .mat-toolbar {
     background: transparent;
@@ -24,7 +49,9 @@
   }
 
   .mat-mdc-form-field {
-    margin-right: 15px;
+    flex-grow: 1;
+    //min-width: 200px;
+    //flex-shrink: 1;
   }
 
   mat-expansion-panel {
@@ -54,6 +81,10 @@
 
   .action-btns {
     margin: 10px 10px 0;
+  }
+
+  mat-row {
+    cursor: pointer;
   }
 }
 

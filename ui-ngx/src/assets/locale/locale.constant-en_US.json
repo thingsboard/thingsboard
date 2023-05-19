@@ -2512,7 +2512,7 @@
         "create-new-gateway-text": "Are you sure you want create a new gateway with name: '{{gatewayName}}'?",
         "created-time": "Created time",
         "configuration-delete-dialog-header": "Configurations will be deleted",
-        "configuration-delete-dialog-body": "Turning off Remote Configuration is possible only if there is physical access to the Gateway. All previous configurations will be deleted.<br><br> \nTo turn off configuration, enter gateway name below.",
+        "configuration-delete-dialog-body": "Turning off Remote Configuration is possible only if there is physical access to the Gateway. All previous configurations will be deleted.<br><br> \nTo turn off configuration, enter gateway name below",
         "configuration-delete-dialog-input": "Gateway name",
         "configuration-delete-dialog-input-required": "Gateway name is mandatory",
         "configuration-delete-dialog-confirm": "Turn Off",
@@ -2609,6 +2609,7 @@
         "stats-send-period-in-sec": "Stats send period in seconds",
         "statistics": {
             "statistics": "Statistics",
+            "commands": "Commands",
             "send-period": "Statistic send period (in ms)",
             "send-period-required": "Statistic send period is required",
             "send-period-min": "Statistic send period can not be less then 0",
@@ -2689,7 +2690,45 @@
         "toggle-fullscreen": "Toggle fullscreen",
         "transformer-json-config": "Configuration JSON*",
         "update-config": "Add/update configuration JSON",
-        "windows": "Windows"
+        "windows": "Windows",
+        "hints": {
+            "remote-configuration": "Enables remote configuration and management of the gateway",
+            "remote-shell": "Enables remote control of the operating system with the gateway from the Remote Shell widget",
+            "host": "Hostname or ip address of ThingsBoard server",
+            "port": "Port of MQTT service on ThingsBoard server",
+            "token": "Access token for the gateway from ThingsBoard server",
+            "client-id": "MQTT client id for the gateway form ThingsBoard server",
+            "username": "MQTT username for the gateway form ThingsBoard server",
+            "password": "MQTT password for the gateway form ThingsBoard server",
+            "ca-cert": "Path to CA certificate file",
+            "cert": "Path to certificate file",
+            "private-key": "Path to private key file",
+            "date-form": "Date format of log message",
+            "log-format": "Log message format",
+            "remote-log": "Enables remote logging and logs reading from the gateway",
+            "backup-count": "If Backup count is > 0, when a rollover is done, no more than Backup count files are kept - the oldest ones are deleted",
+            "storage": "Provides configuration for saving incoming data before it is sent to the ThingsBoard platform",
+            "file": "Received data saving to the hard drive",
+            "memory": "Received data saving to the RAM memory",
+            "sqlite": "Received data saving to the .db file",
+            "data-folder": "Path to folder, that will contains data (Relative or Absolute)",
+            "max-file-count": "Maximum count of file that will be saved",
+            "max-read-count": "Count of messages to get from storage and send to ThingsBoard",
+            "max-records": "Maximum count of records that will be stored in one file",
+            "read-record-count": "Count of messages to get from storage and send to ThingsBoard",
+            "max-records-count": "Maximum count of data in storage before send to ThingsBoard",
+            "ttl-check-hour": "How often will Gateway check data for obsolescence",
+            "ttl-messages-day": "Maximum days that storage will save data",
+            "commands": "Commands for collecting additional statistic",
+            "attribute": "Gateway client attribute name",
+            "timeout": "Timeout for command executing",
+            "command": "The result of the command will be used as the value of the client attribute (\"/bin/sh -c ipconfig getifaddr en0\")",
+            "check-device-activity": "Enables monitor the activity of each connected device",
+            "inactivity-timeout": "Inactivity device time after whose the gateway will disconnect device",
+            "inactivity-period": "Periodicity of device activity check",
+            "minimal-pack-delay": "Delay between sending packets (Decreasing this setting results in increased CPU usage",
+            "qos": "Quality of Service in MQTT messaging (0 - at most once, 1 - at least once)"
+        }
     },
     "grid": {
         "delete-item-title": "Are you sure you want to delete this item?",
@@ -5247,6 +5286,11 @@
             "font-weight-lighter": "Lighter",
             "color": "Color",
             "shadow-color": "Shadow color"
+        },
+        "action-buttons": {
+            "button-type": "Button type",
+            "button-class": "Button class",
+            "alignment": "Buttons alignment"
         }
     },
     "icon": {
@@ -5273,7 +5317,8 @@
             "node-selected": "On node selected",
             "element-click": "On HTML element click",
             "pie-slice-click": "On slice click",
-            "row-double-click": "On row double click"
+            "row-double-click": "On row double click",
+            "action-button-click": "Action button click"
         }
     },
     "paginator" : {

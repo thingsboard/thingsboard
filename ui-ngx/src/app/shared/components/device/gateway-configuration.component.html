@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <h2 translate>gateway.gateway-configuration</h2>
     <span fxFlex></span>
-    <button  mat-icon-button
+    <button mat-icon-button
             type="button"
             (click)="cancel()"
             *ngIf="dialogRef">
@@ -34,13 +34,25 @@
             <div fxLayout="row wrap">
               <mat-slide-toggle color="primary" fxFlex="100" formControlName="remoteConfiguration">
                 {{ 'gateway.remote-configuration'  | translate }}
+                <mat-icon class="material-icons-outlined" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.remote-configuration' | translate }}">info
+                </mat-icon>
               </mat-slide-toggle>
               <mat-slide-toggle color="primary" fxFlex="100" formControlName="remoteShell">
                 {{ 'gateway.remote-shell' | translate }}
+                <mat-icon class="material-icons-outlined" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.remote-shell' | translate }}">info
+                </mat-icon>
               </mat-slide-toggle>
               <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                 <mat-label translate>gateway.thingsboard-host</mat-label>
                 <input matInput formControlName="host"/>
+                <mat-icon class="mat-form-field-infix pe"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.host' | translate }}">info_outlined
+                </mat-icon>
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.host').hasError('required')">
                   {{ 'gateway.thingsboard-host-required' | translate }}
                 </mat-error>
@@ -60,6 +72,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.port').hasError('pattern')">
                   {{'gateway.thingsboard-port-pattern' | translate }}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.port' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
 
             </div>
@@ -82,6 +98,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.accessToken').hasError('required')">
                   {{'security.access-token-required' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.token' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'usernamePassword'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -90,6 +110,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.clientId').hasError('required')">
                   {{'security.clientId-required' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.client-id' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'usernamePassword'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -98,6 +122,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.username').hasError('required')">
                   {{'security.username-required' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.username' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'usernamePassword'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -106,18 +134,24 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.password').hasError('required')">
                   {{'security.password-required' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.password' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <tb-file-input
                 fxFlex="100"
+                hint="{{'gateway.hints.ca-cert' | translate}}"
                 *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value.toLowerCase().includes('tls')"
                 formControlName="caCert"
-                label="{{'security.ca-cert-required' | translate}}"
+                label="{{'security.ca-cert' | translate}}"
                 [allowedExtensions]="'pem, cert, key'"
                 [accept]="'.pem, application/pem,.cert, application/cert, .key,application/key'"
                 dropLabel="{{'gateway.drop-file' | translate}}">
               </tb-file-input>
               <tb-file-input
                 fxFlex="100"
+                hint="{{'gateway.hints.cert' | translate}}"
                 *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'tlsPrivateKey'"
                 formControlName="cert"
                 label="{{'security.cert' | translate}}"
@@ -127,6 +161,7 @@
               </tb-file-input>
               <tb-file-input
                 fxFlex="100"
+                hint="{{'gateway.hints.private-key' | translate}}"
                 *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'tlsPrivateKey'"
                 formControlName="privateKey"
                 label="{{'security.private-key' | translate}}"
@@ -150,6 +185,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('logs.dateFormat').hasError('required')">
                   {{'gateway.logs.date-format-required' | translate }}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.date-form' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field fxFlex="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.logs.log-format</mat-label>
@@ -157,9 +196,14 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('logs.logFormat').hasError('required')">
                   {{'gateway.logs.log-format-required' | translate }}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.log-format' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <label fxFlex="100" class="logs-label" translate>gateway.logs.log-type</label>
-              <mat-button-toggle-group class="logs-toggle-group" #logging="matButtonToggleGroup" value="remote" style="margin-bottom: 15px">
+              <mat-button-toggle-group class="logs-toggle-group" #logging="matButtonToggleGroup" value="remote"
+                                       style="margin-bottom: 15px">
                 <mat-button-toggle value="remote"
                                    aria-label="Remote logging"> {{'gateway.logs.remote' | translate}}</mat-button-toggle>
                 <mat-button-toggle value="local"
@@ -168,6 +212,10 @@
               <div fxFlex="100" fxLayout="column" formGroupName="remote" *ngIf="logging.value === 'remote'">
                 <mat-slide-toggle color="primary" formControlName="enabled">
                   {{ 'gateway.logs.remote-logs'  | translate }}
+                  <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                            matSuffix style="cursor:pointer;"
+                            matTooltip="{{'gateway.hints.remote-log' | translate }}">info
+                  </mat-icon>
                 </mat-slide-toggle>
                 <mat-form-field class="mat-block tb-value-type">
                   <mat-label translate>gateway.logs.level</mat-label>
@@ -178,10 +226,10 @@
               </div>
               <div fxFlex="100" fxLayout="row wrap" formGroupName="local" *ngIf="logging.value === 'local'">
                 <mat-button-toggle-group class="security-toggle-group" [formControl]="logSelector" fxFlex="100"
-                                 name="logSelector">
-                  <mat-button-toggle *ngFor="let logConfig of localLogsConfigs" [value]="logConfig"
-                                    class="first-capital">
-                    {{ logConfig }}
+                                         name="logSelector">
+                  <mat-button-toggle *ngFor="let logConfig of localLogsConfigLabels| keyvalue" [value]="logConfig.key"
+                                     class="first-capital">
+                    {{ logConfig.value }}
                   </mat-button-toggle>
                 </mat-button-toggle-group>
                 <div fxFlex="100" fxLayout="row wrap" [formGroup]="getLogFormGroup(logSelector.value)">
@@ -230,6 +278,10 @@
                       *ngIf="gatewayConfigGroup.get('logs.local.' + logSelector.value + '.backupCount').hasError('min')">
                       {{'gateway.logs.backup-count-min' | translate }}
                     </mat-error>
+                    <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                              matSuffix style="cursor:pointer;"
+                              matTooltip="{{'gateway.hints.backup-count' | translate }}">info_outlined
+                    </mat-icon>
                   </mat-form-field>
                 </div>
               </div>
@@ -243,13 +295,20 @@
         <mat-accordion>
           <mat-expansion-panel expanded="true" disabled>
             <mat-expansion-panel-header>
-              <mat-panel-title translate class="expansion-panel-header">gateway.storage</mat-panel-title>
+              <mat-panel-title translate class="expansion-panel-header">gateway.storage
+                <span class="tb-hint" matTooltip="{{'gateway.hints.storage' | translate}}">Hint about storage</span>
+              </mat-panel-title>
             </mat-expansion-panel-header>
             <div fxLayout="row wrap">
-              <mat-button-toggle-group class="security-toggle-group" formControlName="type" fxFlex="100">
+              <mat-button-toggle-group fxLayout="row wrap" class="security-toggle-group" formControlName="type"
+                                       fxFlex="100">
                 <mat-button-toggle *ngFor="let storageType of storageTypes | keyvalue" [value]="storageType.key">
                   {{ storageType.value | translate }}
                 </mat-button-toggle>
+                <div class="line-break "></div>
+                <span class="tb-hint" style="padding-left: 0"
+                      matTooltip="{{'gateway.hints.'+gatewayConfigGroup.get('storage.type').value | translate}}">
+                  Hint about {{ gatewayConfigGroup.get('storage.type').value | translate }} storage</span>
               </mat-button-toggle-group>
               <mat-form-field *ngIf="gatewayConfigGroup.get('storage.type').value === 'memory'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -264,6 +323,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('storage.read_records_count').hasError('pattern')">
                   {{'gateway.storage-read-record-count-pattern' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.read-record-count' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('storage.type').value === 'memory'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -278,6 +341,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('storage.max_records_count').hasError('pattern')">
                   {{'gateway.storage-max-records-pattern' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.max-records-count' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('storage.type').value === 'file'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -286,6 +353,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('storage.data_folder_path').hasError('required')">
                   {{'gateway.storage-data-folder-path-required' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.data-folder' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('storage.type').value === 'file'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -300,6 +371,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('storage.max_file_count').hasError('pattern')">
                   {{'gateway.storage-max-files-pattern' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.max-file-count' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('storage.type').value === 'file'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -314,6 +389,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('storage.max_read_records_count').hasError('pattern')">
                   {{'gateway.storage-max-read-record-count-pattern' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.max-read-count' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('storage.type').value === 'file'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -328,6 +407,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('storage.max_records_per_file').hasError('pattern')">
                   {{'gateway.storage-max-records-pattern' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.max-records' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('storage.type').value === 'sqlite'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -336,6 +419,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('storage.data_file_path').hasError('required')">
                   {{'gateway.storage-path-required' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.data-folder' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('storage.type').value === 'sqlite'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -350,6 +437,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('storage.messages_ttl_check_in_hours').hasError('pattern')">
                   {{'gateway.messages-ttl-check-in-hours-pattern' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.ttl-check-hour' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field *ngIf="gatewayConfigGroup.get('storage.type').value === 'sqlite'"
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type" style="flex-grow: 0">
@@ -364,6 +455,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('storage.messages_ttl_in_days').hasError('pattern')">
                   {{'gateway.messages-ttl-in-days-pattern' | translate}}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.ttl-messages-day' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
             </div>
           </mat-expansion-panel>
@@ -491,33 +586,20 @@
                   {{'gateway.statistics.send-period-pattern' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
-                <mat-label translate>gateway.statistics.check-connectors-configuration</mat-label>
-                <input matInput formControlName="checkConnectorsConfigurationInSeconds" type="number"/>
-                <mat-error
-                  *ngIf="gatewayConfigGroup.get('thingsboard.statistics.checkConnectorsConfigurationInSeconds').hasError('required')">
-                  {{'gateway.statistics.check-connectors-configuration-required' | translate }}
-                </mat-error>
-                <mat-error
-                  *ngIf="gatewayConfigGroup.get('thingsboard.statistics.checkConnectorsConfigurationInSeconds').hasError('min')">
-                  {{'gateway.statistics.check-connectors-configuration-min' | translate }}
-                </mat-error>
-                <mat-error
-                  *ngIf="gatewayConfigGroup.get('thingsboard.statistics.checkConnectorsConfigurationInSeconds').hasError('pattern')">
-                  {{'gateway.statistics.check-connectors-configuration-pattern' | translate }}
-                </mat-error>
-              </mat-form-field>
             </div>
           </mat-expansion-panel>
           <mat-expansion-panel expanded="true" disabled>
             <mat-expansion-panel-header>
-              <mat-panel-title translate class="expansion-panel-header">gateway.statistics.statistics</mat-panel-title>
+              <mat-panel-title class="expansion-panel-header">{{"gateway.statistics.commands" |translate}}
+                <span class="tb-hint"
+                      matTooltip="{{'gateway.hints.commands' | translate}}"
+                >Hint about commands</span></mat-panel-title>
             </mat-expansion-panel-header>
             <div fxLayout="column" formGroupName="statistics">
               <div fxLayout="row" formArrayName="commands"
                    *ngFor="let commandControl of commandFormArray().controls; let $index = index"
                    style="margin-bottom: 15px">
-                <mat-card fxLayout="row wrap" style="margin-bottom: 15px" [formGroupName]="$index">
+                <mat-card fxLayout="row wrap" [formGroupName]="$index" class="statistics-block">
                   <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                     <mat-label translate>gateway.statistics.attribute-name</mat-label>
                     <input matInput formControlName="attributeName"/>
@@ -525,6 +607,10 @@
                       *ngIf="commandControl.get('attributeName').hasError('required')">
                       {{'gateway.statistics.attribute-name-required' | translate }}
                     </mat-error>
+                    <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                              matSuffix style="cursor:pointer;"
+                              matTooltip="{{'gateway.hints.attribute' | translate }}">info_outlined
+                    </mat-icon>
                   </mat-form-field>
                   <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                     <mat-label translate>gateway.statistics.timeout</mat-label>
@@ -541,6 +627,10 @@
                       *ngIf="commandControl.get('timeout').hasError('pattern')">
                       {{'gateway.statistics.timeout-pattern' | translate }}
                     </mat-error>
+                    <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                              matSuffix style="cursor:pointer;"
+                              matTooltip="{{'gateway.hints.timeout' | translate }}">info_outlined
+                    </mat-icon>
                   </mat-form-field>
                   <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type" style="flex-grow: 0">
                     <mat-label translate>gateway.statistics.command</mat-label>
@@ -549,6 +639,10 @@
                       *ngIf="commandControl.get('command').hasError('required')">
                       {{'gateway.statistics.command-required' | translate }}
                     </mat-error>
+                    <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                              matSuffix style="cursor:pointer;"
+                              matTooltip="{{'gateway.hints.command' | translate }}">info_outlined
+                    </mat-icon>
                   </mat-form-field>
                 </mat-card>
                 <button mat-icon-button (click)="removeCommandControl($index)"
@@ -574,12 +668,15 @@
     <mat-tab label="{{'gateway.other' | translate}}">
       <div formGroupName="thingsboard" fxLayout="column" class="mat-content mat-padding">
         <mat-accordion multi>
-          <mat-expansion-panel expanded="true"  disabled formGroupName="checkingDeviceActivity">
+          <mat-expansion-panel expanded="true" disabled formGroupName="checkingDeviceActivity">
             <mat-expansion-panel-header>
-              <mat-panel-title  class="expansion-panel-header">
+              <mat-panel-title class="expansion-panel-header">
                 <mat-slide-toggle color="primary" fxFlex="100" formControlName="checkDeviceInactivity">
                   {{ 'gateway.checking-device-activity'  | translate }}
                 </mat-slide-toggle>
+                <span class="tb-hint" style="padding-left: 40px; margin-top: -15px;"
+                      matTooltip="{{'gateway.hints.check-device-activity' | translate}}"
+                >Hint about checking activity</span>
               </mat-panel-title>
             </mat-expansion-panel-header>
             <div fxLayout="row wrap">
@@ -596,6 +693,10 @@
                   *ngIf="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.inactivityTimeoutSeconds').hasError('min')">
                   {{'gateway.inactivity-timeout-seconds-min' | translate }}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.inactivity-timeout' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field
                 *ngIf="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.checkDeviceInactivity').value"
@@ -610,10 +711,14 @@
                   *ngIf="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('min')">
                   {{'gateway.inactivity-check-period-seconds-min' | translate }}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.inactivity-period' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
             </div>
           </mat-expansion-panel>
-          <mat-expansion-panel expanded="true" disabled >
+          <mat-expansion-panel expanded="true" disabled>
             <mat-expansion-panel-header>
               <mat-panel-title translate class="expansion-panel-header">gateway.advanced</mat-panel-title>
             </mat-expansion-panel-header>
@@ -627,6 +732,10 @@
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.minPackSendDelayMS').hasError('min')">
                   {{ 'gateway.min-pack-send-delay-min' | translate }}
                 </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.minimal-pack-delay' | translate }}">info_outlined
+                </mat-icon>
               </mat-form-field>
               <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                 <mat-label translate>gateway.mqtt-qos</mat-label>
@@ -639,6 +748,26 @@
                 </mat-error>
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.qos').hasError('max')">
                   {{ 'gateway.mqtt-qos-range' | translate}}
+                </mat-error>
+                <mat-icon class="mat-form-field-infix pe" aria-hidden="false" aria-label="help-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.qos' | translate }}">info_outlined
+                </mat-icon>
+              </mat-form-field>
+              <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
+                <mat-label translate>gateway.statistics.check-connectors-configuration</mat-label>
+                <input matInput formControlName="checkConnectorsConfigurationInSeconds" type="number"/>
+                <mat-error
+                  *ngIf="gatewayConfigGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('required')">
+                  {{'gateway.statistics.check-connectors-configuration-required' | translate }}
+                </mat-error>
+                <mat-error
+                  *ngIf="gatewayConfigGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('min')">
+                  {{'gateway.statistics.check-connectors-configuration-min' | translate }}
+                </mat-error>
+                <mat-error
+                  *ngIf="gatewayConfigGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('pattern')">
+                  {{'gateway.statistics.check-connectors-configuration-pattern' | translate }}
                 </mat-error>
               </mat-form-field>
             </div>
@@ -661,7 +790,7 @@
             type="button"
             [disabled]="gatewayConfigGroup.invalid || !gatewayConfigGroup.dirty"
             cdkFocusInitial
-    (click)="saveConfig()">
+            (click)="saveConfig()">
       {{ 'action.save' | translate }}
     </button>
 

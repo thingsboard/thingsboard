@@ -1,0 +1,57 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<nav mat-tab-nav-bar [tabPanel]="tabPanel">
+  <a mat-tab-link *ngFor="let link of logLinks"
+     (click)="onTabChanged(link)"
+     [active]="activeLink.name == link.name"> {{link.name}} </a>
+</nav>
+<mat-tab-nav-panel #tabPanel></mat-tab-nav-panel>
+<table mat-table [dataSource]="dataSource"
+       matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
+       matSortDisableClear>
+  <ng-container matColumnDef="ts">
+    <mat-header-cell *matHeaderCellDef mat-sort-header> Created time</mat-header-cell>
+    <mat-cell *matCellDef="let attribute">
+      {{ attribute.ts | date:'yyyy-MM-dd HH:mm:ss'}}
+    </mat-cell>
+  </ng-container>
+  <ng-container matColumnDef="status">
+    <mat-header-cell *matHeaderCellDef mat-sort-header> Status</mat-header-cell>
+    <mat-cell *matCellDef="let attribute">
+      <span [ngClass]="statusClass(attribute.status )">{{ attribute.status }}</span>
+    </mat-cell>
+  </ng-container>
+  <ng-container matColumnDef="message">
+    <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 70%">Message</mat-header-cell>
+    <mat-cell *matCellDef="let attribute" [ngClass]="statusClassMsg(attribute.status )">
+      {{ attribute.message }}
+    </mat-cell>
+  </ng-container>
+  <mat-header-row [ngClass]="{'mat-row-select': true}"
+                  *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+  <mat-row [ngClass]="{'mat-row-select': true}"
+           *matRowDef="let attribute; columns: displayedColumns;"></mat-row>
+  <!--        <ng-container matColumnDef="lastUpdateTs">-->
+  <!--          <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 150px; max-width: 150px; width: 150px;"> {{ 'attribute.last-update-time' | translate }} </mat-header-cell>-->
+  <!--          <mat-cell *matCellDef="let attribute">-->
+  <!--            {{ attribute.lastUpdateTs | date:'yyyy-MM-dd HH:mm:ss' }}-->
+  <!--          </mat-cell>-->
+  <!--        </ng-container>-->
+</table>
+<mat-divider></mat-divider>
+

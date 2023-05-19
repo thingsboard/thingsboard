@@ -259,6 +259,16 @@ import {
 import {
   TripAnimationPointSettingsComponent
 } from '@home/components/widget/lib/settings/map/trip-animation-point-settings.component';
+import {
+  ActionButtonsWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/action-buttons-widget-settings.component';
+import {
+  GatewayLogsSettingsComponent
+} from '@home/components/widget/lib/settings/gateway/gateway-logs-settings.component';
+import {
+  GatewayServiceRPCSettingsComponent
+} from '@home/components/widget/lib/settings/gateway/gateway-service-rpc-settings.component';
+
 
 @NgModule({
   declarations: [
@@ -357,7 +367,10 @@ import {
     TripAnimationPointSettingsComponent,
     MapWidgetSettingsComponent,
     RouteMapWidgetSettingsComponent,
-    TripAnimationWidgetSettingsComponent
+    TripAnimationWidgetSettingsComponent,
+    ActionButtonsWidgetSettingsComponent,
+    GatewayLogsSettingsComponent,
+    GatewayServiceRPCSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -460,7 +473,10 @@ import {
     TripAnimationPointSettingsComponent,
     MapWidgetSettingsComponent,
     RouteMapWidgetSettingsComponent,
-    TripAnimationWidgetSettingsComponent
+    TripAnimationWidgetSettingsComponent,
+    ActionButtonsWidgetSettingsComponent,
+    GatewayLogsSettingsComponent,
+    GatewayServiceRPCSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -527,5 +543,8 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-update-multiple-attributes-key-settings': UpdateMultipleAttributesKeySettingsComponent,
   'tb-map-widget-settings': MapWidgetSettingsComponent,
   'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
-  'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent
+  'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent,
+  'tb-action-buttons-widget-settings': ActionButtonsWidgetSettingsComponent,
+  'tb-gateway-logs-settings': GatewayLogsSettingsComponent,
+  'tb-gateway-service-rpc-settings':GatewayServiceRPCSettingsComponent
 };
