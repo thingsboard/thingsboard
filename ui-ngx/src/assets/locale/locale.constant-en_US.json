@@ -807,7 +807,8 @@
         "type-provision-success": "Device provisioned",
         "type-provision-failure": "Device provisioning was failed",
         "type-timeseries-updated": "Telemetry updated",
-        "type-timeseries-deleted": "Telemetry deleted"
+        "type-timeseries-deleted": "Telemetry deleted",
+        "type-sms-sent": "SMS sent"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -2960,6 +2961,8 @@
         "rule-engine-filter": "Rule engine filter",
         "rule-name": "Rule name",
         "rule-name-required": "Name is required",
+        "rule-disable": "Disable notification rule",
+        "rule-enable": "Enable notification rule",
         "rule-node-filter": "Rule node filter",
         "rules": "Rules",
         "notification-rules": "Notifications / Rules",

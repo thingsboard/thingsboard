@@ -816,6 +816,7 @@ CREATE TABLE IF NOT EXISTS notification_rule (
     created_time BIGINT NOT NULL,
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT true,
     template_id UUID NOT NULL CONSTRAINT fk_notification_rule_template_id REFERENCES notification_template(id),
     trigger_type VARCHAR(50) NOT NULL,
     trigger_config VARCHAR(1000) NOT NULL,

@@ -97,7 +97,7 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
         TenantId tenantId = triggerType.isTenantLevel() ? trigger.getTenantId() : TenantId.SYS_TENANT_ID;
 
         try {
-            List<NotificationRule> rules = notificationRulesCache.get(tenantId, triggerType);
+            List<NotificationRule> rules = notificationRulesCache.getEnabled(tenantId, triggerType);
             for (NotificationRule rule : rules) {
                 notificationExecutor.submit(() -> {
                     try {

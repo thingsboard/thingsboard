@@ -249,22 +249,22 @@ public class ThingsboardInstallService {
                         case "3.4.4":
                             log.info("Upgrading ThingsBoard from version 3.4.4 to 3.5.0 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.4.4");
-                            entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
-                            entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                             if (!getEnv("SKIP_DEFAULT_NOTIFICATION_CONFIGS_CREATION", false)) {
                                 systemDataLoaderService.createDefaultNotificationConfigs();
                             } else {
                                 log.info("Skipping default notification configs creation");
                             }
-                            installScripts.loadSystemLwm2mResources();
                         case "3.5.0":
                             log.info("Upgrading ThingsBoard from version 3.5.0 to 3.5.1 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.5.0");
                             dataUpdateService.updateData("3.5.0");
+                            entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
+                            entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
-                            //TODO update CacheCleanupService on the next version upgrade
+                            installScripts.loadSystemLwm2mResources();
                             break;
+                        //TODO update CacheCleanupService on the next version upgrade
                         default:
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
 

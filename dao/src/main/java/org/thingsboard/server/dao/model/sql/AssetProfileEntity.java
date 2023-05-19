@@ -34,7 +34,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.ASSET_PROFILE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.ASSET_PROFILE_TABLE_NAME)
 public final class AssetProfileEntity extends BaseSqlEntity<AssetProfile> implements SearchTextEntity<AssetProfile> {
 
     @Column(name = ModelConstants.ASSET_PROFILE_TENANT_ID_PROPERTY)
