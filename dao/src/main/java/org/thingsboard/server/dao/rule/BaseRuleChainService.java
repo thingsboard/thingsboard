@@ -199,10 +199,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                         int toVersion = tbVersionedNode.getCurrentVersion();
                         if (fromVersion < toVersion) {
                             log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
-                                    ruleNodeId,
-                                    ruleNodeType,
-                                    fromVersion,
-                                    toVersion);
+                                    ruleNodeId, ruleNodeType, fromVersion, toVersion);
                             try {
                                 TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(fromVersion, node.getConfiguration());
                                 if (upgradeResult.getFirst()) {
@@ -210,33 +207,19 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                                 }
                                 node.setConfigurationVersion(toVersion);
                                 log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
-                                        ruleNodeId,
-                                        ruleNodeType,
-                                        ruleChainId,
-                                        fromVersion,
-                                        toVersion);
+                                        ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
                             } catch (TbNodeException e) {
                                 log.warn("Failed to upgrade rule node with id: {} type: {} rule chain id: {} fromVersion: {} toVersion: {} due to: ",
-                                        ruleNodeId,
-                                        ruleNodeType,
-                                        ruleChainId,
-                                        fromVersion,
-                                        toVersion,
-                                        e);
+                                        ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion, e);
                             }
                         } else {
                             log.debug("Rule node with id: {} type: {} ruleChainId: {} already set to latest version!",
-                                    ruleNodeId,
-                                    ruleChainId,
-                                    ruleNodeType);
+                                    ruleNodeId, ruleChainId, ruleNodeType);
                         }
                     }
-                } catch (ClassNotFoundException |
-                         InvocationTargetException |
-                         InstantiationException |
-                         IllegalAccessException |
-                         NoSuchMethodException e) {
-                    log.error("Failed to create instance of rule node with id: {} type: {}, rule chain id: {}", ruleNodeId, ruleNodeType, ruleChainId);
+                } catch (Exception e) {
+                    log.error("Failed to create instance of rule node with id: {} type: {}, rule chain id: {}",
+                            ruleNodeId, ruleNodeType, ruleChainId);
                 }
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
