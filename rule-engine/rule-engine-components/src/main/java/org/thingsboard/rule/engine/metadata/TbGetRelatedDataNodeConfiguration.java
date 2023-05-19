@@ -27,16 +27,16 @@ import java.util.HashMap;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class TbGetRelatedAttrNodeConfiguration extends TbGetEntityAttrNodeConfiguration {
+public class TbGetRelatedDataNodeConfiguration extends TbGetEntityDataNodeConfiguration {
 
     private RelationsQuery relationsQuery;
 
     @Override
-    public TbGetRelatedAttrNodeConfiguration defaultConfiguration() {
-        var configuration = new TbGetRelatedAttrNodeConfiguration();
-        var attrMapping = new HashMap<String, String>();
-        attrMapping.putIfAbsent("serialNumber", "sn");
-        configuration.setAttrMapping(attrMapping);
+    public TbGetRelatedDataNodeConfiguration defaultConfiguration() {
+        var configuration = new TbGetRelatedDataNodeConfiguration();
+        var dataMapping = new HashMap<String, String>();
+        dataMapping.putIfAbsent("serialNumber", "sn");
+        configuration.setDataMapping(dataMapping);
         configuration.setDataToFetch(DataToFetch.ATTRIBUTES);
         configuration.setFetchTo(FetchTo.METADATA);
 

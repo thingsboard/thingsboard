@@ -35,7 +35,7 @@ import java.util.Arrays;
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "related attributes",
-        configClazz = TbGetRelatedAttrNodeConfiguration.class,
+        configClazz = TbGetRelatedDataNodeConfiguration.class,
         nodeDescription = "Add Originators Related Entity Attributes or Latest Telemetry into Message Metadata/Data",
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
                 "If multiple Related Entities are found, only first Entity is used for attributes enrichment, other entities are discarded. " +
@@ -45,21 +45,21 @@ import java.util.Arrays;
                 "<code>metadata.temperature</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeRelatedAttributesConfig")
-public class TbGetRelatedAttributeNode extends TbAbstractGetEntityAttrNode<EntityId> {
+public class TbGetRelatedAttributeNode extends TbAbstractGetEntityDataNode<EntityId> {
 
     private static final String RELATED_ENTITY_NOT_FOUND_MESSAGE = "Failed to find related entity to message originator using relation query specified in the configuration!";
 
     @Override
-    public TbGetRelatedAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        var config = TbNodeUtils.convert(configuration, TbGetRelatedAttrNodeConfiguration.class);
-        checkIfMappingIsNotEmptyOrElseThrow(config.getAttrMapping());
+    public TbGetRelatedDataNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbGetRelatedDataNodeConfiguration.class);
+        checkIfMappingIsNotEmptyOrElseThrow(config.getDataMapping());
         checkDataToFetchSupportedOrElseThrow(config.getDataToFetch());
         return config;
     }
 
     @Override
     public ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
-        var relatedAttrConfig = (TbGetRelatedAttrNodeConfiguration) config;
+        var relatedAttrConfig = (TbGetRelatedDataNodeConfiguration) config;
         return Futures.transformAsync(
                 EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, relatedAttrConfig.getRelationsQuery()),
                 checkIfEntityIsPresentOrThrow(RELATED_ENTITY_NOT_FOUND_MESSAGE),

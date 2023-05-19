@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.util.TbPair;
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "customer attributes",
-        configClazz = TbGetEntityAttrNodeConfiguration.class,
+        configClazz = TbGetEntityDataNodeConfiguration.class,
         nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message or Metadata",
         nodeDetails = "Enrich the Message or Metadata with the corresponding customer's latest attributes or telemetry value. " +
                 "The customer is selected based on the originator of the message: device, asset, etc. " +
@@ -42,14 +42,14 @@ import org.thingsboard.server.common.data.util.TbPair;
                 "Useful when you store some parameters on the customer level and would like to use them for message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
-public class TbGetCustomerAttributeNode extends TbAbstractGetEntityAttrNode<CustomerId> {
+public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<CustomerId> {
 
     private static final String CUSTOMER_NOT_FOUND_MESSAGE = "Failed to find customer for entity with id %s and type %s";
 
     @Override
-    protected TbGetEntityAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        var config = TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
-        checkIfMappingIsNotEmptyOrElseThrow(config.getAttrMapping());
+    protected TbGetEntityDataNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbGetEntityDataNodeConfiguration.class);
+        checkIfMappingIsNotEmptyOrElseThrow(config.getDataMapping());
         checkDataToFetchSupportedOrElseThrow(config.getDataToFetch());
         return config;
     }

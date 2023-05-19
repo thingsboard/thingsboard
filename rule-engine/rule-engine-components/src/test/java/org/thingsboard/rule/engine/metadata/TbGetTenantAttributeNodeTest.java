@@ -93,14 +93,14 @@ public class TbGetTenantAttributeNodeTest {
     @Mock
     private TimeseriesService timeseriesServiceMock;
     private TbGetTenantAttributeNode node;
-    private TbGetEntityAttrNodeConfiguration config;
+    private TbGetEntityDataNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
     private TbMsg msg;
 
     @BeforeEach
     public void setUp() {
         node = new TbGetTenantAttributeNode();
-        config = new TbGetEntityAttrNodeConfiguration().defaultConfiguration();
+        config = new TbGetEntityDataNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
     }
 
@@ -155,7 +155,7 @@ public class TbGetTenantAttributeNodeTest {
 
         // THEN
         assertThat(node.config).isEqualTo(config);
-        assertThat(config.getAttrMapping()).isEqualTo(Map.of("alarmThreshold", "threshold"));
+        assertThat(config.getDataMapping()).isEqualTo(Map.of("alarmThreshold", "threshold"));
         assertThat(config.getDataToFetch()).isEqualTo(DataToFetch.ATTRIBUTES);
         assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
     }
@@ -163,7 +163,7 @@ public class TbGetTenantAttributeNodeTest {
     @Test
     public void givenCustomConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
-        config.setAttrMapping(Map.of(
+        config.setDataMapping(Map.of(
                 "sourceAttr1", "targetKey1",
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
@@ -176,7 +176,7 @@ public class TbGetTenantAttributeNodeTest {
 
         // THEN
         assertThat(node.config).isEqualTo(config);
-        assertThat(config.getAttrMapping()).isEqualTo(Map.of(
+        assertThat(config.getDataMapping()).isEqualTo(Map.of(
                 "sourceAttr1", "targetKey1",
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
@@ -189,7 +189,7 @@ public class TbGetTenantAttributeNodeTest {
         // GIVEN
         var expectedExceptionMessage = "At least one mapping entry should be specified!";
 
-        config.setAttrMapping(Collections.emptyMap());
+        config.setDataMapping(Collections.emptyMap());
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
@@ -386,7 +386,7 @@ public class TbGetTenantAttributeNodeTest {
 
     @Test
     public void givenOldConfig_whenUpgrade_thenShouldReturnSuccessResult() throws Exception {
-        var defaultConfig = new TbGetEntityAttrNodeConfiguration().defaultConfiguration();
+        var defaultConfig = new TbGetEntityDataNodeConfiguration().defaultConfiguration();
         var node = new TbGetTenantAttributeNode();
         String oldConfig = "{\"attrMapping\":{\"alarmThreshold\":\"threshold\"},\"telemetry\":false}";
         JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
@@ -396,7 +396,7 @@ public class TbGetTenantAttributeNodeTest {
     }
 
     private void prepareMsgAndConfig(FetchTo fetchTo, DataToFetch dataToFetch, EntityId originator) {
-        config.setAttrMapping(Map.of(
+        config.setDataMapping(Map.of(
                 "sourceKey1", "targetKey1",
                 "${metaDataPattern1}", "$[messageBodyPattern1]",
                 "$[messageBodyPattern2]", "${metaDataPattern2}"));

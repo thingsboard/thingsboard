@@ -20,21 +20,19 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 import java.util.HashMap;
-import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class TbGetEntityAttrNodeConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbGetEntityAttrNodeConfiguration> {
+public class TbGetEntityDataNodeConfiguration extends TbGetMappedDataNodeConfiguration implements NodeConfiguration<TbGetEntityDataNodeConfiguration> {
 
-    private Map<String, String> attrMapping;
     private DataToFetch dataToFetch;
 
     @Override
-    public TbGetEntityAttrNodeConfiguration defaultConfiguration() {
-        var configuration = new TbGetEntityAttrNodeConfiguration();
-        var attrMapping = new HashMap<String, String>();
-        attrMapping.putIfAbsent("alarmThreshold", "threshold");
-        configuration.setAttrMapping(attrMapping);
+    public TbGetEntityDataNodeConfiguration defaultConfiguration() {
+        var configuration = new TbGetEntityDataNodeConfiguration();
+        var dataMapping = new HashMap<String, String>();
+        dataMapping.putIfAbsent("alarmThreshold", "threshold");
+        configuration.setDataMapping(dataMapping);
         configuration.setDataToFetch(DataToFetch.ATTRIBUTES);
         configuration.setFetchTo(FetchTo.METADATA);
         return configuration;

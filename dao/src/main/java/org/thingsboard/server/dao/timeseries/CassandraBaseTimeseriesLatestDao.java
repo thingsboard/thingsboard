@@ -75,7 +75,7 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
         try {
             return findLatest(tenantId, entityId, key, rs -> convertResultToTsKvEntry(key, rs.one())).get();
         } catch (InterruptedException | ExecutionException e) {
-            log.error("[{}][{}] Failed to get latest entry for key: {}", tenantId, entityId, key, e);
+            log.error("[{}][{}] Failed to get latest entry for key: {} due to: ", tenantId, entityId, key, e);
             throw new RuntimeException(e);
         }
     }

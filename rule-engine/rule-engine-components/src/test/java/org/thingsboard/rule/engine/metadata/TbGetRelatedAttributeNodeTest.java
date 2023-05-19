@@ -34,9 +34,21 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.data.RelationsQuery;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -54,7 +66,12 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -102,7 +119,7 @@ public class TbGetRelatedAttributeNodeTest {
     @Mock
     private DeviceService deviceServiceMock;
     private TbGetRelatedAttributeNode node;
-    private TbGetRelatedAttrNodeConfiguration config;
+    private TbGetRelatedDataNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
     private EntityRelation entityRelation;
     private TbMsg msg;
@@ -110,7 +127,7 @@ public class TbGetRelatedAttributeNodeTest {
     @BeforeEach
     public void setUp() {
         node = new TbGetRelatedAttributeNode();
-        config = new TbGetRelatedAttrNodeConfiguration().defaultConfiguration();
+        config = new TbGetRelatedDataNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         entityRelation = new EntityRelation();
     }
@@ -151,9 +168,9 @@ public class TbGetRelatedAttributeNodeTest {
         node.init(ctxMock, nodeConfiguration);
 
         // THEN
-        var nodeConfig = (TbGetRelatedAttrNodeConfiguration) node.config;
+        var nodeConfig = (TbGetRelatedDataNodeConfiguration) node.config;
         assertThat(nodeConfig).isEqualTo(config);
-        assertThat(nodeConfig.getAttrMapping()).isEqualTo(Map.of("serialNumber", "sn"));
+        assertThat(nodeConfig.getDataMapping()).isEqualTo(Map.of("serialNumber", "sn"));
         assertThat(nodeConfig.getDataToFetch()).isEqualTo(DataToFetch.ATTRIBUTES);
         assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
 
@@ -169,7 +186,7 @@ public class TbGetRelatedAttributeNodeTest {
     @Test
     public void givenCustomConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
-        config.setAttrMapping(Map.of(
+        config.setDataMapping(Map.of(
                 "sourceAttr1", "targetKey1",
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
@@ -189,9 +206,9 @@ public class TbGetRelatedAttributeNodeTest {
         node.init(ctxMock, nodeConfiguration);
 
         // THEN
-        var nodeConfig = (TbGetRelatedAttrNodeConfiguration) node.config;
+        var nodeConfig = (TbGetRelatedDataNodeConfiguration) node.config;
         assertThat(nodeConfig).isEqualTo(config);
-        assertThat(nodeConfig.getAttrMapping()).isEqualTo(Map.of(
+        assertThat(nodeConfig.getDataMapping()).isEqualTo(Map.of(
                 "sourceAttr1", "targetKey1",
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"
@@ -206,7 +223,7 @@ public class TbGetRelatedAttributeNodeTest {
         // GIVEN
         var expectedExceptionMessage = "At least one mapping entry should be specified!";
 
-        config.setAttrMapping(Collections.emptyMap());
+        config.setDataMapping(Collections.emptyMap());
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
@@ -553,7 +570,7 @@ public class TbGetRelatedAttributeNodeTest {
 
     @Test
     public void givenOldConfig_whenUpgrade_thenShouldReturnSuccessResult() throws Exception {
-        var defaultConfig = new TbGetRelatedAttrNodeConfiguration().defaultConfiguration();
+        var defaultConfig = new TbGetRelatedDataNodeConfiguration().defaultConfiguration();
         var node = new TbGetRelatedAttributeNode();
         String oldConfig = "{\"attrMapping\":{\"serialNumber\":\"sn\"}," +
                 "\"relationsQuery\":{\"direction\":\"FROM\",\"maxLevel\":1," +
@@ -575,13 +592,13 @@ public class TbGetRelatedAttributeNodeTest {
         var msgMetaData = new TbMsgMetaData();
         String msgData;
         if (dataToFetch.equals(DataToFetch.FIELDS)) {
-            config.setAttrMapping(Map.of(
+            config.setDataMapping(Map.of(
                     "id", "$[messageBodyPattern]",
                     "name", "${metaDataPattern}"));
             msgMetaData.putValue("metaDataPattern", "relatedEntityName");
             msgData = "{\"temp\":42,\"humidity\":77,\"messageBodyPattern\":\"relatedEntityId\"}";
         } else {
-            config.setAttrMapping(Map.of(
+            config.setDataMapping(Map.of(
                     "sourceKey1", "targetKey1",
                     "${metaDataPattern1}", "$[messageBodyPattern1]",
                     "$[messageBodyPattern2]", "${metaDataPattern2}"));

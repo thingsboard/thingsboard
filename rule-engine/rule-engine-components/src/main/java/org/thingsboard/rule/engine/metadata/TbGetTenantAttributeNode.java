@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.util.TbPair;
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "tenant attributes",
-        configClazz = TbGetEntityAttrNodeConfiguration.class,
+        configClazz = TbGetEntityDataNodeConfiguration.class,
         nodeDescription = "Add Originators Tenant Attributes or Latest Telemetry into Message Metadata/Data",
         nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message Metadata/Data. " +
                 "If Latest Telemetry enrichment configured, latest telemetry added into Metadata/Data. " +
@@ -41,12 +41,12 @@ import org.thingsboard.server.common.data.util.TbPair;
                 "<code>metadata.temperature</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeTenantAttributesConfig")
-public class TbGetTenantAttributeNode extends TbAbstractGetEntityAttrNode<TenantId> {
+public class TbGetTenantAttributeNode extends TbAbstractGetEntityDataNode<TenantId> {
 
     @Override
-    public TbGetEntityAttrNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        var config = TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
-        checkIfMappingIsNotEmptyOrElseThrow(config.getAttrMapping());
+    public TbGetEntityDataNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbGetEntityDataNodeConfiguration.class);
+        checkIfMappingIsNotEmptyOrElseThrow(config.getDataMapping());
         checkDataToFetchSupportedOrElseThrow(config.getDataToFetch());
         return config;
     }

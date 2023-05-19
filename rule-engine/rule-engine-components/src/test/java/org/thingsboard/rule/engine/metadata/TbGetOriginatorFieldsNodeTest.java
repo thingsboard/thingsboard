@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -111,7 +112,7 @@ public class TbGetOriginatorFieldsNodeTest {
 
         // THEN
         assertThat(node.config).isEqualTo(config);
-        assertThat(config.getFieldsMapping()).isEqualTo(Map.of(
+        assertThat(config.getDataMapping()).isEqualTo(Map.of(
                 "name", "originatorName",
                 "type", "originatorType"));
         assertThat(config.isIgnoreNullStrings()).isEqualTo(false);
@@ -122,7 +123,7 @@ public class TbGetOriginatorFieldsNodeTest {
     @Test
     public void givenCustomConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
-        config.setFieldsMapping(Map.of(
+        config.setDataMapping(Map.of(
                 "email", "originatorEmail",
                 "title", "originatorTitle",
                 "country", "originatorCountry"));
@@ -135,7 +136,7 @@ public class TbGetOriginatorFieldsNodeTest {
 
         // THEN
         assertThat(node.config).isEqualTo(config);
-        assertThat(config.getFieldsMapping()).isEqualTo(Map.of(
+        assertThat(config.getDataMapping()).isEqualTo(Map.of(
                 "email", "originatorEmail",
                 "title", "originatorTitle",
                 "country", "originatorCountry"));
@@ -159,14 +160,14 @@ public class TbGetOriginatorFieldsNodeTest {
     }
 
     @Test
-    public void givenValidMsgAndFetchToData_whenOnMsg_thenShouldTellSuccessAndFetchToData() {
+    public void givenValidMsgAndFetchToData_whenOnMsg_thenShouldTellSuccessAndFetchToData() throws TbNodeException, ExecutionException, InterruptedException {
         // GIVEN
         var device = new Device();
         device.setId(DUMMY_DEVICE_ORIGINATOR);
         device.setName("Test device");
         device.setType("Test device type");
 
-        config.setFieldsMapping(Map.of(
+        config.setDataMapping(Map.of(
                 "name", "originatorName",
                 "type", "originatorType",
                 "label", "originatorLabel"));
@@ -200,14 +201,14 @@ public class TbGetOriginatorFieldsNodeTest {
     }
 
     @Test
-    public void givenValidMsgAndFetchToMetaData_whenOnMsg_thenShouldTellSuccessAndFetchToMetaData() {
+    public void givenValidMsgAndFetchToMetaData_whenOnMsg_thenShouldTellSuccessAndFetchToMetaData() throws TbNodeException, ExecutionException, InterruptedException {
         // GIVEN
         var device = new Device();
         device.setId(DUMMY_DEVICE_ORIGINATOR);
         device.setName("Test device");
         device.setType("Test device type");
 
-        config.setFieldsMapping(Map.of(
+        config.setDataMapping(Map.of(
                 "name", "originatorName",
                 "type", "originatorType",
                 "label", "originatorLabel"));
@@ -248,14 +249,14 @@ public class TbGetOriginatorFieldsNodeTest {
     }
 
     @Test
-    public void givenNullEntityFieldsAndIgnoreNullStringsFalse_whenOnMsg_thenShouldTellSuccessAndFetchNullField() {
+    public void givenNullEntityFieldsAndIgnoreNullStringsFalse_whenOnMsg_thenShouldTellSuccessAndFetchNullField() throws TbNodeException, ExecutionException, InterruptedException {
         // GIVEN
         var device = new Device();
         device.setId(DUMMY_DEVICE_ORIGINATOR);
         device.setName("Test device");
         device.setType("Test device type");
 
-        config.setFieldsMapping(Map.of(
+        config.setDataMapping(Map.of(
                 "name", "originatorName",
                 "type", "originatorType",
                 "label", "originatorLabel"));
@@ -299,7 +300,7 @@ public class TbGetOriginatorFieldsNodeTest {
     @Test
     public void givenEmptyFieldsMapping_whenInit_thenException() {
         // GIVEN
-        config.setFieldsMapping(Collections.emptyMap());
+        config.setDataMapping(Collections.emptyMap());
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
@@ -311,9 +312,9 @@ public class TbGetOriginatorFieldsNodeTest {
     }
 
     @Test
-    public void givenUnsupportedEntityType_whenOnMsg_thenShouldTellFailureWithSameMsg() {
+    public void givenUnsupportedEntityType_whenOnMsg_thenShouldTellFailureWithSameMsg() throws TbNodeException, ExecutionException, InterruptedException {
         // GIVEN
-        config.setFieldsMapping(Map.of(
+        config.setDataMapping(Map.of(
                 "name", "originatorName",
                 "type", "originatorType",
                 "label", "originatorLabel"));
