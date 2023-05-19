@@ -73,7 +73,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private static final int WIDTH = 1680;
     private static final int HEIGHT = 1050;
     private static final String REMOTE_WEBDRIVER_HOST = "http://localhost:4444";
-    protected final PageLink pageLink = new PageLink(10);
+    protected final PageLink pageLink = new PageLink(30);
     private final ContainerTestSuite instance = ContainerTestSuite.getInstance();
     private JavascriptExecutor js;
     public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
