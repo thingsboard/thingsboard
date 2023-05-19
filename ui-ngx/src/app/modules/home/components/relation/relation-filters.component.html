@@ -22,13 +22,13 @@
            fxLayoutAlign="start center" formArrayName="relationFilters"
            *ngFor="let relationFilterControl of relationFiltersFormArray.controls; let $index = index">
         <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-          <div class="input-block" fxFlex fxLayout="row" fxLayoutAlign="start center">
-            <tb-relation-type-autocomplete
-              style="width: 200px; min-width: 200px;"
+          <div class="input-block" fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-right: 8px">
+            <tb-relation-type-autocomplete fxFlex="50"
               subscriptSizing="dynamic"
+              style="min-width: 200px;"
               [formControl]="relationFilterControl.get('relationType')">
             </tb-relation-type-autocomplete>
-            <tb-entity-type-list style="margin-left: 30px" fxFlex
+            <tb-entity-type-list style="margin-left: 30px" fxFlex="50"
               subscriptSizing="dynamic"
               [allowedEntityTypes]="allowedEntityTypes"
               [formControl]="relationFilterControl.get('entityTypes')">
@@ -49,7 +49,7 @@
         <span fxLayoutAlign="center center"
               class="tb-prompt" translate>relation.any-relation</span>
   </div>
-  <div style="margin-top: 8px">
+  <div style="margin: 5px 0px 15px">
     <button mat-stroked-button color="primary"
             [disabled]="isLoading$ | async"
             (click)="addFilter()"
