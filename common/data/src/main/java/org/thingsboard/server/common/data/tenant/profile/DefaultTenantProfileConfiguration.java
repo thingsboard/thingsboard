@@ -110,7 +110,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     public boolean getProfileFeatureEnabled(ApiUsageRecordKey key) {
         switch (key) {
             case SMS_EXEC_COUNT:
-                return smsEnabled == null || smsEnabled;
+                return smsEnabled == null || Boolean.TRUE.equals(smsEnabled);
             default:
                 return true;
         }
