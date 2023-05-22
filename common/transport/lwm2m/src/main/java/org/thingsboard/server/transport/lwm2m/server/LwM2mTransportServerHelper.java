@@ -18,14 +18,12 @@ package org.thingsboard.server.transport.lwm2m.server;
 import com.google.gson.JsonParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.DDFFileParser;
-import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.util.TBDDFFileParser;
+import org.thingsboard.server.common.data.util.TbDDFFileParser;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -145,7 +143,7 @@ public class LwM2mTransportServerHelper {
 
     public ObjectModel parseFromXmlToObjectModel(byte[] xmlByte, String streamName) {
         try {
-            TBDDFFileParser ddfFileParser = new TBDDFFileParser();
+            TbDDFFileParser ddfFileParser = new TbDDFFileParser();
             return ddfFileParser.parse(new ByteArrayInputStream(xmlByte), streamName).get(0);
         } catch (IOException | InvalidDDFFileException e) {
             log.error("Could not parse the XML file [{}]", streamName, e);
