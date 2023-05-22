@@ -34,15 +34,18 @@ import java.util.Arrays;
 @Slf4j
 @RuleNode(
         type = ComponentType.ENRICHMENT,
-        name = "related attributes",
+        name = "related entity data",
         configClazz = TbGetRelatedDataNodeConfiguration.class,
-        nodeDescription = "Add Originators Related Entity Attributes or Latest Telemetry into Message Metadata/Data",
-        nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
-                "If multiple Related Entities are found, only first Entity is used for attributes enrichment, other entities are discarded. " +
-                "If Attributes enrichment configured, server scope attributes are added into Message Metadata/Data. " +
-                "If Latest Telemetry enrichment configured, latest telemetry added into Metadata/Data. " +
-                "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.temperature</code>.",
+        nodeDescription = "Adds originators related entity data into message or message metadata",
+        nodeDetails = "Related entity lookup based on the configured relation query. " +
+                "If multiple related entities are found, only first entity is used for message enrichment, other entities are discarded.<br><br>" +
+                "Data to fetch configuration: <br><br>" +
+                "<i>Attributes</i> - rule node fetches server scope attributes configured in mapping and adds them into message or message metadata. " +
+                "Access example in other nodes: <code>metadata.serialNumber</code>, <code>msg.serialNumber</code>.<br>" +
+                "<i>Latest telemetry</i> - rule node fetches latest telemetry configured in mapping and adds them into message or message metadata. " +
+                "Access example in other nodes: <code>metadata.temperature</code>, <code>msg.temperature</code>.<br>" +
+                "<i>Fields</i> - rule node fetches fields configured in mapping and adds them into message or message metadata. " +
+                "Access example in other nodes: <code>metadata.entityName</code>, <code>msg.entityName</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeRelatedAttributesConfig")
 public class TbGetRelatedAttributeNode extends TbAbstractGetEntityDataNode<EntityId> {

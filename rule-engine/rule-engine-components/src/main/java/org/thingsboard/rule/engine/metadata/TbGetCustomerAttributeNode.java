@@ -35,16 +35,17 @@ import org.thingsboard.server.common.data.util.TbPair;
         type = ComponentType.ENRICHMENT,
         name = "customer attributes",
         configClazz = TbGetEntityDataNodeConfiguration.class,
-        nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message or Metadata",
-        nodeDetails = "Enrich the Message or Metadata with the corresponding customer's latest attributes or telemetry value. " +
-                "The customer is selected based on the originator of the message: device, asset, etc. " +
-                "</br>" +
+        nodeDescription = "Adds message originator customer attributes or latest telemetry into message or message metadata",
+        nodeDetails = "Enriches incoming message or message metadata with the customer's attributes or latest telemetry values. <br><br>" +
+                "The customer is selected based on the originator of the message. " +
+                "Supported originator types: <br><br>" +
+                "Customer, User, Asset, Device. <br><br>" +
                 "Useful when you store some parameters on the customer level and would like to use them for message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
 public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<CustomerId> {
 
-    private static final String CUSTOMER_NOT_FOUND_MESSAGE = "Failed to find customer for entity with id %s and type %s";
+    private static final String CUSTOMER_NOT_FOUND_MESSAGE = "Failed to find customer for entity with id: %s and type: %s";
 
     @Override
     protected TbGetEntityDataNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
@@ -52,14 +53,6 @@ public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<Cust
         checkIfMappingIsNotEmptyOrElseThrow(config.getDataMapping());
         checkDataToFetchSupportedOrElseThrow(config.getDataToFetch());
         return config;
-    }
-
-    @Override
-    protected void checkDataToFetchSupportedOrElseThrow(DataToFetch dataToFetch) throws TbNodeException {
-        if (dataToFetch == null || dataToFetch.equals(DataToFetch.FIELDS)) {
-            throw new TbNodeException("DataToFetch property has invalid value: " + dataToFetch +
-                    ". Only ATTRIBUTES and LATEST_TELEMETRY values supported!");
-        }
     }
 
     @Override

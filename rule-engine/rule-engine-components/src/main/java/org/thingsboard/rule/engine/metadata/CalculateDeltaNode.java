@@ -48,10 +48,10 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         name = "calculate delta", relationTypes = {"Success", "Failure", "Other"},
         configClazz = CalculateDeltaNodeConfiguration.class,
         nodeDescription = "Calculates and adds 'delta' value into message based on the incoming and previous value",
-        nodeDetails = "Calculates delta and period based on the previous time-series reading and current data. " +
-                "Delta calculation is done in scope of the message originator, e.g. device, asset or customer. " +
-                "If there is input key, the output relation will be 'Success' unless delta is negative and corresponding configuration parameter is set. " +
-                "If there is no input value key in the incoming message, the output relation will be 'Other'.",
+        nodeDetails = "Calculates delta and period based on the previous timeseries reading and current data. " +
+                "Delta calculation is done in scope of the message originator, e.g. device, asset or customer.<br><br>" +
+                "If there is input key, the output relation will be <code>Success</code> unless delta is negative and corresponding configuration parameter is set. <br>" +
+                "If there is no input value key in the incoming message, the output relation will be <code>Other</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
 public class CalculateDeltaNode implements TbNode {

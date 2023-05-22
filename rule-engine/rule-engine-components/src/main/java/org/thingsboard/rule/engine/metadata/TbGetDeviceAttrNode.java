@@ -34,11 +34,15 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "related device attributes",
         configClazz = TbGetDeviceAttrNodeConfiguration.class,
-        nodeDescription = "Add Originators Related Device Attributes and Latest Telemetry value into Message Data or Metadata",
-        nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message data/metadata " +
-                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into Message data/metadata without prefix. " +
-                "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
+        nodeDescription = "Add originators related device attributes and latest telemetry values into message or message metadata",
+        nodeDetails = "Related device lookup based on the configured relation query. " +
+                "If multiple related devices are found, only first device is used for message enrichment, other entities are discarded.<br><br>" +
+                "If Attributes enrichment configured, <i>CLIENT/SHARED/SERVER</i> attributes are added into message or message metadata " +
+                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value adds into message or message metadata without prefix. <br><br>" +
+                "See the following examples of accessing those attributes in other nodes:<br>" +
+                "<code>metadata.cs_serialNumber</code> - to access client side attribute 'serialNumber' that was fetched to message metadata.<br>" +
+                "<code>metadata.shared_limit</code> - to access shared side attribute 'limit' that was fetched to message metadata.<br>" +
+                "<code>msg.temperature</code> - to access latest telemetry 'temperature' that was fetched to message.<br>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeDeviceAttributesConfig")
 public class TbGetDeviceAttrNode extends TbAbstractGetAttributesNode<TbGetDeviceAttrNodeConfiguration, DeviceId> {

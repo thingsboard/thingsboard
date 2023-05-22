@@ -34,11 +34,9 @@ import org.thingsboard.server.common.data.util.TbPair;
         type = ComponentType.ENRICHMENT,
         name = "tenant attributes",
         configClazz = TbGetEntityDataNodeConfiguration.class,
-        nodeDescription = "Add Originators Tenant Attributes or Latest Telemetry into Message Metadata/Data",
-        nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message Metadata/Data. " +
-                "If Latest Telemetry enrichment configured, latest telemetry added into Metadata/Data. " +
-                "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.temperature</code>.",
+        nodeDescription = "Adds message originator tenant attributes or latest telemetry into message or message metadata",
+        nodeDetails = "Enriches incoming message or message metadata with the tenant's attributes or latest telemetry values. " +
+                "Useful when you store some parameters on the tenant level and would like to use them for message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeTenantAttributesConfig")
 public class TbGetTenantAttributeNode extends TbAbstractGetEntityDataNode<TenantId> {
@@ -54,14 +52,6 @@ public class TbGetTenantAttributeNode extends TbAbstractGetEntityDataNode<Tenant
     @Override
     public ListenableFuture<TenantId> findEntityAsync(TbContext ctx, EntityId originator) {
         return Futures.immediateFuture(ctx.getTenantId());
-    }
-
-    @Override
-    protected void checkDataToFetchSupportedOrElseThrow(DataToFetch dataToFetch) throws TbNodeException {
-        if (dataToFetch == null || dataToFetch.equals(DataToFetch.FIELDS)) {
-            throw new TbNodeException("DataToFetch property has invalid value: " + dataToFetch +
-                    ". Only ATTRIBUTES and LATEST_TELEMETRY values supported!");
-        }
     }
 
     @Override

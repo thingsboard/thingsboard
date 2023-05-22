@@ -44,10 +44,13 @@ import java.util.NoSuchElementException;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "customer details",
         configClazz = TbGetCustomerDetailsNodeConfiguration.class,
-        nodeDescription = "Enrich the message body or metadata with the corresponding customer details: title, address, email, phone, etc.",
-        nodeDetails = "If checkbox: <b>Add selected details to the message metadata</b> is selected, existing fields will be added to the message metadata instead of message data.<br><br>" +
-                "<b>Note:</b> only Device, Asset, and Entity View type are allowed.<br><br>" +
-                "If the originator of the message is not assigned to Customer, or originator type is not supported - Message will be forwarded to <b>Failure</b> chain, otherwise, <b>Success</b> chain will be used.",
+        nodeDescription = "Adds originator customer details into message or message metadata",
+        nodeDetails = "Enriches incoming message or message metadata with the corresponding customer details. " +
+                "Selected details adds to the message with predefined prefix: <code>customer_</code>. Examples: <code>customer_title</code>, <code>customer_address</code>, etc. <br><br>" +
+                "The customer is selected based on the originator of the message. Supported originator types: <br><br>" +
+                "Device, Asset, Entity view, User, Edge. <br><br>" +
+                "If message originator is not assigned to customer, or originator is not supported - " +
+                "message will be forwarded via <code>Failure</code> chain, otherwise, <code>Success</code> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetCustomerDetailsNodeConfiguration, CustomerId> {
@@ -96,9 +99,9 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
             if (hasCustomerId.getCustomerId() == null || hasCustomerId.getCustomerId().isNullUid()) {
                 if (hasCustomerId instanceof HasName) {
                     var hasName = (HasName) hasCustomerId;
-                    throw new RuntimeException(originator.getEntityType().getNormalName() + " with name '" + hasName.getName() + "' is not assigned to Customer.");
+                    throw new RuntimeException(originator.getEntityType().getNormalName() + " with name '" + hasName.getName() + "' is not assigned to Customer!");
                 }
-                throw new RuntimeException(originator.getEntityType().getNormalName() + " with id '" + originator + "' is not assigned to Customer.");
+                throw new RuntimeException(originator.getEntityType().getNormalName() + " with id '" + originator + "' is not assigned to Customer!");
             } else {
                 return ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), hasCustomerId.getCustomerId());
             }

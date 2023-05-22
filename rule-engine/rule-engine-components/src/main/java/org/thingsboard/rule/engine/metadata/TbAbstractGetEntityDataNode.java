@@ -30,10 +30,13 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 @Slf4j
 public abstract class TbAbstractGetEntityDataNode<T extends EntityId> extends TbAbstractGetMappedDataNode<T, TbGetEntityDataNodeConfiguration> {
 
-    protected final static String DATA_TO_FETCH_PROPERTY_NAME = "dataToFetch";
-    protected static final String OLD_DATA_TO_FETCH_PROPERTY_NAME = "telemetry";
-    protected final static String DATA_MAPPING_PROPERTY_NAME = "dataMapping";
-    protected static final String OLD_DATA_MAPPING_PROPERTY_NAME = "attrMapping";
+    private final static String DATA_TO_FETCH_PROPERTY_NAME = "dataToFetch";
+    private static final String OLD_DATA_TO_FETCH_PROPERTY_NAME = "telemetry";
+    private final static String DATA_MAPPING_PROPERTY_NAME = "dataMapping";
+    private static final String OLD_DATA_MAPPING_PROPERTY_NAME = "attrMapping";
+
+    private static final String DATA_TO_FETCH_VALIDATION_MSG = "DataToFetch property has invalid value: %s." +
+            " Only ATTRIBUTES and LATEST_TELEMETRY values supported!";
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
@@ -45,7 +48,11 @@ public abstract class TbAbstractGetEntityDataNode<T extends EntityId> extends Tb
 
     protected abstract ListenableFuture<T> findEntityAsync(TbContext ctx, EntityId originator);
 
-    protected abstract void checkDataToFetchSupportedOrElseThrow(DataToFetch dataToFetch) throws TbNodeException;
+    protected void checkDataToFetchSupportedOrElseThrow(DataToFetch dataToFetch) throws TbNodeException {
+        if (dataToFetch == null || dataToFetch.equals(DataToFetch.FIELDS)) {
+            throw new TbNodeException(String.format(DATA_TO_FETCH_VALIDATION_MSG, dataToFetch));
+        }
+    }
 
     protected void processDataAndTell(TbContext ctx, TbMsg msg, T entityId, ObjectNode msgDataAsJsonNode) {
         DataToFetch dataToFetch = config.getDataToFetch();

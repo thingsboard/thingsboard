@@ -36,11 +36,13 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator attributes",
         configClazz = TbGetAttributesNodeConfiguration.class,
-        nodeDescription = "Enrich the message body or metadata with the originator attributes and/or timeseries data",
-        nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message data/metadata " +
-                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into Message data/metadata without prefix. " +
-                "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
+        nodeDescription = "Adds originator attributes and/or latest timeseries data for the message originator to the message or message metadata",
+        nodeDetails = "If attributes enrichment configured, <i>CLIENT/SHARED/SERVER</i> attributes are added into message or message metadata " +
+                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value adds without prefix. <br><br>" +
+                "See the following examples of accessing those attributes in other nodes:<br>" +
+                "<code>metadata.cs_serialNumber</code> - to access client side attribute 'serialNumber' that was fetched to message metadata.<br>" +
+                "<code>metadata.shared_limit</code> - to access shared side attribute 'limit' that was fetched to message metadata.<br>" +
+                "<code>msg.temperature</code> - to access latest telemetry 'temperature' that was fetched to message.<br>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
 public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {

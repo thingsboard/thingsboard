@@ -385,7 +385,7 @@ public class TbGetCustomerDetailsNodeTest {
         assertThat(actualMsg.getMetaData()).isEqualTo(msg.getMetaData());
 
         assertThat(actualException).isInstanceOf(RuntimeException.class);
-        assertThat(actualException.getMessage()).isEqualTo("Device with name 'Thermostat' is not assigned to Customer.");
+        assertThat(actualException.getMessage()).isEqualTo("Device with name 'Thermostat' is not assigned to Customer!");
     }
 
     @Test

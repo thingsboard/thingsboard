@@ -33,10 +33,9 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "tenant details",
         configClazz = TbGetTenantDetailsNodeConfiguration.class,
-        nodeDescription = "Adds fields from Tenant details to the message body or metadata",
-        nodeDetails = "If checkbox: <b>Add selected details to the message metadata</b> is selected, existing fields will be added to the message metadata instead of message data.<br><br>" +
-                "<b>Note:</b> only Device, Asset, and Entity View type are allowed.<br><br>" +
-                "If the originator of the message is not assigned to Tenant, or originator type is not supported - Message will be forwarded to <b>Failure</b> chain, otherwise, <b>Success</b> chain will be used.",
+        nodeDescription = "Adds originator tenant details into message or message metadata",
+        nodeDetails = "Enriches incoming message or message metadata with the corresponding tenant details. " +
+                "Selected details adds to the message with predefined prefix: <code>tenant_</code>, Examples: <code>tenant_title</code> or <code>tenant_address</code>, etc.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration, TenantId> {

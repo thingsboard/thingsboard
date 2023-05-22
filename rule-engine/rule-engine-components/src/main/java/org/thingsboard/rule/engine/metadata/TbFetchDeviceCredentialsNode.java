@@ -37,11 +37,10 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.ENRICHMENT,
         name = "fetch device credentials",
         configClazz = TbFetchDeviceCredentialsNodeConfiguration.class,
-        nodeDescription = "Enrich the message body or metadata with the device credentials",
-        nodeDetails = "Adds <b>credentialsType</b> and <b>credentials</b> properties to the message metadata if the " +
-                "configuration parameter <b>fetchToMetadata</b> is set to <code>true</code>, otherwise, adds properties " +
-                "to the message data. If originator type is not <b>DEVICE</b> or rule node failed to get device credentials " +
-                "- send Message via <code>Failure</code> chain, otherwise <code>Success</code> chain is used.",
+        nodeDescription = "Adds device credentials to the message or message metadata",
+        nodeDetails = "if message originator type is Device and device credentials was successfully fetched, " +
+                "rule node enriches message or message metadata with <i>credentialsType</i> and <i>credentials</i> properties " +
+                "and send message via <code>Success</code> chain. Otherwise message will be forwarded via <code>Failure</code> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig")
 public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFetchDeviceCredentialsNodeConfiguration> {

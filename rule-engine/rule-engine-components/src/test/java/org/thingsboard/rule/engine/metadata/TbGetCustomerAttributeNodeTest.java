@@ -262,7 +262,7 @@ public class TbGetCustomerAttributeNodeTest {
         var actualException = actualExceptionCaptor.getValue();
 
         var expectedExceptionMessage = String.format(
-                "Failed to find customer for entity with id %s and type %s",
+                "Failed to find customer for entity with id: %s and type: %s",
                 userId.getId(), userId.getEntityType().getNormalName());
 
         assertEquals(msg, actualMessage);

@@ -54,13 +54,17 @@ import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfigurati
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
-        nodeDescription = "Add Message Originator Telemetry for selected time range into Message Metadata\n",
-        nodeDetails = "The node allows you to select fetch mode: <b>FIRST/LAST/ALL</b> to fetch telemetry of certain time range that are added into Message metadata without any prefix. " +
-                "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry.</br>" +
-                "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp.</br>" +
-                "Also, the rule node allows you to select telemetry sampling order: <b>ASC</b> or <b>DESC</b>. </br>" +
-                "Aggregation feature allows you to fetch aggregated telemetry as a single value by <b>AVG, COUNT, SUM, MIN, MAX, NONE</b>. </br>" +
-                "<b>Note</b>: The maximum size of the fetched array is 1000 records.\n ",
+        nodeDescription = "Adds message originator telemetry for selected time range into message metadata",
+        nodeDetails = "The node allows you to configure fetch interval and fetch strategy. Fetch strategy section allows you to select fetch mode: <i>First/Last/All</i> <br><br>" +
+                "If selected fetch mode <i>First</i> rule node will retrieve the closest telemetry to the fetch interval's start.<br>" +
+                "If selected fetch mode <i>Last</i> rule node will retrieve the closest telemetry to the fetch interval's end.<br>" +
+                "If selected fetch mode <i>All</i> rule node will retrieve telemetry from the fetch interval with configurable query parameters.<br><br>" +
+                "Query parameters: <br><br>" +
+                "Data aggregation function: <i>Min/Max/Average/Sum/Count/None</i>. " +
+                "If selected aggregation function <i>None</i> rule node allows you to configure additional query parameters: <br><br>" +
+                "Order by timestamp: <i>Ascending/Descending</i><br><br>" +
+                "Limit: Min value - 2, max value - 1000.<br><br>" +
+                "Other data aggregation functions useful when you need to get the aggregated telemetry data as a single value for the configured fetch interval.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
