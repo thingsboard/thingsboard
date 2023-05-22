@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  .mat-mdc-form-field-infix {
+  .mat-mdc-floating-label {
     width: 100% !important;
+  }
+
+  .mat-mdc-form-field-error {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .mat-mdc-checkbox{
