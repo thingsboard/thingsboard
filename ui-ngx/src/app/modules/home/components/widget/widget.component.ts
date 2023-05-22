@@ -447,6 +447,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.onInit();
       },
       (err) => {
+        this.widgetContext.inited = true;
         // console.log(err);
       }
     );
@@ -670,9 +671,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.createDefaultSubscription().subscribe(
         () => {
           this.subscriptionInited = true;
-          this.configureDynamicWidgetComponent();
-          initSubject.next();
-          initSubject.complete();
+          try {
+            this.configureDynamicWidgetComponent();
+            initSubject.next();
+            initSubject.complete();
+          } catch (err) {
+            initSubject.error(err);
+          }
         },
         (err) => {
           this.subscriptionInited = true;
@@ -682,9 +687,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     } else {
       this.loadingData = false;
       this.subscriptionInited = true;
-      this.configureDynamicWidgetComponent();
-      initSubject.next();
-      initSubject.complete();
+      try {
+        this.configureDynamicWidgetComponent();
+        initSubject.next();
+        initSubject.complete();
+      }  catch (err) {
+        initSubject.error(err);
+      }
     }
     return initSubject.asObservable();
   }
@@ -738,12 +747,15 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory, 0, injector);
         this.cd.detectChanges();
       } catch (e) {
-        console.error(e);
         if (this.dynamicWidgetComponentRef) {
           this.dynamicWidgetComponentRef.destroy();
           this.dynamicWidgetComponentRef = null;
         }
         this.widgetContentContainer.clear();
+        this.handleWidgetException(e);
+        this.widgetComponentService.clearWidgetInfo(this.widgetInfo, this.widget.bundleAlias, this.widget.typeAlias,
+          this.widget.isSystemType);
+        throw e;
       }
 
       if (this.dynamicWidgetComponentRef) {

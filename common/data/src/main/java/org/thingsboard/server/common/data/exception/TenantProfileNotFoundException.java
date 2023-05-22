@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.apiusage.limits;
+package org.thingsboard.server.common.data.exception;
 
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.Getter;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface RateLimitService {
+public class TenantProfileNotFoundException extends RuntimeException {
 
-    boolean checkRateLimit(LimitedApi api, TenantId tenantId);
+    @Getter
+    private final TenantId tenantId;
 
-    boolean checkRateLimit(LimitedApi api, TenantId tenantId, EntityId entityId);
+    public TenantProfileNotFoundException(TenantId tenantId) {
+        super("Profile for tenant with id " + tenantId + " not found");
+        this.tenantId = tenantId;
+    }
 
 }
