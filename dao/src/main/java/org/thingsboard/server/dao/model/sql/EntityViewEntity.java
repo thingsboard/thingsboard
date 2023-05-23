@@ -29,7 +29,7 @@ import javax.persistence.Table;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.ENTITY_VIEW_TABLE_FAMILY_NAME)
+@Table(name = ModelConstants.ENTITY_VIEW_TABLE_NAME)
 public class EntityViewEntity extends AbstractEntityViewEntity<EntityView> {
 
     public EntityViewEntity() {

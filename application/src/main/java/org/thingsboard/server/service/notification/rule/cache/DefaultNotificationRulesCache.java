@@ -82,12 +82,12 @@ public class DefaultNotificationRulesCache implements NotificationRulesCache {
     }
 
     @Override
-    public List<NotificationRule> get(TenantId tenantId, NotificationRuleTriggerType triggerType) {
+    public List<NotificationRule> getEnabled(TenantId tenantId, NotificationRuleTriggerType triggerType) {
         lock.readLock().lock();
         try {
             log.trace("Retrieving notification rules of type {} for tenant {} from cache", triggerType, tenantId);
             return cache.get(key(tenantId, triggerType), k -> {
-                List<NotificationRule> rules = notificationRuleService.findNotificationRulesByTenantIdAndTriggerType(tenantId, triggerType);
+                List<NotificationRule> rules = notificationRuleService.findEnabledNotificationRulesByTenantIdAndTriggerType(tenantId, triggerType);
                 log.trace("Fetched notification rules of type {} for tenant {} (count: {})", triggerType, tenantId, rules.size());
                 return !rules.isEmpty() ? rules : Collections.emptyList();
             });

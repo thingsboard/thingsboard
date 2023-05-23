@@ -109,6 +109,7 @@ export interface SlackConversation {
 
 export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>{
   tenantId: TenantId;
+  enabled: boolean;
   templateId: NotificationTemplateId;
   triggerType: TriggerType;
   triggerConfig: NotificationRuleTriggerConfig;

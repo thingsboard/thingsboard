@@ -421,7 +421,7 @@ public class TbMsgDeduplicationNodeTest {
     }
 
     private String getMergedData(List<TbMsg> msgs) {
-        ArrayNode mergedData = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+        ArrayNode mergedData = JacksonUtil.newArrayNode();
         msgs.forEach(msg -> {
             ObjectNode msgNode = JacksonUtil.newObjectNode();
             msgNode.set("msg", JacksonUtil.toJsonNode(msg.getData()));

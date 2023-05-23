@@ -72,9 +72,9 @@ import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersion
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
-import org.thingsboard.server.service.apiusage.limits.LimitedApi;
-import org.thingsboard.server.service.apiusage.limits.RateLimitService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.util.ArrayList;
@@ -154,6 +154,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         NotificationRule notificationRule = new NotificationRule();
         notificationRule.setName("Web notification on any alarm");
+        notificationRule.setEnabled(true);
         notificationRule.setTemplateId(notificationTemplate.getId());
         notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
 
@@ -239,6 +240,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         NotificationRule notificationRule = new NotificationRule();
         notificationRule.setName("Web notification on any alarm");
+        notificationRule.setEnabled(true);
         notificationRule.setTemplateId(notificationTemplate.getId());
         notificationRule.setTriggerType(NotificationRuleTriggerType.ALARM);
 
@@ -375,6 +377,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         NotificationRule rule = new NotificationRule();
         rule.setName("Test");
+        rule.setEnabled(true);
         rule.setTemplateId(template.getId());
 
         rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
@@ -402,6 +405,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         NotificationRule rule = new NotificationRule();
         rule.setName("Device created");
+        rule.setEnabled(true);
         rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
         NotificationTemplate template = createNotificationTemplate(NotificationType.ENTITY_ACTION,
                 "Device created", "Device created", NotificationDeliveryMethod.WEB);
@@ -462,6 +466,37 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                         "test", "test", "test"))
                 .build());
         await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
+                });
+    }
+
+    @Test
+    public void testNotificationRuleDisabling() throws Exception {
+        EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
+        triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
+        triggerConfig.setCreated(true);
+        NotificationRule rule = createNotificationRule(triggerConfig, "Created", "Created", createNotificationTarget(tenantAdminUserId).getId());
+
+        assertThat(getMyNotifications(false, 100)).size().isZero();
+        createDevice("Device 1", "default", "111");
+        await().atMost(15, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    assertThat(getMyNotifications(false, 100)).size().isEqualTo(1);
+                });
+
+        rule.setEnabled(false);
+        saveNotificationRule(rule);
+
+        createDevice("Device 2", "default", "222");
+        TimeUnit.SECONDS.sleep(5);
+        assertThat(getMyNotifications(false, 100)).as("No new notifications arrived").size().isEqualTo(1);
+
+        rule.setEnabled(true);
+        saveNotificationRule(rule);
+
+        createDevice("Device 3", "default", "333");
+        await().atMost(15, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
                 });

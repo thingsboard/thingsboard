@@ -29,7 +29,7 @@ import javax.persistence.Table;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Immutable
-@Table(name = ModelConstants.DEVICE_INFO_VIEW_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.DEVICE_INFO_VIEW_TABLE_NAME)
 public class DeviceInfoEntity extends AbstractDeviceEntity<DeviceInfo> {
 
     @Column(name = ModelConstants.DEVICE_CUSTOMER_TITLE_PROPERTY)
