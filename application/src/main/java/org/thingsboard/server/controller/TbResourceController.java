@@ -169,8 +169,9 @@ public class TbResourceController extends BaseController {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TbResourceInfoFilter.TbResourceInfoFilterBuilder filter = TbResourceInfoFilter.builder();
         filter.tenantId(getTenantId());
-        filter.resourceType(StringUtils.isNotEmpty(resourceType) ? ResourceType.valueOf(resourceType) : null);
-
+        if (StringUtils.isNotEmpty(resourceType)){
+            filter.resourceType(ResourceType.valueOf(resourceType));
+        }
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(resourceService.findTenantResourcesByTenantId(filter.build(), pageLink));
         } else {

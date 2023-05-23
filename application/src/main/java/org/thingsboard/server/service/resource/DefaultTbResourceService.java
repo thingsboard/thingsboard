@@ -77,13 +77,13 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink) {
-        return resourceService.findAllTenantResourcesByTenantId(tbResourceInfoFilter, pageLink);
+    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
+        return resourceService.findAllTenantResourcesByTenantId(filter, pageLink);
     }
 
     @Override
-    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink) {
-        return resourceService.findTenantResourcesByTenantId(tbResourceInfoFilter, pageLink);
+    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
+        return resourceService.findTenantResourcesByTenantId(filter, pageLink);
     }
 
     @Override

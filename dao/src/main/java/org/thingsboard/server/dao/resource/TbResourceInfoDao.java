@@ -25,8 +25,8 @@ import java.util.UUID;
 
 public interface TbResourceInfoDao extends Dao<TbResourceInfo> {
 
-    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink);
+    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
 
-    PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink);
+    PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
 
 }

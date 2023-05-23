@@ -104,19 +104,19 @@ public class BaseResourceService implements ResourceService {
     }
 
     @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink) {
-        TenantId tenantId = tbResourceInfoFilter.getTenantId();
+    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
+        TenantId tenantId = filter.getTenantId();
         log.trace("Executing findAllTenantResourcesByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceInfoDao.findAllTenantResourcesByTenantId(tbResourceInfoFilter, pageLink);
+        return resourceInfoDao.findAllTenantResourcesByTenantId(filter, pageLink);
     }
 
     @Override
-    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink) {
-        TenantId tenantId = tbResourceInfoFilter.getTenantId();
+    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
+        TenantId tenantId = filter.getTenantId();
         log.trace("Executing findTenantResourcesByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceInfoDao.findTenantResourcesByTenantId(tbResourceInfoFilter, pageLink);
+        return resourceInfoDao.findTenantResourcesByTenantId(filter, pageLink);
     }
 
     @Override

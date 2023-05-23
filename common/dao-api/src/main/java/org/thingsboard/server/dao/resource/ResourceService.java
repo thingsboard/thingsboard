@@ -40,9 +40,9 @@ public interface ResourceService extends EntityDaoService {
 
     ListenableFuture<TbResourceInfo> findResourceInfoByIdAsync(TenantId tenantId, TbResourceId resourceId);
 
-    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink);
+    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
 
-    PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink);
+    PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
 
     List<TbResource> findTenantResourcesByResourceTypeAndObjectIds(TenantId tenantId, ResourceType lwm2mModel, String[] objectIds);
 

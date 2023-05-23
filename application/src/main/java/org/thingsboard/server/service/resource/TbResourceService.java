@@ -36,9 +36,9 @@ public interface TbResourceService extends SimpleTbEntityService<TbResource> {
 
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
 
-    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink);
+    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
 
-    PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter tbResourceInfoFilter, PageLink pageLink);
+    PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
 
     List<LwM2mObject> findLwM2mObject(TenantId tenantId,
                                       String sortOrder,
