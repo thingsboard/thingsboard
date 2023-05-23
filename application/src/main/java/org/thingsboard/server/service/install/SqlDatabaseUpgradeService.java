@@ -721,6 +721,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.0", SCHEMA_UPDATE_SQL);
                         loadSql(schemaUpdateFile, conn);
                         try {
+                            conn.createStatement().execute("ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0;");
+                        } catch (Exception e) {
+                        }
+                        try {
                             conn.createStatement().execute("ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0;");
                         } catch (Exception e) {
                         }

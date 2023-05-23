@@ -28,6 +28,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -148,6 +149,11 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             scannedComponent.setType(type);
             Class<?> clazz = Class.forName(clazzName);
             RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
+            if (TbVersionedNode.class.isAssignableFrom(clazz)) {
+                TbVersionedNode tbVersionNode = (TbVersionedNode) clazz.getDeclaredConstructor().newInstance();
+                int currentVersion = tbVersionNode.getCurrentVersion();
+                scannedComponent.setConfigurationVersion(currentVersion);
+            }
             scannedComponent.setName(ruleNodeAnnotation.name());
             scannedComponent.setScope(ruleNodeAnnotation.scope());
             scannedComponent.setClusteringMode(ruleNodeAnnotation.clusteringMode());

@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     actions varchar(255),
     clazz varchar UNIQUE,
     configuration_descriptor varchar,
+    configuration_version int DEFAULT 0,
     name varchar(255),
     scope varchar(255),
     search_text varchar(255),

@@ -337,6 +337,7 @@ public class ModelConstants {
     public static final String COMPONENT_DESCRIPTOR_NAME_PROPERTY = "name";
     public static final String COMPONENT_DESCRIPTOR_CLASS_PROPERTY = "clazz";
     public static final String COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY = "configuration_descriptor";
+    public static final String COMPONENT_DESCRIPTOR_CONFIGURATION_VERSION_PROPERTY = "configuration_version";
     public static final String COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY = "actions";
 
     /**
