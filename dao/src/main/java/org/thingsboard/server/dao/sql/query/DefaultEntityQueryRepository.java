@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Repository
@@ -227,6 +228,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private static final String SELECT_API_USAGE_STATE = "(select aus.id, aus.created_time, aus.tenant_id, aus.entity_id, " +
             "coalesce((select title from tenant where id = aus.entity_id), (select title from customer where id = aus.entity_id)) as name " +
             "from api_usage_state as aus)";
+
+    private static final Map<EntityType, String[]> entityNameColumns = getEntityNameColumnsForSearchText();
 
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
@@ -807,14 +810,15 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
     private String entityNameQuery(QueryContext ctx, EntityNameFilter filter) {
         ctx.addStringParameter("entity_filter_name_filter", filter.getEntityNameFilter());
-
+        String firstNameColumnFilter = entityNameColumns.get(filter.getEntityType())[0];
+        String secondNameColumnFilter = entityNameColumns.get(filter.getEntityType())[1];
         if (filter.getEntityNameFilter().startsWith("%") || filter.getEntityNameFilter().endsWith("%")) {
-            return "(lower(e.name) like lower(:entity_filter_name_filter) or " +
-                    "lower(e.label) like lower(:entity_filter_name_filter))";
+            return String.format("(lower(e.%s) like lower(:entity_filter_name_filter) or " +
+                    "lower(e.%s) like lower(:entity_filter_name_filter))", firstNameColumnFilter, secondNameColumnFilter);
         }
 
-        return "(lower(e.name) like lower(concat(:entity_filter_name_filter, '%%')) or " +
-                "lower(e.label) like lower(concat(:entity_filter_name_filter, '%%')))";
+        return String.format("(lower(e.%s) like lower(concat(:entity_filter_name_filter, '%%')) or " +
+                "lower(%s) like lower(concat(:entity_filter_name_filter, '%%')))", firstNameColumnFilter, secondNameColumnFilter);
     }
 
     private String typeQuery(QueryContext ctx, EntityFilter filter) {
@@ -885,5 +889,28 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             default:
                 throw new RuntimeException("Not implemented!");
         }
+    }
+
+    //    "component_descriptor" - not entity Type
+    private static Map<EntityType, String[]> getEntityNameColumnsForSearchText(){
+        Map<EntityType, String[]> entityNameColumns = new ConcurrentHashMap<>();
+        entityNameColumns.put(EntityType.DEVICE, new String [] {"name", "label"});
+        entityNameColumns.put(EntityType.CUSTOMER, new String [] {"title", "email"});
+        entityNameColumns.put(EntityType.DASHBOARD, new String [] {"title", "title"});
+        entityNameColumns.put(EntityType.RULE_CHAIN, new String [] {"name", "type"});
+        entityNameColumns.put(EntityType.RULE_NODE, new String [] {"name", "type"});
+        entityNameColumns.put(EntityType.OTA_PACKAGE, new String [] {"title", "type"});
+        entityNameColumns.put(EntityType.ASSET_PROFILE, new String [] {"name", "default_queue_name"});
+        entityNameColumns.put(EntityType.ASSET, new String [] {"name", "label"});
+        entityNameColumns.put(EntityType.DEVICE_PROFILE, new String [] {"name", "type"});
+        entityNameColumns.put(EntityType.USER, new String [] {"first_name", "last_name"});
+        entityNameColumns.put(EntityType.TENANT_PROFILE, new String [] {"name", "description"});
+        entityNameColumns.put(EntityType.TENANT, new String [] {"title", "email"});
+        entityNameColumns.put(EntityType.WIDGETS_BUNDLE, new String [] {"title", "description"});
+        entityNameColumns.put(EntityType.ENTITY_VIEW, new String [] {"name", "type"});
+        entityNameColumns.put(EntityType.TB_RESOURCE, new String [] {"file_name", "type"});
+        entityNameColumns.put(EntityType.EDGE, new String [] {"name", "label"});
+
+        return entityNameColumns;
     }
 }
