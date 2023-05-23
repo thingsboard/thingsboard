@@ -23,10 +23,12 @@ import org.testng.SkipException;
 import org.testng.internal.ConstructorOrMethod;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 
+import java.util.Optional;
+
 @Slf4j
 public class TestListener implements ITestListener {
 
-    int failedTestsCount = 0;
+    private int failedTestsCount = 0;
     private static final int DEFAULT_COUNT_FOR_SKIP = 20;
 
     @Override
@@ -70,13 +72,10 @@ public class TestListener implements ITestListener {
     }
 
     private int getCountForSkip() {
-        String countForSkipProperty = System.getProperty("countForSkip");
-        if (countForSkipProperty != null) {
-            try {
-                return Integer.parseInt(countForSkipProperty);
-            } catch (NumberFormatException e) {
-                log.warn("Invalid value for countForSkip property. Using default value.");
-            }
+        try {
+            return Integer.parseInt(System.getProperty("countForSkip", String.valueOf(DEFAULT_COUNT_FOR_SKIP)));
+        } catch (NumberFormatException e) {
+            log.warn("Invalid value for countForSkip property. Using default value.");
         }
         return DEFAULT_COUNT_FOR_SKIP;
     }
@@ -84,8 +83,7 @@ public class TestListener implements ITestListener {
     private void closeWebDriver(ITestResult result) {
         Object instance = result.getInstance();
         if (instance instanceof AbstractDriverBaseTest) {
-            WebDriver driver = ((AbstractDriverBaseTest) instance).getDriver();
-            driver.close();
+            Optional.ofNullable(((AbstractDriverBaseTest) instance).getDriver()).ifPresent(WebDriver::close);
         } else {
             log.warn("Unable to close WebDriver. AbstractDriverBaseTest instance not found.");
         }
