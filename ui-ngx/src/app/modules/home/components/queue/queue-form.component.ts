@@ -129,11 +129,6 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
     this.queueFormGroup.get('submitStrategy').get('type').valueChanges.subscribe(() => {
       this.submitStrategyTypeChanged();
     });
-    if (this.newQueue) {
-      this.queueFormGroup.get('name').enable({emitEvent: false});
-    } else {
-      this.queueFormGroup.get('name').disable({emitEvent: false});
-    }
   }
 
   ngOnDestroy() {
@@ -149,7 +144,11 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
       this.queueFormGroup.disable({emitEvent: false});
     } else {
       this.queueFormGroup.enable({emitEvent: false});
-      this.queueFormGroup.get('name').disable({emitEvent: false});
+      if (this.newQueue) {
+        this.queueFormGroup.get('name').enable({emitEvent: false});
+      } else {
+        this.queueFormGroup.get('name').disable({emitEvent: false});
+      }
     }
   }
 
@@ -203,7 +202,7 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
     const type: QueueSubmitStrategyTypes = form.get('type').value;
     const batchSizeField = form.get('batchSize');
     if (type === QueueSubmitStrategyTypes.BATCH) {
-      batchSizeField.patchValue(1000, {emitEvent: false});
+      batchSizeField.patchValue(batchSizeField.value ?? 1000, {emitEvent: false});
       batchSizeField.setValidators([Validators.min(1), Validators.required]);
       batchSizeField.updateValueAndValidity({emitEvent: false});
       this.hideBatchSize = true;

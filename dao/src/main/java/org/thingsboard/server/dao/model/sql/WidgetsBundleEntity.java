@@ -33,7 +33,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.WIDGETS_BUNDLE_TABLE_NAME)
 public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> implements SearchTextEntity<WidgetsBundle> {
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY)

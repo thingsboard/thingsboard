@@ -154,8 +154,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
             Optional<TbResource> tbResource = context.getTransportResourceCache().get(this.tenantId, LWM2M_MODEL, key);
             return tbResource.map(resource -> helper.parseFromXmlToObjectModel(
                     Base64.getDecoder().decode(resource.getData()),
-                    key + ".xml",
-                    new DefaultDDFFileValidator())).orElse(null);
+                    key + ".xml")).orElse(null);
         }
     }
 }

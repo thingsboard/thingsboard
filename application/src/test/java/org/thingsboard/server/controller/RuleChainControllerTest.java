@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNode;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNodeConfiguration;
 import org.thingsboard.server.common.data.StringUtils;
@@ -275,7 +276,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         TbCreateAlarmNodeConfiguration invalidCreateAlarmNodeConfiguration = new TbCreateAlarmNodeConfiguration();
         invalidCreateAlarmNodeConfiguration.setSeverity("<script/>");
         invalidCreateAlarmNodeConfiguration.setAlarmType("<script/>");
-        createAlarmNode.setConfiguration(mapper.valueToTree(invalidCreateAlarmNodeConfiguration));
+        createAlarmNode.setConfiguration(JacksonUtil.valueToTree(invalidCreateAlarmNodeConfiguration));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(createAlarmNode);

@@ -106,6 +106,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
   }
 
   ngOnDestroy(): void {
+    super.ngOnDestroy();
     if (this.ctx.telemetrySubscribers) {
       this.ctx.telemetrySubscribers.forEach(item =>  item.unsubscribe());
     }

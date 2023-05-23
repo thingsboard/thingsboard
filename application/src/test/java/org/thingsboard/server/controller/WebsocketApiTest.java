@@ -173,7 +173,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         sendTelemetry(device, Arrays.asList(dataPoint4));
         String msg = getWsClient().waitForUpdate();
 
-        update = mapper.readValue(msg, EntityDataUpdate.class);
+        update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);
@@ -460,7 +460,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         String msg = getWsClient().waitForUpdate();
         Assert.assertNotNull(msg);
-        update = mapper.readValue(msg, EntityDataUpdate.class);
+        update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
 
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> listData = update.getUpdate();
@@ -479,7 +479,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         msg = getWsClient().waitForUpdate();
         Assert.assertNotNull(msg);
 
-        update = mapper.readValue(msg, EntityDataUpdate.class);
+        update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);
@@ -539,7 +539,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         String msg = getWsClient().waitForUpdate();
         Assert.assertNotNull(msg);
-        update = mapper.readValue(msg, EntityDataUpdate.class);
+        update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);
@@ -566,7 +566,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         AttributeKvEntry dataPoint2 = new BaseAttributeKvEntry(now, new LongDataEntry("sharedAttributeKey", 42L));
         sendAttributes(device, TbAttributeSubscriptionScope.SHARED_SCOPE, Arrays.asList(dataPoint2));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
-        update = mapper.readValue(msg, EntityDataUpdate.class);
+        update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         eData = update.getUpdate();
         Assert.assertNotNull(eData);
@@ -580,7 +580,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         AttributeKvEntry dataPoint3 = new BaseAttributeKvEntry(now, new LongDataEntry("clientAttributeKey", 42L));
         sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(dataPoint3));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
-        update = mapper.readValue(msg, EntityDataUpdate.class);
+        update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         eData = update.getUpdate();
         Assert.assertNotNull(eData);
@@ -594,7 +594,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         AttributeKvEntry dataPoint4 = new BaseAttributeKvEntry(now, new LongDataEntry("anyAttributeKey", 42L));
         sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(dataPoint4));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
-        update = mapper.readValue(msg, EntityDataUpdate.class);
+        update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         eData = update.getUpdate();
         Assert.assertNotNull(eData);
@@ -608,7 +608,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         AttributeKvEntry dataPoint5 = new BaseAttributeKvEntry(now, new LongDataEntry("anyAttributeKey", 43L));
         sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint5));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
-        update = mapper.readValue(msg, EntityDataUpdate.class);
+        update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         eData = update.getUpdate();
         Assert.assertNotNull(eData);
@@ -643,22 +643,22 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     @Test
     public void testEntityCountCmd_filterTypeSingularCompatibilityTest() {
-        ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.newObjectNode();
         oldFormatDeviceTypeFilterSingular.put("type", "deviceType");
         oldFormatDeviceTypeFilterSingular.put("deviceType", "default");
         oldFormatDeviceTypeFilterSingular.put("deviceNameFilter", "Device");
 
-        ObjectNode query = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode query = JacksonUtil.newObjectNode();
         query.set("entityFilter", oldFormatDeviceTypeFilterSingular);
 
-        ObjectNode entityCountCmd = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode entityCountCmd = JacksonUtil.newObjectNode();
         entityCountCmd.put("cmdId", 1);
         entityCountCmd.set("query", query);
 
-        ArrayNode entityCountCmds = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+        ArrayNode entityCountCmds = JacksonUtil.newArrayNode();
         entityCountCmds.add(entityCountCmd);
 
-        ObjectNode wrapperNode = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode wrapperNode = JacksonUtil.newObjectNode();
         wrapperNode.set("entityCountCmds", entityCountCmds);
 
         getWsClient().send(JacksonUtil.toString(wrapperNode));
