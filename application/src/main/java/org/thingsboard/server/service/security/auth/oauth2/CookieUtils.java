@@ -15,21 +15,29 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.SerializationUtils;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamClass;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
 
 @Slf4j
 public class CookieUtils {
+
+    private static final ObjectMapper OBJECT_MAPPER;
+
+    static {
+        ClassLoader loader = CookieUtils.class.getClassLoader();
+        OBJECT_MAPPER = new ObjectMapper();
+        OBJECT_MAPPER.registerModules(SecurityJackson2Modules.getModules(loader));
+    }
 
     public static Optional<Cookie> getCookie(HttpServletRequest request, String name) {
         Cookie[] cookies = request.getCookies();
@@ -56,7 +64,7 @@ public class CookieUtils {
     public static void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null && cookies.length > 0) {
-            for (Cookie cookie: cookies) {
+            for (Cookie cookie : cookies) {
                 if (cookie.getName().equals(name)) {
                     cookie.setValue("");
                     cookie.setPath("/");
@@ -68,27 +76,22 @@ public class CookieUtils {
     }
 
     public static String serialize(Object object) {
-        return Base64.getUrlEncoder()
-                .encodeToString(SerializationUtils.serialize(object));
+        try {
+            return Base64.getUrlEncoder()
+                    .encodeToString(OBJECT_MAPPER.writeValueAsBytes(object));
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("The given Json object value: "
+                    + object + " cannot be transformed to a String", e);
+        }
     }
 
     public static <T> T deserialize(Cookie cookie, Class<T> cls) {
         byte[] decodedBytes = Base64.getUrlDecoder().decode(cookie.getValue());
-        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(decodedBytes)) {
-            @Override
-            protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
-                String name = desc.getName();
-                if (!cls.getName().equals(name)) {
-                    throw new ClassNotFoundException("Class not allowed for deserialization: " + name);
-                }
-                return super.resolveClass(desc);
-            }
-        }) {
-
-            return cls.cast(ois.readObject());
-        } catch (Exception e) {
-            log.debug("Failed to deserialize class from cookie.", e.getCause());
-            return null;
+        try {
+            return OBJECT_MAPPER.readValue(decodedBytes, cls);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given string value: "
+                    + Arrays.toString(decodedBytes) + " cannot be transformed to Json object", e);
         }
     }
 }
