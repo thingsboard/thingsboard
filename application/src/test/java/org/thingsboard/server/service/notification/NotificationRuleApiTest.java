@@ -72,9 +72,9 @@ import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersion
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
-import org.thingsboard.server.service.apiusage.limits.LimitedApi;
-import org.thingsboard.server.service.apiusage.limits.RateLimitService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.util.ArrayList;
