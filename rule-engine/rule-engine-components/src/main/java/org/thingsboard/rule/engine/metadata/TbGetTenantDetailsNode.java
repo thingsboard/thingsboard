@@ -33,9 +33,9 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "tenant details",
         configClazz = TbGetTenantDetailsNodeConfiguration.class,
-        nodeDescription = "Adds originator tenant details into message or message metadata",
-        nodeDetails = "Enriches incoming message or message metadata with the corresponding tenant details. " +
-                "Selected details adds to the message with predefined prefix: <code>tenant_</code>, Examples: <code>tenant_title</code> or <code>tenant_address</code>, etc.",
+        nodeDescription = "Adds message originator tenant details into message or message metadata",
+        nodeDetails = "Useful when we need to retrieve contact information from your tenant " +
+                "such as email, phone, address, etc., for notifications via email, SMS, and other notification providers.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration, TenantId> {

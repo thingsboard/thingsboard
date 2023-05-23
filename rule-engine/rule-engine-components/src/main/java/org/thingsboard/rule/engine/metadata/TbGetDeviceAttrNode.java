@@ -34,15 +34,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "related device attributes",
         configClazz = TbGetDeviceAttrNodeConfiguration.class,
-        nodeDescription = "Add originators related device attributes and latest telemetry values into message or message metadata",
+        nodeDescription = "Add originators related device attributes and/or latest telemetry values into message or message metadata",
         nodeDetails = "Related device lookup based on the configured relation query. " +
-                "If multiple related devices are found, only first device is used for message enrichment, other entities are discarded.<br><br>" +
-                "If Attributes enrichment configured, <i>CLIENT/SHARED/SERVER</i> attributes are added into message or message metadata " +
-                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value adds into message or message metadata without prefix. <br><br>" +
-                "See the following examples of accessing those attributes in other nodes:<br>" +
-                "<code>metadata.cs_serialNumber</code> - to access client side attribute 'serialNumber' that was fetched to message metadata.<br>" +
-                "<code>metadata.shared_limit</code> - to access shared side attribute 'limit' that was fetched to message metadata.<br>" +
-                "<code>msg.temperature</code> - to access latest telemetry 'temperature' that was fetched to message.<br>",
+                "If multiple related devices are found, only first device is used for message enrichment, other entities are discarded. " +
+                "Useful when you need to retrieve attributes and/or latest telemetry values from device that has a relation to the message originator and use them for further message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeDeviceAttributesConfig")
 public class TbGetDeviceAttrNode extends TbAbstractGetAttributesNode<TbGetDeviceAttrNodeConfiguration, DeviceId> {

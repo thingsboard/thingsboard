@@ -47,11 +47,9 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "calculate delta", relationTypes = {"Success", "Failure", "Other"},
         configClazz = CalculateDeltaNodeConfiguration.class,
-        nodeDescription = "Calculates and adds 'delta' value into message based on the incoming and previous value",
-        nodeDetails = "Calculates delta and period based on the previous timeseries reading and current data. " +
-                "Delta calculation is done in scope of the message originator, e.g. device, asset or customer.<br><br>" +
-                "If there is input key, the output relation will be <code>Success</code> unless delta is negative and corresponding configuration parameter is set. <br>" +
-                "If there is no input value key in the incoming message, the output relation will be <code>Other</code>.",
+        nodeDescription = "Calculates delta and amount of time passed between previous timeseries key reading " +
+                "and current value for this key from the incoming message",
+        nodeDetails = "Useful for metering use cases, when you need to calculate consumption based on pulse counter reading.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
 public class CalculateDeltaNode implements TbNode {

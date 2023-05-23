@@ -55,16 +55,9 @@ import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfigurati
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
         nodeDescription = "Adds message originator telemetry for selected time range into message metadata",
-        nodeDetails = "The node allows you to configure fetch interval and fetch strategy. Fetch strategy section allows you to select fetch mode: <i>First/Last/All</i> <br><br>" +
-                "If selected fetch mode <i>First</i> rule node will retrieve the closest telemetry to the fetch interval's start.<br>" +
-                "If selected fetch mode <i>Last</i> rule node will retrieve the closest telemetry to the fetch interval's end.<br>" +
-                "If selected fetch mode <i>All</i> rule node will retrieve telemetry from the fetch interval with configurable query parameters.<br><br>" +
-                "Query parameters: <br><br>" +
-                "Data aggregation function: <i>Min/Max/Average/Sum/Count/None</i>. " +
-                "If selected aggregation function <i>None</i> rule node allows you to configure additional query parameters: <br><br>" +
-                "Order by timestamp: <i>Ascending/Descending</i><br><br>" +
-                "Limit: Min value - 2, max value - 1000.<br><br>" +
-                "Other data aggregation functions useful when you need to get the aggregated telemetry data as a single value for the configured fetch interval.",
+        nodeDetails = "Useful when you need to get telemetry data set from the message originator for a specific time range " +
+                "instead of fetching just the latest telemetry or if you need to get the closest telemetry to the fetch interval start or end. " +
+                "Also, this node can be used for telemetry aggregation within configured fetch interval.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {

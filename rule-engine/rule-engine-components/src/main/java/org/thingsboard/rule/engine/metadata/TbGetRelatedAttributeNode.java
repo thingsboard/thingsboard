@@ -36,16 +36,10 @@ import java.util.Arrays;
         type = ComponentType.ENRICHMENT,
         name = "related entity data",
         configClazz = TbGetRelatedDataNodeConfiguration.class,
-        nodeDescription = "Adds originators related entity data into message or message metadata",
+        nodeDescription = "Adds originators related entity attributes or latest telemetry or fields into message or message metadata",
         nodeDetails = "Related entity lookup based on the configured relation query. " +
-                "If multiple related entities are found, only first entity is used for message enrichment, other entities are discarded.<br><br>" +
-                "Data to fetch configuration: <br><br>" +
-                "<i>Attributes</i> - rule node fetches server scope attributes configured in mapping and adds them into message or message metadata. " +
-                "Access example in other nodes: <code>metadata.serialNumber</code>, <code>msg.serialNumber</code>.<br>" +
-                "<i>Latest telemetry</i> - rule node fetches latest telemetry configured in mapping and adds them into message or message metadata. " +
-                "Access example in other nodes: <code>metadata.temperature</code>, <code>msg.temperature</code>.<br>" +
-                "<i>Fields</i> - rule node fetches fields configured in mapping and adds them into message or message metadata. " +
-                "Access example in other nodes: <code>metadata.entityName</code>, <code>msg.entityName</code>.",
+                "If multiple related entities are found, only first entity is used for message enrichment, other entities are discarded. " +
+                "Useful when you need to retrieve data from an entity that has a relation to the message originator and use them for further message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeRelatedAttributesConfig")
 public class TbGetRelatedAttributeNode extends TbAbstractGetEntityDataNode<EntityId> {

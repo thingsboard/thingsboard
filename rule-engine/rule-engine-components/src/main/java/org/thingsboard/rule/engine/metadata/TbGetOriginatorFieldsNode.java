@@ -39,10 +39,7 @@ import java.util.concurrent.ExecutionException;
         configClazz = TbGetOriginatorFieldsConfiguration.class,
         nodeDescription = "Adds message originator fields values into message or message metadata",
         nodeDetails = "Fetches fields values specified in the mapping. If specified field is not part of originator fields it will be ignored. " +
-                "Supported originator types: <br><br>" +
-                "Tenant, Customer, User, Asset, Device, Alarm, Rule chain, Entity view.<br><br>" +
-                "If message originator is not supported - message will be forwarded via <code>Failure</code> chain, " +
-                "otherwise, <code>Success</code> chain will be used.",
+                "Useful when you need to retrieve originator fields and use them for further message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorFieldsConfig")
 public class TbGetOriginatorFieldsNode extends TbAbstractGetMappedDataNode<EntityId, TbGetOriginatorFieldsConfiguration> {

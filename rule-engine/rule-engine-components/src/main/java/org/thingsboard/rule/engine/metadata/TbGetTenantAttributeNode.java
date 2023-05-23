@@ -35,8 +35,8 @@ import org.thingsboard.server.common.data.util.TbPair;
         name = "tenant attributes",
         configClazz = TbGetEntityDataNodeConfiguration.class,
         nodeDescription = "Adds message originator tenant attributes or latest telemetry into message or message metadata",
-        nodeDetails = "Enriches incoming message or message metadata with the tenant's attributes or latest telemetry values. " +
-                "Useful when you store some parameters on the tenant level and would like to use them for message processing.",
+        nodeDetails = "Useful when you need to retrieve some common configuration or threshold set " +
+                "that is stored as tenant attributes or telemetry data and use it for further message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeTenantAttributesConfig")
 public class TbGetTenantAttributeNode extends TbAbstractGetEntityDataNode<TenantId> {

@@ -44,13 +44,9 @@ import java.util.NoSuchElementException;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "customer details",
         configClazz = TbGetCustomerDetailsNodeConfiguration.class,
-        nodeDescription = "Adds originator customer details into message or message metadata",
-        nodeDetails = "Enriches incoming message or message metadata with the corresponding customer details. " +
-                "Selected details adds to the message with predefined prefix: <code>customer_</code>. Examples: <code>customer_title</code>, <code>customer_address</code>, etc. <br><br>" +
-                "The customer is selected based on the originator of the message. Supported originator types: <br><br>" +
-                "Device, Asset, Entity view, User, Edge. <br><br>" +
-                "If message originator is not assigned to customer, or originator is not supported - " +
-                "message will be forwarded via <code>Failure</code> chain, otherwise, <code>Success</code> chain will be used.",
+        nodeDescription = "Adds message originator customer details into message or message metadata",
+        nodeDetails = "Useful in multi-customer solutions where we need dynamically use customer contact information " +
+                "such as email, phone, address, etc., for notifications via email, SMS, and other notification providers.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetCustomerDetailsNodeConfiguration, CustomerId> {

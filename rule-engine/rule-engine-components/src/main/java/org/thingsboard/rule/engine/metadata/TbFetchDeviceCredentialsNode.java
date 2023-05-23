@@ -39,8 +39,8 @@ import java.util.concurrent.ExecutionException;
         configClazz = TbFetchDeviceCredentialsNodeConfiguration.class,
         nodeDescription = "Adds device credentials to the message or message metadata",
         nodeDetails = "if message originator type is Device and device credentials was successfully fetched, " +
-                "rule node enriches message or message metadata with <i>credentialsType</i> and <i>credentials</i> properties " +
-                "and send message via <code>Success</code> chain. Otherwise message will be forwarded via <code>Failure</code> chain.",
+                "rule node enriches message or message metadata with <i>credentialsType</i> and <i>credentials</i> properties. " +
+                "Useful when you need to fetch device credentials and use them for further message processing. For example, use device credentials to interact with external systems.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig")
 public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFetchDeviceCredentialsNodeConfiguration> {
