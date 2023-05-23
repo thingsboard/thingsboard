@@ -177,7 +177,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
 
   onReassign(): void {
     this.alarmUpdated = true;
-    this.loadAlarm()
+    this.loadAlarm();
     this.alarmCommentComponent.loadAlarmComments();
   }
 }
