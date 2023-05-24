@@ -305,6 +305,7 @@ export const ruleNodeTypeDescriptors = new Map<RuleNodeType, RuleNodeTypeDescrip
 
 export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
   type: RuleNodeType;
+  configurationVersion: number,
   configurationDescriptor?: RuleNodeConfigurationDescriptor;
 }
 
