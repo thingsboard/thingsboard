@@ -78,7 +78,7 @@ public class DefaultRateLimitService implements RateLimitService {
             notificationRuleProcessor.process(RateLimitsTrigger.builder()
                     .tenantId(tenantId)
                     .api(api)
-                    .limitLevel(level instanceof EntityId ? (EntityId) level : null)
+                    .limitLevel(level instanceof EntityId ? (EntityId) level : tenantId)
                     .limitLevelEntityName(null)
                     .build());
         }

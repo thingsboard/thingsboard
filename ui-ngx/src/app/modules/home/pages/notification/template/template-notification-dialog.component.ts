@@ -14,27 +14,27 @@
 /// limitations under the License.
 ///
 
-import {NotificationDeliveryMethod, NotificationTemplate, NotificationType} from '@shared/models/notification.models';
-import {Component, Inject, OnDestroy, ViewChild} from '@angular/core';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {Router} from '@angular/router';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {FormBuilder} from '@angular/forms';
-import {NotificationService} from '@core/http/notification.service';
-import {deepClone, isDefinedAndNotNull} from '@core/utils';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
-import {StepperOrientation, StepperSelectionEvent} from '@angular/cdk/stepper';
-import {MatStepper} from '@angular/material/stepper';
-import {BreakpointObserver} from '@angular/cdk/layout';
-import {MediaBreakpoints} from '@shared/models/constants';
-import {TranslateService} from '@ngx-translate/core';
-import {TemplateConfiguration} from '@home/pages/notification/template/template-configuration';
-import {AuthState} from '@core/auth/auth.models';
-import {getCurrentAuthState} from '@core/auth/auth.selectors';
-import {AuthUser} from '@shared/models/user.model';
-import {Authority} from '@shared/models/authority.enum';
+import { NotificationDeliveryMethod, NotificationTemplate, NotificationType } from '@shared/models/notification.models';
+import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormBuilder } from '@angular/forms';
+import { NotificationService } from '@core/http/notification.service';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper';
+import { MatStepper } from '@angular/material/stepper';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { MediaBreakpoints } from '@shared/models/constants';
+import { TranslateService } from '@ngx-translate/core';
+import { TemplateConfiguration } from '@home/pages/notification/template/template-configuration';
+import { AuthState } from '@core/auth/auth.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { AuthUser } from '@shared/models/user.model';
+import { Authority } from '@shared/models/authority.enum';
 
 export interface TemplateNotificationDialogData {
   template?: NotificationTemplate;

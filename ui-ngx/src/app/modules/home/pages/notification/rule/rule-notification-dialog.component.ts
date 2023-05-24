@@ -28,38 +28,38 @@ import {
   TriggerType,
   TriggerTypeTranslationMap
 } from '@shared/models/notification.models';
-import {Component, Inject, OnDestroy, ViewChild} from '@angular/core';
-import {DialogComponent} from '@shared/components/dialog.component';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {Router} from '@angular/router';
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {NotificationService} from '@core/http/notification.service';
-import {EntityType} from '@shared/models/entity-type.models';
-import {deepClone, deepTrim, isDefined} from '@core/utils';
-import {Observable, Subject} from 'rxjs';
-import {map, takeUntil} from 'rxjs/operators';
-import {StepperOrientation, StepperSelectionEvent} from '@angular/cdk/stepper';
-import {MatStepper} from '@angular/material/stepper';
-import {MediaBreakpoints} from '@shared/models/constants';
-import {BreakpointObserver} from '@angular/cdk/layout';
+import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { NotificationService } from '@core/http/notification.service';
+import { EntityType } from '@shared/models/entity-type.models';
+import { deepClone, deepTrim, isDefined } from '@core/utils';
+import { Observable, Subject } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
+import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper';
+import { MatStepper } from '@angular/material/stepper';
+import { MediaBreakpoints } from '@shared/models/constants';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   AlarmSearchStatus,
   alarmSearchStatusTranslations,
   AlarmSeverity,
   alarmSeverityTranslations
 } from '@shared/models/alarm.models';
-import {TranslateService} from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import {
   RecipientNotificationDialogComponent,
   RecipientNotificationDialogData
 } from '@home/pages/notification/recipient/recipient-notification-dialog.component';
-import {MatButton} from '@angular/material/button';
-import {AuthState} from '@core/auth/auth.models';
-import {getCurrentAuthState} from '@core/auth/auth.selectors';
-import {AuthUser} from '@shared/models/user.model';
-import {Authority} from '@shared/models/authority.enum';
+import { MatButton } from '@angular/material/button';
+import { AuthState } from '@core/auth/auth.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { AuthUser } from '@shared/models/user.model';
+import { Authority } from '@shared/models/authority.enum';
 import {
   ApiFeature,
   ApiFeatureTranslationMap,

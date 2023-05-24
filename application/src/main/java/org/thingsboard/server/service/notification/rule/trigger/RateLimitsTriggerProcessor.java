@@ -48,10 +48,10 @@ public class RateLimitsTriggerProcessor implements NotificationRuleTriggerProces
     public RuleOriginatedNotificationInfo constructNotificationInfo(RateLimitsTrigger trigger) {
         EntityId limitLevel = trigger.getLimitLevel();
         String tenantName = tenantService.findTenantById(trigger.getTenantId()).getName();
-        String limitLevelEntityName;
+        String limitLevelEntityName = null;
         if (limitLevel instanceof TenantId) {
             limitLevelEntityName = tenantName;
-        } else {
+        } else if (limitLevel != null) {
             limitLevelEntityName = Optional.ofNullable(trigger.getLimitLevelEntityName())
                     .orElseGet(() -> entityServiceRegistry.getServiceByEntityType(limitLevel.getEntityType())
                             .findEntity(trigger.getTenantId(), limitLevel)
