@@ -78,7 +78,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { fromEvent, NEVER, Observable, of, ReplaySubject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, mergeMap, tap } from 'rxjs/operators';
 import { ISearchableComponent } from '../../models/searchable-component.models';
-import { deepClone } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-details.component';
 import { RuleNodeLinkComponent } from './rule-node-link.component';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -1425,7 +1425,7 @@ export class RuleChainPageComponent extends PageComponent
             id: node.ruleNodeId,
             type: node.component.clazz,
             name: node.name,
-            configurationVersion: node.configurationVersion,
+            configurationVersion: isDefinedAndNotNull(node.configurationVersion) ? node.configurationVersion : node.component.configurationVersion,
             configuration: node.configuration,
             additionalInfo: node.additionalInfo ? node.additionalInfo : {},
             debugMode: node.debugMode,
