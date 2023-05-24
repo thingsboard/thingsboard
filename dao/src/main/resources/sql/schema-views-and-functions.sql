@@ -226,7 +226,11 @@ BEGIN
     END IF;
     IF NOT(existing.cleared) THEN
         cleared = TRUE;
-        UPDATE alarm a SET cleared = true, clear_ts = a_ts, additional_info = a_details WHERE a.id = a_id AND a.tenant_id = t_id;
+        IF a_details IS NULL THEN
+            UPDATE alarm a SET cleared = true, clear_ts = a_ts WHERE a.id = a_id AND a.tenant_id = t_id;
+        ELSE
+            UPDATE alarm a SET cleared = true, clear_ts = a_ts, additional_info = a_details WHERE a.id = a_id AND a.tenant_id = t_id;
+        END IF;
     END IF;
     SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
     RETURN json_build_object('success', true, 'cleared', cleared, 'alarm', row_to_json(result))::text;
