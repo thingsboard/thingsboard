@@ -23,6 +23,8 @@ import org.testng.annotations.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
@@ -51,11 +53,11 @@ public class DeleteSeveralDevicesTest extends AbstractDeviceTest {
             "that appears at the top")
     public void deleteSeveralDevicesByTopBtn() {
         sideBarMenuView.goToDevicesPage();
-        devicePage.deleteSelected(2);
+        devicePage.deleteSelectedDevices(deviceName1, deviceName2);
         devicePage.refreshBtn().click();
 
-        devicePage.assertEntityIsNotPresent(deviceName1);
-        devicePage.assertEntityIsNotPresent(deviceName2);
+        List.of(deviceName1, deviceName2)
+                .forEach(d -> devicePage.assertEntityIsNotPresent(d));
     }
 
     @Test(groups = "smoke")
@@ -76,9 +78,9 @@ public class DeleteSeveralDevicesTest extends AbstractDeviceTest {
             "that appears at the top without refresh")
     public void deleteSeveralWithoutRefresh() {
         sideBarMenuView.goToDevicesPage();
-        devicePage.deleteSelected(2);
+        devicePage.deleteSelectedDevices(deviceName1, deviceName2);
 
-        devicePage.assertEntityIsNotPresent(deviceName1);
-        devicePage.assertEntityIsNotPresent(deviceName2);
+        List.of(deviceName1, deviceName2)
+                .forEach(d -> devicePage.assertEntityIsNotPresent(d));
     }
 }

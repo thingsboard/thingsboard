@@ -33,26 +33,26 @@ public class DevicePageElements extends OtherPageElementsHelper {
     private static final String CLOSE_DEVICE_DETAILS_VIEW = "//header//mat-icon[contains(text(),'close')]/parent::button";
     private static final String SUBMIT_ASSIGN_TO_CUSTOMER_BTN = "//button[@type='submit']";
     private static final String ADD_DEVICE_BTN = "//mat-icon[text() = 'insert_drive_file']/parent::button";
-    private static final String CREATE_DEVICE_NAME_FIELD = "//tb-device-wizard//input[@formcontrolname='name']";
     private static final String HEADER_NAME_VIEW = "//header//div[@class='tb-details-title']/span";
-    private static final String DESCRIPTION_FIELD_CREATE_VIEW = "//tb-device-wizard//textarea[@formcontrolname='description']";
     private static final String ADD_DEVICE_VIEW = "//tb-device-wizard";
     private static final String DELETE_BTN_DETAILS_TAB = "//span[contains(text(),'Delete device')]/parent::button";
     private static final String CHECKBOX_GATEWAY_EDIT = "//mat-checkbox[@formcontrolname='gateway']//label";
-    private static final String CHECKBOX_GATEWAY_CREATE = "//tb-device-wizard//mat-checkbox[@formcontrolname='gateway']//label";
     private static final String CHECKBOX_OVERWRITE_ACTIVITY_TIME_EDIT = "//mat-checkbox[@formcontrolname='overwriteActivityTime']//label";
-    private static final String CHECKBOX_OVERWRITE_ACTIVITY_TIME_CREATE = "//tb-device-wizard//mat-checkbox[@formcontrolname='overwriteActivityTime']//label";
     private static final String CHECKBOX_GATEWAY_DETAILS = "//mat-checkbox[@formcontrolname='gateway']//input";
     private static final String CHECKBOX_GATEWAY_PAGE = DEVICE + "/ancestor::mat-row//mat-cell[contains(@class,'cdk-column-gateway')]//mat-icon[text() = 'check_box']";
     private static final String CHECKBOX_OVERWRITE_ACTIVITY_TIME_DETAILS = "//mat-checkbox[@formcontrolname='overwriteActivityTime']//input";
     private static final String CLEAR_PROFILE_FIELD_BTN = "//button[@aria-label='Clear']";
     private static final String DEVICE_PROFILE_REDIRECTED_BTN = "//a[@aria-label='Open device profile']";
-    private static final String DEVICE_LABEL_FIELD_CREATE = "//tb-device-wizard//input[@formcontrolname='label']";
     private static final String DEVICE_LABEL_PAGE = DEVICE + "/ancestor::mat-row//mat-cell[contains(@class,'cdk-column-label')]/span";
     private static final String DEVICE_CUSTOMER_PAGE = DEVICE + "/ancestor::mat-row//mat-cell[contains(@class,'cdk-column-customerTitle')]/span";
-    private static final String CUSTOMER_OPTION_BNT = "//div[text() = 'Customer']/ancestor::mat-step-header";
-    private static final String ASSIGN_ON_CUSTOMER_FIELD = "//input[@formcontrolname='entity']";
     private static final String DEVICE_LABEL_EDIT = "//input[@formcontrolname='label']";
+    private static final String DEVICE_DEVICE_PROFILE_PAGE = DEVICE + "/ancestor::mat-row//mat-cell[contains(@class,'cdk-column-deviceProfileName')]/span";
+    protected static final String ASSIGN_BTN = ENTITY + "/ancestor::mat-row//mat-icon[contains(text(),'assignment_ind')]/ancestor::button";
+    protected static final String UNASSIGN_BTN = ENTITY + "/ancestor::mat-row//mat-icon[contains(text(),' assignment_return')]/ancestor::button";
+    protected static final String ASSIGN_BTN_DETAILS_TAB = "//span[contains(text(),'Assign to customer')]/parent::button";
+    protected static final String UNASSIGN_BTN_DETAILS_TAB = "//span[contains(text(),'Unassign from customer')]/parent::button";
+    protected static final String ASSIGNED_FIELD_DETAILS_TAB = "//mat-label[text() = 'Assigned to customer']/parent::label/parent::div/input";
+    protected static final String ASSIGN_MARKED_DEVICE_BTN = "//mat-icon[text() = 'assignment_ind']/parent::button";
 
     public WebElement device(String deviceName) {
         return waitUntilElementToBeClickable(String.format(DEVICE, deviceName));
@@ -90,16 +90,8 @@ public class DevicePageElements extends OtherPageElementsHelper {
         return waitUntilElementToBeClickable(ADD_DEVICE_BTN);
     }
 
-    public WebElement nameField() {
-        return waitUntilElementToBeClickable(CREATE_DEVICE_NAME_FIELD);
-    }
-
     public WebElement headerNameView() {
         return waitUntilVisibilityOfElementLocated(HEADER_NAME_VIEW);
-    }
-
-    public WebElement descriptionFieldCreateField() {
-        return waitUntilElementToBeClickable(DESCRIPTION_FIELD_CREATE_VIEW);
     }
 
     public WebElement addDeviceView() {
@@ -114,16 +106,8 @@ public class DevicePageElements extends OtherPageElementsHelper {
         return waitUntilElementToBeClickable(CHECKBOX_GATEWAY_EDIT);
     }
 
-    public WebElement checkboxGatewayCreate() {
-        return waitUntilElementToBeClickable(CHECKBOX_GATEWAY_CREATE);
-    }
-
     public WebElement checkboxOverwriteActivityTimeEdit() {
         return waitUntilElementToBeClickable(CHECKBOX_OVERWRITE_ACTIVITY_TIME_EDIT);
-    }
-
-    public WebElement checkboxOverwriteActivityTimeCreate() {
-        return waitUntilElementToBeClickable(CHECKBOX_OVERWRITE_ACTIVITY_TIME_CREATE);
     }
 
     public WebElement checkboxGatewayDetailsTab() {
@@ -146,20 +130,8 @@ public class DevicePageElements extends OtherPageElementsHelper {
         return waitUntilElementToBeClickable(DEVICE_PROFILE_REDIRECTED_BTN);
     }
 
-    public WebElement deviceLabelFieldCreate() {
-        return waitUntilElementToBeClickable(DEVICE_LABEL_FIELD_CREATE);
-    }
-
     public WebElement deviceLabelOnPage(String deviceName) {
         return waitUntilVisibilityOfElementLocated(String.format(DEVICE_LABEL_PAGE, deviceName));
-    }
-
-    public WebElement customerOptionBtn() {
-        return waitUntilElementToBeClickable(CUSTOMER_OPTION_BNT);
-    }
-
-    public WebElement assignOnCustomerField() {
-        return waitUntilElementToBeClickable(ASSIGN_ON_CUSTOMER_FIELD);
     }
 
     public WebElement deviceCustomerOnPage(String deviceName) {
@@ -172,5 +144,37 @@ public class DevicePageElements extends OtherPageElementsHelper {
 
     public WebElement deviceLabelDetailsField() {
         return waitUntilVisibilityOfElementLocated(DEVICE_LABEL_EDIT);
+    }
+
+    public WebElement deviceDeviceProfileOnPage(String deviceProfileTitle) {
+        return waitUntilVisibilityOfElementLocated(String.format(DEVICE_DEVICE_PROFILE_PAGE, deviceProfileTitle));
+    }
+
+    public WebElement assignBtn(String deviceName) {
+        return waitUntilElementToBeClickable(String.format(ASSIGN_BTN, deviceName));
+    }
+
+    public WebElement assignBtnVisible(String deviceName) {
+        return waitUntilVisibilityOfElementLocated(String.format(ASSIGN_BTN, deviceName));
+    }
+
+    public WebElement unassignBtn(String deviceName) {
+        return waitUntilElementToBeClickable(String.format(UNASSIGN_BTN, deviceName));
+    }
+
+    public WebElement assignBtnDetailsTab() {
+        return waitUntilElementToBeClickable(ASSIGN_BTN_DETAILS_TAB);
+    }
+
+    public WebElement unassignBtnDetailsTab() {
+        return waitUntilElementToBeClickable(UNASSIGN_BTN_DETAILS_TAB);
+    }
+
+    public WebElement assignFieldDetailsTab() {
+        return waitUntilVisibilityOfElementLocated(ASSIGNED_FIELD_DETAILS_TAB);
+    }
+
+    public WebElement assignMarkedDeviceBtn() {
+        return waitUntilVisibilityOfElementLocated(ASSIGN_MARKED_DEVICE_BTN);
     }
 }
