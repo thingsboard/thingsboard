@@ -132,6 +132,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       type: ['', [Validators.required]],
       log_level: ['', [Validators.required]],
       key: ['auto'],
+      class: [''],
       configurationJson: [{}, [Validators.required]]
     })
 
@@ -231,6 +232,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.pageLink.sortOrder.property = this.sort.active;
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
     this.attributeDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
+      console.log(data);
       this.dataSource.data = data.data.filter(value => this.activeConnectors.includes(value.key) || this.inactiveConnectors.includes(value.key));
     });
   }
