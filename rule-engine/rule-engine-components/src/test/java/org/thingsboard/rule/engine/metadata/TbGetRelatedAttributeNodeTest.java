@@ -569,7 +569,7 @@ public class TbGetRelatedAttributeNodeTest {
     }
 
     @Test
-    public void givenOldConfig_whenUpgrade_thenShouldReturnSuccessResult() throws Exception {
+    public void givenOldConfig_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
         var defaultConfig = new TbGetRelatedDataNodeConfiguration().defaultConfiguration();
         var node = new TbGetRelatedAttributeNode();
         String oldConfig = "{\"attrMapping\":{\"serialNumber\":\"sn\"}," +
@@ -580,7 +580,7 @@ public class TbGetRelatedAttributeNodeTest {
         JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
         TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
         Assertions.assertTrue(upgrade.getFirst());
-        Assertions.assertEquals(JacksonUtil.valueToTree(defaultConfig), upgrade.getSecond());
+        Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
     }
 
     private void prepareMsgAndConfig(FetchTo fetchTo, DataToFetch dataToFetch, EntityId originator) {

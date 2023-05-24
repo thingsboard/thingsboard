@@ -154,12 +154,12 @@ public class TbFetchDeviceCredentialsNodeTest {
     }
 
     @Test
-    void givenOldConfig_whenUpgrade_thenShouldReturnSuccessResult() throws Exception {
+    void givenOldConfig_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
         String oldConfig = "{\"fetchToMetadata\":true}";
         JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
         TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
         assertTrue(upgrade.getFirst());
-        assertEquals(JacksonUtil.valueToTree(config), upgrade.getSecond());
+        assertEquals(config, JacksonUtil.treeToValue(upgrade.getSecond(), config.getClass()));
     }
 
     private TbMsg getTbMsg(EntityId entityId) {

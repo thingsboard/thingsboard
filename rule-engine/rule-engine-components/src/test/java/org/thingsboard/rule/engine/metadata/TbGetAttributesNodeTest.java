@@ -251,7 +251,7 @@ public class TbGetAttributesNodeTest {
     }
 
     @Test
-    public void givenOldConfig_whenUpgrade_thenShouldReturnSuccessResult() throws Exception {
+    public void givenOldConfig_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
         var defaultConfig = new TbGetAttributesNodeConfiguration().defaultConfiguration();
         var node = new TbGetAttributesNode();
         String oldConfig = "{\"fetchToData\":false," +
@@ -264,7 +264,7 @@ public class TbGetAttributesNodeTest {
         JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
         TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
         Assertions.assertTrue(upgrade.getFirst());
-        Assertions.assertEquals(JacksonUtil.valueToTree(defaultConfig), upgrade.getSecond());
+        Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
     }
 
     private TbMsg checkMsg(boolean checkSuccess) {
