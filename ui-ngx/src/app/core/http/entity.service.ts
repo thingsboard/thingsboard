@@ -422,6 +422,14 @@ export class EntityService {
         pageLink.sortOrder.property = 'name';
         entitiesObservable = this.notificationService.getNotificationTargets(pageLink, subType as NotificationType, config);
         break;
+      case EntityType.NOTIFICATION_TEMPLATE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.notificationService.getNotificationTemplates(pageLink, subType as NotificationType, config);
+        break;
+      case EntityType.NOTIFICATION_RULE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.notificationService.getNotificationRules(pageLink, config);
+        break;
     }
     return entitiesObservable;
   }

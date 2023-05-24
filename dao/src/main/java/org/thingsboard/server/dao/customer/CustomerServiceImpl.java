@@ -197,6 +197,12 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         return Optional.ofNullable(findCustomerById(tenantId, new CustomerId(entityId.getId())));
     }
 
+    @Transactional
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteCustomer(tenantId, (CustomerId) id);
+    }
+
     @Override
     public long countByTenantId(TenantId tenantId) {
         return customerDao.countByTenantId(tenantId);

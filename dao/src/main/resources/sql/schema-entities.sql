@@ -796,7 +796,9 @@ CREATE TABLE IF NOT EXISTS notification_target (
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
     configuration VARCHAR(10000) NOT NULL,
-    CONSTRAINT uq_notification_target_name UNIQUE (tenant_id, name)
+    external_id UUID,
+    CONSTRAINT uq_notification_target_name UNIQUE (tenant_id, name),
+    CONSTRAINT uq_notification_target_external_id UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS notification_template (
@@ -806,7 +808,9 @@ CREATE TABLE IF NOT EXISTS notification_template (
     name VARCHAR(255) NOT NULL,
     notification_type VARCHAR(50) NOT NULL,
     configuration VARCHAR(10000000) NOT NULL,
-    CONSTRAINT uq_notification_template_name UNIQUE (tenant_id, name)
+    external_id UUID,
+    CONSTRAINT uq_notification_template_name UNIQUE (tenant_id, name),
+    CONSTRAINT uq_notification_template_external_id UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS notification_rule (
@@ -820,7 +824,9 @@ CREATE TABLE IF NOT EXISTS notification_rule (
     trigger_config VARCHAR(1000) NOT NULL,
     recipients_config VARCHAR(10000) NOT NULL,
     additional_config VARCHAR(255),
-    CONSTRAINT uq_notification_rule_name UNIQUE (tenant_id, name)
+    external_id UUID,
+    CONSTRAINT uq_notification_rule_name UNIQUE (tenant_id, name),
+    CONSTRAINT uq_notification_rule_external_id UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS notification_request (
