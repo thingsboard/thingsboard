@@ -87,7 +87,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
         String targets = recipientsConfig.getTargetsTable().values().stream()
                 .flatMap(List::stream).sorted().map(Object::toString)
                 .collect(Collectors.joining(","));
-        return String.join(":", triggerType.toString(), targets, triggerConfig.getDeduplicationKey());
+        return String.join(":", targets, triggerConfig.getDeduplicationKey());
     }
 
 }

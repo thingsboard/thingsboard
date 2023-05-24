@@ -75,14 +75,14 @@ public class RateLimitServiceTest {
                 LimitedApi.ENTITY_EXPORT,
                 LimitedApi.ENTITY_IMPORT,
                 LimitedApi.NOTIFICATION_REQUESTS,
-                LimitedApi.REST_REQUESTS,
+                LimitedApi.REST_REQUESTS_PER_CUSTOMER,
                 LimitedApi.CASSANDRA_QUERIES
         )) {
             testRateLimits(limitedApi, max, tenantId);
         }
 
         CustomerId customerId = new CustomerId(UUID.randomUUID());
-        testRateLimits(LimitedApi.REST_REQUESTS, max, customerId);
+        testRateLimits(LimitedApi.REST_REQUESTS_PER_CUSTOMER, max, customerId);
 
         NotificationRuleId notificationRuleId = new NotificationRuleId(UUID.randomUUID());
         testRateLimits(LimitedApi.NOTIFICATION_REQUESTS_PER_RULE, max, notificationRuleId);

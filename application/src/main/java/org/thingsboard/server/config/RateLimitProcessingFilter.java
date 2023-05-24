@@ -49,7 +49,7 @@ public class RateLimitProcessingFilter extends OncePerRequestFilter {
         SecurityUser user = getCurrentUser();
         if (user != null && !user.isSystemAdmin()) {
             try {
-                if (!rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS, user.getTenantId())) {
+                if (!rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS_PER_TENANT, user.getTenantId())) {
                     rateLimitExceeded(EntityType.TENANT, response);
                     return;
                 }
@@ -60,7 +60,7 @@ public class RateLimitProcessingFilter extends OncePerRequestFilter {
             }
 
             if (user.isCustomerUser()) {
-                if (!rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS, user.getTenantId(), user.getCustomerId())) {
+                if (!rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS_PER_CUSTOMER, user.getTenantId(), user.getCustomerId())) {
                     rateLimitExceeded(EntityType.CUSTOMER, response);
                     return;
                 }

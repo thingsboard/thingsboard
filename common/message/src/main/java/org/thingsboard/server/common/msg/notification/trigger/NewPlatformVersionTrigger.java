@@ -51,11 +51,12 @@ public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
 
     @Override
     public String getDeduplicationKey() {
-        return String.join(":", updateInfo.getCurrentVersion(), updateInfo.getLatestVersion());
+        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(),
+                updateInfo.getCurrentVersion(), updateInfo.getLatestVersion());
     }
 
     @Override
-    public long getDeduplicationDuration() {
+    public long getDefaultDeduplicationDuration() {
         return 0;
     }
 

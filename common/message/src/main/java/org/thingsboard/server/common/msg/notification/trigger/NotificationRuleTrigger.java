@@ -36,10 +36,10 @@ public interface NotificationRuleTrigger extends Serializable {
 
     default String getDeduplicationKey() {
         EntityId originatorEntityId = getOriginatorEntityId();
-        return String.join(":", originatorEntityId.getEntityType().toString(), originatorEntityId.getId().toString());
+        return String.join(":", getType().toString(), originatorEntityId.getEntityType().toString(), originatorEntityId.getId().toString());
     }
 
-    default long getDeduplicationDuration() {
+    default long getDefaultDeduplicationDuration() {
         return 0;
     }
 

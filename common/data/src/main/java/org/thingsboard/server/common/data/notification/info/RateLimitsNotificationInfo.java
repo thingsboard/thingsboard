@@ -21,6 +21,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 
 import java.util.Map;
 
@@ -34,14 +35,14 @@ public class RateLimitsNotificationInfo implements RuleOriginatedNotificationInf
 
     private TenantId tenantId;
     private String tenantName;
-    private String api;
+    private LimitedApi api;
     private EntityId limitLevel;
     private String limitLevelEntityName;
 
     @Override
     public Map<String, String> getTemplateData() {
         return mapOf(
-                "api", api,
+                "api", api.getLabel(),
                 "limitLevelEntityType", limitLevel != null ? limitLevel.getEntityType().getNormalName() : null,
                 "limitLevelEntityId", limitLevel != null ? limitLevel.getId().toString() : null,
                 "limitLevelEntityName", limitLevelEntityName,

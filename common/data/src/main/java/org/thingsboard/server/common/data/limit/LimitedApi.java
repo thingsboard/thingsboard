@@ -16,56 +16,55 @@
 package org.thingsboard.server.common.data.limit;
 
 import lombok.Getter;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 
-import java.util.function.BiFunction;
+import java.util.Optional;
 import java.util.function.Function;
 
 public enum LimitedApi {
 
-    ENTITY_EXPORT(DefaultTenantProfileConfiguration::getTenantEntityExportRateLimit, "entity version creation"),
-    ENTITY_IMPORT(DefaultTenantProfileConfiguration::getTenantEntityImportRateLimit, "entity version load"),
-    NOTIFICATION_REQUESTS(DefaultTenantProfileConfiguration::getTenantNotificationRequestsRateLimit, "notification requests"),
-    NOTIFICATION_REQUESTS_PER_RULE(DefaultTenantProfileConfiguration::getTenantNotificationRequestsPerRuleRateLimit, "notification requests"),
-    REST_REQUESTS((profileConfiguration, level) -> ((EntityId) level).getEntityType() == EntityType.TENANT ?
-            profileConfiguration.getTenantServerRestLimitsConfiguration() :
-            profileConfiguration.getCustomerServerRestLimitsConfiguration(), "REST API requests"),
-    WS_UPDATES_PER_SESSION(DefaultTenantProfileConfiguration::getWsUpdatesPerSessionRateLimit, "WS updates per session"),
-    CASSANDRA_QUERIES(DefaultTenantProfileConfiguration::getCassandraQueryTenantRateLimitsConfiguration, "Cassandra queries"),
-    PASSWORD_RESET(true),
-    TWO_FA_VERIFICATION_CODE_SEND(true),
-    TWO_FA_VERIFICATION_CODE_CHECK(true);
+    ENTITY_EXPORT(DefaultTenantProfileConfiguration::getTenantEntityExportRateLimit, "entity version creation", true),
+    ENTITY_IMPORT(DefaultTenantProfileConfiguration::getTenantEntityImportRateLimit, "entity version load", true),
+    NOTIFICATION_REQUESTS(DefaultTenantProfileConfiguration::getTenantNotificationRequestsRateLimit, "notification requests", true),
+    NOTIFICATION_REQUESTS_PER_RULE(DefaultTenantProfileConfiguration::getTenantNotificationRequestsPerRuleRateLimit, "notification requests per rule", false),
+    REST_REQUESTS_PER_TENANT(DefaultTenantProfileConfiguration::getTenantServerRestLimitsConfiguration, "REST API requests", true),
+    REST_REQUESTS_PER_CUSTOMER(DefaultTenantProfileConfiguration::getCustomerServerRestLimitsConfiguration, "REST API requests per customer", false),
+    WS_UPDATES_PER_SESSION(DefaultTenantProfileConfiguration::getWsUpdatesPerSessionRateLimit, "WS updates per session", true),
+    CASSANDRA_QUERIES(DefaultTenantProfileConfiguration::getCassandraQueryTenantRateLimitsConfiguration, "Cassandra queries", true),
+    PASSWORD_RESET(false, true),
+    TWO_FA_VERIFICATION_CODE_SEND(false, true),
+    TWO_FA_VERIFICATION_CODE_CHECK(false, true),
+    TRANSPORT_MESSAGES_PER_TENANT("transport messages", true),
+    TRANSPORT_MESSAGES_PER_DEVICE("transport messages per device", false);
 
-    private final BiFunction<DefaultTenantProfileConfiguration, Object, String> configExtractor;
+    private Function<DefaultTenantProfileConfiguration, String> configExtractor;
     @Getter
-    private final boolean refillRateLimitIntervally;
+    private final boolean perTenant;
     @Getter
-    private final String label;
+    private boolean refillRateLimitIntervally;
+    @Getter
+    private String label;
 
-    LimitedApi(Function<DefaultTenantProfileConfiguration, String> configExtractor, String label) {
-        this((profileConfiguration, level) -> configExtractor.apply(profileConfiguration), label);
-    }
-
-    LimitedApi(BiFunction<DefaultTenantProfileConfiguration, Object, String> configExtractor, String label) {
+    LimitedApi(Function<DefaultTenantProfileConfiguration, String> configExtractor, String label, boolean perTenant) {
         this.configExtractor = configExtractor;
-        this.refillRateLimitIntervally = false;
         this.label = label;
+        this.perTenant = perTenant;
     }
 
-    LimitedApi(boolean refillRateLimitIntervally) {
-        this.configExtractor = null;
+    LimitedApi(boolean perTenant, boolean refillRateLimitIntervally) {
+        this.perTenant = perTenant;
         this.refillRateLimitIntervally = refillRateLimitIntervally;
-        this.label = null;
     }
 
-    public String getLimitConfig(DefaultTenantProfileConfiguration profileConfiguration, Object level) {
-        if (configExtractor != null) {
-            return configExtractor.apply(profileConfiguration, level);
-        } else {
-            throw new IllegalArgumentException("No tenant profile config for " + name() + " rate limits");
-        }
+    LimitedApi(String label, boolean perTenant) {
+        this.label = label;
+        this.perTenant = perTenant;
+    }
+
+    public String getLimitConfig(DefaultTenantProfileConfiguration profileConfiguration) {
+        return Optional.ofNullable(configExtractor)
+                .map(extractor -> extractor.apply(profileConfiguration))
+                .orElse(null);
     }
 
 }

@@ -72,12 +72,12 @@ public class DefaultRateLimitService implements RateLimitService {
         }
 
         String rateLimitConfig = tenantProfile.getProfileConfiguration()
-                .map(profileConfiguration -> api.getLimitConfig(profileConfiguration, level))
-                .orElse(null);
+                .map(api::getLimitConfig).orElse(null);
         boolean success = checkRateLimit(api, level, rateLimitConfig);
         if (!success) {
             notificationRuleProcessor.process(RateLimitsTrigger.builder()
-                    .tenantId(tenantId).api(api.getLabel())
+                    .tenantId(tenantId)
+                    .api(api)
                     .limitLevel(level instanceof EntityId ? (EntityId) level : null)
                     .limitLevelEntityName(null)
                     .build());

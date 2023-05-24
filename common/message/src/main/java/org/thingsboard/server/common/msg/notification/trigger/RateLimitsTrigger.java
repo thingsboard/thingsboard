@@ -19,6 +19,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
 import java.util.concurrent.TimeUnit;
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class RateLimitsTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
-    private final String api;
+    private final LimitedApi api;
     private final EntityId limitLevel;
     private final String limitLevelEntityName;
 
@@ -43,8 +44,6 @@ public class RateLimitsTrigger implements NotificationRuleTrigger {
     }
 
 
-    private static final long deduplicationDuration = TimeUnit.HOURS.toMillis(1);
-
     @Override
     public boolean deduplicate() {
         return true;
@@ -52,12 +51,12 @@ public class RateLimitsTrigger implements NotificationRuleTrigger {
 
     @Override
     public String getDeduplicationKey() {
-        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(), api);
+        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(), api.toString());
     }
 
     @Override
-    public long getDeduplicationDuration() {
-        return deduplicationDuration;
+    public long getDefaultDeduplicationDuration() {
+        return TimeUnit.HOURS.toMillis(4);
     }
 
 }

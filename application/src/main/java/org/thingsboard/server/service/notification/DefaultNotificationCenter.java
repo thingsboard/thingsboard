@@ -89,7 +89,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final NotificationService notificationService;
     private final NotificationTemplateService notificationTemplateService;
     private final NotificationSettingsService notificationSettingsService;
-    private final UserService userService;
     private final NotificationExecutorService notificationExecutor;
     private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducerProvider producerProvider;
