@@ -40,7 +40,7 @@ import java.util.Optional;
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId> {
+public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId> {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -199,11 +199,6 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         } catch (JsonProcessingException e) {
             log.warn("Can't serialize device data: ", e);
         }
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 
     @ApiModelProperty(position = 10, value = "JSON object with Ota Package Id.")

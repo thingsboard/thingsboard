@@ -261,6 +261,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityNameColumns.put(EntityType.ENTITY_VIEW, "name");
         entityNameColumns.put(EntityType.TB_RESOURCE, "search_text");
         entityNameColumns.put(EntityType.EDGE, "name");
+        entityNameColumns.put(EntityType.QUEUE, "name");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
