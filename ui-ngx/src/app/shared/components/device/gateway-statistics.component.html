@@ -24,8 +24,8 @@
         <mat-option *ngFor="let key of statisticsKeys" [value]="key">
           {{key}}
         </mat-option>
-        <mat-option *ngFor="let command of commands" [value]="command.attributeName">
-          {{command.attributeName}}
+        <mat-option *ngFor="let command of commands" [value]="command.attributeOnGateway">
+          {{command.attributeOnGateway}}
         </mat-option>
       </mat-select>
     </mat-form-field>

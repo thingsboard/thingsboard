@@ -67,10 +67,10 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
       statisticKey: [null, []]
     })
 
-    this.statisticForm.get('statisticKey').valueChanges.subscribe(value=>{
+    this.statisticForm.get('statisticKey').valueChanges.subscribe(value => {
       this.commandObj = null;
       if (this.commands.length) {
-        this.commandObj = this.commands.find(command=>command.attributeOnGateway === value);
+        this.commandObj = this.commands.find(command => command.attributeOnGateway === value);
       }
       this.changeSubscription(true);
     })
@@ -80,10 +80,10 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   ngAfterViewInit() {
     if (this.ctx.defaultSubscription.datasources.length) {
       const gatewayId = this.ctx.defaultSubscription.datasources[0].entity.id;
-      this.attributeService.getEntityAttributes(gatewayId, AttributeScope.SHARED_SCOPE, ["configuration"]).subscribe(resp=>{
+      this.attributeService.getEntityAttributes(gatewayId, AttributeScope.SHARED_SCOPE, ["general_configuration"]).subscribe(resp => {
         if (resp && resp.length) {
-          this.commands = resp[0].value.thingsboard.thingsboard.statistics.commands;
-          if (!this.statisticForm.get('statisticKey').value ) {
+          this.commands = resp[0].value.statistics.commands;
+          if (!this.statisticForm.get('statisticKey').value) {
             this.statisticForm.get('statisticKey').setValue(this.commands[0].attributeOnGateway);
             this.changeSubscription(true);
           }
@@ -126,7 +126,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
 
   changeSubscription(init?: boolean) {
     if (this.ctx.datasources[0].entity) {
-      if (this.flot && init)  {
+      if (this.flot && init) {
         this.flot.destroy();
         delete this.flot;
       }
@@ -138,10 +138,14 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
       }];
       this.ctx.defaultSubscription.unsubscribe();
       this.ctx.defaultSubscription.updateDataSubscriptions();
-      if (init) this.initChart();
-      this.ctx.defaultSubscription.options.callbacks.dataLoading = ()=>{};
+      this.ctx.defaultSubscription.options.callbacks.dataLoading = () => {
+      };
       this.ctx.defaultSubscription.callbacks.onDataUpdated = () => {
-        this.updateChart();
+        if (init) {
+          this.initChart();
+        } else {
+          this.updateChart();
+        }
       }
       this.cd.detectChanges();
     }
