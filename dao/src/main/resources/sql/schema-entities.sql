@@ -340,7 +340,6 @@ CREATE TABLE IF NOT EXISTS device (
     type varchar(255),
     name varchar(255),
     label varchar(255),
-    search_text varchar(255),
     tenant_id uuid,
     firmware_id uuid,
     software_id uuid,
