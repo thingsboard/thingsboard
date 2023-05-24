@@ -95,10 +95,10 @@ export class GatewayServiceRPCComponent extends PageComponent implements AfterVi
   sendCommand() {
     const formValues = this.commandForm.value;
     this.ctx.controlApi.sendTwoWayCommand('gateway_'+formValues.command.toLowerCase(), {},formValues.time).subscribe(resp=>{
-      this.commandForm.get('result').setValue(resp+"");
+      this.commandForm.get('result').setValue(JSON.stringify(resp));
     },error => {
       console.log(error);
-      this.commandForm.get('result').setValue(error.error+"");
+      this.commandForm.get('result').setValue(JSON.stringify(error.error));
     })
   }
 
