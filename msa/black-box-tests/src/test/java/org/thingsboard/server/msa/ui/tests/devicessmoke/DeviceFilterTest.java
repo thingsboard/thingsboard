@@ -17,6 +17,7 @@ package org.thingsboard.server.msa.ui.tests.devicessmoke;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -31,6 +32,7 @@ import static org.thingsboard.server.msa.ui.utils.Const.DEVICE_ACTIVE_STATE;
 import static org.thingsboard.server.msa.ui.utils.Const.DEVICE_INACTIVE_STATE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
+@Epic("Filter devices (By device profile and state)")
 public class DeviceFilterTest extends AbstractDeviceTest {
 
     private String activeDeviceName;
@@ -38,23 +40,25 @@ public class DeviceFilterTest extends AbstractDeviceTest {
     private String activeDeviceWithProfileName;
 
     @BeforeClass
-    public void create() throws JsonProcessingException {
+    public void createTestEntities() throws JsonProcessingException {
         DeviceProfile deviceProfile = testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(ENTITY_NAME + random()));
-        deviceProfileTitle = deviceProfile.getName();
         Device deviceWithProfile = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME + random(), deviceProfile.getId()));
-        deviceWithProfileName = deviceWithProfile.getName();
         Device activeDevice = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME + random()));
-        activeDeviceName = activeDevice.getName();
         Device activeDeviceWithProfile = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME + random(), deviceProfile.getId()));
-        activeDeviceWithProfileName = activeDeviceWithProfile.getName();
+
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(activeDevice.getId());
         DeviceCredentials deviceCredentials1 = testRestClient.getDeviceCredentialsByDeviceId(activeDeviceWithProfile.getId());
         testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.readTree(createPayload().toString()));
         testRestClient.postTelemetry(deviceCredentials1.getCredentialsId(), mapper.readTree(createPayload().toString()));
+
+        deviceProfileTitle = deviceProfile.getName();
+        deviceWithProfileName = deviceWithProfile.getName();
+        activeDeviceName = activeDevice.getName();
+        activeDeviceWithProfileName = activeDeviceWithProfile.getName();
     }
 
     @AfterClass
-    public void delete() {
+    public void deleteTestEntities() {
         deleteDevicesByName(deviceWithProfileName, activeDeviceName, activeDeviceWithProfileName);
         deleteDeviceProfileByTitle(deviceProfileTitle);
     }
