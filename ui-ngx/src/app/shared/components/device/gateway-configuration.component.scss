@@ -193,10 +193,9 @@
   .line-break {
     width: 100%;
   }
-  //
-  //::ng-deep.mat-mdc-slide-toggle .mdc-switch {
-  //  position: relative;
-  //  transform: translateY(4px);
-  //}
+
+  textarea {
+    resize: none;
+  }
 }
 
