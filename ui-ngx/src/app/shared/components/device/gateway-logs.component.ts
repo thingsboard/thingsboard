@@ -167,13 +167,22 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
 
   updateData(sort?) {
     if (this.ctx.defaultSubscription.data.length) {
+      console.log(this.ctx.defaultSubscription.data[0].dataKey.name === "LOGS")
       let attrData = this.ctx.defaultSubscription.data[0].data.map(data => {
-        return {
+        let result =  {
           ts: data[0],
           key: this.activeLink.key,
-          status: data[1].match(/\|(\w+)\|/)? data[1].match(/\|(\w+)\|/)[1] : "",
-          message: /\[(.*)/.exec(data[1])[0]
+          message: /\[(.*)/.exec(data[1])[0],
+          status: 'INVALID LOG FORMAT'
         };
+
+        try {
+          result.status= data[1].match(/\|(\w+)\|/)[1];
+        } catch (e) {
+          result.status = 'INVALID LOG FORMAT'
+        }
+
+        return result;
       });
       if (this.activeLink.filterFn) {
         attrData = attrData.filter(data => this.activeLink.filterFn(data));
@@ -201,6 +210,7 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
         return "status status-error";
       case GatewayLogLevel.info:
       default:
+        return "status status-info"
         return "status status-info"
     }
   }

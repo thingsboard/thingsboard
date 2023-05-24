@@ -64,7 +64,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
               public dialog: MatDialog) {
     super(store);
     this.statisticForm = this.fb.group({
-      statisticKey: [this.statisticsKeys[0], []]
+      statisticKey: [null, []]
     })
 
     this.statisticForm.get('statisticKey').valueChanges.subscribe(value=>{
@@ -126,7 +126,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
 
   changeSubscription(init?: boolean) {
     if (this.ctx.datasources[0].entity) {
-      if (this.flot)  {
+      if (this.flot && init)  {
         this.flot.destroy();
         delete this.flot;
       }
@@ -143,7 +143,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
       this.ctx.defaultSubscription.callbacks.onDataUpdated = () => {
         this.updateChart();
       }
-
+      this.cd.detectChanges();
     }
   }
 
