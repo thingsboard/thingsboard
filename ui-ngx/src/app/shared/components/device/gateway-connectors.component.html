@@ -50,7 +50,7 @@
         <ng-container matColumnDef="type">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%"> Type</mat-header-cell>
           <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
-            {{ attribute.value.type }}
+            {{ gatewayConnectorDefaultTypes.get(attribute.value.type) }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
@@ -126,12 +126,16 @@
           <mat-label>Type</mat-label>
           <mat-select formControlName="type">
             <mat-option style="text-transform: uppercase"
-                        *ngFor="let type of gatewayConnectorDefaultTypes" [value]="type">{{type}}</mat-option>
+                        *ngFor="let type of gatewayConnectorDefaultTypes | keyvalue" [value]="type.key">{{type.value}}</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field class="mat-block tb-value-type" *ngIf="connectorForm.get('type').value === 'grpc'">
           <mat-label>Key</mat-label>
           <input matInput formControlName="key"/>
+        </mat-form-field>
+        <mat-form-field class="mat-block tb-value-type" *ngIf="connectorForm.get('type').value === 'custom'">
+          <mat-label>Class</mat-label>
+          <input matInput formControlName="class"/>
         </mat-form-field>
         <mat-form-field class="mat-block tb-value-type">
           <mat-label translate>gateway.remote-logging-level</mat-label>
@@ -148,7 +152,7 @@
           label="{{ 'gateway.connector-json' | translate }}"
           formControlName="configurationJson">
         </tb-json-object-edit>
-        <div fxLayoutAlign="end center">
+        <div fxLayoutAlign="start center">
           <button mat-raised-button color="primary"
                   class="action-btns"
                   type="button"

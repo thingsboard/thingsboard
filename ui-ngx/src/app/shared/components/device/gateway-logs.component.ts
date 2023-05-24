@@ -65,26 +65,6 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
 
   displayedColumns = ['ts', 'status', 'message'];
 
-  gatewayConnectorDefaultTypes: Array<string> =
-    ['mqtt',
-      'modbus',
-      'grpc',
-      'opcua',
-      'opcua_asyncio',
-      'ble',
-      'request',
-      'can',
-      'bacnet',
-      'odbc',
-      'rest',
-      'snmp',
-      'ftp',
-      'socket',
-      'xmpp',
-      'ocpp',
-      'custom'
-    ];
-
   @Input()
   ctx: WidgetContext;
 
@@ -128,6 +108,10 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
     }, {
       name: "Storage",
       key: "STORAGE_LOGS"
+    },
+    {
+      key: 'EXTENSIONS_LOGS',
+      name: "Extension"
     }]
 
 
@@ -168,15 +152,11 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
         }
       },{
         key: `${connector.key}_LOGS`,
-        name: "Convector",
+        name: "Converter",
         filterFn: (attrData)=>{
           return attrData.message.includes(`${connector.key}_converter`)
         }
-      },
-        {
-          key: `${connector.key}_EXTENSION_LOGS`,
-          name: "Extension"
-        }]
+      }]
     } else {
       this.logLinks = this.gatewayLogLinks;
     }
@@ -191,7 +171,7 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
         return {
           ts: data[0],
           key: this.activeLink.key,
-          status: data[1].match(/\|(\w+)\|/)[1],
+          status: data[1].match(/\|(\w+)\|/)? data[1].match(/\|(\w+)\|/)[1] : "",
           message: /\[(.*)/.exec(data[1])[0]
         };
       });

@@ -70,7 +70,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     this.statisticForm.get('statisticKey').valueChanges.subscribe(value=>{
       this.commandObj = null;
       if (this.commands.length) {
-        this.commandObj = this.commands.find(command=>command.attributeName === value);
+        this.commandObj = this.commands.find(command=>command.attributeOnGateway === value);
       }
       this.changeSubscription(true);
     })
@@ -84,7 +84,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
         if (resp && resp.length) {
           this.commands = resp[0].value.thingsboard.thingsboard.statistics.commands;
           if (!this.statisticForm.get('statisticKey').value ) {
-            this.statisticForm.get('statisticKey').setValue(this.commands[0].attributeName);
+            this.statisticForm.get('statisticKey').setValue(this.commands[0].attributeOnGateway);
             this.changeSubscription(true);
           }
         }

@@ -100,7 +100,7 @@ export const securityTypesTranslationsMap = new Map<SecurityTypes, string>(
   [
     [SecurityTypes.ACCESS_TOKEN, 'gateway.security-types.access-token'],
     [SecurityTypes.USERNAME_PASSWORD, 'gateway.security-types.username-password'],
-    [SecurityTypes.TLS_ACCESS_TOKEN, 'gateway.security-types.tls-access-token'],
+    // [SecurityTypes.TLS_ACCESS_TOKEN, 'gateway.security-types.tls-access-token'],
     [SecurityTypes.TLS_PRIVATE_KEY, 'gateway.security-types.tls-private-key'],
   ]
 );
@@ -174,7 +174,7 @@ export class GatewayConfigurationComponent implements OnInit {
           cert: [null, []],
           privateKey: [null, []],
         }),
-        qos: [1, [Validators.min(0), Validators.max(2), Validators.required]]
+        qos: [1, [Validators.min(0), Validators.max(1), Validators.required]]
       }),
       storage: this.fb.group({
         type: [StorageTypes.MEMORY, [Validators.required]],
@@ -356,16 +356,17 @@ export class GatewayConfigurationComponent implements OnInit {
   }
 
   checkAndFetchCredentials(security): void {
-    if ((security.type == SecurityTypes.ACCESS_TOKEN && !security.accessToken) ||
-      (security.type === SecurityTypes.USERNAME_PASSWORD && !(security.username && security.password)) || !security.type) {
+    if (security.type !== SecurityTypes.TLS_PRIVATE_KEY) {
       this.deviceService.getDeviceCredentials(this.device.id).subscribe(credentials => {
-        if (credentials.credentialsType === DeviceCredentialsType.ACCESS_TOKEN) {
-          this.gatewayConfigGroup.get('thingsboard.security.accessToken').setValue(credentials.credentialsValue);
+        if (credentials.credentialsType === DeviceCredentialsType.ACCESS_TOKEN || security.type !== SecurityTypes.TLS_ACCESS_TOKEN) {
+          this.gatewayConfigGroup.get('thingsboard.security.accessToken').setValue(credentials.credentialsId);
         } else if (credentials.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
           const parsedValue = JSON.parse(credentials.credentialsValue);
           this.gatewayConfigGroup.get('thingsboard.security.clientId').setValue(parsedValue.clientId);
           this.gatewayConfigGroup.get('thingsboard.security.username').setValue(parsedValue.userName);
           this.gatewayConfigGroup.get('thingsboard.security.password').setValue(parsedValue.password);
+        } else if (credentials.credentialsType === DeviceCredentialsType.X509_CERTIFICATE ) {
+          //if sertificate is present set sertificate as present
         }
       });
     }
@@ -396,7 +397,7 @@ export class GatewayConfigurationComponent implements OnInit {
     const data = command || {};
     const commandsFormArray = this.commandFormArray();
     const commandFormGroup = this.fb.group({
-      attributeName: [data.attributeName || null, [Validators.required]],
+      attributeOnGateway: [data.attributeOnGateway || null, [Validators.required]],
       command: [data.command || null, [Validators.required]],
       timeout: [data.timeout || null, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
     });
@@ -425,6 +426,7 @@ export class GatewayConfigurationComponent implements OnInit {
 
   removeCommandControl(index: number): void {
     this.commandFormArray().removeAt(index);
+    this.gatewayConfigGroup.markAsDirty();
   }
 
   removeAllSecurityValidators(): void {

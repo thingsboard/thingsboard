@@ -166,6 +166,11 @@
     z-index: 100;
   }
 
+  .suffix-icon {
+    position: relative;
+    transform: translateY(5px);
+  }
+
   mat-panel-title {
     display: block;
     padding-top: 20px;
@@ -188,5 +193,10 @@
   .line-break {
     width: 100%;
   }
+  //
+  //::ng-deep.mat-mdc-slide-toggle .mdc-switch {
+  //  position: relative;
+  //  transform: translateY(4px);
+  //}
 }
 

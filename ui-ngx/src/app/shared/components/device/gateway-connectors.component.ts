@@ -26,19 +26,19 @@ import { DeviceService } from '@core/http/device.service';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, merge } from 'rxjs';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
-import { PageComponent } from "@shared/components/page.component";
-import { PageLink } from "@shared/models/page/page-link";
-import { AttributeDatasource } from "@home/models/datasource/attribute-datasource";
-import { Direction, SortOrder } from "@shared/models/page/sort-order";
-import { MatSort } from "@angular/material/sort";
-import { tap } from "rxjs/operators";
-import { TelemetryWebsocketService } from "@core/ws/telemetry-websocket.service";
-import { MatTableDataSource } from "@angular/material/table";
-import { GatewayLogLevel } from "@shared/components/device/gateway-configuration.component";
-import { ActionNotificationShow } from "@core/notification/notification.actions";
+import { PageComponent } from '@shared/components/page.component';
+import { PageLink } from '@shared/models/page/page-link';
+import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
+import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { MatSort } from '@angular/material/sort';
+import { tap } from 'rxjs/operators';
+import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
+import { MatTableDataSource } from '@angular/material/table';
+import { GatewayLogLevel } from '@shared/components/device/gateway-configuration.component';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@app/core/services/dialog.service';
-import { updateEntityParams, WidgetContext } from "@home/models/widget-component.models";
-import { deepClone } from "@core/utils";
+import { WidgetContext } from '@home/models/widget-component.models';
+import { deepClone } from '@core/utils';
 
 
 export interface gatewayConnector {
@@ -49,6 +49,27 @@ export interface gatewayConnector {
   log_level: string;
   key?: string;
 }
+
+
+export const GatewayConnectorDefaultTypesTranslates= new Map<string, string> ([
+  ['mqtt', 'MQTT'],
+  ['modbus', 'MODBUS'],
+  ['grpc', 'GRPC'],
+  ['opcua', 'OPCUA'],
+  ['opcua_asyncio', 'OPCUA ASYNCIO'],
+  ['ble', 'BLE'],
+  ['request', 'REQUEST'],
+  ['can', 'CAN'],
+  ['bacnet', 'BACNET'],
+  ['odbc', 'ODBC'],
+  ['rest', 'REST'],
+  ['snmp', 'SNMP'],
+  ['ftp', 'FTP'],
+  ['socket', 'SOCKET'],
+  ['xmpp', 'XMPP'],
+  ['ocpp', 'OCCP'],
+  ['custom', 'CUSTOM']
+]);
 
 @Component({
   selector: 'tb-gateway-connector',
@@ -65,25 +86,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   displayedColumns = ['enabled', 'key', 'type', 'actions'];
 
-  gatewayConnectorDefaultTypes: Array<string> =
-    ['mqtt',
-      'modbus',
-      'grpc',
-      'opcua',
-      'opcua_asyncio',
-      'ble',
-      'request',
-      'can',
-      'bacnet',
-      'odbc',
-      'rest',
-      'snmp',
-      'ftp',
-      'socket',
-      'xmpp',
-      'ocpp',
-      'custom'
-    ];
+  gatewayConnectorDefaultTypes = GatewayConnectorDefaultTypesTranslates;
 
   @Input()
   ctx: WidgetContext;
@@ -131,6 +134,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       key: ['auto'],
       configurationJson: [{}, [Validators.required]]
     })
+
+    this.connectorForm.valueChanges.subscribe(_=>{
+      this.cd.detectChanges();
+    })
     this.connectorForm.disable();
   }
 
@@ -167,7 +174,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (value.type !== 'grpc') {
       delete value.key;
     }
-    value.configuration = `${value.type}.json`
     const attributesToSave = [{
       key: value.name,
       value: value
@@ -239,9 +245,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   clearOutConnectorForm(): void {
     this.connectorForm.setValue({
       name: '',
-      type: this.gatewayConnectorDefaultTypes[0],
+      type: 'mqtt',
       log_level: GatewayLogLevel.info,
       key: 'auto',
+      class: '',
       configurationJson: {}
     })
     this.initialConnector = null;
@@ -253,14 +260,15 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.connectorForm.enable();
     }
     const connector = attribute.value;
-    if (!connector.key) {
-      connector.key = 'auto';
-    }
     if (connector.configuration) {
       delete connector.configuration;
     }
+    if (!connector.key) {
+      connector.key = 'auto';
+    }
     this.initialConnector = connector;
     this.connectorForm.setValue(connector);
+    this.connectorForm.markAsPristine();
   }
 
   showToast(message: string) {
@@ -312,7 +320,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    console.log(attribute);
     const params = deepClone(this.ctx.stateController.getStateParams());
     params.connector_logs = attribute;
     params.targetEntityParamName = "connector_logs";
@@ -323,7 +330,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    console.log(attribute);
     const params = deepClone(this.ctx.stateController.getStateParams());
     params.connector_logs = attribute;
     params.targetEntityParamName = "connector_rpc";

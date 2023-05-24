@@ -71,7 +71,7 @@ export class DeviceGatewayCommandComponent implements OnInit {
       macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
       windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
     if (macosPlatforms.indexOf(platform) !== -1) {
-      this.selectedOSCControl.setValue(OsType.macos);
+      this.selectedOSCControl.setValue(OsType.linux);
     } else if (windowsPlatforms.indexOf(platform) !== -1) {
       this.selectedOSCControl.setValue(OsType.windows);
     } else if (/Linux/.test(platform)) {
