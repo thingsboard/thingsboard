@@ -555,7 +555,7 @@ export class RuleChainPageComponent extends PageComponent
         ruleNodeId: ruleNode.id,
         additionalInfo: ruleNode.additionalInfo,
         configuration: ruleNode.configuration,
-        configurationVersion: ruleNode.configurationVersion,
+        configurationVersion: isDefinedAndNotNull(ruleNode.configurationVersion) ? ruleNode.configurationVersion : 0,
         debugMode: ruleNode.debugMode,
         singletonMode: ruleNode.singletonMode,
         x: Math.round(ruleNode.additionalInfo.layoutX),
