@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.util.TbPair;
         type = ComponentType.ENRICHMENT,
         name = "tenant attributes",
         configClazz = TbGetEntityDataNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Adds message originator tenant attributes or latest telemetry into message or message metadata",
         nodeDetails = "Useful when you need to retrieve some common configuration or threshold set " +
                 "that is stored as tenant attributes or telemetry data and use it for further message processing.",

@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "fetch device credentials",
+        version = 1,
         configClazz = TbFetchDeviceCredentialsNodeConfiguration.class,
         nodeDescription = "Adds device credentials to the message or message metadata",
         nodeDetails = "if message originator type is Device and device credentials was successfully fetched, " +

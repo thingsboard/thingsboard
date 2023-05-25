@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,16 +145,17 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         Assert.assertTrue(savedRuleChain.getCreatedTime() > 0);
         Assert.assertEquals(ruleChain.getName(), savedRuleChain.getName());
 
-        TbVersionedNode tbVersionedNode = new TbGetRelatedAttributeNode();
-        String ruleNodeType = tbVersionedNode.getClass().getName();
-        int currentVersion = tbVersionedNode.getCurrentVersion();
+        var annotation = TbGetRelatedAttributeNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class);
+        String ruleNodeType = TbGetRelatedAttributeNode.class.getName();
+        int currentVersion = annotation.version();
 
         String oldConfig = "{\"attrMapping\":{\"serialNumber\":\"sn\"}," +
                         "\"relationsQuery\":{\"direction\":\"FROM\",\"maxLevel\":1," +
                         "\"filters\":[{\"relationType\":\"Contains\",\"entityTypes\":[]}]," +
                         "\"fetchLastLevelOnly\":false},\"telemetry\":false}";
 
-        String newConfig = JacksonUtil.toString(new TbGetRelatedDataNodeConfiguration().defaultConfiguration());
+        TbGetRelatedDataNodeConfiguration defaultConfiguration = new TbGetRelatedDataNodeConfiguration().defaultConfiguration();
+        String newConfig = JacksonUtil.toString(defaultConfiguration);
 
         var ruleChainMetaData = createRuleChainMetadataWithTbVersionedNodes(
                 ruleChainId,
@@ -170,7 +172,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         for (RuleNode ruleNode : savedRuleChainMetaData.getNodes()) {
             Assert.assertNotNull(ruleNode.getId());
             Assert.assertEquals(currentVersion, ruleNode.getConfigurationVersion());
-            Assert.assertEquals(JacksonUtil.toJsonNode(newConfig), ruleNode.getConfiguration());
+            Assert.assertEquals(defaultConfiguration, JacksonUtil.treeToValue(ruleNode.getConfiguration(), defaultConfiguration.getClass()));
         }
     }
 

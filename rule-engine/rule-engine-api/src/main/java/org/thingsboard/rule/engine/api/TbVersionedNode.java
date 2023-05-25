@@ -22,6 +22,4 @@ public interface TbVersionedNode extends TbNode {
 
     TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException;
 
-    int getCurrentVersion();
-
 }

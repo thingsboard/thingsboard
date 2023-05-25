@@ -37,6 +37,7 @@ import java.util.concurrent.ExecutionException;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator fields",
         configClazz = TbGetOriginatorFieldsConfiguration.class,
+        version = 1,
         nodeDescription = "Adds message originator fields values into message or message metadata",
         nodeDetails = "Fetches fields values specified in the mapping. If specified field is not part of originator fields it will be ignored. " +
                 "Useful when you need to retrieve originator fields and use them for further message processing.",

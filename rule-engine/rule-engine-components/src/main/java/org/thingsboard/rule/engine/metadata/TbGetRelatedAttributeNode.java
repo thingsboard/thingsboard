@@ -36,6 +36,7 @@ import java.util.Arrays;
         type = ComponentType.ENRICHMENT,
         name = "related entity data",
         configClazz = TbGetRelatedDataNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Adds originators related entity attributes or latest telemetry or fields into message or message metadata",
         nodeDetails = "Related entity lookup based on the configured relation query. " +
                 "If multiple related entities are found, only first entity is used for message enrichment, other entities are discarded. " +

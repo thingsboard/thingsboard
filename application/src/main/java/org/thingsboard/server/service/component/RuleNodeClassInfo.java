@@ -13,15 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.bean;
+package org.thingsboard.server.service.component;
 
-import org.springframework.beans.factory.config.BeanDefinition;
+import lombok.Data;
+import org.thingsboard.rule.engine.api.RuleNode;
 
-import java.lang.annotation.Annotation;
-import java.util.Set;
+@Data
+public class RuleNodeClassInfo {
 
-public interface BeanDiscoveryService {
+    private final Class<?> clazz;
+    private final RuleNode annotation;
+    private final boolean versioned;
 
-    Set<BeanDefinition> discoverBeansByAnnotationType(Class<? extends Annotation> annotationType);
+    public String getClassName(){
+        return clazz.getName();
+    }
+
+    public String getSimpleName() {
+        return clazz.getSimpleName();
+    }
+
+    public int getCurrentVersion() {
+        return annotation.version();
+    }
 
 }

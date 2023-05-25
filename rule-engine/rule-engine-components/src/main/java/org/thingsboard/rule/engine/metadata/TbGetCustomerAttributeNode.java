@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.util.TbPair;
         type = ComponentType.ENRICHMENT,
         name = "customer attributes",
         configClazz = TbGetEntityDataNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Adds message originator customer attributes or latest telemetry into message or message metadata",
         nodeDetails = "Useful in multi-customer solutions where each customer has a different configuration or threshold set " +
                 "that is stored as customer attributes or telemetry data and used for dynamic message filtering, transformation, " +

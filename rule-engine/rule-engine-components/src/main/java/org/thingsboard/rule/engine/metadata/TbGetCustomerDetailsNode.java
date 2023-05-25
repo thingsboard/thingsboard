@@ -44,6 +44,7 @@ import java.util.NoSuchElementException;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "customer details",
         configClazz = TbGetCustomerDetailsNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Adds message originator customer details into message or message metadata",
         nodeDetails = "Useful in multi-customer solutions where we need dynamically use customer contact information " +
                 "such as email, phone, address, etc., for notifications via email, SMS, and other notification providers.",

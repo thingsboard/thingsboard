@@ -65,4 +65,6 @@ public @interface RuleNode {
 
     RuleChainType[] ruleChainTypes() default {RuleChainType.CORE, RuleChainType.EDGE};
 
+    int version() default 0;
+
 }

@@ -81,7 +81,7 @@ import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.service.bean.BeanDiscoveryService;
+import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 
@@ -92,6 +92,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isBlank;
@@ -139,7 +140,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private QueueService queueService;
 
     @Autowired
-    private BeanDiscoveryService beanDiscoveryService;
+    private ComponentDiscoveryService componentDiscoveryService;
 
     @Autowired
     private SystemDataLoaderService systemDataLoaderService;
@@ -221,11 +222,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
     public void upgradeRuleNodes() {
         try {
             log.info("Lookup rule nodes to upgrade ...");
-            var nodeClassToVersionMap = getNodeClassToVersionMap();
+            var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
             log.info("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
-            nodeClassToVersionMap.forEach((clazz, toVersion) -> {
-                var ruleNodeType = clazz.getName();
+            nodeClassToVersionMap.forEach(clazz -> {
+                var ruleNodeType = clazz.getClassName();
                 var ruleNodeTypeForLogs = clazz.getSimpleName();
+                var toVersion = clazz.getCurrentVersion();
                 log.info("Going to check for nodes with type: {} to upgrade to version: {}.", ruleNodeTypeForLogs, toVersion);
                 var ruleNodesToUpdate = new PageDataIterable<>(
                         pageLink -> ruleChainService.findAllRuleNodesByTypeAndVersionLessThan(ruleNodeType, toVersion, pageLink), 1024
@@ -240,7 +242,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         log.info("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                                 ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
                         try {
-                            var tbVersionedNode = (TbVersionedNode) clazz.getDeclaredConstructor().newInstance();
+                            var tbVersionedNode = (TbVersionedNode) clazz.getClazz().getDeclaredConstructor().newInstance();
                             TbPair<Boolean, JsonNode> upgradeRuleNodeConfigurationResult = tbVersionedNode.upgrade(fromVersion, oldConfiguration);
                             if (upgradeRuleNodeConfigurationResult.getFirst()) {
                                 ruleNode.setConfiguration(upgradeRuleNodeConfigurationResult.getSecond());
@@ -260,26 +262,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
         } catch (Exception e) {
             log.error("Unexpected error during rule nodes upgrade: ", e);
         }
-    }
-
-    private Map<Class<?>, Integer> getNodeClassToVersionMap() {
-        var ruleNodeDefinitions = beanDiscoveryService.discoverBeansByAnnotationType(
-                org.thingsboard.rule.engine.api.RuleNode.class
-        );
-        var tbVersionedNodes = new HashMap<Class<?>, Integer>();
-        for (var def : ruleNodeDefinitions) {
-            String clazzName = def.getBeanClassName();
-            try {
-                var clazz = Class.forName(clazzName);
-                if (TbVersionedNode.class.isAssignableFrom(clazz)) {
-                    TbVersionedNode tbVersionedNode = (TbVersionedNode) clazz.getDeclaredConstructor().newInstance();
-                    tbVersionedNodes.put(clazz, tbVersionedNode.getCurrentVersion());
-                }
-            } catch (Exception e) {
-                log.warn("Failed to create instance of rule node type: {} due to: ", clazzName, e);
-            }
-        }
-        return tbVersionedNodes;
     }
 
     private final PaginatedUpdater<String, DeviceProfileEntity> deviceProfileEntityDynamicConditionsUpdater =
@@ -516,7 +498,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                             md.getNodes().add(ruleNode);
                             md.setFirstNodeIndex(newIdx);
                             md.addConnectionInfo(newIdx, oldIdx, "Success");
-                            ruleChainService.saveRuleChainMetaData(tenant.getId(), md);
+                            ruleChainService.saveRuleChainMetaData(tenant.getId(), md, Function.identity());
                         }
                     } catch (Exception e) {
                         log.error("[{}] Unable to update Tenant: {}", tenant.getId(), tenant.getName(), e);

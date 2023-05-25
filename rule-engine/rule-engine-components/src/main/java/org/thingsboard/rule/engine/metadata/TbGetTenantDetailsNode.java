@@ -33,6 +33,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "tenant details",
         configClazz = TbGetTenantDetailsNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Adds message originator tenant details into message or message metadata",
         nodeDetails = "Useful when we need to retrieve contact information from your tenant " +
                 "such as email, phone, address, etc., for notifications via email, SMS, and other notification providers.",

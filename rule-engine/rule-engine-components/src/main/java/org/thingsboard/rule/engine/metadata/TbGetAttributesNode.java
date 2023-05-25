@@ -36,6 +36,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator attributes",
         configClazz = TbGetAttributesNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Adds attributes and/or latest timeseries data for the message originator to the message or message metadata",
         nodeDetails = "Useful when you need to retrieve some attributes or the latest telemetry readings from the message originator " +
                 "that are not included in the incoming message to use them for further message processing. " +

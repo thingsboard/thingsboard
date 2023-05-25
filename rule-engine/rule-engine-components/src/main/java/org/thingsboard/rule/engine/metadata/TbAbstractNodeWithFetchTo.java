@@ -42,11 +42,6 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     protected FetchTo fetchTo;
 
     @Override
-    public int getCurrentVersion() {
-        return 1;
-    }
-
-    @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         config = loadNodeConfiguration(configuration);
         if (config.getFetchTo() == null) {

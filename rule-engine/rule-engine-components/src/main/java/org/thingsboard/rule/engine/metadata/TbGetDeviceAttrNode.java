@@ -34,6 +34,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "related device attributes",
         configClazz = TbGetDeviceAttrNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Add originators related device attributes and/or latest telemetry values into message or message metadata",
         nodeDetails = "Related device lookup based on the configured relation query. " +
                 "If multiple related devices are found, only first device is used for message enrichment, other entities are discarded. " +

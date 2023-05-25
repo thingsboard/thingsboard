@@ -73,6 +73,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
@@ -145,7 +146,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData) {
+    public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater) {
         Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
         if (ruleChain == null) {
@@ -189,38 +190,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (nodes != null) {
             for (RuleNode node : toAddOrUpdate) {
                 node.setRuleChainId(ruleChainId);
-                String ruleNodeType = node.getType();
-                RuleNodeId ruleNodeId = node.getId();
-                try {
-                    var ruleNodeClazz = Class.forName(ruleNodeType);
-                    if (TbVersionedNode.class.isAssignableFrom(ruleNodeClazz)) {
-                        TbVersionedNode tbVersionedNode = (TbVersionedNode) ruleNodeClazz.getDeclaredConstructor().newInstance();
-                        int fromVersion = node.getConfigurationVersion();
-                        int toVersion = tbVersionedNode.getCurrentVersion();
-                        if (fromVersion < toVersion) {
-                            log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
-                                    ruleNodeId, ruleNodeType, fromVersion, toVersion);
-                            try {
-                                TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(fromVersion, node.getConfiguration());
-                                if (upgradeResult.getFirst()) {
-                                    node.setConfiguration(upgradeResult.getSecond());
-                                }
-                                node.setConfigurationVersion(toVersion);
-                                log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
-                                        ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
-                            } catch (TbNodeException e) {
-                                log.warn("Failed to upgrade rule node with id: {} type: {} rule chain id: {} fromVersion: {} toVersion: {} due to: ",
-                                        ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion, e);
-                            }
-                        } else {
-                            log.debug("Rule node with id: {} type: {} ruleChainId: {} already set to latest version!",
-                                    ruleNodeId, ruleChainId, ruleNodeType);
-                        }
-                    }
-                } catch (Exception e) {
-                    log.error("Failed to create instance of rule node with id: {} type: {}, rule chain id: {}",
-                            ruleNodeId, ruleNodeType, ruleChainId);
-                }
+                node = ruleNodeUpdater.apply(node);
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
@@ -484,7 +454,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public List<RuleChainImportResult> importTenantRuleChains(TenantId tenantId, RuleChainData ruleChainData, boolean overwrite) {
+    public List<RuleChainImportResult> importTenantRuleChains(TenantId tenantId, RuleChainData ruleChainData, boolean overwrite, Function<RuleNode, RuleNode> ruleNodeUpdater) {
         List<RuleChainImportResult> importResults = new ArrayList<>();
 
         setRandomRuleChainIds(ruleChainData);
@@ -521,7 +491,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
 
         if (CollectionUtils.isNotEmpty(ruleChainData.getMetadata())) {
-            ruleChainData.getMetadata().forEach(md -> saveRuleChainMetaData(tenantId, md));
+            ruleChainData.getMetadata().forEach(md -> saveRuleChainMetaData(tenantId, md, ruleNodeUpdater));
         }
 
         return importResults;

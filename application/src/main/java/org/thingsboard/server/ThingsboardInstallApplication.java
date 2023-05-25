@@ -27,7 +27,6 @@ import java.util.Arrays;
 @Slf4j
 @SpringBootConfiguration
 @ComponentScan({"org.thingsboard.server.install",
-        "org.thingsboard.server.service.bean",
         "org.thingsboard.server.service.component",
         "org.thingsboard.server.service.install",
         "org.thingsboard.server.service.security.auth.jwt.settings",
