@@ -129,7 +129,7 @@ public class EntityRelationController extends BaseController {
         checkParameter("entityType", strType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
         checkEntityId(entityId, Operation.WRITE);
-        tbEntityRelationService.deleteRelations(getTenantId(), getCurrentUser().getCustomerId(), entityId, getCurrentUser());
+        tbEntityRelationService.deleteCommonRelations(getTenantId(), getCurrentUser().getCustomerId(), entityId, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Relation (getRelation)",

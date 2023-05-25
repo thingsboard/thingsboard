@@ -222,11 +222,29 @@ public class BaseRelationService implements RelationService {
 
     @Transactional
     @Override
+    public void deleteEntityCommonRelations(TenantId tenantId, EntityId entityId) {
+        deleteEntityRelations(tenantId, entityId, RelationTypeGroup.COMMON);
+    }
+
+    @Transactional
+    @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
+        deleteEntityRelations(tenantId, entityId, null);
+    }
+
+    @Transactional
+    public void deleteEntityRelations(TenantId tenantId, EntityId entityId, RelationTypeGroup relationTypeGroup) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
         validate(entityId);
-        List<EntityRelation> inboundRelations = new ArrayList<>(relationDao.findAllByTo(tenantId, entityId));
-        List<EntityRelation> outboundRelations = new ArrayList<>(relationDao.findAllByFrom(tenantId, entityId));
+        List<EntityRelation> inboundRelations;
+        List<EntityRelation> outboundRelations;
+        if (relationTypeGroup == null) {
+            inboundRelations = relationDao.findAllByTo(tenantId, entityId);
+            outboundRelations = relationDao.findAllByFrom(tenantId, entityId);
+        } else {
+            inboundRelations = relationDao.findAllByFrom(tenantId, entityId, relationTypeGroup);
+            outboundRelations = relationDao.findAllByTo(tenantId, entityId, relationTypeGroup);
+        }
 
         if (!inboundRelations.isEmpty()) {
             try {
