@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class NotificationRule extends BaseData<NotificationRuleId> implements HasTenantId, HasName, Serializable {
+public class NotificationRule extends BaseData<NotificationRuleId> implements HasTenantId, HasName, ExportableEntity<NotificationRuleId>, Serializable {
 
     private TenantId tenantId;
     @NotBlank
@@ -63,6 +64,8 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
 
     private NotificationRuleConfig additionalConfig;
 
+    private NotificationRuleId externalId;
+
     public NotificationRule(NotificationRule other) {
         super(other);
         this.tenantId = other.tenantId;
@@ -73,6 +76,7 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
         this.triggerConfig = other.triggerConfig;
         this.recipientsConfig = other.recipientsConfig;
         this.additionalConfig = other.additionalConfig;
+        this.externalId = other.externalId;
     }
 
     @JsonIgnore
