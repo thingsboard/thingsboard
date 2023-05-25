@@ -33,7 +33,7 @@ public class MakeDevicePrivateTest extends AbstractDeviceTest {
     private CustomerPageHelper customerPage;
 
     @BeforeMethod
-    public void createDevice() {
+    public void createPublicDevice() {
         customerPage = new CustomerPageHelper(driver);
         Device device = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME + random()));
         testRestClient.setDevicePublic(device.getId());

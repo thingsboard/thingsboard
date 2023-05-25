@@ -37,22 +37,23 @@ public class MakeDevicePublicTest extends AbstractDeviceTest {
     private AssignDeviceTabHelper assignDeviceTab;
     private String deviceName1;
 
-    @BeforeMethod
-    public void createDevice() {
+    @BeforeClass
+    public void createFirstDevice() {
         customerPage = new CustomerPageHelper(driver);
         assignDeviceTab = new AssignDeviceTabHelper(driver);
-        deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME + random())).getName();
-    }
 
-    @BeforeClass
-    public void create() {
         deviceName1 = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME + random())).getName();
     }
 
     @AfterClass
-    public void deleteCustomers() {
+    public void cleanUp() {
         deleteCustomerByName(PUBLIC_CUSTOMER_NAME);
         deleteDeviceByName(deviceName1);
+    }
+
+    @BeforeMethod
+    public void createSecondDevice() {
+        deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME + random())).getName();
     }
 
     @Test(groups = "smoke", priority = 10)

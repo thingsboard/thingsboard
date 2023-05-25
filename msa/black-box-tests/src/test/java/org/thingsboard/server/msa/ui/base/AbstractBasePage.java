@@ -42,7 +42,6 @@ abstract public class AbstractBasePage {
     protected Actions actions;
     protected JavascriptExecutor js;
 
-
     public AbstractBasePage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofMillis(WAIT_TIMEOUT));
