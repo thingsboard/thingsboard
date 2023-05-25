@@ -209,16 +209,16 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     log.info("Skipping edge events migration");
                 }
                 break;
-            case "3.5.0":
-                log.info("Updating data from version 3.5.0 to 3.5.1 ...");
-                upgradeRuleNodes();
+            case "3.5.1":
+                log.info("Updating data from version 3.5.1 to 3.5.2 ...");
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
     }
 
-    private void upgradeRuleNodes() {
+    @Override
+    public void upgradeRuleNodes() {
         try {
             log.info("Lookup rule nodes to upgrade ...");
             var nodeClassToVersionMap = getNodeClassToVersionMap();

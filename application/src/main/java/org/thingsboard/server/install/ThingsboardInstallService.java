@@ -268,6 +268,7 @@ public class ThingsboardInstallService {
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                     log.info("Updating system data...");
+                    dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.updateSystemWidgets();
                     installScripts.loadSystemLwm2mResources();
                 }
