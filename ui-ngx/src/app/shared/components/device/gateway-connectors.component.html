@@ -50,7 +50,7 @@
         <ng-container matColumnDef="type">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%"> Type</mat-header-cell>
           <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
-            {{ gatewayConnectorDefaultTypes.get(attribute.value.type) }}
+            {{ returnType(attribute) }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>

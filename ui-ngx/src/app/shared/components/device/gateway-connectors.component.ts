@@ -303,6 +303,11 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       }));
   }
 
+  returnType (attribute) {
+    const value = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
+    return  this.gatewayConnectorDefaultTypes.get(value.type)
+  }
+
   deleteConnector(attribute: AttributeData, $event: Event): void {
     if ($event) {
       $event.stopPropagation();
