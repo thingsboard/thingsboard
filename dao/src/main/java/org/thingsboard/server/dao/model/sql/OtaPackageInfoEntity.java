@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
@@ -60,7 +59,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = OTA_PACKAGE_TABLE_NAME)
-public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implements SearchTextEntity<OtaPackageInfo> {
+public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
 
     @Column(name = OTA_PACKAGE_TENANT_ID_COLUMN)
     private UUID tenantId;
@@ -153,16 +152,6 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
         this.dataSize = dataSize;
         this.hasData = hasData;
         this.additionalInfo = JacksonUtil.convertValue(additionalInfo, JsonNode.class);
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return title;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     @Override
