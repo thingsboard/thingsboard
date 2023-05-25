@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.transform;
+package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
 
 @Data
-public class TbTransformNodeConfiguration {
+public abstract class TbAbstractFetchToNodeConfiguration {
+
+    private FetchTo fetchTo;
 
 }

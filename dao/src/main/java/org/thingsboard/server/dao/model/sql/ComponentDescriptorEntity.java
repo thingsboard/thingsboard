@@ -65,6 +65,9 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY)
     private JsonNode configurationDescriptor;
 
+    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_VERSION_PROPERTY)
+    private int configurationVersion;
+
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY)
     private String actions;
 
@@ -86,6 +89,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
         this.name = component.getName();
         this.clazz = component.getClazz();
         this.configurationDescriptor = component.getConfigurationDescriptor();
+        this.configurationVersion = component.getConfigurationVersion();
         this.searchText = component.getName();
     }
 
@@ -100,6 +104,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
         data.setClazz(this.getClazz());
         data.setActions(this.getActions());
         data.setConfigurationDescriptor(configurationDescriptor);
+        data.setConfigurationVersion(configurationVersion);
         return data;
     }
 

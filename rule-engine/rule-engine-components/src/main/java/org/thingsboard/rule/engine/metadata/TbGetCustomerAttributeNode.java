@@ -15,30 +15,57 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 
+@Slf4j
 @RuleNode(
         type = ComponentType.ENRICHMENT,
-        name="customer attributes",
-        configClazz = TbGetEntityAttrNodeConfiguration.class,
-        nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message Metadata",
-        nodeDetails = "Enrich the message metadata with the corresponding customer's latest attributes or telemetry value. " +
-                "The customer is selected based on the originator of the message: device, asset, etc. " +
-                "</br>" +
-                "Useful when you store some parameters on the customer level and would like to use them for message processing.",
+        name = "customer attributes",
+        configClazz = TbGetEntityDataNodeConfiguration.class,
+        nodeDescription = "Adds message originator customer attributes or latest telemetry into message or message metadata",
+        nodeDetails = "Useful in multi-customer solutions where each customer has a different configuration or threshold set " +
+                "that is stored as customer attributes or telemetry data and used for dynamic message filtering, transformation, " +
+                "or actions such as alarm creation if the threshold is exceeded.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
-public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {
+public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<CustomerId> {
+
+    private static final String CUSTOMER_NOT_FOUND_MESSAGE = "Failed to find customer for entity with id: %s and type: %s";
+
+    @Override
+    protected TbGetEntityDataNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbGetEntityDataNodeConfiguration.class);
+        checkIfMappingIsNotEmptyOrElseThrow(config.getDataMapping());
+        checkDataToFetchSupportedOrElseThrow(config.getDataToFetch());
+        return config;
+    }
 
     @Override
     protected ListenableFuture<CustomerId> findEntityAsync(TbContext ctx, EntityId originator) {
-        return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, originator);
+        return Futures.transformAsync(EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, originator),
+                checkIfEntityIsPresentOrThrow(String.format(CUSTOMER_NOT_FOUND_MESSAGE, originator.getId(), originator.getEntityType().getNormalName())),
+                ctx.getDbCallbackExecutor()
+        );
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        return fromVersion == 0 ?
+                upgradeToUseFetchToAndDataToFetch(oldConfiguration) :
+                new TbPair<>(false, oldConfiguration);
     }
 
 }

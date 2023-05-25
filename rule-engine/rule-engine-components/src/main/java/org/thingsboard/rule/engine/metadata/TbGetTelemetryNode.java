@@ -54,13 +54,10 @@ import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfigurati
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
-        nodeDescription = "Add Message Originator Telemetry for selected time range into Message Metadata\n",
-        nodeDetails = "The node allows you to select fetch mode: <b>FIRST/LAST/ALL</b> to fetch telemetry of certain time range that are added into Message metadata without any prefix. " +
-                "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry.</br>" +
-                "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp.</br>" +
-                "Also, the rule node allows you to select telemetry sampling order: <b>ASC</b> or <b>DESC</b>. </br>" +
-                "Aggregation feature allows you to fetch aggregated telemetry as a single value by <b>AVG, COUNT, SUM, MIN, MAX, NONE</b>. </br>" +
-                "<b>Note</b>: The maximum size of the fetched array is 1000 records.\n ",
+        nodeDescription = "Adds message originator telemetry for selected time range into message metadata",
+        nodeDetails = "Useful when you need to get telemetry data set from the message originator for a specific time range " +
+                "instead of fetching just the latest telemetry or if you need to get the closest telemetry to the fetch interval start or end. " +
+                "Also, this node can be used for telemetry aggregation within configured fetch interval.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
