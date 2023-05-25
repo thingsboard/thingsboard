@@ -638,6 +638,12 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.countByTenantId(tenantId);
     }
 
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteDevice(tenantId, (DeviceId) id);
+    }
+
     private PaginatedRemover<TenantId, Device> tenantDevicesRemover =
             new PaginatedRemover<>() {
 

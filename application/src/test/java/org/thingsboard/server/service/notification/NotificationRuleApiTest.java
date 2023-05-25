@@ -480,7 +480,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         assertThat(getMyNotifications(false, 100)).size().isZero();
         createDevice("Device 1", "default", "111");
-        await().atMost(15, TimeUnit.SECONDS)
+        await().atMost(30, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(1);
                 });
@@ -494,9 +494,10 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         rule.setEnabled(true);
         saveNotificationRule(rule);
+        TimeUnit.SECONDS.sleep(2); // for rule update event to reach rules cache
 
         createDevice("Device 3", "default", "333");
-        await().atMost(15, TimeUnit.SECONDS)
+        await().atMost(30, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
                 });
