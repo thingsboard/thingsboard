@@ -107,6 +107,7 @@
                          tooltipPosition="below"
                          aggregation="true"
                          timezone="true"
+                         isNgModel
                          [(ngModel)]="dashboardCtx.dashboardTimewindow">
           </tb-timewindow>
           <tb-filters-edit [fxShow]="!isEdit && displayFilters()"

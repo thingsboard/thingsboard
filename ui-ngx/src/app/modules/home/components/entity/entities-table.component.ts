@@ -24,6 +24,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   SimpleChanges,
   ViewChild
@@ -72,7 +73,7 @@ import { EntityDetailsPanelComponent } from '@home/components/entity/entity-deta
   styleUrls: ['./entities-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EntitiesTableComponent extends PageComponent implements IEntitiesTableComponent, AfterViewInit, OnInit, OnChanges {
+export class EntitiesTableComponent extends PageComponent implements IEntitiesTableComponent, AfterViewInit, OnInit, OnChanges, OnDestroy {
 
   @Input()
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
@@ -162,6 +163,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   ngOnDestroy() {
+    super.ngOnDestroy();
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
@@ -366,12 +368,10 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     );
     if (this.displayPagination) {
       paginatorSubscription$ = this.paginator.page.asObservable().pipe(
-        map((data) => {
-          return {
-            page: data.pageIndex === 0 ? null : data.pageIndex,
-            pageSize: data.pageSize === this.defaultPageSize ? null : data.pageSize
-          };
-        })
+        map((data) => ({
+          page: data.pageIndex === 0 ? null : data.pageIndex,
+          pageSize: data.pageSize === this.defaultPageSize ? null : data.pageSize
+        }))
       );
     }
     this.updateDataSubscription = ((this.displayPagination ? merge(sortSubscription$, paginatorSubscription$)
@@ -421,8 +421,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     }
   }
 
-  private getTimePageLinkInterval(): {startTime?: number, endTime?: number} {
-    const interval: {startTime?: number, endTime?: number} = {};
+  private getTimePageLinkInterval(): {startTime?: number; endTime?: number} {
+    const interval: {startTime?: number; endTime?: number} = {};
     switch (this.timewindow.history.historyType) {
       case HistoryWindowType.LAST_INTERVAL:
         const currentTime = Date.now();
