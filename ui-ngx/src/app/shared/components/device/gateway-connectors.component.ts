@@ -20,7 +20,7 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { AttributeService } from '@core/http/attribute.service';
 import { DeviceService } from '@core/http/device.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,7 +51,7 @@ export interface gatewayConnector {
 }
 
 
-export const GatewayConnectorDefaultTypesTranslates= new Map<string, string> ([
+export const GatewayConnectorDefaultTypesTranslates = new Map<string, string>([
   ['mqtt', 'MQTT'],
   ['modbus', 'MODBUS'],
   ['grpc', 'GRPC'],
@@ -82,6 +82,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   attributeDataSource: AttributeDatasource;
 
+  inactiveConnectorsDataSource: AttributeDatasource;
+
   dataSource: MatTableDataSource<AttributeData>
 
   displayedColumns = ['enabled', 'key', 'type', 'actions'];
@@ -111,6 +113,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   gatewayLogLevel = Object.values(GatewayLogLevel);
 
+  activeData: Array<any> = [];
+
+  inactiveData: Array<any> = [];
+
   constructor(protected router: Router,
               protected store: Store<AppState>,
               protected fb: FormBuilder,
@@ -126,6 +132,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const sortOrder: SortOrder = {property: 'key', direction: Direction.ASC};
     this.pageLink = new PageLink(1000, 0, null, sortOrder);
     this.attributeDataSource = new AttributeDatasource(this.attributeService, this.telemetryWsService, this.zone, this.translate);
+    this.inactiveConnectorsDataSource = new AttributeDatasource(this.attributeService, this.telemetryWsService, this.zone, this.translate);
     this.dataSource = new MatTableDataSource<AttributeData>([]);
     this.connectorForm = this.fb.group({
       name: ['', [Validators.required]],
@@ -137,7 +144,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       configurationJson: [{}, [Validators.required]]
     })
 
-    this.connectorForm.valueChanges.subscribe(_=>{
+    this.connectorForm.valueChanges.subscribe(() => {
       this.cd.detectChanges();
     })
     this.connectorForm.disable();
@@ -147,7 +154,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   initialConnector: gatewayConnector;
 
   ngAfterViewInit() {
-    console.log(this.device)
     merge(this.sort.sortChange)
       .pipe(
         tap(() => this.updateData())
@@ -156,7 +162,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     this.viewsInited = true;
     if (this.device) {
-      forkJoin(this.attributeService.getEntityAttributes(this.device, AttributeScope.CLIENT_SCOPE, ['active_connectors']),
+      forkJoin(this.attributeService.getEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, ['active_connectors']),
         this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, ['inactive_connectors'])).subscribe(attributes => {
         if (attributes.length) {
           this.activeConnectors = attributes[0].length ? attributes[0][0].value : [];
@@ -232,10 +238,18 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   updateData(reload: boolean = false) {
     this.pageLink.sortOrder.property = this.sort.active;
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
-    this.attributeDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
-      console.log(data);
-      this.dataSource.data = data.data.filter(value => this.activeConnectors.includes(value.key) || this.inactiveConnectors.includes(value.key));
+    this.attributeDataSource.loadAttributes(this.device, AttributeScope.CLIENT_SCOPE, this.pageLink, reload).subscribe(data => {
+      this.activeData = data.data.filter(value => this.activeConnectors.includes(value.key));
+      this.combineData()
     });
+    this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
+      this.inactiveData = data.data.filter(value =>this.inactiveConnectors.includes(value.key));
+      this.combineData()
+    });
+  }
+
+  combineData () {
+    this.dataSource.data = [...this.activeData, ...this.inactiveData];
   }
 
   addAttribute(): void {
@@ -308,8 +322,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
           key: scope == AttributeScope.SHARED_SCOPE ? 'active_connectors' : 'inactive_connectors',
           value: scope == AttributeScope.SHARED_SCOPE ? this.activeConnectors : this.inactiveConnectors
         }]));
-        forkJoin(tasks).subscribe(resp=>{
-          if (this.initialConnector ? this.initialConnector.name === attribute.key: true) {
+        forkJoin(tasks).subscribe(resp => {
+          if (this.initialConnector ? this.initialConnector.name === attribute.key : true) {
             this.clearOutConnectorForm();
             this.cd.detectChanges();
             this.connectorForm.disable();
@@ -339,7 +353,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     params.targetEntityParamName = "connector_rpc";
     this.ctx.stateController.openState("connector_rpc", params);
   }
-
 
 
   enableConnector(attribute): void {
