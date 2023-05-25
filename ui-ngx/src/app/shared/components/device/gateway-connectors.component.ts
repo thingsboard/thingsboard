@@ -133,6 +133,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       log_level: ['', [Validators.required]],
       key: ['auto'],
       class: [''],
+      configuration: [''],
       configurationJson: [{}, [Validators.required]]
     })
 
@@ -155,7 +156,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     this.viewsInited = true;
     if (this.device) {
-      forkJoin(this.attributeService.getEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, ['active_connectors']),
+      forkJoin(this.attributeService.getEntityAttributes(this.device, AttributeScope.CLIENT_SCOPE, ['active_connectors']),
         this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, ['inactive_connectors'])).subscribe(attributes => {
         if (attributes.length) {
           this.activeConnectors = attributes[0].length ? attributes[0][0].value : [];
@@ -251,6 +252,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       log_level: GatewayLogLevel.info,
       key: 'auto',
       class: '',
+      configuration: '',
       configurationJson: {}
     })
     this.initialConnector = null;
@@ -262,9 +264,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.connectorForm.enable();
     }
     const connector = attribute.value;
-    if (connector.configuration) {
-      delete connector.configuration;
-    }
+    // if (connector.configuration) {
+    //   delete connector.configuration;
+    // }
     if (!connector.key) {
       connector.key = 'auto';
     }
