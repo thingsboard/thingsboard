@@ -21,49 +21,42 @@
   <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
   <section class="tb-rulechain-container" fxFlex fxLayout="column">
     <div class="tb-rulechain-layout" fxFlex fxLayout="row">
-      <section fxLayout="row"
-               class="tb-header-buttons tb-library-open" [fxShow]="!isLibraryOpen">
-        <button color="primary"
-                mat-mini-fab
-                class="tb-btn-header tb-btn-open-library"
-                (click)="isLibraryOpen = true"
-                matTooltip="{{ 'rulenode.open-node-library' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>menu</mat-icon>
-        </button>
-      </section>
       <mat-drawer-container style="width: 100%; height: 100%;">
         <mat-drawer class="tb-rulechain-library mat-elevation-z4"
                     disableClose="true"
                     mode="side"
-                    [opened]="isLibraryOpen"
+                    #drawer
+                    [opened]="true"
                     position="start"
                     fxLayout="column">
           <mat-toolbar color="primary" class="tb-dark">
+            <tb-rule-chain-select
+              fxFlex
+              *ngIf="!isImport"
+              [disabled]="isDirtyValue"
+              [(ngModel)]="ruleChain.id.id"
+              (ngModelChange)="currentRuleChainIdChanged(ruleChain.id?.id)">
+            </tb-rule-chain-select>
+          </mat-toolbar>
+          <mat-toolbar>
             <div class="mat-toolbar-tools">
-              <button mat-icon-button class="tb-small"
-                matTooltip="{{'rulenode.search' | translate}}"
-                matTooltipPosition="above">
-                <mat-icon>search</mat-icon>
-              </button>
               <mat-form-field fxFlex class="tb-appearance-transparent">
+                <button mat-icon-button matPrefix class="tb-small"
+                        matTooltip="{{'rulenode.search' | translate}}"
+                        matTooltipPosition="above">
+                  <mat-icon>search</mat-icon>
+                </button>
                 <input #ruleNodeSearchInput matInput
                        [(ngModel)]="ruleNodeTypeSearch"
                        placeholder="{{'rulenode.search' | translate}}"/>
+                <button mat-icon-button matSuffix class="tb-small"
+                        [fxShow]="ruleNodeTypeSearch !== ''"
+                        (click)="ruleNodeTypeSearch = ''; updateRuleChainLibrary()"
+                        matTooltip="{{'action.clear-search' | translate}}"
+                        matTooltipPosition="above">
+                  <mat-icon>close</mat-icon>
+                </button>
               </mat-form-field>
-              <button mat-icon-button class="tb-small"
-                      [fxShow]="ruleNodeTypeSearch !== ''"
-                      (click)="ruleNodeTypeSearch = ''; updateRuleChainLibrary()"
-                      matTooltip="{{'action.clear-search' | translate}}"
-                      matTooltipPosition="above">
-                <mat-icon>close</mat-icon>
-              </button>
-              <button mat-icon-button class="tb-small"
-                      (click)="isLibraryOpen = false"
-                      matTooltip="{{'action.close' | translate}}"
-                      matTooltipPosition="above">
-                <mat-icon>chevron_left</mat-icon>
-              </button>
             </div>
           </mat-toolbar>
           <div class="tb-rulechain-library-panel-group">
@@ -164,6 +157,14 @@
           </tb-details-panel>
         </mat-drawer>
         <mat-drawer-content class="tb-rulechain-graph-content">
+          <button color="primary"
+                  mat-mini-fab
+                  class="tb-library-node-btn"
+                  (click)="drawer.toggle();"
+                  matTooltip="{{ (drawer.opened ? 'rulenode.close-node-library' : 'rulenode.open-node-library') | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon style="transition: transform 0.4s" [ngClass]="{'tb-library-node-btn-toggled' : !drawer.opened}">chevron_right</mat-icon>
+          </button>
           <button #versionControlButton
                   *ngIf="!isImport"
                   color="primary"
