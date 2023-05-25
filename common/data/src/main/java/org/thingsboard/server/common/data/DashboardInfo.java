@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @ApiModel
-public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName, HasTenantId, HasTitle {
+public class DashboardInfo extends BaseDataWithAdditionalInfo<DashboardId> implements HasName, HasTenantId, HasTitle {
 
     private TenantId tenantId;
     @NoXss
@@ -184,11 +184,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return title;
-    }
-
-    @Override
-    public String getSearchText() {
-        return getTitle();
     }
 
     @Override
