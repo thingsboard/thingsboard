@@ -93,7 +93,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     this.ctx.defaultSubscription.onTimewindowChangeFunction = timeWindow => {
       this.ctx.defaultSubscription.options.timeWindowConfig = timeWindow;
       this.ctx.defaultSubscription.updateTimewindowConfig(timeWindow);
-      this.ctx.defaultSubscription.update();
+      // this.ctx.defaultSubscription.update();
       this.updateChart();
       return timeWindow;
     }
