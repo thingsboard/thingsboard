@@ -178,6 +178,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   saveConnector(): void {
     const value = this.connectorForm.value;
+    value.configuration = this.camelize(value.name) + ".json";
     if (value.type !== 'grpc') {
       delete value.key;
     }
@@ -331,6 +332,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         })
       }
     })
+  }
+
+  camelize(str): string {
+    return str.toLowerCase().replace(/\s+/g, '_');
   }
 
   connectorLogs(attribute: AttributeData, $event: Event): void {
