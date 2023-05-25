@@ -53,6 +53,9 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
+    @Column(name = ModelConstants.RULE_NODE_VERSION_PROPERTY)
+    private int configurationVersion;
+
     @Type(type = "json")
     @Column(name = ModelConstants.RULE_NODE_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
@@ -86,6 +89,7 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
         this.debugMode = ruleNode.isDebugMode();
         this.singletonMode = ruleNode.isSingletonMode();
         this.searchText = ruleNode.getName();
+        this.configurationVersion = ruleNode.getConfigurationVersion();
         this.configuration = ruleNode.getConfiguration();
         this.additionalInfo = ruleNode.getAdditionalInfo();
         if (ruleNode.getExternalId() != null) {
@@ -114,6 +118,7 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
         ruleNode.setName(name);
         ruleNode.setDebugMode(debugMode);
         ruleNode.setSingletonMode(singletonMode);
+        ruleNode.setConfigurationVersion(configurationVersion);
         ruleNode.setConfiguration(configuration);
         ruleNode.setAdditionalInfo(additionalInfo);
         if (externalId != null) {

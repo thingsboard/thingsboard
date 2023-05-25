@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 /**
@@ -32,25 +34,35 @@ import org.thingsboard.server.common.msg.TbMsg;
  */
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-          name = "originator attributes",
-          configClazz = TbGetAttributesNodeConfiguration.class,
-          nodeDescription = "Enrich the message body or metadata with the originator attributes and/or timeseries data",
-          nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message data/metadata " +
-                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into Message data/metadata without prefix. " +
-                  "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
+        name = "originator attributes",
+        configClazz = TbGetAttributesNodeConfiguration.class,
+        nodeDescription = "Adds attributes and/or latest timeseries data for the message originator to the message or message metadata",
+        nodeDetails = "Useful when you need to retrieve some attributes or the latest telemetry readings from the message originator " +
+                "that are not included in the incoming message to use them for further message processing. " +
+                "For example to filter messages based on the threshold value stored in the attributes.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
 public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {
 
     @Override
-    protected TbGetAttributesNodeConfiguration loadGetAttributesNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
+    protected TbGetAttributesNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbGetAttributesNodeConfiguration.class);
     }
 
     @Override
     protected ListenableFuture<EntityId> findEntityIdAsync(TbContext ctx, TbMsg msg) {
         return Futures.immediateFuture(msg.getOriginator());
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        return fromVersion == 0 ?
+                upgradeRuleNodesWithOldPropertyToUseFetchTo(
+                        oldConfiguration,
+                        "fetchToData",
+                        FetchTo.DATA.name(),
+                        FetchTo.METADATA.name()) :
+                new TbPair<>(false, oldConfiguration);
     }
 
 }

@@ -27,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -52,6 +54,7 @@ import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
 import org.thingsboard.server.common.data.util.ReflectionUtils;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -60,6 +63,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -74,6 +78,7 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
+import static org.thingsboard.server.dao.service.Validator.validatePositiveNumber;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
 /**
@@ -180,9 +185,42 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
             updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode, newRuleNode));
         }
+        RuleChainId ruleChainId = ruleChain.getId();
         if (nodes != null) {
             for (RuleNode node : toAddOrUpdate) {
-                node.setRuleChainId(ruleChain.getId());
+                node.setRuleChainId(ruleChainId);
+                String ruleNodeType = node.getType();
+                RuleNodeId ruleNodeId = node.getId();
+                try {
+                    var ruleNodeClazz = Class.forName(ruleNodeType);
+                    if (TbVersionedNode.class.isAssignableFrom(ruleNodeClazz)) {
+                        TbVersionedNode tbVersionedNode = (TbVersionedNode) ruleNodeClazz.getDeclaredConstructor().newInstance();
+                        int fromVersion = node.getConfigurationVersion();
+                        int toVersion = tbVersionedNode.getCurrentVersion();
+                        if (fromVersion < toVersion) {
+                            log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
+                                    ruleNodeId, ruleNodeType, fromVersion, toVersion);
+                            try {
+                                TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(fromVersion, node.getConfiguration());
+                                if (upgradeResult.getFirst()) {
+                                    node.setConfiguration(upgradeResult.getSecond());
+                                }
+                                node.setConfigurationVersion(toVersion);
+                                log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
+                                        ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
+                            } catch (TbNodeException e) {
+                                log.warn("Failed to upgrade rule node with id: {} type: {} rule chain id: {} fromVersion: {} toVersion: {} due to: ",
+                                        ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion, e);
+                            }
+                        } else {
+                            log.debug("Rule node with id: {} type: {} ruleChainId: {} already set to latest version!",
+                                    ruleNodeId, ruleChainId, ruleNodeType);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to create instance of rule node with id: {} type: {}, rule chain id: {}",
+                            ruleNodeId, ruleNodeType, ruleChainId);
+                }
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
@@ -218,7 +256,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     RuleChain targetRuleChain = findRuleChainById(TenantId.SYS_TENANT_ID, targetRuleChainId);
                     RuleNode targetNode = new RuleNode();
                     targetNode.setName(targetRuleChain != null ? targetRuleChain.getName() : "Rule Chain Input");
-                    targetNode.setRuleChainId(ruleChain.getId());
+                    targetNode.setRuleChainId(ruleChainId);
                     targetNode.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
                     var configuration = JacksonUtil.newObjectNode();
                     configuration.put("ruleChainId", targetRuleChainId.getId().toString());
@@ -231,7 +269,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     targetNode = ruleNodeDao.save(tenantId, targetNode);
 
                     EntityRelation sourceRuleChainToRuleNode = new EntityRelation();
-                    sourceRuleChainToRuleNode.setFrom(ruleChain.getId());
+                    sourceRuleChainToRuleNode.setFrom(ruleChainId);
                     sourceRuleChainToRuleNode.setTo(targetNode.getId());
                     sourceRuleChainToRuleNode.setType(EntityRelation.CONTAINS_TYPE);
                     sourceRuleChainToRuleNode.setTypeGroup(RelationTypeGroup.RULE_CHAIN);
@@ -698,6 +736,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         validateString(type, "Incorrect type of the rule node");
         validatePageLink(pageLink);
         return ruleNodeDao.findAllRuleNodesByType(type, pageLink);
+    }
+
+    @Override
+    public PageData<RuleNode> findAllRuleNodesByTypeAndVersionLessThan(String type, int version, PageLink pageLink) {
+        log.trace("Executing findAllRuleNodesByTypeAndVersionLessThan, type {}, pageLink {}, version {}", type, pageLink, version);
+        validateString(type, "Incorrect type of the rule node");
+        validatePositiveNumber(version, "Incorrect version to compare with. Version should be greater than 0!");
+        validatePageLink(pageLink);
+        return ruleNodeDao.findAllRuleNodesByTypeAndVersionLessThan(type, version, pageLink);
     }
 
     @Override

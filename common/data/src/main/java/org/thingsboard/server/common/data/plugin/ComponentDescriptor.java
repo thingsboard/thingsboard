@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.validation.Length;
 
+import java.util.Objects;
+
 /**
  * @author Andrew Shvayka
  */
@@ -47,8 +49,10 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
     @Getter @Setter private String clazz;
     @ApiModelProperty(position = 8, value = "Complex JSON object that represents the Rule Node configuration.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Getter @Setter private transient JsonNode configurationDescriptor;
+    @ApiModelProperty(position = 9, value = "Rule node configuration version. By default, this value is 0. If the rule node is a versioned node, this value might be greater than 0.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Getter @Setter private int configurationVersion;
     @Length(fieldName = "actions")
-    @ApiModelProperty(position = 9, value = "Rule Node Actions. Deprecated. Always null.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 10, value = "Rule Node Actions. Deprecated. Always null.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Getter @Setter private String actions;
 
     public ComponentDescriptor() {
@@ -63,9 +67,11 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
         super(plugin);
         this.type = plugin.getType();
         this.scope = plugin.getScope();
+        this.clusteringMode = plugin.getClusteringMode();
         this.name = plugin.getName();
         this.clazz = plugin.getClazz();
         this.configurationDescriptor = plugin.getConfigurationDescriptor();
+        this.configurationVersion = plugin.getConfigurationVersion();
         this.actions = plugin.getActions();
     }
 
@@ -98,10 +104,11 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
 
         if (type != that.type) return false;
         if (scope != that.scope) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (actions != null ? !actions.equals(that.actions) : that.actions != null) return false;
-        if (configurationDescriptor != null ? !configurationDescriptor.equals(that.configurationDescriptor) : that.configurationDescriptor != null) return false;
-        return clazz != null ? clazz.equals(that.clazz) : that.clazz == null;
+        if (!Objects.equals(name, that.name)) return false;
+        if (!Objects.equals(actions, that.actions)) return false;
+        if (!Objects.equals(configurationDescriptor, that.configurationDescriptor)) return false;
+        if (configurationVersion != that.configurationVersion) return false;
+        return Objects.equals(clazz, that.clazz);
     }
 
     @Override

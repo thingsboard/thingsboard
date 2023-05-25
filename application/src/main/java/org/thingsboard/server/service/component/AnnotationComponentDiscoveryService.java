@@ -19,31 +19,28 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
+import org.thingsboard.server.service.bean.BeanDiscoveryService;
 
 import javax.annotation.PostConstruct;
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,11 +51,12 @@ import java.util.Set;
 public class AnnotationComponentDiscoveryService implements ComponentDiscoveryService {
 
     public static final int MAX_OPTIMISITC_RETRIES = 3;
-    @Value("${plugins.scan_packages}")
-    private String[] scanPackages;
 
     @Autowired
     private Environment environment;
+
+    @Autowired(required = false)
+    private BeanDiscoveryService beanDiscoveryService;
 
     @Autowired
     private ComponentDescriptorService componentDescriptorService;
@@ -81,7 +79,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     private void registerRuleNodeComponents() {
-        Set<BeanDefinition> ruleNodeBeanDefinitions = getBeanDefinitions(RuleNode.class);
+        Set<BeanDefinition> ruleNodeBeanDefinitions = beanDiscoveryService.discoverBeansByAnnotationType(RuleNode.class);
         for (BeanDefinition def : ruleNodeBeanDefinitions) {
             int retryCount = 0;
             Exception cause = null;
@@ -151,6 +149,11 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             scannedComponent.setType(type);
             Class<?> clazz = Class.forName(clazzName);
             RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
+            if (TbVersionedNode.class.isAssignableFrom(clazz)) {
+                TbVersionedNode tbVersionNode = (TbVersionedNode) clazz.getDeclaredConstructor().newInstance();
+                int currentVersion = tbVersionNode.getCurrentVersion();
+                scannedComponent.setConfigurationVersion(currentVersion);
+            }
             scannedComponent.setName(ruleNodeAnnotation.name());
             scannedComponent.setScope(ruleNodeAnnotation.scope());
             scannedComponent.setClusteringMode(ruleNodeAnnotation.clusteringMode());
@@ -208,16 +211,6 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             relationTypes.add(TbRelationTypes.FAILURE);
         }
         return relationTypes.toArray(new String[relationTypes.size()]);
-    }
-
-    private Set<BeanDefinition> getBeanDefinitions(Class<? extends Annotation> componentType) {
-        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
-        scanner.addIncludeFilter(new AnnotationTypeFilter(componentType));
-        Set<BeanDefinition> defs = new HashSet<>();
-        for (String scanPackage : scanPackages) {
-            defs.addAll(scanner.findCandidateComponents(scanPackage));
-        }
-        return defs;
     }
 
     @Override

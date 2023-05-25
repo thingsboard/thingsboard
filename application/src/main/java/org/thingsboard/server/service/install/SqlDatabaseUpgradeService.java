@@ -726,7 +726,20 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             for (String entityName : entityNames) {
                                 conn.createStatement().execute("ALTER TABLE " + entityName + " DROP COLUMN search_text CASCADE");
                             }
-                        } catch (Exception e) {}
+                        } catch (Exception e) {
+                        }
+                        try {
+                            conn.createStatement().execute("ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0;");
+                        } catch (Exception e) {
+                        }
+                        try {
+                            conn.createStatement().execute("ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0;");
+                        } catch (Exception e) {
+                        }
+                        try {
+                            conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_rule_node_type_configuration_version ON rule_node(type, configuration_version);");
+                        } catch (Exception e) {
+                        }
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005002;");
                     }

@@ -46,6 +46,9 @@ export class RelationTypeAutocompleteComponent implements ControlValueAccessor, 
   get required(): boolean {
     return this.requiredValue;
   }
+
+  @Input() label: string;
+
   @Input()
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);

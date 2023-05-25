@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.util;
+package org.thingsboard.rule.engine.metadata;
 
-public enum EntityDetails {
+public enum DataToFetch {
 
-    ID, TITLE, COUNTRY, CITY, STATE, ZIP, ADDRESS, ADDRESS2, PHONE, EMAIL, ADDITIONAL_INFO
+    ATTRIBUTES, LATEST_TELEMETRY, FIELDS
 
 }

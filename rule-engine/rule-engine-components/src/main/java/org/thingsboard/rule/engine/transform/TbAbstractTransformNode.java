@@ -31,19 +31,18 @@ import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import java.util.List;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 
 /**
  * Created by ashvayka on 19.01.18.
  */
 @Slf4j
-public abstract class TbAbstractTransformNode implements TbNode {
+public abstract class TbAbstractTransformNode<C> implements TbNode {
 
-    private TbTransformNodeConfiguration config;
+    protected C config;
 
     @Override
-    public void init(TbContext context, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbTransformNodeConfiguration.class);
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        config = loadNodeConfiguration(ctx, configuration);
     }
 
     @Override
@@ -54,16 +53,10 @@ public abstract class TbAbstractTransformNode implements TbNode {
                 MoreExecutors.directExecutor());
     }
 
+    protected abstract C loadNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException;
+
     protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {
         ctx.tellFailure(msg, t);
-    }
-
-    protected void transformSuccess(TbContext ctx, TbMsg msg, TbMsg m) {
-        if (m != null) {
-            ctx.tellSuccess(m);
-        } else {
-            ctx.tellNext(msg, FAILURE);
-        }
     }
 
     protected void transformSuccess(TbContext ctx, TbMsg msg, List<TbMsg> msgs) {
@@ -85,13 +78,10 @@ public abstract class TbAbstractTransformNode implements TbNode {
                 msgs.forEach(newMsg -> ctx.enqueueForTellNext(newMsg, TbRelationTypes.SUCCESS, wrapper::onSuccess, wrapper::onFailure));
             }
         } else {
-            ctx.tellNext(msg, FAILURE);
+            ctx.tellFailure(msg, new RuntimeException("Message or messages list are empty!"));
         }
     }
 
     protected abstract ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg);
 
-    public void setConfig(TbTransformNodeConfiguration config) {
-        this.config = config;
-    }
 }

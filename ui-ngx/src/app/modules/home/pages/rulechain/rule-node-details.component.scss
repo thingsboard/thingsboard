@@ -27,12 +27,16 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-bottom: 5px;
+
+      @media #{$mat-gt-sm} {
+        margin-bottom: 24px;
+      }
     }
 
     @media #{$mat-gt-sm} {
       flex-direction: row;
       gap: 8px;
+      align-items: center;
 
       .node-setting {
         margin-top: 5px;
