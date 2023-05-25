@@ -67,14 +67,11 @@ export class WidgetPreviewComponent extends PageComponent implements OnInit, OnC
   }
 
   private loadPreviewWidget() {
-    const sizeX = this.widget.sizeX * 2;
-    const sizeY = this.widget.sizeY * 2;
-    const col = Math.floor(Math.max(0, (20 - sizeX) / 2));
     const widget = deepClone(this.widget);
-    widget.sizeX = sizeX;
-    widget.sizeY = sizeY;
+    widget.sizeX = 24;
+    widget.sizeY = this.widget.sizeY * 2;
     widget.row = 0;
-    widget.col = col;
+    widget.col = 0;
     widget.config = this.widgetConfig;
     this.widgets = [widget];
   }
