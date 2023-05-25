@@ -63,8 +63,11 @@
     opacity: 0.5;
     border-radius: 0 15px 15px 0 !important;
     transform: translateY(-50%);
-    &-toggled {
-      transform: rotateZ(180deg);
+    &-icon {
+      transition: transform 0.4s !important;
+      &-toggled {
+        transform: rotateZ(180deg);
+      }
     }
     &:before {
       width: 20px;

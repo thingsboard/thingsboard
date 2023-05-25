@@ -15,9 +15,8 @@
     limitations under the License.
 
 -->
-<div class="mat-content" fxFlex tb-fullscreen [fullscreen]="isFullscreen" tb-hotkeys [hotkeys]="hotKeys"
-     [cheatSheet]="cheatSheetComponent"
-  fxLayout="column" class="tb-rulechain">
+<div class="mat-content tb-rulechain" fxFlex tb-fullscreen [fullscreen]="isFullscreen" tb-hotkeys [hotkeys]="hotKeys"
+     [cheatSheet]="cheatSheetComponent" fxLayout="column">
   <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
   <section class="tb-rulechain-container" fxFlex fxLayout="column">
     <div class="tb-rulechain-layout" fxFlex fxLayout="row">
@@ -163,7 +162,7 @@
                   (click)="drawer.toggle();"
                   matTooltip="{{ (drawer.opened ? 'rulenode.close-node-library' : 'rulenode.open-node-library') | translate }}"
                   matTooltipPosition="above">
-            <mat-icon style="transition: transform 0.4s" [ngClass]="{'tb-library-node-btn-toggled' : !drawer.opened}">chevron_right</mat-icon>
+            <mat-icon class="tb-library-node-btn-icon" [ngClass]="{'tb-library-node-btn-icon-toggled' : !drawer.opened}">chevron_right</mat-icon>
           </button>
           <button #versionControlButton
                   *ngIf="!isImport"
