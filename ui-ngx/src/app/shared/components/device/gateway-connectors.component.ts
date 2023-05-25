@@ -143,10 +143,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       configuration: [''],
       configurationJson: [{}, [Validators.required]]
     })
-
-    this.connectorForm.valueChanges.subscribe(() => {
-      this.cd.detectChanges();
-    })
     this.connectorForm.disable();
   }
 
@@ -154,6 +150,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   initialConnector: gatewayConnector;
 
   ngAfterViewInit() {
+    this.connectorForm.valueChanges.subscribe(() => {
+      this.cd.detectChanges();
+    })ж
     merge(this.sort.sortChange)
       .pipe(
         tap(() => this.updateData())
