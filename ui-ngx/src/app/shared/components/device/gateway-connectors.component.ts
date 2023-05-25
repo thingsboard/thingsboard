@@ -277,9 +277,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.connectorForm.enable();
     }
     const connector = attribute.value;
-    // if (connector.configuration) {
-    //   delete connector.configuration;
-    // }
+    if (!connector.configuration) {
+      connector.configuration = "";
+    }
     if (!connector.key) {
       connector.key = 'auto';
     }
