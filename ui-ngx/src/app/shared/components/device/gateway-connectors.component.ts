@@ -152,7 +152,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   ngAfterViewInit() {
     this.connectorForm.valueChanges.subscribe(() => {
       this.cd.detectChanges();
-    })ж
+    });
     merge(this.sort.sortChange)
       .pipe(
         tap(() => this.updateData())
