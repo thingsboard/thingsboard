@@ -40,6 +40,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { EntityAliasSelectCallbacks } from '@home/components/alias/entity-alias-select.component.models';
 import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';
 import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
   selector: 'tb-datasource',
@@ -122,6 +123,8 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
 
   widgetTypes = widgetType;
 
+  entityType = EntityType;
+
   datasourceType = DatasourceType;
   datasourceTypes: Array<DatasourceType> = [];
   datasourceTypesTranslations = datasourceTypeTranslationMap;
@@ -160,7 +163,7 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
     if (this.widgetConfigComponent.functionsOnly) {
       this.datasourceTypes = [DatasourceType.function];
     } else {
-      this.datasourceTypes = [DatasourceType.function, DatasourceType.entity];
+      this.datasourceTypes = [DatasourceType.function, DatasourceType.device, DatasourceType.entity];
       if (this.widgetConfigComponent.widgetType === widgetType.latest) {
         this.datasourceTypes.push(DatasourceType.entityCount);
         this.datasourceTypes.push(DatasourceType.alarmCount);
@@ -171,6 +174,7 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
       {
         type: [null, [Validators.required]],
         name: [null, []],
+        deviceId: [null, []],
         entityAliasId: [null, []],
         filterId: [null, []],
         dataKeys: [null, []],
@@ -194,6 +198,7 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
     this.datasourceFormGroup.patchValue({
       type: datasource?.type,
       name: datasource?.name,
+      deviceId: datasource?.deviceId,
       entityAliasId: datasource?.entityAliasId,
       filterId: datasource?.filterId,
       dataKeys: datasource?.dataKeys,
@@ -231,11 +236,15 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
 
   private updateValidators() {
     const type: DatasourceType = this.datasourceFormGroup.get('type').value;
+    this.datasourceFormGroup.get('deviceId').setValidators(
+      type === DatasourceType.device ? [Validators.required] : []
+    );
     this.datasourceFormGroup.get('entityAliasId').setValidators(
       (type === DatasourceType.entity || type === DatasourceType.entityCount) ? [Validators.required] : []
     );
     const newDataKeysRequired = !this.isDataKeysOptional(type);
     this.datasourceFormGroup.get('dataKeys').setValidators(newDataKeysRequired ? [Validators.required] : []);
+    this.datasourceFormGroup.get('deviceId').updateValueAndValidity({emitEvent: false});
     this.datasourceFormGroup.get('entityAliasId').updateValueAndValidity({emitEvent: false});
     this.datasourceFormGroup.get('dataKeys').updateValueAndValidity({emitEvent: false});
   }

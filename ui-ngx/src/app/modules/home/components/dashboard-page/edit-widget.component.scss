@@ -14,26 +14,13 @@
  * limitations under the License.
  */
 :host {
-  z-index: 10;
-  background: #F3F6FA;
-  .tb-preview-dashboard {
+  .widget-preview-section {
     position: absolute;
-    top: 15%;
-    bottom: 15%;
-    left: 0;
-    right: 0;
-  }
-  .tb-preview-panel {
-    position: absolute;
-    top: 16px;
-    left: 24px;
-  }
-}
-
-:host ::ng-deep {
-  tb-dashboard.tb-preview-dashboard {
-    .tb-dashboard-content {
-      background-color: transparent !important;
-    }
+    top: 72px;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
   }
 }

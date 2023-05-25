@@ -162,6 +162,8 @@ export interface WidgetTypeDescriptor {
   settingsDirective?: string;
   dataKeySettingsDirective?: string;
   latestDataKeySettingsDirective?: string;
+  hasBasicMode?: boolean;
+  basicModeDirective?: string;
   defaultConfig: string;
   sizeX: number;
   sizeY: number;
@@ -318,6 +320,7 @@ export interface DataKey extends KeyInfo {
 
 export enum DatasourceType {
   function = 'function',
+  device = 'device',
   entity = 'entity',
   entityCount = 'entityCount',
   alarmCount = 'alarmCount'
@@ -326,6 +329,7 @@ export enum DatasourceType {
 export const datasourceTypeTranslationMap = new Map<DatasourceType, string>(
   [
     [ DatasourceType.function, 'function.function' ],
+    [ DatasourceType.device, 'device.device' ],
     [ DatasourceType.entity, 'entity.entity' ],
     [ DatasourceType.entityCount, 'entity.entities-count' ],
     [ DatasourceType.alarmCount, 'entity.alarms-count' ]
@@ -341,6 +345,7 @@ export interface Datasource {
   entityType?: EntityType;
   entityId?: string;
   entityName?: string;
+  deviceId?: string;
   entityAliasId?: string;
   filterId?: string;
   unresolvedStateEntity?: boolean;
@@ -600,7 +605,13 @@ export interface WidgetSettings {
   [key: string]: any;
 }
 
+export enum WidgetConfigMode {
+  basic = 'basic',
+  advanced = 'advanced'
+}
+
 export interface WidgetConfig {
+  configMode?: WidgetConfigMode;
   title?: string;
   titleIcon?: string;
   showTitle?: boolean;

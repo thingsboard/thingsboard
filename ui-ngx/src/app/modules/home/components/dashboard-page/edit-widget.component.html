@@ -22,9 +22,19 @@
       [functionsOnly]="widgetEditMode"
       [dashboard]="dashboard"
       [widget]="widget"
+      [hideToggleHeader]="previewMode"
+      [widgetConfigMode]="widgetConfigMode"
       formControlName="widgetConfig">
+      <div class="tb-widget-config-header-prefix">
+        <button mat-button
+                *ngIf="previewMode"
+                (click)="previewMode = false">
+          <mat-icon>chevron_left</mat-icon>
+          {{ 'action.back' | translate }}
+        </button>
+      </div>
       <div class="tb-widget-config-header-suffix" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
-        <button [disabled]="(isLoading$ | async) || widgetFormGroup.invalid"
+        <button *ngIf="!previewMode" [disabled]="(isLoading$ | async) || widgetFormGroup.invalid"
           mat-button color="primary"
           (click)="previewMode = true">
           <mat-icon>visibility</mat-icon>
@@ -44,17 +54,11 @@
         </button>
       </div>
     </tb-widget-config>
-    <tb-widget-preview *ngIf="previewMode" class="tb-absolute-fill"
+    <tb-widget-preview *ngIf="previewMode" class="widget-preview-section"
                        [aliasController]="aliasController"
                        [stateController]="stateController"
                        [widget]="widget"
                        [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config">
-      <div class="tb-preview-panel-content">
-        <button mat-button color="primary"
-                (click)="previewMode = false">
-          {{ 'action.back' | translate }}
-        </button>
-      </div>
     </tb-widget-preview>
   </fieldset>
 </form>

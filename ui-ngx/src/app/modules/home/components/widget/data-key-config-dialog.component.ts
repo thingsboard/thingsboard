@@ -36,6 +36,7 @@ export interface DataKeyConfigDialogData {
   aliasController: IAliasController;
   widget: Widget;
   widgetType: widgetType;
+  deviceId?: string;
   entityAliasId?: string;
   showPostProcessing?: boolean;
   callbacks?: DataKeysCallbacks;

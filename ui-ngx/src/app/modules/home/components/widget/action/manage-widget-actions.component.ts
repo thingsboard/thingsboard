@@ -89,6 +89,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   dragDisabled = true;
 
   private widgetResize$: ResizeObserver;
+  private destroyed = false;
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
@@ -123,6 +124,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
@@ -340,11 +342,13 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.innerValue = obj;
     if (this.innerValue) {
       setTimeout(() => {
-        this.dataSource.setActions(this.innerValue);
-        if (this.viewsInited) {
-          this.resetSortAndFilter(true);
-        } else {
-          this.dirtyValue = true;
+        if (!this.destroyed) {
+          this.dataSource.setActions(this.innerValue);
+          if (this.viewsInited) {
+            this.resetSortAndFilter(true);
+          } else {
+            this.dirtyValue = true;
+          }
         }
       }, 0);
     }

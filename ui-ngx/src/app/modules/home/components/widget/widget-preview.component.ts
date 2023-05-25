@@ -14,8 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
 import { Widget, WidgetConfig } from '@shared/models/widget.models';
@@ -28,7 +27,7 @@ import { deepClone } from '@core/utils';
   templateUrl: './widget-preview.component.html',
   styleUrls: ['./widget-preview.component.scss']
 })
-export class WidgetPreviewComponent extends PageComponent implements OnInit {
+export class WidgetPreviewComponent extends PageComponent implements OnInit, OnChanges {
 
   @Input()
   aliasController: IAliasController;
@@ -49,6 +48,25 @@ export class WidgetPreviewComponent extends PageComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadPreviewWidget();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    let reloadPreviewWidget = false;
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (['widget', 'widgetConfig'].includes(propName)) {
+          reloadPreviewWidget = true;
+        }
+      }
+    }
+    if (reloadPreviewWidget) {
+      this.loadPreviewWidget();
+    }
+  }
+
+  private loadPreviewWidget() {
     const sizeX = this.widget.sizeX * 2;
     const sizeY = this.widget.sizeY * 2;
     const col = Math.floor(Math.max(0, (20 - sizeX) / 2));

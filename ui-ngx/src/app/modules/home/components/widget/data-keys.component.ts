@@ -37,8 +37,8 @@ import {
   NgForm,
   UntypedFormBuilder,
   UntypedFormControl,
-  UntypedFormGroup, ValidationErrors,
-  Validators
+  UntypedFormGroup,
+  ValidationErrors
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs/operators';
@@ -139,6 +139,9 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @Input()
   entityAliasId: string;
+
+  @Input()
+  deviceId: string;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -326,15 +329,21 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'entityAliasId') {
+        if (['deviceId', 'entityAliasId'].includes(propName)) {
           this.clearSearchCache();
           this.dirty = true;
         } else if (['widgetType', 'datasourceType', 'maxDataKeys', 'simpleDataKeysLabel'].includes(propName)) {
-          this.clearSearchCache();
-          this.updateParams();
-          setTimeout(() => {
-            this.reset();
-          }, 1);
+          if (propName === 'datasourceType' &&
+              [DatasourceType.device, DatasourceType.entity].includes(change.previousValue) &&
+              [DatasourceType.device, DatasourceType.entity].includes(change.currentValue)) {
+            this.clearSearchCache();
+          } else {
+            this.clearSearchCache();
+            this.updateParams();
+            setTimeout(() => {
+              this.reset();
+            }, 1);
+          }
         } else if (['required', 'optDataKeys'].includes(propName)) {
           this.updateValidators();
         }
@@ -468,6 +477,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
           aliasController: this.aliasController,
           widget: this.widget,
           widgetType: this.widgetType,
+          deviceId: this.deviceId,
           entityAliasId: this.entityAliasId,
           showPostProcessing: this.widgetType !== widgetType.alarm,
           callbacks: this.callbacks
@@ -517,7 +527,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       if (this.datasourceType === DatasourceType.function) {
         const targetKeysList = this.widgetType === widgetType.alarm ? this.alarmKeys : this.functionTypeKeys;
         fetchObservable = of(targetKeysList);
-      } else if (this.datasourceType === DatasourceType.entity && this.entityAliasId) {
+      } else if (this.datasourceType === DatasourceType.entity && this.entityAliasId ||
+                 this.datasourceType === DatasourceType.device && this.deviceId) {
         const dataKeyTypes = [DataKeyType.timeseries];
         if (this.widgetType === widgetType.latest || this.widgetType === widgetType.alarm) {
           dataKeyTypes.push(DataKeyType.attribute);
@@ -526,7 +537,11 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
             dataKeyTypes.push(DataKeyType.alarm);
           }
         }
-        fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
+        if (this.datasourceType === DatasourceType.device) {
+          fetchObservable = this.callbacks.fetchEntityKeysForDevice(this.deviceId, dataKeyTypes);
+        } else {
+          fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
+        }
       } else {
         fetchObservable = of([]);
       }
@@ -561,6 +576,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   get isCountDatasource(): boolean {
     return [DatasourceType.entityCount, DatasourceType.alarmCount].includes(this.datasourceType);
+  }
+
+  get isEntityDatasource(): boolean {
+    return [DatasourceType.device, DatasourceType.entity].includes(this.datasourceType);
   }
 
   get inputDisabled(): boolean {

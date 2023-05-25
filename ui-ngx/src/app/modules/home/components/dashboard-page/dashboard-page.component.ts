@@ -332,7 +332,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private mobileService: MobileService,
               private fb: UntypedFormBuilder,
               private dialog: MatDialog,
-              private translate: TranslateService,
+              public translate: TranslateService,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private ngZone: NgZone,

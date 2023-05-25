@@ -242,10 +242,8 @@ export class DashboardUtilsService {
       widgetConfig.datasources = [];
     }
     widgetConfig.datasources.forEach((datasource) => {
-      if (datasource.type === 'device') {
-        datasource.type = DatasourceType.entity;
-      }
       if (datasource.deviceAliasId) {
+        datasource.type = DatasourceType.entity;
         datasource.entityAliasId = datasource.deviceAliasId;
         delete datasource.deviceAliasId;
       }

@@ -183,6 +183,9 @@ import { DeviceInfoFilterComponent } from '@home/components/device/device-info-f
 import { WidgetPreviewComponent } from '@home/components/widget/widget-preview.component';
 import { DatasourceComponent } from '@home/components/widget/datasource.component';
 import { DatasourcesComponent } from '@home/components/widget/datasources.component';
+import {
+  ManageWidgetActionsDialogComponent
+} from '@home/components/widget/action/manage-widget-actions-dialog.component';
 
 @NgModule({
   declarations:
@@ -234,6 +237,7 @@ import { DatasourcesComponent } from '@home/components/widget/datasources.compon
       DataKeyConfigDialogComponent,
       ManageWidgetActionsComponent,
       WidgetActionDialogComponent,
+      ManageWidgetActionsDialogComponent,
       CustomActionPrettyResourcesTabsComponent,
       CustomActionPrettyEditorComponent,
       MobileActionEditorComponent,
@@ -386,6 +390,7 @@ import { DatasourcesComponent } from '@home/components/widget/datasources.compon
     DataKeyConfigDialogComponent,
     ManageWidgetActionsComponent,
     WidgetActionDialogComponent,
+    ManageWidgetActionsDialogComponent,
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,

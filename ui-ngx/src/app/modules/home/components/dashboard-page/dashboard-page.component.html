@@ -359,7 +359,19 @@
                           headerSubtitle="{{ editingWidgetSubtitle }}"
                           [isReadOnly]="true"
                           (closeDetails)="onEditWidgetClosed()">
-          <div class="details-buttons">
+          <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+            <tb-toggle-header *ngIf="tbEditWidget.hasBasicMode" (valueChange)="tbEditWidget.widgetConfigMode = $event" ignoreMdLgSize="true"
+                              appearance="fill-invert" [options]="[
+                                {
+                                   name: translate.instant('widget.basic-mode'),
+                                   value: 'basic'
+                                },
+                                {
+                                   name: translate.instant('widget.advanced-mode'),
+                                   value: 'advanced'
+                                }
+                              ]" [value]="tbEditWidget.widgetConfigMode" name="widgetConfigModeHeader" useSelectOnMdLg="false">
+            </tb-toggle-header>
             <div [tb-help]="helpLinkIdForWidgetType()"></div>
           </div>
           <tb-edit-widget #tbEditWidget

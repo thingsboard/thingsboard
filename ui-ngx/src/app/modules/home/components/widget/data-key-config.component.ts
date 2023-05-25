@@ -91,6 +91,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   comparisonResultTypeTranslations = comparisonResultTypeTranslationMap;
 
   @Input()
+  deviceId: string;
+
+  @Input()
   entityAliasId: string;
 
   @Input()
@@ -377,9 +380,13 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       if (this.modelValue.type === DataKeyType.alarm) {
         fetchObservable = of(this.alarmKeys);
       } else {
-        if (this.entityAliasId) {
+        if (this.deviceId || this.entityAliasId) {
           const dataKeyTypes = [this.modelValue.type];
-          fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
+          if (this.deviceId) {
+            fetchObservable = this.callbacks.fetchEntityKeysForDevice(this.deviceId, dataKeyTypes);
+          } else {
+            fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
+          }
         } else {
           fetchObservable = of([]);
         }

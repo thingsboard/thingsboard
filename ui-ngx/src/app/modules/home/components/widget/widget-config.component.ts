@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -26,6 +26,8 @@ import {
   JsonSchema,
   JsonSettingsSchema,
   Widget,
+  WidgetActionDescriptor,
+  WidgetConfigMode,
   widgetType
 } from '@shared/models/widget.models';
 import {
@@ -60,9 +62,14 @@ import { JsonFormComponentData } from '@shared/components/json-form/json-form-co
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
-import { Filter } from '@shared/models/query/query.models';
+import { Filter, singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import {
+  ManageWidgetActionsDialogComponent,
+  ManageWidgetActionsDialogData
+} from '@home/components/widget/action/manage-widget-actions-dialog.component';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -94,6 +101,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   widgetTypes = widgetType;
 
+  widgetConfigModes = WidgetConfigMode;
+
   entityTypes = EntityType;
 
   @Input()
@@ -111,7 +120,18 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   @Input()
   functionsOnly: boolean;
 
+  @Input()
+  @coerceBoolean()
+  hideHeader = false;
+
+  @Input()
+  @coerceBoolean()
+  hideToggleHeader = false;
+
   @Input() disabled: boolean;
+
+  @Input()
+  widgetConfigMode = WidgetConfigMode.advanced;
 
   widgetType: widgetType;
 
@@ -119,6 +139,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     createEntityAlias: this.createEntityAlias.bind(this),
     createFilter: this.createFilter.bind(this),
     generateDataKey: this.generateDataKey.bind(this),
+    fetchEntityKeysForDevice: this.fetchEntityKeysForDevice.bind(this),
     fetchEntityKeys: this.fetchEntityKeys.bind(this),
     fetchDashboardStates: this.fetchDashboardStates.bind(this)
   };
@@ -151,7 +172,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
               private entityService: EntityService,
               private dialog: MatDialog,
               public translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -288,7 +310,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         value: 'mobile'
       }
     );
-    this.selectedOption = this.headerOptions[0].value;
+    if (!this.selectedOption || !this.headerOptions.find(o => o.value === this.selectedOption)) {
+      this.selectedOption = this.headerOptions[0].value;
+    }
   }
 
   private buildForms() {
@@ -607,6 +631,28 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     return this.widgetType !== widgetType.static && !this.modelValue?.typeParameters?.processNoDataByWidget;
   }
 
+  public get widgetActionSourceIds(): Array<string> {
+    const actionsData: WidgetActionsData = this.actionsSettings.get('actionsData').value;
+    return actionsData?.actionsMap ? Object.keys(actionsData.actionsMap) : [];
+  }
+
+  public widgetActionsByActionSourceId(actionSourceId: string): Array<WidgetActionDescriptor> {
+    const actionsData: WidgetActionsData = this.actionsSettings.get('actionsData').value;
+    return actionsData?.actionsMap[actionSourceId] || [];
+  }
+
+  public get hasWidgetActions(): boolean {
+    const actionsData: WidgetActionsData = this.actionsSettings.get('actionsData').value;
+    if (actionsData?.actionsMap) {
+      for (const actionSourceId of Object.keys(actionsData.actionsMap)) {
+        if (actionsData.actionsMap[actionSourceId] && actionsData.actionsMap[actionSourceId].length) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public onlyHistoryTimewindow(): boolean {
     if (this.widgetType === widgetType.latest) {
       const datasources = this.dataSettings.get('datasources').value;
@@ -614,6 +660,28 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     } else {
       return false;
     }
+  }
+
+  public manageWidgetActions() {
+    const actionsData: WidgetActionsData = this.actionsSettings.get('actionsData').value;
+    this.dialog.open<ManageWidgetActionsDialogComponent, ManageWidgetActionsDialogData,
+      WidgetActionsData>(ManageWidgetActionsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        widgetTitle: this.modelValue.widgetName,
+        callbacks: this.widgetConfigCallbacks,
+        actionsData: deepClone(actionsData),
+        widgetType: this.widgetType
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          this.actionsSettings.get('actionsData').patchValue(res);
+          this.cd.markForCheck();
+        }
+      }
+    );
   }
 
   public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema): DataKey {
@@ -709,6 +777,17 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         }
       })
     );
+  }
+
+  private fetchEntityKeysForDevice(deviceId: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
+      const entityFilter = singleEntityFilterFromDeviceId(deviceId);
+      return this.entityService.getEntityKeysByEntityFilter(
+        entityFilter,
+        dataKeyTypes,
+        {ignoreLoading: true, ignoreErrors: true}
+      ).pipe(
+        catchError(() => of([]))
+      );
   }
 
   private fetchEntityKeys(entityAliasId: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {

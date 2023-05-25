@@ -16,107 +16,19 @@
 
 -->
 <div class="tb-widget-config tb-absolute-fill">
-  <div class="tb-widget-config-header">
-    <tb-toggle-header (valueChange)="selectedOption = $event" ignoreMdLgSize="true"
+  <div class="tb-widget-config-header" *ngIf="!hideHeader">
+    <tb-toggle-header *ngIf="!hideToggleHeader && widgetConfigMode === widgetConfigModes.advanced" (valueChange)="selectedOption = $event" ignoreMdLgSize="true"
                       appearance="fill" [options]="headerOptions" [value]="selectedOption" name="widgetConfigHeader" useSelectOnMdLg="false">
     </tb-toggle-header>
+    <ng-content select=".tb-widget-config-header-prefix"></ng-content>
     <ng-content select=".tb-widget-config-header-suffix"></ng-content>
   </div>
-  <div class="tb-widget-config-content">
-    <div *ngIf="widgetType !== widgetTypes.static" [fxShow]="selectedOption === 'data'" [formGroup]="dataSettings" class="mat-content">
-      <div *ngIf="displayTimewindowConfig" class="tb-widget-config-panel">
-        <div fxLayout="row" fxLayoutAlign="space-between center">
-          <div class="tb-widget-config-panel-title" translate>timewindow.timewindow</div>
-          <tb-toggle-header (valueChange)="dataSettings.get('useDashboardTimewindow').patchValue($event)" ignoreMdLgSize="true"
-                            [options]="[
-                                         { name: translate.instant('widget-config.use-dashboard-timewindow'), value: true},
-                                         { name: translate.instant('widget-config.use-widget-timewindow'), value: false}
-                                       ]"
-                            [value]="dataSettings.get('useDashboardTimewindow').value" name="useDashboardTimewindow" useSelectOnMdLg="false">
-          </tb-toggle-header>
-        </div>
-        <div class="tb-widget-config-row">
-          <tb-timewindow asButton="true"
-                         strokedButton
-                         isEdit="true"
-                         alwaysDisplayTypePrefix
-                         [historyOnly]="onlyHistoryTimewindow()"
-                         quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
-                         aggregation="{{ widgetType === widgetTypes.timeseries }}"
-                         formControlName="timewindow"></tb-timewindow>
-          <mat-slide-toggle class="mat-slide" formControlName="displayTimewindow">
-            {{ 'widget-config.display-timewindow' | translate }}
-          </mat-slide-toggle>
-        </div>
-      </div>
-      <div class="tb-widget-config-panel" *ngIf="widgetType === widgetTypes.alarm" fxLayout="column" fxLayoutAlign="center">
-        <tb-alarm-filter-config buttonMode="false" formControlName="alarmFilterConfig"></tb-alarm-filter-config>
-      </div>
-      <tb-datasources
-        formControlName="datasources" *ngIf="widgetType !== widgetTypes.rpc &&
-                                             widgetType !== widgetTypes.alarm &&
-                                             modelValue?.isDataEnabled">
-      </tb-datasources>
-      <div class="tb-widget-config-panel" *ngIf="widgetType === widgetTypes.rpc &&
-                                                  modelValue?.isDataEnabled">
-        <div class="tb-widget-config-panel-title" translate>widget-config.target-device</div>
-        <div [formGroup]="targetDeviceSettings">
-          <tb-entity-alias-select fxFlex
-                                  [tbRequired]="!widgetEditMode"
-                                  [aliasController]="aliasController"
-                                  [allowedEntityTypes]="[entityTypes.DEVICE]"
-                                  [callbacks]="widgetConfigCallbacks"
-                                  formControlName="targetDeviceAliasId">
-          </tb-entity-alias-select>
-        </div>
-      </div>
-      <div class="tb-widget-config-panel" *ngIf="widgetType === widgetTypes.alarm &&
-                                                  modelValue?.isDataEnabled">
-        <div class="tb-widget-config-panel-title" translate>widget-config.alarm-source</div>
-        <tb-datasource
-          formControlName="alarmSource">
-        </tb-datasource>
-      </div>
-      <div *ngIf="displayLimits" class="tb-widget-config-panel" [formGroup]="widgetSettings">
-        <div class="tb-widget-config-panel-title" translate>widget-config.limits</div>
-        <div class="tb-widget-config-row space-between">
-          <div translate>widget-config.data-page-size</div>
-          <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
-            <input matInput formControlName="pageSize" type="number" min="1" step="1">
-          </mat-form-field>
-        </div>
-      </div>
+  <div *ngIf="widgetConfigMode === widgetConfigModes.advanced; else basicMode" class="tb-widget-config-content">
+    <div *ngIf="widgetType !== widgetTypes.static" [fxShow]="selectedOption === 'data'" class="mat-content">
+      <ng-container *ngTemplateOutlet="data"></ng-container>
     </div>
     <div [fxShow]="selectedOption === 'appearance'" class="mat-content">
-      <div *ngIf="displayAppearanceDataSettings" class="tb-widget-config-panel" [formGroup]="widgetSettings">
-        <div class="tb-widget-config-panel-title" translate>widget-config.data-settings</div>
-        <div *ngIf="displayUnitsConfig" class="tb-widget-config-row space-between">
-          <div translate>widget-config.units</div>
-          <mat-form-field appearance="outline" class="center" subscriptSizing="dynamic">
-            <input matInput formControlName="units" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
-        </div>
-        <div *ngIf="displayUnitsConfig" class="tb-widget-config-row space-between">
-          <div translate>widget-config.decimals</div>
-          <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
-            <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
-        </div>
-        <div *ngIf="displayNoDataDisplayMessageConfig" class="tb-widget-config-row">
-          <div translate>widget-config.no-data-display-message</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
-            <input matInput formControlName="noDataDisplayMessage" placeholder="{{ 'widget-config.set-message' | translate }}">
-          </mat-form-field>
-        </div>
-      </div>
-      <div *ngIf="displayAdvancedAppearance" style="height: 100%;" [formGroup]="advancedSettings">
-        <tb-widget-settings
-          [aliasController]="aliasController"
-          [dashboard]="dashboard"
-          [widget]="widget"
-          formControlName="settings">
-        </tb-widget-settings>
-      </div>
+      <ng-container *ngTemplateOutlet="appearance"></ng-container>
     </div>
     <div [fxShow]="selectedOption === 'card'" [formGroup]="widgetSettings" class="mat-content">
       <div class="tb-widget-config-panel">
@@ -231,11 +143,13 @@
       </div>
     </div>
     <div [fxShow]="selectedOption === 'actions'" [formGroup]="actionsSettings" class="mat-content" style="height: 100%;">
-      <tb-manage-widget-actions
-        [callbacks]="widgetConfigCallbacks"
-        [widgetType] = "modelValue.widgetType"
-        formControlName="actionsData">
-      </tb-manage-widget-actions>
+      <div class="tb-widget-config-panel" style="height: 100%;">
+        <tb-manage-widget-actions
+          [callbacks]="widgetConfigCallbacks"
+          [widgetType] = "modelValue.widgetType"
+          formControlName="actionsData">
+        </tb-manage-widget-actions>
+      </div>
     </div>
     <div [fxShow]="selectedOption === 'mobile'" [formGroup]="layoutSettings" class="mat-content">
       <div class="tb-widget-config-panel">
@@ -264,5 +178,130 @@
       </div>
     </div>
   </div>
+  <ng-template #basicMode>
+    <div class="tb-widget-config-content">
+      <div class="mat-content">
+        <ng-container *ngTemplateOutlet="data"></ng-container>
+        <ng-container *ngTemplateOutlet="appearance"></ng-container>
+        <div class="tb-widget-config-panel" (click)="manageWidgetActions()" style="cursor: pointer;">
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+            <div class="tb-widget-config-panel-title" translate style="padding-right: 48px;">widget-config.actions</div>
+            <mat-chip-listbox fxFlex>
+              <ng-container *ngFor="let actionSourceId of widgetActionSourceIds">
+                <mat-chip *ngFor="let widgetAction of widgetActionsByActionSourceId(actionSourceId)">
+                  <mat-icon matChipAvatar>{{ widgetAction.icon }}</mat-icon>
+                  {{ widgetAction.name }}
+                </mat-chip>
+              </ng-container>
+            </mat-chip-listbox>
+            <button mat-stroked-button color="primary" *ngIf="!hasWidgetActions">
+              {{ 'widget-config.add-action' | translate }}
+            </button>
+            <button mat-icon-button color="primary" *ngIf="hasWidgetActions">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #data>
+    <div *ngIf="displayTimewindowConfig" [formGroup]="dataSettings" class="tb-widget-config-panel">
+      <div fxLayout="row" fxLayoutAlign="space-between center">
+        <div class="tb-widget-config-panel-title" translate>timewindow.timewindow</div>
+        <tb-toggle-header (valueChange)="dataSettings.get('useDashboardTimewindow').patchValue($event)" ignoreMdLgSize="true"
+                          [options]="[
+                                         { name: translate.instant('widget-config.use-dashboard-timewindow'), value: true},
+                                         { name: translate.instant('widget-config.use-widget-timewindow'), value: false}
+                                       ]"
+                          [value]="dataSettings.get('useDashboardTimewindow').value" name="useDashboardTimewindow" useSelectOnMdLg="false">
+        </tb-toggle-header>
+      </div>
+      <div class="tb-widget-config-row">
+        <tb-timewindow asButton="true"
+                       strokedButton
+                       isEdit="true"
+                       alwaysDisplayTypePrefix
+                       [historyOnly]="onlyHistoryTimewindow()"
+                       quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
+                       aggregation="{{ widgetType === widgetTypes.timeseries }}"
+                       formControlName="timewindow"></tb-timewindow>
+        <mat-slide-toggle class="mat-slide" formControlName="displayTimewindow">
+          {{ 'widget-config.display-timewindow' | translate }}
+        </mat-slide-toggle>
+      </div>
+    </div>
+    <div *ngIf="widgetType === widgetTypes.alarm" [formGroup]="dataSettings" class="tb-widget-config-panel" fxLayout="column" fxLayoutAlign="center">
+      <tb-alarm-filter-config buttonMode="false" formControlName="alarmFilterConfig"></tb-alarm-filter-config>
+    </div>
+    <div *ngIf="widgetType !== widgetTypes.rpc &&
+                widgetType !== widgetTypes.alarm &&
+                modelValue?.isDataEnabled"
+         [formGroup]="dataSettings">
+      <tb-datasources
+        formControlName="datasources">
+      </tb-datasources>
+    </div>
+    <div class="tb-widget-config-panel" *ngIf="widgetType === widgetTypes.rpc &&
+                                                  modelValue?.isDataEnabled">
+      <div class="tb-widget-config-panel-title" translate>widget-config.target-device</div>
+      <div [formGroup]="targetDeviceSettings">
+        <tb-entity-alias-select fxFlex
+                                [tbRequired]="!widgetEditMode"
+                                [aliasController]="aliasController"
+                                [allowedEntityTypes]="[entityTypes.DEVICE]"
+                                [callbacks]="widgetConfigCallbacks"
+                                formControlName="targetDeviceAliasId">
+        </tb-entity-alias-select>
+      </div>
+    </div>
+    <div *ngIf="widgetType === widgetTypes.alarm && modelValue?.isDataEnabled"
+         [formGroup]="dataSettings" class="tb-widget-config-panel" >
+      <div class="tb-widget-config-panel-title" translate>widget-config.alarm-source</div>
+      <tb-datasource
+        formControlName="alarmSource">
+      </tb-datasource>
+    </div>
+    <div *ngIf="displayLimits" class="tb-widget-config-panel" [formGroup]="widgetSettings">
+      <div class="tb-widget-config-panel-title" translate>widget-config.limits</div>
+      <div class="tb-widget-config-row space-between">
+        <div translate>widget-config.data-page-size</div>
+        <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+          <input matInput formControlName="pageSize" type="number" min="1" step="1">
+        </mat-form-field>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #appearance>
+    <div *ngIf="displayAppearanceDataSettings" class="tb-widget-config-panel" [formGroup]="widgetSettings">
+      <div class="tb-widget-config-panel-title" translate>widget-config.data-settings</div>
+      <div *ngIf="displayUnitsConfig" class="tb-widget-config-row space-between">
+        <div translate>widget-config.units</div>
+        <mat-form-field appearance="outline" class="center" subscriptSizing="dynamic">
+          <input matInput formControlName="units" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+      <div *ngIf="displayUnitsConfig" class="tb-widget-config-row space-between">
+        <div translate>widget-config.decimals</div>
+        <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+          <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+      <div *ngIf="displayNoDataDisplayMessageConfig" class="tb-widget-config-row">
+        <div translate>widget-config.no-data-display-message</div>
+        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="noDataDisplayMessage" placeholder="{{ 'widget-config.set-message' | translate }}">
+        </mat-form-field>
+      </div>
+    </div>
+    <div *ngIf="displayAdvancedAppearance" style="height: 100%;" [formGroup]="advancedSettings">
+      <tb-widget-settings
+        [aliasController]="aliasController"
+        [dashboard]="dashboard"
+        [widget]="widget"
+        formControlName="settings">
+      </tb-widget-settings>
+    </div>
+  </ng-template>
 </div>
 
