@@ -338,10 +338,10 @@
                formControlName="maxOtaPackagesInBytes"
                type="number">
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('required')">
-          {{ 'tenant-profile.maximum-ota-packages-sum-data-size-required' | translate}}
+          {{ 'tenant-profile.maximum-ota-package-sum-data-size-required' | translate}}
         </mat-error>
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('min')">
-          {{ 'tenant-profile.maximum-ota-packages-sum-data-size-range' | translate}}
+          {{ 'tenant-profile.maximum-ota-package-sum-data-size-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
       </mat-form-field>
