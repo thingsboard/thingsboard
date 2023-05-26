@@ -162,7 +162,7 @@
                   (click)="drawer.toggle();"
                   matTooltip="{{ (drawer.opened ? 'rulenode.close-node-library' : 'rulenode.open-node-library') | translate }}"
                   matTooltipPosition="above">
-            <mat-icon class="tb-library-node-btn-icon" [ngClass]="{'tb-library-node-btn-icon-toggled' : !drawer.opened}">chevron_right</mat-icon>
+            <mat-icon class="tb-library-node-btn-icon" [ngClass]="{'tb-library-node-btn-icon-toggled' : drawer.opened}">chevron_right</mat-icon>
           </button>
           <button #versionControlButton
                   *ngIf="!isImport"
