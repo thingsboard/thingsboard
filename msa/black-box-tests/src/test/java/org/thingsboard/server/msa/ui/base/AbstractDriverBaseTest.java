@@ -158,18 +158,11 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
                 .findFirst().orElse(null);
     }
 
-    public List<Device> getDevicesByName(String... deviceNames) {
-        List<Device> matchingDevicesByName = new ArrayList<>();
+    public List<Device> getDevicesByName(List<String> deviceNames) {
         List<Device> allDevices = testRestClient.getDevices(pageLink).getData();
-        for (Device device : allDevices) {
-            for (String name : deviceNames) {
-                if (device.getName().equals(name)) {
-                    matchingDevicesByName.add(device);
-                    break;
-                }
-            }
-        }
-        return matchingDevicesByName;
+        return allDevices.stream()
+                .filter(device -> deviceNames.contains(device.getName()))
+                .collect(Collectors.toList());
     }
 
     public List<RuleChain> getRuleChainsByName(String name) {
@@ -303,8 +296,8 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    public void deleteDevicesByName(String... deviceName) {
-        List<Device> devices = getDevicesByName(deviceName);
+    public void deleteDevicesByName(List<String> deviceNames) {
+        List<Device> devices = getDevicesByName(deviceNames);
         for (Device device : devices) {
             if (device != null) {
                 testRestClient.deleteDevice(device.getId());
