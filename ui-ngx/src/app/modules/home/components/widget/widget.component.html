@@ -22,7 +22,7 @@
   </div>
 </div>
 <div class="tb-absolute-fill tb-widget-error" *ngIf="widgetErrorData">
-  <span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>
+  <span [innerHtml]="('Widget Error:<br/><br/>' + widgetErrorData.message) | safe:'html'"></span>
 </div>
 <div class="tb-absolute-fill tb-widget-no-data" *ngIf="displayNoData">
   <span fxLayoutAlign="center center"

@@ -21,8 +21,6 @@ import {
   forwardRef,
   Injector,
   Input,
-  OnDestroy,
-  OnInit,
   StaticProvider,
   ViewContainerRef
 } from '@angular/core';
@@ -66,7 +64,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     }
   ]
 })
-export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAccessor {
+export class TimewindowComponent implements ControlValueAccessor {
 
   historyOnlyValue = false;
 
@@ -89,60 +87,29 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   @coerceBoolean()
   forAllTimeEnabled = false;
 
-  alwaysDisplayTypePrefixValue = false;
+  @Input()
+  @coerceBoolean()
+  alwaysDisplayTypePrefix = false;
 
   @Input()
-  set alwaysDisplayTypePrefix(val) {
-    this.alwaysDisplayTypePrefixValue = coerceBooleanProperty(val);
-  }
-
-  get alwaysDisplayTypePrefix() {
-    return this.alwaysDisplayTypePrefixValue;
-  }
-
-  quickIntervalOnlyValue = false;
+  @coerceBoolean()
+  quickIntervalOnly = false;
 
   @Input()
-  set quickIntervalOnly(val) {
-    this.quickIntervalOnlyValue = coerceBooleanProperty(val);
-  }
-
-  get quickIntervalOnly() {
-    return this.quickIntervalOnlyValue;
-  }
-
-  aggregationValue = false;
+  @coerceBoolean()
+  aggregation = false;
 
   @Input()
-  set aggregation(val) {
-    this.aggregationValue = coerceBooleanProperty(val);
-  }
-
-  get aggregation() {
-    return this.aggregationValue;
-  }
-
-  timezoneValue = false;
+  @coerceBoolean()
+  timezone = false;
 
   @Input()
-  set timezone(val) {
-    this.timezoneValue = coerceBooleanProperty(val);
-  }
-
-  get timezone() {
-    return this.timezoneValue;
-  }
-
-  asButtonValue = false;
+  @coerceBoolean()
+  isToolbar = false;
 
   @Input()
-  set asButton(val) {
-    this.asButtonValue = coerceBooleanProperty(val);
-  }
-
-  get asButton() {
-    return this.asButtonValue;
-  }
+  @coerceBoolean()
+  asButton = false;
 
   @Input()
   @coerceBoolean()
@@ -178,7 +145,9 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   @Input()
   tooltipPosition: TooltipPosition = 'above';
 
-  @Input() disabled: boolean;
+  @Input()
+  @coerceBoolean()
+  disabled: boolean;
 
   innerValue: Timewindow;
 
@@ -196,12 +165,6 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
               public viewContainerRef: ViewContainerRef) {
   }
 
-  ngOnInit(): void {
-  }
-
-  ngOnDestroy(): void {
-  }
-
   toggleTimewindow($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -213,7 +176,6 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
       maxHeight: '80vh',
       height: 'min-content'
     });
-    config.hasBackdrop = true;
     const connectedPosition: ConnectedPosition = {
       originX: 'start',
       originY: 'bottom',
@@ -260,12 +222,10 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   }
 
   private onHistoryOnlyChanged(): boolean {
-    if (this.historyOnlyValue && this.innerValue) {
-      if (this.innerValue.selectedTab !== TimewindowType.HISTORY) {
-        this.innerValue.selectedTab = TimewindowType.HISTORY;
-        this.updateDisplayValue();
-        return true;
-      }
+    if (this.historyOnlyValue && this.innerValue && this.innerValue.selectedTab !== TimewindowType.HISTORY) {
+      this.innerValue.selectedTab = TimewindowType.HISTORY;
+      this.updateDisplayValue();
+      return true;
     }
     return false;
   }
@@ -283,7 +243,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   }
 
   writeValue(obj: Timewindow): void {
-    this.innerValue = initModelFromDefaultTimewindow(obj, this.quickIntervalOnly, this.timeService);
+    this.innerValue = initModelFromDefaultTimewindow(obj, this.quickIntervalOnly, this.historyOnly, this.timeService);
     this.timewindowDisabled = this.isTimewindowDisabled();
     if (this.onHistoryOnlyChanged()) {
       setTimeout(() => {
