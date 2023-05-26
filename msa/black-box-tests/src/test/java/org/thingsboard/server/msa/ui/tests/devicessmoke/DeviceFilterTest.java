@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.ui.utils.DataProviderCredential;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
@@ -58,7 +60,7 @@ public class DeviceFilterTest extends AbstractDeviceTest {
 
     @AfterClass
     public void deleteTestEntities() {
-        deleteDevicesByName(deviceWithProfileName, activeDeviceName, activeDeviceWithProfileName);
+        deleteDevicesByName(List.of(deviceWithProfileName, activeDeviceName, activeDeviceWithProfileName));
         deleteDeviceProfileByTitle(deviceProfileTitle);
     }
 
