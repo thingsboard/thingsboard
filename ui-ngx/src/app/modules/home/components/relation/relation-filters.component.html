@@ -22,14 +22,16 @@
            fxLayoutAlign="start center" formArrayName="relationFilters"
            *ngFor="let relationFilterControl of relationFiltersFormArray.controls; let $index = index">
         <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-          <div class="input-block" fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-right: 8px">
+          <div class="input-block" fxFlex fxLayout="row" fxLayoutGap="28px" fxLayoutAlign="start center" style="margin-right: 8px">
             <tb-relation-type-autocomplete fxFlex="50"
               subscriptSizing="dynamic"
               style="min-width: 200px;"
               [formControl]="relationFilterControl.get('relationType')">
             </tb-relation-type-autocomplete>
-            <tb-entity-type-list style="margin-left: 30px" fxFlex="50"
+            <tb-entity-type-list fxFlex="50"
               subscriptSizing="dynamic"
+              [label]="'entity.entity-types' | translate"
+              floatLabel="always"
               [allowedEntityTypes]="allowedEntityTypes"
               [formControl]="relationFilterControl.get('entityTypes')">
             </tb-entity-type-list>
@@ -49,14 +51,13 @@
         <span fxLayoutAlign="center center"
               class="tb-prompt" translate>relation.any-relation</span>
   </div>
-  <div style="margin: 5px 0px 15px">
-    <button mat-stroked-button color="primary"
-            [disabled]="isLoading$ | async"
-            (click)="addFilter()"
-            type="button"
-            matTooltip="{{ 'relation.add-relation-filter' | translate }}"
-            matTooltipPosition="above">
-      {{ 'relation.add-relation-filter' | translate }}
-    </button>
-  </div>
+  <button mat-stroked-button color="primary"
+          class="add-button"
+          [disabled]="isLoading$ | async"
+          (click)="addFilter()"
+          type="button"
+          matTooltip="{{ 'relation.add-relation-filter' | translate }}"
+          matTooltipPosition="above">
+    {{ 'relation.add-relation-filter' | translate }}
+  </button>
 </div>

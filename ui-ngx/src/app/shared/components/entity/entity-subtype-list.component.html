@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entitySubtypeListFormGroup" class="mat-block">
-  <mat-label *ngIf="label">{{ label | translate }}</mat-label>
+<mat-form-field [formGroup]="entitySubtypeListFormGroup" [ngClass]="label ? '' : 'tb-chip-list'" class="mat-block">
+  <mat-label *ngIf="label">{{ label }}</mat-label>
   <mat-chip-grid #chipList formControlName="entitySubtypeList">
     <mat-chip-row
       *ngFor="let entitySubtype of entitySubtypeList"
@@ -40,7 +40,6 @@
   </mat-chip-grid>
   <button *ngIf="entitySubtypeListFormGroup.get('entitySubtypeList').value?.length > 1"
           type="button"
-          style="margin-right: 3px"
           matTooltip="{{'entity.clear-selected-profiles' | translate}}"
           matSuffix mat-icon-button
           (click)="clearChipGrid()">

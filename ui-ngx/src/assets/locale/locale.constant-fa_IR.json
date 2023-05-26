@@ -1240,7 +1240,6 @@
         "name": "نام",
         "name-required": ".نام مورد نياز است",
         "type": "نوع",
-        "description": "توصيف",
         "delete": "حذف گره قواعد",
         "select-all-objects": "انتخاب تمام گره ها و اتصالات",
         "deselect-all-objects": "لغو انتخاب تمام گره ها و اتصالات",

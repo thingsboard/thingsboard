@@ -29,7 +29,7 @@
     }
 
     .body {
-      max-height: 300px;
+      max-height: 363px;
       overflow: auto;
 
       .row {
@@ -47,6 +47,10 @@
 
     .any-filter{
       margin: 10px 0 20px;
+    }
+
+    .add-button {
+      margin: 5px 0px 15px;
     }
   }
 }
