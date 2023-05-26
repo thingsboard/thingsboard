@@ -15,14 +15,21 @@
  */
 package org.thingsboard.server.dao.notification;
 
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
 
 public interface NotificationSettingsService {
 
     void saveNotificationSettings(TenantId tenantId, NotificationSettings settings);
 
     NotificationSettings findNotificationSettings(TenantId tenantId);
+
+    void saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings);
+
+    UserNotificationSettings getUserNotificationSettings(TenantId tenantId, User user);
 
     void createDefaultNotificationConfigs(TenantId tenantId);
 
