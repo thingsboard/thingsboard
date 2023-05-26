@@ -125,7 +125,7 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
               private cd: ChangeDetectorRef,
               public dialog: MatDialog) {
     super(store);
-    const sortOrder: SortOrder = {property: 'key', direction: Direction.ASC};
+    const sortOrder: SortOrder = {property: 'ts', direction: Direction.DESC};
     this.pageLink = new PageLink(1000, 0, null, sortOrder);
     this.dataSource = new MatTableDataSource<AttributeData>([]);
 
