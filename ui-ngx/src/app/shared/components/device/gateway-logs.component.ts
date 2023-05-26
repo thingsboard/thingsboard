@@ -148,13 +148,13 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
         key: `${connector.key}_LOGS`,
         name: "Connector",
         filterFn: (attrData)=>{
-          return !attrData.message.includes(`${connector.key}_converter`)
+          return !attrData.message.includes(`_converter.py`)
         }
       },{
         key: `${connector.key}_LOGS`,
         name: "Converter",
         filterFn: (attrData)=>{
-          return attrData.message.includes(`${connector.key}_converter`)
+          return attrData.message.includes(`_converter.py`)
         }
       }]
     } else {
