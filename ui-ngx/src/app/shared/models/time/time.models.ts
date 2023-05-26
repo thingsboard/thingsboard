@@ -246,7 +246,7 @@ const getTimewindowType = (timewindow: Timewindow): TimewindowType => {
 };
 
 export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalOnly: boolean,
-                                               timeService: TimeService, historyOnly: boolean): Timewindow => {
+                                               historyOnly: boolean, timeService: TimeService): Timewindow => {
   const model = defaultTimewindow(timeService);
   if (value) {
     model.hideInterval = value.hideInterval;
