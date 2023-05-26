@@ -100,7 +100,8 @@ public abstract class BaseDataWithAdditionalInfo<I extends UUIDBased> extends Ba
     public static void setJson(JsonNode json, Consumer<JsonNode> jsonConsumer, Consumer<byte[]> bytesConsumer) {
         jsonConsumer.accept(json);
         try {
-            bytesConsumer.accept(mapper.writeValueAsBytes(json));
+            byte[] jsonConsumerToBytes = json == null ? null : mapper.writeValueAsBytes(json);
+            bytesConsumer.accept(jsonConsumerToBytes);
         } catch (JsonProcessingException e) {
             log.warn("Can't serialize json data: ", e);
         }
