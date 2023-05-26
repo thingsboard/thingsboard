@@ -299,9 +299,6 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   currentRuleChainIdChanged(ruleChainId: string) {
-    if (this.isEditingRuleNode) {
-      return;
-    }
     this.router.navigateByUrl(`ruleChains/${ruleChainId}`);
   }
 

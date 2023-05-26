@@ -30,6 +30,8 @@ import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
 import { RuleChain, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
+import { isDefinedAndNotNull } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 // @dynamic
 @Component({
@@ -47,16 +49,12 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
   @Input()
   tooltipPosition: TooltipPosition = 'above';
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
   ruleChains$: Observable<Array<RuleChain>>;
@@ -99,7 +97,9 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
   }
 
   writeValue(value: string | null): void {
-    this.ruleChainId = value;
+    if (isDefinedAndNotNull(value)) {
+      this.ruleChainId = value;
+    }
   }
 
   ruleChainIdChanged() {
