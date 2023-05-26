@@ -30,7 +30,14 @@ import {
   WidgetLayout
 } from '@shared/models/dashboard.models';
 import { isDefined, isString, isUndefined } from '@core/utils';
-import { Datasource, DatasourceType, Widget, WidgetConfig, widgetType } from '@app/shared/models/widget.models';
+import {
+  Datasource,
+  datasourcesHasOnlyComparisonAggregation,
+  DatasourceType,
+  Widget,
+  WidgetConfig,
+  widgetType
+} from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
@@ -227,7 +234,8 @@ export class DashboardUtilsService {
       }
     });
     if (type === widgetType.latest) {
-      widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true, this.timeService);
+      const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
+      widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true, this.timeService, onlyHistoryTimewindow);
     }
     if (type === widgetType.alarm) {
       if (!widgetConfig.alarmFilterConfig) {
@@ -421,7 +429,7 @@ export class DashboardUtilsService {
                            targetLayout: DashboardLayoutId,
                            widget: Widget,
                            originalColumns?: number,
-                           originalSize?: {sizeX: number, sizeY: number},
+                           originalSize?: {sizeX: number; sizeY: number},
                            row?: number,
                            column?: number): void {
     const dashboardConfiguration = dashboard.configuration;
@@ -494,7 +502,7 @@ export class DashboardUtilsService {
     this.removeUnusedWidgets(dashboard);
   }
 
-  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string, layout: DashboardLayoutId} {
+  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string; layout: DashboardLayoutId} {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const stateKeys = Object.keys(states);

@@ -117,10 +117,6 @@ export class TimewindowComponent implements ControlValueAccessor {
   @coerceBoolean()
   strokedButton = false;
 
-  @Input()
-  @coerceBoolean()
-  isNgModel = false;
-
   isEditValue = false;
 
   @Input()
@@ -148,8 +144,6 @@ export class TimewindowComponent implements ControlValueAccessor {
   timewindowDisabled: boolean;
 
   private propagateChange = (_: any) => {};
-
-  private _isControlInitialized = false;
 
   constructor(private overlay: Overlay,
               private translate: TranslateService,
@@ -229,7 +223,6 @@ export class TimewindowComponent implements ControlValueAccessor {
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
-    this._isControlInitialized = true;
   }
 
   registerOnTouched(fn: any): void {
@@ -241,16 +234,14 @@ export class TimewindowComponent implements ControlValueAccessor {
   }
 
   writeValue(obj: Timewindow): void {
-    if (this._isControlInitialized || !this.isNgModel) {
-      this.innerValue = initModelFromDefaultTimewindow(obj, this.quickIntervalOnly, this.timeService);
-      this.timewindowDisabled = this.isTimewindowDisabled();
-      if (this.onHistoryOnlyChanged()) {
-        setTimeout(() => {
-          this.notifyChanged();
-        });
-      } else {
-        this.updateDisplayValue();
-      }
+    this.innerValue = initModelFromDefaultTimewindow(obj, this.quickIntervalOnly, this.timeService, this.historyOnly);
+    this.timewindowDisabled = this.isTimewindowDisabled();
+    if (this.onHistoryOnlyChanged()) {
+      setTimeout(() => {
+        this.notifyChanged();
+      });
+    } else {
+      this.updateDisplayValue();
     }
   }
 

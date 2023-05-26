@@ -42,7 +42,7 @@
               <tb-anchor #entityTableHeader></tb-anchor>
               <tb-timewindow *ngIf="entitiesTableConfig.useTimePageLink"
                              [(ngModel)]="timewindow" (ngModelChange)="onTimewindowChange()"
-                             asButton strokedButton historyOnly isNgModel
+                             asButton strokedButton historyOnly
                              [forAllTimeEnabled]="entitiesTableConfig.forAllTimeEnabled">
               </tb-timewindow>
             </div>
