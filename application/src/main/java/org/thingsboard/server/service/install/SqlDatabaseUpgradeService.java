@@ -737,7 +737,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         try {
                             String [] entityNames = new String [] {"device", "component_descriptor", "customer", "dashboard", "rule_chain", "rule_node", "asset_profile", "asset", "device_profile", "tb_user", "tenant_profile", "tenant", "widgets_bundle", "entity_view", "edge"};
                             for (String entityName : entityNames) {
-                                conn.createStatement().execute("ALTER TABLE " + entityName + " DROP COLUMN search_text CASCADE");
+                                conn.createStatement().execute("ALTER TABLE " + entityName + " DROP COLUMN " + SEARCH_TEXT + " CASCADE");
                             }
                         } catch (Exception e) {}
 
