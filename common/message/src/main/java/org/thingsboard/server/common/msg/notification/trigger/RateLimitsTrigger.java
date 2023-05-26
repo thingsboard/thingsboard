@@ -17,30 +17,30 @@ package org.thingsboard.server.common.msg.notification.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+
+import java.util.concurrent.TimeUnit;
 
 @Data
 @Builder
-public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
+public class RateLimitsTrigger implements NotificationRuleTrigger {
 
-    private final UpdateMessage updateInfo;
+    private final TenantId tenantId;
+    private final LimitedApi api;
+    private final EntityId limitLevel;
+    private final String limitLevelEntityName;
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.NEW_PLATFORM_VERSION;
-    }
-
-    @Override
-    public TenantId getTenantId() {
-        return TenantId.SYS_TENANT_ID;
+        return NotificationRuleTriggerType.RATE_LIMITS;
     }
 
     @Override
     public EntityId getOriginatorEntityId() {
-        return TenantId.SYS_TENANT_ID;
+        return limitLevel != null ? limitLevel : tenantId;
     }
 
 
@@ -51,13 +51,12 @@ public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
 
     @Override
     public String getDeduplicationKey() {
-        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(),
-                updateInfo.getCurrentVersion(), updateInfo.getLatestVersion());
+        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(), api.toString());
     }
 
     @Override
     public long getDefaultDeduplicationDuration() {
-        return 0;
+        return TimeUnit.HOURS.toMillis(4);
     }
 
 }

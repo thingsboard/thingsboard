@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util.limits;
+package org.thingsboard.server.common.data.notification.settings;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.limit.LimitedApi;
+import lombok.Data;
 
-public interface RateLimitService {
-
-    boolean checkRateLimit(LimitedApi api, TenantId tenantId);
-
-    boolean checkRateLimit(LimitedApi api, TenantId tenantId, Object level);
-
-    boolean checkRateLimit(LimitedApi api, Object level, String rateLimitConfig);
-
-    void cleanUp(LimitedApi api, Object level);
-
+@Data
+public class TriggerTypeConfig {
+    private long deduplicationDuration;
 }

@@ -95,6 +95,7 @@ export class RuleNotificationDialogComponent extends
   entitiesLimitTemplateForm: FormGroup;
   apiUsageLimitTemplateForm: FormGroup;
   newPlatformVersionTemplateForm: FormGroup;
+  rateLimitsTemplateForm: FormGroup;
 
   triggerType = TriggerType;
   triggerTypes: TriggerType[];
@@ -302,6 +303,12 @@ export class RuleNotificationDialogComponent extends
       })
     });
 
+    this.rateLimitsTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+
+      })
+    });
+
     this.triggerTypeFormsMap = new Map<TriggerType, FormGroup>([
       [TriggerType.ALARM, this.alarmTemplateForm],
       [TriggerType.ALARM_COMMENT, this.alarmCommentTemplateForm],
@@ -311,7 +318,8 @@ export class RuleNotificationDialogComponent extends
       [TriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, this.ruleEngineEventsTemplateForm],
       [TriggerType.ENTITIES_LIMIT, this.entitiesLimitTemplateForm],
       [TriggerType.API_USAGE_LIMIT, this.apiUsageLimitTemplateForm],
-      [TriggerType.NEW_PLATFORM_VERSION, this.newPlatformVersionTemplateForm]
+      [TriggerType.NEW_PLATFORM_VERSION, this.newPlatformVersionTemplateForm],
+      [TriggerType.RATE_LIMITS, this.rateLimitsTemplateForm]
     ]);
 
     if (data.isAdd || data.isCopy) {
@@ -447,6 +455,7 @@ export class RuleNotificationDialogComponent extends
       TriggerType.ENTITIES_LIMIT,
       TriggerType.API_USAGE_LIMIT,
       TriggerType.NEW_PLATFORM_VERSION,
+      TriggerType.RATE_LIMITS
     ]);
 
     if (this.isSysAdmin()) {

@@ -496,6 +496,18 @@
       </form>
     </mat-step>
 
+    <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.RATE_LIMITS"
+              [stepControl]="rateLimitsTemplateForm">
+      <ng-template matStepLabel>{{ 'notification.rate-limits-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
   </mat-horizontal-stepper>
 </div>
 <mat-divider></mat-divider>

@@ -43,7 +43,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
 import org.thingsboard.server.common.msg.notification.trigger.EntityActionTrigger;
 import org.thingsboard.server.dao.audit.AuditLogService;
-import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 
 import java.util.List;
 import java.util.Map;
