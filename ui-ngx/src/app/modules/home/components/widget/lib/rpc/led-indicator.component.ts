@@ -19,7 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { isDefined } from '@core/utils';
+import { isDefined, isLiteralObject, isObject } from '@core/utils';
 import tinycolor from 'tinycolor2';
 import { UtilsService } from '@core/services/utils.service';
 import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
@@ -335,7 +335,7 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
         if (isDefined(attrValue)) {
           let parsed = null;
           try {
-            parsed = this.parseValueFunction(JSON.parse(attrValue));
+            parsed = this.parseValueFunction(this.isJson(attrValue) ? JSON.parse(attrValue): attrValue);
           } catch (e){/**/}
           value = !!parsed;
         }
@@ -344,6 +344,14 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
     this.setValue(value);
     if (detectChanges) {
       this.ctx.detectChanges();
+    }
+  }
+
+  isJson(str) {
+    try {
+      return isLiteralObject(JSON.parse(str));
+    } catch (e) {
+      return false;
     }
   }
 
