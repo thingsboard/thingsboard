@@ -18,6 +18,10 @@ package org.thingsboard.server.common.data.notification;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @RequiredArgsConstructor
 public enum NotificationDeliveryMethod {
 
@@ -28,5 +32,7 @@ public enum NotificationDeliveryMethod {
 
     @Getter
     private final String name;
+
+    public static final Set<NotificationDeliveryMethod> values = Arrays.stream(values()).collect(Collectors.toSet());
 
 }

@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
@@ -435,6 +436,14 @@ public class NotificationController extends BaseController {
     public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
         return notificationCenter.getAvailableDeliveryMethods(user.getTenantId());
+    }
+
+
+    @PostMapping("/notification/settings/user")
+    public UserNotificationSettings saveUserNotificationSettings(@RequestBody @Valid UserNotificationSettings settings,
+                                                                 @AuthenticationPrincipal SecurityUser user) {
+        notificationSettingsService.saveUserNotificationSettings(user.getTenantId(), user.getId(), settings);
+        return settings;
     }
 
 }

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.notification;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,9 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.CacheConstants;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.AffectedTenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.AffectedUserFilter;
@@ -39,6 +44,7 @@ import org.thingsboard.server.common.data.notification.targets.platform.UsersFil
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Collections;
 import java.util.List;
@@ -52,6 +58,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
     private final NotificationTargetService notificationTargetService;
     private final NotificationTemplateService notificationTemplateService;
     private final DefaultNotifications defaultNotifications;
+    private final UserService userService;
 
     private static final String SETTINGS_KEY = "notifications";
 
@@ -79,6 +86,25 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
                     settings.setDeliveryMethodsConfigs(Collections.emptyMap());
                     return settings;
                 });
+    }
+
+    @Override
+    public void saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings) {
+        User user = userService.findUserById(tenantId, userId);
+        ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(user.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
+        additionalInfo.set("notificationSettings", JacksonUtil.valueToTree(settings));
+        user.setAdditionalInfo(additionalInfo);
+        userService.saveUser(user);
+    }
+
+    @Override
+    public UserNotificationSettings getUserNotificationSettings(TenantId tenantId, User user) {
+        // TODO: decide whether to use user_settings or store it in the additionalInfo not to make more DB requests
+        JsonNode notificationSettings = user.getAdditionalInfo().get("notificationSettings");
+        if (notificationSettings == null || notificationSettings.isNull()) {
+            return UserNotificationSettings.DEFAULT;
+        }
+        return JacksonUtil.treeToValue(notificationSettings, UserNotificationSettings.class);
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED) // so that parent transaction is not aborted on method failure
