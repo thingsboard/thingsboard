@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -70,7 +71,8 @@ public abstract class BaseDataWithAdditionalInfo<I extends UUIDBased> extends Ba
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         BaseDataWithAdditionalInfo<?> that = (BaseDataWithAdditionalInfo<?>) o;
-        return Arrays.equals(additionalInfoBytes, that.additionalInfoBytes);
+        byte [] additionalInfoBytesForEquals = additionalInfoBytes != null && new String(additionalInfoBytes, StandardCharsets.UTF_8).equals(("null")) ? null : additionalInfoBytes;
+        return Arrays.equals(additionalInfoBytesForEquals, that.additionalInfoBytes);
     }
 
     @Override
