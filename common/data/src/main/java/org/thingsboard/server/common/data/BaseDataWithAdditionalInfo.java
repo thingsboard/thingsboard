@@ -71,8 +71,11 @@ public abstract class BaseDataWithAdditionalInfo<I extends UUIDBased> extends Ba
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         BaseDataWithAdditionalInfo<?> that = (BaseDataWithAdditionalInfo<?>) o;
-        byte [] additionalInfoBytesForEquals = additionalInfoBytes != null && new String(additionalInfoBytes, StandardCharsets.UTF_8).equals(("null")) ? null : additionalInfoBytes;
-        return Arrays.equals(additionalInfoBytesForEquals, that.additionalInfoBytes);
+        byte [] additionalInfoBytesForEquals = additionalInfoBytes != null && new String(additionalInfoBytes, StandardCharsets.UTF_8).equals(("null")) ?
+                null : additionalInfoBytes;
+        byte [] thatAdditionalInfoBytesForEquals = that.additionalInfoBytes != null && new String(that.additionalInfoBytes, StandardCharsets.UTF_8).equals(("null")) ?
+                null : that.additionalInfoBytes;
+        return Arrays.equals(additionalInfoBytesForEquals, thatAdditionalInfoBytesForEquals);
     }
 
     @Override
