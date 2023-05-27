@@ -196,9 +196,9 @@ public class UserController extends BaseController {
     @ApiOperation(value = "Save Or update User (saveUser)",
             notes = "Create or update the User. When creating user, platform generates User Id as " + UUID_WIKI_LINK +
                     "The newly created User Id will be present in the response. " +
-                    "Specify existing User Id to update the device. " +
+                    "Specify existing User Id to update the user. " +
                     "Referencing non-existing User Id will cause 'Not Found' error." +
-                    "\n\nDevice email is unique for entire platform setup." +
+                    "\n\nUser email is unique for entire platform setup." +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new User entity." +
                     "\n\nAvailable for users with 'SYS_ADMIN', 'TENANT_ADMIN' or 'CUSTOMER_USER' authority.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
