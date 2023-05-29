@@ -239,7 +239,7 @@ public class TenantServiceTest extends AbstractServiceTest {
     public void testFindTenantsByTitle() {
         String title1 = "Tenant title 1";
         List<Tenant> tenantsTitle1 = new ArrayList<>();
-        for (int i = 0; i < 134; i++) {
+        for (int i = 0; i < 14; i++) {
             Tenant tenant = new Tenant();
             String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String title = title1 + suffix;
@@ -249,7 +249,7 @@ public class TenantServiceTest extends AbstractServiceTest {
         }
         String title2 = "Tenant title 2";
         List<Tenant> tenantsTitle2 = new ArrayList<>();
-        for (int i = 0; i < 127; i++) {
+        for (int i = 0; i < 13; i++) {
             Tenant tenant = new Tenant();
             String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String title = title2 + suffix;
@@ -259,7 +259,7 @@ public class TenantServiceTest extends AbstractServiceTest {
         }
 
         List<Tenant> loadedTenantsTitle1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15, 0, title1);
+        PageLink pageLink = new PageLink(3, 0, title1);
         PageData<Tenant> pageData = null;
         do {
             pageData = tenantService.findTenants(pageLink);

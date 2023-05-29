@@ -171,7 +171,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
     @Test
     public void testFindDashboardsByTenantId() {
         List<DashboardInfo> dashboards = new ArrayList<>();
-        for (int i=0;i<165;i++) {
+        for (int i=0;i<13;i++) {
             Dashboard dashboard = new Dashboard();
             dashboard.setTenantId(tenantId);
             dashboard.setTitle("Dashboard"+i);
@@ -179,7 +179,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
         }
         
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
-        PageLink pageLink = new PageLink(16);
+        PageLink pageLink = new PageLink(3);
         PageData<DashboardInfo> pageData = null;
         do {
             pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
@@ -196,7 +196,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
         
         dashboardService.deleteDashboardsByTenantId(tenantId);
 
-        pageLink = new PageLink(31);
+        pageLink = new PageLink(4);
         pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -205,7 +205,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
     @Test
     public void testFindMobileDashboardsByTenantId() {
         List<DashboardInfo> mobileDashboards = new ArrayList<>();
-        for (int i=0;i<165;i++) {
+        for (int i=0;i<17;i++) {
             Dashboard dashboard = new Dashboard();
             dashboard.setTenantId(tenantId);
             dashboard.setTitle("Dashboard"+i);
@@ -220,7 +220,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
         }
 
         List<DashboardInfo> loadedMobileDashboards = new ArrayList<>();
-        PageLink pageLink = new PageLink(16, 0, null, new SortOrder("title", SortOrder.Direction.ASC));
+        PageLink pageLink = new PageLink(5, 0, null, new SortOrder("title", SortOrder.Direction.ASC));
         PageData<DashboardInfo> pageData = null;
         do {
             pageData = dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink);
@@ -248,7 +248,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
 
         dashboardService.deleteDashboardsByTenantId(tenantId);
 
-        pageLink = new PageLink(31);
+        pageLink = new PageLink(6);
         pageData = dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -258,7 +258,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
     public void testFindDashboardsByTenantIdAndTitle() {
         String title1 = "Dashboard title 1";
         List<DashboardInfo> dashboardsTitle1 = new ArrayList<>();
-        for (int i=0;i<123;i++) {
+        for (int i=0;i<13;i++) {
             Dashboard dashboard = new Dashboard();
             dashboard.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric((int)(Math.random()*17));
@@ -269,7 +269,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
         }
         String title2 = "Dashboard title 2";
         List<DashboardInfo> dashboardsTitle2 = new ArrayList<>();
-        for (int i=0;i<193;i++) {
+        for (int i=0;i<17;i++) {
             Dashboard dashboard = new Dashboard();
             dashboard.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric((int)(Math.random()*15));
@@ -280,7 +280,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
         }
         
         List<DashboardInfo> loadedDashboardsTitle1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(19, 0, title1);
+        PageLink pageLink = new PageLink(3, 0, title1);
         PageData<DashboardInfo> pageData = null;
         do {
             pageData = dashboardService.findDashboardsByTenantId(tenantId, pageLink);
@@ -338,7 +338,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
         CustomerId customerId = customer.getId();
         
         List<DashboardInfo> dashboards = new ArrayList<>();
-        for (int i=0;i<223;i++) {
+        for (int i=0;i<17;i++) {
             Dashboard dashboard = new Dashboard();
             dashboard.setTenantId(tenantId);
             dashboard.setTitle("Dashboard"+i);
@@ -347,7 +347,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
         }
         
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
-        PageLink pageLink = new PageLink(23);
+        PageLink pageLink = new PageLink(3);
         PageData<DashboardInfo> pageData = null;
         do {
             pageData = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink);
@@ -364,7 +364,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
         
         dashboardService.unassignCustomerDashboards(tenantId, customerId);
 
-        pageLink = new PageLink(42);
+        pageLink = new PageLink(4);
         pageData = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());

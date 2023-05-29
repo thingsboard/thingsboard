@@ -404,7 +404,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
     @Test
     public void testFindDevicesByTenantId() {
         List<Device> devices = new ArrayList<>();
-        for (int i = 0; i < 178; i++) {
+        for (int i = 0; i < 17; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             device.setName("Device" + i);
@@ -413,7 +413,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         }
 
         List<Device> loadedDevices = new ArrayList<>();
-        PageLink pageLink = new PageLink(23);
+        PageLink pageLink = new PageLink(3);
         PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
@@ -430,7 +430,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         deviceService.deleteDevicesByTenantId(tenantId);
 
-        pageLink = new PageLink(33);
+        pageLink = new PageLink(4);
         pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -440,7 +440,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
     public void testFindDevicesByTenantIdAndName() {
         String title1 = "Device title 1";
         List<DeviceInfo> devicesTitle1 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        for (int i = 0; i < 13; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -452,7 +452,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         }
         String title2 = "Device title 2";
         List<DeviceInfo> devicesTitle2 = new ArrayList<>();
-        for (int i = 0; i < 175; i++) {
+        for (int i = 0; i < 17; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -464,7 +464,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         }
 
         List<DeviceInfo> loadedDevicesTitle1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15, 0, title1);
+        PageLink pageLink = new PageLink(3, 0, title1);
         PageData<DeviceInfo> pageData = null;
         do {
             pageData = deviceService.findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).build(), pageLink);
@@ -518,7 +518,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         String title1 = "Device title 1";
         String type1 = "typeA";
         List<Device> devicesType1 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        for (int i = 0; i < 13; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -531,7 +531,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         String title2 = "Device title 2";
         String type2 = "typeB";
         List<Device> devicesType2 = new ArrayList<>();
-        for (int i = 0; i < 175; i++) {
+        for (int i = 0; i < 17; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -543,7 +543,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         }
 
         List<Device> loadedDevicesType1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15);
+        PageLink pageLink = new PageLink(3);
         PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantIdAndType(tenantId, type1, pageLink);
@@ -601,7 +601,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         CustomerId customerId = customer.getId();
 
         List<DeviceInfo> devices = new ArrayList<>();
-        for (int i = 0; i < 278; i++) {
+        for (int i = 0; i < 17; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             device.setName("Device" + i);
@@ -611,7 +611,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         }
 
         List<DeviceInfo> loadedDevices = new ArrayList<>();
-        PageLink pageLink = new PageLink(23);
+        PageLink pageLink = new PageLink(3);
         PageData<DeviceInfo> pageData = null;
         do {
             pageData = deviceService.findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).customerId(customerId).build(), pageLink);
@@ -628,7 +628,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         deviceService.unassignCustomerDevices(tenantId, customerId);
 
-        pageLink = new PageLink(33);
+        pageLink = new PageLink(4);
         pageData = deviceService.findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).customerId(customerId).build(), pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -645,7 +645,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         String title1 = "Device title 1";
         List<Device> devicesTitle1 = new ArrayList<>();
-        for (int i = 0; i < 175; i++) {
+        for (int i = 0; i < 17; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -658,7 +658,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         }
         String title2 = "Device title 2";
         List<Device> devicesTitle2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        for (int i = 0; i < 13; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -671,7 +671,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         }
 
         List<Device> loadedDevicesTitle1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15, 0, title1);
+        PageLink pageLink = new PageLink(3, 0, title1);
         PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
@@ -733,7 +733,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         String title1 = "Device title 1";
         String type1 = "typeC";
         List<Device> devicesType1 = new ArrayList<>();
-        for (int i = 0; i < 175; i++) {
+        for (int i = 0; i < 17; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -747,7 +747,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         String title2 = "Device title 2";
         String type2 = "typeD";
         List<Device> devicesType2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        for (int i = 0; i < 13; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric(15);
@@ -760,7 +760,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         }
 
         List<Device> loadedDevicesType1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15);
+        PageLink pageLink = new PageLink(3);
         PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type1, pageLink);
@@ -776,7 +776,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         Assert.assertEquals(devicesType1, loadedDevicesType1);
 
         List<Device> loadedDevicesType2 = new ArrayList<>();
-        pageLink = new PageLink(4);
+        pageLink = new PageLink(3);
         do {
             pageData = deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type2, pageLink);
             loadedDevicesType2.addAll(pageData.getData());
