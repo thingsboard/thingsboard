@@ -55,6 +55,7 @@ import java.io.ByteArrayInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -157,6 +158,13 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
                 .findFirst().orElse(null);
     }
 
+    public List<Device> getDevicesByName(List<String> deviceNames) {
+        List<Device> allDevices = testRestClient.getDevices(pageLink).getData();
+        return allDevices.stream()
+                .filter(device -> deviceNames.contains(device.getName()))
+                .collect(Collectors.toList());
+    }
+
     public List<RuleChain> getRuleChainsByName(String name) {
         return testRestClient.getRuleChains(pageLink).getData().stream()
                 .filter(s -> s.getName().equals(name))
@@ -174,13 +182,10 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     }
 
     public DeviceProfile getDeviceProfileByName(String name) {
-        try {
-            return testRestClient.getDeviceProfiles(pageLink).getData().stream()
-                    .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
-        } catch (Exception e) {
-            log.error("No such device profile with name: " + name);
-            return null;
-        }
+        return testRestClient.getDeviceProfiles(pageLink).getData().stream()
+                .filter(x -> x.getName().equals(name))
+                .findFirst()
+                .orElse(null);
     }
 
     public AssetProfile getAssetProfileByName(String name) {
@@ -288,6 +293,15 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         Device device = getDeviceByName(deviceName);
         if (device != null) {
             testRestClient.deleteDevice(device.getId());
+        }
+    }
+
+    public void deleteDevicesByName(List<String> deviceNames) {
+        List<Device> devices = getDevicesByName(deviceNames);
+        for (Device device : devices) {
+            if (device != null) {
+                testRestClient.deleteDevice(device.getId());
+            }
         }
     }
 
