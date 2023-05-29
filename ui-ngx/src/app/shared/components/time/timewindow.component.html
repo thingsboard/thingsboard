@@ -54,7 +54,7 @@
         (click)="toggleTimewindow($event)"
         matTooltip="{{ 'timewindow.edit' | translate }}"
         [matTooltipPosition]="tooltipPosition">
-    {{innerValue?.displayValue}} <span [fxShow]="innerValue?.displayTimezoneAbbr !== ''">| <span class="timezone-abbr">{{innerValue.displayTimezoneAbbr}}</span></span>
+    {{innerValue?.displayValue}} <span [fxShow]="innerValue?.displayTimezoneAbbr !== ''">| <span class="timezone-abbr">{{innerValue?.displayTimezoneAbbr}}</span></span>
   </span>
   <button *ngIf="direction === 'right'" [disabled]="timewindowDisabled" mat-icon-button class="tb-mat-32"
           type="button"

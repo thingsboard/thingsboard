@@ -16,8 +16,6 @@
 package org.thingsboard.server.service.resource;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.DDFFileParser;
-import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
@@ -53,11 +51,9 @@ import static org.thingsboard.server.utils.LwM2mObjectModelUtils.toLwm2mResource
 public class DefaultTbResourceService extends AbstractTbEntityService implements TbResourceService {
 
     private final ResourceService resourceService;
-    private final DDFFileParser ddfFileParser;
 
     public DefaultTbResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
-        this.ddfFileParser = new DDFFileParser(new DefaultDDFFileValidator());
     }
 
     @Override
