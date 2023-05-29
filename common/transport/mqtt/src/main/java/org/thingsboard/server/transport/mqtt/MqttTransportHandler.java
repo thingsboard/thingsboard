@@ -194,15 +194,23 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     processMqttMsg(ctx, message);
                 } else {
                     log.error("[{}] Message decoding failed: {}", sessionId, message.decoderResult().cause().getMessage());
-                    ctx.close();
+                    closeCtx(ctx);
                 }
             } else {
                 log.debug("[{}] Received non mqtt message: {}", sessionId, msg.getClass().getSimpleName());
-                ctx.close();
+                closeCtx(ctx);
             }
         } finally {
             ReferenceCountUtil.safeRelease(msg);
         }
+    }
+
+    private void closeCtx(ChannelHandlerContext ctx) {
+        if (!rpcAwaitingAck.isEmpty()) {
+            log.debug("[{}] Cleanup rpc awaiting ack map due to session close!", sessionId);
+            rpcAwaitingAck.clear();
+        }
+        ctx.close();
     }
 
     InetSocketAddress getAddress(ChannelHandlerContext ctx) {
@@ -221,7 +229,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     void processMqttMsg(ChannelHandlerContext ctx, MqttMessage msg) {
         if (msg.fixedHeader() == null) {
             log.info("[{}:{}] Invalid message received", address.getHostName(), address.getPort());
-            ctx.close();
+            closeCtx(ctx);
             return;
         }
         deviceSessionCtx.setChannel(ctx);
@@ -258,21 +266,21 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         }
                     } else {
                         log.debug("[{}] Unsupported topic for provisioning requests: {}!", sessionId, topicName);
-                        ctx.close();
+                        closeCtx(ctx);
                     }
                 } catch (RuntimeException e) {
                     log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-                    ctx.close();
+                    closeCtx(ctx);
                 } catch (AdaptorException e) {
                     log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-                    ctx.close();
+                    closeCtx(ctx);
                 }
                 break;
             case PINGREQ:
                 ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
                 break;
             case DISCONNECT:
-                ctx.close();
+                closeCtx(ctx);
                 break;
         }
     }
@@ -282,7 +290,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         if (queueSize >= context.getMessageQueueSizePerDeviceLimit()) {
             log.info("Closing current session because msq queue size for device {} exceed limit {} with msgQueueSize counter {} and actual queue size {}",
                     deviceSessionCtx.getDeviceId(), context.getMessageQueueSizePerDeviceLimit(), queueSize, deviceSessionCtx.getMsgQueueSize());
-            ctx.close();
+            closeCtx(ctx);
             return;
         }
 
@@ -316,7 +324,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
                 break;
             case DISCONNECT:
-                ctx.close();
+                closeCtx(ctx);
                 break;
             case PUBACK:
                 int msgId = ((MqttPubAckMessage) msg).variableHeader().messageId();
@@ -381,7 +389,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } catch (RuntimeException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             ack(ctx, msgId, ReturnCode.IMPLEMENTATION_SPECIFIC);
-            ctx.close();
+            closeCtx(ctx);
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             sendAckOrCloseSession(ctx, topicName, msgId);
@@ -421,7 +429,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } catch (RuntimeException e) {
             log.error("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             ack(ctx, msgId, ReturnCode.IMPLEMENTATION_SPECIFIC);
-            ctx.close();
+            closeCtx(ctx);
         } catch (AdaptorException | ThingsboardException | InvalidProtocolBufferException e) {
             log.error("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             sendAckOrCloseSession(ctx, topicName, msgId);
@@ -523,7 +531,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.writeAndFlush(createMqttPubAckMsg(deviceSessionCtx, msgId, ReturnCode.PAYLOAD_FORMAT_INVALID));
         } else {
             log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
-            ctx.close();
+            closeCtx(ctx);
         }
     }
 
@@ -579,7 +587,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             @Override
             public void onError(Throwable e) {
                 log.trace("[{}] Failed to publish msg: {}", sessionId, msg, e);
-                ctx.close();
+                closeCtx(ctx);
             }
         };
     }
@@ -615,7 +623,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         public void onError(Throwable e) {
             log.trace("[{}] Failed to publish msg: {}", sessionId, msg, e);
             ack(ctx, msgId, ReturnCode.IMPLEMENTATION_SPECIFIC);
-            ctx.close();
+            closeCtx(ctx);
         }
     }
 
@@ -650,7 +658,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         @Override
         public void onError(Throwable e) {
             log.trace("[{}] Failed to get firmware: {}", sessionId, msg, e);
-            ctx.close();
+            closeCtx(ctx);
         }
     }
 
@@ -672,7 +680,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         deviceSessionCtx.getChannel().writeAndFlush(deviceSessionCtx
                 .getPayloadAdaptor()
                 .createMqttPublishMsg(deviceSessionCtx, MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC, error.getBytes()));
-        ctx.close();
+        closeCtx(ctx);
     }
 
     private void processSubscribe(ChannelHandlerContext ctx, MqttSubscribeMessage mqttMsg) {
@@ -922,7 +930,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     public void onError(Throwable e) {
                         log.trace("[{}] Failed to process credentials: {}", address, userName, e);
                         ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SERVER_UNAVAILABLE_5, connectMessage));
-                        ctx.close();
+                        closeCtx(ctx);
                     }
                 });
     }
@@ -945,14 +953,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         public void onError(Throwable e) {
                             log.trace("[{}] Failed to process credentials: {}", address, sha3Hash, e);
                             ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SERVER_UNAVAILABLE_5, connectMessage));
-                            ctx.close();
+                            closeCtx(ctx);
                         }
                     });
         } catch (Exception e) {
             context.onAuthFailure(address);
             ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.NOT_AUTHORIZED_5, connectMessage));
             log.trace("[{}] X509 auth failure: {}", sessionId, address, e);
-            ctx.close();
+            closeCtx(ctx);
         }
     }
 
@@ -1000,7 +1008,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             log.error("[{}] Unexpected Exception", sessionId, cause);
         }
 
-        ctx.close();
+        closeCtx(ctx);
         if (cause instanceof OutOfMemoryError) {
             log.error("Received critical error. Going to shutdown the service.");
             System.exit(1);
@@ -1082,7 +1090,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } catch (Exception e) {
             log.trace("[{}][{}] Failed to fetch sparkplugDevice connect, sparkplugTopicName", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName(), e);
             ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SERVER_UNAVAILABLE_5, connectMessage));
-            ctx.close();
+            closeCtx(ctx);
         }
     }
 
@@ -1139,7 +1147,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
             }
             ctx.writeAndFlush(createMqttConnAckMsg(returnCode, connectMessage));
-            ctx.close();
+            closeCtx(ctx);
         } else {
             context.onAuthSuccess(address);
             deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
@@ -1168,7 +1176,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         log.warn("[{}] Failed to submit session event", sessionId, e);
                     }
                     ctx.writeAndFlush(createMqttConnAckMsg(ReturnCode.SERVER_UNAVAILABLE_5, connectMessage));
-                    ctx.close();
+                    closeCtx(ctx);
                 }
             });
         }
@@ -1216,7 +1224,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onRemoteSessionCloseCommand(UUID sessionId, TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
         log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
-        deviceSessionCtx.getChannel().close();
+        closeCtx(deviceSessionCtx.getChannel());
     }
 
     @Override
@@ -1327,7 +1335,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onDeviceDeleted(DeviceId deviceId) {
         context.onAuthFailure(address);
         ChannelHandlerContext ctx = deviceSessionCtx.getChannel();
-        ctx.close();
+        closeCtx(ctx);
     }
 
     public void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ThingsboardErrorCode result, String errorMsg) {
