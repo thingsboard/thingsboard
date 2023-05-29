@@ -17,7 +17,7 @@
 -->
 
 <div class="statistics-container" fxLayout="row">
-  <mat-card [formGroup]="statisticForm">
+  <mat-card [formGroup]="statisticForm" *ngIf="!general">
     <mat-form-field class="mat-block">
       <mat-label>Statistic</mat-label>
       <mat-select formControlName="statisticKey">
@@ -38,17 +38,17 @@
       <input matInput [value]="commandObj.command" disabled>
     </mat-form-field>
   </mat-card>
-  <div fxLayout="column">
-    <div #statisticChart>
+  <div class="chart-box" fxLayout="column">
+    <div class="chart-container" #statisticChart>
 
     </div>
-    <div fxFlex class="statistic-legend" fxLayout="row" fxLayoutAlign="center center">
-      <div class="statistic-legend-keys" *ngFor="let legendKey of legendData?.keys" fxLayout="row"
+    <div fxFlex class="legend" fxLayout="row" fxLayoutAlign="center center">
+      <div class="legend-keys" *ngFor="let legendKey of legendData?.keys" fxLayout="row"
            fxLayoutAlign="center center">
-        <span class="statistic-legend-line" [ngStyle]="{backgroundColor: legendKey.dataKey.color}"></span>
-        <div class="statistic-legend-label"
+        <span class="legend-line" [ngStyle]="{backgroundColor: legendKey.dataKey.color}"></span>
+        <div class="legend-label"
              (click)="onLegendKeyHiddenChange(legendKey.dataIndex)"
-             [ngClass]="{ 'statistic-hidden-label': legendData.keys[legendKey.dataIndex].dataKey.hidden }"
+             [ngClass]="{ 'hidden-label': legendData.keys[legendKey.dataIndex].dataKey.hidden }"
              [innerHTML]="legendKey.dataKey.label">
         </div>
       </div>

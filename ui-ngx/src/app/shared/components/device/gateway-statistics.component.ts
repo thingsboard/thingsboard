@@ -49,6 +49,9 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   @Input()
   ctx: WidgetContext;
 
+  @Input()
+  general: boolean;
+
   private flot: TbFlot;
   private flotCtx;
   public statisticForm: FormGroup;
@@ -67,7 +70,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
       })
     },
     useDashboardTimewindow: false,
-    legendConfig : {
+    legendConfig: {
       position: LegendPosition.bottom
     } as LegendConfig
   };
@@ -104,18 +107,30 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     this.init();
     if (this.ctx.defaultSubscription.datasources.length) {
 
-      const gatewayId = this.ctx.defaultSubscription.datasources[0].entity.id;
-      this.attributeService.getEntityAttributes(gatewayId, AttributeScope.SHARED_SCOPE, ["general_configuration"]).subscribe((resp: AttributeData[]) => {
-        if (resp && resp.length) {
-          this.commands = resp[0].value.statistics.commands;
-          if (!this.statisticForm.get('statisticKey').value) {
-            this.statisticForm.get('statisticKey').setValue(this.commands[0].attributeOnGateway);
-            this.createChartsSubscription(this.ctx.defaultSubscription.datasources[0].entity, this.commands[0].attributeOnGateway);
+      const gateway = this.ctx.defaultSubscription.datasources[0].entity;
+      if (!this.general) {
+        this.attributeService.getEntityAttributes(gateway.id, AttributeScope.SHARED_SCOPE, ["general_configuration"]).subscribe((resp: AttributeData[]) => {
+          if (resp && resp.length) {
+            this.commands = resp[0].value.statistics.commands;
+            if (!this.statisticForm.get('statisticKey').value) {
+              this.statisticForm.get('statisticKey').setValue(this.commands[0].attributeOnGateway);
+              this.createChartsSubscription(gateway, this.commands[0].attributeOnGateway);
+            }
           }
-        }
-      })
+        })
+      } else {
+        let connectorsTs;
+        this.attributeService.getEntityTimeseriesLatest(gateway.id).subscribe(
+          data => {
+            connectorsTs = Object.keys(data)
+              .filter(el => el.includes(
+                'ConnectorEventsProduced'
+              ) || el.includes(
+                'ConnectorEventsSent'))
+            this.createGeneralChartsSubscription(gateway, connectorsTs);
+          })
+      }
     }
-
   }
 
   public onLegendKeyHiddenChange(index: number) {
@@ -135,7 +150,28 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     subscriptionInfo[0].timeseries = [{name: attr, label: attr}];
     this.subscriptionInfo = subscriptionInfo;
     this.changeSubscription(subscriptionInfo);
+  }
 
+  private createGeneralChartsSubscription(gateway: BaseData<EntityId>, attrData: [string]) {
+    let subscriptionInfo = [{
+      type: DatasourceType.entity,
+      entityType: EntityType.DEVICE,
+      entityId: gateway.id.id,
+      entityName: gateway.name,
+      timeseries: []
+    }];
+    subscriptionInfo[0].timeseries = [];
+    if (attrData && attrData.length) {
+      attrData.forEach(attr => {
+        subscriptionInfo[0].timeseries.push({name: attr, label: attr})
+      })
+    }
+    this.ctx.defaultSubscription.datasources[0].dataKeys.forEach(dataKey => {
+      subscriptionInfo[0].timeseries.push({name: dataKey.name, label: dataKey.label})
+    })
+
+    this.subscriptionInfo = subscriptionInfo;
+    this.changeSubscription(subscriptionInfo);
   }
 
   init = () => {
@@ -181,6 +217,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     if (exceptionData.message) {
       errorText += ': ' + exceptionData.message;
     }
+    console.error(errorText);
   }
 
   private onDataUpdated() {
