@@ -72,8 +72,8 @@ export class RoundSwitchWidgetSettingsComponent extends WidgetSettingsComponent 
 
   protected prepareOutputSettings(settings: any): WidgetSettings {
     return {
-      title: settings.title,
-      ...settings.switchRpcSettings
+      ...settings.switchRpcSettings,
+      title: settings.title
     };
   }
 }

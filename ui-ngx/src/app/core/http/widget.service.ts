@@ -280,7 +280,7 @@ export class WidgetService {
     this.deleteWidgetsBundleFromCache(widgetsBundle.alias, widgetsBundle.tenantId.id === NULL_UUID);
   }
 
-  private deleteWidgetInfoFromCache(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean) {
+  public deleteWidgetInfoFromCache(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean) {
     const key = this.createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
     this.widgetsInfoInMemoryCache.delete(key);
   }

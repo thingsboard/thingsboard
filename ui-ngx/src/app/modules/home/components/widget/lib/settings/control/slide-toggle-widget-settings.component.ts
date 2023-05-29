@@ -78,10 +78,10 @@ export class SlideToggleWidgetSettingsComponent extends WidgetSettingsComponent 
 
   protected prepareOutputSettings(settings: any): WidgetSettings {
     return {
+      ...settings.switchRpcSettings,
       title: settings.title,
       labelPosition: settings.labelPosition,
-      sliderColor: settings.sliderColor,
-      ...settings.switchRpcSettings
+      sliderColor: settings.sliderColor
     };
   }
 }

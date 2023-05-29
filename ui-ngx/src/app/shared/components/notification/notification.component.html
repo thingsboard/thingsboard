@@ -28,8 +28,8 @@
     </mat-icon>
   </ng-template>
   <div class="content" fxFlex>
-    <div class="title" [innerHTML]="(notification.subject | safe: 'html' )"></div>
-    <div class="message" [innerHTML]="(notification.text  | safe: 'html' )"></div>
+    <div class="title" [innerHTML]="(title | safe: 'html' )"></div>
+    <div class="message" [innerHTML]="(message  | safe: 'html' )"></div>
     <button *ngIf="showButton" mat-stroked-button class="button" color="primary"
             (click)="navigate($event)">
       {{ buttonLabel }}

@@ -83,6 +83,26 @@ public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntit
     }
 
     @Override
+    public NotificationRule findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(notificationRuleRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public NotificationRule findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(notificationRuleRepository.findByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
+    public PageData<NotificationRule> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationRuleRepository.findByTenantId(tenantId, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public NotificationRuleId getExternalIdByInternal(NotificationRuleId internalId) {
+        return DaoUtil.toEntityId(notificationRuleRepository.getExternalIdByInternal(internalId.getId()), NotificationRuleId::new);
+    }
+
+    @Override
     protected Class<NotificationRuleEntity> getEntityClass() {
         return NotificationRuleEntity.class;
     }

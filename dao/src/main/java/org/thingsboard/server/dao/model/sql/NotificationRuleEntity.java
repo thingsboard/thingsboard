@@ -72,6 +72,9 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
     @Column(name = ModelConstants.NOTIFICATION_RULE_ADDITIONAL_CONFIG_PROPERTY)
     private JsonNode additionalConfig;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public NotificationRuleEntity() {}
 
     public NotificationRuleEntity(NotificationRule notificationRule) {
@@ -85,6 +88,7 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         setTriggerConfig(toJson(notificationRule.getTriggerConfig()));
         setRecipientsConfig(toJson(notificationRule.getRecipientsConfig()));
         setAdditionalConfig(toJson(notificationRule.getAdditionalConfig()));
+        setExternalId(getUuid(notificationRule.getExternalId()));
     }
 
     public NotificationRuleEntity(NotificationRuleEntity other) {
@@ -98,6 +102,7 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         this.triggerConfig = other.triggerConfig;
         this.recipientsConfig = other.recipientsConfig;
         this.additionalConfig = other.additionalConfig;
+        this.externalId = other.externalId;
     }
 
     @Override
@@ -113,6 +118,7 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         notificationRule.setTriggerConfig(fromJson(triggerConfig, NotificationRuleTriggerConfig.class));
         notificationRule.setRecipientsConfig(fromJson(recipientsConfig, NotificationRuleRecipientsConfig.class));
         notificationRule.setAdditionalConfig(fromJson(additionalConfig, NotificationRuleConfig.class));
+        notificationRule.setExternalId(getEntityId(externalId, NotificationRuleId::new));
         return notificationRule;
     }
 

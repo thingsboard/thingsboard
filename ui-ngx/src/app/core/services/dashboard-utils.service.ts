@@ -30,7 +30,14 @@ import {
   WidgetLayout
 } from '@shared/models/dashboard.models';
 import { isDefined, isString, isUndefined } from '@core/utils';
-import { Datasource, DatasourceType, Widget, WidgetConfig, widgetType } from '@app/shared/models/widget.models';
+import {
+  Datasource,
+  datasourcesHasOnlyComparisonAggregation,
+  DatasourceType,
+  Widget,
+  WidgetConfig,
+  widgetType
+} from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
@@ -227,7 +234,8 @@ export class DashboardUtilsService {
       }
     });
     if (type === widgetType.latest) {
-      widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true, this.timeService);
+      const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
+      widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true, onlyHistoryTimewindow, this.timeService);
     }
     if (type === widgetType.alarm) {
       if (!widgetConfig.alarmFilterConfig) {

@@ -116,7 +116,8 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
       new EntityTableColumn<AlarmInfo>('originatorName', 'alarm.originator', '25%',
         (entity) => entity.originatorName, entity => ({}), false));
     this.columns.push(
-      new EntityTableColumn<AlarmInfo>('type', 'alarm.type', '25%'));
+      new EntityTableColumn<AlarmInfo>('type', 'alarm.type', '25%',
+          entity => this.utilsService.customTranslation(entity.type, entity.type)));
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('severity', 'alarm.severity', '25%',
         (entity) => this.translate.instant(alarmSeverityTranslations.get(entity.severity)),

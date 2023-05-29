@@ -20,7 +20,7 @@ import {
   ShowTooltipAction, WidgetToolipSettings
 } from './map-models';
 import { Datasource, FormattedData } from '@app/shared/models/widget.models';
-import { fillDataPattern, processDataPattern, safeExecute } from '@core/utils';
+import { fillDataPattern, isDefinedAndNotNull, isString, processDataPattern, safeExecute } from '@core/utils';
 import { parseWithTranslation } from '@home/components/widget/lib/maps/common-maps-utils';
 
 export function createTooltip(target: L.Layer,
@@ -110,3 +110,16 @@ export function entitiesParseName(entities: FormattedData[], labelSettings: labe
   }
   return entities;
 }
+
+export const isValidLatitude = (latitude: any): boolean =>
+  isDefinedAndNotNull(latitude) &&
+  !isString(latitude) &&
+  !isNaN(latitude) && isFinite(latitude) && Math.abs(latitude) <= 90;
+
+export const isValidLongitude = (longitude: any): boolean =>
+  isDefinedAndNotNull(longitude) &&
+  !isString(longitude) &&
+  !isNaN(longitude) && isFinite(longitude) && Math.abs(longitude) <= 180;
+
+export const isValidLatLng = (latitude: any, longitude: any): boolean =>
+  isValidLatitude(latitude) && isValidLongitude(longitude);
