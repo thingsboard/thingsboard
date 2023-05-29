@@ -2668,7 +2668,6 @@
     "name": "Navn",
     "name-required": "Navn er påkrævet.",
     "type": "Type",
-    "description": "Beskrivelse",
     "delete": "Slet regelknude",
     "select-all-objects": "Vælg alle knuder og tilslutninger",
     "deselect-all-objects": "Fravælg alle knuder og tilslutninger",

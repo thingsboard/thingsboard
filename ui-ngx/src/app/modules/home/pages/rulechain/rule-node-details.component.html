@@ -52,7 +52,7 @@
         [ruleChainType]="ruleChainType"
         [nodeDefinition]="ruleNode.component.configurationDescriptor.nodeDefinition">
       </tb-rule-node-config>
-      <div formGroupName="additionalInfo" fxLayout="column">
+      <div formGroupName="additionalInfo" fxLayout="column" class="description-block">
         <mat-form-field class="mat-block">
           <mat-label translate>rulenode.rule-node-description</mat-label>
           <textarea matInput formControlName="description" rows="1"></textarea>

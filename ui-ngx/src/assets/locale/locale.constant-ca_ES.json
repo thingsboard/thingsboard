@@ -3675,7 +3675,6 @@
         "name-required": "Cal el nom.",
         "name-max-length": "El nom ha de ser inferior a 256",
         "type": "Tipus",
-        "description": "Descripció",
         "delete": "Eliminar node de regles",
         "select-all-objects": "Seleccionar tots els nodes i conexions",
         "deselect-all-objects": "Desfer selecció de tots els nodes i conexions",
