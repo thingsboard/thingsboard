@@ -117,8 +117,8 @@ public class EntityRelationController extends BaseController {
         tbEntityRelationService.delete(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
     }
 
-    @ApiOperation(value = "Delete Relations (deleteRelations)",
-            notes = "Deletes all the relation (both 'from' and 'to' direction) for the specified entity. " +
+    @ApiOperation(value = "Delete common relations (deleteCommonRelations)",
+            notes = "Deletes all the relations ('from' and 'to' direction) for the specified entity and relation type group: 'COMMON'. " +
                     SECURITY_CHECKS_ENTITY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relations", method = RequestMethod.DELETE, params = {"entityId", "entityType"})
