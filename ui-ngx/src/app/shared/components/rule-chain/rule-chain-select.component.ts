@@ -32,6 +32,7 @@ import { RuleChain, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { Direction } from '@shared/models/page/sort-order';
 
 // @dynamic
 @Component({
@@ -84,7 +85,10 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
 
   ngOnInit() {
 
-    const pageLink = new PageLink(100);
+    const pageLink = new PageLink(100, 0, null, {
+      property: 'name',
+      direction: Direction.ASC
+    });
 
     this.ruleChains$ = this.getRuleChains(pageLink).pipe(
       map((pageData) => pageData.data),
