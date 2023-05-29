@@ -23,12 +23,18 @@ import { MatDialog } from '@angular/material/dialog';
 import { AttributeService } from '@core/http/attribute.service';
 import { DeviceService } from '@core/http/device.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { PageComponent } from '@shared/components/page.component';
 import { DialogService } from '@app/core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TbFlot } from '@home/components/widget/lib/flot-widget';
-import { ResizeObserver } from "@juggle/resize-observer";
+import { ResizeObserver } from '@juggle/resize-observer';
+import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { UtilsService } from '@core/services/utils.service';
+import { DatasourceType, LegendConfig, LegendData, LegendPosition, widgetType } from '@shared/models/widget.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { BaseData } from '@shared/models/base-data';
 
 
 @Component({
@@ -44,13 +50,29 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   ctx: WidgetContext;
 
   private flot: TbFlot;
-
+  private flotCtx;
   public statisticForm: FormGroup;
-
   public statisticsKeys = [];
   public commands = [];
   public commandObj: any;
   private resize$: ResizeObserver;
+  private subscription: IWidgetSubscription;
+  private subscriptionOptions: WidgetSubscriptionOptions = {
+    callbacks: {
+      onDataUpdated: (subscription, detectChanges) => this.ctx.ngZone.run(() => {
+        this.onDataUpdated();
+      }),
+      onDataUpdateError: (subscription, e) => this.ctx.ngZone.run(() => {
+        this.onDataUpdateError(subscription, e);
+      })
+    },
+    useDashboardTimewindow: false,
+    legendConfig : {
+      position: LegendPosition.bottom
+    } as LegendConfig
+  };
+  private subscriptionInfo: SubscriptionInfo [];
+  public legendData: LegendData;
 
 
   constructor(protected router: Router,
@@ -61,6 +83,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
               protected deviceService: DeviceService,
               protected dialogService: DialogService,
               private cd: ChangeDetectorRef,
+              private utils: UtilsService,
               public dialog: MatDialog) {
     super(store);
     this.statisticForm = this.fb.group({
@@ -72,43 +95,60 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
       if (this.commands.length) {
         this.commandObj = this.commands.find(command => command.attributeOnGateway === value);
       }
-      this.changeSubscription(true);
+      if (this.subscriptionInfo) this.createChartsSubscription(this.ctx.defaultSubscription.datasources[0].entity, value);
     })
   }
 
 
   ngAfterViewInit() {
+    this.init();
     if (this.ctx.defaultSubscription.datasources.length) {
+
       const gatewayId = this.ctx.defaultSubscription.datasources[0].entity.id;
-      this.attributeService.getEntityAttributes(gatewayId, AttributeScope.SHARED_SCOPE, ["general_configuration"]).subscribe(resp => {
+      this.attributeService.getEntityAttributes(gatewayId, AttributeScope.SHARED_SCOPE, ["general_configuration"]).subscribe((resp: AttributeData[]) => {
         if (resp && resp.length) {
           this.commands = resp[0].value.statistics.commands;
           if (!this.statisticForm.get('statisticKey').value) {
             this.statisticForm.get('statisticKey').setValue(this.commands[0].attributeOnGateway);
-            this.changeSubscription(true);
+            this.createChartsSubscription(this.ctx.defaultSubscription.datasources[0].entity, this.commands[0].attributeOnGateway);
           }
         }
       })
     }
-    this.ctx.defaultSubscription.onTimewindowChangeFunction = timeWindow => {
-      this.ctx.defaultSubscription.options.timeWindowConfig = timeWindow;
-      this.ctx.defaultSubscription.updateTimewindowConfig(timeWindow);
-      // this.ctx.defaultSubscription.update();
-      this.updateChart();
-      return timeWindow;
-    }
-    this.changeSubscription(true);
-    this.resize$ = new ResizeObserver(() => {
-      this.resize();
-    });
-    this.resize$.observe(this.statisticChart.nativeElement)
+
   }
 
-  initChart = () => {
-    if (this.ctx.defaultSubscription.data.length && !this.flot) {
-      this.ctx.$container = $(this.statisticChart.nativeElement);
-      this.flot = new TbFlot(this.ctx, 'line');
-    } else setTimeout(this.initChart, 500);
+  public onLegendKeyHiddenChange(index: number) {
+    this.legendData.keys[index].dataKey.hidden = !this.legendData.keys[index].dataKey.hidden;
+    this.subscription.updateDataVisibility(index);
+  }
+
+  private createChartsSubscription(gateway: BaseData<EntityId>, attr: string) {
+    let subscriptionInfo = [{
+      type: DatasourceType.entity,
+      entityType: EntityType.DEVICE,
+      entityId: gateway.id.id,
+      entityName: gateway.name,
+      timeseries: []
+    }];
+
+    subscriptionInfo[0].timeseries = [{name: attr, label: attr}];
+    this.subscriptionInfo = subscriptionInfo;
+    this.changeSubscription(subscriptionInfo);
+
+  }
+
+  init = () => {
+    this.flotCtx = {
+      $scope: this.ctx.$scope,
+      $injector: this.ctx.$injector,
+      utils: this.ctx.utils,
+      isMobile: this.ctx.isMobile,
+      isEdit: this.ctx.isEdit,
+      subscriptionApi: this.ctx.subscriptionApi,
+      detectChanges: this.ctx.detectChanges,
+      settings: this.ctx.settings
+    };
   }
 
   updateChart = () => {
@@ -123,31 +163,52 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     }
   }
 
+  private reset() {
+    if (this.resize$) {
+      this.resize$.disconnect();
+    }
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    if (this.flot) {
+      this.flot.destroy();
+    }
+  }
 
-  changeSubscription(init?: boolean) {
+  private onDataUpdateError(subscription: IWidgetSubscription, e: any) {
+    const exceptionData = this.utils.parseException(e);
+    let errorText = exceptionData.name;
+    if (exceptionData.message) {
+      errorText += ': ' + exceptionData.message;
+    }
+  }
+
+  private onDataUpdated() {
+    if (this.flot) {
+      this.flot.update();
+    }
+  }
+
+
+  changeSubscription(subscriptionInfo: SubscriptionInfo[]) {
+    if (this.subscription) {
+      this.reset();
+    }
     if (this.ctx.datasources[0].entity) {
-      if (this.flot && init) {
-        this.flot.destroy();
-        delete this.flot;
-      }
-      this.ctx.defaultSubscription.options.datasources[0].dataKeys = [{
-        name: this.statisticForm.get('statisticKey').value,
-        type: DataKeyType.timeseries,
-        settings: {},
-        color: "#2196f3"
-      }];
-      this.ctx.defaultSubscription.unsubscribe();
-      this.ctx.defaultSubscription.updateDataSubscriptions();
-      this.ctx.defaultSubscription.options.callbacks.dataLoading = () => {
-      };
-      this.ctx.defaultSubscription.callbacks.onDataUpdated = () => {
-        if (init) {
-          this.initChart();
-        } else {
-          this.updateChart();
-        }
-      }
-      this.cd.detectChanges();
+      this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.timeseries, subscriptionInfo, this.subscriptionOptions, false, true).subscribe(subscription => {
+        this.subscription = subscription;
+        this.legendData = this.subscription.legendData;
+        this.flotCtx.defaultSubscription = subscription;
+        this.flotCtx.$container = $(this.statisticChart.nativeElement);
+        this.resize$ = new ResizeObserver(() => {
+          this.resize();
+        });
+        this.resize$.observe(this.statisticChart.nativeElement);
+        this.ctx.detectChanges();
+        this.flot = new TbFlot(this.flotCtx as WidgetContext, "line");
+        this.flot.update();
+      })
+
     }
   }
 
