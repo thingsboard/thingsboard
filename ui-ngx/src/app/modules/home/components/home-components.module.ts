@@ -290,6 +290,7 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
       AliyunSmsProviderConfigurationComponent
       SmppSmsProviderConfigurationComponent,
       TwilioSmsProviderConfigurationComponent,
+      AliyunSmsProviderConfigurationComponent,
       DashboardToolbarComponent,
       DashboardPageComponent,
       DashboardStateComponent,
@@ -427,6 +428,7 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
     AliyunSmsProviderConfigurationComponent
     SmppSmsProviderConfigurationComponent,
     TwilioSmsProviderConfigurationComponent,
+    AliyunSmsProviderConfigurationComponent,    
     DashboardToolbarComponent,
     DashboardPageComponent,
     DashboardStateComponent,

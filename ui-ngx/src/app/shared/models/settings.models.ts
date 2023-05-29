@@ -409,6 +409,7 @@ export function smsProviderConfigurationValidator(required: boolean): ValidatorF
             const aliyunConfiguration: AliyunSmsProviderConfiguration = configuration;
             valid = isNotEmptyStr(aliyunConfiguration.accessKeyId) && isNotEmptyStr(aliyunConfiguration.accessKeySecret)
               && isNotEmptyStr(aliyunConfiguration.signName) && isNotEmptyStr(aliyunConfiguration.templateCode);
+            break;
           case SmsProviderType.SMPP:
             const smppConfiguration = configuration as SmppSmsProviderConfiguration;
             valid = isNotEmptyStr(smppConfiguration.host) && isNumber(smppConfiguration.port)
