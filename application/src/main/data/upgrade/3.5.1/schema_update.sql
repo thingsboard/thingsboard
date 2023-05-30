@@ -76,17 +76,17 @@ $$
 $$;
 
 CREATE TABLE IF NOT EXISTS edge_event (
-                                          seq_id INT GENERATED ALWAYS AS IDENTITY,
-                                          id uuid NOT NULL,
-                                          created_time bigint NOT NULL,
-                                          edge_id uuid,
-                                          edge_event_type varchar(255),
-                                          edge_event_uid varchar(255),
-                                          entity_id uuid,
-                                          edge_event_action varchar(255),
-                                          body varchar(10000000),
-                                          tenant_id uuid,
-                                          ts bigint NOT NULL
+    seq_id INT GENERATED ALWAYS AS IDENTITY,
+    id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    edge_id uuid,
+    edge_event_type varchar(255),
+    edge_event_uid varchar(255),
+    entity_id uuid,
+    edge_event_action varchar(255),
+    body varchar(10000000),
+    tenant_id uuid,
+    ts bigint NOT NULL
 ) PARTITION BY RANGE (created_time);
 CREATE INDEX IF NOT EXISTS idx_edge_event_tenant_id_and_created_time ON edge_event(tenant_id, created_time DESC);
 CREATE INDEX IF NOT EXISTS idx_edge_event_id ON edge_event(id);

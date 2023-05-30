@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
 
     private final Long queueStartTs;
+    private Long seqIdOffset;
     private final EdgeEventService edgeEventService;
 
     @Override
@@ -44,6 +45,12 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        return edgeEventService.findEdgeEvents(tenantId, edge.getId(), (TimePageLink) pageLink);
+        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdOffset, (TimePageLink) pageLink);
+        if (edgeEvents.getData().isEmpty()) {
+            // reset in case seq_id column started new cycle
+            this.seqIdOffset = 0L;
+            edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdOffset, (TimePageLink) pageLink);
+        }
+        return edgeEvents;
     }
 }
