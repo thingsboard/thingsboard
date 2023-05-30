@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.config;
+package org.thingsboard.monitoring.config.transport;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.thingsboard.monitoring.transport.TransportHealthChecker;
-import org.thingsboard.monitoring.transport.impl.CoapTransportHealthChecker;
-import org.thingsboard.monitoring.transport.impl.HttpTransportHealthChecker;
-import org.thingsboard.monitoring.transport.impl.Lwm2mTransportHealthChecker;
-import org.thingsboard.monitoring.transport.impl.MqttTransportHealthChecker;
+import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
+import org.thingsboard.monitoring.service.transport.impl.CoapTransportHealthChecker;
+import org.thingsboard.monitoring.service.transport.impl.HttpTransportHealthChecker;
+import org.thingsboard.monitoring.service.transport.impl.Lwm2mTransportHealthChecker;
+import org.thingsboard.monitoring.service.transport.impl.MqttTransportHealthChecker;
 
 @AllArgsConstructor
 @Getter
