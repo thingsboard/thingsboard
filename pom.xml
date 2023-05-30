@@ -74,7 +74,7 @@
         <gson.version>2.9.0</gson.version>
         <freemarker.version>2.3.30</freemarker.version>
         <mail.version>1.6.2</mail.version>
-        <curator.version>4.2.0</curator.version>
+        <curator.version>5.5.0</curator.version>
         <zookeeper.version>3.8.1</zookeeper.version>
         <protobuf.version>3.21.9</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
