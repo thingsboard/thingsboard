@@ -20,7 +20,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { isDefined } from '@core/utils';
+import { isDefined, isJson } from '@core/utils';
 import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -379,7 +379,7 @@ export class SwitchComponent extends PageComponent implements OnInit, AfterViewI
         if (isDefined(attrValue)) {
           let parsed = null;
           try {
-            parsed = this.parseValueFunction(JSON.parse(attrValue));
+            parsed = this.parseValueFunction(isJson(attrValue) ? JSON.parse(attrValue): attrValue);
           } catch (e){/**/}
           value = !!parsed;
         }

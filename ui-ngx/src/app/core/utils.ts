@@ -763,3 +763,11 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
   }
   return label;
 }
+
+export function isJson(value: any) {
+  try {
+    return isLiteralObject(JSON.parse(value));
+  } catch (e) {
+    return false;
+  }
+}
