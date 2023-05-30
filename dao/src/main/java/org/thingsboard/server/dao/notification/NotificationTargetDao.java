@@ -22,11 +22,12 @@ import org.thingsboard.server.common.data.notification.targets.NotificationTarge
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
 
-public interface NotificationTargetDao extends Dao<NotificationTarget>, TenantEntityDao {
+public interface NotificationTargetDao extends Dao<NotificationTarget>, TenantEntityDao, ExportableEntityDao<NotificationTargetId, NotificationTarget> {
 
     PageData<NotificationTarget> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
 

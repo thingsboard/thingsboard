@@ -36,7 +36,13 @@ import { Observable, of } from 'rxjs';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import { Circle } from './circle';
-import { createTooltip, entitiesParseName, isCutPolygon, isJSON } from '@home/components/widget/lib/maps/maps-utils';
+import {
+  createTooltip,
+  entitiesParseName,
+  isCutPolygon,
+  isJSON,
+  isValidLatLng
+} from '@home/components/widget/lib/maps/maps-utils';
 import { checkLngLat, createLoadingDiv } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
@@ -148,7 +154,8 @@ export default abstract class LeafletMap {
             if (isDefinedAndNotNull(markerColor) && tinycolor(markerColor).isValid()) {
               const parsedColor = tinycolor(markerColor);
               return L.divIcon({
-                html: `<div style="background-color: ${parsedColor.setAlpha(0.4).toRgbString()};" class="marker-cluster tb-cluster-marker-element">` +
+                html: `<div style="background-color: ${parsedColor.setAlpha(0.4).toRgbString()};" ` +
+                  `class="marker-cluster tb-cluster-marker-element">` +
                   `<div style="background-color: ${parsedColor.setAlpha(0.9).toRgbString()};"><span>` + childCount + '</span></div></div>',
                 iconSize: new L.Point(40, 40),
                 className: 'tb-cluster-marker-container'
@@ -378,7 +385,8 @@ export default abstract class LeafletMap {
             });
           },
         });
-        this.map.pm.Toolbar.changeControlOrder(['tbMarker', 'tbRectangle', 'tbPolygon', 'tbCircle', 'editMode', 'dragMode', 'tbCut', 'removalMode', 'rotateMode']);
+        this.map.pm.Toolbar.changeControlOrder(['tbMarker', 'tbRectangle', 'tbPolygon', 'tbCircle',
+          'editMode', 'dragMode', 'tbCut', 'removalMode', 'rotateMode']);
       }
 
       this.map.pm.setLang('en', this.translateService.instant('widgets.maps'), 'en');
@@ -643,19 +651,19 @@ export default abstract class LeafletMap {
         }
     }
 
-    extractPosition(data: FormattedData): {x: number, y: number} {
+    extractPosition(data: FormattedData): {x: number; y: number} {
       if (!data) {
         return null;
       }
       const lat = data[this.options.latKeyName];
       const lng = data[this.options.lngKeyName];
-      if (!isDefinedAndNotNull(lat) || isString(lat) || isNaN(lat) || !isDefinedAndNotNull(lng) || isString(lng) || isNaN(lng)) {
+      if (!isValidLatLng(lat, lng)) {
         return null;
       }
       return {x: lat, y: lng};
     }
 
-    positionToLatLng(position: {x: number, y: number}): L.LatLng {
+    positionToLatLng(position: {x: number; y: number}): L.LatLng {
       return L.latLng(position.x, position.y) as L.LatLng;
     }
 
@@ -936,7 +944,7 @@ export default abstract class LeafletMap {
           return;
         }
         this.saveLocation(data, this.convertToCustomFormat(e.target._latlng)).subscribe();
-    }
+    };
 
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetMarkersSettings>,
                          updateBounds = true, callback?, snappable = false): Marker {
@@ -1141,7 +1149,7 @@ export default abstract class LeafletMap {
       }
     }
     this.saveLocation(data, this.convertPolygonToCustomFormat(coordinates)).subscribe(() => {});
-  }
+  };
 
     createPolygon(polyData: FormattedData, dataSources: FormattedData[], settings: Partial<WidgetPolygonSettings>,
                   updateBounds = true, snappable = false) {
@@ -1218,7 +1226,7 @@ export default abstract class LeafletMap {
       const center = e.layer.getLatLng();
       const radius = e.layer.getRadius();
       this.saveLocation(data, this.convertCircleToCustomFormat(center, radius)).subscribe(() => {});
-    }
+    };
 
     updateCircle(circlesData: FormattedData[], updateBounds = true) {
       const toDelete = new Set(Array.from(this.circles.keys()));

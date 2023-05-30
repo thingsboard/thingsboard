@@ -755,6 +755,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteRuleChainById(tenantId, (RuleChainId) id);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.RULE_CHAIN;
     }

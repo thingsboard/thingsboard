@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTra
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -189,6 +190,49 @@ public class EntityPrototypes {
         device.setName(name + RandomStringUtils.randomAlphanumeric(7));
         device.setCustomerId(id);
         device.setType("DEFAULT");
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, String description) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, String description, String label) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
+        device.setLabel(label);
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, boolean gateway) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode().put("gateway", gateway));
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, boolean gateway, boolean overwriteActivityTime) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode()
+                .put("gateway", gateway)
+                .put("overwriteActivityTime", overwriteActivityTime));
+        return device;
+    }
+
+    public static Device defaultDevicePrototype(String name, DeviceProfileId deviceProfileId) {
+        Device device = new Device();
+        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setType("DEFAULT");
+        device.setDeviceProfileId(deviceProfileId);
         return device;
     }
 

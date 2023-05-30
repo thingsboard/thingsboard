@@ -42,7 +42,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.RULE_CHAIN_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.RULE_CHAIN_TABLE_NAME)
 public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchTextEntity<RuleChain> {
 
     @Column(name = ModelConstants.RULE_CHAIN_TENANT_ID_PROPERTY)

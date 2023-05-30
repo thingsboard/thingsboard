@@ -15,13 +15,13 @@
     limitations under the License.
 
 -->
-<button *ngIf="asButton && !strokedButton"
+<button *ngIf="asButton && !strokedButton && !flatButton"
         [disabled]="timewindowDisabled"
         type="button"
         mat-raised-button color="primary"
         (click)="toggleTimewindow($event)">
   <mat-icon class="material-icons">query_builder</mat-icon>
-  <span>{{innerValue?.displayValue}}</span>
+  <span>{{displayValue()}}</span>
 </button>
 <button *ngIf="asButton && strokedButton"
         [disabled]="timewindowDisabled"
@@ -29,7 +29,15 @@
         mat-stroked-button color="primary"
         (click)="toggleTimewindow($event)">
   <mat-icon class="material-icons">query_builder</mat-icon>
-  <span>{{innerValue?.displayValue}}</span>
+  <span>{{displayValue()}}</span>
+</button>
+<button *ngIf="asButton && flatButton"
+        [disabled]="timewindowDisabled"
+        type="button"
+        mat-button
+        (click)="toggleTimewindow($event)">
+  <mat-icon class="material-icons">query_builder</mat-icon>
+  <span>{{displayValue()}}</span>
 </button>
 <section *ngIf="!asButton"
          class="tb-timewindow"
@@ -42,11 +50,11 @@
           [matTooltipPosition]="tooltipPosition">
     <mat-icon class="material-icons">query_builder</mat-icon>
   </button>
-  <span [fxHide]="hideLabel()"
+  <span [fxHide]="hideLabel"
         (click)="toggleTimewindow($event)"
         matTooltip="{{ 'timewindow.edit' | translate }}"
         [matTooltipPosition]="tooltipPosition">
-    {{innerValue?.displayValue}} <span [fxShow]="innerValue?.displayTimezoneAbbr !== ''">| <span class="timezone-abbr">{{innerValue.displayTimezoneAbbr}}</span></span>
+    {{innerValue?.displayValue}} <span [fxShow]="innerValue?.displayTimezoneAbbr !== ''">| <span class="timezone-abbr">{{innerValue?.displayTimezoneAbbr}}</span></span>
   </span>
   <button *ngIf="direction === 'right'" [disabled]="timewindowDisabled" mat-icon-button class="tb-mat-32"
           type="button"

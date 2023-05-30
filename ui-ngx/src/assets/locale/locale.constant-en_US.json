@@ -807,7 +807,8 @@
         "type-provision-success": "Device provisioned",
         "type-provision-failure": "Device provisioning was failed",
         "type-timeseries-updated": "Telemetry updated",
-        "type-timeseries-deleted": "Telemetry deleted"
+        "type-timeseries-deleted": "Telemetry deleted",
+        "type-sms-sent": "SMS sent"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -930,6 +931,7 @@
         "no-dashboards-text": "No dashboards found",
         "no-widgets": "No widgets configured",
         "add-widget": "Add new widget",
+        "add-widget-button-text": "Add widget",
         "title": "Title",
         "image": "Dashboard image",
         "mobile-app-settings": "Mobile application settings",
@@ -1058,6 +1060,7 @@
         "public-link-copied-message": "Dashboard public link has been copied to clipboard",
         "manage-states": "Manage dashboard states",
         "states": "Dashboard states",
+        "states-short": "States",
         "search-states": "Search dashboard states",
         "selected-states": "{ count, plural, =1 {1 dashboard state} other {# dashboard states} } selected",
         "edit-state": "Edit dashboard state",
@@ -1086,7 +1089,8 @@
         "unassign-dashboards-from-edge-text": "After the confirmation all selected dashboards will be unassigned and won't be accessible by the edge.",
         "assign-dashboard-to-edge": "Assign Dashboard(s) To Edge",
         "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
-        "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found"
+        "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found",
+        "edit-mode": "Edit mode"
     },
     "datakey": {
         "settings": "Settings",
@@ -1789,7 +1793,9 @@
         }
     },
     "dialog": {
-        "close": "Close dialog"
+        "close": "Close dialog",
+        "error-message-title": "Error message:",
+        "error-details-title": "Error details"
     },
     "direction": {
         "column": "Column",
@@ -1937,6 +1943,7 @@
         "entities-count": "Entities count",
         "alarms-count": "Alarms count",
         "aliases": "Entity aliases",
+        "aliases-short": "Aliases",
         "entity-alias": "Entity alias",
         "unable-delete-entity-alias-title": "Unable to delete entity alias",
         "unable-delete-entity-alias-text": "Entity alias '{{entityAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
@@ -2060,9 +2067,15 @@
         "type-queue": "Queue",
         "type-notification": "Notification",
         "type-notification-rule": "Notification rule",
+        "type-notification-rules": "Notification rules",
+        "list-of-notification-rules": "{ count, plural, =1 {One notification rule} other {List of # notification rules} }",
         "type-notification-target": "Notification recipient",
+        "type-notification-targets": "Notification recipients",
+        "list-of-notification-targets": "{ count, plural, =1 {One notification recipient} other {List of # notification recipients} }",
         "type-notification-request": "Notification request",
-        "type-notification-template": "Notification template"
+        "type-notification-template": "Notification template",
+        "type-notification-templates": "Notification templates",
+        "list-of-notification-templates": "{ count, plural, =1 {One notification template} other {List of # notification templates} }"
     },
     "entity-field": {
         "created-time": "Created time",
@@ -2698,6 +2711,7 @@
     },
     "layout": {
         "layout": "Layout",
+        "layouts": "Layouts",
         "manage": "Manage layouts",
         "settings": "Layout settings",
         "color": "Color",
@@ -2954,6 +2968,8 @@
         "rule-engine-filter": "Rule engine filter",
         "rule-name": "Rule name",
         "rule-name-required": "Name is required",
+        "rule-disable": "Disable notification rule",
+        "rule-enable": "Enable notification rule",
         "rule-node-filter": "Rule node filter",
         "rules": "Rules",
         "notification-rules": "Notifications / Rules",
@@ -3752,6 +3768,7 @@
         "days": "Days"
     },
     "timewindow": {
+        "timewindow": "Timewindow",
         "years": "{ years, plural, =1 { year } other {# years } }",
         "months": "{ months, plural, =1 { month } other {# months } }",
         "weeks": "{ weeks, plural, =1 { week } other {# weeks } }",
@@ -3991,7 +4008,8 @@
         "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
         "search": "Search widget",
         "filter": "Widget filter type",
-        "loading-widgets": "Loading widgets..."
+        "loading-widgets": "Loading widgets...",
+        "widget-template-error": "Invalid widget HTML template."
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -4000,6 +4018,9 @@
         "open-dashboard": "Navigate to other dashboard",
         "custom": "Custom action",
         "custom-pretty": "Custom action (with HTML template)",
+        "custom-pretty-error-title": "Custom dialog error",
+        "custom-pretty-template-error": "Invalid custom dialog template.",
+        "custom-pretty-controller-error": "Error occurred while evaluating custom dialog function.",
         "mobile-action": "Mobile action",
         "target-dashboard-state": "Target dashboard state",
         "target-dashboard-state-required": "Target dashboard state is required",

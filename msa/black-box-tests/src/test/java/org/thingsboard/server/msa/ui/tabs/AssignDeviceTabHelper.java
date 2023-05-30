@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.apiusage.limits;
+package org.thingsboard.server.msa.ui.tabs;
 
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.openqa.selenium.WebDriver;
 
-public interface RateLimitService {
+public class AssignDeviceTabHelper extends AssignDeviceTabElements {
+    public AssignDeviceTabHelper(WebDriver driver) {
+        super(driver);
+    }
 
-    boolean checkRateLimit(LimitedApi api, TenantId tenantId);
-
-    boolean checkRateLimit(LimitedApi api, TenantId tenantId, EntityId entityId);
-
+    public void assignOnCustomer(String customerTitle) {
+        assignOnCustomerField().click();
+        customerFromDropDown(customerTitle).click();
+        assignBtn().click();
+    }
 }

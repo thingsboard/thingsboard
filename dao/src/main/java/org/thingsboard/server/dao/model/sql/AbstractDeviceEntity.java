@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonBinaryType;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
@@ -47,7 +46,7 @@ import java.util.UUID;
         @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 })
 @MappedSuperclass
-public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
+public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEntity<T> {
 
     @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;
@@ -63,9 +62,6 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
 
     @Column(name = ModelConstants.DEVICE_LABEL_PROPERTY)
     private String label;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Type(type = "json")
     @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY)
@@ -131,21 +127,10 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         this.type = deviceEntity.getType();
         this.name = deviceEntity.getName();
         this.label = deviceEntity.getLabel();
-        this.searchText = deviceEntity.getSearchText();
         this.additionalInfo = deviceEntity.getAdditionalInfo();
         this.firmwareId = deviceEntity.getFirmwareId();
         this.softwareId = deviceEntity.getSoftwareId();
         this.externalId = deviceEntity.getExternalId();
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     protected Device toDevice() {

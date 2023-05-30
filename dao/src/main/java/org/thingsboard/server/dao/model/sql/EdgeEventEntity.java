@@ -40,7 +40,7 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ACTION_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_BODY_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_EDGE_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_SEQUENTIAL_ID_PROPERTY;
@@ -54,7 +54,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = EDGE_EVENT_COLUMN_FAMILY_NAME)
+@Table(name = EDGE_EVENT_TABLE_NAME)
 @NoArgsConstructor
 public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEntity<EdgeEvent> {
 

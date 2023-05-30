@@ -495,8 +495,8 @@ cache:
     timeToLiveInMinutes: "${CACHE_SPECS_NOTIFICATION_RULES_TTL:30}"
     maxSize: "${CACHE_SPECS_NOTIFICATION_RULES_MAX_SIZE:1000}"
   rateLimits:
-    timeToLiveInMinutes: "${CACHE_SPECS_RATE_LIMITS_TTL:60}"
-    maxSize: "${CACHE_SPECS_RATE_LIMITS_MAX_SIZE:100000}"
+    timeToLiveInMinutes: "${CACHE_SPECS_RATE_LIMITS_TTL:120}"
+    maxSize: "${CACHE_SPECS_RATE_LIMITS_MAX_SIZE:200000}"
 
 #Disable this because it is not required.
 spring.data.redis.repositories.enabled: false
@@ -607,6 +607,7 @@ spring:
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
+      leakDetectionThreshold: "${SPRING_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
       registerMbeans: "${SPRING_DATASOURCE_HIKARI_REGISTER_MBEANS:false}" # true - enable MBean to diagnose pools state via JMX
 
@@ -621,6 +622,7 @@ audit-log:
       "device": "${AUDIT_LOG_MASK_DEVICE:W}"
       "asset": "${AUDIT_LOG_MASK_ASSET:W}"
       "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}"
+      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}"
       "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}"
       "user": "${AUDIT_LOG_MASK_USER:W}"
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
@@ -987,6 +989,7 @@ edges:
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
 swagger:
+  enabled: "${SWAGGER_ENABLED:true}"
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api/.*}"
   security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api/.*}"
   non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/(?:noauth|v1)/.*}"
