@@ -199,4 +199,8 @@ abstract public class AbstractBasePage {
         element.click();
         element.sendKeys(Keys.CONTROL + "A" + Keys.BACK_SPACE);
     }
+
+    public void waitUntilAttributeToBeNotEmpty(WebElement element, String attribute) {
+        wait.until(ExpectedConditions.attributeToBeNotEmpty(element, attribute));
+    }
 }
