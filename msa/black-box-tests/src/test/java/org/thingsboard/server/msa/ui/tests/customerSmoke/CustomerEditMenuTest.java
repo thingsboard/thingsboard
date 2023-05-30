@@ -204,7 +204,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
 
     @Epic("Customers smoke tests")
     @Feature("Edit customer")
-    @Test(priority = 20, groups = "smoke")
+    @Test(priority = 20, groups = { "smoke", "broken" })
     @Description("Assigned dashboard without hide")
     public void assignedDashboardWithoutHide() {
         String customerName = ENTITY_NAME + random();
