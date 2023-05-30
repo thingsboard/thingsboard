@@ -218,7 +218,7 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         customerPage.entity(customerName).click();
         jsClick(customerPage.editPencilBtn());
         customerPage.chooseDashboard(customerPage.getDashboard());
-        customerPage.hideHomeDashboardToolbarCheckbox().click();
+        customerPage.disableHideHomeDashboardToolbar();
         customerPage.doneBtnEditView().click();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();

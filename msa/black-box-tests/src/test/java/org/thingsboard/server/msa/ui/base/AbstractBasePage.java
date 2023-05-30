@@ -189,4 +189,8 @@ abstract public class AbstractBasePage {
     public void pull(WebElement element, int xOffset, int yOffset) {
         actions.clickAndHold(element).moveByOffset(xOffset, yOffset).release().perform();
     }
+
+    public void waitUntilAttributeToBe(String locator, String attribute, String value) {
+        wait.until(ExpectedConditions.attributeToBe(By.xpath(locator), attribute, value));
+    }
 }

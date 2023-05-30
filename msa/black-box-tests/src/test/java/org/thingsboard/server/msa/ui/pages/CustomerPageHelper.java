@@ -169,4 +169,9 @@ public class CustomerPageHelper extends CustomerPageElements {
         }
         customerDetailsAlarmsBtn().click();
     }
+
+    public void disableHideHomeDashboardToolbar() {
+        hideHomeDashboardToolbarCheckbox().click();
+        waitUntilAttributeToBe("//mat-checkbox[@formcontrolname='homeDashboardHideToolbar']//input", "class", "mdc-checkbox__native-control");
+    }
 }
