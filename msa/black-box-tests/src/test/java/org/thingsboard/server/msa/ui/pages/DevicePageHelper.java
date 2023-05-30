@@ -35,7 +35,7 @@ public class DevicePageHelper extends DevicePageElements {
     public void assignToCustomer(String customerTitle) {
         chooseCustomerForAssignField().click();
         entityFromDropdown(customerTitle).click();
-        submitAssignToCustomerBtn().click();
+        submitBtn().click();
     }
 
     public void openCreateDeviceView() {
@@ -100,5 +100,27 @@ public class DevicePageHelper extends DevicePageElements {
         selectDevices(deviceNames);
         deleteSelectedBtn().click();
         warningPopUpYesBtn().click();
+    }
+
+    public void filterDeviceByDeviceProfile(String deviceProfileTitle) {
+        clearProfileFieldBtn().click();
+        entityFromDropdown(deviceProfileTitle).click();
+        submitBtn().click();
+    }
+
+    public void filterDeviceByState(String state) {
+        deviceStateSelect().click();
+        entityFromDropdown(" " + state + " ").click();
+        sleep(2); //wait until the action is counted
+        submitBtn().click();
+    }
+
+    public void filterDeviceByDeviceProfileAndState(String deviceProfileTitle, String state) {
+        clearProfileFieldBtn().click();
+        entityFromDropdown(deviceProfileTitle).click();
+        deviceStateSelect().click();
+        entityFromDropdown(" " + state + " ").click();
+        sleep(2); //wait until the action is counted
+        submitBtn().click();
     }
 }
