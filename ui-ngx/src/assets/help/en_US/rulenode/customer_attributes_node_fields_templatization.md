@@ -1,34 +1,28 @@
-#### Customer attributes node fields templatization
+#### Fields templatization
 
 <div class="divider"></div>
 <br/>
 
 {% include rulenode/common_node_fields_templatization %}
 
-##### Example
+##### Examples
 
-Let's assume that we have a customer-based solution where customer manage two type of devices: *temperature* and *humidity* sensors. 
+Let's assume that we have a customer-based solution where customer manage two type of devices: `temperature` and `humidity` sensors. 
 Additionally, let's assume that customer configured the thresholds settings for each device type. 
 Threshold settings stored as an attributes on a customer level:
 
  - *temperature_min_threshold* and *temperature_max_threshold* for temperature sensor with values set to *10* and *30* accordingly.
  - *humidity_min_threshold* and *humidity_max_threshold* for humidity sensor with values set to *70* and *85* accordingly.
 
-Each message received from device includes: *deviceType* property in the message metadata 
-with either *temperature* or *humidity* value according to the sensor type.
+Each message received from device includes `deviceType` property in the message metadata 
+with either `temperature` or `humidity` value according to the sensor type.
 
 In order to fetch the threshold value for the further message processing you can define next mapping in the configuration:
 
-TODO: add node config screenshot instead of mapping below: 
+![image](${helpBaseUrl}/help/images/rulenode/examples/customer-attributes-ft.png)
 
-source key -> target key
-
-${deviceType}_min_threshold -> min_threshold
-
-${deviceType}_max_threshold -> max_threshold
-
-Imagine that you receive message defined below from the *temperature* sensor 
-and forwarded it to the *customer attributes* node with configuration added above.
+Imagine that you receive message defined below from the `temperature` sensor 
+and forwarded it to the **customer attributes** node with configuration added above.
 
  - incoming message definition:
 
@@ -45,7 +39,7 @@ and forwarded it to the *customer attributes* node with configuration added abov
     }
 ```
 
-Rule node default configuration set to fetch data to the message metadata so the outgoing message would be updated to:
+Rule node configuration set to fetch data to the message metadata so the outgoing message would be updated to:
 
 ```json
     {
@@ -62,14 +56,16 @@ Rule node default configuration set to fetch data to the message metadata so the
     }
 ```
 
-The same example for the *humidity* sensor:
+<br>
+
+The same example for the `humidity` sensor:
 
 - incoming message definition:
 
 ```json
     {
       "msg":{
-        "humidity":32
+        "humidity":77
       },
       "metadata":{
         "deviceType":"humidity",
@@ -96,6 +92,10 @@ Rule node configuration wasn't changed so the outgoing message would be updated 
     }
 ```
 
-This example showcases using the *customer attributes* node with dynamic configuration based on the substitution of metadata fields.
+<br>
 
+These examples showcases using the **customer attributes** node with dynamic configuration based on the substitution of metadata fields.
+
+<br>
+<br>
 
