@@ -53,7 +53,7 @@ import { takeUntil } from 'rxjs/operators';
     }
   ]
 })
-export class TenantProfileQueuesComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
+export class TenantProfileQueuesComponent implements ControlValueAccessor, Validator, OnDestroy, OnInit {
 
   tenantProfileQueuesFormGroup: UntypedFormGroup;
   newQueue = false;
@@ -107,6 +107,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    this.newQueue = false;
     if (this.disabled) {
       this.tenantProfileQueuesFormGroup.disable({emitEvent: false});
     } else {

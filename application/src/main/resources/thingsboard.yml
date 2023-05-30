@@ -607,6 +607,7 @@ spring:
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
+      leakDetectionThreshold: "${SPRING_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
       registerMbeans: "${SPRING_DATASOURCE_HIKARI_REGISTER_MBEANS:false}" # true - enable MBean to diagnose pools state via JMX
 
