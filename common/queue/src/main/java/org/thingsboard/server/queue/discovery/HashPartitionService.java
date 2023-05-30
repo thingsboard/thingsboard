@@ -326,7 +326,7 @@ public class HashPartitionService implements PartitionService {
         final Map<QueueKey, List<ServiceInfo>> currentMap = new HashMap<>();
         services.forEach(serviceInfo -> {
             for (String serviceTypeStr : serviceInfo.getServiceTypesList()) {
-                ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
+                ServiceType serviceType = ServiceType.of(serviceTypeStr);
                 if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
                     partitionTopicsMap.keySet().forEach(queueKey ->
                             currentMap.computeIfAbsent(queueKey, key -> new ArrayList<>()).add(serviceInfo));
@@ -389,7 +389,7 @@ public class HashPartitionService implements PartitionService {
 
     private void addNode(Map<QueueKey, List<ServiceInfo>> queueServiceList, ServiceInfo instance) {
         for (String serviceTypeStr : instance.getServiceTypesList()) {
-            ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
+            ServiceType serviceType = ServiceType.of(serviceTypeStr);
             if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
                 partitionTopicsMap.keySet().forEach(key -> {
                     if (key.getType().equals(ServiceType.TB_RULE_ENGINE)) {
