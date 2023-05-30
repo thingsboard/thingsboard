@@ -18,6 +18,7 @@ package org.thingsboard.server.msa.ui.base;
 import lombok.SneakyThrows;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
@@ -192,5 +193,10 @@ abstract public class AbstractBasePage {
 
     public void waitUntilAttributeToBe(String locator, String attribute, String value) {
         wait.until(ExpectedConditions.attributeToBe(By.xpath(locator), attribute, value));
+    }
+
+    public void clearInputField(WebElement element) {
+        element.click();
+        element.sendKeys(Keys.CONTROL + "A" + Keys.BACK_SPACE);
     }
 }
