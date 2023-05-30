@@ -1142,15 +1142,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.searchBundle = '';
     this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
       (widgetTypeInfo) => {
-        const config: WidgetConfig = JSON.parse(widgetTypeInfo.defaultConfig);
+        const config: WidgetConfig = this.dashboardUtils.widgetConfigFromWidgetType(widgetTypeInfo);
         config.title = 'New ' + widgetTypeInfo.widgetName;
-        config.datasources = [];
-        if (isDefinedAndNotNull(config.alarmSource)) {
-          config.alarmSource = {
-            type: DatasourceType.entity,
-            dataKeys: config.alarmSource.dataKeys || []
-          };
-        }
         let newWidget: Widget = {
           isSystemType: widget.isSystemType,
           bundleAlias: widget.bundleAlias,

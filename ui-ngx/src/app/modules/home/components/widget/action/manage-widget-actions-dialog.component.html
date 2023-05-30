@@ -32,7 +32,8 @@
     <tb-manage-widget-actions
       [callbacks]="data.callbacks"
       [widgetType] = "data.widgetType"
-      formControlName="actionsData">
+      [actionSources]="actionSources"
+      formControlName="actions">
     </tb-manage-widget-actions>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">

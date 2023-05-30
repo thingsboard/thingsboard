@@ -147,7 +147,8 @@
         <tb-manage-widget-actions
           [callbacks]="widgetConfigCallbacks"
           [widgetType] = "modelValue.widgetType"
-          formControlName="actionsData">
+          [actionSources]="modelValue.actionSources"
+          formControlName="actions">
         </tb-manage-widget-actions>
       </div>
     </div>
@@ -180,29 +181,21 @@
   </div>
   <ng-template #basicMode>
     <div class="tb-widget-config-content">
-      <div class="mat-content">
-        <ng-container *ngTemplateOutlet="data"></ng-container>
-        <ng-container *ngTemplateOutlet="appearance"></ng-container>
-        <div class="tb-widget-config-panel" (click)="manageWidgetActions()" style="cursor: pointer;">
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <div class="tb-widget-config-panel-title" translate style="padding-right: 48px;">widget-config.actions</div>
-            <mat-chip-listbox fxFlex>
-              <ng-container *ngFor="let actionSourceId of widgetActionSourceIds">
-                <mat-chip *ngFor="let widgetAction of widgetActionsByActionSourceId(actionSourceId)">
-                  <mat-icon matChipAvatar>{{ widgetAction.icon }}</mat-icon>
-                  {{ widgetAction.name }}
-                </mat-chip>
-              </ng-container>
-            </mat-chip-listbox>
-            <button mat-stroked-button color="primary" *ngIf="!hasWidgetActions">
-              {{ 'widget-config.add-action' | translate }}
-            </button>
-            <button mat-icon-button color="primary" *ngIf="hasWidgetActions">
-              <mat-icon>add</mat-icon>
-            </button>
-          </div>
-        </div>
+      <div class="mat-content" *ngIf="hasBasicModeDirective; else basicModeContent">
+        <ng-container #basicModeContainer></ng-container>
+        <div class="tb-basic-mode-directive-error" *ngIf="basicModeDirectiveError">{{basicModeDirectiveError}}</div>
       </div>
+      <ng-template #basicModeContent>
+        <div class="mat-content">
+          <ng-container *ngTemplateOutlet="data"></ng-container>
+          <ng-container *ngTemplateOutlet="appearance"></ng-container>
+          <ng-container [formGroup]="actionsSettings">
+            <tb-widget-actions-panel
+              formControlName="actions">
+            </tb-widget-actions-panel>
+          </ng-container>
+        </div>
+      </ng-template>
     </div>
   </ng-template>
   <ng-template #data>
@@ -239,6 +232,7 @@
                 modelValue?.isDataEnabled"
          [formGroup]="dataSettings">
       <tb-datasources
+        [configMode]="widgetConfigMode"
         formControlName="datasources">
       </tb-datasources>
     </div>

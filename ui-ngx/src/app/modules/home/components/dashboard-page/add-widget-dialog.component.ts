@@ -128,7 +128,8 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
       latestDataKeySettingsSchema,
       settingsDirective: widgetInfo.settingsDirective,
       dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
-      latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective
+      latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,
+      basicModeDirective: widgetInfo.basicModeDirective
     };
     this.hasBasicMode = isDefinedAndNotNull(widgetInfo.hasBasicMode) ? widgetInfo.hasBasicMode : false;
     this.widgetFormGroup = this.fb.group({

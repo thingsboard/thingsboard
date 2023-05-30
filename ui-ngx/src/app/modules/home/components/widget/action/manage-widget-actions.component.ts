@@ -76,6 +76,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   @Input() callbacks: WidgetActionCallbacks;
 
+  @Input() actionSources: {[actionSourceId: string]: WidgetActionSource};
+
   innerValue: WidgetActionsData;
 
   displayedColumns: string[];
@@ -338,24 +340,25 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.disabled = isDisabled;
   }
 
-  writeValue(obj: WidgetActionsData): void {
-    this.innerValue = obj;
-    if (this.innerValue) {
-      setTimeout(() => {
-        if (!this.destroyed) {
-          this.dataSource.setActions(this.innerValue);
-          if (this.viewsInited) {
-            this.resetSortAndFilter(true);
-          } else {
-            this.dirtyValue = true;
-          }
+  writeValue(actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>}): void {
+    this.innerValue = {
+      actionsMap: actions || {},
+      actionSources: this.actionSources || {}
+    };
+    setTimeout(() => {
+      if (!this.destroyed) {
+        this.dataSource.setActions(this.innerValue);
+        if (this.viewsInited) {
+          this.resetSortAndFilter(true);
+        } else {
+          this.dirtyValue = true;
         }
-      }, 0);
-    }
+      }
+    }, 0);
   }
 
   private onActionsUpdated() {
     this.updateData(true);
-    this.propagateChange(this.innerValue);
+    this.propagateChange(this.innerValue.actionsMap);
   }
 }

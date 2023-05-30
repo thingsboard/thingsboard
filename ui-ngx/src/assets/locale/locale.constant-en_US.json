@@ -5119,6 +5119,7 @@
             "markdown-css": "Markdown/HTML CSS"
         },
         "simple-card": {
+            "label": "Label",
             "label-position": "Label position",
             "label-position-left": "Left",
             "label-position-top": "Top"

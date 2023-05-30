@@ -169,6 +169,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       settingsDirective: widgetInfo.settingsDirective,
       dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
       latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,
+      basicModeDirective: widgetInfo.basicModeDirective
     };
     this.hasBasicMode = isDefinedAndNotNull(widgetInfo.hasBasicMode) ? widgetInfo.hasBasicMode : false;
     this.widgetFormGroup.reset({widgetConfig: this.widgetConfig});

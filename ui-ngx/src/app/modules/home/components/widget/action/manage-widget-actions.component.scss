@@ -43,6 +43,12 @@
     opacity: 1 !important;
   }
 
+  .mat-mdc-cell.tb-icon-cell {
+    .mat-icon {
+      vertical-align: middle;
+    }
+  }
+
   .tb-draggable {
     &.cdk-drag-placeholder {
       opacity: 0;

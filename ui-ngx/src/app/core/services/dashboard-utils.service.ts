@@ -29,21 +29,25 @@ import {
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { isDefined, isDefinedAndNotNull, isString, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isString, isUndefined } from '@core/utils';
 import {
+  DataKey,
   Datasource,
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   defaultLegendConfig,
   Widget,
   WidgetConfig,
-  widgetType
+  WidgetConfigMode,
+  widgetType,
+  WidgetTypeDescriptor
 } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 @Injectable({
   providedIn: 'root'
@@ -332,6 +336,55 @@ export class DashboardUtilsService {
     };
   }
 
+  public widgetConfigFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor): WidgetConfig {
+    const config: WidgetConfig = JSON.parse(widgetTypeDescriptor.defaultConfig);
+    config.datasources = this.convertDatasourcesFromWidgetType(widgetTypeDescriptor, config, config.datasources);
+    if (isDefinedAndNotNull(config.alarmSource)) {
+      config.alarmSource = this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, config.alarmSource);
+    }
+    return config;
+  }
+
+  private convertDatasourcesFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor,
+                                           config: WidgetConfig, datasources?: Datasource[]): Datasource[] {
+    const newDatasources: Datasource[] = [];
+    if (datasources) {
+      datasources.forEach(datasource => {
+        newDatasources.push(this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, datasource));
+      });
+    }
+    return newDatasources;
+  }
+
+  private convertDatasourceFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor, config: WidgetConfig,
+                                          datasource: Datasource): Datasource {
+    const newDatasource = deepClone(datasource);
+    if (newDatasource.type === DatasourceType.function) {
+      newDatasource.type = DatasourceType.entity;
+      if (widgetTypeDescriptor.hasBasicMode && config.configMode === WidgetConfigMode.basic) {
+        newDatasource.type = DatasourceType.device;
+      }
+      const dataKeys = newDatasource.dataKeys;
+      newDatasource.dataKeys = [];
+      dataKeys.forEach(dataKey => {
+        newDatasource.dataKeys.push(this.convertDataKeyFromWidgetType(widgetTypeDescriptor, config, dataKey));
+      });
+    }
+    return newDatasource;
+  }
+
+  private convertDataKeyFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor, config: WidgetConfig, dataKey: DataKey): DataKey {
+    const newDataKey = deepClone(dataKey);
+    newDataKey.funcBody = null;
+    if (widgetTypeDescriptor.type === widgetType.alarm) {
+      newDataKey.type = DataKeyType.alarm;
+    } else {
+      newDataKey.type = DataKeyType.timeseries;
+      newDataKey.name = newDataKey.label;
+    }
+    return newDataKey;
+  }
+
   private validateAndUpdateState(state: DashboardState) {
     if (!state.layouts) {
       state.layouts = this.createDefaultLayouts();
@@ -445,7 +498,7 @@ export class DashboardUtilsService {
                            targetLayout: DashboardLayoutId,
                            widget: Widget,
                            originalColumns?: number,
-                           originalSize?: {sizeX: number, sizeY: number},
+                           originalSize?: {sizeX: number; sizeY: number},
                            row?: number,
                            column?: number): void {
     const dashboardConfiguration = dashboard.configuration;
@@ -518,7 +571,7 @@ export class DashboardUtilsService {
     this.removeUnusedWidgets(dashboard);
   }
 
-  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string, layout: DashboardLayoutId} {
+  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string; layout: DashboardLayoutId} {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const stateKeys = Object.keys(states);

@@ -14,7 +14,20 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ComponentFactoryResolver,
+  ComponentRef,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChanges,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -26,7 +39,6 @@ import {
   JsonSchema,
   JsonSettingsSchema,
   Widget,
-  WidgetActionDescriptor,
   WidgetConfigMode,
   widgetType
 } from '@shared/models/widget.models';
@@ -50,7 +62,10 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Observable, of, Subscription } from 'rxjs';
-import { WidgetConfigCallbacks } from '@home/components/widget/widget-config.component.models';
+import {
+  IBasicWidgetConfigComponent,
+  WidgetConfigCallbacks
+} from '@home/components/widget/widget-config.component.models';
 import {
   EntityAliasDialogComponent,
   EntityAliasDialogData
@@ -59,17 +74,14 @@ import { catchError, mergeMap, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
-import { WidgetActionsData } from './action/manage-widget-actions.component.models';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
 import { Filter, singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import {
-  ManageWidgetActionsDialogComponent,
-  ManageWidgetActionsDialogData
-} from '@home/components/widget/action/manage-widget-actions-dialog.component';
+import { basicWidgetConfigComponentsMap } from '@home/components/widget/basic-config/basic-widget-config.module';
+import Timeout = NodeJS.Timeout;
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -97,7 +109,9 @@ const defaultSettingsForm = [
     }
   ]
 })
-export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator, OnChanges {
+
+  @ViewChild('basicModeContainer', {read: ViewContainerRef, static: false}) basicModeContainer: ViewContainerRef;
 
   widgetTypes = widgetType;
 
@@ -146,6 +160,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   widgetEditMode = this.utils.widgetEditMode;
 
+  basicModeDirectiveError: string;
+
   modelValue: WidgetConfigComponentData;
 
   private propagateChange = null;
@@ -160,6 +176,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   public advancedSettings: UntypedFormGroup;
   public actionsSettings: UntypedFormGroup;
 
+  private createBasicModeComponentTimeout: Timeout;
+  private basicModeComponentRef: ComponentRef<IBasicWidgetConfigComponent>;
+  private basicModeComponent: IBasicWidgetConfigComponent;
+  private basicModeComponentChangeSubscription: Subscription;
+
   private dataSettingsChangesSubscription: Subscription;
   private targetDeviceSettingsSubscription: Subscription;
   private widgetSettingsSubscription: Subscription;
@@ -172,6 +193,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
               private entityService: EntityService,
               private dialog: MatDialog,
               public translate: TranslateService,
+              private cfr: ComponentFactoryResolver,
               private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef) {
     super(store);
@@ -218,11 +240,25 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       desktopHide: [false]
     });
     this.actionsSettings = this.fb.group({
-      actionsData: [null, []]
+      actions: [null, []]
     });
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'widgetConfigMode') {
+          if (this.hasBasicModeDirective) {
+            this.setupConfig();
+          }
+        }
+      }
+    }
+  }
+
   ngOnDestroy(): void {
+    this.destroyBasicModeComponent();
     this.removeChangeSubscriptions();
   }
 
@@ -360,7 +396,61 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   writeValue(value: WidgetConfigComponentData): void {
     this.modelValue = value;
+    this.setupConfig();
+  }
+
+  private setupConfig() {
+    this.destroyBasicModeComponent();
     this.removeChangeSubscriptions();
+    if (this.hasBasicModeDirective && this.widgetConfigMode === WidgetConfigMode.basic) {
+      this.setupBasicModeConfig();
+    } else {
+      this.setupDefaultConfig();
+    }
+  }
+
+  private setupBasicModeConfig() {
+    const componentType = basicWidgetConfigComponentsMap[this.modelValue.basicModeDirective];
+    if (!componentType) {
+      this.basicModeDirectiveError = this.translate.instant('widget-config.settings-component-not-found',
+        {selector: this.modelValue.basicModeDirective});
+    } else {
+      const factory = this.cfr.resolveComponentFactory(componentType);
+      this.createBasicModeComponentTimeout = setTimeout(() => {
+        this.createBasicModeComponentTimeout = null;
+        this.basicModeComponentRef = this.basicModeContainer.createComponent(factory);
+        this.basicModeComponent = this.basicModeComponentRef.instance;
+        this.basicModeComponent.widgetConfig = this.modelValue;
+        this.basicModeComponentChangeSubscription = this.basicModeComponent.widgetConfigChanged.subscribe((data) => {
+          this.modelValue = data;
+          this.propagateChange(this.modelValue);
+        });
+        this.cd.markForCheck();
+      }, 0);
+    }
+  }
+
+  private destroyBasicModeComponent() {
+    this.basicModeDirectiveError = null;
+    if (this.basicModeComponentChangeSubscription) {
+      this.basicModeComponentChangeSubscription.unsubscribe();
+      this.basicModeComponentChangeSubscription = null;
+    }
+    if (this.createBasicModeComponentTimeout) {
+      clearTimeout(this.createBasicModeComponentTimeout);
+      this.createBasicModeComponentTimeout = null;
+    }
+    if (this.basicModeComponentRef) {
+      this.basicModeComponentRef.destroy();
+      this.basicModeComponentRef = null;
+      this.basicModeComponent = null;
+    }
+    if (this.basicModeContainer) {
+      this.basicModeContainer.clear();
+    }
+  }
+
+  private setupDefaultConfig() {
     if (this.modelValue) {
       if (this.widgetType !== this.modelValue.widgetType) {
         this.widgetType = this.modelValue.widgetType;
@@ -399,13 +489,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           {emitEvent: false}
         );
         this.updateWidgetSettingsEnabledState();
-        const actionsData: WidgetActionsData = {
-          actionsMap: config.actions || {},
-          actionSources: this.modelValue.actionSources || {}
-        };
         this.actionsSettings.patchValue(
           {
-            actionsData
+            actions: config.actions || {}
           },
           {emitEvent: false}
         );
@@ -449,9 +535,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           } else if (this.widgetType === widgetType.alarm) {
             this.dataSettings.patchValue(
               { alarmFilterConfig: isDefined(config.alarmFilterConfig) ?
-                                         config.alarmFilterConfig :
-                                         { statusList: [AlarmSearchStatus.ACTIVE], searchPropagatedAlarms: true },
-                      alarmSource: config.alarmSource }, {emitEvent: false}
+                  config.alarmFilterConfig :
+                  { statusList: [AlarmSearchStatus.ACTIVE], searchPropagatedAlarms: true },
+                alarmSource: config.alarmSource }, {emitEvent: false}
             );
           }
         }
@@ -590,10 +676,18 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private updateActionSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        this.modelValue.config.actions = (this.actionsSettings.get('actionsData').value as WidgetActionsData).actionsMap;
+        this.modelValue.config.actions = this.actionsSettings.get('actions').value;
       }
       this.propagateChange(this.modelValue);
     }
+  }
+
+  public get hasBasicModeDirective(): boolean {
+    return this.modelValue?.basicModeDirective?.length > 0;
+  }
+
+  public get useDefinedBasicModeDirective(): boolean {
+    return this.modelValue?.basicModeDirective?.length && !this.basicModeDirectiveError;
   }
 
   public get displayAppearance(): boolean {
@@ -631,28 +725,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     return this.widgetType !== widgetType.static && !this.modelValue?.typeParameters?.processNoDataByWidget;
   }
 
-  public get widgetActionSourceIds(): Array<string> {
-    const actionsData: WidgetActionsData = this.actionsSettings.get('actionsData').value;
-    return actionsData?.actionsMap ? Object.keys(actionsData.actionsMap) : [];
-  }
-
-  public widgetActionsByActionSourceId(actionSourceId: string): Array<WidgetActionDescriptor> {
-    const actionsData: WidgetActionsData = this.actionsSettings.get('actionsData').value;
-    return actionsData?.actionsMap[actionSourceId] || [];
-  }
-
-  public get hasWidgetActions(): boolean {
-    const actionsData: WidgetActionsData = this.actionsSettings.get('actionsData').value;
-    if (actionsData?.actionsMap) {
-      for (const actionSourceId of Object.keys(actionsData.actionsMap)) {
-        if (actionsData.actionsMap[actionSourceId] && actionsData.actionsMap[actionSourceId].length) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   public onlyHistoryTimewindow(): boolean {
     if (this.widgetType === widgetType.latest) {
       const datasources = this.dataSettings.get('datasources').value;
@@ -660,28 +732,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     } else {
       return false;
     }
-  }
-
-  public manageWidgetActions() {
-    const actionsData: WidgetActionsData = this.actionsSettings.get('actionsData').value;
-    this.dialog.open<ManageWidgetActionsDialogComponent, ManageWidgetActionsDialogData,
-      WidgetActionsData>(ManageWidgetActionsDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        widgetTitle: this.modelValue.widgetName,
-        callbacks: this.widgetConfigCallbacks,
-        actionsData: deepClone(actionsData),
-        widgetType: this.widgetType
-      }
-    }).afterClosed().subscribe(
-      (res) => {
-        if (res) {
-          this.actionsSettings.get('actionsData').patchValue(res);
-          this.cd.markForCheck();
-        }
-      }
-    );
   }
 
   public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema): DataKey {
@@ -819,7 +869,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   }
 
   public validate(c: UntypedFormControl) {
-    if (!this.dataSettings.valid) {
+    if (this.basicModeComponent &&
+        !this.basicModeComponent.validateConfig()) {
+      return {
+        basicWidgetConfig: {
+          valid: false
+        }
+      };
+    } else if (!this.dataSettings.valid) {
       return {
         dataSettings: {
           valid: false

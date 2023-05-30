@@ -14,23 +14,33 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   AbstractControl,
-  ControlValueAccessor, FormControl,
+  ControlValueAccessor,
+  FormControl,
   NG_VALIDATORS,
-  NG_VALUE_ACCESSOR, UntypedFormArray,
-  UntypedFormBuilder, UntypedFormControl,
+  NG_VALUE_ACCESSOR,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { Datasource, DatasourceType, JsonSettingsSchema, widgetType } from '@shared/models/widget.models';
+import {
+  Datasource,
+  DatasourceType,
+  JsonSettingsSchema,
+  WidgetConfigMode,
+  widgetType
+} from '@shared/models/widget.models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { deepClone } from '@core/utils';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-datasources',
@@ -49,7 +59,13 @@ import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.m
     }
   ]
 })
-export class DatasourcesComponent implements ControlValueAccessor, OnInit, Validator {
+export class DatasourcesComponent implements ControlValueAccessor, OnInit, Validator, OnChanges {
+
+  datasourceType = DatasourceType;
+
+  public get basicMode(): boolean {
+    return !this.widgetConfigComponent.widgetEditMode && this.configMode === WidgetConfigMode.basic;
+  }
 
   public get maxDatasources(): number {
     return this.widgetConfigComponent.modelValue?.typeParameters?.maxDatasources;
@@ -71,16 +87,22 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   @Input()
   disabled: boolean;
 
+  @Input()
+  configMode: WidgetConfigMode;
+
   datasourcesFormGroup: UntypedFormGroup;
 
   timeseriesKeyError = false;
 
   datasourceError: string[] = [];
 
+  datasourcesMode: DatasourceType;
+
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
               private utils: UtilsService,
+              public translate: TranslateService,
               private widgetConfigComponent: WidgetConfigComponent) {
   }
 
@@ -116,15 +138,37 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
     );
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'configMode') {
+          this.configModeChanged();
+        }
+      }
+    }
+  }
+
   writeValue(datasources?: Datasource[]): void {
     this.datasourcesFormArray.clear({emitEvent: false});
+    this.datasourcesMode = this.detectDatasourcesMode(datasources);
+    let changed = false;
     if (datasources) {
       datasources.forEach((datasource) => {
+        if (this.basicMode && datasource.type !== this.datasourcesMode) {
+          datasource.type = this.datasourcesMode;
+          changed = true;
+        }
         this.datasourcesFormArray.push(this.fb.control(datasource, []), {emitEvent: false});
       });
     }
     if (this.singleDatasource && !this.datasourcesFormArray.length) {
       this.addDatasource(false);
+    }
+    if (changed) {
+      setTimeout(() => {
+        this.datasourcesUpdated(this.datasourcesFormGroup.get('datasources').value);
+      }, 0);
     }
   }
 
@@ -175,6 +219,37 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
     return null;
   }
 
+  datasourcesModeChange(datasourcesMode: DatasourceType) {
+    this.datasourcesMode = datasourcesMode;
+    if (this.basicMode) {
+      for (const datasourceControl of this.datasourcesControls) {
+        const datasource: Datasource = datasourceControl.value;
+        if (datasource.type !== datasourcesMode) {
+          datasource.type = datasourcesMode;
+          datasourceControl.patchValue(datasource);
+        }
+      }
+    }
+  }
+
+  private configModeChanged() {
+    if (this.basicMode) {
+      let datasourcesMode = this.detectDatasourcesMode(this.datasourcesFormGroup.get('datasources').value);
+      this.datasourcesModeChange(datasourcesMode);
+    }
+  }
+
+  private detectDatasourcesMode(datasources?: Datasource[]) {
+    let datasourcesMode = DatasourceType.device;
+    if (datasources && datasources.length) {
+      datasourcesMode = datasources[0].type;
+    }
+    if (datasourcesMode !== DatasourceType.device && datasourcesMode !== DatasourceType.entity) {
+      datasourcesMode = DatasourceType.device;
+    }
+    return datasourcesMode;
+  }
+
   get datasourcesFormArray(): UntypedFormArray {
     return this.datasourcesFormGroup.get('datasources') as UntypedFormArray;
   }
@@ -207,7 +282,8 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
       newDatasource = deepClone(this.utils.getDefaultDatasource(this.dataKeySettingsSchema.schema));
       newDatasource.dataKeys = [this.dataKeysCallbacks.generateDataKey('Sin', DataKeyType.function, this.dataKeySettingsSchema)];
     } else {
-      newDatasource = { type: DatasourceType.entity,
+      const type = this.basicMode ? this.datasourcesMode : DatasourceType.entity;
+      newDatasource = { type,
         dataKeys: []
       };
     }
