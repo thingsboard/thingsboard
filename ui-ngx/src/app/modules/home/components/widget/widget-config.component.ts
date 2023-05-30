@@ -869,13 +869,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   }
 
   public validate(c: UntypedFormControl) {
-    if (this.basicModeComponent &&
-        !this.basicModeComponent.validateConfig()) {
-      return {
-        basicWidgetConfig: {
-          valid: false
-        }
-      };
+    if (this.basicModeComponent) {
+      if (!this.basicModeComponent.validateConfig()) {
+        return {
+          basicWidgetConfig: {
+            valid: false
+          }
+        };
+      }
     } else if (!this.dataSettings.valid) {
       return {
         dataSettings: {
