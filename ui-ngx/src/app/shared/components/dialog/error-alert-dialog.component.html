@@ -15,8 +15,16 @@
     limitations under the License.
 
 -->
-<h2 mat-dialog-title>{{data.title}}</h2>
-<div mat-dialog-content [innerHTML]="data.message | safe:'html'"></div>
+<h2 mat-dialog-title>{{title}}</h2>
+<div mat-dialog-content class="tb-error-alert-dialog-content">
+  <div>{{ message }}</div>
+  <div class="error-message-title" translate>dialog.error-message-title</div>
+  <div class="error-message-content"> {{ errorMessage }} </div>
+  <mat-expansion-panel *ngIf="errorDetails">
+    <mat-expansion-panel-header>{{ 'dialog.error-details-title' | translate }}</mat-expansion-panel-header>
+    <small class="error-details-content" [innerHTML]="errorDetails"></small>
+  </mat-expansion-panel>
+</div>
 <div mat-dialog-actions fxLayoutAlign="end center">
   <button mat-button color="primary" [mat-dialog-close]="true" cdkFocusInitial>{{data.ok}}</button>
 </div>

@@ -1789,7 +1789,9 @@
         }
     },
     "dialog": {
-        "close": "Close dialog"
+        "close": "Close dialog",
+        "error-message-title": "Error message:",
+        "error-details-title": "Error details"
     },
     "direction": {
         "column": "Column",
@@ -3991,7 +3993,8 @@
         "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
         "search": "Search widget",
         "filter": "Widget filter type",
-        "loading-widgets": "Loading widgets..."
+        "loading-widgets": "Loading widgets...",
+        "widget-template-error": "Invalid widget HTML template."
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -4000,6 +4003,9 @@
         "open-dashboard": "Navigate to other dashboard",
         "custom": "Custom action",
         "custom-pretty": "Custom action (with HTML template)",
+        "custom-pretty-error-title": "Custom dialog error",
+        "custom-pretty-template-error": "Invalid custom dialog template.",
+        "custom-pretty-controller-error": "Error occurred while evaluating custom dialog function.",
         "mobile-action": "Mobile action",
         "target-dashboard-state": "Target dashboard state",
         "target-dashboard-state-required": "Target dashboard state is required",
