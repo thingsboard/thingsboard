@@ -157,7 +157,7 @@ abstract public class AbstractBasePage {
         try {
             wait.until(ExpectedConditions.attributeContains(element, attribute, value));
         } catch (WebDriverException e) {
-            fail("");
+            fail("Failed to wait until attribute '" + attribute + "' of element '" + element + "' contains value '" + value + "'");
         }
     }
 
