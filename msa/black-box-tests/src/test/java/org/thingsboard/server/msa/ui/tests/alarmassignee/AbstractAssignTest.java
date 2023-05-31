@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.assignee;
+package org.thingsboard.server.msa.ui.tests.alarmassignee;
 
 import io.qameta.allure.Epic;
 import org.testng.annotations.AfterClass;
