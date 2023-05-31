@@ -176,4 +176,25 @@ public class DataProviderCredential {
                 {DEVICE_INACTIVE_STATE}
         };
     }
+
+    @DataProvider(name = "devicesSearchPath")
+    public static Object[][] getDevicesSearchPath() {
+        return new Object[][]{
+                {"Things"},
+                {"Board"},
+                {"~"},
+                {"`"},
+                {"!"},
+                {"@"},
+                {"#"},
+                {"$"},
+                {"^"},
+                {"&"},
+                {"*"},
+                {"("},
+                {")"},
+                {"+"},
+                {"="},
+                {"-"}};
+    }
 }

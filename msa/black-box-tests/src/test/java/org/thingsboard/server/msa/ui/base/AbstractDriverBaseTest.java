@@ -319,4 +319,8 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             fail("Element " + element.toString() + " stay visible");
         }
     }
+
+    public void assertListOfElementContainsText(List<WebElement> elements, String text) {
+        elements.forEach(x -> assertThat(x.getText()).as("All web elements contains: %s", text).contains(text));
+    }
 }

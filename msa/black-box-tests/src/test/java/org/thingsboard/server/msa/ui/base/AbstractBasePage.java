@@ -70,6 +70,15 @@ abstract public class AbstractBasePage {
         }
     }
 
+    protected List<WebElement> waitUntilPresenceOfElementsLocated(String locator) {
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(locator)));
+            return driver.findElements(By.xpath(locator));
+        } catch (WebDriverException e) {
+            return fail("No presence elements: " + locator);
+        }
+    }
+
     protected WebElement waitUntilElementToBeClickable(String locator) {
         try {
             return wait.until(ExpectedConditions.elementToBeClickable(By.xpath(locator)));

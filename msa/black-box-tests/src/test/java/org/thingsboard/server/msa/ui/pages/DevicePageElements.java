@@ -59,13 +59,16 @@ public class DevicePageElements extends OtherPageElementsHelper {
     private static final String DEVICE_PROFILE_FIELD = "(//input[@formcontrolname='deviceProfile'])[2]";
     private static final String DEVICE_STATE_SELECT = "//div[contains(@class,'tb-filter-panel')]//mat-select[@role='combobox']";
     private static final String LIST_OF_DEVICES_STATE = "//div[@class='status']";
-    private static final String LIST_OF_DEVICES_PROFILE = "//mat-cell[contains(@class,'deviceProfileName')]";
+    private static final String LIST_OF_DEVICES_PROFILE_CELLS = "//mat-cell[contains(@class,'deviceProfileName')]";
     private static final String MAKE_DEVICE_PUBLIC_BTN = DEVICE + "/ancestor::mat-row//mat-icon[contains(text(),'share')]/parent::button";
     private static final String DEVICE_IS_PUBLIC_CHECKBOX = DEVICE + "/ancestor::mat-row//mat-icon[contains(text(),'check_box')]";
     private static final String MAKE_DEVICE_PUBLIC_BTN_DETAILS_TAB = "//span[contains(text(),'Make device public')]/parent::button";
     private static final String MAKE_DEVICE_PRIVATE_BTN = DEVICE + "/ancestor::mat-row//mat-icon[contains(text(),'reply')]/parent::button";
     private static final String DEVICE_IS_PRIVATE_CHECKBOX = DEVICE + "/ancestor::mat-row//mat-icon[contains(text(),'check_box_outline_blank')]";
     private static final String MAKE_DEVICE_PRIVATE_BTN_DETAILS_TAB = "//span[contains(text(),'Make device private')]/parent::button";
+    private static final String LIST_OF_DEVICES_NAME = "//mat-cell[contains(@class,'cdk-column-name')]/span";
+    private static final String LIST_OF_LABELS_CELLS = "//mat-cell[contains(@class,'cdk-column-label')]/span";
+    private static final String LIST_OF_CUSTOMERS_CELLS = "//mat-cell[contains(@class,'cdk-column-customerTitle')]/span";
 
     public WebElement device(String deviceName) {
         return waitUntilElementToBeClickable(String.format(DEVICE, deviceName));
@@ -207,8 +210,8 @@ public class DevicePageElements extends OtherPageElementsHelper {
         return waitUntilVisibilityOfElementsLocated(LIST_OF_DEVICES_STATE);
     }
 
-    public List<WebElement> listOfDevicesProfile() {
-        return waitUntilVisibilityOfElementsLocated(LIST_OF_DEVICES_PROFILE);
+    public List<WebElement> listOfDevicesProfileCells() {
+        return waitUntilVisibilityOfElementsLocated(LIST_OF_DEVICES_PROFILE_CELLS);
     }
 
     public WebElement makeDevicePublicBtn(String deviceName) {
@@ -233,5 +236,17 @@ public class DevicePageElements extends OtherPageElementsHelper {
 
     public WebElement makeDevicePrivateBtnDetailsTab() {
         return waitUntilElementToBeClickable(MAKE_DEVICE_PRIVATE_BTN_DETAILS_TAB);
+    }
+
+    public List<WebElement> listOfDevicesName() {
+        return waitUntilElementsToBeClickable(LIST_OF_DEVICES_NAME);
+    }
+
+    public List<WebElement> listOfLabelsCells() {
+        return waitUntilPresenceOfElementsLocated(LIST_OF_LABELS_CELLS);
+    }
+
+    public List<WebElement> listOfCustomersCells() {
+        return waitUntilElementsToBeClickable(LIST_OF_CUSTOMERS_CELLS);
     }
 }
