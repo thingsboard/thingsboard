@@ -7,7 +7,7 @@ setlocal ENABLEEXTENSIONS
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set "jver=%%j%%k"
 @ECHO CurrentVersion %jver%
 
-if %jver% NEQ 110 GOTO JAVA_NOT_INSTALLED
+if %jver% NEQ 170 GOTO JAVA_NOT_INSTALLED
 
 :JAVA_INSTALLED
 
