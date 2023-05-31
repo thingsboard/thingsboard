@@ -42,7 +42,6 @@ import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input
 import { QrCodeWidgetComponent } from '@home/components/widget/lib/qrcode-widget.component';
 import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-widget.component';
 import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
-import { ActionButtonsComponent } from '@home/components/widget/lib/action-buttons.component';
 
 @NgModule({
   declarations:
@@ -65,8 +64,7 @@ import { ActionButtonsComponent } from '@home/components/widget/lib/action-butto
       NavigationCardWidgetComponent,
       QrCodeWidgetComponent,
       MarkdownWidgetComponent,
-      SelectEntityDialogComponent,
-      ActionButtonsComponent
+      SelectEntityDialogComponent
     ],
   imports: [
     CommonModule,
@@ -90,8 +88,7 @@ import { ActionButtonsComponent } from '@home/components/widget/lib/action-butto
     NavigationCardsWidgetComponent,
     NavigationCardWidgetComponent,
     QrCodeWidgetComponent,
-    MarkdownWidgetComponent,
-    ActionButtonsComponent
+    MarkdownWidgetComponent
   ],
   providers: [
     CustomDialogService,

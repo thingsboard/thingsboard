@@ -17,7 +17,7 @@
 -->
 <mat-card fxLayout="row" class="command-form" fxLayoutGap="10px" [formGroup]="commandForm">
   <mat-form-field class="mat-block tb-value-type">
-    <mat-label>Command</mat-label>
+    <mat-label>{{'gateway.statistics.command' | translate}}</mat-label>
     <mat-select formControlName="command" *ngIf="!isConnector">
       <mat-option *ngFor="let command of RPCCommands" [value]="command">
         {{command}}
@@ -26,11 +26,11 @@
     <input matInput formControlName="command" *ngIf="isConnector"/>
   </mat-form-field>
   <mat-form-field class="mat-block tb-value-type" fxFlex *ngIf="!isConnector">
-    <mat-label>Time</mat-label>
+    <mat-label>{{'gateway.statistics.timeout-ms' | translate}}</mat-label>
     <input matInput formControlName="time" type="number"/>
   </mat-form-field>
   <mat-form-field class="mat-block tb-value-type" fxFlex *ngIf="isConnector">
-    <mat-label>Parameters</mat-label>
+    <mat-label>{{'widget-config.datasource-parameters' | translate}}</mat-label>
     <input matInput formControlName="params" type="JSON"/>
     <mat-icon class="material-icons-outlined" aria-hidden="false" aria-label="help-icon"
               matSuffix style="cursor:pointer;"

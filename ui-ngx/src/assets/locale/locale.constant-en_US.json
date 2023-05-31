@@ -2608,9 +2608,10 @@
         "server-port": "Server port",
         "stats-send-period-in-sec": "Stats send period in seconds",
         "statistics": {
+            "statistic": "Statistic",
             "statistics": "Statistics",
             "commands": "Commands",
-            "send-period": "Statistic send period (in ms)",
+            "send-period": "Statistic send period (in sec)",
             "send-period-required": "Statistic send period is required",
             "send-period-min": "Statistic send period can not be less then 1",
             "send-period-pattern": "Statistic send period is not valid",
@@ -2620,6 +2621,7 @@
             "check-connectors-configuration-pattern": "Check connectors configuration is not valid",
             "add": "Add command",
             "timeout": "Timeout",
+            "timeout-ms": "Timeout (in ms)",
             "timeout-required": "Timeout is required",
             "timeout-min": "Timeout can not be less then 1",
             "timeout-pattern": "Timeout is not valid",
@@ -2685,7 +2687,7 @@
         "messages-ttl-in-days-pattern": "Number is not valid.",
         "mqtt-qos": "QoS",
         "mqtt-qos-required": "QoS is required",
-        "mqtt-qos-range": "QoS values range is from 0 to 2",
+        "mqtt-qos-range": "QoS values range is from 0 to 1",
         "tls-path-private-key": "Path to private key on gateway",
         "toggle-fullscreen": "Toggle fullscreen",
         "transformer-json-config": "Configuration JSON*",
@@ -2726,7 +2728,7 @@
             "check-device-activity": "Enables monitor the activity of each connected device",
             "inactivity-timeout": "Inactivity device time after whose the gateway will disconnect device",
             "inactivity-period": "Periodicity of device activity check",
-            "minimal-pack-delay": "Delay between sending packets (Decreasing this setting results in increased CPU usage",
+            "minimal-pack-delay": "Delay between sending packets (Decreasing this setting results in increased CPU usage)",
             "qos": "Quality of Service in MQTT messaging (0 - at most once, 1 - at least once)"
         }
     },

@@ -571,7 +571,7 @@
               </mat-slide-toggle>
               <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                 <mat-label translate>gateway.statistics.send-period</mat-label>
-                <input matInput formControlName="statsSendPeriodInSeconds" type="number" min="0" />
+                <input matInput formControlName="statsSendPeriodInSeconds" type="number" min="1" />
                 <mat-error
                   *ngIf="gatewayConfigGroup.get('thingsboard.statistics.statsSendPeriodInSeconds').hasError('required')">
                   {{'gateway.statistics.send-period-required' | translate }}

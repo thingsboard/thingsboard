@@ -100,8 +100,8 @@ export const securityTypesTranslationsMap = new Map<SecurityTypes, string>(
   [
     [SecurityTypes.ACCESS_TOKEN, 'gateway.security-types.access-token'],
     [SecurityTypes.USERNAME_PASSWORD, 'gateway.security-types.username-password'],
-    // [SecurityTypes.TLS_ACCESS_TOKEN, 'gateway.security-types.tls-access-token'],
-    [SecurityTypes.TLS_PRIVATE_KEY, 'gateway.security-types.tls-private-key'],
+    [SecurityTypes.TLS_ACCESS_TOKEN, 'gateway.security-types.tls-access-token'],
+    // [SecurityTypes.TLS_PRIVATE_KEY, 'gateway.security-types.tls-private-key'],
   ]
 );
 
@@ -152,7 +152,7 @@ export class GatewayConfigurationComponent implements OnInit {
         checkConnectorsConfigurationInSeconds: [60, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         statistics: this.fb.group({
           enable: [true, []],
-          statsSendPeriodInSeconds: [3600, [Validators.required, Validators.min(0), Validators.pattern(/^-?[0-9]+$/)]],
+          statsSendPeriodInSeconds: [3600, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
           commands: this.fb.array([], [])
         }),
         maxPayloadSizeBytes: [1024, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],

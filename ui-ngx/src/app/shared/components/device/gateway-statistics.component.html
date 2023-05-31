@@ -19,7 +19,7 @@
 <div class="statistics-container" fxLayout="row">
   <mat-card [formGroup]="statisticForm" *ngIf="!general">
     <mat-form-field class="mat-block">
-      <mat-label>Statistic</mat-label>
+      <mat-label>{{'gateway.statistics.statistic' | translate}}</mat-label>
       <mat-select formControlName="statisticKey">
         <mat-option *ngFor="let key of statisticsKeys" [value]="key">
           {{key}}
@@ -29,12 +29,12 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
+<!--    <mat-form-field class="mat-block" *ngIf="commandObj">-->
+<!--      <mat-label>Timeout</mat-label>-->
+<!--      <input matInput [value]="commandObj.timeout" disabled>-->
+<!--    </mat-form-field>-->
     <mat-form-field class="mat-block" *ngIf="commandObj">
-      <mat-label>Timeout</mat-label>
-      <input matInput [value]="commandObj.timeout" disabled>
-    </mat-form-field>
-    <mat-form-field class="mat-block" *ngIf="commandObj">
-      <mat-label>Command</mat-label>
+      <mat-label>{{'gateway.statistics.command' | translate}}</mat-label>
       <input matInput [value]="commandObj.command" disabled>
     </mat-form-field>
   </mat-card>
