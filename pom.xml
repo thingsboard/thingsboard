@@ -79,7 +79,7 @@
         <protobuf.version>3.21.9</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
         <tbel.version>1.0.6</tbel.version>
-        <lombok.version>1.18.18</lombok.version>
+        <lombok.version>1.18.26</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <netty.version>4.1.91.Final</netty.version>
@@ -100,12 +100,12 @@
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
         <delight-nashorn-sandbox.version>0.2.1</delight-nashorn-sandbox.version>
+        <nashorn-core.version>15.4</nashorn-core.version>
         <!-- IMPORTANT: If you change the version of the kafka client, make sure to synchronize our overwritten implementation of the
         org.apache.kafka.common.network.NetworkReceive class in the application module. It addresses the issue https://issues.apache.org/jira/browse/KAFKA-4090.
         Here is the source to track https://github.com/apache/kafka/tree/trunk/clients/src/main/java/org/apache/kafka/common/network -->
         <kafka.version>3.2.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
-        <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
         <snakeyaml.version>2.0</snakeyaml.version>
         <aws.sdk.version>1.11.747</aws.sdk.version>
@@ -605,9 +605,9 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.11.0</version>
                     <configuration>
-                        <release>11</release>
+                        <release>17</release>
                         <compilerArgs>
                             <arg>-Xlint:deprecation</arg>
                             <arg>-Xlint:removal</arg>
@@ -650,7 +650,7 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.11</version>
+                    <version>1.0.12</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
@@ -664,6 +664,7 @@
                     <configuration>
                         <argLine>
                             --illegal-access=permit -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
+                            --add-opens java.base/java.lang.reflect=ALL-UNNAMED
                         </argLine>
                     </configuration>
                 </plugin>
@@ -1798,11 +1799,6 @@
                 <version>${bucket4j.version}</version>
             </dependency>
             <dependency>
-                <groupId>de.ruedigermoeller</groupId>
-                <artifactId>fst</artifactId>
-                <version>${fst.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.locationtech.spatial4j</groupId>
                 <artifactId>spatial4j</artifactId>
                 <version>${spatial4j.version}</version>
@@ -2006,6 +2002,11 @@
                 <groupId>com.github.oshi</groupId>
                 <artifactId>oshi-core</artifactId>
                 <version>${oshi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjdk.nashorn</groupId>
+                <artifactId>nashorn-core</artifactId>
+                <version>${nashorn-core.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

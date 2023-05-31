@@ -19,9 +19,11 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @ApiModel
 @Data
-public class LwM2MServerSecurityConfig {
+public class LwM2MServerSecurityConfig implements Serializable {
 
     @ApiModelProperty(position = 1, value = "Server short Id. Used as link to associate server Object Instance. This identifier uniquely identifies each LwM2M Server configured for the LwM2M Client. " +
             "This Resource MUST be set when the Bootstrap-Server Resource has a value of 'false'. " +

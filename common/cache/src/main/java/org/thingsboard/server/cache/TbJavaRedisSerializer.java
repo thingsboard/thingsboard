@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.cache;
 
-import lombok.extern.slf4j.Slf4j;
-import org.nustaq.serialization.FSTConfiguration;
+import org.springframework.data.redis.serializer.SerializationException;
+import org.thingsboard.server.common.data.JavaSerDesUtil;
 
-@Slf4j
-public class FSTUtils {
+public class TbJavaRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
 
-    public static final FSTConfiguration CONFIG = FSTConfiguration.createDefaultConfiguration();
-
-    @SuppressWarnings("unchecked")
-    public static <T> T decode(byte[] byteArray) {
-        return byteArray != null && byteArray.length > 0 ? (T) CONFIG.asObject(byteArray) : null;
+    @Override
+    public byte[] serialize(V value) throws SerializationException {
+        return JavaSerDesUtil.encode(value);
     }
 
-    public static <T> byte[] encode(T msq) {
-        return CONFIG.asByteArray(msq);
+    @Override
+    public V deserialize(K key, byte[] bytes) throws SerializationException {
+        return JavaSerDesUtil.decode(bytes);
     }
-
 }
