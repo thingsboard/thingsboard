@@ -43,7 +43,6 @@ abstract public class AbstractBasePage {
     protected Actions actions;
     protected JavascriptExecutor js;
 
-
     public AbstractBasePage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofMillis(WAIT_TIMEOUT));
@@ -155,7 +154,11 @@ abstract public class AbstractBasePage {
     }
 
     public void waitUntilAttributeContains(WebElement element, String attribute, String value) {
-        wait.until(ExpectedConditions.attributeContains(element, attribute, value));
+        try {
+            wait.until(ExpectedConditions.attributeContains(element, attribute, value));
+        } catch (WebDriverException e) {
+            fail("");
+        }
     }
 
     public void goToNextTab(int tabNumber) {
@@ -192,7 +195,11 @@ abstract public class AbstractBasePage {
     }
 
     public void waitUntilAttributeToBe(String locator, String attribute, String value) {
-        wait.until(ExpectedConditions.attributeToBe(By.xpath(locator), attribute, value));
+        try {
+            wait.until(ExpectedConditions.attributeToBe(By.xpath(locator), attribute, value));
+        } catch (WebDriverException e) {
+            fail("Failed to wait until attribute '" + attribute + "' of element located by '" + locator + "' is '" + value + "'");
+        }
     }
 
     public void clearInputField(WebElement element) {
@@ -201,6 +208,10 @@ abstract public class AbstractBasePage {
     }
 
     public void waitUntilAttributeToBeNotEmpty(WebElement element, String attribute) {
-        wait.until(ExpectedConditions.attributeToBeNotEmpty(element, attribute));
+        try {
+            wait.until(ExpectedConditions.attributeToBeNotEmpty(element, attribute));
+        } catch (WebDriverException e) {
+            fail("Failed to wait until attribute '" + attribute + "' of element '" + element + "' is not empty");
+        }
     }
 }
