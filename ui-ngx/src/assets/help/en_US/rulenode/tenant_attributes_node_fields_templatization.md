@@ -7,9 +7,9 @@
 
 ##### Examples
 
-Let's assume that we have a customer-based solution where customer manage two type of devices: `temperature` and `humidity` sensors.
-Additionally, let's assume that customer configured the thresholds settings for each device type.
-Threshold settings stored as an attributes on a customer level:
+Let's assume that tenant manage two type of devices: `temperature` and `humidity` sensors.
+Additionally, let's assume that tenant configured the thresholds settings for each device type.
+Threshold settings stored as an attributes on a tenant level:
 
 - *temperature_min_threshold* and *temperature_max_threshold* for temperature sensor with values set to *10* and *30* accordingly.
 - *humidity_min_threshold* and *humidity_max_threshold* for humidity sensor with values set to *70* and *85* accordingly.
@@ -19,10 +19,10 @@ with either `temperature` or `humidity` value according to the sensor type.
 
 In order to fetch the threshold value for the further message processing you can define next node configuration:
 
-![image](${helpBaseUrl}/help/images/rulenode/examples/customer-attributes-ft.png)
+![image](${helpBaseUrl}/help/images/rulenode/examples/tenant-attributes-ft.png)
 
 Imagine that you receive message defined below from the `temperature` sensor
-and forwarded it to the **customer attributes** node with configuration added above.
+and forwarded it to the **tenant attributes** node with configuration added above.
 
 - incoming message definition:
 
@@ -100,7 +100,7 @@ Rule node configuration set to fetch data to the message metadata. In the follow
 
 <br>
 
-These examples showcases using the **customer attributes** node with dynamic configuration based on the substitution of metadata fields.
+These examples showcases using the **tenant attributes** node with dynamic configuration based on the substitution of metadata fields.
 
 <br>
 <br>

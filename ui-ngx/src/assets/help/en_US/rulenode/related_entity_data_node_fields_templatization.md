@@ -7,9 +7,13 @@
 
 ##### Examples
 
-Let's assume that we have a customer-based solution where customer manage two type of devices: `temperature` and `humidity` sensors.
-Additionally, let's assume that customer configured the thresholds settings for each device type.
-Threshold settings stored as an attributes on a customer level:
+Let's consider a scenario where we possess an asset that serves as a warehouse 
+and is responsible for overseeing two categories of devices: 
+
+- sensors measuring `temperature`. 
+- sensors measuring `humidity`.
+
+Additionally, let's assume that this asset has configured thresholds set as attributes for each device type:
 
 - *temperature_min_threshold* and *temperature_max_threshold* for temperature sensor with values set to *10* and *30* accordingly.
 - *humidity_min_threshold* and *humidity_max_threshold* for humidity sensor with values set to *70* and *85* accordingly.
@@ -19,10 +23,11 @@ with either `temperature` or `humidity` value according to the sensor type.
 
 In order to fetch the threshold value for the further message processing you can define next node configuration:
 
-![image](${helpBaseUrl}/help/images/rulenode/examples/customer-attributes-ft.png)
+![image](${helpBaseUrl}/help/images/rulenode/examples/related-entity-data-ft.png)
+![image](${helpBaseUrl}/help/images/rulenode/examples/related-entity-data-ft-2.png)
 
 Imagine that you receive message defined below from the `temperature` sensor
-and forwarded it to the **customer attributes** node with configuration added above.
+and forwarded it to the **related entity data** node with configuration added above.
 
 - incoming message definition:
 
@@ -100,8 +105,7 @@ Rule node configuration set to fetch data to the message metadata. In the follow
 
 <br>
 
-These examples showcases using the **customer attributes** node with dynamic configuration based on the substitution of metadata fields.
+These examples showcases using the **related entity data** node with dynamic configuration based on the substitution of metadata fields.
 
 <br>
 <br>
-
