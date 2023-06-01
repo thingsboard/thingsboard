@@ -33,6 +33,10 @@
       flex-grow: 1;
     }
 
+    .chart-box {
+      overflow: auto;
+    }
+
     & > * {
       height: 100%;
     }

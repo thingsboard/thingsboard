@@ -122,11 +122,10 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
               protected attributeService: AttributeService,
               protected deviceService: DeviceService,
               protected dialogService: DialogService,
-              private cd: ChangeDetectorRef,
               public dialog: MatDialog) {
     super(store);
     const sortOrder: SortOrder = {property: 'ts', direction: Direction.DESC};
-    this.pageLink = new PageLink(1000, 0, null, sortOrder);
+    this.pageLink = new PageLink(Number.POSITIVE_INFINITY, 0, null, sortOrder);
     this.dataSource = new MatTableDataSource<AttributeData>([]);
 
   }
@@ -210,8 +209,7 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
         return "status status-error";
       case GatewayLogLevel.info:
       default:
-        return "status status-info"
-        return "status status-info"
+        return "status status-info";
     }
   }
 

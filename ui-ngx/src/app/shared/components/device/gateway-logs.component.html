@@ -53,5 +53,8 @@
   <!--          </mat-cell>-->
   <!--        </ng-container>-->
 </table>
+<span [fxShow]="dataSource.data.length === 0"
+      fxLayoutAlign="center center"
+      class="no-data-found">{{'attribute.no-telemetry-text' | translate}}</span>
 <mat-divider></mat-divider>
 

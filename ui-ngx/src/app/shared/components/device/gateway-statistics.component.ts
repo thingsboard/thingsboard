@@ -35,6 +35,10 @@ import { DatasourceType, LegendConfig, LegendData, LegendPosition, widgetType } 
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
+import { PageLink } from "@shared/models/page/page-link";
+import { Direction, SortOrder } from "@shared/models/page/sort-order";
+import { MatTableDataSource } from "@angular/material/table";
+import { MatSort } from "@angular/material/sort";
 
 
 @Component({
@@ -44,29 +48,36 @@ import { BaseData } from '@shared/models/base-data';
 })
 export class GatewayStatisticsComponent extends PageComponent implements AfterViewInit {
 
+  @ViewChild(MatSort) sort: MatSort;
   @ViewChild('statisticChart') statisticChart: ElementRef;
 
   @Input()
   ctx: WidgetContext;
 
   @Input()
-  general: boolean;
-
+  public general: boolean;
+  public isNumericData: boolean = true;
+  public chartInited: boolean;
   private flot: TbFlot;
   private flotCtx;
   public statisticForm: FormGroup;
   public statisticsKeys = [];
   public commands = [];
   public commandObj: any;
+  public dataSource: MatTableDataSource<any>;
+  public pageLink: PageLink;
   private resize$: ResizeObserver;
   private subscription: IWidgetSubscription;
+  private subscriptionInfo: SubscriptionInfo [];
+  public legendData: LegendData;
+  public displayedColumns: Array<string>;
   private subscriptionOptions: WidgetSubscriptionOptions = {
     callbacks: {
-      onDataUpdated: (subscription, detectChanges) => this.ctx.ngZone.run(() => {
+      onDataUpdated: () => this.ctx.ngZone.run(() => {
         this.onDataUpdated();
       }),
       onDataUpdateError: (subscription, e) => this.ctx.ngZone.run(() => {
-        this.onDataUpdateError(subscription, e);
+        this.onDataUpdateError(e);
       })
     },
     useDashboardTimewindow: false,
@@ -74,8 +85,6 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
       position: LegendPosition.bottom
     } as LegendConfig
   };
-  private subscriptionInfo: SubscriptionInfo [];
-  public legendData: LegendData;
 
 
   constructor(protected router: Router,
@@ -89,6 +98,10 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
               private utils: UtilsService,
               public dialog: MatDialog) {
     super(store);
+    const sortOrder: SortOrder = {property: 'ts', direction: Direction.DESC};
+    this.pageLink = new PageLink(Number.POSITIVE_INFINITY, 0, null, sortOrder);
+    this.displayedColumns = ['ts', 'message'];
+    this.dataSource = new MatTableDataSource<any>([]);
     this.statisticForm = this.fb.group({
       statisticKey: [null, []]
     })
@@ -104,6 +117,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
 
 
   ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
     this.init();
     if (this.ctx.defaultSubscription.datasources.length) {
 
@@ -211,7 +225,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     }
   }
 
-  private onDataUpdateError(subscription: IWidgetSubscription, e: any) {
+  private onDataUpdateError( e: any) {
     const exceptionData = this.utils.parseException(e);
     let errorText = exceptionData.name;
     if (exceptionData.message) {
@@ -221,9 +235,29 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   }
 
   private onDataUpdated() {
-    if (this.flot) {
-      this.flot.update();
+    this.checkDataToBeNumeric();
+    if (this.isNumericData) {
+      if (this.chartInited) {
+        if (this.flot) {
+          this.flot.update();
+        }
+      } else {
+        this.initChart();
+      }
     }
+  }
+
+  private initChart() {
+    this.chartInited = true;
+    this.flotCtx.$container = $(this.statisticChart.nativeElement);
+    this.resize$.observe(this.statisticChart.nativeElement);
+    this.flot = new TbFlot(this.flotCtx as WidgetContext, "line");
+    this.flot.update();
+  }
+
+  private checkDataToBeNumeric() {
+    this.dataSource.data = this.subscription.data.length ? this.subscription.data[0].data : [];
+    this.isNumericData = this.dataSource.data.every(data => isNaN(data[1]) === false);
   }
 
 
@@ -234,16 +268,16 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     if (this.ctx.datasources[0].entity) {
       this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.timeseries, subscriptionInfo, this.subscriptionOptions, false, true).subscribe(subscription => {
         this.subscription = subscription;
+        this.checkDataToBeNumeric();
         this.legendData = this.subscription.legendData;
         this.flotCtx.defaultSubscription = subscription;
-        this.flotCtx.$container = $(this.statisticChart.nativeElement);
         this.resize$ = new ResizeObserver(() => {
           this.resize();
         });
-        this.resize$.observe(this.statisticChart.nativeElement);
         this.ctx.detectChanges();
-        this.flot = new TbFlot(this.flotCtx as WidgetContext, "line");
-        this.flot.update();
+        if (this.isNumericData) {
+          this.initChart();
+        }
       })
 
     }

@@ -29,20 +29,43 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-<!--    <mat-form-field class="mat-block" *ngIf="commandObj">-->
-<!--      <mat-label>Timeout</mat-label>-->
-<!--      <input matInput [value]="commandObj.timeout" disabled>-->
-<!--    </mat-form-field>-->
+    <!--    <mat-form-field class="mat-block" *ngIf="commandObj">-->
+    <!--      <mat-label>Timeout</mat-label>-->
+    <!--      <input matInput [value]="commandObj.timeout" disabled>-->
+    <!--    </mat-form-field>-->
     <mat-form-field class="mat-block" *ngIf="commandObj">
       <mat-label>{{'gateway.statistics.command' | translate}}</mat-label>
       <input matInput [value]="commandObj.command" disabled>
     </mat-form-field>
   </mat-card>
   <div class="chart-box" fxLayout="column">
-    <div class="chart-container" #statisticChart>
+        <div class="chart-container" #statisticChart [fxShow]="isNumericData">
 
-    </div>
-    <div fxFlex class="legend" fxLayout="row" fxLayoutAlign="center center">
+        </div>
+    <table [fxShow]="!isNumericData" mat-table [dataSource]="dataSource"
+           matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
+           matSortDisableClear>
+      <ng-container matColumnDef="ts">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
+        <mat-cell *matCellDef="let row; let rowIndex = index">
+          {{row[0]| date:'yyyy-MM-dd HH:mm:ss' }}
+        </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="message">
+        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 70%">Message</mat-header-cell>
+        <mat-cell *matCellDef="let row">
+          {{ row[1] }}
+        </mat-cell>
+      </ng-container>
+      <mat-header-row [ngClass]="{'mat-row-select': true}"
+                      *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+      <mat-row [ngClass]="{'mat-row-select': true}"
+               *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </table>
+    <span [fxShow]="dataSource.data.length === 0 && !isNumericData"
+          fxLayoutAlign="center center"
+          class="no-data-found">{{'attribute.no-telemetry-text' | translate}}</span>
+    <div fxFlex class="legend" fxLayout="row" fxLayoutAlign="center center" [fxShow]="isNumericData">
       <div class="legend-keys" *ngFor="let legendKey of legendData?.keys" fxLayout="row"
            fxLayoutAlign="center center">
         <span class="legend-line" [ngStyle]="{backgroundColor: legendKey.dataKey.color}"></span>
