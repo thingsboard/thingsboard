@@ -32,17 +32,21 @@
 </fieldset>
 <fieldset class="tb-help-popup-button-container" *ngIf="textMode">
   <div #toggleHelpTextButton
+       [ngClass] = "{'hint-button': hintMode}"
        (click)="toggleHelp()">
     <button mat-button
             color="primary"
             class="tb-help-popup-text-button"
-            [ngClass]="{'mat-mdc-outlined-button mdc-button--outlined': popoverVisible && popoverReady}">
+            [ngClass]="{'mat-mdc-outlined-button mdc-button--outlined': popoverVisible && popoverReady,
+                        'tb-standard-help-popup-text-button': !hintMode,
+                        'tb-hint-help-popup-text-button': hintMode}">
       <span>
         <ng-container *ngIf="triggerSafeHtml">
           <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
         </ng-container>
-        <mat-icon *ngIf="!popoverVisible || popoverReady" class="tb-mat-16">open_in_new</mat-icon>
-        <mat-spinner *ngIf="popoverVisible && !popoverReady" mode="indeterminate" diameter="16" strokeWidth="2"></mat-spinner>
+        <mat-icon *ngIf="(!popoverVisible || popoverReady)"
+                  [ngClass]="{'tb-mat-16': !hintMode,'tb-mat-12': hintMode}">open_in_new</mat-icon>
+        <mat-spinner *ngIf="popoverVisible && !popoverReady" mode="indeterminate" [diameter]="hintMode ? 12 : 16" strokeWidth="2"></mat-spinner>
       </span>
     </button>
   </div>

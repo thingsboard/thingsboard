@@ -28,6 +28,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { isDefinedAndNotNull } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   // eslint-disable-next-line @angular-eslint/component-selector
@@ -58,6 +59,10 @@ export class HelpPopupComponent implements OnChanges, OnDestroy {
 
   // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('tb-help-popup-style') helpPopupStyle: { [klass: string]: any } = {};
+
+  @Input()
+  @coerceBoolean()
+  hintMode = false;
 
   popoverVisible = false;
   popoverReady = true;

@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-help-popup-button-container {
   width: initial;
   display: inline-block;
   vertical-align: middle;
+  .hint-button {
+    line-height: 1;
+  }
 }
 
 .tb-help-popup-button {
@@ -42,12 +46,29 @@
   }
 }
 
-.tb-help-popup-text-button.mat-mdc-button.mat-mdc-button-base {
-  position: relative;
+.tb-hint-help-popup-text-button.mat-mdc-button.mat-mdc-button-base {
+  padding: 0 3px;
+  line-height: 1;
+  &.mat-mdc-outlined-button {
+    padding: 0 2px;
+  }
+  .mdc-button__label > span {
+    .mat-icon {
+      vertical-align: bottom;
+      margin-right: 0;
+    }
+    .mat-mdc-progress-spinner {
+      vertical-align: bottom;
+    }
+  }
+  .mat-mdc-button-touch-target {
+    height: 14px;
+  }
+}
+
+.tb-standard-help-popup-text-button.mat-mdc-button.mat-mdc-button-base {
   padding: 0 2px 0 8px;
   line-height: 28px;
-  height: auto;
-  transition: border 0s;
   &.mat-mdc-outlined-button {
     padding: 0 1px 0 7px;
     line-height: 26px;
@@ -55,14 +76,26 @@
   .mdc-button__label > span {
     .mat-icon {
       vertical-align: middle;
+    }
+    .mat-mdc-progress-spinner {
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+  }
+}
+
+.tb-help-popup-text-button.mat-mdc-button.mat-mdc-button-base {
+  position: relative;
+  height: auto;
+  transition: border 0s;
+  .mdc-button__label > span {
+    .mat-icon {
       padding-left: 4px;
       box-sizing: initial;
     }
     .mat-mdc-progress-spinner {
       display: inline-block;
       margin-left: 4px;
-      margin-right: 5px;
-      vertical-align: middle;
     }
   }
 }
