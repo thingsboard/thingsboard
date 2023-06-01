@@ -28,9 +28,9 @@ import {
   GatewayRemoteConfigurationDialogData
 } from '@shared/components/dialog/gateway-remote-configuration-dialog';
 import { DeviceService } from '@core/http/device.service';
-import { of } from "rxjs";
-import { mergeMap } from "rxjs/operators";
-import { DeviceCredentialsType } from "@shared/models/device.models";
+import { of } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
+import { DeviceCredentialsType } from '@shared/models/device.models';
 
 export enum StorageTypes {
   MEMORY = 'memory',

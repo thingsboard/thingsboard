@@ -35,10 +35,10 @@ import { DatasourceType, LegendConfig, LegendData, LegendPosition, widgetType } 
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
-import { PageLink } from "@shared/models/page/page-link";
-import { Direction, SortOrder } from "@shared/models/page/sort-order";
-import { MatTableDataSource } from "@angular/material/table";
-import { MatSort } from "@angular/material/sort";
+import { PageLink } from '@shared/models/page/page-link';
+import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatSort } from '@angular/material/sort';
 
 
 @Component({
@@ -56,6 +56,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
 
   @Input()
   public general: boolean;
+
   public isNumericData: boolean = true;
   public chartInited: boolean;
   private flot: TbFlot;
@@ -98,9 +99,9 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
               private utils: UtilsService,
               public dialog: MatDialog) {
     super(store);
-    const sortOrder: SortOrder = {property: 'ts', direction: Direction.DESC};
+    const sortOrder: SortOrder = {property: '0', direction: Direction.DESC};
     this.pageLink = new PageLink(Number.POSITIVE_INFINITY, 0, null, sortOrder);
-    this.displayedColumns = ['ts', 'message'];
+    this.displayedColumns = ['0', '1'];
     this.dataSource = new MatTableDataSource<any>([]);
     this.statisticForm = this.fb.group({
       statisticKey: [null, []]
@@ -118,6 +119,9 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
 
   ngAfterViewInit() {
     this.dataSource.sort = this.sort;
+    this.sort.sortChange.subscribe(_=>{
+      this.sortData();
+    })
     this.init();
     if (this.ctx.defaultSubscription.datasources.length) {
 
@@ -145,6 +149,10 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
           })
       }
     }
+  }
+
+  public sortData () {
+    this.dataSource.sortData(this.dataSource.data, this.sort);
   }
 
   public onLegendKeyHiddenChange(index: number) {
@@ -225,7 +233,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     }
   }
 
-  private onDataUpdateError( e: any) {
+  private onDataUpdateError(e: any) {
     const exceptionData = this.utils.parseException(e);
     let errorText = exceptionData.name;
     if (exceptionData.message) {
@@ -256,6 +264,10 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   }
 
   private checkDataToBeNumeric() {
+    if (this.general) {
+      this.isNumericData = true;
+      return;
+    }
     this.dataSource.data = this.subscription.data.length ? this.subscription.data[0].data : [];
     this.isNumericData = this.dataSource.data.every(data => isNaN(data[1]) === false);
   }

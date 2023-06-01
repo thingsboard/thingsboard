@@ -30,7 +30,7 @@ import { ContentType } from '@shared/models/constants';
 import {
   JsonObjectEditDialogComponent,
   JsonObjectEditDialogData
-} from "@shared/components/dialog/json-object-edit-dialog.component";
+} from '@shared/components/dialog/json-object-edit-dialog.component';
 
 
 @Component({
@@ -70,7 +70,6 @@ export class GatewayServiceRPCComponent extends PageComponent implements AfterVi
               protected attributeService: AttributeService,
               protected deviceService: DeviceService,
               protected dialogService: DialogService,
-              private cd: ChangeDetectorRef,
               public dialog: MatDialog) {
     super(store);
     this.commandForm = this.fb.group({

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, ViewChild } from '@angular/core';
+import { AfterViewInit,  Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
@@ -24,18 +24,18 @@ import { AttributeService } from '@core/http/attribute.service';
 import { DeviceService } from '@core/http/device.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AttributeData, DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { PageComponent } from "@shared/components/page.component";
-import { PageLink } from "@shared/models/page/page-link";
+import { PageComponent } from '@shared/components/page.component';
+import { PageLink } from '@shared/models/page/page-link';
 import { AttributeDatasource } from "@home/models/datasource/attribute-datasource";
 import { Direction, SortOrder } from "@shared/models/page/sort-order";
-import { MatSort } from "@angular/material/sort";
-import { MatTableDataSource } from "@angular/material/table";
-import { GatewayLogLevel } from "@shared/components/device/gateway-configuration.component";
+import { MatSort } from '@angular/material/sort';
+import { MatTableDataSource } from '@angular/material/table';
+import { GatewayLogLevel } from '@shared/components/device/gateway-configuration.component';
 import { DialogService } from '@app/core/services/dialog.service';
-import { WidgetContext } from "@home/models/widget-component.models";
+import { WidgetContext } from '@home/models/widget-component.models';
 
 
-export interface gatewayConnector {
+export interface GatewayConnector {
   name: string;
   type: string;
   configuration?: string;
@@ -90,7 +90,7 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
 
   logLinks: Array<LogLink>;
 
-  initialConnector: gatewayConnector;
+  initialConnector: GatewayConnector;
 
   activeLink: LogLink;
 
@@ -139,10 +139,7 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
       return timewindow;
     }
     if (this.ctx.settings.isConnectorLog && this.ctx.settings.connectorLogState) {
-      console.log(this.ctx.settings.connectorLogState)
-
       const connector = this.ctx.stateController.getStateParams()[this.ctx.settings.connectorLogState];
-      console.log(connector)
       this.logLinks = [{
         key: `${connector.key}_LOGS`,
         name: "Connector",
@@ -166,7 +163,6 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
 
   updateData(sort?) {
     if (this.ctx.defaultSubscription.data.length) {
-      console.log(this.ctx.defaultSubscription.data[0].dataKey.name === "LOGS")
       let attrData = this.ctx.defaultSubscription.data[0].data.map(data => {
         let result =  {
           ts: data[0],
