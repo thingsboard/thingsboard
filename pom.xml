@@ -80,6 +80,7 @@
         <grpc.version>1.42.1</grpc.version>
         <tbel.version>1.0.6</tbel.version>
         <lombok.version>1.18.18</lombok.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
         <paho.client.version>1.2.4</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <netty.version>4.1.91.Final</netty.version>
@@ -618,6 +619,11 @@
                                 <groupId>org.projectlombok</groupId>
                                 <artifactId>lombok</artifactId>
                                 <version>${lombok.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
                             </path>
                         </annotationProcessorPaths>
                     </configuration>
@@ -1699,6 +1705,11 @@
                 <artifactId>dbunit</artifactId>
                 <version>${dbunit.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>
