@@ -103,9 +103,6 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
     @Column(name = ModelConstants.OTA_PACKAGE_ADDITIONAL_INFO_COLUMN)
     private JsonNode additionalInfo;
 
-    @Column(name = SEARCH_TEXT_PROPERTY)
-    private String searchText;
-
     @Transient
     private boolean hasData;
 
