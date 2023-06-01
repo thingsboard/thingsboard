@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.notification.settings.TriggerTypeConfi
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
-import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
@@ -53,17 +52,14 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.rule.cache.NotificationRulesCache;
 import org.thingsboard.server.service.notification.rule.trigger.NotificationRuleTriggerProcessor;
-import org.thingsboard.server.service.notification.rule.trigger.RuleEngineMsgNotificationRuleTriggerProcessor;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -99,7 +95,6 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
     @Override
     public void process(NotificationRuleTrigger trigger) {
         NotificationRuleTriggerType triggerType = trigger.getType();
-        if (triggerType == null) return;
         TenantId tenantId = triggerType.isTenantLevel() ? trigger.getTenantId() : TenantId.SYS_TENANT_ID;
 
         try {
@@ -253,17 +248,9 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
 
     @Autowired
     public void setTriggerProcessors(Collection<NotificationRuleTriggerProcessor> processors) {
-        Map<String, NotificationRuleTriggerType> ruleEngineMsgTypeToTriggerType = new HashMap<>();
         processors.forEach(processor -> {
             triggerProcessors.put(processor.getTriggerType(), processor);
-            if (processor instanceof RuleEngineMsgNotificationRuleTriggerProcessor) {
-                Set<String> supportedMsgTypes = ((RuleEngineMsgNotificationRuleTriggerProcessor<?>) processor).getSupportedMsgTypes();
-                supportedMsgTypes.forEach(supportedMsgType -> {
-                    ruleEngineMsgTypeToTriggerType.put(supportedMsgType, processor.getTriggerType());
-                });
-            }
         });
-        RuleEngineMsgTrigger.msgTypeToTriggerType = ruleEngineMsgTypeToTriggerType;
     }
 
 }

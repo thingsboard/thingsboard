@@ -17,30 +17,32 @@ package org.thingsboard.server.common.msg.notification.trigger;
 
 import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.TbMsg;
-
-import java.util.Map;
 
 @Data
 @Builder
-public class RuleEngineMsgTrigger implements NotificationRuleTrigger {
+public class AlarmCommentTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
-    private final TbMsg msg;
-
-    public static Map<String, NotificationRuleTriggerType> msgTypeToTriggerType; // set on init by DefaultNotificationRuleProcessor
+    private final AlarmComment comment;
+    private final AlarmInfo alarmInfo;
+    private final ActionType actionType;
+    private final User user;
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return msgTypeToTriggerType != null ? msgTypeToTriggerType.get(msg.getType()) : null;
+        return NotificationRuleTriggerType.ALARM_COMMENT;
     }
 
     @Override
     public EntityId getOriginatorEntityId() {
-        return msg.getOriginator();
+        return alarmInfo.getId();
     }
 
 }
