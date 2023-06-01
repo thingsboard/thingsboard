@@ -20,6 +20,16 @@ import org.thingsboard.server.common.data.util.TbPair;
 
 public interface TbVersionedNode extends TbNode {
 
+    /**
+     * Upgrades the configuration from a specific version to the current version specified in the
+     * {@link RuleNode} annotation for the instance of {@link TbVersionedNode}.
+     *
+     * @param fromVersion        The version from which the configuration needs to be upgraded.
+     * @param oldConfiguration   The old configuration to be upgraded.
+     * @return                   A pair consisting of a Boolean flag indicating the success of the upgrade
+     *                           and a JsonNode representing the upgraded configuration.
+     * @throws TbNodeException   If an error occurs during the upgrade process.
+     */
     TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException;
 
 }
