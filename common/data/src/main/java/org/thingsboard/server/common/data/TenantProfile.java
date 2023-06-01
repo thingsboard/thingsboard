@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -38,9 +39,11 @@ import java.util.Optional;
 @ToString(exclude = {"profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class TenantProfile extends BaseDataWithAdditionalInfo<TenantProfileId> implements HasName {
+public class TenantProfile extends BaseData<TenantProfileId> implements HasName {
 
     private static final long serialVersionUID = 3021989561267192281L;
+
+    public static final ObjectMapper mapper = new ObjectMapper();
 
     @NoXss
     @Length(fieldName = "name")

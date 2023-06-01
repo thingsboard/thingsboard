@@ -37,7 +37,6 @@ import java.util.function.Supplier;
 @Slf4j
 public abstract class BaseDataWithAdditionalInfo<I extends UUIDBased> extends BaseData<I> implements HasAdditionalInfo {
 
-    public static final ObjectMapper mapper = new ObjectMapper();
     @NoXss
     private transient JsonNode additionalInfo;
     @JsonIgnore
