@@ -670,7 +670,7 @@ public class AssetServiceTest extends AbstractServiceTest {
                         )
         );
 
-        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
+        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getTitle());
         List<AssetInfo> assetInfosWithCustomer = assetService
                 .findAssetInfosByTenantId(tenantId, pageLinkWithCustomer).getData();
 
@@ -730,7 +730,7 @@ public class AssetServiceTest extends AbstractServiceTest {
                         )
         );
 
-        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
+        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getTitle());
         List<AssetInfo> assetInfosWithCustomer = assetService
                 .findAssetInfosByTenantIdAndType(tenantId, asset.getType(), pageLinkWithCustomer).getData();
 
@@ -776,7 +776,7 @@ public class AssetServiceTest extends AbstractServiceTest {
                         )
         );
 
-        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
+        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getTitle());
         List<AssetInfo> assetInfosWithCustomer = assetService
                 .findAssetInfosByTenantIdAndAssetProfileId(tenantId, savedAsset.getAssetProfileId(), pageLinkWithCustomer).getData();
 

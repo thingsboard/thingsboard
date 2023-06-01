@@ -124,7 +124,6 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     configuration_descriptor varchar,
     name varchar(255),
     scope varchar(255),
-    search_text varchar(255),
     type varchar(255),
     clustering_mode varchar(255)
 );
@@ -139,7 +138,6 @@ CREATE TABLE IF NOT EXISTS customer (
     country varchar(255),
     email varchar(255),
     phone varchar(255),
-    search_text varchar(255),
     state varchar(255),
     tenant_id uuid,
     title varchar(255),
@@ -153,7 +151,6 @@ CREATE TABLE IF NOT EXISTS dashboard (
     created_time bigint NOT NULL,
     configuration varchar,
     assigned_customers varchar(1000000),
-    search_text varchar(255),
     tenant_id uuid,
     title varchar(255),
     mobile_hide boolean DEFAULT false,
@@ -173,7 +170,6 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     first_rule_node_id uuid,
     root boolean,
     debug_mode boolean,
-    search_text varchar(255),
     tenant_id uuid,
     external_id uuid,
     CONSTRAINT rule_chain_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -189,7 +185,6 @@ CREATE TABLE IF NOT EXISTS rule_node (
     name varchar(255),
     debug_mode boolean,
     singleton_mode boolean,
-    search_text varchar(255),
     external_id uuid
 );
 
@@ -246,7 +241,6 @@ CREATE TABLE IF NOT EXISTS asset_profile (
     name varchar(255),
     image varchar(1000000),
     description varchar,
-    search_text varchar(255),
     is_default boolean,
     tenant_id uuid,
     default_rule_chain_id uuid,
@@ -269,7 +263,6 @@ CREATE TABLE IF NOT EXISTS asset (
     asset_profile_id uuid NOT NULL,
     name varchar(255),
     label varchar(255),
-    search_text varchar(255),
     tenant_id uuid,
     type varchar(255),
     external_id uuid,
@@ -288,7 +281,6 @@ CREATE TABLE IF NOT EXISTS device_profile (
     provision_type varchar(255),
     profile_data jsonb,
     description varchar,
-    search_text varchar(255),
     is_default boolean,
     tenant_id uuid,
     firmware_id uuid,
@@ -442,7 +434,6 @@ CREATE TABLE IF NOT EXISTS tb_user (
     first_name varchar(255),
     last_name varchar(255),
     phone varchar(255),
-    search_text varchar(255),
     tenant_id uuid
 );
 
@@ -452,7 +443,6 @@ CREATE TABLE IF NOT EXISTS tenant_profile (
     name varchar(255),
     profile_data jsonb,
     description varchar,
-    search_text varchar(255),
     is_default boolean,
     isolated_tb_core boolean,
     isolated_tb_rule_engine boolean,
@@ -471,7 +461,6 @@ CREATE TABLE IF NOT EXISTS tenant (
     email varchar(255),
     phone varchar(255),
     region varchar(255),
-    search_text varchar(255),
     state varchar(255),
     title varchar(255),
     zip varchar(255),
@@ -505,7 +494,6 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     id uuid NOT NULL CONSTRAINT widgets_bundle_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     alias varchar(255),
-    search_text varchar(255),
     tenant_id uuid,
     title varchar(255),
     image varchar(1000000),
@@ -526,7 +514,6 @@ CREATE TABLE IF NOT EXISTS entity_view (
     keys varchar(10000000),
     start_ts bigint,
     end_ts bigint,
-    search_text varchar(255),
     additional_info varchar,
     external_id uuid,
     CONSTRAINT entity_view_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -725,7 +712,6 @@ CREATE TABLE IF NOT EXISTS edge (
     label varchar(255),
     routing_key varchar(255),
     secret varchar(255),
-    search_text varchar(255),
     tenant_id uuid,
     CONSTRAINT edge_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT edge_routing_key_unq_key UNIQUE (routing_key)

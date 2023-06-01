@@ -862,7 +862,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
                         )
         );
 
-        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
+        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getTitle());
         List<DeviceInfo> deviceInfosWithCustomer = deviceService
                 .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).build(), pageLinkWithCustomer).getData();
 
@@ -922,7 +922,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
                         )
         );
 
-        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
+        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getTitle());
         List<DeviceInfo> deviceInfosWithCustomer = deviceService
                 .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).type(device.getType()).build(), pageLinkWithCustomer).getData();
 
@@ -968,7 +968,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
                         )
         );
 
-        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getSearchText());
+        PageLink pageLinkWithCustomer = new PageLink(100, 0, savedCustomer.getTitle());
         List<DeviceInfo> deviceInfosWithCustomer = deviceService
                 .findDeviceInfosByFilter(DeviceInfoFilter.builder().tenantId(tenantId).deviceProfileId(savedDevice.getDeviceProfileId()).build(), pageLinkWithCustomer).getData();
 
