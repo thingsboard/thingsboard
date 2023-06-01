@@ -216,7 +216,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (attributesToDelete.length) {
       tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributesToDelete));
     }
-    forkJoin(tasks).subscribe(resp => {
+    forkJoin(tasks).subscribe(_ => {
       this.showToast("Update Successful")
       this.updateData(true);
     })
@@ -327,7 +327,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
           key: scope == AttributeScope.SHARED_SCOPE ? 'active_connectors' : 'inactive_connectors',
           value: scope == AttributeScope.SHARED_SCOPE ? this.activeConnectors : this.inactiveConnectors
         }]));
-        forkJoin(tasks).subscribe(resp => {
+        forkJoin(tasks).subscribe(_ => {
           if (this.initialConnector ? this.initialConnector.name === attribute.key : true) {
             this.clearOutConnectorForm();
             this.cd.detectChanges();
@@ -381,7 +381,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }]), this.attributeService.saveEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, [{
       key: 'inactive_connectors',
       value: this.inactiveConnectors
-    }]),]).subscribe(resp => {
+    }]),]).subscribe(_ => {
       this.updateData();
     })
   }

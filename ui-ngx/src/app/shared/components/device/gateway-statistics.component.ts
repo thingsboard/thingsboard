@@ -39,6 +39,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
+import { isNumber } from '@core/utils';
 
 
 @Component({
@@ -243,7 +244,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   }
 
   private onDataUpdated() {
-    this.checkDataToBeNumeric();
+    this.isDataOnlyNumbers();
     if (this.isNumericData) {
       if (this.chartInited) {
         if (this.flot) {
@@ -263,13 +264,13 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     this.flot.update();
   }
 
-  private checkDataToBeNumeric() {
+  private isDataOnlyNumbers() {
     if (this.general) {
       this.isNumericData = true;
       return;
     }
     this.dataSource.data = this.subscription.data.length ? this.subscription.data[0].data : [];
-    this.isNumericData = this.dataSource.data.every(data => isNaN(data[1]) === false);
+    this.isNumericData = this.dataSource.data.every(data => isNumber(data[1]));
   }
 
 
@@ -280,7 +281,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     if (this.ctx.datasources[0].entity) {
       this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.timeseries, subscriptionInfo, this.subscriptionOptions, false, true).subscribe(subscription => {
         this.subscription = subscription;
-        this.checkDataToBeNumeric();
+        this.isDataOnlyNumbers();
         this.legendData = this.subscription.legendData;
         this.flotCtx.defaultSubscription = subscription;
         this.resize$ = new ResizeObserver(() => {
