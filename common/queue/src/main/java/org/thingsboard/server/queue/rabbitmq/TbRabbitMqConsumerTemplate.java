@@ -20,6 +20,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.GetResponse;
+import java.util.ArrayList;
+import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
@@ -31,7 +33,6 @@ import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -44,6 +45,7 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> extends AbstractTb
     private final TbQueueMsgDecoder<T> decoder;
     private final Channel channel;
     private final Connection connection;
+    private final int maxPollMessages;
 
     private volatile Set<String> queues;
 
@@ -51,6 +53,7 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> extends AbstractTb
         super(topic);
         this.admin = admin;
         this.decoder = decoder;
+        this.maxPollMessages = rabbitMqSettings.getMaxPollMessages();
         try {
             connection = rabbitMqSettings.getConnectionFactory().newConnection();
         } catch (IOException | TimeoutException e) {
@@ -70,17 +73,32 @@ public class TbRabbitMqConsumerTemplate<T extends TbQueueMsg> extends AbstractTb
     protected List<GetResponse> doPoll(long durationInMillis) {
         List<GetResponse> result = queues.stream()
                 .map(queue -> {
-                    try {
-                        return channel.basicGet(queue, false);
-                    } catch (IOException e) {
-                        log.error("Failed to get messages from queue: [{}]", queue);
-                        throw new RuntimeException("Failed to get messages from queue.", e);
+                    List<GetResponse> messages = new ArrayList<>();
+                    for (int i = 0; i < maxPollMessages; i++) {
+                        GetResponse response = doQueuePoll(queue);
+                        if (response == null) {
+                            break;
+                        }
+                        messages.add(response);
                     }
-                }).filter(Objects::nonNull).collect(Collectors.toList());
+                    return messages;
+                })
+                .filter(r -> !r.isEmpty())
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
         if (result.size() > 0) {
             return result;
         } else {
             return Collections.emptyList();
+        }
+    }
+
+    protected GetResponse doQueuePoll(String queue) {
+        try {
+            return channel.basicGet(queue, false);
+        } catch (IOException e) {
+            log.error("Failed to get messages from queue: [{}]", queue);
+            throw new RuntimeException("Failed to get messages from queue.", e);
         }
     }
 
