@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.notification.rule.trigger;
+package org.thingsboard.server.common.data.notification.settings;
 
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
-import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
+import lombok.Data;
 
-import java.util.Set;
-
-public interface RuleEngineMsgNotificationRuleTriggerProcessor<C extends NotificationRuleTriggerConfig> extends NotificationRuleTriggerProcessor<RuleEngineMsgTrigger, C> {
-
-    Set<String> getSupportedMsgTypes();
-
+@Data
+public class TriggerTypeConfig {
+    private long deduplicationDuration;
 }

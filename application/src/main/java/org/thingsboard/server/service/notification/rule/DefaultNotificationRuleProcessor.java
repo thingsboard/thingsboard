@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@ConfigurationProperties(prefix = "notification-system.rules")
 @Slf4j
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class DefaultNotificationRuleProcessor implements NotificationRuleProcessor {
@@ -79,6 +80,8 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
     private final NotificationExecutorService notificationExecutor;
     private final CacheManager cacheManager;
     private Cache sentNotifications;
+    @Setter
+    private Map<NotificationRuleTriggerType, TriggerTypeConfig> triggerTypesConfigs;
 
     private final Map<NotificationRuleTriggerType, NotificationRuleTriggerProcessor> triggerProcessors = new EnumMap<>(NotificationRuleTriggerType.class);
 
@@ -142,9 +145,6 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
                 log.debug("[{}] Rate limit for notification requests per rule was exceeded (rule '{}')", rule.getTenantId(), rule.getName());
                 return;
             }
-            if (trigger.getType().isDeduplicate() && alreadySent(rule.getId(), trigger)) {
-                return;
-            }
 
             NotificationInfo notificationInfo = constructNotificationInfo(trigger, triggerConfig);
             rule.getRecipientsConfig().getTargetsTable().forEach((delay, targets) -> {
@@ -194,21 +194,32 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
         return triggerProcessors.get(triggerConfig.getTriggerType()).constructNotificationInfo(trigger);
     }
 
-    private boolean alreadySent(NotificationRuleId ruleId, NotificationRuleTrigger trigger) {
-        String key = ruleId + "_" + trigger.getOriginatorEntityId();
-        SentNotification sent = sentNotifications.get(key, SentNotification.class);
-        boolean alreadySent;
-        if (sent != null && sent.getTrigger().equals(trigger)) {
-            alreadySent = true;
-            log.debug("Notification for {} trigger was already sent, ignoring", trigger.getType());
-            // updating cache anyway so that the value is not removed by ttl
-        } else {
-            alreadySent = false;
-            sent = new SentNotification(trigger);
+    private boolean alreadySent(NotificationRule rule, NotificationRuleTrigger trigger) {
+        String deduplicationKey = getDeduplicationKey(trigger, rule);
+
+        boolean alreadySent = false;
+        Long lastSentTs = sentNotifications.get(deduplicationKey, Long.class);
+        if (lastSentTs != null) {
+            long deduplicationDuration = Optional.ofNullable(triggerTypesConfigs)
+                    .map(triggerTypes -> triggerTypes.get(trigger.getType()))
+                    .map(TriggerTypeConfig::getDeduplicationDuration)
+                    .orElseGet(trigger::getDefaultDeduplicationDuration);
+            long passed = System.currentTimeMillis() - lastSentTs;
+            log.trace("Deduplicating trigger {} for rule '{}' by key '{}'. Deduplication duration: {} ms, passed: {} ms",
+                    trigger.getType(), rule.getName(), deduplicationKey, deduplicationDuration, passed);
+            if (deduplicationDuration == 0 || passed <= deduplicationDuration) {
+                alreadySent = true;
+            }
         }
-        log.trace("[{}] Putting to sentNotifications cache: {}", ruleId, trigger);
-        sentNotifications.put(key, sent);
+        if (!alreadySent) {
+            lastSentTs = System.currentTimeMillis();
+        }
+        sentNotifications.put(deduplicationKey, lastSentTs);
         return alreadySent;
+    }
+
+    public static String getDeduplicationKey(NotificationRuleTrigger trigger, NotificationRule rule) {
+        return String.join("_", trigger.getDeduplicationKey(), rule.getDeduplicationKey());
     }
 
     @EventListener(ComponentLifecycleMsg.class)

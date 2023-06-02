@@ -444,7 +444,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
-    public void testNotificationsDeduplication() throws Exception {
+    public void testNotificationsDeduplication_newPlatformVersion() throws Exception {
         loginSysAdmin();
         NewPlatformVersionNotificationRuleTriggerConfig triggerConfig = new NewPlatformVersionNotificationRuleTriggerConfig();
         createNotificationRule(triggerConfig, "Test", "Test", createNotificationTarget(tenantAdminUserId).getId());
