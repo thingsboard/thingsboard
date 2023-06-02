@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { WidgetActionCallbacks } from './action/manage-widget-actions.component.models';
-import { DatasourceCallbacks } from '@home/components/widget/datasource.component.models';
+import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { DatasourceCallbacks } from '@home/components/widget/config/datasource.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import { AfterViewInit, Directive, EventEmitter, Inject, OnInit } from '@angular/core';

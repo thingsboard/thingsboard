@@ -17,14 +17,14 @@
 import { NgModule, Type } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { IBasicWidgetConfigComponent } from '@home/components/widget/widget-config.component.models';
-import { WidgetConfigComponentsModule } from '@home/components/widget/widget-config-components.module';
+import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
+import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
 import {
   SimpleCardBasicConfigComponent
-} from '@home/components/widget/basic-config/cards/simple-card-basic-config.component';
+} from '@home/components/widget/config/basic/cards/simple-card-basic-config.component';
 import {
   WidgetActionsPanelComponent
-} from '@home/components/widget/basic-config/common/widget-actions-panel.component';
+} from '@home/components/widget/config/basic/common/widget-actions-panel.component';
 
 @NgModule({
   declarations: [

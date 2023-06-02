@@ -19,16 +19,17 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
 import { AlarmFilterConfigComponent } from '@home/components/alarm/alarm-filter-config.component';
 import { AlarmAssigneeSelectComponent } from '@home/components/alarm/alarm-assignee-select.component';
-import { DataKeysComponent } from '@home/components/widget/data-keys.component';
-import { DataKeyConfigDialogComponent } from '@home/components/widget/data-key-config-dialog.component';
-import { DataKeyConfigComponent } from '@home/components/widget/data-key-config.component';
-import { DatasourceComponent } from '@home/components/widget/datasource.component';
-import { DatasourcesComponent } from '@home/components/widget/datasources.component';
+import { DataKeysComponent } from '@home/components/widget/config/data-keys.component';
+import { DataKeyConfigDialogComponent } from '@home/components/widget/config/data-key-config-dialog.component';
+import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
+import { DatasourceComponent } from '@home/components/widget/config/datasource.component';
+import { DatasourcesComponent } from '@home/components/widget/config/datasources.component';
 import { EntityAliasSelectComponent } from '@home/components/alias/entity-alias-select.component';
 import { FilterSelectComponent } from '@home/components/filter/filter-select.component';
 import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
-import { WidgetSettingsComponent } from '@home/components/widget/widget-settings.component';
-import { TimewindowConfigPanelComponent } from '@home/components/widget/timewindow-config-panel.component';
+import { WidgetSettingsComponent } from '@home/components/widget/config/widget-settings.component';
+import { TimewindowConfigPanelComponent } from '@home/components/widget/config/timewindow-config-panel.component';
+import { WidgetUnitsComponent } from '@home/components/widget/config/widget-units.component';
 
 @NgModule({
   declarations:
@@ -43,6 +44,7 @@ import { TimewindowConfigPanelComponent } from '@home/components/widget/timewind
       EntityAliasSelectComponent,
       FilterSelectComponent,
       TimewindowConfigPanelComponent,
+      WidgetUnitsComponent,
       WidgetSettingsComponent
     ],
   imports: [
@@ -61,6 +63,7 @@ import { TimewindowConfigPanelComponent } from '@home/components/widget/timewind
     EntityAliasSelectComponent,
     FilterSelectComponent,
     TimewindowConfigPanelComponent,
+    WidgetUnitsComponent,
     WidgetSettingsComponent
   ]
 })

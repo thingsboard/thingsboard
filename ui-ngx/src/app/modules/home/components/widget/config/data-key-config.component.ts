@@ -40,7 +40,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
-import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';

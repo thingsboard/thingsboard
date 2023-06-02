@@ -39,14 +39,14 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { deepClone } from '@core/utils';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
-import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-datasources',
   templateUrl: './datasources.component.html',
-  styleUrls: ['./datasources.component.scss', 'widget-config.scss'],
+  styleUrls: ['./datasources.component.scss', './widget-config.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

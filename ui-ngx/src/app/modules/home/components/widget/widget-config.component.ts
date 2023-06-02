@@ -82,7 +82,7 @@ import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import Timeout = NodeJS.Timeout;
-import { TimewindowConfigData } from '@home/components/widget/timewindow-config-panel.component';
+import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -96,7 +96,7 @@ const defaultSettingsForm = [
 @Component({
   selector: 'tb-widget-config',
   templateUrl: './widget-config.component.html',
-  styleUrls: ['./widget-config.component.scss', 'widget-config.scss'],
+  styleUrls: ['./widget-config.component.scss', './config/widget-config.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

@@ -15,16 +15,10 @@
 ///
 
 import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
-import {
-  ControlValueAccessor,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
-  UntypedFormBuilder,
-  UntypedFormGroup
-} from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { WidgetActionsData } from '@home/components/widget/action/manage-widget-actions.component.models';
-import { Datasource, WidgetActionDescriptor } from '@shared/models/widget.models';
+import { WidgetActionDescriptor } from '@shared/models/widget.models';
 import {
   ManageWidgetActionsDialogComponent,
   ManageWidgetActionsDialogData

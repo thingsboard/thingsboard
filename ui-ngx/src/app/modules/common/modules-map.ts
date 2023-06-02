@@ -206,9 +206,9 @@ import * as EntityAliasDialogComponent from '@home/components/alias/entity-alias
 import * as EntityFilterComponent from '@home/components/entity/entity-filter.component';
 import * as RelationFiltersComponent from '@home/components/relation/relation-filters.component';
 import * as EntityAliasSelectComponent from '@home/components/alias/entity-alias-select.component';
-import * as DataKeysComponent from '@home/components/widget/data-keys.component';
-import * as DataKeyConfigDialogComponent from '@home/components/widget/data-key-config-dialog.component';
-import * as DataKeyConfigComponent from '@home/components/widget/data-key-config.component';
+import * as DataKeysComponent from '@home/components/widget/config/data-keys.component';
+import * as DataKeyConfigDialogComponent from '@home/components/widget/config/data-key-config-dialog.component';
+import * as DataKeyConfigComponent from '@home/components/widget/config/data-key-config.component';
 import * as LegendConfigComponent from '@home/components/widget/lib/settings/common/legend-config.component';
 import * as ManageWidgetActionsComponent from '@home/components/widget/action/manage-widget-actions.component';
 import * as WidgetActionDialogComponent from '@home/components/widget/action/widget-action-dialog.component';
@@ -501,9 +501,9 @@ class ModulesMap implements IModulesMap {
     '@home/components/entity/entity-filter.component': EntityFilterComponent,
     '@home/components/relation/relation-filters.component': RelationFiltersComponent,
     '@home/components/alias/entity-alias-select.component': EntityAliasSelectComponent,
-    '@home/components/widget/data-keys.component': DataKeysComponent,
-    '@home/components/widget/data-key-config-dialog.component': DataKeyConfigDialogComponent,
-    '@home/components/widget/data-key-config.component': DataKeyConfigComponent,
+    '@home/components/widget/config/data-keys.component': DataKeysComponent,
+    '@home/components/widget/config/data-key-config-dialog.component': DataKeyConfigDialogComponent,
+    '@home/components/widget/config/data-key-config.component': DataKeyConfigComponent,
     '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,

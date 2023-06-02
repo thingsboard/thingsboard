@@ -29,7 +29,7 @@ import {
   DateRangeNavigatorWidgetComponent
 } from '@home/components/widget/lib/date-range-navigator/date-range-navigator.component';
 import { MultipleInputWidgetComponent } from '@home/components/widget/lib/multiple-input-widget.component';
-import { TripAnimationComponent } from '@home/components/widget/trip-animation/trip-animation.component';
+import { TripAnimationComponent } from '@home/components/widget/lib/trip-animation/trip-animation.component';
 import { PhotoCameraInputWidgetComponent } from '@home/components/widget/lib/photo-camera-input.component';
 import { GatewayFormComponent } from '@home/components/widget/lib/gateway/gateway-form.component';
 import { NavigationCardsWidgetComponent } from '@home/components/widget/lib/navigation-cards-widget.component';

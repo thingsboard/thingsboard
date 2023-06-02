@@ -164,7 +164,7 @@ export class WidgetComponentService {
           (window as any).TbMapWidgetV2 = mod.TbMapWidgetV2;
         }))
       );
-      widgetModulesTasks.push(from(import('@home/components/widget/trip-animation/trip-animation.component')).pipe(
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/trip-animation/trip-animation.component')).pipe(
         tap((mod) => {
           (window as any).TbTripAnimationWidget = mod.TbTripAnimationWidget;
         }))

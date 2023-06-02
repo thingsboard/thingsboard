@@ -51,9 +51,9 @@
     </div>
     <div class="tb-widget-config-row space-between">
       <div translate>widget-config.units-short</div>
-      <mat-form-field appearance="outline" class="center" subscriptSizing="dynamic">
-        <input matInput formControlName="units" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
+      <tb-widget-units
+        formControlName="units">
+      </tb-widget-units>
     </div>
     <div class="tb-widget-config-row space-between">
       <div translate>widget-config.decimals-short</div>

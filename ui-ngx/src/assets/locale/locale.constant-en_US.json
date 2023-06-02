@@ -4140,6 +4140,8 @@
         "desktop-hide": "Hide widget in desktop mode",
         "units": "Special symbol to show next to value",
         "decimals": "Number of digits after floating point",
+        "units-short": "Units",
+        "decimals-short": "Decimals",
         "timewindow": "Timewindow",
         "use-dashboard-timewindow": "Use dashboard timewindow",
         "use-widget-timewindow": "Use widget timewindow",

@@ -61,14 +61,14 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
-} from '@home/components/widget/data-key-config-dialog.component';
+} from '@home/components/widget/config/data-key-config-dialog.component';
 import { deepClone, guid, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { AggregationType } from '@shared/models/time/time.models';
 import { DndDropEvent } from 'ngx-drag-drop/lib/dnd-dropzone.directive';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { DatasourceComponent } from '@home/components/widget/datasource.component';
+import { DatasourceComponent } from '@home/components/widget/config/datasource.component';
 
 @Component({
   selector: 'tb-data-keys',

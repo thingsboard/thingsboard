@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-simple-card-widget-settings',
   templateUrl: './simple-card-widget-settings.component.html',
-  styleUrls: ['../../../widget-config.scss']
+  styleUrls: ['../../../config/widget-config.scss']
 })
 export class SimpleCardWidgetSettingsComponent extends WidgetSettingsComponent {
 

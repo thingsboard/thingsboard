@@ -170,14 +170,13 @@ import { AlarmAssigneePanelComponent } from '@home/components/alarm/alarm-assign
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { SendNotificationButtonComponent } from '@home/components/notification/send-notification-button.component';
 import { AlarmAssigneeSelectPanelComponent } from '@home/components/alarm/alarm-assignee-select-panel.component';
-import { AlarmAssigneeSelectComponent } from '@home/components/alarm/alarm-assignee-select.component';
 import { DeviceInfoFilterComponent } from '@home/components/device/device-info-filter.component';
 import { WidgetPreviewComponent } from '@home/components/widget/widget-preview.component';
 import {
   ManageWidgetActionsDialogComponent
 } from '@home/components/widget/action/manage-widget-actions-dialog.component';
-import { WidgetConfigComponentsModule } from '@home/components/widget/widget-config-components.module';
-import { BasicWidgetConfigModule } from '@home/components/widget/basic-config/basic-widget-config.module';
+import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
+import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/basic-widget-config.module';
 
 @NgModule({
   declarations:
@@ -202,7 +201,6 @@ import { BasicWidgetConfigModule } from '@home/components/widget/basic-config/ba
       AlarmTableHeaderComponent,
       AlarmTableComponent,
       AlarmAssigneePanelComponent,
-      AlarmAssigneeSelectComponent,
       AlarmAssigneeSelectPanelComponent,
       AttributeTableComponent,
       AddAttributeDialogComponent,
@@ -350,7 +348,6 @@ import { BasicWidgetConfigModule } from '@home/components/widget/basic-config/ba
     RelationFiltersComponent,
     AlarmTableComponent,
     AlarmAssigneePanelComponent,
-    AlarmAssigneeSelectComponent,
     AlarmAssigneeSelectPanelComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
