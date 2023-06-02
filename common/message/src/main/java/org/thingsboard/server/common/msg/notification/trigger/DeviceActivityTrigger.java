@@ -17,28 +17,33 @@ package org.thingsboard.server.common.msg.notification.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.ApiUsageRecordState;
-import org.thingsboard.server.common.data.ApiUsageStateValue;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
 @Data
 @Builder
-public class ApiUsageLimitTrigger implements NotificationRuleTrigger {
+public class DeviceActivityTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
-    private final ApiUsageRecordState state;
-    private final ApiUsageStateValue status;
+    private final CustomerId customerId;
+    private final DeviceId deviceId;
+    private final boolean active;
 
-    @Override
-    public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.API_USAGE_LIMIT;
-    }
+    private final String deviceName;
+    private final String deviceType;
+    private final String deviceLabel;
 
     @Override
     public EntityId getOriginatorEntityId() {
-        return tenantId;
+        return deviceId;
+    }
+
+    @Override
+    public NotificationRuleTriggerType getType() {
+        return NotificationRuleTriggerType.DEVICE_ACTIVITY;
     }
 
 }
