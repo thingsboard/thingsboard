@@ -61,7 +61,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceM
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.service.apiusage.BaseApiUsageState.StatsCalculationResult;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;

@@ -317,10 +317,3 @@ management:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
-
-notification_system:
-  rules:
-    trigger_types_configs:
-      RATE_LIMITS:
-        # In milliseconds, 4 hours by default
-        deduplication_duration: "${RATE_LIMITS_NOTIFICATION_RULE_DEDUPLICATION_DURATION:14400000}"

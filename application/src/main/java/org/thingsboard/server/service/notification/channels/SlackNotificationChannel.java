@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.notification.channels;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.slack.SlackService;
@@ -26,7 +25,6 @@ import org.thingsboard.server.common.data.notification.settings.SlackNotificatio
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
-import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
 @Component
@@ -35,15 +33,11 @@ public class SlackNotificationChannel implements NotificationChannel<SlackConver
 
     private final SlackService slackService;
     private final NotificationSettingsService notificationSettingsService;
-    private final ExternalCallExecutorService executor;
 
     @Override
-    public ListenableFuture<Void> sendNotification(SlackConversation conversation, SlackDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
+    public void sendNotification(SlackConversation conversation, SlackDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
         SlackNotificationDeliveryMethodConfig config = ctx.getDeliveryMethodConfig(NotificationDeliveryMethod.SLACK);
-        return executor.submit(() -> {
-            slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), conversation.getId(), processedTemplate.getBody());
-            return null;
-        });
+        slackService.sendMessage(ctx.getTenantId(), config.getBotToken(), conversation.getId(), processedTemplate.getBody());
     }
 
     @Override

@@ -63,7 +63,7 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
