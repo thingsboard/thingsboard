@@ -181,6 +181,7 @@ export class TemplateNotificationDialogComponent
       NotificationType.ENTITIES_LIMIT,
       NotificationType.API_USAGE_LIMIT,
       NotificationType.NEW_PLATFORM_VERSION,
+      NotificationType.RATE_LIMITS
     ]);
 
     if (this.isSysAdmin()) {
