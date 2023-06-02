@@ -86,7 +86,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
               private utilsService: UtilsService,
               pageMode = false) {
     super();
-    this.loadDataOnInit = false;
+    this.loadDataOnInit = pageMode;
     this.tableTitle = '';
     this.useTimePageLink = true;
     this.forAllTimeEnabled = true;

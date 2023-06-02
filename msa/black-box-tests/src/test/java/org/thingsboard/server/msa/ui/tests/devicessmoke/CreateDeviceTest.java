@@ -17,6 +17,7 @@ package org.thingsboard.server.msa.ui.tests.devicessmoke;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.msa.ui.pages.ProfilesPageElements;
@@ -32,6 +33,16 @@ import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_DEVICE
 
 @Feature("Create device")
 public class CreateDeviceTest extends AbstractDeviceTest {
+
+    @AfterMethod
+    public void delete() {
+        deleteDeviceByName(deviceName);
+        deviceName = null;
+        if (deviceProfileTitle != null) {
+            deleteDeviceProfileByTitle(deviceProfileTitle);
+            deviceProfileTitle = null;
+        }
+    }
 
     @Test(groups = "smoke")
     @Description("Add device after specifying the name (text/numbers /special characters)")

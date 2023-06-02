@@ -165,11 +165,6 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
     }
 
     @Override
-    public String getSearchText() {
-        return getTitle();
-    }
-
-    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("Customer [title=");
