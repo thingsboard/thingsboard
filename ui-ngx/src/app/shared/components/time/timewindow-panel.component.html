@@ -98,6 +98,11 @@
         <section fxLayout="column" fxFlex [fxShow]="isEdit || !timewindow.hideInterval">
           <div formGroupName="history" class="mat-content mat-padding" style="padding-top: 8px;">
             <mat-radio-group formControlName="historyType">
+              <mat-radio-button *ngIf="forAllTimeEnabled" [value]="historyTypes.FOR_ALL_TIME" color="primary">
+                <section fxLayout="column">
+                  <span translate>timewindow.for-all-time</span>
+                </section>
+              </mat-radio-button>
               <mat-radio-button [value]="historyTypes.LAST_INTERVAL" color="primary">
                 <section fxLayout="column">
                   <span translate>timewindow.last</span>

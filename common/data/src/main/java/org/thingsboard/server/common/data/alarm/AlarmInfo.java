@@ -21,9 +21,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.thingsboard.server.common.data.User;
-
-import java.util.Objects;
 
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)

@@ -72,6 +72,31 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
     }
 
     @Override
+    public Long countByTenantId(TenantId tenantId) {
+        return notificationTargetRepository.countByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public NotificationTarget findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(notificationTargetRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public NotificationTarget findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(notificationTargetRepository.findByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
+    public PageData<NotificationTarget> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationTargetRepository.findByTenantId(tenantId, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public NotificationTargetId getExternalIdByInternal(NotificationTargetId internalId) {
+        return DaoUtil.toEntityId(notificationTargetRepository.getExternalIdByInternal(internalId.getId()), NotificationTargetId::new);
+    }
+
+    @Override
     protected Class<NotificationTargetEntity> getEntityClass() {
         return NotificationTargetEntity.class;
     }

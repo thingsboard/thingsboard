@@ -30,11 +30,19 @@ import {
   WidgetLayout
 } from '@shared/models/dashboard.models';
 import { isDefined, isString, isUndefined } from '@core/utils';
-import { Datasource, DatasourceType, Widget, widgetType } from '@app/shared/models/widget.models';
+import {
+  Datasource,
+  datasourcesHasOnlyComparisonAggregation,
+  DatasourceType,
+  Widget,
+  WidgetConfig,
+  widgetType
+} from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
+import { AlarmSearchStatus } from '@shared/models/alarm.models';
 
 @Injectable({
   providedIn: 'root'
@@ -201,13 +209,22 @@ export class DashboardUtilsService {
   }
 
   public validateAndUpdateWidget(widget: Widget): Widget {
-    if (!widget.config) {
-      widget.config = {};
+    widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
+    // Temp workaround
+    if (widget.isSystemType  && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
+      widget.typeAlias = 'basic_timeseries';
     }
-    if (!widget.config.datasources) {
-      widget.config.datasources = [];
+    return widget;
+  }
+
+  public validateAndUpdateWidgetConfig(widgetConfig: WidgetConfig | undefined, type: widgetType): WidgetConfig {
+    if (!widgetConfig) {
+      widgetConfig = {};
     }
-    widget.config.datasources.forEach((datasource) => {
+    if (!widgetConfig.datasources) {
+      widgetConfig.datasources = [];
+    }
+    widgetConfig.datasources.forEach((datasource) => {
       if (datasource.type === 'device') {
         datasource.type = DatasourceType.entity;
       }
@@ -216,14 +233,48 @@ export class DashboardUtilsService {
         delete datasource.deviceAliasId;
       }
     });
-    if (widget.type === widgetType.latest) {
-      widget.config.timewindow = initModelFromDefaultTimewindow(widget.config.timewindow, true, this.timeService);
+    if (type === widgetType.latest) {
+      const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
+      widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true, onlyHistoryTimewindow, this.timeService);
     }
-    // Temp workaround
-    if (widget.isSystemType  && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
-      widget.typeAlias = 'basic_timeseries';
+    if (type === widgetType.alarm) {
+      if (!widgetConfig.alarmFilterConfig) {
+        widgetConfig.alarmFilterConfig = {};
+        const alarmFilterConfig = widgetConfig.alarmFilterConfig;
+        if (isDefined(widgetConfig.alarmStatusList) && widgetConfig.alarmStatusList.length) {
+          alarmFilterConfig.statusList = widgetConfig.alarmStatusList;
+        } else if (isDefined(widgetConfig.alarmSearchStatus) && widgetConfig.alarmSearchStatus !== AlarmSearchStatus.ANY) {
+          alarmFilterConfig.statusList = [widgetConfig.alarmSearchStatus];
+        } else {
+          alarmFilterConfig.statusList = [];
+        }
+        if (isDefined(widgetConfig.alarmStatusList)) {
+          delete widgetConfig.alarmStatusList;
+        }
+        if (isDefined(widgetConfig.alarmSearchStatus)) {
+          delete widgetConfig.alarmSearchStatus;
+        }
+        if (isDefined(widgetConfig.alarmSeverityList)) {
+          alarmFilterConfig.severityList = widgetConfig.alarmSeverityList;
+          delete widgetConfig.alarmSeverityList;
+        } else {
+          alarmFilterConfig.severityList = [];
+        }
+        if (isDefined(widgetConfig.alarmTypeList)) {
+          alarmFilterConfig.typeList = widgetConfig.alarmTypeList;
+          delete widgetConfig.alarmTypeList;
+        } else {
+          alarmFilterConfig.typeList = [];
+        }
+        if (isDefined(widgetConfig.searchPropagatedAlarms)) {
+          alarmFilterConfig.searchPropagatedAlarms = widgetConfig.searchPropagatedAlarms;
+          delete widgetConfig.searchPropagatedAlarms;
+        } else {
+          alarmFilterConfig.searchPropagatedAlarms = true;
+        }
+      }
     }
-    return widget;
+    return widgetConfig;
   }
 
   public createDefaultLayoutData(): DashboardLayout {

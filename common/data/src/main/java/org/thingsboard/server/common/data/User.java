@@ -34,7 +34,7 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId, NotificationRecipient {
+public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId, NotificationRecipient {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -74,7 +74,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     @ApiModelProperty(position = 1, value = "JSON object with the User Id. " +
             "Specify this field to update the device. " +
             "Referencing non-existing User Id will cause error. " +
-            "Omit this field to create new customer." )
+            "Omit this field to create new customer.")
     @Override
     public UserId getId() {
         return super.getId();
@@ -162,13 +162,12 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         return super.getAdditionalInfo();
     }
 
-    @Override
-    public String getSearchText() {
-        return getEmail();
-    }
-
     @JsonIgnore
     public String getTitle() {
+        return getTitle(email, firstName, lastName);
+    }
+
+    public static String getTitle(String email, String firstName, String lastName) {
         String title = "";
         if (isNotEmpty(firstName)) {
             title += firstName;

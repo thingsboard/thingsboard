@@ -24,16 +24,12 @@ import { DocumentationLink, DocumentationLinks } from '@shared/models/user-setti
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetContext } from '@home/models/widget-component.models';
-import {
-  ImportDialogCsvComponent,
-  ImportDialogCsvData
-} from '@home/components/import-export/import-dialog-csv.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AddDocLinkDialogComponent } from '@home/components/widget/lib/home-page/add-doc-link-dialog.component';
 import {
-  EditDocLinksDialogComponent,
-  EditDocLinksDialogData
-} from '@home/components/widget/lib/home-page/edit-doc-links-dialog.component';
+  EditLinksDialogComponent,
+  EditLinksDialogData
+} from '@home/components/widget/lib/home-page/edit-links-dialog.component';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 
@@ -88,7 +84,13 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
       ]
     }],
     [Authority.CUSTOMER_USER, {
-      links: []
+      links: [
+        {
+          icon: 'rocket',
+          name: 'Getting started',
+          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
+        }
+      ]
     }]
   ]
 );
@@ -100,7 +102,7 @@ interface DocLinksWidgetSettings {
 @Component({
   selector: 'tb-doc-links-widget',
   templateUrl: './doc-links-widget.component.html',
-  styleUrls: ['./doc-links-widget.component.scss']
+  styleUrls: ['./home-page-widget.scss', './links-widget.component.scss']
 })
 export class DocLinksWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -172,12 +174,13 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
   }
 
   edit() {
-    this.dialog.open<EditDocLinksDialogComponent, EditDocLinksDialogData,
-      boolean>(EditDocLinksDialogComponent, {
+    this.dialog.open<EditLinksDialogComponent, EditLinksDialogData,
+      boolean>(EditLinksDialogComponent, {
       disableClose: true,
       autoFocus: false,
       data: {
-        docLinks: this.documentationLinks
+        mode: 'docs',
+        links: this.documentationLinks
       },
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
     }).afterClosed().subscribe(

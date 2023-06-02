@@ -71,7 +71,7 @@ public class DefaultNotifications {
             .type(NotificationType.ENTITIES_LIMIT)
             .subject("${entityType}s limit will be reached soon for tenant ${tenantName}")
             .text("${entityType}s usage: ${currentCount}/${limit} (${percents}%)")
-            .icon("warning").color("#D6D634")
+            .icon("warning").color("#F9D916")
             .rule(DefaultRule.builder()
                     .name("Entities count limit (sysadmin)")
                     .triggerConfig(EntitiesLimitNotificationRuleTriggerConfig.builder()
@@ -82,7 +82,7 @@ public class DefaultNotifications {
             .build();
     public static final DefaultNotification entitiesLimitForTenant = entitiesLimitForSysadmin.toBuilder()
             .name("Entities count limit notification for tenant")
-            .subject("${entityType}s limit will be reached soon")
+            .subject("WARNING: ${entityType}s limit will be reached soon")
             .rule(entitiesLimitForSysadmin.getRule().toBuilder()
                     .name("Entities count limit")
                     .description("Send notification to tenant admins when count of entities of some type reached 80% threshold of the limit")
@@ -93,7 +93,7 @@ public class DefaultNotifications {
             .type(NotificationType.API_USAGE_LIMIT)
             .subject("${feature} feature will be disabled soon for tenant ${tenantName}")
             .text("Usage: ${currentValue} out of ${limit} ${unitLabel}s")
-            .icon("warning").color("#D6D634")
+            .icon("warning").color("#F9D916")
             .rule(DefaultRule.builder()
                     .name("API feature warning (sysadmin)")
                     .triggerConfig(ApiUsageLimitNotificationRuleTriggerConfig.builder()
@@ -105,7 +105,7 @@ public class DefaultNotifications {
             .build();
     public static final DefaultNotification apiFeatureWarningForTenant = apiFeatureWarningForSysadmin.toBuilder()
             .name("API feature warning notification for tenant")
-            .subject("${feature} feature will be disabled soon")
+            .subject("WARNING: ${feature} feature will be disabled soon")
             .rule(apiFeatureWarningForSysadmin.getRule().toBuilder()
                     .name("API feature warning")
                     .description("Send notification to tenant admins on API feature usage WARNING state")
@@ -143,7 +143,7 @@ public class DefaultNotifications {
             .rule(DefaultRule.builder()
                     .name("New platform version")
                     .triggerConfig(new NewPlatformVersionNotificationRuleTriggerConfig())
-                    .description("Send notification to system admins and tenant admins when new platform version is available")
+                    .description("Send notification to system admins when new platform version is available")
                     .build())
             .build();
 
@@ -179,13 +179,13 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when any alarm is updated or cleared")
                     .build())
             .build();
-    public static final DefaultNotification deviceAction = DefaultNotification.builder()
-            .name("Device action notification")
+    public static final DefaultNotification entityAction = DefaultNotification.builder()
+            .name("Entity action notification")
             .type(NotificationType.ENTITY_ACTION)
             .subject("${entityType} was ${actionType}")
             .text("${entityType} '${entityName}' was ${actionType} by user ${userEmail}")
             .icon("info").color(null)
-            .button("Go to device").link("/devices/${entityId}")
+            .button("Go to ${entityType:lowerCase}").link("/${entityType:lowerCase}s/${entityId}")
             .rule(DefaultRule.builder()
                     .name("Device created")
                     .triggerConfig(EntityActionNotificationRuleTriggerConfig.builder()
@@ -206,6 +206,7 @@ public class DefaultNotifications {
             .button("Go to device").link("/devices/${deviceId}")
             .rule(DefaultRule.builder()
                     .name("Device activity status change")
+                    .enabled(false)
                     .triggerConfig(DeviceActivityNotificationRuleTriggerConfig.builder()
                             .devices(null)
                             .deviceProfiles(null)
@@ -341,7 +342,8 @@ public class DefaultNotifications {
         public NotificationRule toRule(NotificationTemplateId templateId, NotificationTargetId... targets) {
             DefaultRule defaultRule = this.rule;
             NotificationRule rule = new NotificationRule();
-            rule.setName(name);
+            rule.setName(defaultRule.getName());
+            rule.setEnabled(defaultRule.getEnabled() == null || defaultRule.getEnabled());
             rule.setTemplateId(templateId);
             rule.setTriggerType(defaultRule.getTriggerConfig().getTriggerType());
             rule.setTriggerConfig(defaultRule.getTriggerConfig());
@@ -368,6 +370,7 @@ public class DefaultNotifications {
     @Builder(toBuilder = true)
     public static class DefaultRule {
         private final String name;
+        private final Boolean enabled;
         private final NotificationRuleTriggerConfig triggerConfig;
         private final String description;
     }

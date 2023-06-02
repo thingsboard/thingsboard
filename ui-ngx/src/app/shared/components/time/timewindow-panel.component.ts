@@ -35,6 +35,7 @@ import { OverlayRef } from '@angular/cdk/overlay';
 
 export interface TimewindowPanelData {
   historyOnly: boolean;
+  forAllTimeEnabled: boolean;
   quickIntervalOnly: boolean;
   timewindow: Timewindow;
   aggregation: boolean;
@@ -52,6 +53,8 @@ export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelDat
 export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   historyOnly = false;
+
+  forAllTimeEnabled = false;
 
   quickIntervalOnly = false;
 
@@ -87,6 +90,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
               public viewContainerRef: ViewContainerRef) {
     super(store);
     this.historyOnly = data.historyOnly;
+    this.forAllTimeEnabled = data.forAllTimeEnabled;
     this.quickIntervalOnly = data.quickIntervalOnly;
     this.timewindow = data.timewindow;
     this.aggregation = data.aggregation;

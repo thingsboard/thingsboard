@@ -27,7 +27,7 @@ import { of } from 'rxjs';
 @Component({
   selector: 'tb-version-info',
   templateUrl: './version-info.component.html',
-  styleUrls: ['./version-info.component.scss']
+  styleUrls: ['./home-page-widget.scss', './version-info.component.scss']
 })
 export class VersionInfoComponent extends PageComponent implements OnInit {
 

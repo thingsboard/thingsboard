@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.transport;
 
 import lombok.Getter;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.queue.discovery.event.TbApplicationEvent;
 

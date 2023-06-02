@@ -37,7 +37,7 @@
                     dndType="{{ dndId }}"
                     dndEffectAllowed="move"
                     dndDraggingSourceClass="tb-chip-dragging"
-                    [removable]="!disabled && !isEntityCountDatasource"
+                    [removable]="!disabled && !isCountDatasource"
                     (removed)="remove(key)">
         <div dndDragImageRef fxLayout="row" fxLayoutAlign="start center" class="tb-attribute-chip"
              [ngClass]="{'tb-dragging-chip-image': $index === dragIndex}">
@@ -78,7 +78,7 @@
                   (click)="editDataKey(key, $index)" mat-icon-button class="tb-mat-32">
             <mat-icon class="tb-mat-20">edit</mat-icon>
           </button>
-          <mat-icon matChipRemove *ngIf="!disabled && !isEntityCountDatasource">close</mat-icon>
+          <mat-icon matChipRemove *ngIf="!disabled && !isCountDatasource">close</mat-icon>
         </div>
       </mat-chip-row>
       <input matInput type="text" placeholder="{{ !disabled ? (keys.length ? secondaryPlaceholder : placeholder) : '' }}"
@@ -87,13 +87,13 @@
              #keyInput
              formControlName="key"
              matAutocompleteOrigin
-             [readonly]="isEntityCountDatasource"
+             [readonly]="isCountDatasource"
              #origin="matAutocompleteOrigin"
              [matAutocompleteConnectedTo]="origin"
              (focusin)="onFocus()"
              (drop)="$event.preventDefault();"
              [matAutocomplete]="keyAutocomplete"
-             [matAutocompleteDisabled]="isEntityCountDatasource"
+             [matAutocompleteDisabled]="isCountDatasource"
              [matChipInputFor]="chipList"
              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
              (matChipInputTokenEnd)="add($event)">

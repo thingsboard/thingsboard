@@ -16,7 +16,6 @@
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.DockerClientFactory;
 
 @Slf4j
 public class TestProperties {

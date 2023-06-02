@@ -224,6 +224,11 @@ export class WidgetComponentService {
     );
   }
 
+  public clearWidgetInfo(widgetInfo: WidgetInfo, bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): void {
+    this.dynamicComponentFactoryService.destroyDynamicComponentFactory(widgetInfo.componentFactory);
+    this.widgetService.deleteWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem);
+  }
+
   private getWidgetInfoInternal(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): Observable<WidgetInfo> {
     const widgetInfoSubject = new ReplaySubject<WidgetInfo>();
     const widgetInfo = this.widgetService.getWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem);

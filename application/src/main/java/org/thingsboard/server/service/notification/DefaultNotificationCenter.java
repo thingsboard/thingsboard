@@ -39,7 +39,6 @@ import org.thingsboard.server.common.data.notification.NotificationRequestConfig
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
-import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
@@ -65,8 +64,8 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.service.apiusage.limits.LimitedApi;
-import org.thingsboard.server.service.apiusage.limits.RateLimitService;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.channels.NotificationChannel;
@@ -292,24 +291,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .notification(notification)
                 .build();
         return onNotificationUpdate(recipient.getTenantId(), recipient.getId(), update);
-    }
-
-    @Override
-    public void sendBasicNotification(TenantId tenantId, UserId recipientId, String subject, String text) {
-        Notification notification = Notification.builder()
-                .recipientId(recipientId)
-                .type(NotificationType.GENERAL)
-                .subject(subject)
-                .text(text)
-                .status(NotificationStatus.SENT)
-                .build();
-        notification = notificationService.saveNotification(TenantId.SYS_TENANT_ID, notification);
-
-        NotificationUpdate update = NotificationUpdate.builder()
-                .created(true)
-                .notification(notification)
-                .build();
-        onNotificationUpdate(tenantId, recipientId, update);
     }
 
     @Override

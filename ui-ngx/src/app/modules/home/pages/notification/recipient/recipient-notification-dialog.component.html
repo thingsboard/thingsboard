@@ -19,6 +19,7 @@
   <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'notification.add-notification-recipients-group' : 'notification.edit-notification-recipients-group') | translate }}</h2>
     <span fxFlex></span>
+    <div tb-help="recipientNotifications"></div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">

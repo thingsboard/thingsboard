@@ -23,10 +23,16 @@ import { AlarmSearchStatus, AlarmSeverity } from '@shared/models/alarm.models';
 import { DataKeyType } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import * as moment_ from 'moment';
-import { EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
+import {
+  AlarmFilter,
+  AlarmFilterConfig,
+  EntityDataPageLink,
+  EntityFilter,
+  KeyFilter
+} from '@shared/models/query/query.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, Directive, EventEmitter, Inject, OnInit } from '@angular/core';
+import { AfterViewInit, Directive, EventEmitter, Inject, OnInit, Type } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
@@ -315,14 +321,16 @@ export interface DataKey extends KeyInfo {
 export enum DatasourceType {
   function = 'function',
   entity = 'entity',
-  entityCount = 'entityCount'
+  entityCount = 'entityCount',
+  alarmCount = 'alarmCount'
 }
 
 export const datasourceTypeTranslationMap = new Map<DatasourceType, string>(
   [
     [ DatasourceType.function, 'function.function' ],
     [ DatasourceType.entity, 'entity.entity' ],
-    [ DatasourceType.entityCount, 'entity.entities-count' ]
+    [ DatasourceType.entityCount, 'entity.entities-count' ],
+    [ DatasourceType.alarmCount, 'entity.alarms-count' ]
   ]
 );
 
@@ -348,6 +356,8 @@ export interface Datasource {
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
   entityFilter?: EntityFilter;
+  alarmFilterConfig?: AlarmFilterConfig;
+  alarmFilter?: AlarmFilter;
   dataKeyStartIndex?: number;
   latestDataKeyStartIndex?: number;
   [key: string]: any;
@@ -550,6 +560,7 @@ export interface CustomActionDescriptor {
   customResources?: Array<WidgetResource>;
   customHtml?: string;
   customCss?: string;
+  customModules?: Type<any>[];
 }
 
 export interface WidgetActionDescriptor extends CustomActionDescriptor {
@@ -624,10 +635,7 @@ export interface WidgetConfig {
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
   settings?: WidgetSettings;
   alarmSource?: Datasource;
-  alarmStatusList?: AlarmSearchStatus[];
-  alarmSeverityList?: AlarmSeverity[];
-  alarmTypeList?: string[];
-  searchPropagatedAlarms?: boolean;
+  alarmFilterConfig?: AlarmFilterConfig;
   datasources?: Array<Datasource>;
   targetDeviceAliasIds?: Array<string>;
   [key: string]: any;

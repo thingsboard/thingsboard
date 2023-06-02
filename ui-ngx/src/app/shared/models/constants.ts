@@ -146,7 +146,7 @@ export const HelpLinks = {
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
     entitiesImport: helpBaseUrl + '/docs/user-guide/bulk-provisioning',
     rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
-    resources: helpBaseUrl + '/docs/user-guide/ui/resources',
+    lwm2mResourceLibrary: helpBaseUrl + '/docs/reference/lwm2m-api',
     dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
     otaUpdates: helpBaseUrl + '/docs/user-guide/ota-updates',
     widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles',
@@ -161,7 +161,12 @@ export const HelpLinks = {
     queue: helpBaseUrl + '/docs/user-guide/queue',
     repositorySettings: helpBaseUrl + '/docs/user-guide/version-control/#git-settings-configuration',
     autoCommitSettings: helpBaseUrl + '/docs/user-guide/version-control/#auto-commit',
-    twoFactorAuthentication: helpBaseUrl + '/docs/user-guide/two-factor-authentication'
+    twoFactorAuthentication: helpBaseUrl + '/docs/user-guide/two-factor-authentication',
+    sentNotification: helpBaseUrl + '/docs/user-guide/notifications/#send-notification',
+    templateNotifications: helpBaseUrl + '/docs/user-guide/notifications/#templates',
+    recipientNotifications: helpBaseUrl + '/docs/user-guide/notifications/#recipients',
+    ruleNotifications: helpBaseUrl + '/docs/user-guide/notifications/#rules',
+    jwtSecuritySettings: helpBaseUrl + '/docs/user-guide/ui/jwt-security-settings/',
   }
 };
 

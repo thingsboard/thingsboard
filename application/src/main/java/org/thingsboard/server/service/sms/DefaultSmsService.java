@@ -19,21 +19,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.sms.SmsSender;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.sms.config.SmsProviderConfiguration;
-import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.sms.config.SmsProviderConfiguration;
+import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.transport.DefaultTransportApiService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -86,7 +87,7 @@ public class DefaultSmsService implements SmsService {
         }
     }
 
-    private int sendSms(String numberTo, String message) throws ThingsboardException {
+    protected int sendSms(String numberTo, String message) throws ThingsboardException {
         if (this.smsSender == null) {
             throw new ThingsboardException("Unable to send SMS: no SMS provider configured!", ThingsboardErrorCode.GENERAL);
         }
@@ -130,7 +131,9 @@ public class DefaultSmsService implements SmsService {
 
     private int sendSms(SmsSender smsSender, String numberTo, String message) throws ThingsboardException {
         try {
-            return smsSender.sendSms(numberTo, message);
+            int sentSms = smsSender.sendSms(numberTo, message);
+            log.trace("Successfully sent sms to number: {}", numberTo);
+            return sentSms;
         } catch (Exception e) {
             throw handleException(e);
         }

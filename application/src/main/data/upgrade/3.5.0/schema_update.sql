@@ -14,23 +14,10 @@
 -- limitations under the License.
 --
 
--- MAIL CONFIG TEMPLATE START;
+-- FIX DASHBOARD TEMPLATES AFTER ANGULAR MIGRATION TO VER.15
 
-CREATE TABLE IF NOT EXISTS mail_config_template (
-   id uuid NOT NULL CONSTRAINT mail_config_template_pkey PRIMARY KEY,
-   created_time bigint NOT NULL,
-   provider_id varchar(255),
-   smtp_protocol varchar(255),
-   smtp_host varchar(255),
-   smtp_port int,
-   timeout int,
-   tls_enabled boolean,
-   tls_version varchar(255),
-   authorization_uri varchar(255),
-   token_uri varchar(255),
-   scope varchar(255),
-   help_link varchar(255),
-   CONSTRAINT mail_config_template_provider_id_unq_key UNIQUE (provider_id)
-);
+UPDATE dashboard SET configuration = REPLACE(configuration, 'mat-button mat-icon-button', 'mat-icon-button')
+        WHERE configuration like '%mat-button mat-icon-button%';
 
--- MAIL CONFIG TEMPLATE END;
+UPDATE widget_type SET descriptor = REPLACE(descriptor, 'mat-button mat-icon-button', 'mat-icon-button')
+        WHERE descriptor like '%mat-button mat-icon-button%';

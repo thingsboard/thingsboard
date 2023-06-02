@@ -18,6 +18,7 @@ package org.thingsboard.server.msa.ui.base;
 import lombok.SneakyThrows;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
@@ -41,7 +42,6 @@ abstract public class AbstractBasePage {
     protected WebDriverWait wait;
     protected Actions actions;
     protected JavascriptExecutor js;
-
 
     public AbstractBasePage(WebDriver driver) {
         this.driver = driver;
@@ -117,7 +117,7 @@ abstract public class AbstractBasePage {
         try {
             return wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOfElementLocated(By.xpath(locator))));
         } catch (WebDriverException e) {
-            return fail("Element is present");
+            return fail("Element is present: " + locator);
         }
     }
 
@@ -125,7 +125,7 @@ abstract public class AbstractBasePage {
         try {
             return wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath(locator))));
         } catch (WebDriverException e) {
-            return fail("Elements is present");
+            return fail("Elements is present: " + locator);
         }
     }
 
@@ -154,7 +154,11 @@ abstract public class AbstractBasePage {
     }
 
     public void waitUntilAttributeContains(WebElement element, String attribute, String value) {
-        wait.until(ExpectedConditions.attributeContains(element, attribute, value));
+        try {
+            wait.until(ExpectedConditions.attributeContains(element, attribute, value));
+        } catch (WebDriverException e) {
+            fail("Failed to wait until attribute '" + attribute + "' of element '" + element + "' contains value '" + value + "'");
+        }
     }
 
     public void goToNextTab(int tabNumber) {
@@ -184,5 +188,30 @@ abstract public class AbstractBasePage {
         Random rand = new Random();
         String s = "~`!@#$^&*()_+=-";
         return s.charAt(rand.nextInt(s.length()));
+    }
+
+    public void pull(WebElement element, int xOffset, int yOffset) {
+        actions.clickAndHold(element).moveByOffset(xOffset, yOffset).release().perform();
+    }
+
+    public void waitUntilAttributeToBe(String locator, String attribute, String value) {
+        try {
+            wait.until(ExpectedConditions.attributeToBe(By.xpath(locator), attribute, value));
+        } catch (WebDriverException e) {
+            fail("Failed to wait until attribute '" + attribute + "' of element located by '" + locator + "' is '" + value + "'");
+        }
+    }
+
+    public void clearInputField(WebElement element) {
+        element.click();
+        element.sendKeys(Keys.CONTROL + "A" + Keys.BACK_SPACE);
+    }
+
+    public void waitUntilAttributeToBeNotEmpty(WebElement element, String attribute) {
+        try {
+            wait.until(ExpectedConditions.attributeToBeNotEmpty(element, attribute));
+        } catch (WebDriverException e) {
+            fail("Failed to wait until attribute '" + attribute + "' of element '" + element + "' is not empty");
+        }
     }
 }

@@ -148,6 +148,7 @@ message PostTelemetryMsg {
 
 message PostAttributeMsg {
   repeated KeyValueProto kv = 1;
+  bool shared = 2;
 }
 
 message GetAttributeRequestMsg {

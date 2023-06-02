@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -325,7 +326,7 @@ public class HashPartitionService implements PartitionService {
         final Map<QueueKey, List<ServiceInfo>> currentMap = new HashMap<>();
         services.forEach(serviceInfo -> {
             for (String serviceTypeStr : serviceInfo.getServiceTypesList()) {
-                ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
+                ServiceType serviceType = ServiceType.of(serviceTypeStr);
                 if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
                     partitionTopicsMap.keySet().forEach(queueKey ->
                             currentMap.computeIfAbsent(queueKey, key -> new ArrayList<>()).add(serviceInfo));
@@ -368,7 +369,7 @@ public class HashPartitionService implements PartitionService {
             }
         }
         if (routingInfo == null) {
-            throw new RuntimeException("Tenant not found!");
+            throw new TenantNotFoundException(tenantId);
         }
         switch (serviceType) {
             case TB_RULE_ENGINE:
@@ -388,7 +389,7 @@ public class HashPartitionService implements PartitionService {
 
     private void addNode(Map<QueueKey, List<ServiceInfo>> queueServiceList, ServiceInfo instance) {
         for (String serviceTypeStr : instance.getServiceTypesList()) {
-            ServiceType serviceType = ServiceType.valueOf(serviceTypeStr.toUpperCase());
+            ServiceType serviceType = ServiceType.of(serviceTypeStr);
             if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
                 partitionTopicsMap.keySet().forEach(key -> {
                     if (key.getType().equals(ServiceType.TB_RULE_ENGINE)) {

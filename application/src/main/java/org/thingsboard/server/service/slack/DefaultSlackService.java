@@ -28,7 +28,6 @@ import com.slack.api.methods.response.conversations.ConversationsListResponse;
 import com.slack.api.methods.response.users.UsersListResponse;
 import com.slack.api.model.ConversationType;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -43,8 +42,6 @@ import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @Service
 @RequiredArgsConstructor
@@ -81,15 +78,11 @@ public class DefaultSlackService implements SlackService {
                         .filter(user -> !user.isDeleted() && !user.isStranger() && !user.isBot())
                         .map(user -> {
                             SlackConversation conversation = new SlackConversation();
+                            conversation.setType(conversationType);
                             conversation.setId(user.getId());
-                            conversation.setShortName(user.getName());
+                            conversation.setName(user.getName());
                             conversation.setWholeName(user.getProfile() != null ? user.getProfile().getRealNameNormalized() : user.getRealName());
                             conversation.setEmail(user.getProfile() != null ? user.getProfile().getEmail() : null);
-                            String title = "@" + conversation.getShortName();
-                            if (isNotEmpty(conversation.getWholeName()) && !conversation.getWholeName().equals(conversation.getShortName())) {
-                                title += " (" + conversation.getWholeName() + ")";
-                            }
-                            conversation.setTitle(title);
                             return conversation;
                         })
                         .collect(Collectors.toList());
@@ -107,23 +100,15 @@ public class DefaultSlackService implements SlackService {
                         .filter(channel -> !channel.isArchived())
                         .map(channel -> {
                             SlackConversation conversation = new SlackConversation();
+                            conversation.setType(conversationType);
                             conversation.setId(channel.getId());
-                            conversation.setShortName(channel.getName());
+                            conversation.setName(channel.getName());
                             conversation.setWholeName(channel.getNameNormalized());
-                            conversation.setTitle("#" + channel.getName());
                             return conversation;
                         })
                         .collect(Collectors.toList());
             }
         });
-    }
-
-    @Override
-    public SlackConversation findConversation(TenantId tenantId, String token, SlackConversationType conversationType, String namePattern) {
-        List<SlackConversation> conversations = listConversations(tenantId, token, conversationType);
-        return conversations.stream()
-                .filter(conversation -> StringUtils.containsIgnoreCase(conversation.getTitle(), namePattern))
-                .findFirst().orElse(null);
     }
 
     @Override

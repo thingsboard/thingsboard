@@ -30,7 +30,7 @@ import { MediaBreakpoints } from '@shared/models/constants';
 @Component({
   selector: 'tb-configured-features',
   templateUrl: './configured-features.component.html',
-  styleUrls: ['./configured-features.component.scss']
+  styleUrls: ['./home-page-widget.scss', './configured-features.component.scss']
 })
 export class ConfiguredFeaturesComponent extends PageComponent implements OnInit, OnDestroy {
 

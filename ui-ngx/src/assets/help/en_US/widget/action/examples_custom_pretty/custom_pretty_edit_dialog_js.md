@@ -82,9 +82,9 @@ function EditEntityDialogController(instance) {
     vm.relations().markAsDirty();
   };
 
-  vm.removeOldRelation = function(index) {
+  vm.removeOldRelation = function(index, relation) {
     vm.oldRelations().removeAt(index);
-    vm.relationsToDelete.push(vm.oldRelationsData[index]);
+    vm.relationsToDelete.push(relation);
     vm.oldRelations().markAsDirty();
   };
 

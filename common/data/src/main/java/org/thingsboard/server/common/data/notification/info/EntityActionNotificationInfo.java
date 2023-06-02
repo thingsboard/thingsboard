@@ -40,6 +40,7 @@ public class EntityActionNotificationInfo implements RuleOriginatedNotificationI
     private CustomerId entityCustomerId;
 
     private UUID userId;
+    private String userTitle;
     private String userEmail;
     private String userFirstName;
     private String userLastName;
@@ -52,6 +53,7 @@ public class EntityActionNotificationInfo implements RuleOriginatedNotificationI
                 "entityName", entityName,
                 "actionType", actionType.name().toLowerCase(),
                 "userId", userId.toString(),
+                "userTitle", userTitle,
                 "userEmail", userEmail,
                 "userFirstName", userFirstName,
                 "userLastName", userLastName

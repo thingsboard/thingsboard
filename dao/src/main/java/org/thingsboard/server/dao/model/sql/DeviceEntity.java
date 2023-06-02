@@ -34,7 +34,7 @@ import javax.persistence.Table;
         @TypeDef(name = "json", typeClass = JsonStringType.class),
         @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 })
-@Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.DEVICE_TABLE_NAME)
 public final class DeviceEntity extends AbstractDeviceEntity<Device> {
 
     public DeviceEntity() {

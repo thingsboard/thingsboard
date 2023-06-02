@@ -22,8 +22,8 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> implements HasName {
+public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements HasName {
 
     private static final long serialVersionUID = -5656679015121235465L;
 
@@ -48,7 +48,9 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
     private String name;
     @ApiModelProperty(position = 6, value = "Enable/disable debug. ", example = "false")
     private boolean debugMode;
-    @ApiModelProperty(position = 7, value = "JSON with the rule node configuration. Structure depends on the rule node implementation.", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @ApiModelProperty(position = 7, value = "Enable/disable singleton mode. ", example = "false")
+    private boolean singletonMode;
+    @ApiModelProperty(position = 8, value = "JSON with the rule node configuration. Structure depends on the rule node implementation.", dataType = "com.fasterxml.jackson.databind.JsonNode")
     private transient JsonNode configuration;
     @JsonIgnore
     private byte[] configurationBytes;
@@ -69,13 +71,9 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
         this.debugMode = ruleNode.isDebugMode();
+        this.singletonMode = ruleNode.isSingletonMode();
         this.setConfiguration(ruleNode.getConfiguration());
         this.externalId = ruleNode.getExternalId();
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 
     @Override
@@ -84,7 +82,7 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
     }
 
     public JsonNode getConfiguration() {
-        return SearchTextBasedWithAdditionalInfo.getJson(() -> configuration, () -> configurationBytes);
+        return BaseDataWithAdditionalInfo.getJson(() -> configuration, () -> configurationBytes);
     }
 
     public void setConfiguration(JsonNode data) {

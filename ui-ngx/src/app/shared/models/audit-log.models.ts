@@ -47,8 +47,8 @@ export enum ActionType {
   RELATIONS_DELETED = 'RELATIONS_DELETED',
   ALARM_ACK = 'ALARM_ACK',
   ALARM_CLEAR = 'ALARM_CLEAR',
-  ALARM_ASSIGN = 'ALARM_ASSIGN',
-  ALARM_UNASSIGN = 'ALARM_UNASSIGN',
+  ALARM_ASSIGNED = 'ALARM_ASSIGNED',
+  ALARM_UNASSIGNED = 'ALARM_UNASSIGNED',
   ADDED_COMMENT = 'ADDED_COMMENT',
   UPDATED_COMMENT = 'UPDATED_COMMENT',
   DELETED_COMMENT = 'DELETED_COMMENT',
@@ -62,7 +62,8 @@ export enum ActionType {
   TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
   TIMESERIES_DELETED = 'TIMESERIES_DELETED',
   ASSIGNED_TO_EDGE = 'ASSIGNED_TO_EDGE',
-  UNASSIGNED_FROM_EDGE = 'UNASSIGNED_FROM_EDGE'
+  UNASSIGNED_FROM_EDGE = 'UNASSIGNED_FROM_EDGE',
+  SMS_SENT = 'SMS_SENT'
 }
 
 export enum ActionStatus {
@@ -90,8 +91,8 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.RELATIONS_DELETED, 'audit-log.type-relations-delete'],
     [ActionType.ALARM_ACK, 'audit-log.type-alarm-ack'],
     [ActionType.ALARM_CLEAR, 'audit-log.type-alarm-clear'],
-    [ActionType.ALARM_ASSIGN, 'audit-log.type-alarm-assign'],
-    [ActionType.ALARM_UNASSIGN, 'audit-log.type-alarm-unassign'],
+    [ActionType.ALARM_ASSIGNED, 'audit-log.type-alarm-assign'],
+    [ActionType.ALARM_UNASSIGNED, 'audit-log.type-alarm-unassign'],
     [ActionType.ADDED_COMMENT, 'audit-log.type-added-comment'],
     [ActionType.UPDATED_COMMENT, 'audit-log.type-updated-comment'],
     [ActionType.DELETED_COMMENT, 'audit-log.type-deleted-comment'],
@@ -105,7 +106,8 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.TIMESERIES_UPDATED, 'audit-log.type-timeseries-updated'],
     [ActionType.TIMESERIES_DELETED, 'audit-log.type-timeseries-deleted'],
     [ActionType.ASSIGNED_TO_EDGE, 'audit-log.type-assigned-to-edge'],
-    [ActionType.UNASSIGNED_FROM_EDGE, 'audit-log.type-unassigned-from-edge']
+    [ActionType.UNASSIGNED_FROM_EDGE, 'audit-log.type-unassigned-from-edge'],
+    [ActionType.SMS_SENT, 'audit-log.type-sms-sent'],
   ]
 );
 

@@ -56,6 +56,9 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
     @Column(name = ModelConstants.NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY, nullable = false)
     private JsonNode configuration;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public NotificationTemplateEntity() {}
 
     public NotificationTemplateEntity(NotificationTemplate notificationTemplate) {
@@ -65,6 +68,7 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
         setName(notificationTemplate.getName());
         setNotificationType(notificationTemplate.getNotificationType());
         setConfiguration(toJson(notificationTemplate.getConfiguration()));
+        setExternalId(getUuid(notificationTemplate.getExternalId()));
     }
 
     @Override
@@ -76,6 +80,7 @@ public class NotificationTemplateEntity extends BaseSqlEntity<NotificationTempla
         notificationTemplate.setName(name);
         notificationTemplate.setNotificationType(notificationType);
         notificationTemplate.setConfiguration(fromJson(configuration, NotificationTemplateConfig.class));
+        notificationTemplate.setExternalId(getEntityId(externalId, NotificationTemplateId::new));
         return notificationTemplate;
     }
 

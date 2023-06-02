@@ -51,6 +51,7 @@
         overflow: auto;
         .mat-mdc-table {
           table-layout: fixed;
+          min-width: 450px;
         }
       }
 
@@ -64,6 +65,22 @@
         margin-left: auto;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+
+      .ellipsis {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .attribute-copy {
+        visibility: hidden;
+        transition: visibility 0.1s;
+      }
+
+      .attribute:hover {
+        .attribute-copy {
+          visibility: visible;
+        }
       }
     }
   }

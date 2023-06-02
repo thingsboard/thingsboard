@@ -120,6 +120,13 @@
 
 :host ::ng-deep {
   .tb-widget-config {
+    tb-alarm-filter-config {
+      .mdc-button {
+        width: 100%;
+        height: 100%;
+        justify-content: flex-start;
+      }
+    }
     .mat-mdc-tab-body-wrapper {
       position: absolute;
       top: 49px;

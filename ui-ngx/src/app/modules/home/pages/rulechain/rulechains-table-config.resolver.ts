@@ -198,7 +198,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     } else if (ruleChainScope === 'edges') {
       return this.translate.instant('edge.rulechain-templates');
     } else if (ruleChainScope === 'edge') {
-      return this.config.tableTitle = edge.name + ': ' + this.translate.instant('edge.rulechains');
+      return this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.rulechains');
     }
   }
 

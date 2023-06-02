@@ -34,7 +34,7 @@
                     #queueAutocomplete="matAutocomplete"
                     [displayWith]="displayQueueFn"
                     >
-    <mat-option *ngFor="let queue of filteredQueues | async" [value]="queue" class="template-option">
+    <mat-option *ngFor="let queue of filteredQueues | async" [value]="queue" class="queue-option">
       <span [innerHTML]="queue.name | highlight:searchText"></span>
       <small class="queue-option-description">{{getDescription(queue)}}</small>
     </mat-option>

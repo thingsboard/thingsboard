@@ -37,4 +37,17 @@ public class DashboardPageHelper extends DashboardPageElements {
         jsClick(manageAssignedEntity(title));
         jsClick(manageAssignedUpdateBtn());
     }
+
+    public void openSelectWidgetsBundleMenu() {
+        addBtn().click();
+    }
+
+    public void openCreateWidgetPopup() {
+        alarmWidgetBundle().click();
+        alarmTableWidget().click();
+    }
+
+    public void increaseSizeOfTheWidget() {
+        pull(widgetSECorner(), 700, 200);
+    }
 }

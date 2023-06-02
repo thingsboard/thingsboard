@@ -17,7 +17,7 @@
 import { NotificationId } from '@shared/models/id/notification-id';
 import { NotificationRequestId } from '@shared/models/id/notification-request-id';
 import { UserId } from '@shared/models/id/user-id';
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { NotificationTargetId } from '@shared/models/id/notification-target-id';
 import { NotificationTemplateId } from '@shared/models/id/notification-template-id';
@@ -25,7 +25,6 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { NotificationRuleId } from '@shared/models/id/notification-rule-id';
 import { AlarmSearchStatus, AlarmSeverity, AlarmStatus } from '@shared/models/alarm.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { User } from '@shared/models/user.model';
 import { ApiFeature, ApiUsageStateValue } from '@shared/models/api-usage.models';
 
 export interface Notification {
@@ -35,7 +34,7 @@ export interface Notification {
   readonly type: NotificationType;
   readonly subject: string;
   readonly text: string;
-  readonly info: NotificationInfo;
+  readonly info?: NotificationInfo;
   readonly status: NotificationStatus;
   readonly createdTime: number;
   readonly additionalConfig?: WebDeliveryMethodAdditionalConfig;
@@ -101,13 +100,15 @@ interface SlackNotificationDeliveryMethodConfig {
 export interface SlackConversation {
   id: string;
   title: string;
-  shortName: string;
+  name: string;
   wholeName: string;
   email: string;
+  type: string;
 }
 
-export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>{
+export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>, ExportableEntity<NotificationRuleId> {
   tenantId: TenantId;
+  enabled: boolean;
   templateId: NotificationTemplateId;
   triggerType: TriggerType;
   triggerConfig: NotificationRuleTriggerConfig;
@@ -233,7 +234,7 @@ export interface NonConfirmedNotificationEscalation {
   targets: Array<string>;
 }
 
-export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>{
+export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>, ExportableEntity<NotificationTargetId> {
   tenantId: TenantId;
   configuration: NotificationTargetConfig;
 }
@@ -278,7 +279,7 @@ export const NotificationTargetTypeTranslationMap = new Map<NotificationTargetTy
   [NotificationTargetType.SLACK, 'notification.delivery-method.slack']
 ]);
 
-export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>{
+export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>, ExportableEntity<NotificationTemplateId> {
   tenantId: TenantId;
   notificationType: NotificationType;
   configuration: NotificationTemplateConfig;
@@ -443,7 +444,7 @@ export enum NotificationType {
   ENTITIES_LIMIT = 'ENTITIES_LIMIT',
   API_USAGE_LIMIT = 'API_USAGE_LIMIT',
   NEW_PLATFORM_VERSION = 'NEW_PLATFORM_VERSION',
-  RULE_ENGINE = 'RULE_ENGINE'
+  RULE_NODE = 'RULE_NODE'
 }
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
@@ -543,10 +544,10 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       helpId: 'notification/new_platform_version'
     }
   ],
-  [NotificationType.RULE_ENGINE,
+  [NotificationType.RULE_NODE,
     {
-      name: 'notification.template-type.rule-engine',
-      helpId: 'notification/rule_engine'
+      name: 'notification.template-type.rule-node',
+      helpId: 'notification/rule_node'
     }
   ]
 ]);

@@ -21,6 +21,8 @@ import org.testng.annotations.DataProvider;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumber;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomSymbol;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
+import static org.thingsboard.server.msa.ui.utils.Const.DEVICE_ACTIVE_STATE;
+import static org.thingsboard.server.msa.ui.utils.Const.DEVICE_INACTIVE_STATE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
 public class DataProviderCredential {
@@ -148,5 +150,30 @@ public class DataProviderCredential {
                 {"", newDescription, newDescription},
                 {description, newDescription, description + newDescription},
                 {description, Keys.CONTROL + "A" + Keys.BACK_SPACE, ""}};
+    }
+
+    @DataProvider
+    public static Object[][] enable() {
+        return new Object[][]{
+                {false},
+                {true}};
+    }
+
+    @DataProvider
+    public static Object[][] editDeviceLabel() {
+        String newLabel = "Label" + getRandomNumber();
+        String label = "Label";
+        return new Object[][]{
+                {"", newLabel, newLabel},
+                {label, newLabel, label + newLabel},
+                {label, Keys.CONTROL + "A" + Keys.BACK_SPACE, ""}};
+    }
+
+    @DataProvider(name = "filterData")
+    public static Object[][] getFilterData() {
+        return new Object[][]{
+                {DEVICE_ACTIVE_STATE},
+                {DEVICE_INACTIVE_STATE}
+        };
     }
 }

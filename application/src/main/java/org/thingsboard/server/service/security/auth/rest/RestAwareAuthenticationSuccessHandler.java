@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.auth.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,10 +22,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
-import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 @Component(value = "defaultAuthenticationSuccessHandler")
 @RequiredArgsConstructor
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
-    private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
     private final TwoFaConfigManager twoFaConfigManager;
 
@@ -65,7 +64,7 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
 
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        mapper.writeValue(response.getWriter(), tokenPair);
+        JacksonUtil.writeValue(response.getWriter(), tokenPair);
 
         clearAuthenticationAttributes(request);
     }

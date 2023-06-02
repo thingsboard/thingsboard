@@ -57,6 +57,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxDPStorageDays;
     private int maxRuleNodeExecutionsPerMessage;
     private long maxEmails;
+    private Boolean smsEnabled;
     private long maxSms;
     private long maxCreatedAlarms;
 
@@ -103,6 +104,16 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
                 return maxCreatedAlarms;
         }
         return 0L;
+    }
+
+    @Override
+    public boolean getProfileFeatureEnabled(ApiUsageRecordKey key) {
+        switch (key) {
+            case SMS_EXEC_COUNT:
+                return smsEnabled == null || Boolean.TRUE.equals(smsEnabled);
+            default:
+                return true;
+        }
     }
 
     @Override

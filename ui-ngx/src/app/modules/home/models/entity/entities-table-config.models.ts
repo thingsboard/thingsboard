@@ -58,6 +58,7 @@ export interface CellActionDescriptor<T extends BaseData<HasId>> {
   nameFunction?: (entity: T) => string;
   icon?: string;
   mdiIcon?: string;
+  mdiIconFunction?: (entity: T) => string;
   style?: any;
   isEnabled: (entity: T) => boolean;
   onAction: ($event: MouseEvent, entity: T) => any;
@@ -145,6 +146,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   loadDataOnInit = true;
   onLoadAction: (route: ActivatedRoute) => void = null;
   useTimePageLink = false;
+  forAllTimeEnabled = false;
   defaultTimewindowInterval = historyInterval(DAY);
   entityType: EntityType = null;
   tableTitle = '';
