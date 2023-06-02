@@ -1335,16 +1335,6 @@
                 <version>${netty.version}</version>
                 <classifier>osx-x86_64</classifier>
             </dependency>
-            <dependency> <!-- brought by com.microsoft.azure:azure-servicebus -->
-                <groupId>com.nimbusds</groupId>
-                <artifactId>content-type</artifactId>
-                <version>2.2</version>
-            </dependency>
-            <dependency> <!-- brought by com.microsoft.azure:azure-servicebus -->
-                <groupId>org.ow2.asm</groupId>
-                <artifactId>asm</artifactId>
-                <version>8.0.1</version>
-            </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-unix-common</artifactId>
@@ -1846,6 +1836,16 @@
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-servicebus</artifactId>
                 <version>${azure-servicebus.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.nimbusds</groupId>
+                        <artifactId>content-type</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>
