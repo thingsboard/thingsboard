@@ -17,7 +17,6 @@ package org.thingsboard.server.service.notification.rule.trigger;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.RateLimitsNotificationInfo;
@@ -26,7 +25,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.notification.trigger.RateLimitsTrigger;
-import org.thingsboard.server.dao.entity.EntityServiceRegistry;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.Optional;
@@ -36,7 +35,7 @@ import java.util.Optional;
 public class RateLimitsTriggerProcessor implements NotificationRuleTriggerProcessor<RateLimitsTrigger, RateLimitsNotificationRuleTriggerConfig> {
 
     private final TenantService tenantService;
-    private final EntityServiceRegistry entityServiceRegistry;
+    private final EntityService entityService;
 
     @Override
     public boolean matchesFilter(RateLimitsTrigger trigger, RateLimitsNotificationRuleTriggerConfig triggerConfig) {
@@ -53,10 +52,7 @@ public class RateLimitsTriggerProcessor implements NotificationRuleTriggerProces
             limitLevelEntityName = tenantName;
         } else if (limitLevel != null) {
             limitLevelEntityName = Optional.ofNullable(trigger.getLimitLevelEntityName())
-                    .orElseGet(() -> entityServiceRegistry.getServiceByEntityType(limitLevel.getEntityType())
-                            .findEntity(trigger.getTenantId(), limitLevel)
-                            .filter(entity -> entity instanceof HasName)
-                            .map(entity -> ((HasName) entity).getName()).orElse(null));
+                    .orElseGet(() -> entityService.fetchEntityName(trigger.getTenantId(), limitLevel).orElse(null));
         }
         return RateLimitsNotificationInfo.builder()
                 .tenantId(trigger.getTenantId())

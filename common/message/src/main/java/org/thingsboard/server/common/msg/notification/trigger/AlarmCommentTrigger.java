@@ -18,8 +18,8 @@ package org.thingsboard.server.common.msg.notification.trigger;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,7 +31,7 @@ public class AlarmCommentTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
     private final AlarmComment comment;
-    private final AlarmInfo alarmInfo;
+    private final Alarm alarm;
     private final ActionType actionType;
     private final User user;
 
@@ -42,7 +42,7 @@ public class AlarmCommentTrigger implements NotificationRuleTrigger {
 
     @Override
     public EntityId getOriginatorEntityId() {
-        return alarmInfo.getId();
+        return alarm.getId();
     }
 
 }

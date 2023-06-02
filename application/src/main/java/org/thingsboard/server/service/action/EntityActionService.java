@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -286,14 +287,14 @@ public class EntityActionService {
                 break;
             case ADDED_COMMENT:
             case UPDATED_COMMENT:
-                if (!(entity instanceof AlarmInfo)) { // should not normally happen
-                    log.warn("Invalid alarm comment event: entity is not instance of AlarmInfo");
+                if (!(entity instanceof Alarm)) { // should not normally happen
+                    log.warn("Invalid alarm comment event: entity is not instance of Alarm");
                     break;
                 }
                 notificationRuleProcessor.process(AlarmCommentTrigger.builder()
                         .tenantId(tenantId)
                         .comment(extractParameter(AlarmComment.class, 0, additionalInfo))
-                        .alarmInfo((AlarmInfo) entity)
+                        .alarm((Alarm) entity)
                         .actionType(actionType)
                         .user(user)
                         .build());
