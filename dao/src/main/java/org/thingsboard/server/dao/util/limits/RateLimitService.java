@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.util.limits;
 
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 
 public interface RateLimitService {
 

@@ -27,6 +27,7 @@ public enum NotificationType {
     NEW_PLATFORM_VERSION,
     ENTITIES_LIMIT,
     API_USAGE_LIMIT,
-    RULE_NODE
+    RULE_NODE,
+    RATE_LIMITS
 
 }

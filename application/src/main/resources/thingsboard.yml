@@ -1266,6 +1266,9 @@ notification_system:
       NEW_PLATFORM_VERSION:
         # In milliseconds, infinitely by default
         deduplication_duration: "${NEW_PLATFORM_VERSION_NOTIFICATION_RULE_DEDUPLICATION_DURATION:0}"
+      RATE_LIMITS:
+        # In milliseconds, 4 hours by default
+        deduplication_duration: "${RATE_LIMITS_NOTIFICATION_RULE_DEDUPLICATION_DURATION:14400000}"
 
 management:
   endpoints:
