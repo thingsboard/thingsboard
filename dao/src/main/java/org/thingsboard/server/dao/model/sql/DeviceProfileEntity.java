@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonBinaryType;
 
 import javax.persistence.Column;
@@ -49,7 +48,7 @@ import java.util.UUID;
 @Entity
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.DEVICE_PROFILE_TABLE_NAME)
-public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> implements SearchTextEntity<DeviceProfile> {
+public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> {
 
     @Column(name = ModelConstants.DEVICE_PROFILE_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -74,9 +73,6 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
 
     @Column(name = ModelConstants.DEVICE_PROFILE_DESCRIPTION_PROPERTY)
     private String description;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Column(name = ModelConstants.DEVICE_PROFILE_IS_DEFAULT_PROPERTY)
     private boolean isDefault;
@@ -149,20 +145,6 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         if (deviceProfile.getExternalId() != null) {
             this.externalId = deviceProfile.getExternalId().getId();
         }
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public String getSearchText() {
-        return searchText;
     }
 
     @Override
