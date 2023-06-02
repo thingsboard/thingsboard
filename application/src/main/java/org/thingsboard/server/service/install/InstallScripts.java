@@ -303,8 +303,8 @@ public class InstallScripts {
             dirStream.forEach(
                     path -> {
                         try {
-                            JsonNode mailConfigTemplateJson = objectMapper.readTree(path.toFile());
-                            MailConfigTemplate mailConfigTemplate = objectMapper.treeToValue(mailConfigTemplateJson, MailConfigTemplate.class);
+                            JsonNode mailConfigTemplateJson = JacksonUtil.toJsonNode(path.toFile());
+                            MailConfigTemplate mailConfigTemplate = JacksonUtil.treeToValue(mailConfigTemplateJson, MailConfigTemplate.class);
                             Optional<MailConfigTemplate> existingTemplate =
                                     mailConfigTemplateService.findMailConfigTemplateByProviderId(mailConfigTemplate.getProviderId());
                             if (existingTemplate.isPresent()) {

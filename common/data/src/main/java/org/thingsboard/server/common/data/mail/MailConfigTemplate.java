@@ -21,8 +21,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.MailConfigTemplateId;
 import org.thingsboard.server.common.data.validation.Length;
 
@@ -33,7 +33,7 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @ApiModel
-public class MailConfigTemplate extends SearchTextBasedWithAdditionalInfo<MailConfigTemplateId> implements HasName {
+public class MailConfigTemplate extends BaseDataWithAdditionalInfo<MailConfigTemplateId> implements HasName {
 
     @Length(fieldName = "providerId")
     @ApiModelProperty(value = "OAuth2 provider identifier (e.g. its name)", required = true)
@@ -75,10 +75,5 @@ public class MailConfigTemplate extends SearchTextBasedWithAdditionalInfo<MailCo
         } catch (IllegalArgumentException iae) {
             return providerId;
         }
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 }
