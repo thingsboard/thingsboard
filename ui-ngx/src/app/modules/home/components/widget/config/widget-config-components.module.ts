@@ -18,6 +18,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
 import { AlarmFilterConfigComponent } from '@home/components/alarm/alarm-filter-config.component';
+import { AlarmAssigneeSelectComponent } from '@home/components/alarm/alarm-assignee-select.component';
 import { DataKeysComponent } from '@home/components/widget/data-keys.component';
 import { DataKeyConfigDialogComponent } from '@home/components/widget/data-key-config-dialog.component';
 import { DataKeyConfigComponent } from '@home/components/widget/data-key-config.component';
@@ -27,10 +28,12 @@ import { EntityAliasSelectComponent } from '@home/components/alias/entity-alias-
 import { FilterSelectComponent } from '@home/components/filter/filter-select.component';
 import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
 import { WidgetSettingsComponent } from '@home/components/widget/widget-settings.component';
+import { TimewindowConfigPanelComponent } from '@home/components/widget/timewindow-config-panel.component';
 
 @NgModule({
   declarations:
     [
+      AlarmAssigneeSelectComponent,
       AlarmFilterConfigComponent,
       DataKeysComponent,
       DataKeyConfigDialogComponent,
@@ -39,6 +42,7 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
       DatasourcesComponent,
       EntityAliasSelectComponent,
       FilterSelectComponent,
+      TimewindowConfigPanelComponent,
       WidgetSettingsComponent
     ],
   imports: [
@@ -47,6 +51,7 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
     WidgetSettingsModule
   ],
   exports: [
+    AlarmAssigneeSelectComponent,
     AlarmFilterConfigComponent,
     DataKeysComponent,
     DataKeyConfigDialogComponent,
@@ -55,6 +60,7 @@ import { WidgetSettingsComponent } from '@home/components/widget/widget-settings
     DatasourcesComponent,
     EntityAliasSelectComponent,
     FilterSelectComponent,
+    TimewindowConfigPanelComponent,
     WidgetSettingsComponent
   ]
 })

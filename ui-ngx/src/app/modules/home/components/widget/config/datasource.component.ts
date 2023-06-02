@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnInit, Optional } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -41,6 +41,7 @@ import { EntityAliasSelectCallbacks } from '@home/components/alias/entity-alias-
 import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';
 import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { DatasourcesComponent } from '@home/components/widget/datasources.component';
 
 @Component({
   selector: 'tb-datasource',
@@ -122,6 +123,22 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
     return this.widgetConfigComponent.widget;
   }
 
+  public get hideDataKeyLabel(): boolean {
+    return this.datasourcesComponent?.hideDataKeyLabel;
+  }
+
+  public get hideDataKeyColor(): boolean {
+    return this.datasourcesComponent?.hideDataKeyColor;
+  }
+
+  public get hideDataKeyUnits(): boolean {
+    return this.datasourcesComponent?.hideDataKeyUnits;
+  }
+
+  public get hideDataKeyDecimals(): boolean {
+    return this.datasourcesComponent?.hideDataKeyDecimals;
+  }
+
   @Input()
   disabled: boolean;
 
@@ -138,6 +155,8 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
+              @Optional()
+              private datasourcesComponent: DatasourcesComponent,
               private widgetConfigComponent: WidgetConfigComponent) {
   }
 

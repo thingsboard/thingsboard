@@ -199,31 +199,12 @@
     </div>
   </ng-template>
   <ng-template #data>
-    <div *ngIf="displayTimewindowConfig" [formGroup]="dataSettings" class="tb-widget-config-panel">
-      <div fxLayout="row" fxLayoutAlign="space-between center">
-        <div class="tb-widget-config-panel-title" translate>timewindow.timewindow</div>
-        <tb-toggle-header (valueChange)="dataSettings.get('useDashboardTimewindow').patchValue($event)" ignoreMdLgSize="true"
-                          [options]="[
-                                         { name: translate.instant('widget-config.use-dashboard-timewindow'), value: true},
-                                         { name: translate.instant('widget-config.use-widget-timewindow'), value: false}
-                                       ]"
-                          [value]="dataSettings.get('useDashboardTimewindow').value" name="useDashboardTimewindow" useSelectOnMdLg="false">
-        </tb-toggle-header>
-      </div>
-      <div class="tb-widget-config-row">
-        <tb-timewindow asButton="true"
-                       strokedButton
-                       isEdit="true"
-                       alwaysDisplayTypePrefix
-                       [historyOnly]="onlyHistoryTimewindow()"
-                       quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
-                       aggregation="{{ widgetType === widgetTypes.timeseries }}"
-                       formControlName="timewindow"></tb-timewindow>
-        <mat-slide-toggle class="mat-slide" formControlName="displayTimewindow">
-          {{ 'widget-config.display-timewindow' | translate }}
-        </mat-slide-toggle>
-      </div>
-    </div>
+    <ng-container *ngIf="displayTimewindowConfig" [formGroup]="dataSettings">
+      <tb-timewindow-config-panel
+        [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+        formControlName="timewindowConfig">
+      </tb-timewindow-config-panel>
+    </ng-container>
     <div *ngIf="widgetType === widgetTypes.alarm" [formGroup]="dataSettings" class="tb-widget-config-panel" fxLayout="column" fxLayoutAlign="center">
       <tb-alarm-filter-config buttonMode="false" formControlName="alarmFilterConfig"></tb-alarm-filter-config>
     </div>

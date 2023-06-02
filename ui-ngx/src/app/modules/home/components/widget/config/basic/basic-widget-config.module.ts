@@ -24,7 +24,7 @@ import {
 } from '@home/components/widget/basic-config/cards/simple-card-basic-config.component';
 import {
   WidgetActionsPanelComponent
-} from '@home/components/widget/basic-config/action/widget-actions-panel.component';
+} from '@home/components/widget/basic-config/common/widget-actions-panel.component';
 
 @NgModule({
   declarations: [

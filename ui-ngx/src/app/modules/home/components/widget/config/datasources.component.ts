@@ -41,6 +41,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
 import { TranslateService } from '@ngx-translate/core';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-datasources',
@@ -86,6 +87,22 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyLabel = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyColor = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyUnits = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyDecimals = false;
 
   @Input()
   configMode: WidgetConfigMode;

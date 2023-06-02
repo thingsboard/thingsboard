@@ -62,16 +62,16 @@
                           matTooltip="{{'datakey.timeseries' | translate }}"
                           matTooltipPosition="above">timeline</mat-icon>
               </ng-container>
-              <span *ngIf="key.label !== key.name">{{key.label}}</span>
+              <span *ngIf="!hideDataKeyLabel && key.label !== key.name">{{key.label}}</span>
             </div>
-            <div *ngIf="key.label !== key.name" class="tb-chip-separator">: </div>
+            <div *ngIf="!hideDataKeyLabel && key.label !== key.name" class="tb-chip-separator">: </div>
             <div class="tb-chip-label">
               <strong>
                 <ng-container *ngTemplateOutlet="keyName; context:{key: key}"></ng-container>
               </strong>
             </div>
           </div>
-          <div style="padding: 3px;">
+          <div *ngIf="!hideDataKeyColor" style="padding: 3px;">
             <div class="tb-color-preview small box" (click)="showColorPicker(key)">
               <div class="tb-color-result" [ngStyle]="{background: key.color}"></div>
             </div>

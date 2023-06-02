@@ -40,11 +40,11 @@
         </mat-autocomplete>
       </mat-form-field>
       <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" fxLayoutAlign.xs fxLayoutGap="8px">
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field *ngIf="!hideDataKeyLabel" fxFlex class="mat-block">
           <mat-label translate>datakey.label</mat-label>
           <input matInput formControlName="label" required>
         </mat-form-field>
-        <tb-color-input fxFlex
+        <tb-color-input *ngIf="!hideDataKeyColor" fxFlex
           required
           label="{{'datakey.color' | translate}}"
           icon="format_color_fill"
@@ -53,11 +53,11 @@
         </tb-color-input>
       </div>
       <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" fxLayoutAlign.xs fxLayoutGap="8px" *ngIf="modelValue.type !== dataKeyTypes.alarm">
-        <mat-form-field fxFlex>
+        <mat-form-field *ngIf="!hideDataKeyUnits" fxFlex>
           <mat-label translate>datakey.units</mat-label>
           <input matInput formControlName="units">
         </mat-form-field>
-        <mat-form-field fxFlex>
+        <mat-form-field *ngIf="!hideDataKeyDecimals" fxFlex>
           <mat-label translate>datakey.decimals</mat-label>
           <input matInput formControlName="decimals" type="number" min="0" max="15" step="1">
         </mat-form-field>

@@ -65,7 +65,7 @@ import { Observable, of, Subscription } from 'rxjs';
 import {
   IBasicWidgetConfigComponent,
   WidgetConfigCallbacks
-} from '@home/components/widget/widget-config.component.models';
+} from '@home/components/widget/config/widget-config.component.models';
 import {
   EntityAliasDialogComponent,
   EntityAliasDialogData
@@ -80,8 +80,9 @@ import { Filter, singleEntityFilterFromDeviceId } from '@shared/models/query/que
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { basicWidgetConfigComponentsMap } from '@home/components/widget/basic-config/basic-widget-config.module';
+import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import Timeout = NodeJS.Timeout;
+import { TimewindowConfigData } from '@home/components/widget/timewindow-config-panel.component';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -187,6 +188,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private layoutSettingsSubscription: Subscription;
   private advancedSettingsSubscription: Subscription;
   private actionsSettingsSubscription: Subscription;
+
+  private defaultConfigFormsType: widgetType;
 
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
@@ -356,12 +359,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.targetDeviceSettings = this.fb.group({});
     this.advancedSettings = this.fb.group({});
     if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
-      this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(true));
-      this.dataSettings.addControl('displayTimewindow', this.fb.control({value: true, disabled: true}));
-      this.dataSettings.addControl('timewindow', this.fb.control({value: null, disabled: true}));
-      this.dataSettings.get('useDashboardTimewindow').valueChanges.subscribe(() => {
-        this.updateDataSettingsEnabledState();
-      });
+      this.dataSettings.addControl('timewindowConfig', this.fb.control({
+        useDashboardTimewindow: true,
+        displayTimewindow: true,
+        timewindow: null
+      }));
       if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
       }
@@ -396,16 +398,19 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   writeValue(value: WidgetConfigComponentData): void {
     this.modelValue = value;
+    this.widgetType = this.modelValue?.widgetType;
     this.setupConfig();
   }
 
   private setupConfig() {
-    this.destroyBasicModeComponent();
-    this.removeChangeSubscriptions();
-    if (this.hasBasicModeDirective && this.widgetConfigMode === WidgetConfigMode.basic) {
-      this.setupBasicModeConfig();
-    } else {
-      this.setupDefaultConfig();
+    if (this.modelValue) {
+      this.destroyBasicModeComponent();
+      this.removeChangeSubscriptions();
+      if (this.hasBasicModeDirective && this.widgetConfigMode === WidgetConfigMode.basic) {
+        this.setupBasicModeConfig();
+      } else {
+        this.setupDefaultConfig();
+      }
     }
   }
 
@@ -451,123 +456,116 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   }
 
   private setupDefaultConfig() {
-    if (this.modelValue) {
-      if (this.widgetType !== this.modelValue.widgetType) {
-        this.widgetType = this.modelValue.widgetType;
-        this.buildForms();
+    if (this.defaultConfigFormsType !== this.widgetType) {
+      this.defaultConfigFormsType = this.widgetType;
+      this.buildForms();
+    }
+    this.buildHeader();
+    const config = this.modelValue.config;
+    const layout = this.modelValue.layout;
+    if (config) {
+      const displayWidgetTitle = isDefined(config.showTitle) ? config.showTitle : false;
+      this.widgetSettings.patchValue({
+          title: config.title,
+          showTitleIcon: isDefined(config.showTitleIcon) && displayWidgetTitle ? config.showTitleIcon : false,
+          titleIcon: isDefined(config.titleIcon) ? config.titleIcon : '',
+          iconColor: isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)',
+          iconSize: isDefined(config.iconSize) ? config.iconSize : '24px',
+          titleTooltip: isDefined(config.titleTooltip) ? config.titleTooltip : '',
+          showTitle: displayWidgetTitle,
+          dropShadow: isDefined(config.dropShadow) ? config.dropShadow : true,
+          enableFullscreen: isDefined(config.enableFullscreen) ? config.enableFullscreen : true,
+          backgroundColor: config.backgroundColor,
+          color: config.color,
+          padding: config.padding,
+          margin: config.margin,
+          widgetStyle: isDefined(config.widgetStyle) ? config.widgetStyle : {},
+          widgetCss: isDefined(config.widgetCss) ? config.widgetCss : '',
+          titleStyle: isDefined(config.titleStyle) ? config.titleStyle : {
+            fontSize: '16px',
+            fontWeight: 400
+          },
+          pageSize: isDefined(config.pageSize) ? config.pageSize : 1024,
+          units: config.units,
+          decimals: config.decimals,
+          noDataDisplayMessage: isDefined(config.noDataDisplayMessage) ? config.noDataDisplayMessage : ''
+        },
+        {emitEvent: false}
+      );
+      this.updateWidgetSettingsEnabledState();
+      this.actionsSettings.patchValue(
+        {
+          actions: config.actions || {}
+        },
+        {emitEvent: false}
+      );
+      if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
+        const useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
+          config.useDashboardTimewindow : true;
+        this.dataSettings.get('timewindowConfig').patchValue({
+          useDashboardTimewindow,
+          displayTimewindow: isDefined(config.displayTimewindow) ?
+            config.displayTimewindow : true,
+          timewindow: config.timewindow
+        }, {emitEvent: false});
       }
-      this.buildHeader();
-      const config = this.modelValue.config;
-      const layout = this.modelValue.layout;
-      if (config) {
-        const displayWidgetTitle = isDefined(config.showTitle) ? config.showTitle : false;
-        this.widgetSettings.patchValue({
-            title: config.title,
-            showTitleIcon: isDefined(config.showTitleIcon) && displayWidgetTitle ? config.showTitleIcon : false,
-            titleIcon: isDefined(config.titleIcon) ? config.titleIcon : '',
-            iconColor: isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)',
-            iconSize: isDefined(config.iconSize) ? config.iconSize : '24px',
-            titleTooltip: isDefined(config.titleTooltip) ? config.titleTooltip : '',
-            showTitle: displayWidgetTitle,
-            dropShadow: isDefined(config.dropShadow) ? config.dropShadow : true,
-            enableFullscreen: isDefined(config.enableFullscreen) ? config.enableFullscreen : true,
-            backgroundColor: config.backgroundColor,
-            color: config.color,
-            padding: config.padding,
-            margin: config.margin,
-            widgetStyle: isDefined(config.widgetStyle) ? config.widgetStyle : {},
-            widgetCss: isDefined(config.widgetCss) ? config.widgetCss : '',
-            titleStyle: isDefined(config.titleStyle) ? config.titleStyle : {
-              fontSize: '16px',
-              fontWeight: 400
-            },
-            pageSize: isDefined(config.pageSize) ? config.pageSize : 1024,
-            units: config.units,
-            decimals: config.decimals,
-            noDataDisplayMessage: isDefined(config.noDataDisplayMessage) ? config.noDataDisplayMessage : ''
-          },
-          {emitEvent: false}
-        );
-        this.updateWidgetSettingsEnabledState();
-        this.actionsSettings.patchValue(
-          {
-            actions: config.actions || {}
-          },
-          {emitEvent: false}
-        );
-        if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
-          const useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
-            config.useDashboardTimewindow : true;
-          this.dataSettings.patchValue(
-            { useDashboardTimewindow }, {emitEvent: false}
-          );
-          this.dataSettings.patchValue(
-            { displayTimewindow: isDefined(config.displayTimewindow) ?
-                config.displayTimewindow : true }, {emitEvent: false}
-          );
-          this.dataSettings.patchValue(
-            { timewindow: config.timewindow }, {emitEvent: false}
-          );
-          this.updateDataSettingsEnabledState();
-        }
-        if (this.modelValue.isDataEnabled) {
-          if (this.widgetType !== widgetType.rpc &&
-            this.widgetType !== widgetType.alarm &&
-            this.widgetType !== widgetType.static) {
-            this.dataSettings.patchValue({ datasources: config.datasources},
-              {emitEvent: false});
-          } else if (this.widgetType === widgetType.rpc) {
-            let targetDeviceAliasId: string;
-            if (config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0) {
-              const aliasId = config.targetDeviceAliasIds[0];
-              const entityAliases = this.aliasController.getEntityAliases();
-              if (entityAliases[aliasId]) {
-                targetDeviceAliasId = entityAliases[aliasId].id;
-              } else {
-                targetDeviceAliasId = null;
-              }
+      if (this.modelValue.isDataEnabled) {
+        if (this.widgetType !== widgetType.rpc &&
+          this.widgetType !== widgetType.alarm &&
+          this.widgetType !== widgetType.static) {
+          this.dataSettings.patchValue({ datasources: config.datasources},
+            {emitEvent: false});
+        } else if (this.widgetType === widgetType.rpc) {
+          let targetDeviceAliasId: string;
+          if (config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0) {
+            const aliasId = config.targetDeviceAliasIds[0];
+            const entityAliases = this.aliasController.getEntityAliases();
+            if (entityAliases[aliasId]) {
+              targetDeviceAliasId = entityAliases[aliasId].id;
             } else {
               targetDeviceAliasId = null;
             }
-            this.targetDeviceSettings.patchValue({
-              targetDeviceAliasId
-            }, {emitEvent: false});
-          } else if (this.widgetType === widgetType.alarm) {
-            this.dataSettings.patchValue(
-              { alarmFilterConfig: isDefined(config.alarmFilterConfig) ?
-                  config.alarmFilterConfig :
-                  { statusList: [AlarmSearchStatus.ACTIVE], searchPropagatedAlarms: true },
-                alarmSource: config.alarmSource }, {emitEvent: false}
-            );
+          } else {
+            targetDeviceAliasId = null;
           }
-        }
-
-        this.updateSchemaForm(config.settings);
-
-        if (layout) {
-          this.layoutSettings.patchValue(
-            {
-              mobileOrder: layout.mobileOrder,
-              mobileHeight: layout.mobileHeight,
-              mobileHide: layout.mobileHide,
-              desktopHide: layout.desktopHide
-            },
-            {emitEvent: false}
-          );
-        } else {
-          this.layoutSettings.patchValue(
-            {
-              mobileOrder: null,
-              mobileHeight: null,
-              mobileHide: false,
-              desktopHide: false
-            },
-            {emitEvent: false}
+          this.targetDeviceSettings.patchValue({
+            targetDeviceAliasId
+          }, {emitEvent: false});
+        } else if (this.widgetType === widgetType.alarm) {
+          this.dataSettings.patchValue(
+            { alarmFilterConfig: isDefined(config.alarmFilterConfig) ?
+                config.alarmFilterConfig :
+                { statusList: [AlarmSearchStatus.ACTIVE], searchPropagatedAlarms: true },
+              alarmSource: config.alarmSource }, {emitEvent: false}
           );
         }
       }
-      this.createChangeSubscriptions();
+
+      this.updateSchemaForm(config.settings);
+
+      if (layout) {
+        this.layoutSettings.patchValue(
+          {
+            mobileOrder: layout.mobileOrder,
+            mobileHeight: layout.mobileHeight,
+            mobileHide: layout.mobileHide,
+            desktopHide: layout.desktopHide
+          },
+          {emitEvent: false}
+        );
+      } else {
+        this.layoutSettings.patchValue(
+          {
+            mobileOrder: null,
+            mobileHeight: null,
+            mobileHide: false,
+            desktopHide: false
+          },
+          {emitEvent: false}
+        );
+      }
     }
+    this.createChangeSubscriptions();
   }
 
   private updateWidgetSettingsEnabledState() {
@@ -595,17 +593,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-  private updateDataSettingsEnabledState() {
-    const useDashboardTimewindow: boolean = this.dataSettings.get('useDashboardTimewindow').value;
-    if (useDashboardTimewindow) {
-      this.dataSettings.get('displayTimewindow').disable({emitEvent: false});
-      this.dataSettings.get('timewindow').disable({emitEvent: false});
-    } else {
-      this.dataSettings.get('displayTimewindow').enable({emitEvent: false});
-      this.dataSettings.get('timewindow').enable({emitEvent: false});
-    }
-  }
-
   private updateSchemaForm(settings?: any) {
     const widgetSettingsFormData: JsonFormComponentData = {};
     if (this.modelValue.settingsSchema && this.modelValue.settingsSchema.schema) {
@@ -626,7 +613,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private updateDataSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        Object.assign(this.modelValue.config, this.dataSettings.value);
+        let data = this.dataSettings.value;
+        if (data.timewindowConfig) {
+          const timewindowConfig: TimewindowConfigData = data.timewindowConfig;
+          data = {...data, ...timewindowConfig};
+          delete data.timewindowConfig;
+        }
+        Object.assign(this.modelValue.config, data);
       }
       this.propagateChange(this.modelValue);
     }

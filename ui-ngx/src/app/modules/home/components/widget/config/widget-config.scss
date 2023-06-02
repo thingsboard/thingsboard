@@ -80,6 +80,30 @@
     }
   }
 
+  .mat-mdc-form-field {
+    &.center {
+      .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+        .mat-mdc-form-field-infix {
+          .mdc-text-field__input {
+            text-align: center;
+          }
+        }
+      }
+    }
+    &.number {
+      .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+        padding-right: 4px;
+        .mat-mdc-form-field-infix {
+          width: 80px;
+          input.mdc-text-field__input[type=number]::-webkit-inner-spin-button,
+          input.mdc-text-field__input[type=number]::-webkit-outer-spin-button {
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+
   .tb-widget-config-row {
     .mat-mdc-form-field {
       .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
@@ -95,27 +119,6 @@
           padding-bottom: 7px;
           min-height: 38px;
           width: 72px;
-        }
-      }
-      &.center {
-        .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
-          .mat-mdc-form-field-infix {
-            .mdc-text-field__input {
-              text-align: center;
-            }
-          }
-        }
-      }
-      &.number {
-        .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
-          padding-right: 4px;
-          .mat-mdc-form-field-infix {
-            width: 80px;
-            input.mdc-text-field__input[type=number]::-webkit-inner-spin-button,
-            input.mdc-text-field__input[type=number]::-webkit-outer-spin-button {
-              opacity: 1;
-            }
-          }
         }
       }
     }
