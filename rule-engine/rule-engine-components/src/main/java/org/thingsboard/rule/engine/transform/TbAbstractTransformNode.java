@@ -23,7 +23,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -60,25 +59,23 @@ public abstract class TbAbstractTransformNode<C> implements TbNode {
     }
 
     protected void transformSuccess(TbContext ctx, TbMsg msg, List<TbMsg> msgs) {
-        if (msgs != null && !msgs.isEmpty()) {
-            if (msgs.size() == 1) {
-                ctx.tellSuccess(msgs.get(0));
-            } else {
-                TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(msgs.size(), new TbMsgCallback() {
-                    @Override
-                    public void onSuccess() {
-                        ctx.ack(msg);
-                    }
-
-                    @Override
-                    public void onFailure(RuleEngineException e) {
-                        ctx.tellFailure(msg, e);
-                    }
-                });
-                msgs.forEach(newMsg -> ctx.enqueueForTellNext(newMsg, TbRelationTypes.SUCCESS, wrapper::onSuccess, wrapper::onFailure));
-            }
-        } else {
+        if (msgs == null || msgs.isEmpty()) {
             ctx.tellFailure(msg, new RuntimeException("Message or messages list are empty!"));
+        } else if (msgs.size() == 1) {
+            ctx.tellSuccess(msgs.get(0));
+        } else {
+            TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(msgs.size(), new TbMsgCallback() {
+                @Override
+                public void onSuccess() {
+                    ctx.ack(msg);
+                }
+
+                @Override
+                public void onFailure(RuleEngineException e) {
+                    ctx.tellFailure(msg, e);
+                }
+            });
+            msgs.forEach(newMsg -> ctx.enqueueForTellNext(newMsg, TbRelationTypes.SUCCESS, wrapper::onSuccess, wrapper::onFailure));
         }
     }
 
