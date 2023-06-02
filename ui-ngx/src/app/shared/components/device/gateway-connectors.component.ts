@@ -360,6 +360,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const params = deepClone(this.ctx.stateController.getStateParams());
     params.connector_rpc = attribute;
     params.targetEntityParamName = "connector_rpc";
+    console.log(attribute, 'connector page')
     this.ctx.stateController.openState("connector_rpc", params);
   }
 

@@ -91,6 +91,7 @@ export class GatewayServiceRPCComponent extends PageComponent implements AfterVi
       this.commandForm.get('command').setValue(this.RPCCommands[0]);
     } else {
       this.connectorType = this.ctx.stateController.getStateParams().connector_rpc.value.type;
+      console.log(this.ctx.stateController.getStateParams().connector_rpc, 'rpc page')
     }
   }
 
