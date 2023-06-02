@@ -358,7 +358,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       $event.stopPropagation();
     }
     const params = deepClone(this.ctx.stateController.getStateParams());
-    params.connector_logs = attribute;
+    params.connector_rpc = attribute;
     params.targetEntityParamName = "connector_rpc";
     this.ctx.stateController.openState("connector_rpc", params);
   }

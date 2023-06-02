@@ -52,6 +52,8 @@ export class GatewayServiceRPCComponent extends PageComponent implements AfterVi
 
   isConnector: boolean;
 
+  connectorType: string;
+
   RPCCommands: Array<string> = [
     "Ping",
     "Stats",
@@ -87,13 +89,16 @@ export class GatewayServiceRPCComponent extends PageComponent implements AfterVi
     this.isConnector = this.ctx.settings.isConnector;
     if (!this.isConnector) {
       this.commandForm.get('command').setValue(this.RPCCommands[0]);
+    } else {
+      this.connectorType = this.ctx.stateController.getStateParams().connector_rpc.value.type;
     }
   }
 
 
   sendCommand() {
     const formValues = this.commandForm.value;
-    this.ctx.controlApi.sendTwoWayCommand('gateway_'+formValues.command.toLowerCase(), {},formValues.time).subscribe(resp=>{
+    const commandPrefix = this.isConnector ? `${this.connectorType}_` : 'gateway_';
+    this.ctx.controlApi.sendTwoWayCommand(commandPrefix+formValues.command.toLowerCase(), {},formValues.time).subscribe(resp=>{
       this.commandForm.get('result').setValue(JSON.stringify(resp));
     },error => {
       console.log(error);
