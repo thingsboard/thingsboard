@@ -35,21 +35,21 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
     DeviceProfileInfo findDeviceProfileInfoById(@Param("deviceProfileId") UUID deviceProfileId);
 
     @Query("SELECT d FROM DeviceProfileEntity d WHERE " +
-            "d.tenantId = :tenantId AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "d.tenantId = :tenantId AND LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<DeviceProfileEntity> findDeviceProfiles(@Param("tenantId") UUID tenantId,
                                                  @Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.tenantId, d.name, d.image, d.defaultDashboardId, d.type, d.transportType) " +
             "FROM DeviceProfileEntity d WHERE " +
-            "d.tenantId = :tenantId AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "d.tenantId = :tenantId AND LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<DeviceProfileInfo> findDeviceProfileInfos(@Param("tenantId") UUID tenantId,
                                                    @Param("textSearch") String textSearch,
                                                    Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.tenantId, d.name, d.image, d.defaultDashboardId, d.type, d.transportType) " +
             "FROM DeviceProfileEntity d WHERE " +
-            "d.tenantId = :tenantId AND d.transportType = :transportType AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "d.tenantId = :tenantId AND d.transportType = :transportType AND LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<DeviceProfileInfo> findDeviceProfileInfos(@Param("tenantId") UUID tenantId,
                                                    @Param("textSearch") String textSearch,
                                                    @Param("transportType") DeviceTransportType transportType,
