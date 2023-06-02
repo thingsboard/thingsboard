@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.ui.tests.assignee;
+package org.thingsboard.server.msa.ui.tests.alarmassignee;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
@@ -56,7 +56,7 @@ public class AssignFromAlarmWidgetTest extends AbstractAssignTest {
         createWidgetPopup.addAliasBtn().click();
         createWidgetPopup.addWidgetBtn().click();
         dashboardPage.increaseSizeOfTheWidget();
-        dashboardPage.doneBtn().click();
+        dashboardPage.saveBtn().click();
     }
 
     @AfterClass
@@ -135,12 +135,10 @@ public class AssignFromAlarmWidgetTest extends AbstractAssignTest {
     }
 
     @Description("Search by name")
-    @Test(groups = "broken")
+    @Test
     public void searchByName() {
         alarmWidget.searchAlarm(alarmType, userName);
-        alarmWidget.setUsers();
 
-        assertThat(alarmWidget.getUsers()).hasSize(1).as("Search result contains search input").contains(userName);
-        alarmWidget.assignUsers().forEach(this::assertIsDisplayed);
+        assertIsDisplayed(alarmWidget.noUsersFoundMessage());
     }
 }

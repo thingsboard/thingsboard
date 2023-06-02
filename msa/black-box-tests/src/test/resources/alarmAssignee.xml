@@ -18,7 +18,7 @@
 -->
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="Assignee ui tests">
+<suite name="Assignee alarm ui tests">
     <listeners>
         <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
     </listeners>
@@ -29,7 +29,7 @@
             </run>
         </groups>
         <packages>
-            <package name="org.thingsboard.server.msa.ui.tests.assignee.*"/>
+            <package name="org.thingsboard.server.msa.ui.tests.alarmassignee.*"/>
         </packages>
     </test>
 </suite>
