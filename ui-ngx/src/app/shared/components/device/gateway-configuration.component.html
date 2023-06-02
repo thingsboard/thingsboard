@@ -732,7 +732,7 @@
               </mat-form-field>
               <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                 <mat-label translate>gateway.mqtt-qos</mat-label>
-                <input matInput formControlName="qos" type="number" min="0" max="2"/>
+                <input matInput formControlName="qos" type="number" min="0" max="1"/>
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.qos').hasError('required')">
                   {{ 'gateway.mqtt-qos-required' | translate}}
                 </mat-error>
