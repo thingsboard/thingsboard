@@ -1,0 +1,45 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+package transport;
+
+option java_package = "org.thingsboard.server.gen.data";
+option java_multiple_files = true;
+
+/**
+ * Data Serialization Structures;
+ */
+message TbUUID {
+  int64 msb = 1;
+  int64 lsb = 2;
+}
+
+message DeviceProto {
+  TbUUID id = 1;
+  int64 createdTime = 3;
+  optional bytes additionalInfo = 4;
+  optional TbUUID tenantId = 5;
+  optional TbUUID customerId = 6;
+  optional string name = 7;
+  optional string type = 8;
+  optional string label = 9;
+  optional TbUUID deviceProfileId = 10;
+  optional bytes deviceDataBytes = 11;
+  optional TbUUID firmwareId = 12;
+  optional TbUUID softwareId = 13;
+  optional TbUUID externalId = 14;
+}
