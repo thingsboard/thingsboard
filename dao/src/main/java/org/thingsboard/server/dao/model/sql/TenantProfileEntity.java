@@ -67,7 +67,7 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> {
         this.setCreatedTime(tenantProfile.getCreatedTime());
         this.name = tenantProfile.getName();
         this.description = tenantProfile.getDescription();
-        this.isDefault = tenantProfile.isDefault();
+        this.isDefault = tenantProfile.isDefaultProfile();
         this.isolatedTbRuleEngine = tenantProfile.isIsolatedTbRuleEngine();
         this.profileData = JacksonUtil.convertValue(tenantProfile.getProfileData(), ObjectNode.class);
     }
@@ -78,7 +78,7 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> {
         tenantProfile.setCreatedTime(createdTime);
         tenantProfile.setName(name);
         tenantProfile.setDescription(description);
-        tenantProfile.setDefault(isDefault);
+        tenantProfile.setDefaultProfile(isDefault);
         tenantProfile.setIsolatedTbRuleEngine(isolatedTbRuleEngine);
         tenantProfile.setProfileData(JacksonUtil.convertValue(profileData, TenantProfileData.class));
         return tenantProfile;

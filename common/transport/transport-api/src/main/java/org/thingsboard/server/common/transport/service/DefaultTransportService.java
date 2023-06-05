@@ -97,6 +97,7 @@ import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.util.TbSerializationService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import javax.annotation.PostConstruct;
@@ -173,7 +174,7 @@ public class DefaultTransportService implements TransportService {
     private final TransportTenantProfileCache tenantProfileCache;
 
     private final TransportRateLimitService rateLimitService;
-    private final DataDecodingEncodingService dataDecodingEncodingService;
+    private final TbSerializationService serializationService;
     private final SchedulerComponent scheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final TransportResourceCache transportResourceCache;
@@ -205,7 +206,7 @@ public class DefaultTransportService implements TransportService {
                                    TransportDeviceProfileCache deviceProfileCache,
                                    TransportTenantProfileCache tenantProfileCache,
                                    TransportRateLimitService rateLimitService,
-                                   DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler, TransportResourceCache transportResourceCache,
+                                   TbSerializationService serializationService, SchedulerComponent scheduler, TransportResourceCache transportResourceCache,
                                    ApplicationEventPublisher eventPublisher) {
         this.partitionService = partitionService;
         this.serviceInfoProvider = serviceInfoProvider;
@@ -216,7 +217,7 @@ public class DefaultTransportService implements TransportService {
         this.deviceProfileCache = deviceProfileCache;
         this.tenantProfileCache = tenantProfileCache;
         this.rateLimitService = rateLimitService;
-        this.dataDecodingEncodingService = dataDecodingEncodingService;
+        this.serializationService = serializationService;
         this.scheduler = scheduler;
         this.transportResourceCache = transportResourceCache;
         this.eventPublisher = eventPublisher;
@@ -926,7 +927,7 @@ public class DefaultTransportService implements TransportService {
                 } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
                     rateLimitService.update(tenantProfileCache.put(msg.getData()));
                 } else if (EntityType.TENANT.equals(entityType)) {
-                    Optional<Tenant> profileOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
+                    Optional<Tenant> profileOpt = serializationService.decode(msg.getData().toByteArray(), Tenant.class);
                     if (profileOpt.isPresent()) {
                         Tenant tenant = profileOpt.get();
                         partitionService.removeTenant(tenant.getId());
@@ -936,14 +937,14 @@ public class DefaultTransportService implements TransportService {
                         }
                     }
                 } else if (EntityType.API_USAGE_STATE.equals(entityType)) {
-                    Optional<ApiUsageState> stateOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
+                    Optional<ApiUsageState> stateOpt = serializationService.decode(msg.getData().toByteArray(), ApiUsageState.class);
                     if (stateOpt.isPresent()) {
                         ApiUsageState apiUsageState = stateOpt.get();
                         rateLimitService.update(apiUsageState.getTenantId(), apiUsageState.isTransportEnabled());
                         //TODO: if transport is disabled, we should close all sessions and not to check credentials.
                     }
                 } else if (EntityType.DEVICE.equals(entityType)) {
-                    Optional<Device> deviceOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
+                    Optional<Device> deviceOpt = serializationService.decode(msg.getData().toByteArray(), Device.class);
                     deviceOpt.ifPresent(this::onDeviceUpdate);
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {

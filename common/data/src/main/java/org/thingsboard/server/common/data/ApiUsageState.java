@@ -27,9 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenantId {
-
-    private static final long serialVersionUID = 8250339805336035966L;
+public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenantId, TbSerializable {
 
     private TenantId tenantId;
     private EntityId entityId;

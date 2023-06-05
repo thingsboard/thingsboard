@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbSerializable;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -72,6 +73,7 @@ import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.util.TbSerializationService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -111,6 +113,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     private final NotificationsTopicService notificationsTopicService;
     private final DataDecodingEncodingService encodingService;
+    private final TbSerializationService serializationService;
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbAssetProfileCache assetProfileCache;
     private final GatewayNotificationsService gatewayNotificationsService;
@@ -335,12 +338,12 @@ public class DefaultTbClusterService implements TbClusterService {
         broadcast(transportMsg, callback);
     }
 
-    public <T> void broadcastEntityChangeToTransport(TenantId tenantId, EntityId entityid, T entity, TbQueueCallback callback) {
+    public <T extends TbSerializable> void broadcastEntityChangeToTransport(TenantId tenantId, EntityId entityId, T entity, TbQueueCallback callback) {
         String entityName = (entity instanceof HasName) ? ((HasName) entity).getName() : entity.getClass().getName();
-        log.trace("[{}][{}][{}] Processing [{}] change event", tenantId, entityid.getEntityType(), entityid.getId(), entityName);
+        log.trace("[{}][{}][{}] Processing [{}] change event", tenantId, entityId.getEntityType(), entityId.getId(), entityName);
         TransportProtos.EntityUpdateMsg entityUpdateMsg = TransportProtos.EntityUpdateMsg.newBuilder()
-                .setEntityType(entityid.getEntityType().name())
-                .setData(ByteString.copyFrom(encodingService.encode(entity))).build();
+                .setEntityType(entityId.getEntityType().name())
+                .setData(ByteString.copyFrom(serializationService.encode(entity))).build();
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setEntityUpdateMsg(entityUpdateMsg).build();
         broadcast(transportMsg, callback);
     }
@@ -403,7 +406,7 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void broadcast(ComponentLifecycleMsg msg) {
-        byte[] msgBytes = encodingService.encode(msg);
+        byte[] msgBytes = serializationService.encode(msg);
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
         Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
         EntityType entityType = msg.getEntityId().getEntityType();

@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -33,17 +32,13 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 
 @ApiModel
 @Data
-@ToString(exclude = {"image", "profileDataBytes"})
+@ToString(exclude = {"image"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId> {
-
-    private static final long serialVersionUID = 6998485460273302018L;
+public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId>, TbSerializable {
 
     @ApiModelProperty(position = 3, value = "JSON object with Tenant Id that owns the profile.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
@@ -57,7 +52,8 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     @Length(fieldName = "image", max = 1000000)
     @ApiModelProperty(position = 12, value = "Either URL or Base64 data of the icon. Used in the mobile application to visualize set of device profiles in the grid view. ")
     private String image;
-    private boolean isDefault;
+    @JsonProperty("default")
+    private boolean defaultProfile;
     @ApiModelProperty(position = 16, value = "Type of the profile. Always 'DEFAULT' for now. Reserved for future use.")
     private DeviceProfileType type;
     @ApiModelProperty(position = 14, value = "Type of the transport used to connect the device. Default transport supports HTTP, CoAP and MQTT.")
@@ -77,9 +73,7 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
             "Otherwise, the 'Main' queue will be used to store those messages.")
     private String defaultQueueName;
     @Valid
-    private transient DeviceProfileData profileData;
-    @JsonIgnore
-    private byte[] profileDataBytes;
+    private DeviceProfileData profileData;
     @NoXss
     @ApiModelProperty(position = 13, value = "Unique provisioning key used by 'Device Provisioning' feature.")
     private String provisionDeviceKey;
@@ -110,7 +104,7 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
         this.name = deviceProfile.getName();
         this.description = deviceProfile.getDescription();
         this.image = deviceProfile.getImage();
-        this.isDefault = deviceProfile.isDefault();
+        this.defaultProfile = deviceProfile.isDefaultProfile();
         this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId();
         this.defaultDashboardId = deviceProfile.getDefaultDashboardId();
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
@@ -138,36 +132,17 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     }
 
     @ApiModelProperty(position = 5, value = "Used to mark the default profile. Default profile is used when the device profile is not specified during device creation.")
-    public boolean isDefault() {
-        return isDefault;
+    public boolean isDefaultProfile() {
+        return defaultProfile;
     }
 
     @ApiModelProperty(position = 16, value = "Complex JSON object that includes addition device profile configuration (transport, alarm rules, etc).")
     public DeviceProfileData getProfileData() {
-        if (profileData != null) {
-            return profileData;
-        } else {
-            if (profileDataBytes != null) {
-                try {
-                    profileData = mapper.readValue(new ByteArrayInputStream(profileDataBytes), DeviceProfileData.class);
-                } catch (IOException e) {
-                    log.warn("Can't deserialize device profile data: ", e);
-                    return null;
-                }
-                return profileData;
-            } else {
-                return null;
-            }
-        }
+        return profileData;
     }
 
     public void setProfileData(DeviceProfileData data) {
         this.profileData = data;
-        try {
-            this.profileDataBytes = data != null ? mapper.writeValueAsBytes(data) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("Can't serialize device profile data: ", e);
-        }
     }
 
 }

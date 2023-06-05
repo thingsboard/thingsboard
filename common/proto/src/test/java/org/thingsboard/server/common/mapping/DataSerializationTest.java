@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.common.mapping;
 
 import lombok.SneakyThrows;
@@ -7,6 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -36,9 +54,13 @@ public class DataSerializationTest {
         d.setName(StringUtils.randomAlphabetic(10));
         d.setLabel(StringUtils.randomAlphabetic(10));
         d.setType(StringUtils.randomAlphabetic(10));
+        var dd = new DeviceData();
+        dd.setConfiguration(new DefaultDeviceConfiguration());
+        dd.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+        d.setDeviceData(dd);
         d.setAdditionalInfo(JacksonUtil.newObjectNode().put("smth", StringUtils.randomAlphabetic(100)));
-//        d.setFirmwareId(new OtaPackageId(UUID.randomUUID()));
-        d.setSoftwareId(new OtaPackageId(UUID.randomUUID()));
+        d.setFirmwareId(new OtaPackageId(UUID.randomUUID()));
+        //d.setSoftwareId(new OtaPackageId(UUID.randomUUID())); - check some fields are null;
         d.setExternalId(new DeviceId(UUID.randomUUID()));
     }
 
@@ -48,25 +70,23 @@ public class DataSerializationTest {
     }
 
     @Test
-    void testSerialize() {
-        testSerialize("Proto", this::toMapStruct);
-        testSerialize("Jackson", this::serializeJackson);
-//        testSerialize("Default", SerializationUtils::serialize);
-
+    void testDeviceSerialization1M() {
+        testDeviceSerialization1M("Proto", this::toMapStruct);
+        testDeviceSerialization1M("Jackson", this::serializeJackson);
         testDeserialize("Proto", toMapStruct(d), this::fromMapStruct);
         testDeserialize("Jackson", serializeJackson(d), data -> JacksonUtil.fromBytes(data, Device.class));
     }
 
     private byte[] toMapStruct(Device device) {
-        return ToProtoMapper.INSTANCE.map(device).toByteArray();
+        return ToProtoMapper.INSTANCE.mapDevice(device).toByteArray();
     }
 
     @SneakyThrows
     private Device fromMapStruct(byte[] data) {
-        return ToDataMapper.INSTANCE.map(DeviceProto.parseFrom(data));
+        return ToDataMapper.INSTANCE.mapDevice(DeviceProto.parseFrom(data));
     }
 
-    private void testSerialize(String methodName, Function<Device, byte[]> serializeFunction) {
+    private void testDeviceSerialization1M(String methodName, Function<Device, byte[]> serializeFunction) {
         // WARMUP;
         for (int i = 0; i < _1M; i++) {
             d.setName(Integer.toString(i));

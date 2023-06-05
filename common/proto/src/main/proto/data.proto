@@ -28,18 +28,93 @@ message TbUUID {
   int64 lsb = 2;
 }
 
+message EntityIdProto {
+  string type = 1;
+  int64 msb = 2;
+  int64 lsb = 3;
+}
+
 message DeviceProto {
   TbUUID id = 1;
-  int64 createdTime = 3;
-  optional bytes additionalInfo = 4;
-  optional TbUUID tenantId = 5;
-  optional TbUUID customerId = 6;
-  optional string name = 7;
+  int64 createdTime = 2;
+  optional TbUUID tenantId = 3;
+  optional TbUUID customerId = 4;
+  optional string name = 5;
+  optional string type = 6;
+  optional string label = 7;
+  optional TbUUID deviceProfileId = 8;
+  optional string deviceData = 9;
+  optional TbUUID firmwareId = 10;
+  optional TbUUID softwareId = 11;
+  optional TbUUID externalId = 12;
+  optional string additionalInfo = 13;
+}
+
+message DeviceProfileProto {
+  TbUUID id = 1;
+  int64 createdTime = 2;
+  optional TbUUID tenantId = 3;
+  optional string name = 4;
+  optional string description = 5;
+  optional string image = 6;
+  optional bool defaultProfile = 7;
   optional string type = 8;
-  optional string label = 9;
-  optional TbUUID deviceProfileId = 10;
-  optional bytes deviceDataBytes = 11;
-  optional TbUUID firmwareId = 12;
-  optional TbUUID softwareId = 13;
-  optional TbUUID externalId = 14;
+  optional string transportType = 9;
+  optional string provisionType = 10;
+  optional TbUUID defaultRuleChainId = 11;
+  optional TbUUID defaultDashboardId = 12;
+  optional string defaultQueueName = 13;
+  optional string profileData = 14;
+  optional string provisionDeviceKey = 15;
+  optional TbUUID firmwareId = 16;
+  optional TbUUID softwareId = 17;
+  optional TbUUID defaultEdgeRuleChainId = 18;
+  optional TbUUID externalId = 19;
+}
+
+message TenantProfileProto {
+  TbUUID id = 1;
+  int64 createdTime = 2;
+  optional string name = 3;
+  optional string description = 4;
+  optional bool defaultProfile = 5;
+  optional bool isolatedTbRuleEngine = 6;
+  optional string profileData = 7;
+}
+
+message TenantProto {
+  TbUUID id = 1;
+  int64 createdTime = 2;
+  optional string country = 3;
+  optional string state = 4;
+  optional string city = 5;
+  optional string address = 6;
+  optional string address2 = 7;
+  optional string zip = 8;
+  optional string phone = 9;
+  optional string email = 10;
+  optional string title = 11;
+  optional string region = 12;
+  optional TbUUID tenantProfileId = 13;
+  optional string additionalInfo = 14;
+}
+
+message ApiUsageStateProto {
+  TbUUID id = 1;
+  int64 createdTime = 2;
+  optional TbUUID tenantId = 3;
+  optional EntityIdProto entityId = 4;
+  optional string transportState = 5;
+  optional string dbStorageState = 6;
+  optional string reExecState = 7;
+  optional string jsExecState = 8;
+  optional string emailExecState = 9;
+  optional string smsExecState = 10;
+  optional string alarmExecState = 11;
+}
+
+message ComponentLifecycleMsgProto {
+  TbUUID tenantId = 1;
+  EntityIdProto entityId = 2;
+  string event = 3;
 }

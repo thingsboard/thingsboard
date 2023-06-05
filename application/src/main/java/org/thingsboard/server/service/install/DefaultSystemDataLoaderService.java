@@ -235,7 +235,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         isolatedRuleEngineTenantProfileData.setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
 
         TenantProfile isolatedTbRuleEngineProfile = new TenantProfile();
-        isolatedTbRuleEngineProfile.setDefault(false);
+        isolatedTbRuleEngineProfile.setDefaultProfile(false);
         isolatedTbRuleEngineProfile.setName("Isolated TB Rule Engine");
         isolatedTbRuleEngineProfile.setDescription("Isolated TB Rule Engine tenant profile");
         isolatedTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
@@ -335,7 +335,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         DeviceProfile thermostatDeviceProfile = new DeviceProfile();
         thermostatDeviceProfile.setTenantId(demoTenant.getId());
-        thermostatDeviceProfile.setDefault(false);
+        thermostatDeviceProfile.setDefaultProfile(false);
         thermostatDeviceProfile.setName("thermostat");
         thermostatDeviceProfile.setType(DeviceProfileType.DEFAULT);
         thermostatDeviceProfile.setTransportType(DeviceTransportType.DEFAULT);

@@ -91,9 +91,9 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         TenantProfile savedTenantProfile;
         try {
             savedTenantProfile = tenantProfileDao.save(tenantId, tenantProfile);
-            publishEvictEvent(new TenantProfileEvictEvent(savedTenantProfile.getId(), savedTenantProfile.isDefault()));
+            publishEvictEvent(new TenantProfileEvictEvent(savedTenantProfile.getId(), savedTenantProfile.isDefaultProfile()));
         } catch (Exception t) {
-            handleEvictEvent(new TenantProfileEvictEvent(null, tenantProfile.isDefault()));
+            handleEvictEvent(new TenantProfileEvictEvent(null, tenantProfile.isDefaultProfile()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("tenant_profile_name_unq_key")) {
                 throw new DataValidationException("Tenant profile with such name already exists!");
@@ -109,7 +109,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         log.trace("Executing deleteTenantProfile [{}]", tenantProfileId);
         validateId(tenantId, INCORRECT_TENANT_PROFILE_ID + tenantProfileId);
         TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenantProfileId.getId());
-        if (tenantProfile != null && tenantProfile.isDefault()) {
+        if (tenantProfile != null && tenantProfile.isDefaultProfile()) {
             throw new DataValidationException("Deletion of Default Tenant Profile is prohibited!");
         }
         this.removeTenantProfile(tenantId, tenantProfileId, false);
@@ -150,7 +150,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         TenantProfile defaultTenantProfile = findDefaultTenantProfile(tenantId);
         if (defaultTenantProfile == null) {
             defaultTenantProfile = new TenantProfile();
-            defaultTenantProfile.setDefault(true);
+            defaultTenantProfile.setDefaultProfile(true);
             defaultTenantProfile.setName("Default");
             TenantProfileData profileData = new TenantProfileData();
             profileData.setConfiguration(new DefaultTenantProfileConfiguration());
@@ -182,8 +182,8 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         log.trace("Executing setDefaultTenantProfile [{}]", tenantProfileId);
         validateId(tenantId, INCORRECT_TENANT_PROFILE_ID + tenantProfileId);
         TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenantProfileId.getId());
-        if (!tenantProfile.isDefault()) {
-            tenantProfile.setDefault(true);
+        if (!tenantProfile.isDefaultProfile()) {
+            tenantProfile.setDefaultProfile(true);
             TenantProfile previousDefaultTenantProfile = findDefaultTenantProfile(tenantId);
             boolean changed = false;
             if (previousDefaultTenantProfile == null) {
@@ -191,7 +191,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
                 publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, true));
                 changed = true;
             } else if (!previousDefaultTenantProfile.getId().equals(tenantProfile.getId())) {
-                previousDefaultTenantProfile.setDefault(false);
+                previousDefaultTenantProfile.setDefaultProfile(false);
                 tenantProfileDao.save(tenantId, previousDefaultTenantProfile);
                 tenantProfileDao.save(tenantId, tenantProfile);
                 publishEvictEvent(new TenantProfileEvictEvent(previousDefaultTenantProfile.getId(), false));
@@ -234,7 +234,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
 
                 @Override
                 protected void removeEntity(TenantId tenantId, TenantProfile entity) {
-                    removeTenantProfile(tenantId, entity.getId(), entity.isDefault());
+                    removeTenantProfile(tenantId, entity.getId(), entity.isDefaultProfile());
                 }
             };
 

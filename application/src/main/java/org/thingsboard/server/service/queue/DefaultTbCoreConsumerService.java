@@ -69,6 +69,7 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.queue.util.TbSerializationService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.notification.NotificationSchedulerService;
@@ -147,6 +148,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         TbLocalSubscriptionService localSubscriptionService,
                                         SubscriptionManagerService subscriptionManagerService,
                                         DataDecodingEncodingService encodingService,
+                                        TbSerializationService serializationService,
                                         TbCoreDeviceRpcService tbCoreDeviceRpcService,
                                         StatsFactory statsFactory,
                                         TbDeviceProfileCache deviceProfileCache,
@@ -162,7 +164,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         Optional<JwtSettingsService> jwtSettingsService,
                                         NotificationSchedulerService notificationSchedulerService,
                                         NotificationRuleProcessor notificationRuleProcessor) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(), jwtSettingsService);
+        super(actorContext, encodingService, serializationService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(), jwtSettingsService);
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.firmwareStatesConsumer = tbCoreQueueFactory.createToOtaPackageStateServiceMsgConsumer();
@@ -337,7 +339,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasFromDeviceRpcResponse()) {
             log.trace("[{}] Forwarding message to RPC service {}", id, toCoreNotification.getFromDeviceRpcResponse());
             forwardToCoreRpcService(toCoreNotification.getFromDeviceRpcResponse(), callback);
-        } else if (toCoreNotification.getComponentLifecycleMsg() != null && !toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
+        } else if (!toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
             handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
             callback.onSuccess();
         } else if (!toCoreNotification.getEdgeEventUpdateMsg().isEmpty()) {

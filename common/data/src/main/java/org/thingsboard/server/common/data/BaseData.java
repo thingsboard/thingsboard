@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 
 import java.io.Serializable;
 
-public abstract class BaseData<I extends UUIDBased> extends IdBased<I> implements Serializable {
+public abstract class BaseData<I extends UUIDBased> extends IdBased<I>  {
 
     private static final long serialVersionUID = 5422817607129962637L;
     public static final ObjectMapper mapper = new ObjectMapper();

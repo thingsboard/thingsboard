@@ -72,7 +72,7 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
         Assert.assertEquals(deviceProfile.getName(), savedDeviceProfile.getName());
         Assert.assertEquals(deviceProfile.getDescription(), savedDeviceProfile.getDescription());
         Assert.assertEquals(deviceProfile.getProfileData(), savedDeviceProfile.getProfileData());
-        Assert.assertEquals(deviceProfile.isDefault(), savedDeviceProfile.isDefault());
+        Assert.assertEquals(deviceProfile.isDefaultProfile(), savedDeviceProfile.isDefaultProfile());
         Assert.assertEquals(deviceProfile.getDefaultRuleChainId(), savedDeviceProfile.getDefaultRuleChainId());
         savedDeviceProfile.setName("New device profile");
         deviceProfileService.saveDeviceProfile(savedDeviceProfile);
@@ -90,7 +90,7 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
         Assert.assertEquals(deviceProfile.getName(), savedDeviceProfile.getName());
         Assert.assertEquals(deviceProfile.getDescription(), savedDeviceProfile.getDescription());
         Assert.assertEquals(deviceProfile.getProfileData(), savedDeviceProfile.getProfileData());
-        Assert.assertEquals(deviceProfile.isDefault(), savedDeviceProfile.isDefault());
+        Assert.assertEquals(deviceProfile.isDefaultProfile(), savedDeviceProfile.isDefaultProfile());
         Assert.assertEquals(deviceProfile.getDefaultRuleChainId(), savedDeviceProfile.getDefaultRuleChainId());
 
         OtaPackage firmware = new OtaPackage();
@@ -312,7 +312,7 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
         Assert.assertEquals(deviceProfiles, loadedDeviceProfiles);
 
         for (DeviceProfile deviceProfile : loadedDeviceProfiles) {
-            if (!deviceProfile.isDefault()) {
+            if (!deviceProfile.isDefaultProfile()) {
                 deviceProfileService.deleteDeviceProfile(tenantId, deviceProfile.getId());
             }
         }
@@ -361,7 +361,7 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
         Assert.assertEquals(deviceProfileInfos, loadedDeviceProfileInfos);
 
         for (DeviceProfile deviceProfile : deviceProfiles) {
-            if (!deviceProfile.isDefault()) {
+            if (!deviceProfile.isDefaultProfile()) {
                 deviceProfileService.deleteDeviceProfile(tenantId, deviceProfile.getId());
             }
         }

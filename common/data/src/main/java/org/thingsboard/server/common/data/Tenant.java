@@ -28,9 +28,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTitle {
-
-    private static final long serialVersionUID = 8057243243859922101L;
+public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTitle, TbSerializable {
 
     @Length(fieldName = "title")
     @NoXss

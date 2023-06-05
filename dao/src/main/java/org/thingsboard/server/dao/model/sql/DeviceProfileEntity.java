@@ -123,7 +123,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> {
         this.transportType = deviceProfile.getTransportType();
         this.provisionType = deviceProfile.getProvisionType();
         this.description = deviceProfile.getDescription();
-        this.isDefault = deviceProfile.isDefault();
+        this.isDefault = deviceProfile.isDefaultProfile();
         this.profileData = JacksonUtil.convertValue(deviceProfile.getProfileData(), ObjectNode.class);
         if (deviceProfile.getDefaultRuleChainId() != null) {
             this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId().getId();
@@ -160,7 +160,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> {
         deviceProfile.setTransportType(transportType);
         deviceProfile.setProvisionType(provisionType);
         deviceProfile.setDescription(description);
-        deviceProfile.setDefault(isDefault);
+        deviceProfile.setDefaultProfile(isDefault);
         deviceProfile.setDefaultQueueName(defaultQueueName);
         deviceProfile.setProfileData(JacksonUtil.convertValue(profileData, DeviceProfileData.class));
         if (defaultRuleChainId != null) {

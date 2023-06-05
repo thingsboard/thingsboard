@@ -15,14 +15,13 @@
  */
 package org.thingsboard.server.common.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -33,14 +32,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Optional;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
+@ToString
 @Slf4j
-public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId> {
+public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId>, TbSerializable {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -56,10 +54,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
     @Length(fieldName = "label")
     private String label;
     private DeviceProfileId deviceProfileId;
-    private transient DeviceData deviceData;
-    @JsonIgnore
-    private byte[] deviceDataBytes;
-
+    private DeviceData deviceData;
     private OtaPackageId firmwareId;
     private OtaPackageId softwareId;
 
@@ -175,30 +170,11 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
 
     @ApiModelProperty(position = 9, value = "JSON object with content specific to type of transport in the device profile.")
     public DeviceData getDeviceData() {
-        if (deviceData != null) {
-            return deviceData;
-        } else {
-            if (deviceDataBytes != null) {
-                try {
-                    deviceData = mapper.readValue(new ByteArrayInputStream(deviceDataBytes), DeviceData.class);
-                } catch (IOException e) {
-                    log.warn("Can't deserialize device data: ", e);
-                    return null;
-                }
-                return deviceData;
-            } else {
-                return null;
-            }
-        }
+        return deviceData;
     }
 
     public void setDeviceData(DeviceData data) {
         this.deviceData = data;
-        try {
-            this.deviceDataBytes = data != null ? mapper.writeValueAsBytes(data) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("Can't serialize device data: ", e);
-        }
     }
 
     @ApiModelProperty(position = 10, value = "JSON object with Ota Package Id.")
@@ -223,35 +199,6 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Device [tenantId=");
-        builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
-        builder.append(", name=");
-        builder.append(name);
-        builder.append(", type=");
-        builder.append(type);
-        builder.append(", label=");
-        builder.append(label);
-        builder.append(", deviceProfileId=");
-        builder.append(deviceProfileId);
-        builder.append(", deviceData=");
-        builder.append(firmwareId);
-        builder.append(", firmwareId=");
-        builder.append(deviceData);
-        builder.append(", additionalInfo=");
-        builder.append(getAdditionalInfo());
-        builder.append(", createdTime=");
-        builder.append(createdTime);
-        builder.append(", id=");
-        builder.append(id);
-        builder.append("]");
-        return builder.toString();
     }
 
 }

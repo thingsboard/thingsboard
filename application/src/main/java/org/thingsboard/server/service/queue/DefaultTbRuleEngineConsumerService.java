@@ -51,6 +51,7 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
+import org.thingsboard.server.queue.util.TbSerializationService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -121,6 +122,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               RuleEngineStatisticsService statisticsService,
                                               ActorSystemContext actorContext,
                                               DataDecodingEncodingService encodingService,
+                                              TbSerializationService serializationService,
                                               TbRuleEngineDeviceRpcService tbDeviceRpcService,
                                               StatsFactory statsFactory,
                                               TbDeviceProfileCache deviceProfileCache,
@@ -129,7 +131,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbApiUsageStateService apiUsageStateService,
                                               PartitionService partitionService, ApplicationEventPublisher eventPublisher,
                                               TbServiceInfoProvider serviceInfoProvider, QueueService queueService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), Optional.empty());
+        super(actorContext, encodingService, serializationService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService,
+                partitionService, eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), Optional.empty());
         this.statisticsService = statisticsService;
         this.tbRuleEngineQueueFactory = tbRuleEngineQueueFactory;
         this.submitStrategyFactory = submitStrategyFactory;
@@ -387,7 +390,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Override
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToRuleEngineNotificationMsg> msg, TbCallback callback) throws Exception {
         ToRuleEngineNotificationMsg nfMsg = msg.getValue();
-        if (nfMsg.getComponentLifecycleMsg() != null && !nfMsg.getComponentLifecycleMsg().isEmpty()) {
+        if (!nfMsg.getComponentLifecycleMsg().isEmpty()) {
             handleComponentLifecycleMsg(id, nfMsg.getComponentLifecycleMsg());
             callback.onSuccess();
         } else if (nfMsg.hasFromDeviceRpcResponse()) {

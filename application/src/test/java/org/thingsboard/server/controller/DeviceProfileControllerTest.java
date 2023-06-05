@@ -124,7 +124,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         Assert.assertEquals(deviceProfile.getName(), savedDeviceProfile.getName());
         Assert.assertEquals(deviceProfile.getDescription(), savedDeviceProfile.getDescription());
         Assert.assertEquals(deviceProfile.getProfileData(), savedDeviceProfile.getProfileData());
-        Assert.assertEquals(deviceProfile.isDefault(), savedDeviceProfile.isDefault());
+        Assert.assertEquals(deviceProfile.isDefaultProfile(), savedDeviceProfile.isDefaultProfile());
         Assert.assertEquals(deviceProfile.getDefaultRuleChainId(), savedDeviceProfile.getDefaultRuleChainId());
         Assert.assertEquals(DeviceProfileProvisionType.DISABLED, savedDeviceProfile.getProvisionType());
 
@@ -519,7 +519,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         Assert.assertEquals(deviceProfiles, loadedDeviceProfiles);
 
         for (DeviceProfile deviceProfile : loadedDeviceProfiles) {
-            if (!deviceProfile.isDefault()) {
+            if (!deviceProfile.isDefaultProfile()) {
                 doDelete("/api/deviceProfile/" + deviceProfile.getId().getId().toString())
                         .andExpect(status().isOk());
             }
@@ -577,7 +577,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         Assert.assertEquals(deviceProfileInfos, loadedDeviceProfileInfos);
 
         for (DeviceProfile deviceProfile : deviceProfiles) {
-            if (!deviceProfile.isDefault()) {
+            if (!deviceProfile.isDefaultProfile()) {
                 doDelete("/api/deviceProfile/" + deviceProfile.getId().getId().toString())
                         .andExpect(status().isOk());
             }

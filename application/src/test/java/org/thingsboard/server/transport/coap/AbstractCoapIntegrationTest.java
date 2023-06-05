@@ -142,7 +142,7 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
             deviceProfileData.setProvisionConfiguration(provisionConfiguration);
             deviceProfileData.setConfiguration(configuration);
             deviceProfile.setProfileData(deviceProfileData);
-            deviceProfile.setDefault(false);
+            deviceProfile.setDefaultProfile(false);
             deviceProfile.setDefaultRuleChainId(null);
             return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         }

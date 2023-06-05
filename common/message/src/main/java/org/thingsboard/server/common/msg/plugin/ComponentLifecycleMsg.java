@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.common.msg.plugin;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.TbSerializable;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,7 +34,8 @@ import java.util.Optional;
  * @author Andrew Shvayka
  */
 @ToString
-public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
+@EqualsAndHashCode
+public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg, TbSerializable {
     @Getter
     private final TenantId tenantId;
     @Getter

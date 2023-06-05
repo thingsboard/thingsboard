@@ -119,7 +119,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DataValidationException("Device profile is referencing to non-existent tenant!");
             }
         }
-        if (deviceProfile.isDefault()) {
+        if (deviceProfile.isDefaultProfile()) {
             DeviceProfile defaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId);
             if (defaultDeviceProfile != null && !defaultDeviceProfile.getId().equals(deviceProfile.getId())) {
                 throw new DataValidationException("Another default device profile is present in scope of current tenant!");

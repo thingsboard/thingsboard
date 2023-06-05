@@ -529,7 +529,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
         }
         deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setDefault(false);
+        deviceProfile.setDefaultProfile(false);
         deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;
     }

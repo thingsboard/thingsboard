@@ -157,7 +157,7 @@ public abstract class AbstractServiceTest {
         deviceProfileData.setConfiguration(configuration);
         deviceProfileData.setTransportConfiguration(transportConfiguration);
         deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setDefault(false);
+        deviceProfile.setDefaultProfile(false);
         deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;
     }

@@ -13,25 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.util;
+package org.thingsboard.server.common.data;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.JavaSerDesUtil;
-import org.thingsboard.server.common.data.TbSerializable;
+public interface TbSerializable {
 
-import java.util.Optional;
-
-@Slf4j
-@Service
-public class JavaDataDecodingEncodingService implements DataDecodingEncodingService {
-    @Override
-    public <T> Optional<T> decode(byte[] byteArray) {
-        return Optional.ofNullable(JavaSerDesUtil.decode(byteArray));
-    }
-
-    @Override
-    public <T> byte[] encode(T msq) {
-        return JavaSerDesUtil.encode(msq);
-    }
 }

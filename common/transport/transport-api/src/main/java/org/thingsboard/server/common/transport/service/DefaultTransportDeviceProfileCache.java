@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.transport.service;
 
 import com.google.protobuf.ByteString;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.util.TbSerializationService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Optional;
@@ -38,11 +40,12 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 @Component
 @TbTransportComponent
+@RequiredArgsConstructor
 public class DefaultTransportDeviceProfileCache implements TransportDeviceProfileCache {
 
     private final Lock deviceProfileFetchLock = new ReentrantLock();
     private final ConcurrentMap<DeviceProfileId, DeviceProfile> deviceProfiles = new ConcurrentHashMap<>();
-    private final DataDecodingEncodingService dataDecodingEncodingService;
+    private final TbSerializationService serializationService;
 
     private TransportService transportService;
 
@@ -52,15 +55,11 @@ public class DefaultTransportDeviceProfileCache implements TransportDeviceProfil
         this.transportService = transportService;
     }
 
-    public DefaultTransportDeviceProfileCache(DataDecodingEncodingService dataDecodingEncodingService) {
-        this.dataDecodingEncodingService = dataDecodingEncodingService;
-    }
-
     @Override
     public DeviceProfile getOrCreate(DeviceProfileId id, ByteString profileBody) {
         DeviceProfile profile = deviceProfiles.get(id);
         if (profile == null) {
-            Optional<DeviceProfile> deviceProfile = dataDecodingEncodingService.decode(profileBody.toByteArray());
+            Optional<DeviceProfile> deviceProfile = serializationService.decode(profileBody.toByteArray(), DeviceProfile.class);
             if (deviceProfile.isPresent()) {
                 profile = deviceProfile.get();
                 deviceProfiles.put(id, profile);
@@ -81,7 +80,7 @@ public class DefaultTransportDeviceProfileCache implements TransportDeviceProfil
 
     @Override
     public DeviceProfile put(ByteString profileBody) {
-        Optional<DeviceProfile> deviceProfile = dataDecodingEncodingService.decode(profileBody.toByteArray());
+        Optional<DeviceProfile> deviceProfile = serializationService.decode(profileBody.toByteArray(), DeviceProfile.class);
         if (deviceProfile.isPresent()) {
             put(deviceProfile.get());
             return deviceProfile.get();
@@ -107,7 +106,7 @@ public class DefaultTransportDeviceProfileCache implements TransportDeviceProfil
                         .setEntityIdLSB(id.getId().getLeastSignificantBits())
                         .build();
                 TransportProtos.GetEntityProfileResponseMsg entityProfileMsg = transportService.getEntityProfile(msg);
-                Optional<DeviceProfile> profileOpt = dataDecodingEncodingService.decode(entityProfileMsg.getData().toByteArray());
+                Optional<DeviceProfile> profileOpt = serializationService.decode(entityProfileMsg.getData().toByteArray(), DeviceProfile.class);
                 if (profileOpt.isPresent()) {
                     profile = profileOpt.get();
                     this.put(profile);

@@ -40,7 +40,7 @@ public class DeviceProfileMsgConstructor {
                 .setIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
                 .setIdLSB(deviceProfile.getId().getId().getLeastSignificantBits())
                 .setName(deviceProfile.getName())
-                .setDefault(deviceProfile.isDefault())
+                .setDefault(deviceProfile.isDefaultProfile())
                 .setType(deviceProfile.getType().name())
                 .setProfileDataBytes(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile.getProfileData())));
         if (deviceProfile.getDefaultQueueName() != null) {

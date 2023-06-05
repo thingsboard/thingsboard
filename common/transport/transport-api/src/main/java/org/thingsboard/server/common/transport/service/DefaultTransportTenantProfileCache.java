@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.transport.service;
 
 import com.google.protobuf.ByteString;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.util.TbSerializationService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Collections;
@@ -43,6 +45,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 @TbTransportComponent
+@RequiredArgsConstructor
 @Slf4j
 public class DefaultTransportTenantProfileCache implements TransportTenantProfileCache {
 
@@ -50,7 +53,7 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
     private final ConcurrentMap<TenantProfileId, TenantProfile> profiles = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, TenantProfileId> tenantIds = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantProfileId, Set<TenantId>> tenantProfileIds = new ConcurrentHashMap<>();
-    private final DataDecodingEncodingService dataDecodingEncodingService;
+    private final TbSerializationService serializationService;
 
     private TransportRateLimitService rateLimitService;
     private TransportService transportService;
@@ -67,10 +70,6 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
         this.transportService = transportService;
     }
 
-    public DefaultTransportTenantProfileCache(DataDecodingEncodingService dataDecodingEncodingService) {
-        this.dataDecodingEncodingService = dataDecodingEncodingService;
-    }
-
     @Override
     public TenantProfile get(TenantId tenantId) {
         return getTenantProfile(tenantId);
@@ -78,7 +77,7 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
 
     @Override
     public TenantProfileUpdateResult put(ByteString profileBody) {
-        Optional<TenantProfile> profileOpt = dataDecodingEncodingService.decode(profileBody.toByteArray());
+        Optional<TenantProfile> profileOpt = serializationService.decode(profileBody.toByteArray(), TenantProfile.class);
         if (profileOpt.isPresent()) {
             TenantProfile newProfile = profileOpt.get();
             log.trace("[{}] put: {}", newProfile.getId(), newProfile);
@@ -134,7 +133,7 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
                             .setEntityIdLSB(tenantId.getId().getLeastSignificantBits())
                             .build();
                     TransportProtos.GetEntityProfileResponseMsg entityProfileMsg = transportService.getEntityProfile(msg);
-                    Optional<TenantProfile> profileOpt = dataDecodingEncodingService.decode(entityProfileMsg.getData().toByteArray());
+                    Optional<TenantProfile> profileOpt = serializationService.decode(entityProfileMsg.getData().toByteArray(), TenantProfile.class);
                     if (profileOpt.isPresent()) {
                         profile = profileOpt.get();
                         TenantProfile existingProfile = profiles.get(profile.getId());
@@ -149,7 +148,7 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
                         log.warn("[{}] Can't decode tenant profile: {}", tenantId, entityProfileMsg.getData());
                         throw new RuntimeException("Can't decode tenant profile!");
                     }
-                    Optional<ApiUsageState> apiStateOpt = dataDecodingEncodingService.decode(entityProfileMsg.getApiState().toByteArray());
+                    Optional<ApiUsageState> apiStateOpt = serializationService.decode(entityProfileMsg.getApiState().toByteArray(), ApiUsageState.class);
                     apiStateOpt.ifPresent(apiUsageState -> rateLimitService.update(tenantId, apiUsageState.isTransportEnabled()));
                 }
             } finally {
