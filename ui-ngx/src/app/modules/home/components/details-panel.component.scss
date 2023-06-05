@@ -48,6 +48,15 @@
     }
   }
 
+  .details-panel {
+    font-family: var(--mdc-dialog-supporting-text-font, "Arial");
+    line-height: var(--mdc-dialog-supporting-text-line-height, 14px);
+    font-size: var(--mdc-dialog-supporting-text-size, 14px);
+    font-weight: var(--mdc-dialog-supporting-text-weight, 500);
+    letter-spacing: var(--mdc-dialog-supporting-text-tracking, 1px);
+    color: var(--mdc-dialog-supporting-text-color, black);
+  }
+
   .tb-details-subtitle {
     width: inherit;
     margin: 10px 0;
