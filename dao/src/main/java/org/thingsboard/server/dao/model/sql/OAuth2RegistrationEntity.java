@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.OAUTH2_REGISTRATION_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.OAUTH2_REGISTRATION_TABLE_NAME)
 public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> {
 
     @Column(name = ModelConstants.OAUTH2_PARAMS_ID_PROPERTY)

@@ -40,7 +40,6 @@ public class DashboardPageHelper extends DashboardPageElements {
 
     public void openSelectWidgetsBundleMenu() {
         addBtn().click();
-        createNewDashboardBtn().click();
     }
 
     public void openCreateWidgetPopup() {

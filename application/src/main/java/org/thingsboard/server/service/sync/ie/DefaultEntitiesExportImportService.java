@@ -32,8 +32,8 @@ import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.apiusage.limits.LimitedApi;
-import org.thingsboard.server.service.apiusage.limits.RateLimitService;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
@@ -67,7 +67,8 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.ASSET_PROFILE, EntityType.ASSET, EntityType.RULE_CHAIN,
             EntityType.DASHBOARD, EntityType.DEVICE_PROFILE, EntityType.DEVICE,
-            EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE
+            EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE,
+            EntityType.NOTIFICATION_TEMPLATE, EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE
     );
 
 

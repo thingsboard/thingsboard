@@ -203,6 +203,11 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteNotificationTargetById(tenantId, (NotificationTargetId) id);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_TARGET;
     }

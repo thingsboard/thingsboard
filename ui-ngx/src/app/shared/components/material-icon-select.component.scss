@@ -14,11 +14,28 @@
  * limitations under the License.
  */
 :host {
-  .mat-icon.icon-value {
-    padding: 4px;
-    margin: 12px 4px 4px;
-    cursor: pointer;
-    border: solid 1px rgba(0, 0, 0, .27);
-    box-sizing: initial;
+  .mat-icon {
+    &.icon-value {
+      padding: 4px;
+      margin: 12px 4px 4px;
+      cursor: pointer;
+      border: solid 1px rgba(0, 0, 0, .27);
+      box-sizing: initial;
+    }
+    &.icon-box {
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 4px;
+      cursor: pointer;
+      box-sizing: border-box;
+      padding: 8px;
+      height: 40px;
+      width: 40px;
+      font-size: 22px;
+      vertical-align: middle;
+      &.disabled {
+        cursor: initial;
+        color: rgba(0, 0, 0, 0.38);
+      }
+    }
   }
 }

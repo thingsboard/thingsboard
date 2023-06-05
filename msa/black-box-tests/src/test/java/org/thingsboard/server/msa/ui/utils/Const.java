@@ -36,10 +36,15 @@ public class Const {
     public static final String EMPTY_CUSTOMER_MESSAGE = "Customer title should be specified!";
     public static final String EMPTY_DEVICE_PROFILE_MESSAGE = "Device profile name should be specified!";
     public static final String EMPTY_ASSET_PROFILE_MESSAGE = "Asset profile name should be specified!";
+    public static final String EMPTY_DEVICE_MESSAGE = "Device name should be specified!";
     public static final String DELETE_RULE_CHAIN_WITH_PROFILE_MESSAGE = "The rule chain referenced by the device profiles cannot be deleted!";
     public static final String SAME_NAME_WARNING_CUSTOMER_MESSAGE = "Customer with such title already exists!";
     public static final String SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE = "Device profile with such name already exists!";
     public static final String SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE = "Asset profile with such name already exists!";
+    public static final String SAME_NAME_WARNING_DEVICE_MESSAGE = "Device with such name already exists!";
     public static final String PHONE_NUMBER_ERROR_MESSAGE = "Phone number is invalid or not possible";
     public static final String NAME_IS_REQUIRED_MESSAGE = "Name is required.";
+    public static final String DEVICE_PROFILE_IS_REQUIRED_MESSAGE = "Device profile is required";
+    public static final String DEVICE_ACTIVE_STATE = "Active";
+    public static final String DEVICE_INACTIVE_STATE = "Inactive";
 }
