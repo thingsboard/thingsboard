@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Inject, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
@@ -22,19 +22,13 @@ import { map, share } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TooltipPosition } from '@angular/material/tooltip';
-import { CdkOverlayOrigin, Overlay } from '@angular/cdk/overlay';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { DOCUMENT } from '@angular/common';
-import { WINDOW } from '@core/services/window.service';
 import { RuleChain, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { Direction } from '@shared/models/page/sort-order';
 
-// @dynamic
 @Component({
   selector: 'tb-rule-chain-select',
   templateUrl: './rule-chain-select.component.html',
@@ -58,33 +52,20 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
   @coerceBoolean()
   disabled: boolean;
 
+  @Input()
+  ruleChainType: RuleChainType = RuleChainType.CORE;
+
   ruleChains$: Observable<Array<RuleChain>>;
 
   ruleChainId: string | null;
 
-  @ViewChild('ruleChainSelectPanelOrigin') ruleChainSelectPanelOrigin: CdkOverlayOrigin;
-
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private ruleChainService: RuleChainService,
-              private overlay: Overlay,
-              private breakpointObserver: BreakpointObserver,
-              private viewContainerRef: ViewContainerRef,
-              private nativeElement: ElementRef,
-              @Inject(DOCUMENT) private document: Document,
-              @Inject(WINDOW) private window: Window) {
-  }
-
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
+              private ruleChainService: RuleChainService) {
   }
 
   ngOnInit() {
-
     const pageLink = new PageLink(100, 0, null, {
       property: 'name',
       direction: Direction.ASC
@@ -95,6 +76,14 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
       share()
     );
   }
+
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+  }
+
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
@@ -115,7 +104,7 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
   }
 
   private getRuleChains(pageLink: PageLink): Observable<PageData<RuleChain>> {
-    return this.ruleChainService.getRuleChains(pageLink, RuleChainType.CORE, {ignoreLoading: true});
+    return this.ruleChainService.getRuleChains(pageLink, this.ruleChainType, {ignoreLoading: true});
   }
 
 }

@@ -32,6 +32,7 @@
             <tb-rule-chain-select
               fxFlex
               *ngIf="!isImport"
+              [ruleChainType]="ruleChainType"
               [disabled]="isDirtyValue"
               [(ngModel)]="ruleChain.id.id"
               (ngModelChange)="currentRuleChainIdChanged(ruleChain.id?.id)">

@@ -17,22 +17,10 @@
   min-width: 52px;
   width: 100%;
   padding: 0 6px;
-  .mat-mdc-select {
+  .tb-rule-chain-select {
     display: flex;
-    max-width: 300px;
     height: 48px;
     min-height: 100%;
     pointer-events: all;
-  }
-}
-
-:host ::ng-deep {
-  .mat-mdc-select {
-    .mat-mdc-select-value {
-      max-width: 282px;
-    }
-    .mat-mdc-select-arrow {
-      width: 24px;
-    }
   }
 }
