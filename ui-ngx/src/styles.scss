@@ -567,6 +567,10 @@ mat-label {
     }
   }
 
+  .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix {
+    z-index: 1;
+  }
+
   .mat-toolbar.mat-mdc-table-toolbar .mat-mdc-form-field.mat-form-field-appearance-fill,
   .mat-mdc-form-field.mat-form-field-appearance-fill.tb-appearance-transparent {
     .mdc-text-field--filled {

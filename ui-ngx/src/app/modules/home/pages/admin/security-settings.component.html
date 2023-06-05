@@ -164,6 +164,8 @@
     <mat-card-title>
       <span class="mat-headline-5" translate>admin.jwt.security-settings</span>
     </mat-card-title>
+    <span fxFlex></span>
+    <div tb-help="jwtSecuritySettings"></div>
   </mat-card-header>
   <mat-card-content style="padding-top: 16px;">
     <form [formGroup]="jwtSecuritySettingsFormGroup" (ngSubmit)="saveJwtSettings()" autocomplete="off">

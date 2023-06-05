@@ -34,7 +34,7 @@ public abstract class AbstractMqttClientConnectionTest extends AbstractMqttInteg
         try {
             client.connectAndWait("wrongAccessToken");
         } catch (MqttException e) {
-            Assert.assertEquals(MqttException.REASON_CODE_FAILED_AUTHENTICATION, e.getReasonCode());
+            Assert.assertEquals(MqttException.REASON_CODE_NOT_AUTHORIZED, e.getReasonCode());
         }
     }
 

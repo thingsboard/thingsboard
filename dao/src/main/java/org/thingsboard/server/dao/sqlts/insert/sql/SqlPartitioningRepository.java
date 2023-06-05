@@ -110,9 +110,12 @@ public class SqlPartitioningRepository {
 
         String tablePartition = table + "_" + partitionTs;
         String detachPsqlStmtStr = "ALTER TABLE " + table + " DETACH PARTITION " + tablePartition;
-        if (getCurrentServerVersion() >= PSQL_VERSION_14) {
-            detachPsqlStmtStr += " CONCURRENTLY";
-        }
+
+        // hotfix of ERROR: partition "integration_debug_event_1678323600000" already pending detach in partitioned table "public.integration_debug_event"
+        // https://github.com/thingsboard/thingsboard/issues/8271
+        // if (getCurrentServerVersion() >= PSQL_VERSION_14) {
+        //    detachPsqlStmtStr += " CONCURRENTLY";
+        // }
 
         String dropStmtStr = "DROP TABLE " + tablePartition;
         try {

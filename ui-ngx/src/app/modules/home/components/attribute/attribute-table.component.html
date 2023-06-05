@@ -139,7 +139,7 @@
       <table mat-table [dataSource]="dataSource"
                  matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
-          <mat-header-cell *matHeaderCellDef style="width: 30px;">
+          <mat-header-cell *matHeaderCellDef style="width: 40px;">
             <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
                           [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
                           [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
