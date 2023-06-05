@@ -26,6 +26,7 @@ import { NotificationRuleId } from '@shared/models/id/notification-rule-id';
 import { AlarmSearchStatus, AlarmSeverity, AlarmStatus } from '@shared/models/alarm.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { ApiFeature, ApiUsageStateValue } from '@shared/models/api-usage.models';
+import { LimitedApi } from '@shared/models/limited-api.models';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -119,7 +120,7 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
 export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig &
   EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig &
   RuleEngineLifecycleEventNotificationRuleTriggerConfig & EntitiesLimitNotificationRuleTriggerConfig &
-  ApiUsageLimitNotificationRuleTriggerConfig>;
+  ApiUsageLimitNotificationRuleTriggerConfig & RateLimitsNotificationRuleTriggerConfig>;
 
 export interface AlarmNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
@@ -176,6 +177,10 @@ export interface EntitiesLimitNotificationRuleTriggerConfig {
 export interface ApiUsageLimitNotificationRuleTriggerConfig {
   apiFeatures: ApiFeature[];
   notifyOn: ApiUsageStateValue[];
+}
+
+export interface RateLimitsNotificationRuleTriggerConfig {
+  apis: LimitedApi[];
 }
 
 export enum ComponentLifecycleEvent {

@@ -66,6 +66,8 @@ import {
   ApiUsageStateValue,
   ApiUsageStateValueTranslationMap
 } from '@shared/models/api-usage.models';
+import { LimitedApi, LimitedApiTranslationMap } from '@shared/models/limited-api.models';
+import { StringItemsOption } from '@shared/components/string-items-list.component';
 
 export interface RuleNotificationDialogData {
   rule?: NotificationRule;
@@ -130,6 +132,8 @@ export class RuleNotificationDialogComponent extends
   apiFeatures: ApiFeature[] = Object.values(ApiFeature);
   apiFeatureTranslationMap = ApiFeatureTranslationMap;
 
+  limitedApis: StringItemsOption[];
+
   entityType = EntityType;
   isAdd = true;
 
@@ -171,6 +175,11 @@ export class RuleNotificationDialogComponent extends
     if (isDefined(data.isAdd)) {
       this.isAdd = data.isAdd;
     }
+
+    this.limitedApis = Object.values(LimitedApi).map(value => ({
+      name: this.translate.instant(LimitedApiTranslationMap.get(value)),
+      value
+    }));
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
@@ -305,7 +314,7 @@ export class RuleNotificationDialogComponent extends
 
     this.rateLimitsTemplateForm = this.fb.group({
       triggerConfig: this.fb.group({
-
+        apis: []
       })
     });
 
