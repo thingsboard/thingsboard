@@ -61,8 +61,7 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
 
   private propagateChange = (v: any) => { };
 
-  constructor(private store: Store<AppState>,
-              private ruleChainService: RuleChainService) {
+  constructor(private ruleChainService: RuleChainService) {
   }
 
   ngOnInit() {
