@@ -329,6 +329,12 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteDeviceProfile(tenantId, (DeviceProfileId) id);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.DEVICE_PROFILE;
     }

@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.notification.template;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
@@ -32,7 +33,7 @@ import jakarta.validation.constraints.NotNull;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class NotificationTemplate extends BaseData<NotificationTemplateId> implements HasTenantId, HasName {
+public class NotificationTemplate extends BaseData<NotificationTemplateId> implements HasTenantId, HasName, ExportableEntity<NotificationTemplateId> {
 
     private TenantId tenantId;
     @NoXss
@@ -45,5 +46,19 @@ public class NotificationTemplate extends BaseData<NotificationTemplateId> imple
     @Valid
     @NotNull
     private NotificationTemplateConfig configuration;
+
+    private NotificationTemplateId externalId;
+
+    public NotificationTemplate() {
+    }
+
+    public NotificationTemplate(NotificationTemplate other) {
+        super(other);
+        this.tenantId = other.tenantId;
+        this.name = other.name;
+        this.notificationType = other.notificationType;
+        this.configuration = other.configuration != null ? other.configuration.copy() : null;
+        this.externalId = other.externalId;
+    }
 
 }

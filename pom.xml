@@ -28,6 +28,8 @@
     <inceptionYear>2016</inceptionYear>
 
     <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
         <pkg.disabled>true</pkg.disabled>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
@@ -893,6 +895,11 @@
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>version-control</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>proto</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

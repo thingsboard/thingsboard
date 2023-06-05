@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
-import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 
 import java.util.UUID;

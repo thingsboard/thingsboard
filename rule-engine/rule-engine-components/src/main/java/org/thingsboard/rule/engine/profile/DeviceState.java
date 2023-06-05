@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 
 import java.util.ArrayList;

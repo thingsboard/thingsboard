@@ -35,6 +35,7 @@
     </properties>
     <modules>
         <module>data</module>
+        <module>proto</module>
         <module>util</module>
         <module>message</module>
         <module>actor</module>

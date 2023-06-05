@@ -30,24 +30,21 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 
 import jakarta.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -73,7 +70,6 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final ScheduledExecutorService timeoutExecutor;
     private final int concurrencyLimit;
     private final int printQueriesFreq;
-    private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
 
     private final AtomicInteger printQueriesIdx = new AtomicInteger(0);
 
@@ -81,14 +77,14 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     protected final BufferedRateExecutorStats stats;
 
     private final EntityService entityService;
-    private final TbTenantProfileCache tenantProfileCache;
+    private final RateLimitService rateLimitService;
 
     private final boolean printTenantNames;
     private final Map<TenantId, String> tenantNamesCache = new HashMap<>();
 
     public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads,
                                         int callbackThreads, long pollMs, int printQueriesFreq, StatsFactory statsFactory,
-                                        EntityService entityService, TbTenantProfileCache tenantProfileCache, boolean printTenantNames) {
+                                        EntityService entityService, RateLimitService rateLimitService, boolean printTenantNames) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
@@ -102,7 +98,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.concurrencyLevel = statsFactory.createGauge(concurrencyLevelKey, new AtomicInteger(0));
 
         this.entityService = entityService;
-        this.tenantProfileCache = tenantProfileCache;
+        this.rateLimitService = rateLimitService;
         this.printTenantNames = printTenantNames;
 
         for (int i = 0; i < dispatcherThreads; i++) {
@@ -116,28 +112,16 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         F result = wrap(task, settableFuture);
 
         boolean perTenantLimitReached = false;
-
-        var tenantProfileConfiguration =
-                (task.getTenantId() != null && !TenantId.SYS_TENANT_ID.equals(task.getTenantId()))
-                        ? tenantProfileCache.get(task.getTenantId()).getDefaultProfileConfiguration()
-                        : null;
-        if (tenantProfileConfiguration != null &&
-                StringUtils.isNotEmpty(tenantProfileConfiguration.getCassandraQueryTenantRateLimitsConfiguration())) {
-            if (task.getTenantId() == null) {
-                log.info("Invalid task received: {}", task);
-            } else if (!task.getTenantId().isNullUid()) {
-                TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(
-                        task.getTenantId(), id -> new TbRateLimits(tenantProfileConfiguration.getCassandraQueryTenantRateLimitsConfiguration())
-                );
-                if (!rateLimits.tryConsume()) {
-                    stats.incrementRateLimitedTenant(task.getTenantId());
-                    stats.getTotalRateLimited().increment();
-                    settableFuture.setException(new TenantRateLimitException());
-                    perTenantLimitReached = true;
-                }
+        TenantId tenantId = task.getTenantId();
+        if (tenantId != null && !tenantId.isSysTenantId()) {
+            if (!rateLimitService.checkRateLimit(LimitedApi.CASSANDRA_QUERIES, tenantId)) {
+                stats.incrementRateLimitedTenant(tenantId);
+                stats.getTotalRateLimited().increment();
+                settableFuture.setException(new TenantRateLimitException());
+                perTenantLimitReached = true;
             }
-        } else if (!TenantId.SYS_TENANT_ID.equals(task.getTenantId())) {
-            perTenantLimits.remove(task.getTenantId());
+        } else if (tenantId == null) {
+            log.info("Invalid task received: {}", task);
         }
 
         if (!perTenantLimitReached) {

@@ -96,11 +96,6 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         this.tenantProfileId = tenantProfileId;
     }
 
-    @Override
-    public String getSearchText() {
-        return getTitle();
-    }
-
     @ApiModelProperty(position = 1, value = "JSON object with the tenant Id. " +
             "Specify this field to update the tenant. " +
             "Referencing non-existing tenant Id will cause error. " +

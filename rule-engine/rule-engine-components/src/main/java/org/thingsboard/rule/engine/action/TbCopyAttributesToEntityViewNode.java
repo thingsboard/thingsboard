@@ -37,7 +37,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 
 import jakarta.annotation.Nullable;
 import java.util.ArrayList;

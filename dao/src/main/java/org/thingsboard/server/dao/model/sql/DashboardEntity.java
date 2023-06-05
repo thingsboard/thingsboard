@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.HashSet;
@@ -43,7 +42,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.DASHBOARD_TABLE_NAME)
-public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements SearchTextEntity<Dashboard> {
+public final class DashboardEntity extends BaseSqlEntity<Dashboard> {
 
     private static final JavaType assignedCustomersType =
             JacksonUtil.constructCollectionType(HashSet.class, ShortCustomerInfo.class);
@@ -56,9 +55,6 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
 
     @Column(name = ModelConstants.DASHBOARD_IMAGE_PROPERTY)
     private String image;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Column(name = ModelConstants.DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
     private String assignedCustomers;
@@ -103,16 +99,6 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
         if (dashboard.getExternalId() != null) {
             this.externalId = dashboard.getExternalId().getId();
         }
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return title;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     @Override

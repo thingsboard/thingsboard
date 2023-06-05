@@ -46,7 +46,7 @@ import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumn
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.controller.BaseController;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.action.EntityActionService;

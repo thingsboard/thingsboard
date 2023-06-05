@@ -47,6 +47,9 @@ public class NotificationTargetEntity extends BaseSqlEntity<NotificationTarget> 
     @Column(name = ModelConstants.NOTIFICATION_TARGET_CONFIGURATION_PROPERTY, nullable = false)
     private JsonNode configuration;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public NotificationTargetEntity() {}
 
     public NotificationTargetEntity(NotificationTarget notificationTarget) {
@@ -55,6 +58,7 @@ public class NotificationTargetEntity extends BaseSqlEntity<NotificationTarget> 
         setTenantId(getTenantUuid(notificationTarget.getTenantId()));
         setName(notificationTarget.getName());
         setConfiguration(toJson(notificationTarget.getConfiguration()));
+        setExternalId(getUuid(notificationTarget.getExternalId()));
     }
 
     @Override
@@ -65,6 +69,7 @@ public class NotificationTargetEntity extends BaseSqlEntity<NotificationTarget> 
         notificationTarget.setTenantId(getTenantId(tenantId));
         notificationTarget.setName(name);
         notificationTarget.setConfiguration(fromJson(configuration, NotificationTargetConfig.class));
+        notificationTarget.setExternalId(getEntityId(externalId, NotificationTargetId::new));
         return notificationTarget;
     }
 

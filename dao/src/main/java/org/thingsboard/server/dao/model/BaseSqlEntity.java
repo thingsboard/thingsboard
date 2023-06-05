@@ -22,6 +22,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.dao.DaoUtil;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
@@ -85,11 +86,7 @@ public abstract class BaseSqlEntity<D> implements BaseEntity<D> {
     }
 
     protected static <I> I getEntityId(UUID uuid, Function<UUID, I> creator) {
-        if (uuid != null) {
-            return creator.apply(uuid);
-        } else {
-            return null;
-        }
+        return DaoUtil.toEntityId(uuid, creator);
     }
 
     protected static TenantId getTenantId(UUID uuid) {

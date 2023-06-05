@@ -21,8 +21,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.validation.Length;
 
@@ -34,7 +34,7 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @ApiModel
-public class OAuth2ClientRegistrationTemplate extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationTemplateId> implements HasName {
+public class OAuth2ClientRegistrationTemplate extends BaseDataWithAdditionalInfo<OAuth2ClientRegistrationTemplateId> implements HasName {
 
     @Length(fieldName = "providerId")
     @ApiModelProperty(value = "OAuth2 provider identifier (e.g. its name)", required = true)
@@ -94,10 +94,5 @@ public class OAuth2ClientRegistrationTemplate extends SearchTextBasedWithAdditio
     @Override
     public String getName() {
         return providerId;
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 }

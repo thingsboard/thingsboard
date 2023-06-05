@@ -26,8 +26,8 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
 
-import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.getJson;
-import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.setJson;
+import static org.thingsboard.server.common.data.BaseDataWithAdditionalInfo.getJson;
+import static org.thingsboard.server.common.data.BaseDataWithAdditionalInfo.setJson;
 
 @ApiModel
 @Data

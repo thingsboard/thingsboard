@@ -19,7 +19,7 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 

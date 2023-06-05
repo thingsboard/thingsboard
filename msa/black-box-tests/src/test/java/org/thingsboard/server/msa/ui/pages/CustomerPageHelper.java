@@ -146,6 +146,14 @@ public class CustomerPageHelper extends CustomerPageElements {
         submitAssignedBtn().click();
     }
 
+    public void assignedDashboard(String dashboardName) {
+        plusBtn().click();
+        assignedField().click();
+        entityFromList(dashboardName).click();
+        assignedField().sendKeys(Keys.ESCAPE);
+        submitAssignedBtn().click();
+    }
+
     public boolean customerIsNotPresent(String title) {
         return elementsIsNotPresent(getEntity(title));
     }
@@ -168,5 +176,14 @@ public class CustomerPageHelper extends CustomerPageElements {
             customer(customerName).click();
         }
         customerDetailsAlarmsBtn().click();
+    }
+
+    public void disableHideHomeDashboardToolbar() {
+        hideHomeDashboardToolbarCheckbox().click();
+        waitUntilAttributeToBe("//mat-checkbox[@formcontrolname='homeDashboardHideToolbar']//input", "class", "mdc-checkbox__native-control");
+    }
+
+    public void waitUntilDashboardFieldToBeNotEmpty() {
+        waitUntilAttributeToBeNotEmpty(editMenuDashboardField(), "value");
     }
 }

@@ -31,23 +31,19 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.TENANT_PROFILE_TABLE_NAME)
-public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> implements SearchTextEntity<TenantProfile> {
+public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> {
 
     @Column(name = ModelConstants.TENANT_PROFILE_NAME_PROPERTY)
     private String name;
 
     @Column(name = ModelConstants.TENANT_PROFILE_DESCRIPTION_PROPERTY)
     private String description;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Column(name = ModelConstants.TENANT_PROFILE_IS_DEFAULT_PROPERTY)
     private boolean isDefault;
@@ -74,20 +70,6 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> impl
         this.isDefault = tenantProfile.isDefault();
         this.isolatedTbRuleEngine = tenantProfile.isIsolatedTbRuleEngine();
         this.profileData = JacksonUtil.convertValue(tenantProfile.getProfileData(), ObjectNode.class);
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public String getSearchText() {
-        return searchText;
     }
 
     @Override

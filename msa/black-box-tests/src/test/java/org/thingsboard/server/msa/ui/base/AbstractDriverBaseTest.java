@@ -73,7 +73,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private static final int WIDTH = 1680;
     private static final int HEIGHT = 1050;
     private static final String REMOTE_WEBDRIVER_HOST = "http://localhost:4444";
-    protected final PageLink pageLink = new PageLink(10);
+    protected final PageLink pageLink = new PageLink(30);
     private final ContainerTestSuite instance = ContainerTestSuite.getInstance();
     private JavascriptExecutor js;
     public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
@@ -157,6 +157,13 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
                 .findFirst().orElse(null);
     }
 
+    public List<Device> getDevicesByName(List<String> deviceNames) {
+        List<Device> allDevices = testRestClient.getDevices(pageLink).getData();
+        return allDevices.stream()
+                .filter(device -> deviceNames.contains(device.getName()))
+                .collect(Collectors.toList());
+    }
+
     public List<RuleChain> getRuleChainsByName(String name) {
         return testRestClient.getRuleChains(pageLink).getData().stream()
                 .filter(s -> s.getName().equals(name))
@@ -174,13 +181,10 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     }
 
     public DeviceProfile getDeviceProfileByName(String name) {
-        try {
-            return testRestClient.getDeviceProfiles(pageLink).getData().stream()
-                    .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
-        } catch (Exception e) {
-            log.error("No such device profile with name: " + name);
-            return null;
-        }
+        return testRestClient.getDeviceProfiles(pageLink).getData().stream()
+                .filter(x -> x.getName().equals(name))
+                .findFirst()
+                .orElse(null);
     }
 
     public AssetProfile getAssetProfileByName(String name) {
@@ -226,13 +230,9 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    public WebStorage getWebStorage() {
-        return webStorage = (WebStorage) driver;
-    }
-
     public void clearStorage() {
-        getWebStorage().getLocalStorage().clear();
-        getWebStorage().getSessionStorage().clear();
+        getJs().executeScript("window.localStorage.clear();");
+        getJs().executeScript("window.sessionStorage.clear();");
     }
 
     public void deleteAlarmById(AlarmId alarmId) {
@@ -250,6 +250,13 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     public void deleteCustomerById(CustomerId customerId) {
         if (customerId != null) {
             testRestClient.deleteCustomer(customerId);
+        }
+    }
+
+    public void deleteCustomerByName(String customerName) {
+        Customer customer = getCustomerByName(customerName);
+        if (customer != null) {
+            testRestClient.deleteCustomer(customer.getId());
         }
     }
 
@@ -281,6 +288,30 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         Device device = getDeviceByName(deviceName);
         if (device != null) {
             testRestClient.deleteDevice(device.getId());
+        }
+    }
+
+    public void deleteDevicesByName(List<String> deviceNames) {
+        List<Device> devices = getDevicesByName(deviceNames);
+        for (Device device : devices) {
+            if (device != null) {
+                testRestClient.deleteDevice(device.getId());
+            }
+        }
+    }
+
+    public void deleteDeviceProfileByTitle(String deviceProfileTitle) {
+        DeviceProfile deviceProfile = getDeviceProfileByName(deviceProfileTitle);
+        if (deviceProfile != null) {
+            testRestClient.deleteDeviseProfile(deviceProfile.getId());
+        }
+    }
+
+    public void assertInvisibilityOfElement(WebElement element) {
+        try {
+            new WebDriverWait(driver, duration).until(ExpectedConditions.invisibilityOf(element));
+        } catch (WebDriverException e) {
+            fail("Element " + element.toString() + " stay visible");
         }
     }
 }

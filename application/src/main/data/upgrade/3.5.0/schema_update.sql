@@ -14,4 +14,10 @@
 -- limitations under the License.
 --
 
-ALTER TABLE notification_rule ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT true;
+-- FIX DASHBOARD TEMPLATES AFTER ANGULAR MIGRATION TO VER.15
+
+UPDATE dashboard SET configuration = REPLACE(configuration, 'mat-button mat-icon-button', 'mat-icon-button')
+        WHERE configuration like '%mat-button mat-icon-button%';
+
+UPDATE widget_type SET descriptor = REPLACE(descriptor, 'mat-button mat-icon-button', 'mat-icon-button')
+        WHERE descriptor like '%mat-button mat-icon-button%';

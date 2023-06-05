@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
@@ -49,7 +48,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPER
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
 @Slf4j
-public abstract class AbstractEntityViewEntity<T extends EntityView> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
+public abstract class AbstractEntityViewEntity<T extends EntityView> extends BaseSqlEntity<T> {
 
     @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
     private UUID entityId;
@@ -78,9 +77,6 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
 
     @Column(name = ModelConstants.ENTITY_VIEW_END_TS_PROPERTY)
     private long endTs;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY)
@@ -117,7 +113,6 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         }
         this.startTs = entityView.getStartTimeMs();
         this.endTs = entityView.getEndTimeMs();
-        this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
         if (entityView.getExternalId() != null) {
             this.externalId = entityView.getExternalId().getId();
@@ -136,19 +131,8 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         this.keys = entityViewEntity.getKeys();
         this.startTs = entityViewEntity.getStartTs();
         this.endTs = entityViewEntity.getEndTs();
-        this.searchText = entityViewEntity.getSearchText();
         this.additionalInfo = entityViewEntity.getAdditionalInfo();
         this.externalId = entityViewEntity.getExternalId();
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     protected EntityView toEntityView() {

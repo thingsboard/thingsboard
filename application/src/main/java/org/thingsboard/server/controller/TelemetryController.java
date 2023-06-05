@@ -74,7 +74,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.exception.InvalidParametersException;
 import org.thingsboard.server.exception.UncheckedApiException;

@@ -638,7 +638,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 futures.add(dbUpgradeExecutor.submit(() -> {
                                     try {
                                         assetProfileService.createDefaultAssetProfile(tenantId);
-                                    } catch (Exception e) {}
+                                    } catch (Exception e) {
+                                    }
                                 }));
                             }
                             Futures.allAsList(futures).get();
@@ -657,7 +658,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                     futures.add(dbUpgradeExecutor.submit(() -> {
                                         try {
                                             assetProfileService.findOrCreateAssetProfile(tenantId, assetType);
-                                        } catch (Exception e) {}
+                                        } catch (Exception e) {
+                                        }
                                     }));
                                 }
                             }
@@ -721,6 +723,29 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.0", SCHEMA_UPDATE_SQL);
                         loadSql(schemaUpdateFile, conn);
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005001;");
+                    }
+                    log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
+                break;
+            case "3.5.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    if (isOldSchema(conn, 3005001)) {
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.1", SCHEMA_UPDATE_SQL);
+                        loadSql(schemaUpdateFile, conn);
+
+                        String[] entityNames = new String[]{"device", "component_descriptor", "customer", "dashboard", "rule_chain", "rule_node", "ota_package",
+                                "asset_profile", "asset", "device_profile", "tb_user", "tenant_profile", "tenant", "widgets_bundle", "entity_view", "edge"};
+                        for (String entityName : entityNames) {
+                            try {
+                                conn.createStatement().execute("ALTER TABLE " + entityName + " DROP COLUMN " + SEARCH_TEXT + " CASCADE");
+                            } catch (Exception e) {
+                            }
+                        }
+
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005002;");
                     }
                     log.info("Schema updated.");
                 } catch (Exception e) {

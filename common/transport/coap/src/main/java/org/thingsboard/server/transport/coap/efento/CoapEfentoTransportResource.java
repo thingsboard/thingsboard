@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.EfentoCoapDeviceTypeConfiguration;
-import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos;

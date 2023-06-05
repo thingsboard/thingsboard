@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
@@ -34,13 +33,10 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
+public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEntity<T> {
 
     @Column(name = ModelConstants.TENANT_TITLE_PROPERTY)
     private String title;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Column(name = ModelConstants.TENANT_REGION_PROPERTY)
     private String region;
@@ -116,20 +112,6 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
         this.email = tenantEntity.getEmail();
         this.additionalInfo = tenantEntity.getAdditionalInfo();
         this.tenantProfileId = tenantEntity.getTenantProfileId();
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return title;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public String getSearchText() {
-        return searchText;
     }
 
     protected Tenant toTenant() {
