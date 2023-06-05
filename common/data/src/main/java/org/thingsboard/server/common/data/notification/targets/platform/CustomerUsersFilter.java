@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.notification.targets.platform;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 @Data

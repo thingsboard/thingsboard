@@ -21,7 +21,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Builder(toBuilder = true)
 @EqualsAndHashCode

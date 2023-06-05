@@ -160,9 +160,9 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import javax.mail.MessagingException;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.ConstraintViolation;
+import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ConstraintViolation;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -390,7 +390,7 @@ public abstract class BaseController {
     }
 
     /**
-     * Handles validation error for controller method arguments annotated with @{@link javax.validation.Valid}
+     * Handles validation error for controller method arguments annotated with @{@link jakarta.validation.Valid}
      * */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public void handleValidationError(MethodArgumentNotValidException validationError, HttpServletResponse response) {

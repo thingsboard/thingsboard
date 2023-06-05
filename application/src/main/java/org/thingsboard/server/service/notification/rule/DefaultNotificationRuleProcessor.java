@@ -53,7 +53,7 @@ import org.thingsboard.server.service.notification.rule.cache.NotificationRulesC
 import org.thingsboard.server.service.notification.rule.trigger.NotificationRuleTriggerProcessor;
 import org.thingsboard.server.service.notification.rule.trigger.RuleEngineMsgNotificationRuleTriggerProcessor;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.EnumMap;

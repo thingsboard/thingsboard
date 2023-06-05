@@ -66,7 +66,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;

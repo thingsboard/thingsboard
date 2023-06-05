@@ -18,7 +18,7 @@ package org.thingsboard.server.common.transport.config.ssl;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 @Slf4j
 @Data

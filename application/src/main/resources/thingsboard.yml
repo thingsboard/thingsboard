@@ -597,7 +597,7 @@ spring:
         enabled: "true"
   jpa:
     properties:
-      javax.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}"
+      jakarta.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}"
     open-in-view: "false"
     hibernate:
       ddl-auto: "none"

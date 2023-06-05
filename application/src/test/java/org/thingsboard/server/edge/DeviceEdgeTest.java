@@ -270,7 +270,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                 (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
         profileConfiguration.setMaxDevices(1);
         tenantProfile.getProfileData().setConfiguration(profileConfiguration);
-        doPost("/api/tenantProfile/", tenantProfile, TenantProfile.class);
+        doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
         loginTenantAdmin();
 

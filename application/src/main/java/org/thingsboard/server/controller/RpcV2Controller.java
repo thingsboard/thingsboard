@@ -49,7 +49,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.security.permission.Operation;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.DataConstants.RPC_DELETED;

@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Profile;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 
 @Slf4j

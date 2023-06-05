@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import org.thingsboard.server.common.data.kv.AggTsKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -27,10 +31,6 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 
-import javax.persistence.Column;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
@@ -59,7 +59,6 @@ public abstract class AbstractTsKvEntity implements ToData<TsKvEntry> {
     @Column(name = KEY_COLUMN)
     protected int key;
 
-    @Id
     @Column(name = TS_COLUMN)
     protected Long ts;
 

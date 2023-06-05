@@ -82,7 +82,7 @@ import static springfox.documentation.builders.PathSelectors.any;
 import static springfox.documentation.builders.PathSelectors.regex;
 
 @Slf4j
-@Configuration
+//@Configuration
 @TbCoreComponent
 @Profile("!test")
 public class SwaggerConfiguration {

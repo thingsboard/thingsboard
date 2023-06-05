@@ -31,8 +31,8 @@ import org.thingsboard.monitoring.data.TransportInfo;
 import org.thingsboard.monitoring.service.MonitoringReporter;
 import org.thingsboard.monitoring.util.TbStopWatch;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.UUID;
 
 @Slf4j

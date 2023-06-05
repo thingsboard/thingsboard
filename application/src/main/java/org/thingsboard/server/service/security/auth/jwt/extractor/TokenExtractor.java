@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.service.security.auth.jwt.extractor;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface TokenExtractor {
-    public String extract(HttpServletRequest request);
+    String extract(HttpServletRequest request);
 }

@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.template;
+package org.thingsboard.server.dao.util.mapping;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+import org.thingsboard.common.util.JacksonUtil;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import java.util.Map;
+@Converter
+public class JsonConverter implements AttributeConverter<JsonNode, String> {
+    @Override
+    public String convertToDatabaseColumn(JsonNode jsonNode) {
+        return JacksonUtil.toString(jsonNode);
+    }
 
-@Data
-public class NotificationTemplateConfig {
-
-    @Valid
-    @NotEmpty
-    private Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> deliveryMethodsTemplates;
-
+    @Override
+    public JsonNode convertToEntityAttribute(String s) {
+        return JacksonUtil.toJsonNode(s);
+    }
 }
