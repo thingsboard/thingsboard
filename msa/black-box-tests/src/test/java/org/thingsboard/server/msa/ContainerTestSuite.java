@@ -111,8 +111,8 @@ public class ContainerTestSuite {
                     new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid-test-extras.yml" : "docker-compose.postgres-test-extras.yml")),
                     new File(targetDir + "docker-compose.postgres.volumes.yml"),
                     new File(targetDir + "docker-compose." + QUEUE_TYPE + ".yml"),
-                    new File(targetDir + resolveComposeFile()),
-                    new File(targetDir + resolveComposeVolumesFile()),
+                    new File(targetDir + resolveRedisComposeFile()),
+                    new File(targetDir + resolveRedisComposeVolumesFile()),
                     new File(targetDir + ("docker-selenium.yml"))
             ));
 
@@ -179,7 +179,7 @@ public class ContainerTestSuite {
         }
     }
 
-    private static String resolveComposeFile() {
+    private static String resolveRedisComposeFile() {
         if (IS_REDIS_CLUSTER) {
             return "docker-compose.redis-cluster.yml";
         }
@@ -189,7 +189,7 @@ public class ContainerTestSuite {
         return "docker-compose.redis.yml";
     }
 
-    private static String resolveComposeVolumesFile() {
+    private static String resolveRedisComposeVolumesFile() {
         if (IS_REDIS_CLUSTER) {
             return "docker-compose.redis-cluster.volumes.yml";
         }

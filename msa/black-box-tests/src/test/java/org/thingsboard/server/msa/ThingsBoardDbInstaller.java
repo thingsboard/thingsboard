@@ -77,8 +77,8 @@ public class ThingsBoardDbInstaller {
                        ? new File("./../../docker/docker-compose.hybrid.yml")
                        : new File("./../../docker/docker-compose.postgres.yml"),
                 new File("./../../docker/docker-compose.postgres.volumes.yml"),
-                resolveComposeFile(),
-                resolveComposeVolumesFile()
+                resolveRedisComposeFile(),
+                resolveRedisComposeVolumesFile()
         ));
         if (IS_HYBRID_MODE) {
             composeFiles.add(new File("./../../docker/docker-compose.cassandra.volumes.yml"));
@@ -132,7 +132,7 @@ public class ThingsBoardDbInstaller {
         dockerCompose.withEnv(env);
     }
 
-    private static File resolveComposeVolumesFile() {
+    private static File resolveRedisComposeVolumesFile() {
         if (IS_REDIS_CLUSTER) {
             return new File("./../../docker/docker-compose.redis-cluster.volumes.yml");
         }
@@ -142,7 +142,7 @@ public class ThingsBoardDbInstaller {
         return new File("./../../docker/docker-compose.redis.volumes.yml");
     }
 
-    private static File resolveComposeFile() {
+    private static File resolveRedisComposeFile() {
         if (IS_REDIS_CLUSTER) {
             return new File("./../../docker/docker-compose.redis-cluster.yml");
         }
@@ -241,11 +241,11 @@ public class ThingsBoardDbInstaller {
 
         dockerCompose.withCommand("volume rm -f " + postgresDataVolume + " " + tbLogVolume +
                 " " + tbCoapTransportLogVolume + " " + tbLwm2mTransportLogVolume + " " + tbHttpTransportLogVolume +
-                " " + tbMqttTransportLogVolume + " " + tbSnmpTransportLogVolume + " " + tbVcExecutorLogVolume + resolveComposeVolumeLog());
+                " " + tbMqttTransportLogVolume + " " + tbSnmpTransportLogVolume + " " + tbVcExecutorLogVolume + resolveRedisComposeVolumeLog());
         dockerCompose.invokeDocker();
     }
 
-    private String resolveComposeVolumeLog() {
+    private String resolveRedisComposeVolumeLog() {
         if (IS_REDIS_CLUSTER) {
             return IntStream.range(0, 6).mapToObj(i -> " " + redisClusterDataVolume + "-" + i).collect(Collectors.joining());
         }
