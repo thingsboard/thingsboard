@@ -38,11 +38,14 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { BreadCrumb } from '@shared/components/breadcrumb';
 
 export interface ToggleHeaderOption {
   name: string;
   value: any;
 }
+
+export type ToggleHeaderAppearance = 'fill' | 'fill-invert' | 'stroked';
 
 @Component({
   selector: 'tb-toggle-header',
@@ -67,6 +70,13 @@ export class ToggleHeaderComponent extends PageComponent implements OnInit {
   @coerceBoolean()
   useSelectOnMdLg = true;
 
+  @Input()
+  @coerceBoolean()
+  ignoreMdLgSize = false;
+
+  @Input()
+  appearance: ToggleHeaderAppearance = 'stroked';
+
   isMdLg: boolean;
 
   private observeBreakpointSubscription: Subscription;
@@ -86,5 +96,9 @@ export class ToggleHeaderComponent extends PageComponent implements OnInit {
           this.cd.markForCheck();
         }
       );
+  }
+
+  trackByHeaderOption(index: number, option: ToggleHeaderOption){
+    return option.value;
   }
 }

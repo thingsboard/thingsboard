@@ -48,11 +48,11 @@ import { ErrorStateMatcher } from '@angular/material/core';
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => EntityAliasSelectComponent),
     multi: true
-  },
+  }/*,
   {
     provide: ErrorStateMatcher,
     useExisting: EntityAliasSelectComponent
-  }]
+  }*/]
 })
 export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, ErrorStateMatcher {
 
@@ -237,16 +237,19 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
     }
   }
 
-  createEntityAlias($event: Event, alias: string) {
+  createEntityAlias($event: Event, alias: string, focusOnCancel = true) {
     $event.preventDefault();
+    $event.stopPropagation();
     this.creatingEntityAlias = true;
     if (this.callbacks && this.callbacks.createEntityAlias) {
       this.callbacks.createEntityAlias(alias, this.allowedEntityTypes).subscribe((newAlias) => {
           if (!newAlias) {
-            setTimeout(() => {
-              this.entityAliasInput.nativeElement.blur();
-              this.entityAliasInput.nativeElement.focus();
-            }, 0);
+            if (focusOnCancel) {
+              setTimeout(() => {
+                this.entityAliasInput.nativeElement.blur();
+                this.entityAliasInput.nativeElement.focus();
+              }, 0);
+            }
           } else {
             this.entityAliasList.push(newAlias);
             this.modelValue = newAlias.id;

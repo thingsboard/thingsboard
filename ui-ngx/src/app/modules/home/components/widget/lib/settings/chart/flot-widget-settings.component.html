@@ -68,6 +68,25 @@
       <input matInput type="number" min="0" formControlName="thresholdsLineWidth">
     </mat-form-field>
   </fieldset>
+  <fieldset *ngIf="chartType === 'graph' || chartType === 'bar'" class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widget-config.legend</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('showLegend').value">
+      <mat-expansion-panel-header fxLayout="row" style="min-height: 48px;">
+        <mat-panel-title fxFlex="60">
+          <mat-slide-toggle formControlName="showLegend" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center" style="height: 100%;">
+            {{ 'widget-config.display-legend' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxFlex="40" style="white-space: nowrap;" fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <tb-legend-config formControlName="legendConfig"></tb-legend-config>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.chart.tooltip-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('showTooltip').value">

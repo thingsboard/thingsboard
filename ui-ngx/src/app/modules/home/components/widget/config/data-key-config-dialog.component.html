@@ -32,6 +32,7 @@
     <tb-data-key-config #dataKeyConfig
       [dataKeySettingsSchema]="data.dataKeySettingsSchema"
       [dataKeySettingsDirective]="data.dataKeySettingsDirective"
+      [deviceId]="data.deviceId"
       [entityAliasId]="data.entityAliasId"
       [dashboard]="data.dashboard"
       [aliasController]="data.aliasController"
@@ -39,6 +40,10 @@
       [widgetType]="data.widgetType"
       [showPostProcessing]="data.showPostProcessing"
       [callbacks]="data.callbacks"
+      [hideDataKeyLabel]="data.hideDataKeyLabel"
+      [hideDataKeyColor]="data.hideDataKeyColor"
+      [hideDataKeyUnits]="data.hideDataKeyUnits"
+      [hideDataKeyDecimals]="data.hideDataKeyDecimals"
       formControlName="dataKey">
     </tb-data-key-config>
   </div>

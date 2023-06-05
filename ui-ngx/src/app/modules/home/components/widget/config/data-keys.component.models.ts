@@ -14,9 +14,12 @@
 /// limitations under the License.
 ///
 
-import { EntityAliasSelectCallbacks } from '../alias/entity-alias-select.component.models';
-import { DataKeysCallbacks } from './data-keys.component.models';
-import { WidgetActionCallbacks } from './action/manage-widget-actions.component.models';
-import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { DataKey, JsonSettingsSchema } from '@shared/models/widget.models';
+import { Observable } from 'rxjs';
 
-export type WidgetConfigCallbacks = EntityAliasSelectCallbacks & FilterSelectCallbacks & DataKeysCallbacks & WidgetActionCallbacks;
+export interface DataKeysCallbacks {
+  generateDataKey: (chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema) => DataKey;
+  fetchEntityKeys: (entityAliasId: string, types: Array<DataKeyType>) => Observable<Array<DataKey>>;
+  fetchEntityKeysForDevice: (deviceId: string, types: Array<DataKeyType>) => Observable<Array<DataKey>>;
+}

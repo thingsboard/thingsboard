@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-@import "../../../../../../../scss/constants";
+@import "../../../theme";
+@import "../../../scss/constants";
 
 :host ::ng-deep {
   .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
@@ -47,8 +48,8 @@
       &.mat-button-toggle-checked {
         .mat-button-toggle-button {
           background: #F3F6FA;
-          color: #305680;
-          border: 1px solid #305680;
+          color: $tb-primary-color;
+          border: 1px solid $tb-primary-color;
           border-radius: 20px;
 
           .mat-button-toggle-label-content {
@@ -58,9 +59,30 @@
         }
       }
     }
+    &.tb-fill {
+      .mat-button-toggle.mat-button-toggle-appearance-standard {
+        &.mat-button-toggle-checked {
+          .mat-button-toggle-button {
+            background: $tb-primary-color;
+            color: #FFFFFF;
+          }
+        }
+      }
+      &.tb-invert {
+        .mat-button-toggle.mat-button-toggle-appearance-standard {
+          color: rgba(255, 255, 255, 0.8);
+          &.mat-button-toggle-checked {
+            .mat-button-toggle-button {
+              background: #FFFFFF;
+              color: $tb-primary-color;
+            }
+          }
+        }
+      }
+    }
   }
   @media #{$mat-md-lg} {
-    .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+    .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header:not(.tb-ignore-md-lg) {
       height: 24px;
       .mat-button-toggle.mat-button-toggle-appearance-standard {
         .mat-button-toggle-button {
