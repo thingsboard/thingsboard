@@ -21,7 +21,7 @@ In order to set cache type change the value of `CACHE` variable in `.env` file t
 
 - `redis` - use Redis standalone cache (1 node - 1 master);
 - `redis-cluster` - use Redis cluster cache (6 nodes - 3 masters, 3 slaves);
-- `redis-sentinel` - use Redis cluster in a sentinel mode (3 nodes - 1 master, 1 slave, 1 sentinel)
+- `redis-sentinel` - use Redis sentinel cache (3 nodes - 1 master, 1 slave, 1 sentinel)
 
 **NOTE**: According to the cache type corresponding docker service will be deployed (see `docker-compose.redis.yml`, `docker-compose.redis-cluster.yml`, `docker-compose.redis-sentinel.yml` for details).
 
