@@ -68,6 +68,7 @@ public class ThingsBoardDbInstaller {
 
     public ThingsBoardDbInstaller() {
         log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_CLUSTER);
+        log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_SENTINEL);
         log.info("System property of blackBoxTests.hybridMode is {}", IS_HYBRID_MODE);
         List<File> composeFiles = new ArrayList<>(Arrays.asList(
                 new File("./../../docker/docker-compose.yml"),
@@ -240,11 +241,20 @@ public class ThingsBoardDbInstaller {
 
         dockerCompose.withCommand("volume rm -f " + postgresDataVolume + " " + tbLogVolume +
                 " " + tbCoapTransportLogVolume + " " + tbLwm2mTransportLogVolume + " " + tbHttpTransportLogVolume +
-                " " + tbMqttTransportLogVolume + " " + tbSnmpTransportLogVolume + " " + tbVcExecutorLogVolume +
-                (IS_REDIS_CLUSTER
-                        ? IntStream.range(0, 6).mapToObj(i -> " " + redisClusterDataVolume + '-' + i).collect(Collectors.joining())
-                        : redisDataVolume));
+                " " + tbMqttTransportLogVolume + " " + tbSnmpTransportLogVolume + " " + tbVcExecutorLogVolume + resolveComposeVolumeLog());
         dockerCompose.invokeDocker();
+    }
+
+    private String resolveComposeVolumeLog() {
+        if (IS_REDIS_CLUSTER) {
+            return IntStream.range(0, 6).mapToObj(i -> " " + redisClusterDataVolume + "-" + i).collect(Collectors.joining());
+        }
+        if (IS_REDIS_SENTINEL) {
+            return redisSentinelDataVolume + "-" + "master " + " " +
+                    redisSentinelDataVolume + "-" + "slave" + " " +
+                    redisSentinelDataVolume + " " + "sentinel";
+        }
+        return redisDataVolume;
     }
 
     private void copyLogs(String volumeName, String targetDir) {
