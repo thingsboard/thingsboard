@@ -37,8 +37,6 @@ body, html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-
-
 body {
   margin: 0;
   padding: 0;
@@ -118,7 +116,7 @@ fieldset {
 }
 
 .details-panel {
-  @extend .mat-mdc-dialog-container
+  @extend .mat-mdc-dialog-container;
 }
 
 .fields-group {
