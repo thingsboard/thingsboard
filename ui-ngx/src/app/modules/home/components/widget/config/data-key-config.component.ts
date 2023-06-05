@@ -40,7 +40,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
-import { DataKeysCallbacks } from '@home/components/widget/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
@@ -52,6 +52,7 @@ import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { aggregationTranslations, AggregationType, ComparisonDuration } from '@shared/models/time/time.models';
 import { genNextLabel } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -91,6 +92,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   comparisonResultTypeTranslations = comparisonResultTypeTranslationMap;
 
   @Input()
+  deviceId: string;
+
+  @Input()
   entityAliasId: string;
 
   @Input()
@@ -116,6 +120,22 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   @Input()
   showPostProcessing = true;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyLabel = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyColor = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyUnits = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyDecimals = false;
 
   @ViewChild('keyInput') keyInput: ElementRef;
 
@@ -377,9 +397,13 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       if (this.modelValue.type === DataKeyType.alarm) {
         fetchObservable = of(this.alarmKeys);
       } else {
-        if (this.entityAliasId) {
+        if (this.deviceId || this.entityAliasId) {
           const dataKeyTypes = [this.modelValue.type];
-          fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
+          if (this.deviceId) {
+            fetchObservable = this.callbacks.fetchEntityKeysForDevice(this.deviceId, dataKeyTypes);
+          } else {
+            fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
+          }
         } else {
           fetchObservable = of([]);
         }

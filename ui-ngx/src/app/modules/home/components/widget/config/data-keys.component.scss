@@ -28,6 +28,13 @@
     line-height: 20px;
     height: 32px;
 
+    &.mdc-evolution-chip--with-trailing-action {
+      .mdc-evolution-chip__action--primary {
+        padding-left: 4px;
+        padding-right: 12px;
+      }
+    }
+
     .mat-mdc-chip-action {
       overflow: hidden;
       .mat-mdc-chip-action-label {
@@ -37,15 +44,12 @@
     .tb-attribute-chip {
       max-width: 100%;
       color: rgb(66, 66, 66);
-      font-weight: normal;
-      font-size: 16px;
       .tb-chip-drag-handle {
+        padding: 3px;
+        height: 24px;
         cursor: move;
         mat-icon {
           pointer-events: none;
-          margin-right: 4px;
-          margin-left: 4px;
-          vertical-align: bottom;
         }
       }
       .tb-chip-labels {
@@ -53,7 +57,13 @@
         flex-direction: row;
         align-items: center;
         min-width: 0;
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 100px;
+        padding: 2px 10px;
         .tb-chip-label {
+          font-weight: normal;
+          font-size: 14px;
+          line-height: 20px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -70,15 +80,9 @@
           white-space: pre;
         }
       }
-      .mat-mdc-chip-remove.mat-icon {
-        width: 24px;
-        min-width: 24px;
-        height: 24px;
-        font-size: 24px;
-        margin-right: 4px;
+      .mat-mdc-chip-remove.mat-mdc-icon-button {
         color: inherit;
         opacity: inherit;
-        padding-left: 0;
       }
     }
 

@@ -15,9 +15,12 @@
     limitations under the License.
 
 -->
-<mat-button-toggle-group *ngIf="!isMdLg || !useSelectOnMdLg; else select" class="tb-toggle-header" [name]="name" [(ngModel)]="value"
+<mat-button-toggle-group *ngIf="!isMdLg || !useSelectOnMdLg; else select" class="tb-toggle-header"
+                         [ngClass]="{'tb-fill': (appearance === 'fill' || appearance === 'fill-invert'),
+                                     'tb-invert': appearance === 'fill-invert',
+                                     'tb-ignore-md-lg': ignoreMdLgSize}" [name]="name" [(ngModel)]="value"
                          (ngModelChange)="valueChange.emit(value)">
-  <mat-button-toggle *ngFor="let option of options" [value]="option.value">{{ option.name }}</mat-button-toggle>
+  <mat-button-toggle *ngFor="let option of options; trackBy: trackByHeaderOption" [value]="option.value">{{ option.name }}</mat-button-toggle>
 </mat-button-toggle-group>
 <ng-template #select>
   <mat-form-field appearance="outline" class="tb-toggle-header-select" subscriptSizing="dynamic">

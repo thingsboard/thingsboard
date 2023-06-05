@@ -24,7 +24,7 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { DataKey, Widget, widgetType } from '@shared/models/widget.models';
 import { DataKeysCallbacks } from './data-keys.component.models';
-import { DataKeyConfigComponent } from '@home/components/widget/data-key-config.component';
+import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 
@@ -36,9 +36,14 @@ export interface DataKeyConfigDialogData {
   aliasController: IAliasController;
   widget: Widget;
   widgetType: widgetType;
+  deviceId?: string;
   entityAliasId?: string;
   showPostProcessing?: boolean;
   callbacks?: DataKeysCallbacks;
+  hideDataKeyLabel: boolean;
+  hideDataKeyColor: boolean;
+  hideDataKeyUnits: boolean;
+  hideDataKeyDecimals: boolean;
 }
 
 @Component({
