@@ -61,6 +61,56 @@
   }
 }
 
+.tb-widget-config-row .mat-mdc-form-field, .mat-mdc-form-field.tb-inline-field {
+  &.mat-form-field-appearance-fill {
+    .mdc-text-field--filled:not(.mdc-text-field--disabled):before {
+      opacity: 0;
+    }
+    .mat-mdc-form-field-focus-overlay {
+      opacity: 0;
+    }
+  }
+  .mat-mdc-text-field-wrapper {
+    &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
+      padding-right: 12px;
+      padding-left: 12px;
+      &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(:hover) {
+        .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+          border-color: rgba(0, 0, 0, 0.12);
+        }
+      }
+      .mat-mdc-form-field-infix {
+        padding-top: 7px;
+        padding-bottom: 7px;
+        min-height: 38px;
+        width: 72px;
+      }
+    }
+  }
+  &.center {
+    .mat-mdc-text-field-wrapper {
+      .mat-mdc-form-field-infix {
+        .mdc-text-field__input {
+          text-align: center;
+        }
+      }
+    }
+  }
+  &.number {
+    .mat-mdc-text-field-wrapper {
+      padding-right: 4px;
+      .mat-mdc-form-field-infix {
+        width: 80px;
+        input.mdc-text-field__input[type=number]::-webkit-inner-spin-button,
+        input.mdc-text-field__input[type=number]::-webkit-outer-spin-button {
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+
+
 :host ::ng-deep {
 
   .mat-slide {
@@ -77,50 +127,6 @@
     display: block;
     &:not(:last-child) {
       margin-bottom: 8px;
-    }
-  }
-
-  .mat-mdc-form-field {
-    &.center {
-      .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
-        .mat-mdc-form-field-infix {
-          .mdc-text-field__input {
-            text-align: center;
-          }
-        }
-      }
-    }
-    &.number {
-      .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
-        padding-right: 4px;
-        .mat-mdc-form-field-infix {
-          width: 80px;
-          input.mdc-text-field__input[type=number]::-webkit-inner-spin-button,
-          input.mdc-text-field__input[type=number]::-webkit-outer-spin-button {
-            opacity: 1;
-          }
-        }
-      }
-    }
-  }
-
-  .tb-widget-config-row {
-    .mat-mdc-form-field {
-      .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
-        padding-right: 12px;
-        padding-left: 12px;
-        &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(:hover) {
-          .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
-            border-color: rgba(0, 0, 0, 0.12);
-          }
-        }
-        .mat-mdc-form-field-infix {
-          padding-top: 7px;
-          padding-bottom: 7px;
-          min-height: 38px;
-          width: 72px;
-        }
-      }
     }
   }
 

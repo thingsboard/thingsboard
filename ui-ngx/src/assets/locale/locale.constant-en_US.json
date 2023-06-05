@@ -1096,6 +1096,7 @@
     "datakey": {
         "settings": "Settings",
         "advanced": "Advanced",
+        "key": "Key",
         "label": "Label",
         "color": "Color",
         "units": "Special symbol to show next to value",
@@ -5176,7 +5177,11 @@
             "allow-alarms-ack": "Allow alarms acknowledgment",
             "allow-alarms-clear": "Allow alarms clear",
             "display-alarm-activity": "Display alarm activity",
-            "allow-alarms-assign": "Allow alarms assignment"
+            "allow-alarms-assign": "Allow alarms assignment",
+            "columns": "Columns",
+            "remove-column": "Remove column",
+            "add-column": "Add column",
+            "no-columns": "No columns configured"
         },
         "value-source": {
             "value-source": "Value source",

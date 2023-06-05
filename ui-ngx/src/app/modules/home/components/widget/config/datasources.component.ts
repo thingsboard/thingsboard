@@ -105,6 +105,10 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   hideDataKeyDecimals = false;
 
   @Input()
+  @coerceBoolean()
+  hideDataKeys = false;
+
+  @Input()
   configMode: WidgetConfigMode;
 
   datasourcesFormGroup: UntypedFormGroup;

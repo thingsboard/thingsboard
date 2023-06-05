@@ -25,11 +25,19 @@ import {
 import {
   WidgetActionsPanelComponent
 } from '@home/components/widget/config/basic/common/widget-actions-panel.component';
+import {
+  EntitiesTableBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/entities-table-basic-config.component';
+import { DataKeysPanelComponent } from '@home/components/widget/config/basic/common/data-keys-panel.component';
+import { DataKeyRowComponent } from '@home/components/widget/config/basic/common/data-key-row.component';
 
 @NgModule({
   declarations: [
     WidgetActionsPanelComponent,
-    SimpleCardBasicConfigComponent
+    SimpleCardBasicConfigComponent,
+    EntitiesTableBasicConfigComponent,
+    DataKeyRowComponent,
+    DataKeysPanelComponent
   ],
   imports: [
     CommonModule,
@@ -38,12 +46,16 @@ import {
   ],
   exports: [
     WidgetActionsPanelComponent,
-    SimpleCardBasicConfigComponent
+    SimpleCardBasicConfigComponent,
+    EntitiesTableBasicConfigComponent,
+    DataKeyRowComponent,
+    DataKeysPanelComponent
   ]
 })
 export class BasicWidgetConfigModule {
 }
 
 export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetConfigComponent>} = {
-  'tb-simple-card-basic-config': SimpleCardBasicConfigComponent
+  'tb-simple-card-basic-config': SimpleCardBasicConfigComponent,
+  'tb-entities-table-basic-config': EntitiesTableBasicConfigComponent
 };
