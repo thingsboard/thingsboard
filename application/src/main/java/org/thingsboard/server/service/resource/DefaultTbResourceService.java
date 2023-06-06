@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.resource;
 
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
@@ -36,6 +38,7 @@ import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -166,6 +169,8 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
         } else {
             resource.setResourceKey(resource.getFileName());
         }
+        HashCode hashCode = Hashing.sha256().hashBytes(Base64.getDecoder().decode(resource.getData().getBytes()));
+        resource.setHashCode(hashCode.toString());
         return resourceService.saveResource(resource);
     }
 }

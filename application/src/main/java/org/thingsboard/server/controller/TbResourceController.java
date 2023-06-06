@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,10 +49,10 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.resource.TbResourceService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Base64;
 import java.util.List;
 
@@ -89,43 +91,45 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
-                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, HttpServletRequest request) throws ThingsboardException {
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
         TbResource tbResource = checkResourceId(resourceId, Operation.READ);
 
         ByteArrayResource resource = new ByteArrayResource(Base64.getDecoder().decode(tbResource.getData().getBytes()));
-
-        HashCode hashCode = Hashing.sha256().hashBytes(resource.getByteArray());
-        String ifNoneMatch = request.getHeader("If-None-Match");
-        if (ifNoneMatch != null) {
-            if (ifNoneMatch.equals(hashCode.toString())) {
-                return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
-                        .eTag(hashCode.toString()).build();
-            }
-        }
-
-        String mediaType;
-        switch (tbResource.getResourceType()) {
-            case LWM2M_MODEL:
-                mediaType = "application/xml";
-                break;
-            case JKS:
-                mediaType = "application/x-java-keystore";
-                break;
-            case PKCS_12:
-                mediaType = "application/x-pkcs12";
-                break;
-            default: mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-        }
-
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
                 .header("x-filename", tbResource.getFileName())
                 .contentLength(resource.contentLength())
-                .header("Content-Type", mediaType)
-                .eTag(hashCode.toString())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
+    }
+
+    @ApiOperation(value = "Download Resource (downloadResource)", notes = "Download Resource based on the provided Resource Id." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/resource/lwm2m/{resourceId}/download", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<org.springframework.core.io.Resource> downloadLwm2mResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader HttpHeaders headers) throws ThingsboardException {
+        return downloadResourceIfChanged(ResourceType.LWM2M_MODEL, strResourceId, headers);
+    }
+
+    @ApiOperation(value = "Download Resource (downloadResource)", notes = "Download Resource based on the provided Resource Id." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/resource/pkcs12/{resourceId}/download", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<org.springframework.core.io.Resource> downloadPkcs12ResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, HttpHeaders headers) throws ThingsboardException {
+        return downloadResourceIfChanged(ResourceType.PKCS_12, strResourceId, headers);
+    }
+
+    @ApiOperation(value = "Download Resource (downloadResource)", notes = "Download Resource based on the provided Resource Id." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/resource/js/{resourceId}/download", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<org.springframework.core.io.Resource> downloadJsResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, HttpHeaders headers) throws ThingsboardException {
+        return downloadResourceIfChanged(ResourceType.JS_MODULE, strResourceId, headers);
     }
 
     @ApiOperation(value = "Get Resource Info (getResourceInfoById)",
@@ -256,5 +260,32 @@ public class TbResourceController extends BaseController {
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
         TbResource tbResource = checkResourceId(resourceId, Operation.DELETE);
         tbResourceService.delete(tbResource, getCurrentUser());
+    }
+
+    private ResponseEntity<org.springframework.core.io.Resource> downloadResourceIfChanged(ResourceType type, String strResourceId, HttpHeaders headers) throws ThingsboardException {
+        checkParameter(RESOURCE_ID, strResourceId);
+        TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
+        TbResourceInfo tbResourceInfo = checkResourceInfoId(resourceId, Operation.READ);
+
+        List<String> ifNoneMatchHeaders = headers.getIfNoneMatch();
+        if (!ifNoneMatchHeaders.isEmpty()) {
+            if (ifNoneMatchHeaders.contains(tbResourceInfo.getHashCode())) {
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                        .eTag(tbResourceInfo.getHashCode()).build();
+            }
+        }
+
+        SecurityUser currentUser = getCurrentUser();
+        TbResource tbResource = resourceService.findResourceById(currentUser.getTenantId(), resourceId);
+        ByteArrayResource resource = new ByteArrayResource(Base64.getDecoder().decode(tbResource.getData().getBytes()));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
+                .header("x-filename", tbResource.getFileName())
+                .contentLength(resource.contentLength())
+                .header("Content-Type", type.mediaType)
+                .cacheControl(CacheControl.noCache())
+                .eTag(tbResource.getHashCode())
+                .body(resource);
     }
 }
