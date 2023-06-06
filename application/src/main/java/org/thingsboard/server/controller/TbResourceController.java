@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -47,6 +50,7 @@ import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Base64;
 import java.util.List;
 
@@ -85,17 +89,42 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
-                                                                                 @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, HttpServletRequest request) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
         TbResource tbResource = checkResourceId(resourceId, Operation.READ);
 
         ByteArrayResource resource = new ByteArrayResource(Base64.getDecoder().decode(tbResource.getData().getBytes()));
+
+        HashCode hashCode = Hashing.sha256().hashBytes(resource.getByteArray());
+        String ifNoneMatch = request.getHeader("If-None-Match");
+        if (ifNoneMatch != null) {
+            if (ifNoneMatch.equals(hashCode.toString())) {
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                        .eTag(hashCode.toString()).build();
+            }
+        }
+
+        String mediaType;
+        switch (tbResource.getResourceType()) {
+            case LWM2M_MODEL:
+                mediaType = "application/xml";
+                break;
+            case JKS:
+                mediaType = "application/x-java-keystore";
+                break;
+            case PKCS_12:
+                mediaType = "application/x-pkcs12";
+                break;
+            default: mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
                 .header("x-filename", tbResource.getFileName())
                 .contentLength(resource.contentLength())
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header("Content-Type", mediaType)
+                .eTag(hashCode.toString())
                 .body(resource);
     }
 
