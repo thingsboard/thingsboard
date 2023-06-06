@@ -23,7 +23,7 @@ SELECT d.*
        , COALESCE(da.bool_v, FALSE) as active
 FROM device d
          LEFT JOIN customer c ON c.id = d.customer_id
-         LEFT JOIN attribute_kv da ON da.entity_id = d.id and da.attribute_key = 'active';
+         LEFT JOIN attribute_kv da ON da.entity_type = 'DEVICE' AND da.entity_id = d.id AND da.attribute_type = 'SERVER_SCOPE' AND da.attribute_key = 'active';
 
 DROP VIEW IF EXISTS device_info_active_ts_view CASCADE;
 CREATE OR REPLACE VIEW device_info_active_ts_view AS
@@ -226,7 +226,11 @@ BEGIN
     END IF;
     IF NOT(existing.cleared) THEN
         cleared = TRUE;
-        UPDATE alarm a SET cleared = true, clear_ts = a_ts, additional_info = a_details WHERE a.id = a_id AND a.tenant_id = t_id;
+        IF a_details IS NULL THEN
+            UPDATE alarm a SET cleared = true, clear_ts = a_ts WHERE a.id = a_id AND a.tenant_id = t_id;
+        ELSE
+            UPDATE alarm a SET cleared = true, clear_ts = a_ts, additional_info = a_details WHERE a.id = a_id AND a.tenant_id = t_id;
+        END IF;
     END IF;
     SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
     RETURN json_build_object('success', true, 'cleared', cleared, 'alarm', row_to_json(result))::text;

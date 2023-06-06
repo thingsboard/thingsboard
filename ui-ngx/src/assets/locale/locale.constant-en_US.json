@@ -35,6 +35,7 @@
         "edit-mode": "Edit mode",
         "enter-edit-mode": "Enter edit mode",
         "decline-changes": "Decline changes",
+        "decline": "Decline",
         "close": "Close",
         "back": "Back",
         "run": "Run",
@@ -807,7 +808,8 @@
         "type-provision-success": "Device provisioned",
         "type-provision-failure": "Device provisioning was failed",
         "type-timeseries-updated": "Telemetry updated",
-        "type-timeseries-deleted": "Telemetry deleted"
+        "type-timeseries-deleted": "Telemetry deleted",
+        "type-sms-sent": "SMS sent"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -1113,6 +1115,10 @@
         "function-types": "Function types",
         "function-type": "Function type",
         "function-types-required": "Function types are required.",
+        "data-keys": "Data keys",
+        "data-key": "Data key",
+        "data-keys-required": "Data keys are required.",
+        "data-key-required": "Data key is required.",
         "alarm-keys": "Alarm data keys",
         "alarm-key": "Alarm data key",
         "alarm-key-functions": "Alarm key functions",
@@ -1792,7 +1798,9 @@
         }
     },
     "dialog": {
-        "close": "Close dialog"
+        "close": "Close dialog",
+        "error-message-title": "Error message:",
+        "error-details-title": "Error details"
     },
     "direction": {
         "column": "Column",
@@ -1971,6 +1979,7 @@
         "no-aliases-found": "No aliases found.",
         "no-alias-matching": "'{{alias}}' not found.",
         "create-new-alias": "Create a new one!",
+        "create-new": "Create new",
         "key": "Key",
         "key-name": "Key name",
         "no-keys-found": "No keys found.",
@@ -2064,9 +2073,15 @@
         "type-queue": "Queue",
         "type-notification": "Notification",
         "type-notification-rule": "Notification rule",
+        "type-notification-rules": "Notification rules",
+        "list-of-notification-rules": "{ count, plural, =1 {One notification rule} other {List of # notification rules} }",
         "type-notification-target": "Notification recipient",
+        "type-notification-targets": "Notification recipients",
+        "list-of-notification-targets": "{ count, plural, =1 {One notification recipient} other {List of # notification recipients} }",
         "type-notification-request": "Notification request",
-        "type-notification-template": "Notification template"
+        "type-notification-template": "Notification template",
+        "type-notification-templates": "Notification templates",
+        "list-of-notification-templates": "{ count, plural, =1 {One notification template} other {List of # notification templates} }"
     },
     "entity-field": {
         "created-time": "Created time",
@@ -2425,6 +2440,7 @@
          "add-filter-prompt": "Please add filter",
          "no-filter-matching": "'{{filter}}' not found.",
          "create-new-filter": "Create a new one!",
+         "create-new": "Create new",
          "filter-required": "Filter is required.",
          "operation": {
            "operation": "Operation",
@@ -2959,6 +2975,8 @@
         "rule-engine-filter": "Rule engine filter",
         "rule-name": "Rule name",
         "rule-name-required": "Name is required",
+        "rule-disable": "Disable notification rule",
+        "rule-enable": "Enable notification rule",
         "rule-node-filter": "Rule node filter",
         "rules": "Rules",
         "notification-rules": "Notifications / Rules",
@@ -3987,6 +4005,10 @@
         "settings-form-selector": "Settings form selector",
         "data-key-settings-form-selector": "Data key settings form selector",
         "latest-data-key-settings-form-selector": "Latest data key settings form selector",
+        "has-basic-mode": "Has basic mode",
+        "basic-mode-form-selector": "Basic mode form selector",
+        "basic-mode": "Basic",
+        "advanced-mode": "Advanced",
         "javascript": "Javascript",
         "js": "JS",
         "remove-widget-type-title": "Are you sure you want to remove the widget type '{{widgetName}}'?",
@@ -4003,7 +4025,8 @@
         "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
         "search": "Search widget",
         "filter": "Widget filter type",
-        "loading-widgets": "Loading widgets..."
+        "loading-widgets": "Loading widgets...",
+        "widget-template-error": "Invalid widget HTML template."
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -4012,6 +4035,9 @@
         "open-dashboard": "Navigate to other dashboard",
         "custom": "Custom action",
         "custom-pretty": "Custom action (with HTML template)",
+        "custom-pretty-error-title": "Custom dialog error",
+        "custom-pretty-template-error": "Invalid custom dialog template.",
+        "custom-pretty-controller-error": "Error occurred while evaluating custom dialog function.",
         "mobile-action": "Mobile action",
         "target-dashboard-state": "Target dashboard state",
         "target-dashboard-state-required": "Target dashboard state is required",
@@ -4097,6 +4123,9 @@
         "data": "Data",
         "settings": "Settings",
         "advanced": "Advanced",
+        "appearance": "Appearance",
+        "widget-card": "Widget card",
+        "mobile": "Mobile",
         "title": "Title",
         "title-tooltip": "Title Tooltip",
         "general-settings": "General settings",
@@ -4117,12 +4146,16 @@
         "desktop-hide": "Hide widget in desktop mode",
         "units": "Special symbol to show next to value",
         "decimals": "Number of digits after floating point",
+        "units-short": "Units",
+        "decimals-short": "Decimals",
         "timewindow": "Timewindow",
         "use-dashboard-timewindow": "Use dashboard timewindow",
+        "use-widget-timewindow": "Use widget timewindow",
         "display-timewindow": "Display timewindow",
         "legend": "Legend",
         "display-legend": "Display legend",
         "datasources": "Datasources",
+        "datasource": "Datasource",
         "maximum-datasources": "Maximum { count, plural, =1 {1 datasource is allowed.} other {# datasources are allowed} }",
         "timeseries-key-error": "At least one timeseries data key should be specified",
         "datasource-type": "Type",
@@ -4155,9 +4188,20 @@
         "icon-size": "Icon size",
         "advanced-settings": "Advanced settings",
         "data-settings": "Data settings",
+        "limits": "Limits",
         "no-data-display-message": "\"No data to display\" alternative message",
         "data-page-size": "Maximum entities per datasource",
-        "settings-component-not-found": "Settings form component not found for selector '{{selector}}'"
+        "settings-component-not-found": "Settings form component not found for selector '{{selector}}'",
+        "preview": "Preview",
+        "set": "Set",
+        "set-message": "Set message",
+        "card-title": "Card title",
+        "advanced-title-style": "Advanced title style",
+        "card-style": "Card style",
+        "text": "Text",
+        "background": "Background",
+        "advanced-widget-style": "Advanced widget style",
+        "card-buttons": "Card buttons"
     },
     "widget-type": {
         "import": "Import widget type",
@@ -5083,6 +5127,7 @@
             "markdown-css": "Markdown/HTML CSS"
         },
         "simple-card": {
+            "label": "Label",
             "label-position": "Label position",
             "label-position-left": "Left",
             "label-position-top": "Top"

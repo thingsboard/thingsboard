@@ -25,5 +25,8 @@
   .tb-color-preview {
     margin-left: 8px;
     margin-right: 5px;
+    &.no-margin {
+      margin: 0;
+    }
   }
 }

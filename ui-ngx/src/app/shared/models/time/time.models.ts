@@ -245,7 +245,8 @@ const getTimewindowType = (timewindow: Timewindow): TimewindowType => {
   }
 };
 
-export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalOnly: boolean, timeService: TimeService): Timewindow => {
+export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalOnly: boolean,
+                                               historyOnly: boolean, timeService: TimeService): Timewindow => {
   const model = defaultTimewindow(timeService);
   if (value) {
     model.hideInterval = value.hideInterval;
@@ -315,6 +316,9 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
   }
   if (quickIntervalOnly) {
     model.realtime.realtimeType = RealtimeWindowType.INTERVAL;
+  }
+  if (historyOnly) {
+    model.selectedTab = TimewindowType.HISTORY;
   }
   return model;
 };

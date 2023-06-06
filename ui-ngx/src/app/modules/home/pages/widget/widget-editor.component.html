@@ -270,6 +270,17 @@
                              [(ngModel)]="widget.latestDataKeySettingsDirective"
                              (ngModelChange)="isDirty = true"/>
                     </mat-form-field>
+                    <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
+                                      [(ngModel)]="widget.hasBasicMode"
+                                      (ngModelChange)="isDirty = true">
+                      {{ 'widget.has-basic-mode' | translate }}
+                    </mat-slide-toggle>
+                    <mat-form-field *ngIf="widget.hasBasicMode" class="mat-block">
+                      <mat-label translate>widget.basic-mode-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.basicModeDirective"
+                             (ngModelChange)="isDirty = true"/>
+                    </mat-form-field>
                   </div>
                 </div>
               </mat-tab>

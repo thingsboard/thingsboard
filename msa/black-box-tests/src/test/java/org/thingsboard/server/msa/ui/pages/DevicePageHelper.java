@@ -35,24 +35,12 @@ public class DevicePageHelper extends DevicePageElements {
     public void assignToCustomer(String customerTitle) {
         chooseCustomerForAssignField().click();
         entityFromDropdown(customerTitle).click();
-        submitAssignToCustomerBtn().click();
+        submitBtn().click();
     }
 
     public void openCreateDeviceView() {
         plusBtn().click();
         addDeviceBtn().click();
-    }
-
-    public void enterName(String deviceName) {
-        enterText(nameField(), deviceName);
-    }
-
-    public void enterDescription(String description) {
-        enterText(descriptionFieldCreateField(), description);
-    }
-
-    public void enterLabel(String label) {
-        enterText(deviceLabelFieldCreate(), label);
     }
 
     public void deleteDeviceByRightSideBtn(String deviceName) {
@@ -87,10 +75,52 @@ public class DevicePageHelper extends DevicePageElements {
         entityFromDropdown(deviceProfileName).click();
     }
 
-    public void assignOnCustomer(String customerTitle) {
-        customerOptionBtn().click();
-        assignOnCustomerField().click();
-        entityFromList(customerTitle).click();
-        sleep(2); //waiting for the action to count
+    public void unassignedDeviceByRightSideBtn(String deviceName) {
+        unassignBtn(deviceName).click();
+        warningPopUpYesBtn().click();
+    }
+
+    public void unassignedDeviceFromDetailsTab() {
+        unassignBtnDetailsTab().click();
+        warningPopUpYesBtn().click();
+    }
+
+    public void selectDevices(String... deviceNames) {
+        for (String deviceName : deviceNames) {
+            checkBox(deviceName).click();
+        }
+    }
+
+    public void assignSelectedDevices(String... deviceNames) {
+        selectDevices(deviceNames);
+        assignMarkedDeviceBtn().click();
+    }
+
+    public void deleteSelectedDevices(String... deviceNames) {
+        selectDevices(deviceNames);
+        deleteSelectedBtn().click();
+        warningPopUpYesBtn().click();
+    }
+
+    public void filterDeviceByDeviceProfile(String deviceProfileTitle) {
+        clearProfileFieldBtn().click();
+        entityFromDropdown(deviceProfileTitle).click();
+        submitBtn().click();
+    }
+
+    public void filterDeviceByState(String state) {
+        deviceStateSelect().click();
+        entityFromDropdown(" " + state + " ").click();
+        sleep(2); //wait until the action is counted
+        submitBtn().click();
+    }
+
+    public void filterDeviceByDeviceProfileAndState(String deviceProfileTitle, String state) {
+        clearProfileFieldBtn().click();
+        entityFromDropdown(deviceProfileTitle).click();
+        deviceStateSelect().click();
+        entityFromDropdown(" " + state + " ").click();
+        sleep(2); //wait until the action is counted
+        submitBtn().click();
     }
 }

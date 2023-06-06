@@ -17,8 +17,9 @@ package org.thingsboard.rule.engine.mail;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbEmail;
@@ -51,7 +52,6 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
 )
 public class TbMsgToEmailNode implements TbNode {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String IMAGES = "images";
     private static final String DYNAMIC = "dynamic";
 
@@ -77,7 +77,7 @@ public class TbMsgToEmailNode implements TbNode {
     }
 
     private TbMsg buildEmailMsg(TbContext ctx, TbMsg msg, TbEmail email) throws JsonProcessingException {
-        String emailJson = MAPPER.writeValueAsString(email);
+        String emailJson = JacksonUtil.toString(email);
         return ctx.transformMsg(msg, SEND_EMAIL_TYPE, msg.getOriginator(), msg.getMetaData().copy(), emailJson);
     }
 
@@ -96,7 +96,7 @@ public class TbMsgToEmailNode implements TbNode {
         builder.body(fromTemplate(this.config.getBodyTemplate(), msg));
         String imagesStr = msg.getMetaData().getValue(IMAGES);
         if (!StringUtils.isEmpty(imagesStr)) {
-            Map<String, String> imgMap = MAPPER.readValue(imagesStr, new TypeReference<HashMap<String, String>>() {});
+            Map<String, String> imgMap = JacksonUtil.fromString(imagesStr, new TypeReference<HashMap<String, String>>() {});
             builder.images(imgMap);
         }
         return builder.build();

@@ -567,6 +567,10 @@ mat-label {
     }
   }
 
+  .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix {
+    z-index: 1;
+  }
+
   .mat-toolbar.mat-mdc-table-toolbar .mat-mdc-form-field.mat-form-field-appearance-fill,
   .mat-mdc-form-field.mat-form-field-appearance-fill.tb-appearance-transparent {
     .mdc-text-field--filled {
@@ -1082,6 +1086,27 @@ mat-label {
     border: 2px solid #fff;
     border-radius: 50%;
     box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .14), 0 2px 2px 0 rgba(0, 0, 0, .098), 0 1px 5px 0 rgba(0, 0, 0, .084);
+
+    &.box {
+      border: none;
+      box-shadow: none;
+      border-radius: 4px;
+      .tb-color-result {
+        border: 1px solid rgba(0, 0, 0, 0.12);
+      }
+      &.disabled {
+        cursor: initial;
+        .tb-color-result {
+          background: rgba(0, 0, 0, 0.38);
+        }
+      }
+    }
+
+    &.small {
+      width: 18px;
+      min-width: 18px;
+      height: 18px;
+    }
 
     @include tb-checkered-bg();
 

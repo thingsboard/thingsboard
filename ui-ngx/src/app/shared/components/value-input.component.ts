@@ -80,6 +80,7 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
         if (res) {
           this.modelValue = res;
           this.inputForm.control.patchValue({value: this.modelValue});
+          this.updateView();
         }
       }
     );

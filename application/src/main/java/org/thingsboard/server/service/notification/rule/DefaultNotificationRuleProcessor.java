@@ -44,10 +44,10 @@ import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigg
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
-import org.thingsboard.server.service.apiusage.limits.LimitedApi;
-import org.thingsboard.server.service.apiusage.limits.RateLimitService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.rule.cache.NotificationRulesCache;
 import org.thingsboard.server.service.notification.rule.trigger.NotificationRuleTriggerProcessor;
@@ -97,7 +97,7 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
         TenantId tenantId = triggerType.isTenantLevel() ? trigger.getTenantId() : TenantId.SYS_TENANT_ID;
 
         try {
-            List<NotificationRule> rules = notificationRulesCache.get(tenantId, triggerType);
+            List<NotificationRule> rules = notificationRulesCache.getEnabled(tenantId, triggerType);
             for (NotificationRule rule : rules) {
                 notificationExecutor.submit(() -> {
                     try {

@@ -176,6 +176,7 @@ export class RuleNotificationDialogComponent extends
 
     this.ruleNotificationForm = this.fb.group({
       name: [null, Validators.required],
+      enabled: [true, Validators.required],
       templateId: [null, Validators.required],
       triggerType: [this.isSysAdmin() ? TriggerType.ENTITIES_LIMIT : TriggerType.ALARM, Validators.required],
       recipientsConfig: this.fb.group({

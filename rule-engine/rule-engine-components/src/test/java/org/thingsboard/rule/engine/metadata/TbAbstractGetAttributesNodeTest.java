@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import org.junit.After;
@@ -59,8 +58,6 @@ import static org.mockito.Mockito.never;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbAbstractGetAttributesNodeTest {
-
-    final ObjectMapper mapper = new ObjectMapper();
 
     private EntityId originator = new DeviceId(Uuids.timeBased());
     private TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
@@ -322,7 +319,7 @@ public class TbAbstractGetAttributesNodeTest {
         config.setFetchToData(fetchToData);
         config.setGetLatestValueWithTs(getLatestValueWithTs);
         config.setTellFailureIfAbsent(isTellFailureIfAbsent);
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         TbGetAttributesNode node = new TbGetAttributesNode();
         node.init(ctx, nodeConfiguration);
         return node;
