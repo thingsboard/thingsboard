@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.metadata;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import org.junit.runner.RunWith;
@@ -89,8 +88,7 @@ public abstract class AbstractAttributeNodeTest {
     TbEntityGetAttrNode node;
 
     void init(TbEntityGetAttrNode node) throws TbNodeException {
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(getTbNodeConfig()));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(getTbNodeConfig()));
 
         metaData = new HashMap<>();
         metaData.putIfAbsent("word", "temperature");
@@ -165,8 +163,7 @@ public abstract class AbstractAttributeNodeTest {
     }
 
     void deviceCustomerTelemetryFetched(Device device) throws TbNodeException {
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(getTbNodeConfigForTelemetry()));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(getTbNodeConfigForTelemetry()));
 
         TbEntityGetAttrNode node = getEmptyNode();
         node.init(null, nodeConfiguration);
@@ -219,7 +216,7 @@ public abstract class AbstractAttributeNodeTest {
 
     void mockFindDevice(Device device) {
         when(ctx.getDeviceService()).thenReturn(deviceService);
-        when(deviceService.findDeviceByIdAsync(any(), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+        when(deviceService.findDeviceById(any(), eq(device.getId()))).thenReturn(device);
     }
 
     void mockFindAsset(Asset asset) {

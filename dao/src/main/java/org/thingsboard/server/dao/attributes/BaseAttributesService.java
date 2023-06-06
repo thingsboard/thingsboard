@@ -89,7 +89,7 @@ public class BaseAttributesService implements AttributesService {
     @Override
     public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
-        attributes.forEach(AttributeUtils::validate);
+        AttributeUtils.validate(attributes);
         List<ListenableFuture<String>> saveFutures = attributes.stream().map(attribute -> attributesDao.save(tenantId, entityId, scope, attribute)).collect(Collectors.toList());
         return Futures.allAsList(saveFutures);
     }

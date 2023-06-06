@@ -28,16 +28,16 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.adapter.NativeWebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -80,13 +80,17 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
 
+    @Autowired
+    private RateLimitService rateLimitService;
+
     @Value("${server.ws.send_timeout:5000}")
     private long sendTimeout;
     @Value("${server.ws.ping_timeout:30000}")
     private long pingTimeout;
+    @Value("${server.ws.max_queue_messages_per_session:1000}")
+    private int wsMaxQueueMessagesPerSession;
 
     private final ConcurrentMap<String, WebSocketSessionRef> blacklistedSessions = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, TbRateLimits> perSessionUpdateLimits = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<TenantId, Set<String>> tenantSessionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<CustomerId, Set<String>> customerSessionsMap = new ConcurrentHashMap<>();
@@ -143,9 +147,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 return;
             }
             var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
+            int wsTenantProfileQueueLimit = tenantProfileConfiguration != null ?
+                    tenantProfileConfiguration.getWsMsgQueueLimitPerSession() : wsMaxQueueMessagesPerSession;
             internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef,
-                    tenantProfileConfiguration != null && tenantProfileConfiguration.getWsMsgQueueLimitPerSession() > 0 ?
-                            tenantProfileConfiguration.getWsMsgQueueLimitPerSession() : 500));
+                    (wsTenantProfileQueueLimit > 0 && wsTenantProfileQueueLimit < wsMaxQueueMessagesPerSession) ?
+                            wsTenantProfileQueueLimit : wsMaxQueueMessagesPerSession));
 
             externalSessionMap.put(externalSessionId, internalSessionId);
             processInWebSocketService(sessionRef, SessionEvent.onEstablished());
@@ -327,24 +333,17 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         if (internalId != null) {
             SessionMetaData sessionMd = internalSessionMap.get(internalId);
             if (sessionMd != null) {
-                var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
-                if (tenantProfileConfiguration != null) {
-                    if (StringUtils.isNotEmpty(tenantProfileConfiguration.getWsUpdatesPerSessionRateLimit())) {
-                        TbRateLimits rateLimits = perSessionUpdateLimits.computeIfAbsent(sessionRef.getSessionId(), sid -> new TbRateLimits(tenantProfileConfiguration.getWsUpdatesPerSessionRateLimit()));
-                        if (!rateLimits.tryConsume()) {
-                            if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
-                                log.info("[{}][{}][{}] Failed to process session update. Max session updates limit reached"
-                                        , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), externalId);
-                                sessionMd.sendMsg("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}");
-                            }
-                            return;
-                        } else {
-                            log.debug("[{}][{}][{}] Session is no longer blacklisted.", sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), externalId);
-                            blacklistedSessions.remove(externalId);
-                        }
-                    } else {
-                        perSessionUpdateLimits.remove(sessionRef.getSessionId());
+                TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
+                if (!rateLimitService.checkRateLimit(LimitedApi.WS_UPDATES_PER_SESSION, tenantId, (Object) sessionRef.getSessionId())) {
+                    if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
+                        log.info("[{}][{}][{}] Failed to process session update. Max session updates limit reached"
+                                , tenantId, sessionRef.getSecurityCtx().getId(), externalId);
+                        sessionMd.sendMsg("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}");
                     }
+                    return;
+                } else {
+                    log.debug("[{}][{}][{}] Session is no longer blacklisted.", tenantId, sessionRef.getSecurityCtx().getId(), externalId);
+                    blacklistedSessions.remove(externalId);
                 }
                 sessionMd.sendMsg(msg);
             } else {
@@ -460,7 +459,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         if (tenantProfileConfiguration == null) return;
 
         String sessionId = session.getId();
-        perSessionUpdateLimits.remove(sessionRef.getSessionId());
+        rateLimitService.cleanUp(LimitedApi.WS_UPDATES_PER_SESSION, sessionRef.getSessionId());
         blacklistedSessions.remove(sessionRef.getSessionId());
         if (tenantProfileConfiguration.getMaxWsSessionsPerTenant() > 0) {
             Set<String> tenantSessions = tenantSessionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());

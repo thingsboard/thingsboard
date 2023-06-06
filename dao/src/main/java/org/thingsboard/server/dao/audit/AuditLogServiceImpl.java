@@ -166,8 +166,8 @@ public class AuditLogServiceImpl implements AuditLogService {
             case UPDATED:
             case ALARM_ACK:
             case ALARM_CLEAR:
-            case ALARM_ASSIGN:
-            case ALARM_UNASSIGN:
+            case ALARM_ASSIGNED:
+            case ALARM_UNASSIGNED:
             case RELATIONS_DELETED:
             case ASSIGNED_TO_TENANT:
                 if (entity != null) {
@@ -325,6 +325,10 @@ public class AuditLogServiceImpl implements AuditLogService {
                 actionData.put("entityId", strEntityId);
                 actionData.put("unassignedEdgeId", strEdgeId);
                 actionData.put("unassignedEdgeName", strEdgeName);
+                break;
+            case SMS_SENT:
+                String number = extractParameter(String.class, 0, additionalInfo);
+                actionData.put("recipientNumber", number);
                 break;
         }
         return actionData;

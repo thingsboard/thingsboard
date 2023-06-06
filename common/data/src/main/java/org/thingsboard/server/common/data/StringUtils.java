@@ -46,6 +46,10 @@ public class StringUtils {
         return source != null && !source.isEmpty() && !source.trim().isEmpty();
     }
 
+    public static String notBlankOrDefault(String src, String def) {
+        return isNotBlank(src) ? src : def;
+    }
+
     public static String removeStart(final String str, final String remove) {
         if (isEmpty(str) || isEmpty(remove)) {
             return str;

@@ -1,0 +1,124 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.tb-datakeys-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+
+  input.tb-dragging {
+    display: none;
+  }
+
+  .mat-mdc-chip.mat-mdc-standard-chip.tb-datakey-chip {
+    overflow: hidden;
+    line-height: 20px;
+    height: 32px;
+
+    &.mdc-evolution-chip--with-trailing-action {
+      .mdc-evolution-chip__action--primary {
+        padding-left: 4px;
+        padding-right: 12px;
+      }
+    }
+
+    .mat-mdc-chip-action {
+      overflow: hidden;
+      .mat-mdc-chip-action-label {
+        overflow: hidden;
+      }
+    }
+    .tb-attribute-chip {
+      max-width: 100%;
+      color: rgb(66, 66, 66);
+      .tb-chip-drag-handle {
+        padding: 3px;
+        height: 24px;
+        cursor: move;
+        mat-icon {
+          pointer-events: none;
+        }
+      }
+      .tb-chip-labels {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        min-width: 0;
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 100px;
+        padding: 2px 10px;
+        .tb-chip-label {
+          font-weight: normal;
+          font-size: 14px;
+          line-height: 20px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          .mat-icon.tb-datakey-icon {
+            margin-right: 4px;
+            margin-left: 4px;
+          }
+          .tb-agg-func {
+            font-style: italic;
+            color: #0c959c;
+          }
+        }
+        .tb-chip-separator {
+          white-space: pre;
+        }
+      }
+      .mat-mdc-chip-remove.mat-mdc-icon-button {
+        color: inherit;
+        opacity: inherit;
+      }
+    }
+
+    &.tb-datakey-chip-dnd-placeholder {
+      min-width: 120px;
+      border: 2px dashed rgba(0, 0, 0, 0.2);
+    }
+    &.tb-chip-dragging {
+      display: none;
+    }
+    .tb-dragging-chip-image-fill {
+      background-color: rgba(0,0,0,0.3);
+      border-radius: var(--mdc-chip-container-shape-radius, 16px 16px 16px 16px);
+      display: none;
+      pointer-events: none;
+    }
+    .tb-dragging-chip-image {
+      background-color: var(--mdc-chip-elevated-container-color, transparent);
+      border-radius: var(--mdc-chip-container-shape-radius, 16px 16px 16px 16px);
+      overflow: hidden;
+      height: 32px;
+      line-height: 20px;
+      .tb-dragging-chip-image-fill {
+        display: block;
+      }
+    }
+  }
+}
+
+.mat-icon.tb-datakey-icon {
+  vertical-align: middle;
+  & > svg {
+    vertical-align: initial;
+  }
+  &.new-key {
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+}

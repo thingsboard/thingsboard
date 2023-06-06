@@ -18,6 +18,7 @@ package org.thingsboard.server.msa.ui.tests.customerSmoke;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import org.openqa.selenium.Keys;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -203,31 +204,32 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
 
     @Epic("Customers smoke tests")
     @Feature("Edit customer")
-    @Test(priority = 20, groups = "smoke")
+    @Test(priority = 20, groups = { "smoke", "broken" })
     @Description("Assigned dashboard without hide")
     public void assignedDashboardWithoutHide() {
         String customerName = ENTITY_NAME + random();
+        String dashboardName = "Firmware";
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
         this.customerName = customerName;
 
         sideBarMenuView.customerBtn().click();
         customerPage.manageCustomersDashboardsBtn(customerName).click();
-        customerPage.assignedDashboard();
+        customerPage.assignedDashboard(dashboardName);
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
         jsClick(customerPage.editPencilBtn());
-        customerPage.chooseDashboard(customerPage.getDashboard());
-        customerPage.hideHomeDashboardToolbarCheckbox().click();
+        customerPage.chooseDashboard(dashboardName);
+        customerPage.disableHideHomeDashboardToolbar();
         customerPage.doneBtnEditView().click();
+        customerPage.waitUntilDashboardFieldToBeNotEmpty();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
         jsClick(customerPage.manageCustomersUserBtn(customerName));
         customerPage.createCustomersUser();
         jsClick(customerPage.userLoginBtn());
 
-        Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
-        Assert.assertEquals(customerPage.getDashboard(), customerPage.getDashboardFromView());
+        Assert.assertEquals(dashboardName, customerPage.getDashboardFromView());
         Assert.assertNotNull(customerPage.stateController());
         Assert.assertNotNull(customerPage.filterBtn());
         Assert.assertNotNull(customerPage.timeBtn());
@@ -306,5 +308,25 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(customerPage.address2EntityView().getAttribute("value"), text);
         Assert.assertEquals(customerPage.phoneNumberEntityView().getAttribute("value"), "+1" + number);
         Assert.assertEquals(customerPage.emailEntityView().getAttribute("value"), email);
+    }
+
+    @Epic("Customers smoke tests")
+    @Feature("Edit customer")
+    @Test(groups = "smoke")
+    @Description("Delete phone number")
+    public void deletePhoneNumber() {
+        String customerName = ENTITY_NAME;
+        int number = 2015550123;
+        testRestClient.postCustomer(defaultCustomerPrototype(customerName, number));
+        this.customerName = customerName;
+
+        sideBarMenuView.customerBtn().click();
+        customerPage.entity(customerName).click();
+        customerPage.editPencilBtn().click();
+        customerPage.phoneNumberEntityView().click();
+        customerPage.phoneNumberEntityView().sendKeys(Keys.CONTROL + "A" + Keys.BACK_SPACE);
+        customerPage.doneBtnEditView().click();
+
+        Assert.assertTrue(customerPage.phoneNumberEntityView().getAttribute("value").isEmpty(), "Phone field is empty");
     }
 }

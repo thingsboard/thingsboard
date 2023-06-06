@@ -63,7 +63,7 @@ import { isDefined, isEmptyStr, isEqual, isString, isUndefined } from '@core/uti
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
-import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
+import { EntitiesTableAction, IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 
 @Component({
@@ -231,8 +231,11 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     const routerQueryParams: PageQueryParam = this.route.snapshot.queryParams;
 
     let sortOrder: SortOrder = null;
+    let initialAction: EntitiesTableAction = null;
     if (this.pageMode) {
-      if (this.entitiesTableConfig.defaultSortOrder || routerQueryParams.hasOwnProperty('direction') || routerQueryParams.hasOwnProperty('property')) {
+      initialAction = routerQueryParams?.action;
+      if (this.entitiesTableConfig.defaultSortOrder || routerQueryParams.hasOwnProperty('direction')
+        || routerQueryParams.hasOwnProperty('property')) {
         sortOrder = {
           property: routerQueryParams?.property || this.entitiesTableConfig.defaultSortOrder.property,
           direction: routerQueryParams?.direction || this.entitiesTableConfig.defaultSortOrder.direction
@@ -251,9 +254,9 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
     if (this.entitiesTableConfig.useTimePageLink) {
       this.timewindow = this.entitiesTableConfig.defaultTimewindowInterval;
-      const currentTime = Date.now();
+      const interval = this.getTimePageLinkInterval();
       this.pageLink = new TimePageLink(10, 0, null, sortOrder,
-        currentTime - this.timewindow.history.timewindowMs, currentTime);
+        interval.startTime, interval.endTime);
     } else {
       this.pageLink = new PageLink(10, 0, null, sortOrder);
     }
@@ -281,6 +284,22 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       setTimeout(() => {
         this.updatePaginationSubscriptions();
       }, 0);
+    }
+    if (this.pageMode) {
+      if (initialAction) {
+        const queryParams: PageQueryParam = {};
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams,
+          queryParamsHandling: '',
+          replaceUrl: true
+        });
+      }
+      if (initialAction === 'add') {
+        setTimeout(() => {
+          this.addEntity(null);
+        }, 0);
+      }
     }
   }
 
@@ -392,23 +411,39 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     }
     if (this.entitiesTableConfig.useTimePageLink) {
       const timePageLink = this.pageLink as TimePageLink;
-      if (this.timewindow.history.historyType === HistoryWindowType.LAST_INTERVAL) {
-        const currentTime = Date.now();
-        timePageLink.startTime = currentTime - this.timewindow.history.timewindowMs;
-        timePageLink.endTime = currentTime;
-      } else if (this.timewindow.history.historyType === HistoryWindowType.INTERVAL) {
-        const startEndTime = calculateIntervalStartEndTime(this.timewindow.history.quickInterval);
-        timePageLink.startTime = startEndTime[0];
-        timePageLink.endTime = startEndTime[1];
-      } else {
-        timePageLink.startTime = this.timewindow.history.fixedTimewindow.startTimeMs;
-        timePageLink.endTime = this.timewindow.history.fixedTimewindow.endTimeMs;
-      }
+      const interval = this.getTimePageLinkInterval();
+      timePageLink.startTime = interval.startTime;
+      timePageLink.endTime = interval.endTime;
     }
     this.dataSource.loadEntities(this.pageLink);
     if (this.isDetailsOpen && this.entityDetailsPanel) {
       this.entityDetailsPanel.reloadEntity();
     }
+  }
+
+  private getTimePageLinkInterval(): {startTime?: number, endTime?: number} {
+    const interval: {startTime?: number, endTime?: number} = {};
+    switch (this.timewindow.history.historyType) {
+      case HistoryWindowType.LAST_INTERVAL:
+        const currentTime = Date.now();
+        interval.startTime = currentTime - this.timewindow.history.timewindowMs;
+        interval.endTime = currentTime;
+        break;
+      case HistoryWindowType.FIXED:
+        interval.startTime = this.timewindow.history.fixedTimewindow.startTimeMs;
+        interval.endTime = this.timewindow.history.fixedTimewindow.endTimeMs;
+        break;
+      case HistoryWindowType.INTERVAL:
+        const startEndTime = calculateIntervalStartEndTime(this.timewindow.history.quickInterval);
+        interval.startTime = startEndTime[0];
+        interval.endTime = startEndTime[1];
+        break;
+      case HistoryWindowType.FOR_ALL_TIME:
+        interval.startTime = null;
+        interval.endTime = null;
+        break;
+    }
+    return interval;
   }
 
   private dataLoaded(col?: number, row?: number) {

@@ -22,22 +22,36 @@ import { Authority } from '@shared/models/authority.enum';
 import { DashboardsTableConfigResolver } from './dashboards-table-config.resolver';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
-import { Observable } from 'rxjs';
+import { mergeMap, Observable, of } from 'rxjs';
 import { Dashboard } from '@app/shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
+import { UserSettingsService } from '@core/http/user-settings.service';
+import { UserDashboardAction } from '@shared/models/user-settings.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 @Injectable()
 export class DashboardResolver implements Resolve<Dashboard> {
 
-  constructor(private dashboardService: DashboardService,
+  constructor(private store: Store<AppState>,
+              private dashboardService: DashboardService,
+              private userSettingService: UserSettingsService,
               private dashboardUtils: DashboardUtilsService) {
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<Dashboard> {
     const dashboardId = route.params.dashboardId;
     return this.dashboardService.getDashboard(dashboardId).pipe(
+      mergeMap((dashboard) =>
+        (getCurrentAuthUser(this.store).isPublic ? of(null) :
+          this.userSettingService.reportUserDashboardAction(dashboardId, UserDashboardAction.VISIT,
+            {ignoreLoading: true, ignoreErrors: true})).pipe(
+          catchError(() => of(dashboard)),
+          map(() => dashboard)
+        )),
       map((dashboard) => this.dashboardUtils.validateAndUpdateDashboard(dashboard))
     );
   }

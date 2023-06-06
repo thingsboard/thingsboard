@@ -20,10 +20,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
-import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +41,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
     AssetInfoEntity findAssetInfoById(@Param("assetId") UUID assetId);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                      @Param("textSearch") String textSearch,
                                      Pageable pageable);
@@ -51,17 +51,17 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
             "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
-            "AND (LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "AND (LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
             "OR LOWER(a.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
-            "OR LOWER(p.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
-            "OR LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
+            "OR LOWER(p.name) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(c.title) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
     Page<AssetInfoEntity> findAssetInfosByTenantId(@Param("tenantId") UUID tenantId,
                                                    @Param("textSearch") String textSearch,
                                                    Pageable pageable);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                   @Param("customerId") UUID customerId,
                                                   @Param("textSearch") String textSearch,
@@ -69,7 +69,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.assetProfileId = :profileId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetEntity> findByTenantIdAndProfileId(@Param("tenantId") UUID tenantId,
                                                  @Param("profileId") UUID profileId,
                                                  @Param("searchText") String searchText,
@@ -81,7 +81,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                                 @Param("customerId") UUID customerId,
                                                                 @Param("searchText") String searchText,
@@ -95,7 +95,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                             @Param("type") String type,
                                             @Param("textSearch") String textSearch,
@@ -107,9 +107,9 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +
-            "AND (LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "AND (LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
             "OR LOWER(a.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
-            "OR LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
+            "OR LOWER(c.title) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                           @Param("type") String type,
                                                           @Param("textSearch") String textSearch,
@@ -121,9 +121,9 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.assetProfileId = :assetProfileId " +
-            "AND (LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "AND (LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
             "OR LOWER(a.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
-            "OR LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
+            "OR LOWER(c.title) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
                                                                     @Param("assetProfileId") UUID assetProfileId,
                                                                     @Param("textSearch") String textSearch,
@@ -132,7 +132,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                          @Param("customerId") UUID customerId,
                                                          @Param("type") String type,
@@ -146,7 +146,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                                        @Param("customerId") UUID customerId,
                                                                        @Param("type") String type,
@@ -160,7 +160,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND a.assetProfileId = :assetProfileId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
                                                                                  @Param("customerId") UUID customerId,
                                                                                  @Param("assetProfileId") UUID assetProfileId,
@@ -175,7 +175,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
     @Query("SELECT a FROM AssetEntity a, RelationEntity re WHERE a.tenantId = :tenantId " +
             "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
                                               @Param("edgeId") UUID edgeId,
                                               @Param("searchText") String searchText,
@@ -185,7 +185,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") UUID tenantId,
                                                      @Param("edgeId") UUID edgeId,
                                                      @Param("type") String type,

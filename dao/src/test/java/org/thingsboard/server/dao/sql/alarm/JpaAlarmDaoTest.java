@@ -21,15 +21,15 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
-import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 
 import java.util.UUID;
@@ -202,7 +202,34 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
     @Test
     public void testClearAlarmProcedure() {
         UUID tenantId = UUID.randomUUID();
-        ;
+        UUID originator1Id = UUID.fromString("d4b68f41-3e96-11e7-a884-898080180d6b");
+        UUID alarm1Id = UUID.fromString("d4b68f43-3e96-11e7-a884-898080180d6b");
+        Alarm alarm = saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
+        long clearTs = System.currentTimeMillis();
+        var details = JacksonUtil.newObjectNode().put("test", 123);
+        AlarmApiCallResult result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs, details);
+        AlarmInfo afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
+        assertNotNull(result);
+        assertTrue(result.isSuccessful());
+        assertTrue(result.isCleared());
+        assertNotNull(result.getAlarm());
+        assertEquals(afterSave, result.getAlarm());
+        assertEquals(clearTs, result.getAlarm().getClearTs());
+        assertTrue(result.getAlarm().isCleared());
+        assertEquals(details, result.getAlarm().getDetails());
+        result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs + 1, JacksonUtil.newObjectNode());
+        assertNotNull(result);
+        assertNotNull(result.getAlarm());
+        assertEquals(afterSave, result.getAlarm());
+        assertTrue(result.isSuccessful());
+        assertFalse(result.isCleared());
+        assertEquals(clearTs, result.getAlarm().getClearTs());
+        assertTrue(result.getAlarm().isCleared());
+    }
+
+    @Test
+    public void testClearAlarmWithoutDetailsProcedure() {
+        UUID tenantId = UUID.randomUUID();
         UUID originator1Id = UUID.fromString("d4b68f41-3e96-11e7-a884-898080180d6b");
         UUID alarm1Id = UUID.fromString("d4b68f43-3e96-11e7-a884-898080180d6b");
         Alarm alarm = saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
@@ -216,6 +243,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(afterSave, result.getAlarm());
         assertEquals(clearTs, result.getAlarm().getClearTs());
         assertTrue(result.getAlarm().isCleared());
+        assertEquals(alarm.getDetails(), result.getAlarm().getDetails());
         result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs + 1, JacksonUtil.newObjectNode());
         assertNotNull(result);
         assertNotNull(result.getAlarm());

@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.user;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -25,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.settings.UserSettings;
@@ -35,7 +33,6 @@ import org.thingsboard.server.dao.entity.AbstractCachedService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -95,7 +92,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserSettingsC
             for (String s : jsonPaths) {
                 dcSettings = dcSettings.delete("$." + s);
             }
-            userSettings.setSettings(new ObjectMapper().readValue(dcSettings.jsonString(), ObjectNode.class));
+            userSettings.setSettings(JacksonUtil.fromString(dcSettings.jsonString(), ObjectNode.class));
         } catch (Exception t) {
             handleEvictEvent(new UserSettingsEvictEvent(key));
             throw new RuntimeException(t);

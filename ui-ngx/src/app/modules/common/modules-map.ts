@@ -93,6 +93,10 @@ import * as NospacePipe from '@shared/pipe/nospace.pipe';
 import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
 import * as KeyboardShortcutPipe from '@shared/pipe/keyboard-shortcut.pipe';
 
+import * as coercion from '@shared/decorators/coercion';
+import * as enumerable from '@shared/decorators/enumerable';
+import * as TbInject from '@shared/decorators/tb-inject';
+
 import * as FooterComponent from '@shared/components/footer.component';
 import * as LogoComponent from '@shared/components/logo.component';
 import * as FooterFabButtonsComponent from '@shared/components/footer-fab-buttons.component';
@@ -192,7 +196,7 @@ import * as AddAttributeDialogComponent from '@home/components/attribute/add-att
 import * as EditAttributeValuePanelComponent from '@home/components/attribute/edit-attribute-value-panel.component';
 import * as DashboardComponent from '@home/components/dashboard/dashboard.component';
 import * as WidgetComponent from '@home/components/widget/widget.component';
-import * as LegendComponent from '@home/components/widget/legend.component';
+import * as LegendComponent from '@home/components/widget/lib/legend.component';
 import * as AliasesEntitySelectPanelComponent from '@home/components/alias/aliases-entity-select-panel.component';
 import * as AliasesEntitySelectComponent from '@home/components/alias/aliases-entity-select.component';
 import * as WidgetConfigComponent from '@home/components/widget/widget-config.component';
@@ -202,10 +206,10 @@ import * as EntityAliasDialogComponent from '@home/components/alias/entity-alias
 import * as EntityFilterComponent from '@home/components/entity/entity-filter.component';
 import * as RelationFiltersComponent from '@home/components/relation/relation-filters.component';
 import * as EntityAliasSelectComponent from '@home/components/alias/entity-alias-select.component';
-import * as DataKeysComponent from '@home/components/widget/data-keys.component';
-import * as DataKeyConfigDialogComponent from '@home/components/widget/data-key-config-dialog.component';
-import * as DataKeyConfigComponent from '@home/components/widget/data-key-config.component';
-import * as LegendConfigComponent from '@home/components/widget/legend-config.component';
+import * as DataKeysComponent from '@home/components/widget/config/data-keys.component';
+import * as DataKeyConfigDialogComponent from '@home/components/widget/config/data-key-config-dialog.component';
+import * as DataKeyConfigComponent from '@home/components/widget/config/data-key-config.component';
+import * as LegendConfigComponent from '@home/components/widget/lib/settings/common/legend-config.component';
 import * as ManageWidgetActionsComponent from '@home/components/widget/action/manage-widget-actions.component';
 import * as WidgetActionDialogComponent from '@home/components/widget/action/widget-action-dialog.component';
 import * as CustomActionPrettyResourcesTabsComponent from '@home/components/widget/action/custom-action-pretty-resources-tabs.component';
@@ -392,6 +396,10 @@ class ModulesMap implements IModulesMap {
     '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
     '@shared/pipe/keyboard-shortcut.pipe': KeyboardShortcutPipe,
 
+    '@shared/decorators/coercion': coercion,
+    '@shared/decorators/enumerable': enumerable,
+    '@shared/decorators/tb-inject': TbInject,
+
     '@shared/components/footer.component': FooterComponent,
     '@shared/components/logo.component': LogoComponent,
     '@shared/components/footer-fab-buttons.component': FooterFabButtonsComponent,
@@ -498,7 +506,7 @@ class ModulesMap implements IModulesMap {
     '@home/components/attribute/edit-attribute-value-panel.component': EditAttributeValuePanelComponent,
     '@home/components/dashboard/dashboard.component': DashboardComponent,
     '@home/components/widget/widget.component': WidgetComponent,
-    '@home/components/widget/legend.component': LegendComponent,
+    '@home/components/widget/lib/legend.component': LegendComponent,
     '@home/components/alias/aliases-entity-select-panel.component': AliasesEntitySelectPanelComponent,
     '@home/components/alias/aliases-entity-select.component': AliasesEntitySelectComponent,
     '@home/components/widget/widget-config.component': WidgetConfigComponent,
@@ -508,10 +516,10 @@ class ModulesMap implements IModulesMap {
     '@home/components/entity/entity-filter.component': EntityFilterComponent,
     '@home/components/relation/relation-filters.component': RelationFiltersComponent,
     '@home/components/alias/entity-alias-select.component': EntityAliasSelectComponent,
-    '@home/components/widget/data-keys.component': DataKeysComponent,
-    '@home/components/widget/data-key-config-dialog.component': DataKeyConfigDialogComponent,
-    '@home/components/widget/data-key-config.component': DataKeyConfigComponent,
-    '@home/components/widget/legend-config.component': LegendConfigComponent,
+    '@home/components/widget/config/data-keys.component': DataKeysComponent,
+    '@home/components/widget/config/data-key-config-dialog.component': DataKeyConfigDialogComponent,
+    '@home/components/widget/config/data-key-config.component': DataKeyConfigComponent,
+    '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,
     '@home/components/widget/action/custom-action-pretty-resources-tabs.component': CustomActionPrettyResourcesTabsComponent,

@@ -51,8 +51,6 @@ import static org.thingsboard.server.service.state.DefaultDeviceStateService.INA
 public class DefaultDeviceStateServiceTest {
 
     @Mock
-    TenantService tenantService;
-    @Mock
     DeviceService deviceService;
     @Mock
     AttributesService attributesService;
@@ -64,8 +62,6 @@ public class DefaultDeviceStateServiceTest {
     PartitionService partitionService;
     @Mock
     DeviceStateData deviceStateDataMock;
-    @Mock
-    TbServiceInfoProvider serviceInfoProvider;
 
     DeviceId deviceId = DeviceId.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112");
 
@@ -73,7 +69,7 @@ public class DefaultDeviceStateServiceTest {
 
     @Before
     public void setUp() {
-        service = spy(new DefaultDeviceStateService(tenantService, deviceService, attributesService, tsService, clusterService, partitionService, serviceInfoProvider, null, null));
+        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, null, null, null));
     }
 
     @Test

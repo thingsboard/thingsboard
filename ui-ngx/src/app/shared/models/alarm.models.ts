@@ -25,6 +25,7 @@ import { CustomerId } from '@shared/models/id/customer-id';
 import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/table-widget.models';
 import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
 import { UserId } from '@shared/models/id/user-id';
+import { AlarmFilter } from '@shared/models/query/query.models';
 
 export enum AlarmsMode {
   ALL,
@@ -292,6 +293,45 @@ export class AlarmQuery {
     }
     if (typeof this.fetchOriginator !== 'undefined' && this.fetchOriginator !== null) {
       query += `&fetchOriginator=${this.fetchOriginator}`;
+    }
+    if (typeof this.assigneeId !== 'undefined' && this.assigneeId !== null) {
+      query += `&assigneeId=${this.assigneeId.id}`;
+    }
+    return query;
+  }
+
+}
+
+export class AlarmQueryV2 {
+
+  affectedEntityId: EntityId;
+  pageLink: TimePageLink;
+  typeList: string[];
+  statusList: AlarmSearchStatus[];
+  severityList: AlarmSeverity[];
+  assigneeId?: UserId;
+
+  constructor(entityId: EntityId, pageLink: TimePageLink,
+              alarmFilter: AlarmFilter) {
+    this.affectedEntityId = entityId;
+    this.pageLink = pageLink;
+    this.typeList = alarmFilter.typeList;
+    this.statusList = alarmFilter.statusList;
+    this.severityList = alarmFilter.severityList;
+    this.assigneeId = alarmFilter.assigneeId;
+  }
+
+  public toQuery(): string {
+    let query = this.affectedEntityId ? `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}` : '';
+    query += this.pageLink.toQuery();
+    if (this.typeList && this.typeList.length) {
+      query += `&typeList=${this.typeList.join(',')}`;
+    }
+    if (this.statusList && this.statusList.length) {
+      query += `&statusList=${this.statusList.join(',')}`;
+    }
+    if (this.severityList && this.severityList.length) {
+      query += `&severityList=${this.severityList.join(',')}`;
     }
     if (typeof this.assigneeId !== 'undefined' && this.assigneeId !== null) {
       query += `&assigneeId=${this.assigneeId.id}`;

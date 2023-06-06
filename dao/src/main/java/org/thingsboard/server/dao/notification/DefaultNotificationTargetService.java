@@ -67,7 +67,7 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
             return notificationTargetDao.saveAndFlush(tenantId, notificationTarget);
         } catch (Exception e) {
             checkConstraintViolation(e, Map.of(
-                    "uq_notification_target_name", "Notification target with such name already exists"
+                    "uq_notification_target_name", "Recipients group with such name already exists"
             ));
             throw e;
         }
@@ -109,7 +109,7 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
                 List<User> users = ((UserListFilter) usersFilter).getUsersIds().stream()
                         .limit(pageLink.getPageSize())
                         .map(UserId::new).map(userId -> userService.findUserById(tenantId, userId))
-                        .collect(Collectors.toList());
+                        .filter(Objects::nonNull).collect(Collectors.toList());
                 return new PageData<>(users, 1, users.size(), false);
             }
             case CUSTOMER_USERS: {
@@ -179,10 +179,10 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
     @Override
     public void deleteNotificationTargetById(TenantId tenantId, NotificationTargetId id) {
         if (notificationRequestDao.existsByTenantIdAndStatusAndTargetId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
-            throw new IllegalArgumentException("Notification target is referenced by scheduled notification request");
+            throw new IllegalArgumentException("Recipients group is referenced by scheduled notification request");
         }
         if (notificationRuleDao.existsByTenantIdAndTargetId(tenantId, id)) {
-            throw new IllegalArgumentException("Notification target is being used in notification rule");
+            throw new IllegalArgumentException("Recipients group is being used in notification rule");
         }
         notificationTargetDao.removeById(tenantId, id.getId());
     }
@@ -193,8 +193,18 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
     }
 
     @Override
+    public long countNotificationTargetsByTenantId(TenantId tenantId) {
+        return notificationTargetDao.countByTenantId(tenantId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findNotificationTargetById(tenantId, new NotificationTargetId(entityId.getId())));
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteNotificationTargetById(tenantId, (NotificationTargetId) id);
     }
 
     @Override

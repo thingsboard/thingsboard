@@ -57,7 +57,7 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         String deletedCustomer = customerPage.deleteRuleChainTrash(customer);
         customerPage.refreshBtn().click();
 
-        Assert.assertTrue(customerPage.entityIsNotPresent(deletedCustomer));
+        Assert.assertTrue(customerPage.assertEntityIsNotPresent(deletedCustomer));
     }
 
     @Epic("Customers smoke tests")
@@ -72,7 +72,7 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         String deletedCustomer = customerPage.deleteSelected(customerName);
         ruleChainsPage.refreshBtn().click();
 
-        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedCustomer));
+        Assert.assertTrue(ruleChainsPage.assertEntityIsNotPresent(deletedCustomer));
     }
 
     @Epic("Customers smoke tests")
@@ -89,7 +89,7 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         customerPage.warningPopUpYesBtn().click();
         jsClick(customerPage.refreshBtn());
 
-        Assert.assertTrue(customerPage.entityIsNotPresent(customerName));
+        Assert.assertTrue(customerPage.assertEntityIsNotPresent(customerName));
     }
 
     @Epic("Customers smoke tests")
@@ -104,6 +104,6 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         String deletedCustomer = customerPage.deleteRuleChainTrash(customer);
         customerPage.refreshBtn().click();
 
-        Assert.assertTrue(customerPage.entityIsNotPresent(deletedCustomer));
+        Assert.assertTrue(customerPage.assertEntityIsNotPresent(deletedCustomer));
     }
 }

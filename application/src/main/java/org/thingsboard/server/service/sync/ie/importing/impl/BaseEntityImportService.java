@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
@@ -87,7 +86,6 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Autowired
     protected TbNotificationEntityService entityNotificationService;
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws ThingsboardException {
         EntityImportResult<E> importResult = new EntityImportResult<>();
@@ -336,45 +334,41 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             if (externalUuid.equals(EntityId.NULL_UUID)) return Optional.empty();
 
             for (EntityType entityType : EntityType.values()) {
-                Optional<EntityId> externalIdOpt = buildEntityId(entityType, externalUuid);
-                if (!externalIdOpt.isPresent()) {
+                Optional<EntityId> externalId = buildEntityId(entityType, externalUuid);
+                if (externalId.isEmpty()) {
                     continue;
                 }
-                EntityId internalId = ctx.getInternalId(externalIdOpt.get());
+                EntityId internalId = ctx.getInternalId(externalId.get());
                 if (internalId != null) {
                     return Optional.of(internalId);
                 }
             }
 
             if (fetchAllUUIDs) {
-                for (EntityType entityType : hints) {
-                    Optional<EntityId> internalId = lookupInDb(externalUuid, entityType);
-                    if (internalId.isPresent()) return internalId;
-                }
+                Set<EntityType> processLast = Set.of(EntityType.TENANT);
+                List<EntityType> entityTypes = new ArrayList<>(hints);
                 for (EntityType entityType : EntityType.values()) {
-                    if (hints.contains(entityType)) {
+                    if (!hints.contains(entityType) && !processLast.contains(entityType)) {
+                        entityTypes.add(entityType);
+                    }
+                }
+                entityTypes.addAll(processLast);
+
+                for (EntityType entityType : entityTypes) {
+                    Optional<EntityId> externalId = buildEntityId(entityType, externalUuid);
+                    if (externalId.isEmpty() || ctx.isNotFound(externalId.get())) {
                         continue;
                     }
-                    Optional<EntityId> internalId = lookupInDb(externalUuid, entityType);
-                    if (internalId.isPresent()) return internalId;
+                    EntityId internalId = getInternalId(externalId.get(), false);
+                    if (internalId != null) {
+                        return Optional.of(internalId);
+                    } else {
+                        ctx.registerNotFound(externalId.get());
+                    }
                 }
             }
 
             importResult.setUpdatedAllExternalIds(false);
-            return Optional.empty();
-        }
-
-        private Optional<EntityId> lookupInDb(UUID externalUuid, EntityType entityType) {
-            Optional<EntityId> externalIdOpt = buildEntityId(entityType, externalUuid);
-            if (externalIdOpt.isEmpty() || ctx.isNotFound(externalIdOpt.get())) {
-                return Optional.empty();
-            }
-            EntityId internalId = getInternalId(externalIdOpt.get(), false);
-            if (internalId != null) {
-                return Optional.of(internalId);
-            } else {
-                ctx.registerNotFound(externalIdOpt.get());
-            }
             return Optional.empty();
         }
 

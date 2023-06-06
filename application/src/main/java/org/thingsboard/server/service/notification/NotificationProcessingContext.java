@@ -48,20 +48,21 @@ public class NotificationProcessingContext {
     private final NotificationSettings settings;
     @Getter
     private final NotificationRequest request;
-
+    @Getter
+    private final Set<NotificationDeliveryMethod> deliveryMethods;
     @Getter
     private final NotificationTemplate notificationTemplate;
+
     private final Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
-    @Getter
-    private Set<NotificationDeliveryMethod> deliveryMethods;
     @Getter
     private final NotificationRequestStats stats;
 
-
     @Builder
-    public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, NotificationTemplate template, NotificationSettings settings) {
+    public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, Set<NotificationDeliveryMethod> deliveryMethods,
+                                           NotificationTemplate template, NotificationSettings settings) {
         this.tenantId = tenantId;
         this.request = request;
+        this.deliveryMethods = deliveryMethods;
         this.settings = settings;
         this.notificationTemplate = template;
         this.templates = new EnumMap<>(NotificationDeliveryMethod.class);
@@ -77,7 +78,6 @@ public class NotificationProcessingContext {
                 templates.put(deliveryMethod, template);
             }
         });
-        deliveryMethods = templates.keySet();
     }
 
     public <C extends NotificationDeliveryMethodConfig> C getDeliveryMethodConfig(NotificationDeliveryMethod deliveryMethod) {
@@ -128,6 +128,7 @@ public class NotificationProcessingContext {
 
     private Map<String, String> createTemplateContextForRecipient(NotificationRecipient recipient) {
         return Map.of(
+                "recipientTitle", recipient.getTitle(),
                 "recipientEmail", Strings.nullToEmpty(recipient.getEmail()),
                 "recipientFirstName", Strings.nullToEmpty(recipient.getFirstName()),
                 "recipientLastName", Strings.nullToEmpty(recipient.getLastName())

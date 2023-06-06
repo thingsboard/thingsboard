@@ -16,28 +16,27 @@
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
+@RequiredArgsConstructor
 public enum NotificationRuleTriggerType {
 
+    ENTITY_ACTION,
     ALARM,
     ALARM_COMMENT,
-    DEVICE_ACTIVITY,
-    ENTITY_ACTION,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
     ALARM_ASSIGNMENT,
-    NEW_PLATFORM_VERSION(false),
-    ENTITIES_LIMIT(false),
-    API_USAGE_LIMIT(false);
+    DEVICE_ACTIVITY,
+    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
+    NEW_PLATFORM_VERSION(false, true),
+    ENTITIES_LIMIT(false, false),
+    API_USAGE_LIMIT(false, false);
 
     private final boolean tenantLevel;
-
-    NotificationRuleTriggerType(boolean tenantLevel) {
-        this.tenantLevel = tenantLevel;
-    }
+    private final boolean deduplicate;
 
     NotificationRuleTriggerType() {
-        this(true);
+        this(true, false);
     }
 
 }

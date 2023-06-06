@@ -99,7 +99,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
         }),
         actionButtonConfig: this.fb.group({
           enabled: [false],
-          text: [{value: '', disabled: true}, Validators.required],
+          text: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(50)]],
           linkType: [ActionButtonLinkType.LINK],
           link: [{value: '', disabled: true}, Validators.required],
           dashboardId: [{value: null, disabled: true}, Validators.required],
@@ -156,7 +156,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
     });
 
     this.smsTemplateForm = this.fb.group({
-      body: ['', Validators.required]
+      body: ['', [Validators.required, Validators.maxLength(320)]]
     });
 
     this.slackTemplateForm = this.fb.group({
@@ -190,7 +190,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
   protected getNotificationTemplateValue(): NotificationTemplate {
     const template: NotificationTemplate = deepClone(this.templateNotificationForm.value);
     this.notificationDeliveryMethods.forEach(method => {
-      if (template.configuration.deliveryMethodsTemplates[method].enabled) {
+      if (template.configuration.deliveryMethodsTemplates[method]?.enabled) {
         Object.assign(template.configuration.deliveryMethodsTemplates[method], this.deliveryMethodFormsMap.get(method).value, {method});
       } else {
         delete template.configuration.deliveryMethodsTemplates[method];

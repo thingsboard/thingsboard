@@ -40,7 +40,6 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.edge.rpc.constructor.EdgeMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.processor.settings.AdminSettingsEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.asset.AssetProfileEdgeProcessor;
@@ -54,6 +53,7 @@ import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProce
 import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.settings.AdminSettingsEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.telemetry.TelemetryEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;

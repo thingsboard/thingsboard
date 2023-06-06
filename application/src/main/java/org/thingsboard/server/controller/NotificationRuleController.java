@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,6 +46,15 @@ import org.thingsboard.server.service.security.permission.Operation;
 import javax.validation.Valid;
 import java.util.UUID;
 
+import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
+import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.service.security.permission.Resource.NOTIFICATION;
 
 @RestController
@@ -55,6 +66,53 @@ public class NotificationRuleController extends BaseController {
 
     private final NotificationRuleService notificationRuleService;
 
+    @ApiOperation(value = "Save notification rule (saveNotificationRule)",
+            notes = "Creates or updates notification rule. " + NEW_LINE +
+                    "Mandatory properties are `name`, `templateId` (of a template with `notificationType` matching to rule's `triggerType`), " +
+                    "`triggerType`, `triggerConfig` and `recipientConfig`. Additionally, you may specify rule `description` " +
+                    "inside of `additionalConfig`." + NEW_LINE +
+                    "Trigger type of the rule cannot be changed. " +
+                    "Available trigger types for tenant: `ENTITY_ACTION`, `ALARM`, `ALARM_COMMENT`, `ALARM_ASSIGNMENT`, " +
+                    "`DEVICE_ACTIVITY`, `RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT`.\n" +
+                    "For sysadmin, there are following trigger types available: `ENTITIES_LIMIT`, `API_USAGE_LIMIT`, " +
+                    "`NEW_PLATFORM_VERSION`." + NEW_LINE +
+                    "Here is an example of notification rule to send notification when a " +
+                    "device, asset or customer is created or deleted:\n" +
+                    MARKDOWN_CODE_BLOCK_START +
+                    "{\n" +
+                    "  \"name\": \"Entity action\",\n" +
+                    "  \"templateId\": {\n" +
+                    "    \"entityType\": \"NOTIFICATION_TEMPLATE\",\n" +
+                    "    \"id\": \"32117320-d785-11ed-a06c-21dd57dd88ca\"\n" +
+                    "  },\n" +
+                    "  \"triggerType\": \"ENTITY_ACTION\",\n" +
+                    "  \"triggerConfig\": {\n" +
+                    "    \"entityTypes\": [\n" +
+                    "      \"CUSTOMER\",\n" +
+                    "      \"DEVICE\",\n" +
+                    "      \"ASSET\"\n" +
+                    "    ],\n" +
+                    "    \"created\": true,\n" +
+                    "    \"updated\": false,\n" +
+                    "    \"deleted\": true,\n" +
+                    "    \"triggerType\": \"ENTITY_ACTION\"\n" +
+                    "  },\n" +
+                    "  \"recipientsConfig\": {\n" +
+                    "    \"targets\": [\n" +
+                    "      \"320f2930-d785-11ed-a06c-21dd57dd88ca\"\n" +
+                    "    ],\n" +
+                    "    \"triggerType\": \"ENTITY_ACTION\"\n" +
+                    "  },\n" +
+                    "  \"additionalConfig\": {\n" +
+                    "    \"description\": \"Send notification to tenant admins or customer users when a device, asset or customer is created\"\n" +
+                    "  },\n" +
+                    "  \"templateName\": \"Entity action notification\",\n" +
+                    "  \"deliveryMethods\": [\n" +
+                    "    \"WEB\"\n" +
+                    "  ]\n" +
+                    "}" +
+                    MARKDOWN_CODE_BLOCK_END +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/rule")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRule saveNotificationRule(@RequestBody @Valid NotificationRule notificationRule,
@@ -67,9 +125,18 @@ public class NotificationRuleController extends BaseController {
             throw new IllegalArgumentException("Trigger type " + triggerType + " is not available");
         }
 
-        return doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
+        boolean created = notificationRule.getId() == null;
+        notificationRule = doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
+        tbClusterService.broadcastEntityStateChangeEvent(user.getTenantId(), notificationRule.getId(), created ?
+                ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        return notificationRule;
     }
 
+    @ApiOperation(value = "Get notification rule by id (getNotificationRuleById)",
+            notes = "Fetches notification rule info by rule's id.\n" +
+                    "In addition to regular notification rule fields, " +
+                    "there are `templateName` and `deliveryMethods` in the response." +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/rule/{id}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationRuleInfo getNotificationRuleById(@PathVariable UUID id) throws ThingsboardException {
@@ -77,12 +144,21 @@ public class NotificationRuleController extends BaseController {
         return checkEntityId(notificationRuleId, notificationRuleService::findNotificationRuleInfoById, Operation.READ);
     }
 
+    @ApiOperation(value = "Get notification rules (getNotificationRules)",
+            notes = "Returns the page of notification rules." + NEW_LINE +
+                    PAGE_DATA_PARAMETERS +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/rules")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public PageData<NotificationRuleInfo> getNotificationRules(@RequestParam int pageSize,
+    public PageData<NotificationRuleInfo> getNotificationRules(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                               @RequestParam int pageSize,
+                                                               @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                @RequestParam int page,
+                                                               @ApiParam(value = "Case-insensitive 'substring' filter based on rule's name")
                                                                @RequestParam(required = false) String textSearch,
+                                                               @ApiParam(value = SORT_PROPERTY_DESCRIPTION)
                                                                @RequestParam(required = false) String sortProperty,
+                                                               @ApiParam(value = SORT_ORDER_DESCRIPTION)
                                                                @RequestParam(required = false) String sortOrder,
                                                                @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         // generic permission
@@ -90,6 +166,10 @@ public class NotificationRuleController extends BaseController {
         return notificationRuleService.findNotificationRulesInfosByTenantId(user.getTenantId(), pageLink);
     }
 
+    @ApiOperation(value = "Delete notification rule (deleteNotificationRule)",
+            notes = "Deletes notification rule by id.\n" +
+                    "Cancels all related scheduled notification requests (e.g. due to escalation table)" +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @DeleteMapping("/rule/{id}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public void deleteNotificationRule(@PathVariable UUID id,

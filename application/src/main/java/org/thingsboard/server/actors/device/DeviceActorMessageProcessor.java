@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -816,7 +815,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private ListenableFuture<Void> saveRpcRequestToEdgeQueue(ToDeviceRpcRequest msg, Integer requestId) {
-        ObjectNode body = mapper.createObjectNode();
+        ObjectNode body = JacksonUtil.newObjectNode();
         body.put("requestId", requestId);
         body.put("requestUUID", msg.getId().toString());
         body.put("oneway", msg.isOneway());

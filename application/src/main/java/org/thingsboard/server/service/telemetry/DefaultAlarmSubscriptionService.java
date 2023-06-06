@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmModificationRequest;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmQueryV2;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -51,7 +52,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -187,6 +188,16 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     @Override
     public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
         return alarmService.findCustomerAlarms(tenantId, customerId, query);
+    }
+
+    @Override
+    public ListenableFuture<PageData<AlarmInfo>> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query) {
+        return alarmService.findAlarmsV2(tenantId, query);
+    }
+
+    @Override
+    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query) {
+        return alarmService.findCustomerAlarmsV2(tenantId, customerId, query);
     }
 
     @Override

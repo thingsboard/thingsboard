@@ -37,18 +37,23 @@ export class DateAgoPipe implements PipeTransform {
 
   }
 
-  transform(value: number): string {
+  transform(value: number, args?: any): string {
     if (value) {
+      const applyAgo = !!args?.applyAgo;
       const ms = Math.floor((+new Date() - +new Date(value)));
       if (ms < 29 * SECOND) { // less than 30 seconds ago will show as 'Just now'
         return this.translate.instant('timewindow.just-now');
       }
       let counter;
-      // tslint:disable-next-line:forin
+      // eslint-disable-next-line guard-for-in
       for (const i in intervals) {
         counter = Math.floor(ms / intervals[i]);
         if (counter > 0) {
-          return this.translate.instant(`timewindow.${i}`, {[i]: counter});
+          let res = this.translate.instant(`timewindow.${i}`, {[i]: counter});
+          if (applyAgo) {
+            res += ' ' + this.translate.instant('timewindow.ago');
+          }
+          return res;
         }
       }
     }

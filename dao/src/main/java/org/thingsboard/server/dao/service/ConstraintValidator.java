@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.google.common.collect.Iterators;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.validator.HibernateValidator;
 import org.hibernate.validator.HibernateValidatorConfiguration;
 import org.hibernate.validator.cfg.ConstraintMapping;
@@ -29,11 +30,13 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
-import javax.validation.Path;
+import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.constraints.AssertTrue;
-import java.util.List;
+import javax.validation.metadata.ConstraintDescriptor;
+import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -51,26 +54,31 @@ public class ConstraintValidator {
     }
 
     public static void validateFields(Object data, String errorPrefix) {
-        List<String> constraintsViolations = getConstraintsViolations(data);
+        Set<ConstraintViolation<Object>> constraintsViolations = fieldsValidator.validate(data);
         if (!constraintsViolations.isEmpty()) {
-            throw new DataValidationException(errorPrefix + String.join(", ", constraintsViolations));
+            throw new DataValidationException(errorPrefix + getErrorMessage(constraintsViolations));
         }
     }
 
-    public static List<String> getConstraintsViolations(Object data) {
-        return fieldsValidator.validate(data).stream()
-                .map(constraintViolation -> {
-                    String property;
-                    if (constraintViolation.getConstraintDescriptor().getAttributes().containsKey("fieldName")) {
-                        property = constraintViolation.getConstraintDescriptor().getAttributes().get("fieldName").toString();
-                    } else {
-                        Path propertyPath = constraintViolation.getPropertyPath();
-                        property = Iterators.getLast(propertyPath.iterator()).toString();
-                    }
-                    return property + " " + constraintViolation.getMessage();
-                })
-                .distinct()
-                .collect(Collectors.toList());
+    public static String getErrorMessage(Collection<ConstraintViolation<Object>> constraintsViolations) {
+        return constraintsViolations.stream()
+                .map(ConstraintValidator::getErrorMessage)
+                .distinct().sorted().collect(Collectors.joining(", "));
+    }
+
+    public static String getErrorMessage(ConstraintViolation<Object> constraintViolation) {
+        ConstraintDescriptor<?> constraintDescriptor = constraintViolation.getConstraintDescriptor();
+        String property = (String) constraintDescriptor.getAttributes().get("fieldName");
+        if (StringUtils.isEmpty(property) && !(constraintDescriptor.getAnnotation() instanceof AssertTrue)) {
+            property = Iterators.getLast(constraintViolation.getPropertyPath().iterator()).toString();
+        }
+
+        String error = "";
+        if (StringUtils.isNotEmpty(property)) {
+            error += property + " ";
+        }
+        error += constraintViolation.getMessage();
+        return error;
     }
 
     private static void initializeValidators() {

@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.msa.ui.pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 
 public class OtherPageElementsHelper extends OtherPageElements {
@@ -34,7 +32,7 @@ public class OtherPageElementsHelper extends OtherPageElements {
         return headerName;
     }
 
-    public boolean entityIsNotPresent(String entityName) {
+    public boolean assertEntityIsNotPresent(String entityName) {
         return elementIsNotPresent(getEntity(entityName));
     }
 

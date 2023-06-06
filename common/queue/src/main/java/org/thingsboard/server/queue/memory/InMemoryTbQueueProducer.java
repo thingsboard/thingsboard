@@ -16,10 +16,10 @@
 package org.thingsboard.server.queue.memory;
 
 import lombok.Data;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 @Data
 public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueueProducer<T> {

@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.service.install;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
@@ -110,13 +111,14 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Profile("install")
 @Slf4j
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     public static final String CUSTOMER_CRED = "customer";
     public static final String DEFAULT_DEVICE_TYPE = "default";
     public static final String ACTIVITY_STATE = "active";
@@ -251,7 +253,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AdminSettings generalSettings = new AdminSettings();
         generalSettings.setTenantId(TenantId.SYS_TENANT_ID);
         generalSettings.setKey("general");
-        ObjectNode node = objectMapper.createObjectNode();
+        ObjectNode node = JacksonUtil.newObjectNode();
         node.put("baseUrl", "http://localhost:8080");
         node.put("prohibitDifferentUrl", false);
         generalSettings.setJsonValue(node);
@@ -260,7 +262,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AdminSettings mailSettings = new AdminSettings();
         mailSettings.setTenantId(TenantId.SYS_TENANT_ID);
         mailSettings.setKey("mail");
-        node = objectMapper.createObjectNode();
+        node = JacksonUtil.newObjectNode();
         node.put("mailFrom", "ThingsBoard <sysadmin@localhost.localdomain>");
         node.put("smtpProtocol", "smtp");
         node.put("smtpHost", "localhost");
@@ -508,6 +510,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         this.deleteSystemWidgetBundle("entity_admin_widgets");
         this.deleteSystemWidgetBundle("navigation_widgets");
         this.deleteSystemWidgetBundle("edge_widgets");
+        this.deleteSystemWidgetBundle("home_page_widgets");
         installScripts.loadSystemWidgets();
     }
 
@@ -542,7 +545,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         device.setDeviceProfileId(deviceProfileId);
         device.setName(name);
         if (description != null) {
-            ObjectNode additionalInfo = objectMapper.createObjectNode();
+            ObjectNode additionalInfo = JacksonUtil.newObjectNode();
             additionalInfo.put("description", description);
             device.setAdditionalInfo(additionalInfo);
         }
@@ -681,18 +684,29 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
+    @SneakyThrows
     public void createDefaultNotificationConfigs() {
         log.info("Creating default notification configs for system admin");
-        if (notificationTargetService.findNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID, new PageLink(1)).getTotalElements() == 0) {
+        if (notificationTargetService.countNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID) == 0) {
             notificationSettingsService.createDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
         }
         PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+        ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
         log.info("Creating default notification configs for all tenants");
+        AtomicInteger count = new AtomicInteger();
         for (TenantId tenantId : tenants) {
-            if (notificationTargetService.findNotificationTargetsByTenantId(tenantId, new PageLink(1)).getTotalElements() == 0) {
-                notificationSettingsService.createDefaultNotificationConfigs(tenantId);
-            }
+            executor.submit(() -> {
+                if (notificationTargetService.countNotificationTargetsByTenantId(tenantId) == 0) {
+                    notificationSettingsService.createDefaultNotificationConfigs(tenantId);
+                    int n = count.incrementAndGet();
+                    if (n % 500 == 0) {
+                        log.info("{} tenants processed", n);
+                    }
+                }
+            });
         }
+        executor.shutdown();
+        executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
     }
 
 }

@@ -196,4 +196,24 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
 
         Assert.assertTrue(urlContains(urlPath), "URL contains " + urlPath);
     }
+
+    @Epic("Customers smoke tests")
+    @Feature("Create customer")
+    @Test(groups = "smoke")
+    @Description("Go to customer documentation page")
+    public void createCustomerAddAndRemovePhoneNumber() {
+        String customerName = ENTITY_NAME;
+        String number = "12015550123";
+
+        sideBarMenuView.customerBtn().click();
+        customerPage.plusBtn().click();
+        customerPage.addCustomerViewEnterName(customerName);
+        customerPage.enterText(customerPage.phoneNumberAddEntityView(), number);
+        customerPage.clearInputField(customerPage.phoneNumberAddEntityView());
+        customerPage.addBtnC().click();
+        this.customerName = customerName;
+        customerPage.entity(customerName).click();
+
+        Assert.assertTrue(customerPage.phoneNumberEntityView().getAttribute("value").isEmpty(), "Phone field is empty");
+    }
 }

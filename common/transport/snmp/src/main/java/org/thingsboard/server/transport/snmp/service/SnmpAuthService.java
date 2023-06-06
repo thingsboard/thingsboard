@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.transport.snmp.SnmpProtocolVersion;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
-import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 
 import java.util.Optional;

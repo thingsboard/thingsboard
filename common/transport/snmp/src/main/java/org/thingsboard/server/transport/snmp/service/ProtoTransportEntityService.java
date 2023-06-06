@@ -24,8 +24,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 
 import java.util.UUID;

@@ -92,12 +92,14 @@ public class TbLogNode implements TbNode {
     boolean isStandard(TbLogNodeConfiguration conf) {
         Objects.requireNonNull(conf, "node config is null");
         final TbLogNodeConfiguration defaultConfig = new TbLogNodeConfiguration().defaultConfiguration();
-        switch (conf.getScriptLang()) {
-            case JS: return defaultConfig.getJsScript().equals(conf.getJsScript());
-            case TBEL: return defaultConfig.getTbelScript().equals(conf.getTbelScript());
-            default:
-                log.warn("No rule to define isStandard script for script language [{}], assuming that is non-standard", conf.getScriptLang());
-                return false;
+
+        if (conf.getScriptLang() == null || conf.getScriptLang().equals(ScriptLanguage.JS)) {
+            return defaultConfig.getJsScript().equals(conf.getJsScript());
+        } else if (conf.getScriptLang().equals(ScriptLanguage.TBEL)) {
+            return defaultConfig.getTbelScript().equals(conf.getTbelScript());
+        } else {
+            log.warn("No rule to define isStandard script for script language [{}], assuming that is non-standard", conf.getScriptLang());
+            return false;
         }
     }
 

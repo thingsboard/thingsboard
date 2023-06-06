@@ -23,6 +23,7 @@ import {
   SubscriptionTimewindow
 } from '@shared/models/time/time.models';
 import {
+  AlarmFilter,
   ComparisonTsValue,
   EntityData,
   EntityDataPageLink,
@@ -36,6 +37,7 @@ import {
 } from '@shared/models/query/query.models';
 import {
   AggKey,
+  AlarmCountCmd,
   DataKeyType,
   EntityCountCmd,
   EntityDataCmd,
@@ -84,6 +86,7 @@ export interface EntityDataSubscriptionOptions {
   dataKeys: Array<SubscriptionDataKey>;
   type: widgetType;
   entityFilter?: EntityFilter;
+  alarmFilter?: AlarmFilter;
   isPaginatedDataSubscription?: boolean;
   ignoreDataUpdateOnIntervalTick?: boolean;
   pageLink?: EntityDataPageLink;
@@ -111,6 +114,7 @@ export class EntityDataSubscription {
   private dataCommand: EntityDataCmd;
   private subsCommand: EntityDataCmd;
   private countCommand: EntityCountCmd;
+  private alarmCountCommand: AlarmCountCmd;
 
   private attrFields: Array<EntityKey>;
   private tsFields: Array<EntityKey>;
@@ -197,6 +201,7 @@ export class EntityDataSubscription {
       }
       let key: string;
       if (this.datasourceType === DatasourceType.entity || this.datasourceType === DatasourceType.entityCount ||
+        this.datasourceType === DatasourceType.alarmCount ||
         this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
         if (this.datasourceType === DatasourceType.function) {
           key = `${dataKey.name}_${dataKey.index}_${dataKey.type}${dataKey.latest ? '_latest' : ''}`;
@@ -228,7 +233,8 @@ export class EntityDataSubscription {
       clearTimeout(this.latestTimer);
       this.latestTimer = null;
     }
-    if (this.datasourceType === DatasourceType.entity || this.datasourceType === DatasourceType.entityCount) {
+    if (this.datasourceType === DatasourceType.entity || this.datasourceType === DatasourceType.entityCount
+      || this.datasourceType === DatasourceType.alarmCount) {
       if (this.subscriber) {
         this.subscriber.unsubscribe();
         this.subscriber = null;
@@ -508,6 +514,84 @@ export class EntityDataSubscription {
         }
       );
       this.subscriber.subscribe();
+    } else if (this.datasourceType === DatasourceType.alarmCount) {
+      this.latestTsOffset = this.entityDataSubscriptionOptions.latestTsOffset;
+      this.subscriber = new TelemetrySubscriber(this.telemetryService);
+      this.subscriber.setTsOffset(this.latestTsOffset);
+      this.alarmCountCommand = new AlarmCountCmd();
+      let keyFilters = this.entityDataSubscriptionOptions.keyFilters;
+      if (this.entityDataSubscriptionOptions.additionalKeyFilters) {
+        if (keyFilters) {
+          keyFilters = keyFilters.concat(this.entityDataSubscriptionOptions.additionalKeyFilters);
+        } else {
+          keyFilters = this.entityDataSubscriptionOptions.additionalKeyFilters;
+        }
+      }
+      this.alarmCountCommand.query = {
+        entityFilter: this.entityDataSubscriptionOptions.entityFilter,
+        keyFilters
+      };
+      if (this.entityDataSubscriptionOptions.alarmFilter) {
+        this.alarmCountCommand.query = {...this.alarmCountCommand.query, ...this.entityDataSubscriptionOptions.alarmFilter};
+      }
+      this.subscriber.subscriptionCommands.push(this.alarmCountCommand);
+
+      const entityId: EntityId = {
+        id: NULL_UUID,
+        entityType: null
+      };
+
+      const countKey = this.dataKeysList[0];
+
+      let dataReceived = false;
+
+      this.subscriber.alarmCount$.subscribe(
+        (alarmCountUpdate) => {
+          if (!dataReceived) {
+            const entityData: EntityData = {
+              entityId,
+              latest: {
+                [EntityKeyType.ENTITY_FIELD]: {
+                  name: {
+                    ts: Date.now() + this.latestTsOffset,
+                    value: DatasourceType.alarmCount
+                  }
+                },
+                [EntityKeyType.COUNT]: {
+                  [countKey.name]: {
+                    ts: Date.now() + this.latestTsOffset,
+                    value: alarmCountUpdate.count + ''
+                  }
+                }
+              },
+              timeseries: {}
+            };
+            const pageData: PageData<EntityData> = {
+              data: [entityData],
+              hasNext: false,
+              totalElements: 1,
+              totalPages: 1
+            };
+            this.onPageData(pageData);
+            dataReceived = true;
+          } else {
+            const update: EntityData[] = [{
+              entityId,
+              latest: {
+                [EntityKeyType.COUNT]: {
+                  [countKey.name]: {
+                    ts: Date.now() + this.latestTsOffset,
+                    value: alarmCountUpdate.count + ''
+                  }
+                }
+              },
+              timeseries: {}
+            }];
+            this.onDataUpdate(update);
+          }
+        }
+      );
+      this.subscriber.subscribe();
     }
     if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
       return of(null);
@@ -542,7 +626,7 @@ export class EntityDataSubscription {
         this.subscriber.subscriptionCommands = [this.subsCommand];
         this.subscriber.update();
       }
-    } else if (this.datasourceType === DatasourceType.entityCount) {
+    } else if (this.datasourceType === DatasourceType.entityCount || this.datasourceType === DatasourceType.alarmCount) {
       if (this.subscriber.setTsOffset(this.latestTsOffset)) {
         if (this.listener.forceReInit) {
           this.listener.forceReInit();
@@ -729,7 +813,8 @@ export class EntityDataSubscription {
       this.datasourceData[dataIndex] = {};
       for (const key of Object.keys(this.dataKeys)) {
         const dataKey = this.dataKeys[key];
-        if (this.datasourceType === DatasourceType.entity || this.datasourceType === DatasourceType.entityCount ||
+        if (this.datasourceType === DatasourceType.entity || this.datasourceType === DatasourceType.entityCount
+          || this.datasourceType === DatasourceType.alarmCount ||
           this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
           const dataKeysList = dataKey as Array<SubscriptionDataKey>;
           for (let index = 0; index < dataKeysList.length; index++) {

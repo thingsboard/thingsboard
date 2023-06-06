@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
@@ -59,14 +58,13 @@ import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.data.settings.LastVisitedDashboardInfo;
+import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.settings.UserDashboardAction;
 import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
 import org.thingsboard.server.common.data.settings.UserSettings;
-import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
-import org.thingsboard.server.common.data.security.model.JwtPair;
-import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.user.TbUserService;
 import org.thingsboard.server.service.query.EntityQueryService;
@@ -408,7 +406,7 @@ public class UserController extends BaseController {
     public void setUserCredentialsEnabled(
             @ApiParam(value = USER_ID_PARAM_DESCRIPTION)
             @PathVariable(USER_ID) String strUserId,
-            @ApiParam(value = "Disable (\"true\") or enable (\"false\") the credentials.", defaultValue = "true")
+            @ApiParam(value = "Enable (\"true\") or disable (\"false\") the credentials.", defaultValue = "true")
             @RequestParam(required = false, defaultValue = "true") boolean userCredentialsEnabled) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         UserId userId = new UserId(toUUID(strUserId));

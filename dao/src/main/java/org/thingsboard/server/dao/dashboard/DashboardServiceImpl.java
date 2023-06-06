@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -50,7 +49,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.dao.user.UserSettingsEvictEvent;
 
 import java.util.List;
 import java.util.Optional;
@@ -366,6 +364,12 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public long countByTenantId(TenantId tenantId) {
         return dashboardDao.countByTenantId(tenantId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteDashboard(tenantId, (DashboardId) id);
     }
 
     @Override

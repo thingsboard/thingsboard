@@ -38,8 +38,8 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { isEqual } from '@core/utils';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { isDefinedAndNotNull, isEqual } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -291,7 +291,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   async writeValue(value: string | EntityId | null): Promise<void> {
     this.searchText = '';
-    if (value !== null && (typeof value === 'string' ||  (value.entityType && value.id))) {
+    if (isDefinedAndNotNull(value) && (typeof value === 'string' || (value.entityType && value.id))) {
       let targetEntityType: EntityType;
       let id: string;
       if (typeof value === 'string') {

@@ -32,7 +32,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.OAUTH2_PARAMS_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.OAUTH2_PARAMS_TABLE_NAME)
 @NoArgsConstructor
 public class OAuth2ParamsEntity extends BaseSqlEntity<OAuth2Params> {
 

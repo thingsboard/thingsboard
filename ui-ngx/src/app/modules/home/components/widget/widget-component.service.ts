@@ -42,13 +42,11 @@ import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { SharedModule } from '@shared/shared.module';
 import { MODULES_MAP } from '@shared/public-api';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import moment from 'moment';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
-
-const tinycolor = tinycolor_;
 
 @Injectable()
 export class WidgetComponentService {
@@ -101,6 +99,8 @@ export class WidgetComponentService {
             settingsDirective: this.utils.editWidgetInfo.settingsDirective,
             dataKeySettingsDirective: this.utils.editWidgetInfo.dataKeySettingsDirective,
             latestDataKeySettingsDirective: this.utils.editWidgetInfo.latestDataKeySettingsDirective,
+            hasBasicMode: this.utils.editWidgetInfo.hasBasicMode,
+            basicModeDirective: this.utils.editWidgetInfo.basicModeDirective,
             defaultConfig: this.utils.editWidgetInfo.defaultConfig
           }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), 'customWidgetBundle', undefined
         );
@@ -164,7 +164,7 @@ export class WidgetComponentService {
           (window as any).TbMapWidgetV2 = mod.TbMapWidgetV2;
         }))
       );
-      widgetModulesTasks.push(from(import('@home/components/widget/trip-animation/trip-animation.component')).pipe(
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/trip-animation/trip-animation.component')).pipe(
         tap((mod) => {
           (window as any).TbTripAnimationWidget = mod.TbTripAnimationWidget;
         }))
@@ -224,6 +224,11 @@ export class WidgetComponentService {
     return this.init().pipe(
       mergeMap(() => this.getWidgetInfoInternal(bundleAlias, widgetTypeAlias, isSystem))
     );
+  }
+
+  public clearWidgetInfo(widgetInfo: WidgetInfo, bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): void {
+    this.dynamicComponentFactoryService.destroyDynamicComponentFactory(widgetInfo.componentFactory);
+    this.widgetService.deleteWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem);
   }
 
   private getWidgetInfoInternal(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): Observable<WidgetInfo> {
@@ -400,6 +405,9 @@ export class WidgetComponentService {
     }
     if (widgetInfo.latestDataKeySettingsDirective && widgetInfo.latestDataKeySettingsDirective.length) {
       directives.push(widgetInfo.latestDataKeySettingsDirective);
+    }
+    if (widgetInfo.basicModeDirective && widgetInfo.basicModeDirective.length) {
+      directives.push(widgetInfo.basicModeDirective);
     }
     if (directives.length) {
       factories.filter((factory) => directives.includes(factory.selector))

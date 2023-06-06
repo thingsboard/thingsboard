@@ -40,8 +40,8 @@ public enum ActionType {
     ALARM_ACK(false),
     ALARM_CLEAR(false),
     ALARM_DELETE(false),
-    ALARM_ASSIGN(false),
-    ALARM_UNASSIGN(false),
+    ALARM_ASSIGNED(false),
+    ALARM_UNASSIGNED(false),
     LOGIN(false),
     LOGOUT(false),
     LOCKOUT(false),
@@ -53,7 +53,8 @@ public enum ActionType {
     UNASSIGNED_FROM_EDGE(false),
     ADDED_COMMENT(false),
     UPDATED_COMMENT(false),
-    DELETED_COMMENT(false);
+    DELETED_COMMENT(false),
+    SMS_SENT(false);
 
     private final boolean isRead;
 

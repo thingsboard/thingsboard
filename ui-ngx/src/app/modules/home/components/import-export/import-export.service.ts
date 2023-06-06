@@ -467,6 +467,7 @@ export class ImportExportService {
           const ruleChainNode: RuleNode = {
             name: '',
             debugMode: false,
+            singletonMode: false,
             type: 'org.thingsboard.rule.engine.flow.TbRuleChainInputNode',
             configuration: {
               ruleChainId: ruleChainConnection.targetRuleChainId.id

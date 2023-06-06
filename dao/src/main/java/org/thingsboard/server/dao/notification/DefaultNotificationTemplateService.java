@@ -48,6 +48,12 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
 
     @Override
     public NotificationTemplate saveNotificationTemplate(TenantId tenantId, NotificationTemplate notificationTemplate) {
+        if (notificationTemplate.getId() != null) {
+            NotificationTemplate oldNotificationTemplate = findNotificationTemplateById(tenantId, notificationTemplate.getId());
+            if (notificationTemplate.getNotificationType() != oldNotificationTemplate.getNotificationType()) {
+                throw new IllegalArgumentException("Notification type cannot be updated");
+            }
+        }
         try {
             return notificationTemplateDao.saveAndFlush(tenantId, notificationTemplate);
         } catch (Exception e) {
@@ -86,6 +92,11 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findNotificationTemplateById(tenantId, new NotificationTemplateId(entityId.getId())));
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteNotificationTemplateById(tenantId, (NotificationTemplateId) id);
     }
 
     @Override

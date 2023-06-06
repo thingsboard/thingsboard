@@ -53,7 +53,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
 import { DatetimeAdapter, MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
@@ -63,7 +63,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ShareModule as ShareButtonsModule } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
-import { ColorPickerModule } from 'ngx-color-picker';
+import { ColorPickerModule } from '@iplab/ngx-color-picker';
 import { NgxHmCarouselModule } from 'ngx-hm-carousel';
 import { EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
@@ -123,6 +123,7 @@ import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
 import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
+import { ErrorAlertDialogComponent } from '@shared/components/dialog/error-alert-dialog.component';
 import { TodoDialogComponent } from '@shared/components/dialog/todo-dialog.component';
 import { MaterialIconsDialogComponent } from '@shared/components/dialog/material-icons-dialog.component';
 import { MaterialIconSelectComponent } from '@shared/components/material-icon-select.component';
@@ -183,6 +184,20 @@ import { GatewayConnectorComponent } from '@shared/components/device/gateway-con
 import { GatewayLogsComponent } from '@shared/components/device/gateway-logs.component';
 import { GatewayStatisticsComponent } from '@shared/components/device/gateway-statistics.component';
 import { GatewayServiceRPCComponent } from '@shared/components/device/gateway-service-rpc.component';
+import {
+  TbBreakPointsProvider,
+  MdLgLayoutDirective,
+  MdLgLayoutAlignDirective,
+  MdLgLayoutGapDirective,
+  MdLgShowHideDirective,
+  GtMdLgLayoutDirective,
+  GtMdLgLayoutAlignDirective,
+  GtMdLgLayoutGapDirective,
+  GtMdLgShowHideDirective
+} from '@shared/layout/layout.directives';
+import { ColorPickerComponent } from '@shared/components/color-picker/color-picker.component';
+import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
+import { ToggleHeaderComponent } from '@shared/components/toggle-header.component';
 
 export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService) => markedOptionsService;
 
@@ -198,7 +213,7 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     SafePipe,
-    DateAgoPipe,
+    ShortNumberPipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -228,7 +243,14 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
       useValue: {
         hideSingleSelectionIndicator: true
       }
-    }
+    },
+    {
+      provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
+      useValue: {
+        disableTooltipInteractivity: true
+      }
+    },
+    TbBreakPointsProvider
   ],
   declarations: [
     FooterComponent,
@@ -298,6 +320,7 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     WidgetsBundleSelectComponent,
     ConfirmDialogComponent,
     AlertDialogComponent,
+    ErrorAlertDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
@@ -322,6 +345,7 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     SafePipe,
+    ShortNumberPipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
@@ -340,7 +364,16 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    DateAgoPipe
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective,
+    ColorPickerComponent,
+    ToggleHeaderComponent
   ],
   imports: [
     CommonModule,
@@ -464,6 +497,7 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     HtmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
+    TbJsonToStringDirective,
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
     ValueInputComponent,
@@ -518,6 +552,7 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     MarkdownModule,
     ConfirmDialogComponent,
     AlertDialogComponent,
+    ErrorAlertDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
@@ -543,6 +578,7 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     SafePipe,
+    ShortNumberPipe,
     SelectableColumnsPipe,
     RouterModule,
     TranslateModule,
@@ -561,7 +597,16 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    DateAgoPipe
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective,
+    ColorPickerComponent,
+    ToggleHeaderComponent
   ]
 })
 export class SharedModule { }

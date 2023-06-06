@@ -26,10 +26,10 @@ import {
 import { UtilsService } from '@core/services/utils.service';
 import { Router } from '@angular/router';
 import { alarmSeverityTranslations } from '@shared/models/alarm.models';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { StateObject } from '@core/api/widget-api.models';
 import { objToBase64URI } from '@core/utils';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-notification',
@@ -56,13 +56,14 @@ export class NotificationComponent implements OnInit {
   buttonLabel = '';
   hideMarkAsReadButton = false;
 
-  tinycolor = tinycolor_;
-
   notificationType = NotificationType;
   notificationTypeIcons = NotificationTypeIcons;
   alarmSeverityTranslations = alarmSeverityTranslations;
 
   currentDate = Date.now();
+
+  title = '';
+  message = '';
 
   constructor(
     private utils: UtilsService,
@@ -74,6 +75,8 @@ export class NotificationComponent implements OnInit {
     this.showIcon = this.notification.additionalConfig?.icon?.enabled;
     this.showButton = this.notification.additionalConfig?.actionButtonConfig?.enabled;
     this.hideMarkAsReadButton = this.notification.status === NotificationStatus.READ;
+    this.title = this.utils.customTranslation(this.notification.subject, this.notification.subject);
+    this.message = this.utils.customTranslation(this.notification.text, this.notification.text);
     if (this.showButton) {
       this.buttonLabel = this.utils.customTranslation(this.notification.additionalConfig.actionButtonConfig.text,
                                                       this.notification.additionalConfig.actionButtonConfig.text);
@@ -97,16 +100,19 @@ export class NotificationComponent implements OnInit {
       let link: string;
       if (this.notification.additionalConfig.actionButtonConfig.linkType === ActionButtonLinkType.DASHBOARD) {
         let state = null;
-        if (this.notification.additionalConfig.actionButtonConfig.dashboardState) {
+        if (this.notification.additionalConfig.actionButtonConfig.dashboardState ||
+          this.notification.additionalConfig.actionButtonConfig.setEntityIdInState) {
           const stateObject: StateObject = {};
           if (this.notification.additionalConfig.actionButtonConfig.setEntityIdInState) {
             stateObject.params = {
-              entityId: this.notification.info.stateEntityId ?? null
+              entityId: this.notification.info?.stateEntityId ?? null
             };
           } else {
             stateObject.params = {};
           }
-          stateObject.id = this.notification.additionalConfig.actionButtonConfig.dashboardState;
+          if (this.notification.additionalConfig.actionButtonConfig.dashboardState) {
+            stateObject.id = this.notification.additionalConfig.actionButtonConfig.dashboardState;
+          }
           state = objToBase64URI([ stateObject ]);
         }
         link = `/dashboards/${this.notification.additionalConfig.actionButtonConfig.dashboardId}`;
@@ -129,7 +135,7 @@ export class NotificationComponent implements OnInit {
   }
 
   alarmColorSeverity(alpha: number) {
-    return this.tinycolor(AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
+    return tinycolor(AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
   }
 
   notificationColor(): string {

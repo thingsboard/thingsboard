@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -33,8 +34,6 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.UUID;
-
-import static org.thingsboard.server.dao.DaoUtil.getId;
 
 @Component
 @SqlDao
@@ -57,6 +56,26 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     @Override
     public void removeByTenantId(TenantId tenantId) {
         notificationTemplateRepository.deleteByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public NotificationTemplate findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(notificationTemplateRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public NotificationTemplate findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(notificationTemplateRepository.findByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
+    public PageData<NotificationTemplate> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationTemplateRepository.findByTenantId(tenantId, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public NotificationTemplateId getExternalIdByInternal(NotificationTemplateId internalId) {
+        return DaoUtil.toEntityId(notificationTemplateRepository.getExternalIdByInternal(internalId.getId()), NotificationTemplateId::new);
     }
 
     @Override

@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data.util;
 
-import com.google.common.collect.ImmutableMap;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,8 +61,12 @@ public class CollectionsUtil {
         return map;
     }
 
-    public static  <K, V> Map<K, V> unmodifiableMapOf(Object... kvs) {
+    public static <K, V> Map<K, V> unmodifiableMapOf(Object... kvs) {
         return Collections.unmodifiableMap(mapOf(kvs));
+    }
+
+    public static <V> boolean emptyOrContains(Collection<V> collection, V element) {
+        return isEmpty(collection) || collection.contains(element);
     }
 
 }

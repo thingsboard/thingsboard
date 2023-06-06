@@ -55,7 +55,7 @@
               <div fxFlex fxLayout="column">
                 <mat-checkbox #removeOtherEntitiesCheckbox
                               formControlName="removeOtherEntities"
-                              (click)="onRemoveOtherEntities(removeOtherEntitiesCheckbox, entityTypeFormGroup, $event)">
+                              (change)="onRemoveOtherEntities(removeOtherEntitiesCheckbox, entityTypeFormGroup)">
                   {{ 'version-control.remove-other-entities' | translate }}
                 </mat-checkbox>
                 <mat-checkbox formControlName="findExistingEntityByName">
@@ -66,10 +66,10 @@
                 <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="loadCredentials">
                   {{ 'version-control.load-credentials' | translate }}
                 </mat-checkbox>
-                <mat-checkbox formControlName="loadAttributes">
+                <mat-checkbox *ngIf="!entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="loadAttributes">
                   {{ 'version-control.load-attributes' | translate }}
                 </mat-checkbox>
-                <mat-checkbox formControlName="loadRelations">
+                <mat-checkbox *ngIf="!entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="loadRelations">
                   {{ 'version-control.load-relations' | translate }}
                 </mat-checkbox>
               </div>
