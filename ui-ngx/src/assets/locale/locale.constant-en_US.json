@@ -3349,6 +3349,7 @@
         "events": "Events",
         "search": "Search nodes",
         "open-node-library": "Open node library",
+        "close-node-library": "Close node library",
         "add": "Add rule node",
         "name": "Name",
         "name-required": "Name is required.",
