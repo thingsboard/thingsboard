@@ -43,7 +43,9 @@ export class TimeseriesTableKeySettingsComponent extends WidgetSettingsComponent
       useCellStyleFunction: false,
       cellStyleFunction: '',
       useCellContentFunction: false,
-      cellContentFunction: ''
+      cellContentFunction: '',
+      defaultColumnVisibility: 'visible',
+      columnSelectionToDisplay: 'enabled'
     };
   }
 
@@ -53,6 +55,8 @@ export class TimeseriesTableKeySettingsComponent extends WidgetSettingsComponent
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],
       useCellContentFunction: [settings.useCellContentFunction, []],
       cellContentFunction: [settings.cellContentFunction, [Validators.required]],
+      defaultColumnVisibility: [settings.defaultColumnVisibility, []],
+      columnSelectionToDisplay: [settings.columnSelectionToDisplay, []],
     });
   }
 
