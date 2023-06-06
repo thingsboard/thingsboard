@@ -71,7 +71,7 @@ public class DeviceFilterTest extends AbstractDeviceTest {
         devicePage.filterBtn().click();
         devicePage.filterDeviceByDeviceProfile(deviceProfileTitle);
 
-        devicePage.listOfDevicesProfile().forEach(d -> assertThat(d.getText())
+        devicePage.listOfDevicesProfileCells().forEach(d -> assertThat(d.getText())
                 .as("There are only devices with the selected profile(%s) on the page", deviceProfileTitle)
                 .isEqualTo(deviceProfileTitle));
     }
@@ -95,7 +95,7 @@ public class DeviceFilterTest extends AbstractDeviceTest {
         devicePage.filterBtn().click();
         devicePage.filterDeviceByDeviceProfileAndState(deviceProfileTitle, state);
 
-        devicePage.listOfDevicesProfile().forEach(d -> assertThat(d.getText())
+        devicePage.listOfDevicesProfileCells().forEach(d -> assertThat(d.getText())
                 .as("There are only devices with the selected profile(%s) on the page", deviceProfileTitle)
                 .isEqualTo(deviceProfileTitle));
         devicePage.listOfDevicesState().forEach(d -> assertThat(d.getText())

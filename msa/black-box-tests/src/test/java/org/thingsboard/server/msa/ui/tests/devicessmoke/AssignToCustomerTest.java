@@ -34,6 +34,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
+import static org.thingsboard.server.msa.ui.utils.Const.PUBLIC_CUSTOMER_NAME;
 
 @Feature("Assign to customer")
 public class AssignToCustomerTest extends AbstractDeviceTest {
@@ -58,7 +59,7 @@ public class AssignToCustomerTest extends AbstractDeviceTest {
     @AfterClass
     public void deleteCustomer() {
         deleteCustomerById(customerId);
-        deleteCustomerByName("Public");
+        deleteCustomerByName(PUBLIC_CUSTOMER_NAME);
         deleteDeviceByName(device1.getName());
     }
 

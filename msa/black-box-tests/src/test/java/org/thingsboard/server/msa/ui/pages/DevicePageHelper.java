@@ -123,4 +123,24 @@ public class DevicePageHelper extends DevicePageElements {
         sleep(2); //wait until the action is counted
         submitBtn().click();
     }
+
+    public void makeDevicePublicByRightSideBtn(String deviceName) {
+        makeDevicePublicBtn(deviceName).click();
+        warningPopUpYesBtn().click();
+    }
+
+    public void makeDevicePublicFromDetailsTab() {
+        makeDevicePublicBtnDetailsTab().click();
+        warningPopUpYesBtn().click();
+    }
+
+    public void makeDevicePrivateByRightSideBtn(String deviceName) {
+        makeDevicePrivateBtn(deviceName).click();
+        warningPopUpYesBtn().click();
+    }
+
+    public void makeDevicePrivateFromDetailsTab() {
+        makeDevicePrivateBtnDetailsTab().click();
+        warningPopUpYesBtn().click();
+    }
 }
