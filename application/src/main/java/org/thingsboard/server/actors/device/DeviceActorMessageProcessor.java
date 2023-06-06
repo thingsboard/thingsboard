@@ -701,8 +701,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 sessionMD = new SessionInfoMetaData(new SessionInfo(subscribeCmd.getSessionType(), sessionInfo.getNodeId()));
             }
             sessionMD.setSubscribedToRPC(true);
-            log.debug("[{}] Registered rpc subscription for session: [{}] Going to check for pending requests ...", deviceId, sessionId);
             rpcSubscriptions.put(sessionId, sessionMD.getSessionInfo());
+            log.debug("[{}] Registered rpc subscription for session: [{}] Going to check for pending requests ...", deviceId, sessionId);
             sendPendingRequests(context, sessionId, sessionInfo.getNodeId());
             dumpSessions();
         }
