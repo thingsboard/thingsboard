@@ -55,7 +55,6 @@ import java.io.ByteArrayInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -231,13 +230,9 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    public WebStorage getWebStorage() {
-        return webStorage = (WebStorage) driver;
-    }
-
     public void clearStorage() {
-        getWebStorage().getLocalStorage().clear();
-        getWebStorage().getSessionStorage().clear();
+        getJs().executeScript("window.localStorage.clear();");
+        getJs().executeScript("window.sessionStorage.clear();");
     }
 
     public void deleteAlarmById(AlarmId alarmId) {
