@@ -23,13 +23,15 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 import {
   Datasource,
   datasourcesHasAggregation,
-  datasourcesHasOnlyComparisonAggregation
+  datasourcesHasOnlyComparisonAggregation,
 } from '@shared/models/widget.models';
+import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 @Component({
   selector: 'tb-simple-card-basic-config',
   templateUrl: './simple-card-basic-config.component.html',
-  styleUrls: ['../basic-config.scss', '../../widget-config.scss']
+  styleUrls: ['../basic-config.scss']
 })
 export class SimpleCardBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -46,12 +48,17 @@ export class SimpleCardBasicConfigComponent extends BasicWidgetConfigComponent {
   simpleCardWidgetConfigForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
+              protected widgetConfigComponent: WidgetConfigComponent,
               private fb: UntypedFormBuilder) {
-    super(store);
+    super(store, widgetConfigComponent);
   }
 
   protected configForm(): UntypedFormGroup {
     return this.simpleCardWidgetConfigForm;
+  }
+
+  protected setupDefaults(configData: WidgetConfigComponentData) {
+    this.setupDefaultDatasource(configData, [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries }]);
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {

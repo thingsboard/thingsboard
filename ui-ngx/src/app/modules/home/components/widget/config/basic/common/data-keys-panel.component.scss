@@ -29,13 +29,18 @@
     align-items: center;
     gap: 12px;
     padding-left: 12px;
-    padding-right: 12px;
     .tb-data-keys-header-cell {
       font-weight: 400;
       font-size: 14px;
       line-height: 20px;
       letter-spacing: 0.2px;
       color: rgba(0, 0, 0, 0.54);
+      &.tb-color-header, &.tb-units-header, &.tb-decimals-header {
+        width: 60px;
+      }
+      &.tb-actions-header {
+        width: 76px;
+      }
     }
   }
   .tb-data-keys-body {

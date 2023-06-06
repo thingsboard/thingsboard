@@ -30,6 +30,7 @@
     addKeyTitle="{{ 'widgets.table.add-column' | translate }}"
     removeKeyTitle="{{ 'widgets.table.remove-column' | translate }}"
     noKeysText="{{ 'widgets.table.no-columns' | translate }}"
+    hideDataKeyColor
     [datasourceType]="datasource?.type"
     [deviceId]="datasource?.deviceId"
     [entityAliasId]="datasource?.entityAliasId"
@@ -37,6 +38,29 @@
   </tb-data-keys-panel>
   <div class="tb-widget-config-panel">
     <div class="tb-widget-config-panel-title" translate>widget-config.appearance</div>
+    <div class="tb-widget-config-row">
+      <mat-slide-toggle class="mat-slide"  formControlName="showTitle">
+        {{ 'widget-config.card-title' | translate }}
+      </mat-slide-toggle>
+      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-widget-config-row space-between same-padding">
+      <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
+        {{ 'widget-config.card-icon' | translate }}
+      </mat-slide-toggle>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+        <tb-material-icon-select asBoxInput
+                                 [color]="entitiesTableWidgetConfigForm.get('iconColor').value"
+                                 formControlName="titleIcon">
+        </tb-material-icon-select>
+        <mat-divider vertical></mat-divider>
+        <tb-color-input asBoxInput
+                        formControlName="iconColor">
+        </tb-color-input>
+      </div>
+    </div>
     <div class="tb-widget-config-row space-between same-padding">
       <div>{{ 'widget-config.text-color' | translate }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">

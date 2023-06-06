@@ -46,7 +46,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 @Component({
   selector: 'tb-datasources',
   templateUrl: './datasources.component.html',
-  styleUrls: ['./datasources.component.scss', './widget-config.scss'],
+  styleUrls: ['./datasources.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

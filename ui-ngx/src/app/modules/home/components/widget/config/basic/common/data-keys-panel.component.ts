@@ -44,11 +44,12 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-data-keys-panel',
   templateUrl: './data-keys-panel.component.html',
-  styleUrls: ['./data-keys-panel.component.scss', '../../widget-config.scss'],
+  styleUrls: ['./data-keys-panel.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -88,6 +89,10 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
 
   @Input()
   deviceId: string;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyColor = false;
 
   dataKeyType: DataKeyType;
   alarmKeys: Array<DataKey>;
@@ -212,13 +217,11 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
 
   addKey() {
     const dataKey = this.callbacks.generateDataKey('', null, this.datakeySettingsSchema);
+    dataKey.label = '';
+    dataKey.decimals = 0;
     const keysArray = this.keysListFormGroup.get('keys') as UntypedFormArray;
     const keyControl = this.fb.control(dataKey, [dataKeyRowValidator]);
     keysArray.push(keyControl);
-    this.keysListFormGroup.updateValueAndValidity();
-    if (!this.keysListFormGroup.valid) {
-      this.propagateChange(this.keysListFormGroup.get('keys').value);
-    }
   }
 
   private prepareKeysFormArray(keys: DataKey[] | undefined): UntypedFormArray {

@@ -37,7 +37,7 @@ import {
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKey, DatasourceType, JsonSettingsSchema, widgetType } from '@shared/models/widget.models';
+import { DataKey, DatasourceType, JsonSettingsSchema, Widget, widgetType } from '@shared/models/widget.models';
 import { DataKeysPanelComponent } from '@home/components/widget/config/basic/common/data-keys-panel.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AggregationType } from '@shared/models/time/time.models';
@@ -49,6 +49,13 @@ import { Observable, of } from 'rxjs';
 import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
+import {
+  DataKeyConfigDialogComponent,
+  DataKeyConfigDialogData
+} from '@home/components/widget/config/data-key-config-dialog.component';
+import { deepClone } from '@core/utils';
+import { Dashboard } from '@shared/models/dashboard.models';
+import { IAliasController } from '@core/api/widget-api.models';
 
 export const dataKeyRowValidator = (control: AbstractControl): ValidationErrors | null => {
   const dataKey: DataKey = control.value;
@@ -63,7 +70,7 @@ export const dataKeyRowValidator = (control: AbstractControl): ValidationErrors 
 @Component({
   selector: 'tb-data-key-row',
   templateUrl: './data-key-row.component.html',
-  styleUrls: ['./data-key-row.component.scss', '../../data-keys.component.scss', '../../widget-config.scss'],
+  styleUrls: ['./data-key-row.component.scss', '../../data-keys.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -122,6 +129,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.dataKeysPanelComponent.functionTypeKeys;
   }
 
+  get hideDataKeyColor(): boolean {
+    return this.dataKeysPanelComponent.hideDataKeyColor;
+  }
+
   get widgetType(): widgetType {
     return this.widgetConfigComponent.widgetType;
   }
@@ -130,12 +141,32 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
 
+  get widget(): Widget {
+    return this.widgetConfigComponent.widget;
+  }
+
+  get dashboard(): Dashboard {
+    return this.widgetConfigComponent.dashboard;
+  }
+
+  get aliasController(): IAliasController {
+    return this.widgetConfigComponent.aliasController;
+  }
+
   get datakeySettingsSchema(): JsonSettingsSchema {
     return this.widgetConfigComponent.modelValue?.dataKeySettingsSchema;
   }
 
+  get dataKeySettingsDirective(): string {
+    return this.widgetConfigComponent.modelValue?.dataKeySettingsDirective;
+  }
+
   get isEntityDatasource(): boolean {
     return [DatasourceType.device, DatasourceType.entity].includes(this.datasourceType);
+  }
+
+  get displayUnitsOrDigits() {
+    return this.modelValue.type && ![ DataKeyType.alarm, DataKeyType.entityField, DataKeyType.count ].includes(this.modelValue.type);
   }
 
   private propagateChange = (_val: any) => {};
@@ -261,7 +292,37 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   editKey() {
-
+    this.dialog.open<DataKeyConfigDialogComponent, DataKeyConfigDialogData, DataKey>(DataKeyConfigDialogComponent,
+      {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          dataKey: deepClone(this.modelValue),
+          dataKeySettingsSchema: this.datakeySettingsSchema,
+          dataKeySettingsDirective: this.dataKeySettingsDirective,
+          dashboard: this.dashboard,
+          aliasController: this.aliasController,
+          widget: this.widget,
+          widgetType: this.widgetType,
+          deviceId: this.deviceId,
+          entityAliasId: this.entityAliasId,
+          showPostProcessing: this.widgetType !== widgetType.alarm,
+          callbacks: this.callbacks,
+          hideDataKeyLabel: false,
+          hideDataKeyColor: this.hideDataKeyColor,
+          hideDataKeyUnits: !this.displayUnitsOrDigits,
+          hideDataKeyDecimals: !this.displayUnitsOrDigits
+        }
+      }).afterClosed().subscribe((updatedDataKey) => {
+      if (updatedDataKey) {
+        this.modelValue = updatedDataKey;
+        this.keyRowFormGroup.get('label').patchValue(this.modelValue.label, {emitEvent: false});
+        this.keyRowFormGroup.get('color').patchValue(this.modelValue.color, {emitEvent: false});
+        this.keyRowFormGroup.get('units').patchValue(this.modelValue.units, {emitEvent: false});
+        this.keyRowFormGroup.get('decimals').patchValue(this.modelValue.decimals, {emitEvent: false});
+        this.updateModel();
+      }
+    });
   }
 
   removeKey() {

@@ -26,11 +26,13 @@ import {
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation
 } from '@shared/models/widget.models';
+import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 @Component({
   selector: 'tb-entities-table-basic-config',
   templateUrl: './entities-table-basic-config.component.html',
-  styleUrls: ['../basic-config.scss', '../../widget-config.scss']
+  styleUrls: ['../basic-config.scss']
 })
 export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -56,12 +58,17 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
   entitiesTableWidgetConfigForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
+              protected widgetConfigComponent: WidgetConfigComponent,
               private fb: UntypedFormBuilder) {
-    super(store);
+    super(store, widgetConfigComponent);
   }
 
   protected configForm(): UntypedFormGroup {
     return this.entitiesTableWidgetConfigForm;
+  }
+
+  protected setupDefaults(configData: WidgetConfigComponentData) {
+    this.setupDefaultDatasource(configData, [{ name: 'name', type: DataKeyType.entityField }]);
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
@@ -73,6 +80,11 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
       }, []],
       datasources: [configData.config.datasources, []],
       columns: [this.getColumns(configData.config.datasources), []],
+      showTitle: [configData.config.showTitle, []],
+      title: [configData.config.settings?.entitiesTitle, []],
+      showTitleIcon: [configData.config.showTitleIcon, []],
+      titleIcon: [configData.config.titleIcon, []],
+      iconColor: [configData.config.iconColor, []],
       color: [configData.config.color, []],
       backgroundColor: [configData.config.backgroundColor, []],
       actions: [configData.config.actions || {}, []]
@@ -86,9 +98,44 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
     this.widgetConfig.config.datasources = config.datasources;
     this.setColumns(config.columns, this.widgetConfig.config.datasources);
     this.widgetConfig.config.actions = config.actions;
+    this.widgetConfig.config.showTitle = config.showTitle;
+    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
+    this.widgetConfig.config.settings.entitiesTitle = config.title;
+    this.widgetConfig.config.showTitleIcon = config.showTitleIcon;
+    this.widgetConfig.config.titleIcon = config.titleIcon;
+    this.widgetConfig.config.iconColor = config.iconColor;
     this.widgetConfig.config.color = config.color;
     this.widgetConfig.config.backgroundColor = config.backgroundColor;
     return this.widgetConfig;
+  }
+
+  protected validatorTriggers(): string[] {
+    return ['showTitle', 'showTitleIcon'];
+  }
+
+  protected updateValidators(emitEvent: boolean, trigger?: string) {
+    const showTitle: boolean = this.entitiesTableWidgetConfigForm.get('showTitle').value;
+    const showTitleIcon: boolean = this.entitiesTableWidgetConfigForm.get('showTitleIcon').value;
+    if (showTitle) {
+      this.entitiesTableWidgetConfigForm.get('title').enable();
+      this.entitiesTableWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
+      if (showTitleIcon) {
+        this.entitiesTableWidgetConfigForm.get('titleIcon').enable();
+        this.entitiesTableWidgetConfigForm.get('iconColor').enable();
+      } else {
+        this.entitiesTableWidgetConfigForm.get('titleIcon').disable();
+        this.entitiesTableWidgetConfigForm.get('iconColor').disable();
+      }
+    } else {
+      this.entitiesTableWidgetConfigForm.get('title').disable();
+      this.entitiesTableWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
+      this.entitiesTableWidgetConfigForm.get('titleIcon').disable();
+      this.entitiesTableWidgetConfigForm.get('iconColor').disable();
+    }
+    this.entitiesTableWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
+    this.entitiesTableWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
+    this.entitiesTableWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
+    this.entitiesTableWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});
   }
 
   private getColumns(datasources?: Datasource[]): DataKey[] {

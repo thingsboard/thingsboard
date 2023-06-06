@@ -366,23 +366,16 @@ export class DashboardUtilsService {
       }
       const dataKeys = newDatasource.dataKeys;
       newDatasource.dataKeys = [];
-      dataKeys.forEach(dataKey => {
-        newDatasource.dataKeys.push(this.convertDataKeyFromWidgetType(widgetTypeDescriptor, config, dataKey));
-      });
+      if (widgetTypeDescriptor.type === widgetType.alarm) {
+        dataKeys.forEach(dataKey => {
+          const newDataKey = deepClone(dataKey);
+          newDataKey.funcBody = null;
+          newDataKey.type = DataKeyType.alarm;
+          newDatasource.dataKeys.push(newDataKey);
+        });
+      }
     }
     return newDatasource;
-  }
-
-  private convertDataKeyFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor, config: WidgetConfig, dataKey: DataKey): DataKey {
-    const newDataKey = deepClone(dataKey);
-    newDataKey.funcBody = null;
-    if (widgetTypeDescriptor.type === widgetType.alarm) {
-      newDataKey.type = DataKeyType.alarm;
-    } else {
-      newDataKey.type = DataKeyType.timeseries;
-      newDataKey.name = newDataKey.label;
-    }
-    return newDataKey;
   }
 
   private validateAndUpdateState(state: DashboardState) {
