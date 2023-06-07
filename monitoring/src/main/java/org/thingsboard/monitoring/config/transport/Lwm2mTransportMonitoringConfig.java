@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.config.service;
+package org.thingsboard.monitoring.config.transport;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import org.thingsboard.monitoring.config.TransportType;
 
 @Component
-@ConditionalOnProperty(name = "monitoring.transports.mqtt.enabled", havingValue = "true")
-@ConfigurationProperties(prefix = "monitoring.transports.mqtt")
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class MqttTransportMonitoringConfig extends TransportMonitoringConfig {
-
-    private Integer qos;
+@ConditionalOnProperty(name = "monitoring.transports.lwm2m.enabled", havingValue = "true")
+@ConfigurationProperties(prefix = "monitoring.transports.lwm2m")
+public class Lwm2mTransportMonitoringConfig extends TransportMonitoringConfig {
 
     @Override
     public TransportType getTransportType() {
-        return TransportType.MQTT;
+        return TransportType.LWM2M;
     }
 
 }

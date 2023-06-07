@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.config.service;
+package org.thingsboard.monitoring.config.transport;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import org.thingsboard.monitoring.config.TransportType;
 
 @Component
 @ConditionalOnProperty(name = "monitoring.transports.http.enabled", havingValue = "true")

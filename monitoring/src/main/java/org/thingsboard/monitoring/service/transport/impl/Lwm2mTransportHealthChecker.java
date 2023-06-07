@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.transport.impl;
+package org.thingsboard.monitoring.service.transport.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.thingsboard.monitoring.client.Lwm2mClient;
-import org.thingsboard.monitoring.config.MonitoringTargetConfig;
-import org.thingsboard.monitoring.config.TransportType;
-import org.thingsboard.monitoring.config.service.Lwm2mTransportMonitoringConfig;
-import org.thingsboard.monitoring.transport.TransportHealthChecker;
+import org.thingsboard.monitoring.config.transport.Lwm2mTransportMonitoringConfig;
+import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
+import org.thingsboard.monitoring.config.transport.TransportType;
+import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 
 @Service
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -32,7 +32,7 @@ public class Lwm2mTransportHealthChecker extends TransportHealthChecker<Lwm2mTra
 
     private Lwm2mClient lwm2mClient;
 
-    protected Lwm2mTransportHealthChecker(Lwm2mTransportMonitoringConfig config, MonitoringTargetConfig target) {
+    protected Lwm2mTransportHealthChecker(Lwm2mTransportMonitoringConfig config, TransportMonitoringTarget target) {
         super(config, target);
     }
 

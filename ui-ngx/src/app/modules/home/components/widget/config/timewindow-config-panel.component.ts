@@ -31,7 +31,7 @@ export interface TimewindowConfigData {
 @Component({
   selector: 'tb-timewindow-config-panel',
   templateUrl: './timewindow-config-panel.component.html',
-  styleUrls: ['./widget-config.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

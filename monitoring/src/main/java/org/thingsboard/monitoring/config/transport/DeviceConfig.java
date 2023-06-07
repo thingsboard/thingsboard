@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.data;
+package org.thingsboard.monitoring.config.transport;
 
 import lombok.Data;
-import org.thingsboard.monitoring.config.TransportType;
+import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+
+import java.util.UUID;
 
 @Data
-public class TransportInfo {
+public class DeviceConfig {
 
-    private final TransportType transportType;
-    private final String url;
+    private UUID id;
+    private String name;
+    private DeviceCredentials credentials;
 
-    @Override
-    public String toString() {
-        return String.format("%s (%s)", transportType, url);
+    public void setId(String id) {
+        this.id = StringUtils.isNotEmpty(id) ? UUID.fromString(id) : null;
     }
 
 }

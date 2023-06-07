@@ -61,7 +61,7 @@
       </mat-form-field>
     </ng-template>
   </section>
-  <section fxLayout="column" fxLayoutAlign="stretch" fxFlex>
+  <section *ngIf="!hideDataKeys" fxLayout="column" fxLayoutAlign="stretch" fxFlex>
     <tb-data-keys class="tb-data-keys" fxFlex
                   [widgetType]="widgetType"
                   [datasourceType]="datasourceFormGroup.get('type').value"

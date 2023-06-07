@@ -1096,6 +1096,7 @@
     "datakey": {
         "settings": "Settings",
         "advanced": "Advanced",
+        "key": "Key",
         "label": "Label",
         "color": "Color",
         "units": "Special symbol to show next to value",
@@ -3348,6 +3349,7 @@
         "events": "Events",
         "search": "Search nodes",
         "open-node-library": "Open node library",
+        "close-node-library": "Close node library",
         "add": "Add rule node",
         "name": "Name",
         "name-required": "Name is required.",
@@ -4124,6 +4126,7 @@
         "title-tooltip": "Title Tooltip",
         "general-settings": "General settings",
         "display-title": "Display widget title",
+        "card-title": "Card title",
         "drop-shadow": "Drop shadow",
         "enable-fullscreen": "Enable fullscreen",
         "background-color": "Background color",
@@ -4178,6 +4181,7 @@
         "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?",
         "title-icon": "Title icon",
         "display-icon": "Display title icon",
+        "card-icon": "Card icon",
         "icon-color": "Icon color",
         "icon-size": "Icon size",
         "advanced-settings": "Advanced settings",
@@ -5176,7 +5180,11 @@
             "allow-alarms-ack": "Allow alarms acknowledgment",
             "allow-alarms-clear": "Allow alarms clear",
             "display-alarm-activity": "Display alarm activity",
-            "allow-alarms-assign": "Allow alarms assignment"
+            "allow-alarms-assign": "Allow alarms assignment",
+            "columns": "Columns",
+            "remove-column": "Remove column",
+            "add-column": "Add column",
+            "no-columns": "No columns configured"
         },
         "value-source": {
             "value-source": "Value source",
