@@ -349,6 +349,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
     attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
     const params = deepClone(this.ctx.stateController.getStateParams());
+    params.connector_logs = attribute;
     params.targetEntityParamName = "connector_logs";
     this.ctx.stateController.openState("connector_logs", params);
   }
