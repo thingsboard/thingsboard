@@ -46,7 +46,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 @Component({
   selector: 'tb-datasources',
   templateUrl: './datasources.component.html',
-  styleUrls: ['./datasources.component.scss', './widget-config.scss'],
+  styleUrls: ['./datasources.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -103,6 +103,10 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   @Input()
   @coerceBoolean()
   hideDataKeyDecimals = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeys = false;
 
   @Input()
   configMode: WidgetConfigMode;

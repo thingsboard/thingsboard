@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.transport.impl;
+package org.thingsboard.monitoring.service.transport.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -21,10 +21,10 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.thingsboard.monitoring.config.MonitoringTargetConfig;
-import org.thingsboard.monitoring.config.TransportType;
-import org.thingsboard.monitoring.config.service.HttpTransportMonitoringConfig;
-import org.thingsboard.monitoring.transport.TransportHealthChecker;
+import org.thingsboard.monitoring.config.transport.HttpTransportMonitoringConfig;
+import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
+import org.thingsboard.monitoring.config.transport.TransportType;
+import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 
 import java.time.Duration;
 
@@ -35,7 +35,7 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
 
     private RestTemplate restTemplate;
 
-    protected HttpTransportHealthChecker(HttpTransportMonitoringConfig config, MonitoringTargetConfig target) {
+    protected HttpTransportHealthChecker(HttpTransportMonitoringConfig config, TransportMonitoringTarget target) {
         super(config, target);
     }
 

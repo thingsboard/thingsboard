@@ -29,7 +29,7 @@ import { MatDialog } from '@angular/material/dialog';
 @Component({
   selector: 'tb-widget-actions-panel',
   templateUrl: './widget-actions-panel.component.html',
-  styleUrls: ['../../widget-config.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

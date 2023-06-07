@@ -81,8 +81,8 @@ import { FilterDialogComponent, FilterDialogData } from '@home/components/filter
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
-import Timeout = NodeJS.Timeout;
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
+import Timeout = NodeJS.Timeout;
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -96,7 +96,7 @@ const defaultSettingsForm = [
 @Component({
   selector: 'tb-widget-config',
   templateUrl: './widget-config.component.html',
-  styleUrls: ['./widget-config.component.scss', './config/widget-config.scss'],
+  styleUrls: ['./widget-config.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -142,6 +142,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   @Input()
   @coerceBoolean()
   hideToggleHeader = false;
+
+  @Input()
+  @coerceBoolean()
+  isAdd = false;
 
   @Input() disabled: boolean;
 
@@ -399,22 +403,22 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   writeValue(value: WidgetConfigComponentData): void {
     this.modelValue = value;
     this.widgetType = this.modelValue?.widgetType;
-    this.setupConfig();
+    this.setupConfig(this.isAdd);
   }
 
-  private setupConfig() {
+  private setupConfig(isAdd = false) {
     if (this.modelValue) {
       this.destroyBasicModeComponent();
       this.removeChangeSubscriptions();
       if (this.hasBasicModeDirective && this.widgetConfigMode === WidgetConfigMode.basic) {
-        this.setupBasicModeConfig();
+        this.setupBasicModeConfig(isAdd);
       } else {
         this.setupDefaultConfig();
       }
     }
   }
 
-  private setupBasicModeConfig() {
+  private setupBasicModeConfig(isAdd = false) {
     const componentType = basicWidgetConfigComponentsMap[this.modelValue.basicModeDirective];
     if (!componentType) {
       this.basicModeDirectiveError = this.translate.instant('widget-config.settings-component-not-found',
@@ -425,6 +429,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         this.createBasicModeComponentTimeout = null;
         this.basicModeComponentRef = this.basicModeContainer.createComponent(factory);
         this.basicModeComponent = this.basicModeComponentRef.instance;
+        this.basicModeComponent.isAdd = isAdd;
         this.basicModeComponent.widgetConfig = this.modelValue;
         this.basicModeComponentChangeSubscription = this.basicModeComponent.widgetConfigChanged.subscribe((data) => {
           this.modelValue = data;
@@ -826,7 +831,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       const entityFilter = singleEntityFilterFromDeviceId(deviceId);
       return this.entityService.getEntityKeysByEntityFilter(
         entityFilter,
-        dataKeyTypes,
+        dataKeyTypes, [EntityType.DEVICE],
         {ignoreLoading: true, ignoreErrors: true}
       ).pipe(
         catchError(() => of([]))
@@ -837,7 +842,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     return this.aliasController.getAliasInfo(entityAliasId).pipe(
       mergeMap((aliasInfo) => this.entityService.getEntityKeysByEntityFilter(
           aliasInfo.entityFilter,
-          dataKeyTypes,
+          dataKeyTypes,  [],
           {ignoreLoading: true, ignoreErrors: true}
         ).pipe(
           catchError(() => of([]))

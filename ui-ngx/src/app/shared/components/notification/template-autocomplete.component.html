@@ -29,6 +29,14 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <button *ngIf="selectTemplateFormGroup.get('templateName').value && !disabled && allowEdit"
+          type="button"
+          matSuffix mat-icon-button aria-label="Edit"
+          matTooltip="{{ 'notification.edit-notification-template' | translate }}"
+          matTooltipPosition="above"
+          (click)="editTemplate($event)">
+    <mat-icon class="material-icons">edit</mat-icon>
+  </button>
   <button #createTemplateButton
           mat-button color="primary" matSuffix
           *ngIf="allowCreate && !selectTemplateFormGroup.get('templateName').value && !disabled"

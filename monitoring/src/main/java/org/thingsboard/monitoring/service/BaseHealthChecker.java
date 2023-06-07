@@ -13,34 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.transport;
+package org.thingsboard.monitoring.service;
 
-import com.fasterxml.jackson.databind.node.TextNode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.client.WsClient;
-import org.thingsboard.monitoring.config.MonitoringTargetConfig;
-import org.thingsboard.monitoring.config.TransportType;
-import org.thingsboard.monitoring.config.service.TransportMonitoringConfig;
+import org.thingsboard.monitoring.config.MonitoringConfig;
+import org.thingsboard.monitoring.config.MonitoringTarget;
 import org.thingsboard.monitoring.data.Latencies;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
-import org.thingsboard.monitoring.data.TransportFailureException;
-import org.thingsboard.monitoring.data.TransportInfo;
-import org.thingsboard.monitoring.service.MonitoringReporter;
+import org.thingsboard.monitoring.data.ServiceFailureException;
 import org.thingsboard.monitoring.util.TbStopWatch;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.UUID;
 
+@RequiredArgsConstructor
 @Slf4j
-public abstract class TransportHealthChecker<C extends TransportMonitoringConfig> {
+public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends MonitoringTarget> {
 
     protected final C config;
-    protected final MonitoringTargetConfig target;
-    private TransportInfo transportInfo;
+    protected final T target;
+
+    private Object info;
 
     @Autowired
     private MonitoringReporter reporter;
@@ -51,73 +50,66 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
     public static final String TEST_TELEMETRY_KEY = "testData";
 
-    protected TransportHealthChecker(C config, MonitoringTargetConfig target) {
-        this.config = config;
-        this.target = target;
-    }
-
     @PostConstruct
     private void init() {
-        transportInfo = new TransportInfo(getTransportType(), target.getBaseUrl());
+        info = getInfo();
     }
 
+    protected abstract void initialize(TbClient tbClient);
+
     public final void check(WsClient wsClient) {
-        log.debug("[{}] Checking", transportInfo);
+        log.debug("[{}] Checking", info);
         try {
             wsClient.registerWaitForUpdate();
 
             String testValue = UUID.randomUUID().toString();
             String testPayload = createTestPayload(testValue);
             try {
-                initClientAndSendPayload(testPayload);
-                log.trace("[{}] Sent test payload ({})", transportInfo, testPayload);
+                initClient();
+                stopWatch.start();
+                sendTestPayload(testPayload);
+                reporter.reportLatency(Latencies.request(getKey()), stopWatch.getTime());
+                log.trace("[{}] Sent test payload ({})", info, testPayload);
             } catch (Throwable e) {
-                throw new TransportFailureException(e);
+                throw new ServiceFailureException(e);
             }
 
-            log.trace("[{}] Waiting for WS update", transportInfo);
+            log.trace("[{}] Waiting for WS update", info);
             checkWsUpdate(wsClient, testValue);
 
-            reporter.serviceIsOk(transportInfo);
+            reporter.serviceIsOk(info);
             reporter.serviceIsOk(MonitoredServiceKey.GENERAL);
-        } catch (TransportFailureException transportFailureException) {
-            reporter.serviceFailure(transportInfo, transportFailureException);
+        } catch (ServiceFailureException serviceFailureException) {
+            reporter.serviceFailure(info, serviceFailureException);
         } catch (Exception e) {
             reporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
         }
     }
 
-    private void initClientAndSendPayload(String payload) throws Throwable {
-        initClient();
-        stopWatch.start();
-        sendTestPayload(payload);
-        reporter.reportLatency(Latencies.transportRequest(getTransportType()), stopWatch.getTime());
-    }
-
     private void checkWsUpdate(WsClient wsClient, String testValue) {
         stopWatch.start();
         wsClient.waitForUpdate(resultCheckTimeoutMs);
-        log.trace("[{}] Waited for WS update. Last WS msg: {}", transportInfo, wsClient.lastMsg);
-        Object update = wsClient.getTelemetryUpdate(target.getDevice().getId(), TEST_TELEMETRY_KEY);
+        log.trace("[{}] Waited for WS update. Last WS msg: {}", info, wsClient.lastMsg);
+        Object update = wsClient.getTelemetryUpdate(target.getDeviceId(), TEST_TELEMETRY_KEY);
         if (update == null) {
-            throw new TransportFailureException("No WS update arrived within " + resultCheckTimeoutMs + " ms");
+            throw new ServiceFailureException("No WS update arrived within " + resultCheckTimeoutMs + " ms");
         } else if (!update.toString().equals(testValue)) {
-            throw new TransportFailureException("Was expecting value " + testValue + " but got " + update);
+            throw new ServiceFailureException("Was expecting value " + testValue + " but got " + update);
         }
         reporter.reportLatency(Latencies.WS_UPDATE, stopWatch.getTime());
     }
 
-    protected String createTestPayload(String testValue) {
-        return JacksonUtil.newObjectNode().set(TEST_TELEMETRY_KEY, new TextNode(testValue)).toString();
-    }
 
     protected abstract void initClient() throws Exception;
+
+    protected abstract String createTestPayload(String testValue);
 
     protected abstract void sendTestPayload(String payload) throws Exception;
 
     @PreDestroy
     protected abstract void destroyClient() throws Exception;
 
-    protected abstract TransportType getTransportType();
+    protected abstract Object getInfo();
+    protected abstract String getKey();
 
 }

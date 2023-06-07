@@ -192,6 +192,7 @@ import { ColorPickerComponent } from '@shared/components/color-picker/color-pick
 import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
 import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
 import { ToggleHeaderComponent } from '@shared/components/toggle-header.component';
+import { RuleChainSelectComponent } from '@shared/components/rule-chain/rule-chain-select.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -362,7 +363,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     GtMdLgShowHideDirective,
     ColorPickerComponent,
     ResourceAutocompleteComponent,
-    ToggleHeaderComponent
+    ToggleHeaderComponent,
+    RuleChainSelectComponent
   ],
   imports: [
     CommonModule,
@@ -589,7 +591,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     GtMdLgShowHideDirective,
     ColorPickerComponent,
     ResourceAutocompleteComponent,
-    ToggleHeaderComponent
+    ToggleHeaderComponent,
+    RuleChainSelectComponent
   ]
 })
 export class SharedModule { }

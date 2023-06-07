@@ -300,6 +300,7 @@ import * as QueueFormComponent from '@home/components/queue/queue-form.component
 import * as AssetProfileComponent from '@home/components/profile/asset-profile.component';
 import * as AssetProfileDialogComponent from '@home/components/profile/asset-profile-dialog.component';
 import * as AssetProfileAutocompleteComponent from '@home/components/profile/asset-profile-autocomplete.component';
+import * as RuleChainSelectComponent from '@shared/components/rule-chain/rule-chain-select.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 
@@ -418,6 +419,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/quick-time-interval.component': QuickTimeIntervalComponent,
     '@shared/components/dashboard-select.component': DashboardSelectComponent,
     '@shared/components/dashboard-select-panel.component': DashboardSelectPanelComponent,
+    '@shared/components/rule-chain/rule-chain-select.component': RuleChainSelectComponent,
     '@shared/components/time/datetime-period.component': DatetimePeriodComponent,
     '@shared/components/time/datetime.component': DatetimeComponent,
     '@shared/components/time/timezone-select.component': TimezoneSelectComponent,

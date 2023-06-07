@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.config.service;
+package org.thingsboard.monitoring.config;
 
-import lombok.Data;
-import org.thingsboard.monitoring.config.MonitoringTargetConfig;
-import org.thingsboard.monitoring.config.TransportType;
+import java.util.UUID;
 
-import java.util.List;
+public interface MonitoringTarget {
 
-@Data
-public abstract class TransportMonitoringConfig {
-
-    private int requestTimeoutMs;
-
-    private List<MonitoringTargetConfig> targets;
-
-    public abstract TransportType getTransportType();
+    UUID getDeviceId();
 
 }
