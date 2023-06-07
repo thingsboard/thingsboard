@@ -232,7 +232,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         }
 
         client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
-        CoapTestCallback callbackCoap = new CoapTestCallback(1);
+        CoapTestCallback callbackCoap = new CoapTestCallback();
 
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
         String awaitAlias = "await Json Test Subscribe To AttributesUpdates (client.getObserveRelation)";
@@ -279,7 +279,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         }
 
         client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
-        CoapTestCallback callbackCoap = new CoapTestCallback(1);
+        CoapTestCallback callbackCoap = new CoapTestCallback();
 
         String awaitAlias = "await Proto Test Subscribe To Attributes Updates (add attributes)";
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
