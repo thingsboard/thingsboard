@@ -15,6 +15,13 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="outline" class="tb-inline-field center" subscriptSizing="dynamic">
-  <input matInput [formControl]="unitsFormControl" placeholder="{{ 'widget-config.set' | translate }}">
-</mat-form-field>
+<mat-select fxFlex
+            class="tb-rule-chain-select"
+            [required]="required"
+            [disabled]="disabled"
+            [(ngModel)]="ruleChainId"
+            (ngModelChange)="ruleChainIdChanged()">
+  <mat-option *ngFor="let ruleChain of ruleChains$ | async" [value]="ruleChain.id.id">
+    {{ruleChain.name}}
+  </mat-option>
+</mat-select>

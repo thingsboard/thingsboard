@@ -20,7 +20,7 @@ import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilde
 @Component({
   selector: 'tb-widget-units',
   templateUrl: './widget-units.component.html',
-  styleUrls: ['./widget-config.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -43,6 +43,7 @@ export class WidgetUnitsComponent implements ControlValueAccessor, OnInit {
 
   ngOnInit() {
     this.unitsFormControl = this.fb.control('', []);
+    this.unitsFormControl.valueChanges.subscribe(val => this.propagateChange(val));
   }
 
   writeValue(units?: string): void {

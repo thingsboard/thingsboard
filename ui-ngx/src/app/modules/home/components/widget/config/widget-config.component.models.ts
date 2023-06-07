@@ -23,12 +23,15 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
-import { WidgetConfigMode } from '@shared/models/widget.models';
+import { DataKey, DatasourceType, KeyInfo, WidgetConfigMode } from '@shared/models/widget.models';
+import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export type WidgetConfigCallbacks = DatasourceCallbacks & WidgetActionCallbacks;
 
 export interface IBasicWidgetConfigComponent {
-
+  isAdd: boolean;
   widgetConfig: WidgetConfigComponentData;
   widgetConfigChanged: Observable<WidgetConfigComponentData>;
   validateConfig(): boolean;
@@ -39,6 +42,8 @@ export interface IBasicWidgetConfigComponent {
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class BasicWidgetConfigComponent extends PageComponent implements
   IBasicWidgetConfigComponent, OnInit, AfterViewInit {
+
+  isAdd = false;
 
   basicMode = WidgetConfigMode.basic;
 
@@ -56,7 +61,8 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
   widgetConfigChangedEmitter = new EventEmitter<WidgetConfigComponentData>();
   widgetConfigChanged = this.widgetConfigChangedEmitter.asObservable();
 
-  protected constructor(@Inject(Store) protected store: Store<AppState>) {
+  protected constructor(@Inject(Store) protected store: Store<AppState>,
+                        protected widgetConfigComponent: WidgetConfigComponent) {
     super(store);
   }
 
@@ -65,12 +71,15 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
   ngAfterViewInit(): void {
     setTimeout(() => {
       if (!this.validateConfig()) {
-        this.onConfigChanged(this.prepareOutputConfig(this.configForm().value));
+        this.onConfigChanged(this.prepareOutputConfig(this.configForm().getRawValue()));
       }
     }, 0);
   }
 
   protected setupConfig(widgetConfig: WidgetConfigComponentData) {
+    if (this.isAdd) {
+      this.setupDefaults(widgetConfig);
+    }
     this.onConfigSet(widgetConfig);
     this.updateValidators(false);
     for (const trigger of this.validatorTriggers()) {
@@ -83,10 +92,12 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
         this.updateValidators(true, trigger);
       });
     }
-    this.configForm().valueChanges.subscribe((updated: any) => {
-      this.onConfigChanged(this.prepareOutputConfig(updated));
+    this.configForm().valueChanges.subscribe(() => {
+      this.onConfigChanged(this.prepareOutputConfig(this.configForm().getRawValue()));
     });
   }
+
+  protected setupDefaults(configData: WidgetConfigComponentData) {}
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
   }
@@ -106,6 +117,41 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
 
   public validateConfig(): boolean {
     return this.configForm().valid;
+  }
+
+  protected setupDefaultDatasource(configData: WidgetConfigComponentData, keys?: DataKey[]) {
+    let datasources = configData.config.datasources;
+    if (!datasources || !datasources.length) {
+      datasources = [
+        {
+          type: DatasourceType.device,
+          dataKeys: []
+        }
+      ];
+      configData.config.datasources = datasources;
+    }
+    let dataKeys = datasources[0].dataKeys;
+    if (!dataKeys) {
+      dataKeys = [];
+      datasources[0].dataKeys = dataKeys;
+    }
+    if (keys && keys.length) {
+      dataKeys.length = 0;
+      keys.forEach(key => {
+        const dataKey =
+          this.widgetConfigComponent.widgetConfigCallbacks.generateDataKey(key.name, key.type, configData.dataKeySettingsSchema);
+        if (key.label) {
+          dataKey.label = key.label;
+        }
+        if (key.units) {
+          dataKey.units = key.units;
+        }
+        if (isDefinedAndNotNull(key.decimals)) {
+          dataKey.decimals = key.decimals;
+        }
+        dataKeys.push(dataKey);
+      });
+    }
   }
 
   protected abstract configForm(): UntypedFormGroup;
