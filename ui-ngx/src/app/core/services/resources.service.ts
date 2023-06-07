@@ -30,6 +30,9 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
 import { isObject } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
+import { select, Store } from '@ngrx/store';
+import { selectIsAuthenticated } from '@core/auth/auth.selectors';
+import { AppState } from '@core/core.state';
 
 declare const System;
 
@@ -50,9 +53,12 @@ export class ResourcesService {
   private anchor = this.document.getElementsByTagName('head')[0] || this.document.getElementsByTagName('body')[0];
 
   constructor(@Inject(DOCUMENT) private readonly document: any,
+              protected store: Store<AppState>,
               private compiler: Compiler,
               private http: HttpClient,
-              private injector: Injector) {}
+              private injector: Injector) {
+    this.store.pipe(select(selectIsAuthenticated)).subscribe(() => this.clearCache());
+  }
 
   public loadResource(url: string): Observable<any> {
     if (this.loadedResources[url]) {
@@ -269,5 +275,21 @@ export class ResourcesService {
         }
       };
     }
+  }
+
+  private deleteFromSystemJS(keys: string[]) {
+    keys.forEach(item => {
+      if (System.has(item)) {
+        System.delete(item);
+      }
+    });
+  }
+
+  private clearCache() {
+    this.deleteFromSystemJS(Object.keys(this.loadedModules));
+    this.loadedModules = {};
+
+    this.deleteFromSystemJS(Object.keys(this.loadedModulesAndFactories));
+    this.loadedModulesAndFactories = {};
   }
 }
