@@ -601,6 +601,13 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return mockMvc.perform(getRequest);
     }
 
+    protected ResultActions doGet(String urlTemplate, HttpHeaders httpHeaders, Object... urlVariables) throws Exception {
+        MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
+        getRequest.headers(httpHeaders);
+        setJwtToken(getRequest);
+        return mockMvc.perform(getRequest);
+    }
+
     protected <T> T doGet(String urlTemplate, Class<T> responseClass, Object... urlVariables) throws Exception {
         return readResponse(doGet(urlTemplate, urlVariables).andExpect(status().isOk()), responseClass);
     }

@@ -119,7 +119,7 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource/pkcs12/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadPkcs12ResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
-                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, HttpHeaders headers) throws ThingsboardException {
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader HttpHeaders headers) throws ThingsboardException {
         return downloadResourceIfChanged(ResourceType.PKCS_12, strResourceId, headers);
     }
 
@@ -128,7 +128,7 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource/js/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadJsResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
-                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, HttpHeaders headers) throws ThingsboardException {
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader HttpHeaders headers) throws ThingsboardException {
         return downloadResourceIfChanged(ResourceType.JS_MODULE, strResourceId, headers);
     }
 
@@ -203,7 +203,7 @@ public class TbResourceController extends BaseController {
         TbResourceInfoFilter.TbResourceInfoFilterBuilder filter = TbResourceInfoFilter.builder();
         filter.tenantId(getTenantId());
         if (StringUtils.isNotEmpty(resourceType)){
-            filter.resourceType(ResourceType.valueOf(resourceType));
+            filter.resourceType(ResourceType.getResourceByType(resourceType));
         }
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(resourceService.findTenantResourcesByTenantId(filter.build(), pageLink));
@@ -283,7 +283,7 @@ public class TbResourceController extends BaseController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
                 .header("x-filename", tbResource.getFileName())
                 .contentLength(resource.contentLength())
-                .header("Content-Type", type.mediaType)
+                .header("Content-Type", type.getMediaType())
                 .cacheControl(CacheControl.noCache())
                 .eTag(tbResource.getHashCode())
                 .body(resource);

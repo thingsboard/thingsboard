@@ -29,6 +29,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_HASH_CODE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
@@ -57,6 +58,9 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
+    @Column(name = RESOURCE_HASH_CODE_COLUMN)
+    private String hashCode;
+
     public TbResourceInfoEntity() {
     }
 
@@ -70,6 +74,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         this.resourceType = resource.getResourceType().name();
         this.resourceKey = resource.getResourceKey();
         this.searchText = resource.getSearchText();
+        this.hashCode = resource.getHashCode();
     }
 
     @Override
@@ -81,6 +86,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceKey(resourceKey);
         resource.setSearchText(searchText);
+        resource.setHashCode(hashCode);
         return resource;
     }
 }

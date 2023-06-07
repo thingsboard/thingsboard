@@ -21,11 +21,28 @@ public enum ResourceType {
     PKCS_12("pkcs12", "application/x-pkcs12"),
     JS_MODULE("js", "application/javascript");
 
-    public String type;
-    public String mediaType;
+    private final String type;
+    private final String mediaType;
 
     ResourceType(String type, String mediaType) {
         this.type = type;
         this.mediaType = mediaType;
+    }
+
+    public static ResourceType getResourceByType(String type) {
+        for(ResourceType resourceType : values()) {
+            if (resourceType.getType().equalsIgnoreCase(type)) {
+                return resourceType;
+            }
+        }
+        throw new IllegalArgumentException();
+    }
+
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    public String getType() {
+        return type;
     }
 }
