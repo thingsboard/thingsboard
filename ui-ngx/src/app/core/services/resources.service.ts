@@ -27,6 +27,9 @@ import { DOCUMENT } from '@angular/common';
 import { forkJoin, Observable, ReplaySubject, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { IModulesMap } from '@modules/common/modules-map.models';
+import { TbResourceId } from '@shared/models/id/tb-resource-id';
+import { isObject } from '@core/utils';
+import { AuthService } from '@core/auth/auth.service';
 
 declare const System;
 
@@ -69,16 +72,18 @@ export class ResourcesService {
     return this.loadResourceByType(fileType, url);
   }
 
-  public loadFactories(url: string, modulesMap: IModulesMap): Observable<ModulesWithFactories> {
+  public loadFactories(resourceId: string | TbResourceId, modulesMap: IModulesMap): Observable<ModulesWithFactories> {
+    const url = this.getDownloadUrl(resourceId);
     if (this.loadedModulesAndFactories[url]) {
       return this.loadedModulesAndFactories[url].asObservable();
     }
     modulesMap.init();
+    const meta = this.getMetaInfo(resourceId);
     const subject = new ReplaySubject<ModulesWithFactories>();
     this.loadedModulesAndFactories[url] = subject;
     import('@angular/compiler').then(
       () => {
-        System.import(url).then(
+        System.import(url, undefined, meta).then(
           (module) => {
             const modules = this.extractNgModules(module);
             if (modules.length) {
@@ -123,16 +128,18 @@ export class ResourcesService {
     return subject.asObservable();
   }
 
-  public loadModules(url: string, modulesMap: IModulesMap): Observable<Type<any>[]> {
+  public loadModules(resourceId: string | TbResourceId, modulesMap: IModulesMap): Observable<Type<any>[]> {
+    const url = this.getDownloadUrl(resourceId);
     if (this.loadedModules[url]) {
       return this.loadedModules[url].asObservable();
     }
     modulesMap.init();
+    const meta = this.getMetaInfo(resourceId);
     const subject = new ReplaySubject<Type<any>[]>();
     this.loadedModules[url] = subject;
     import('@angular/compiler').then(
       () => {
-        System.import(url).then(
+        System.import(url, undefined, meta).then(
           (module) => {
             try {
               let modules;
@@ -245,5 +252,22 @@ export class ResourcesService {
     };
     this.anchor.appendChild(el);
     return subject.asObservable();
+  }
+
+  private getDownloadUrl(resourceId: string | TbResourceId): string {
+    if (isObject(resourceId)) {
+      return `/api/resource/js/${(resourceId as TbResourceId).id}/download`;
+    }
+    return resourceId as string;
+  }
+
+  private getMetaInfo(resourceId: string | TbResourceId): object {
+    if (isObject(resourceId)) {
+      return {
+        additionalHeaders: {
+          'X-Authorization': `Bearer ${AuthService.getJwtToken()}`
+        }
+      };
+    }
   }
 }

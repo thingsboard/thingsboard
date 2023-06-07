@@ -3252,6 +3252,7 @@
     },
     "resource": {
         "add": "Add Resource",
+        "all-types": "All",
         "copyId": "Copy resource Id",
         "delete": "Delete resource",
         "delete-resource-text": "Be careful, after the confirmation the resource will become unrecoverable.",

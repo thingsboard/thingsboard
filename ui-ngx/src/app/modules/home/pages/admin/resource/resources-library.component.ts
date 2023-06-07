@@ -57,7 +57,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   ngOnInit() {
     super.ngOnInit();
     this.entityForm.get('resourceType').valueChanges.pipe(
-      startWith(ResourceType.LWM2M_MODEL),
+      startWith(ResourceType.JS_MODULE),
       filter(() => this.isAdd),
       takeUntil(this.destroy$)
     ).subscribe((type) => {
@@ -91,7 +91,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   buildForm(entity: Resource): FormGroup {
     return this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
-      resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL, Validators.required],
+      resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.JS_MODULE, Validators.required],
       fileName: [entity ? entity.fileName : null, Validators.required],
       data: [entity ? entity.data : null, Validators.required]
     });

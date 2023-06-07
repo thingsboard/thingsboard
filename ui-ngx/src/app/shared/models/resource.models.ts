@@ -52,7 +52,7 @@ export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
   ]
 );
 
-export interface ResourceInfo extends BaseData<TbResourceId> {
+export interface ResourceInfo extends Omit<BaseData<TbResourceId>, 'name' | 'label'> {
   tenantId?: TenantId;
   resourceKey?: string;
   title?: string;
@@ -62,6 +62,7 @@ export interface ResourceInfo extends BaseData<TbResourceId> {
 export interface Resource extends ResourceInfo {
   data: string;
   fileName: string;
+  name?: string;
 }
 
 export interface Resources extends ResourceInfo {

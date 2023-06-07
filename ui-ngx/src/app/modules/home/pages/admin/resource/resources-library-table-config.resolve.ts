@@ -36,6 +36,7 @@ import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { map } from 'rxjs/operators';
+import { ResourcesTableHeaderComponent } from '@home/pages/admin/resource/resources-table-header.component';
 
 @Injectable()
 export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableConfig<Resource, PageLink, ResourceInfo>> {
@@ -53,6 +54,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.entityComponent = ResourcesLibraryComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.TB_RESOURCE);
     this.config.entityResources = entityTypeResources.get(EntityType.TB_RESOURCE);
+    this.config.headerComponent = ResourcesTableHeaderComponent;
 
     this.config.entityTitle = (resource) => resource ?
       resource.title : '';
@@ -81,7 +83,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.deleteEntitiesTitle = count => this.translate.instant('resource.delete-resources-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('resource.delete-resources-text');
 
-    this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink);
+    this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink, this.config.componentsData.resourceType);
     this.config.loadEntity = id => this.resourceService.getResource(id.id);
     this.config.saveEntity = resource => this.saveResource(resource);
     this.config.deleteEntity = id => this.resourceService.deleteResource(id.id);
@@ -110,6 +112,9 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
 
   resolve(): EntityTableConfig<Resource, PageLink, ResourceInfo> {
     this.config.tableTitle = this.translate.instant('resource.resources-library');
+    this.config.componentsData = {
+      resourceType: ''
+    };
     const authUser = getCurrentAuthUser(this.store);
     this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);

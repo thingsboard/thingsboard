@@ -614,6 +614,13 @@ class ModulesMap implements IModulesMap {
       for (const moduleId of Object.keys(this.modulesMap)) {
         System.set('app:' + moduleId, this.modulesMap[moduleId]);
       }
+      System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download');
+      System.constructor.prototype.fetch = (url, options: RequestInit & {meta?: any}) => {
+        if (options?.meta?.additionalHeaders) {
+          options.headers = { ...options.headers, ...options.meta.additionalHeaders };
+        }
+        return fetch(url, options);
+      };
       this.initialized = true;
     }
   }
