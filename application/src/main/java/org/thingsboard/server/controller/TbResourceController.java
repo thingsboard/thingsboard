@@ -110,8 +110,8 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource/lwm2m/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadLwm2mResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
-                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader HttpHeaders headers) throws ThingsboardException {
-        return downloadResourceIfChanged(ResourceType.LWM2M_MODEL, strResourceId, headers);
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
+        return downloadResourceIfChanged(ResourceType.LWM2M_MODEL, strResourceId, etag);
     }
 
     @ApiOperation(value = "Download PKCS_12 Resource (downloadPkcs12ResourceIfChanged)", notes = "Download Resource based on the provided Resource Id or return 304 status code if resource was not changed." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -119,8 +119,8 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource/pkcs12/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadPkcs12ResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
-                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader HttpHeaders headers) throws ThingsboardException {
-        return downloadResourceIfChanged(ResourceType.PKCS_12, strResourceId, headers);
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
+        return downloadResourceIfChanged(ResourceType.PKCS_12, strResourceId, etag);
     }
 
     @ApiOperation(value = "Download JKS Resource (downloadJksResourceIfChanged)", notes = "Download Resource based on the provided Resource Id or return 304 status code if resource was not changed." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -128,17 +128,17 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource/jks/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadJksResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
-                                                                                             @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader HttpHeaders headers) throws ThingsboardException {
-        return downloadResourceIfChanged(ResourceType.JKS, strResourceId, headers);
+                                                                                             @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
+        return downloadResourceIfChanged(ResourceType.JKS, strResourceId, etag);
     }
 
     @ApiOperation(value = "Download JS Resource (downloadJsResourceIfChanged)", notes = "Download Resource based on the provided Resource Id or return 304 status code if resource was not changed." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/resource/js/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadJsResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
-                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader HttpHeaders headers) throws ThingsboardException {
-        return downloadResourceIfChanged(ResourceType.JS_MODULE, strResourceId, headers);
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
+        return downloadResourceIfChanged(ResourceType.JS_MODULE, strResourceId, etag);
     }
 
     @ApiOperation(value = "Get Resource Info (getResourceInfoById)",
@@ -271,21 +271,20 @@ public class TbResourceController extends BaseController {
         tbResourceService.delete(tbResource, getCurrentUser());
     }
 
-    private ResponseEntity<org.springframework.core.io.Resource> downloadResourceIfChanged(ResourceType type, String strResourceId, HttpHeaders headers) throws ThingsboardException {
+    private ResponseEntity<org.springframework.core.io.Resource> downloadResourceIfChanged(ResourceType type, String strResourceId, String etag) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
-        TbResourceInfo tbResourceInfo = checkResourceInfoId(resourceId, Operation.READ);
 
-        List<String> ifNoneMatchHeaders = headers.getIfNoneMatch();
-        if (!ifNoneMatchHeaders.isEmpty()) {
-            if (ifNoneMatchHeaders.contains(tbResourceInfo.getHashCode())) {
+        if (etag != null) {
+            TbResourceInfo tbResourceInfo = checkResourceInfoId(resourceId, Operation.READ);
+            if (etag.equals(tbResourceInfo.getHashCode())) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
-                        .eTag(tbResourceInfo.getHashCode()).build();
+                        .eTag(tbResourceInfo.getHashCode())
+                        .build();
             }
         }
 
-        SecurityUser currentUser = getCurrentUser();
-        TbResource tbResource = resourceService.findResourceById(currentUser.getTenantId(), resourceId);
+        TbResource tbResource = checkResourceId(resourceId, Operation.READ);
         ByteArrayResource resource = new ByteArrayResource(Base64.getDecoder().decode(tbResource.getData().getBytes()));
 
         return ResponseEntity.ok()
