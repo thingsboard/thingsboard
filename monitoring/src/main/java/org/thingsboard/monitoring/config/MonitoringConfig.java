@@ -15,20 +15,10 @@
  */
 package org.thingsboard.monitoring.config;
 
-import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
+import java.util.List;
 
-import java.util.UUID;
+public interface MonitoringConfig<T extends MonitoringTarget> {
 
-@Data
-public class DeviceConfig {
-
-    private UUID id;
-    private DeviceCredentials credentials;
-
-    public void setId(String id) {
-        this.id = StringUtils.isNotEmpty(id) ? UUID.fromString(id) : null;
-    }
+    List<T> getTargets();
 
 }

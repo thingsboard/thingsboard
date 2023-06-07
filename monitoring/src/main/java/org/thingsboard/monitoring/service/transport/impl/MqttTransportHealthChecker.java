@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.transport.impl;
+package org.thingsboard.monitoring.service.transport.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
@@ -25,10 +25,10 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.thingsboard.monitoring.config.MonitoringTargetConfig;
-import org.thingsboard.monitoring.config.TransportType;
-import org.thingsboard.monitoring.config.service.MqttTransportMonitoringConfig;
-import org.thingsboard.monitoring.transport.TransportHealthChecker;
+import org.thingsboard.monitoring.config.transport.MqttTransportMonitoringConfig;
+import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
+import org.thingsboard.monitoring.config.transport.TransportType;
+import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -39,7 +39,7 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
 
     private static final String DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
 
-    protected MqttTransportHealthChecker(MqttTransportMonitoringConfig config, MonitoringTargetConfig target) {
+    protected MqttTransportHealthChecker(MqttTransportMonitoringConfig config, TransportMonitoringTarget target) {
         super(config, target);
     }
 

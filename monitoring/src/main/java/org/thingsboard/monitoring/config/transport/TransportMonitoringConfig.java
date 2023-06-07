@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.config;
+package org.thingsboard.monitoring.config.transport;
 
 import lombok.Data;
+import org.thingsboard.monitoring.config.MonitoringConfig;
+
+import java.util.List;
 
 @Data
-public class MonitoringTargetConfig {
+public abstract class TransportMonitoringConfig implements MonitoringConfig<TransportMonitoringTarget> {
 
-    private String baseUrl;
-    private DeviceConfig device;
+    private int requestTimeoutMs;
+
+    private List<TransportMonitoringTarget> targets;
+
+    public abstract TransportType getTransportType();
 
 }
