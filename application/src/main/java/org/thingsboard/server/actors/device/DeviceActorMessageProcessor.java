@@ -594,19 +594,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             boolean delivered = requestMd.isDelivered();
             boolean hasError = StringUtils.isNotEmpty(responseMsg.getError());
             try {
-                String payload;
-                if (hasError) {
-                    payload = responseMsg.getError();
-                } else if (delivered) {
-                    payload = responseMsg.getPayload();
-                } else {
-                    payload = "Received response for undelivered RPC: " + responseMsg.getPayload();
-                }
+                String payload = hasError ? responseMsg.getError() : responseMsg.getPayload();
                 systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(
-                        new FromDeviceRpcResponse(toDeviceRequestMsg.getId(),
-                                payload, null));
+                        new FromDeviceRpcResponse(toDeviceRequestMsg.getId(), payload, null));
                 if (toDeviceRequestMsg.isPersisted()) {
-                    RpcStatus status = hasError || !delivered ? RpcStatus.FAILED : RpcStatus.SUCCESSFUL;
+                    RpcStatus status = hasError ? RpcStatus.FAILED : RpcStatus.SUCCESSFUL;
                     JsonNode response;
                     try {
                         response = JacksonUtil.toJsonNode(payload);
