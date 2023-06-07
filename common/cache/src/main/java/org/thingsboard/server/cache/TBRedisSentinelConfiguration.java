@@ -19,35 +19,44 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisClusterConfiguration;
+import org.springframework.data.redis.connection.RedisSentinelConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 
 @Configuration
 @ConditionalOnMissingBean(TbCaffeineCacheConfiguration.class)
-@ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "cluster")
-public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
+@ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "sentinel")
+public class TBRedisSentinelConfiguration extends TBRedisCacheConfiguration {
 
-    @Value("${redis.cluster.nodes:}")
-    private String clusterNodes;
+    @Value("${redis.sentinel.master:}")
+    private String master;
 
-    @Value("${redis.cluster.max-redirects:12}")
-    private Integer maxRedirects;
+    @Value("${redis.sentinel.sentinels:}")
+    private String sentinels;
 
-    @Value("${redis.cluster.useDefaultPoolConfig:true}")
+    @Value("${redis.sentinel.password:}")
+    private String sentinelPassword;
+
+    @Value("${redis.sentinel.useDefaultPoolConfig:true}")
     private boolean useDefaultPoolConfig;
+
+    @Value("${redis.db:}")
+    private Integer database;
 
     @Value("${redis.password:}")
     private String password;
 
     public JedisConnectionFactory loadFactory() {
-        RedisClusterConfiguration clusterConfiguration = new RedisClusterConfiguration();
-        clusterConfiguration.setClusterNodes(getNodes(clusterNodes));
-        clusterConfiguration.setMaxRedirects(maxRedirects);
-        clusterConfiguration.setPassword(password);
+        RedisSentinelConfiguration redisSentinelConfiguration = new RedisSentinelConfiguration();
+        redisSentinelConfiguration.setMaster(master);
+        redisSentinelConfiguration.setSentinels(getNodes(sentinels));
+        redisSentinelConfiguration.setSentinelPassword(sentinelPassword);
+        redisSentinelConfiguration.setPassword(password);
+        redisSentinelConfiguration.setDatabase(database);
         if (useDefaultPoolConfig) {
-            return new JedisConnectionFactory(clusterConfiguration);
+            return new JedisConnectionFactory(redisSentinelConfiguration);
         } else {
-            return new JedisConnectionFactory(clusterConfiguration, buildPoolConfig());
+            return new JedisConnectionFactory(redisSentinelConfiguration, buildPoolConfig());
         }
     }
+
 }
