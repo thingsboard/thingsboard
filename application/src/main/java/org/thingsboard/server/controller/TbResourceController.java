@@ -105,7 +105,7 @@ public class TbResourceController extends BaseController {
                 .body(resource);
     }
 
-    @ApiOperation(value = "Download Resource (downloadResource)", notes = "Download Resource based on the provided Resource Id." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Download LWM2M Resource (downloadLwm2mResourceIfChanged)", notes = "Download Resource based on the provided Resource Id or return 304 status code if resource was not changed." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/lwm2m/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
@@ -114,7 +114,7 @@ public class TbResourceController extends BaseController {
         return downloadResourceIfChanged(ResourceType.LWM2M_MODEL, strResourceId, headers);
     }
 
-    @ApiOperation(value = "Download Resource (downloadResource)", notes = "Download Resource based on the provided Resource Id." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Download PKCS_12 Resource (downloadPkcs12ResourceIfChanged)", notes = "Download Resource based on the provided Resource Id or return 304 status code if resource was not changed." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/pkcs12/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
@@ -123,7 +123,16 @@ public class TbResourceController extends BaseController {
         return downloadResourceIfChanged(ResourceType.PKCS_12, strResourceId, headers);
     }
 
-    @ApiOperation(value = "Download Resource (downloadResource)", notes = "Download Resource based on the provided Resource Id." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Download JKS Resource (downloadJksResourceIfChanged)", notes = "Download Resource based on the provided Resource Id or return 304 status code if resource was not changed." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/resource/jks/{resourceId}/download", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<org.springframework.core.io.Resource> downloadJksResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
+                                                                                             @PathVariable(RESOURCE_ID) String strResourceId, @RequestHeader HttpHeaders headers) throws ThingsboardException {
+        return downloadResourceIfChanged(ResourceType.JKS, strResourceId, headers);
+    }
+
+    @ApiOperation(value = "Download JS Resource (downloadJsResourceIfChanged)", notes = "Download Resource based on the provided Resource Id or return 304 status code if resource was not changed." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/js/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
