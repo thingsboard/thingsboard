@@ -16,33 +16,18 @@
 package org.thingsboard.server.common.data;
 
 public enum ResourceType {
-    LWM2M_MODEL("lwm2m", "application/xml"),
-    JKS("jks", "application/x-java-keystore"),
-    PKCS_12("pkcs12", "application/x-pkcs12"),
-    JS_MODULE("js", "application/javascript");
+    LWM2M_MODEL("application/xml"),
+    JKS("application/x-java-keystore"),
+    PKCS_12("application/x-pkcs12"),
+    JS_MODULE("application/javascript");
 
-    private final String type;
     private final String mediaType;
 
-    ResourceType(String type, String mediaType) {
-        this.type = type;
+    ResourceType(String mediaType) {
         this.mediaType = mediaType;
-    }
-
-    public static ResourceType getResourceByType(String type) {
-        for(ResourceType resourceType : values()) {
-            if (resourceType.getType().equalsIgnoreCase(type)) {
-                return resourceType;
-            }
-        }
-        throw new IllegalArgumentException();
     }
 
     public String getMediaType() {
         return mediaType;
-    }
-
-    public String getType() {
-        return type;
     }
 }

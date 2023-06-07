@@ -212,7 +212,7 @@ public class TbResourceController extends BaseController {
         TbResourceInfoFilter.TbResourceInfoFilterBuilder filter = TbResourceInfoFilter.builder();
         filter.tenantId(getTenantId());
         if (StringUtils.isNotEmpty(resourceType)){
-            filter.resourceType(ResourceType.getResourceByType(resourceType));
+            filter.resourceType(ResourceType.valueOf(resourceType));
         }
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(resourceService.findTenantResourcesByTenantId(filter.build(), pageLink));
