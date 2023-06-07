@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +44,7 @@ import static org.thingsboard.server.controller.UserController.ACTIVATE_URL_PATT
 public class DefaultUserService extends AbstractTbEntityService implements TbUserService {
 
     private final UserService userService;
+    private final TbAlarmService tbAlarmService;
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
 
@@ -80,6 +82,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
         UserId userId = tbUser.getId();
 
         try {
+            tbAlarmService.unassignUserAlarms(tenantId, tbUser, System.currentTimeMillis());
             userService.deleteUser(tenantId, userId);
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, userId, tbUser,
                     user, ActionType.DELETED, true, null, customerId.toString());

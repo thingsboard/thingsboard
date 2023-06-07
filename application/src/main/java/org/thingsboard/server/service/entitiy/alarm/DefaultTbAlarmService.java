@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQueryV2;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -36,9 +37,13 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @AllArgsConstructor
@@ -208,6 +213,44 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             throw new ThingsboardException("Alarm was already unassigned!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         return alarmInfo;
+    }
+
+    @Override
+    public void unassignUserAlarms(TenantId tenantId, User user, long unassignTs) throws ThingsboardException {
+        AlarmQueryV2 alarmQuery = AlarmQueryV2.builder().assigneeId(user.getId()).pageLink(new TimePageLink(Integer.MAX_VALUE)).build();
+        try {
+            List<AlarmInfo> alarms = alarmService.findAlarmsV2(tenantId, alarmQuery).get(30, TimeUnit.SECONDS).getData();
+            if (alarms.isEmpty()) {
+                throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
+            }
+            for (AlarmInfo alarm : alarms) {
+                AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, alarm.getId(), getOrDefault(unassignTs));
+                if (!result.isSuccessful()) {
+                    continue;
+                }
+                if (result.isModified()) {
+                    AlarmComment alarmComment = AlarmComment.builder()
+                            .alarmId(alarm.getId())
+                            .type(AlarmCommentType.SYSTEM)
+                            .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was unassigned because user %s - was deleted",
+                                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
+                                    .put("userId", user.getId().toString())
+                                    .put("subtype", "ASSIGN"))
+                            .build();
+                    try {
+                        alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
+                    } catch (ThingsboardException e) {
+                        log.error("Failed to save alarm comment", e);
+                    }
+                    notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_UNASSIGNED, user);
+                } else {
+                    throw new ThingsboardException("Alarm was already unassigned!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                }
+            }
+
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
