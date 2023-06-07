@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -38,5 +39,10 @@ import java.io.Serializable;
 public interface NotificationRuleTriggerConfig extends Serializable {
 
     NotificationRuleTriggerType getTriggerType();
+
+    @JsonIgnore
+    default String getDeduplicationKey() {
+        return "#";
+    }
 
 }

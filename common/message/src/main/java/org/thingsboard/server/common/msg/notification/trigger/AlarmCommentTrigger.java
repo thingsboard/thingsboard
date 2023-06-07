@@ -15,32 +15,34 @@
  */
 package org.thingsboard.server.common.msg.notification.trigger;
 
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
-import java.io.Serializable;
+@Data
+@Builder
+public class AlarmCommentTrigger implements NotificationRuleTrigger {
 
-public interface NotificationRuleTrigger extends Serializable {
+    private final TenantId tenantId;
+    private final AlarmComment comment;
+    private final Alarm alarm;
+    private final ActionType actionType;
+    private final User user;
 
-    NotificationRuleTriggerType getType();
-
-    TenantId getTenantId();
-
-    EntityId getOriginatorEntityId();
-
-
-    default boolean deduplicate() {
-        return false;
+    @Override
+    public NotificationRuleTriggerType getType() {
+        return NotificationRuleTriggerType.ALARM_COMMENT;
     }
 
-    default String getDeduplicationKey() {
-        EntityId originatorEntityId = getOriginatorEntityId();
-        return String.join(":", getType().toString(), originatorEntityId.getEntityType().toString(), originatorEntityId.getId().toString());
-    }
-
-    default long getDefaultDeduplicationDuration() {
-        return 0;
+    @Override
+    public EntityId getOriginatorEntityId() {
+        return alarm.getId();
     }
 
 }

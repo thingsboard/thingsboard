@@ -15,32 +15,35 @@
  */
 package org.thingsboard.server.common.msg.notification.trigger;
 
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
 
-import java.io.Serializable;
+@Data
+@Builder
+public class DeviceActivityTrigger implements NotificationRuleTrigger {
 
-public interface NotificationRuleTrigger extends Serializable {
+    private final TenantId tenantId;
+    private final CustomerId customerId;
+    private final DeviceId deviceId;
+    private final boolean active;
 
-    NotificationRuleTriggerType getType();
+    private final String deviceName;
+    private final String deviceType;
+    private final String deviceLabel;
 
-    TenantId getTenantId();
-
-    EntityId getOriginatorEntityId();
-
-
-    default boolean deduplicate() {
-        return false;
+    @Override
+    public EntityId getOriginatorEntityId() {
+        return deviceId;
     }
 
-    default String getDeduplicationKey() {
-        EntityId originatorEntityId = getOriginatorEntityId();
-        return String.join(":", getType().toString(), originatorEntityId.getEntityType().toString(), originatorEntityId.getId().toString());
-    }
-
-    default long getDefaultDeduplicationDuration() {
-        return 0;
+    @Override
+    public NotificationRuleTriggerType getType() {
+        return NotificationRuleTriggerType.DEVICE_ACTIVITY;
     }
 
 }

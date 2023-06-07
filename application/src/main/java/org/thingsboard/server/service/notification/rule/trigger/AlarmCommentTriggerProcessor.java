@@ -15,79 +15,73 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.notification.info.AlarmCommentNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
-
-import java.util.Set;
+import org.thingsboard.server.common.msg.notification.trigger.AlarmCommentTrigger;
+import org.thingsboard.server.dao.entity.EntityService;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;
 
 @Service
-public class AlarmCommentTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<AlarmCommentNotificationRuleTriggerConfig> {
+@RequiredArgsConstructor
+public class AlarmCommentTriggerProcessor implements NotificationRuleTriggerProcessor<AlarmCommentTrigger, AlarmCommentNotificationRuleTriggerConfig> {
+
+    private final EntityService entityService;
 
     @Override
-    public boolean matchesFilter(RuleEngineMsgTrigger trigger, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
-        TbMsg msg = trigger.getMsg();
-        if (msg.getMetaData().getValue("comment") == null) {
-            return false;
-        }
-        if (msg.getType().equals(DataConstants.COMMENT_UPDATED) && !triggerConfig.isNotifyOnCommentUpdate()) {
+    public boolean matchesFilter(AlarmCommentTrigger trigger, AlarmCommentNotificationRuleTriggerConfig triggerConfig) {
+        if (trigger.getActionType() == ActionType.UPDATED_COMMENT && !triggerConfig.isNotifyOnCommentUpdate()) {
             return false;
         }
         if (triggerConfig.isOnlyUserComments()) {
-            AlarmComment comment = JacksonUtil.fromString(msg.getMetaData().getValue("comment"), AlarmComment.class);
-            if (comment.getType() == AlarmCommentType.SYSTEM) {
+            if (trigger.getComment().getType() == AlarmCommentType.SYSTEM) {
                 return false;
             }
         }
-        Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
+        Alarm alarm = trigger.getAlarm();
         return emptyOrContains(triggerConfig.getAlarmTypes(), alarm.getType()) &&
                 emptyOrContains(triggerConfig.getAlarmSeverities(), alarm.getSeverity()) &&
                 (isEmpty(triggerConfig.getAlarmStatuses()) || AlarmStatusFilter.from(triggerConfig.getAlarmStatuses()).matches(alarm));
     }
 
     @Override
-    public RuleOriginatedNotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger) {
-        TbMsg msg = trigger.getMsg();
-        AlarmComment comment = JacksonUtil.fromString(msg.getMetaData().getValue("comment"), AlarmComment.class);
-        AlarmInfo alarmInfo = JacksonUtil.fromString(msg.getData(), AlarmInfo.class);
+    public RuleOriginatedNotificationInfo constructNotificationInfo(AlarmCommentTrigger trigger) {
+        Alarm alarm = trigger.getAlarm();
+        String originatorName;
+        if (alarm instanceof AlarmInfo) {
+            originatorName = ((AlarmInfo) alarm).getOriginatorName();
+        } else {
+            originatorName = entityService.fetchEntityName(trigger.getTenantId(), alarm.getOriginator()).orElse("");
+        }
         return AlarmCommentNotificationInfo.builder()
-                .comment(comment.getComment().get("text").asText())
-                .action(msg.getType().equals(DataConstants.COMMENT_CREATED) ? "added" : "updated")
-                .userEmail(msg.getMetaData().getValue("userEmail"))
-                .userFirstName(msg.getMetaData().getValue("userFirstName"))
-                .userLastName(msg.getMetaData().getValue("userLastName"))
-                .alarmId(alarmInfo.getUuidId())
-                .alarmType(alarmInfo.getType())
-                .alarmOriginator(alarmInfo.getOriginator())
-                .alarmOriginatorName(alarmInfo.getOriginatorName())
-                .alarmSeverity(alarmInfo.getSeverity())
-                .alarmStatus(alarmInfo.getStatus())
-                .alarmCustomerId(alarmInfo.getCustomerId())
+                .comment(trigger.getComment().getComment().get("text").asText())
+                .action(trigger.getActionType() == ActionType.ADDED_COMMENT ? "added" : "updated")
+                .userEmail(trigger.getUser().getEmail())
+                .userFirstName(trigger.getUser().getFirstName())
+                .userLastName(trigger.getUser().getLastName())
+                .alarmId(alarm.getUuidId())
+                .alarmType(alarm.getType())
+                .alarmOriginator(alarm.getOriginator())
+                .alarmOriginatorName(originatorName)
+                .alarmSeverity(alarm.getSeverity())
+                .alarmStatus(alarm.getStatus())
+                .alarmCustomerId(alarm.getCustomerId())
                 .build();
     }
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM_COMMENT;
-    }
-
-    @Override
-    public Set<String> getSupportedMsgTypes() {
-        return Set.of(DataConstants.COMMENT_CREATED, DataConstants.COMMENT_UPDATED);
     }
 
 }
