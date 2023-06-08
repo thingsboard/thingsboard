@@ -130,9 +130,15 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
     if (isDefinedAndNotNull(value)) {
       this.searchText = '';
       if (isObject(value) && typeof value !== 'string' && (value as TbResourceId).id) {
-        this.resourceService.getResourceInfo(value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe(resource => {
-          this.modelValue = resource.id;
-          this.resourceFormGroup.get('resource').patchValue(resource, {emitEvent: false});
+        this.resourceService.getResourceInfo(value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe({
+          next: resource => {
+            this.modelValue = resource.id;
+            this.resourceFormGroup.get('resource').patchValue(resource, {emitEvent: false});
+          },
+          error: () => {
+            this.modelValue = '';
+            this.resourceFormGroup.get('resource').patchValue('');
+          }
         });
       } else {
         this.modelValue = value;
