@@ -122,12 +122,14 @@
                     <div fxFlex fxLayout="row" style="max-height: 40px;"
                          fxLayoutAlign="start center"
                          *ngFor="let resource of widget.resources; let i = index" >
-                      <mat-form-field fxFlex class="mat-block resource-field" hideRequiredMarker="false"
-                                      style="margin: 10px 0 0 0; max-height: 40px;">
-                        <input required matInput [(ngModel)]="resource.url"
-                               (ngModelChange)="isDirty = true"
-                               placeholder="{{ 'widget.resource-url' | translate }}"/>
-                      </mat-form-field>
+                      <tb-resource-autocomplete fxFlex class="mat-block resource-field"
+                                                hideRequiredMarker required
+                                                subscriptSizing="dynamic"
+                                                [allowAutocomplete]="resource.isModule"
+                                                [(ngModel)]="resource.url"
+                                                (ngModelChange)="isDirty = true"
+                                                placeholder="{{ 'widget.resource-url' | translate }}">
+                      </tb-resource-autocomplete>
                       <mat-checkbox [(ngModel)]="resource.isModule"
                                     (ngModelChange)="isDirty = true">
                         {{ 'widget.resource-is-module' | translate }}
@@ -140,15 +142,14 @@
                         <mat-icon>close</mat-icon>
                       </button>
                     </div>
-                    <div style="margin-top: 6px;">
-                      <button mat-raised-button color="primary"
-                              [disabled]="isLoading$ | async"
-                              (click)="addResource()"
-                              matTooltip="{{'widget.add-resource' | translate}}"
-                              matTooltipPosition="above">
-                        <span translate>action.add</span>
-                      </button>
-                    </div>
+                    <button mat-raised-button color="primary"
+                            style="margin-top: 8px;"
+                            [disabled]="isLoading$ | async"
+                            (click)="addResource()"
+                            matTooltip="{{'widget.add-resource' | translate}}"
+                            matTooltipPosition="above">
+                      <span translate>action.add</span>
+                    </button>
                   </div>
                 </div>
               </mat-tab>

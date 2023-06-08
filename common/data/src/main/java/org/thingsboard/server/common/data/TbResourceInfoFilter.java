@@ -15,19 +15,15 @@
  */
 package org.thingsboard.server.common.data;
 
-public enum ResourceType {
-    LWM2M_MODEL("application/xml"),
-    JKS("application/x-java-keystore"),
-    PKCS_12("application/x-pkcs12"),
-    JS_MODULE("application/javascript");
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    private final String mediaType;
+@Data
+@Builder
+public class TbResourceInfoFilter {
 
-    ResourceType(String mediaType) {
-        this.mediaType = mediaType;
-    }
+    private TenantId tenantId;
+    private ResourceType resourceType;
 
-    public String getMediaType() {
-        return mediaType;
-    }
 }

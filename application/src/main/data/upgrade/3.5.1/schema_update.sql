@@ -52,3 +52,10 @@ $$
 $$;
 
 -- NOTIFICATION CONFIGS VERSION CONTROL END
+
+ALTER TABLE resource
+    ADD COLUMN IF NOT EXISTS hash_code varchar;
+
+UPDATE resource
+    SET hash_code = encode(sha256(decode(resource.data, 'base64')),'hex') WHERE resource.data is not null;
+
