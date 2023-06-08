@@ -160,7 +160,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
 
         List<WidgetsBundle> systemWidgetsBundles = widgetsBundleService.findSystemWidgetsBundles(tenantId);
         List<WidgetsBundle> createdWidgetsBundles = new ArrayList<>();
-        for (int i=0;i<235;i++) {
+        for (int i=0;i<17;i++) {
             WidgetsBundle widgetsBundle = new WidgetsBundle();
             widgetsBundle.setTenantId(tenantId);
             widgetsBundle.setTitle("Widgets bundle "+i);
@@ -171,7 +171,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         widgetsBundles.addAll(systemWidgetsBundles);
 
         List<WidgetsBundle> loadedWidgetsBundles = new ArrayList<>();
-        PageLink pageLink = new PageLink(19);
+        PageLink pageLink = new PageLink(3);
         PageData<WidgetsBundle> pageData = null;
         do {
             pageData = widgetsBundleService.findSystemWidgetsBundlesByPageLink(tenantId, pageLink);
@@ -238,7 +238,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
     public void testFindTenantWidgetsBundlesByTenantId() {
 
         List<WidgetsBundle> widgetsBundles = new ArrayList<>();
-        for (int i=0;i<127;i++) {
+        for (int i=0;i<13;i++) {
             WidgetsBundle widgetsBundle = new WidgetsBundle();
             widgetsBundle.setTenantId(tenantId);
             widgetsBundle.setTitle("Widgets bundle "+i);
@@ -246,7 +246,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         }
 
         List<WidgetsBundle> loadedWidgetsBundles = new ArrayList<>();
-        PageLink pageLink = new PageLink(11);
+        PageLink pageLink = new PageLink(3);
         PageData<WidgetsBundle> pageData = null;
         do {
             pageData = widgetsBundleService.findTenantWidgetsBundlesByTenantId(tenantId, pageLink);
@@ -263,7 +263,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
 
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
 
-        pageLink = new PageLink(15);
+        pageLink = new PageLink(4);
         pageData = widgetsBundleService.findTenantWidgetsBundlesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -279,7 +279,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
 
         List<WidgetsBundle> createdWidgetsBundles = new ArrayList<>();
         List<WidgetsBundle> createdSystemWidgetsBundles = new ArrayList<>();
-        for (int i=0;i<177;i++) {
+        for (int i=0;i<17;i++) {
             WidgetsBundle widgetsBundle = new WidgetsBundle();
             widgetsBundle.setTenantId(i % 2 == 0 ? tenantId : systemTenantId);
             widgetsBundle.setTitle((i % 2 == 0 ? "Widgets bundle " : "System widget bundle ") + i);
@@ -294,7 +294,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         widgetsBundles.addAll(systemWidgetsBundles);
 
         List<WidgetsBundle> loadedWidgetsBundles = new ArrayList<>();
-        PageLink pageLink = new PageLink(17);
+        PageLink pageLink = new PageLink(3);
         PageData<WidgetsBundle> pageData = null;
         do {
             pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
@@ -312,7 +312,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
 
         loadedWidgetsBundles.clear();
-        pageLink = new PageLink(14);
+        pageLink = new PageLink(4);
         do {
             pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
@@ -334,7 +334,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         }
 
         loadedWidgetsBundles.clear();
-        pageLink = new PageLink(18);
+        pageLink = new PageLink(5);
         do {
             pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());

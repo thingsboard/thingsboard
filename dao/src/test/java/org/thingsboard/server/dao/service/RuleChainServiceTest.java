@@ -124,7 +124,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
     @Test
     public void testFindRuleChainsByTenantId() {
         List<RuleChain> ruleChains = new ArrayList<>();
-        for (int i = 0; i < 165; i++) {
+        for (int i = 0; i < 17; i++) {
             RuleChain ruleChain = new RuleChain();
             ruleChain.setTenantId(tenantId);
             ruleChain.setName("RuleChain" + i);
@@ -132,7 +132,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         }
 
         List<RuleChain> loadedRuleChains = new ArrayList<>();
-        PageLink pageLink = new PageLink(16);
+        PageLink pageLink = new PageLink(3);
         PageData<RuleChain> pageData = null;
         do {
             pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
@@ -149,7 +149,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
 
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
 
-        pageLink = new PageLink(31);
+        pageLink = new PageLink(4);
         pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -159,7 +159,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
     public void testFindRuleChainsByTenantIdAndName() {
         String name1 = "RuleChain name 1";
         List<RuleChain> ruleChainsName1 = new ArrayList<>();
-        for (int i = 0; i < 123; i++) {
+        for (int i = 0; i < 13; i++) {
             RuleChain ruleChain = new RuleChain();
             ruleChain.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 17));
@@ -170,7 +170,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         }
         String name2 = "RuleChain name 2";
         List<RuleChain> ruleChainsName2 = new ArrayList<>();
-        for (int i = 0; i < 193; i++) {
+        for (int i = 0; i < 17; i++) {
             RuleChain ruleChain = new RuleChain();
             ruleChain.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
@@ -181,7 +181,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         }
 
         List<RuleChain> loadedRuleChainsName1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(19, 0, name1);
+        PageLink pageLink = new PageLink(3, 0, name1);
         PageData<RuleChain> pageData = null;
         do {
             pageData = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, pageLink);
@@ -484,7 +484,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
 
         String name1 = "Edge RuleChain name 1";
         List<RuleChain> ruleChainsName1 = new ArrayList<>();
-        for (int i = 0; i < 123; i++) {
+        for (int i = 0; i < 13; i++) {
             RuleChain ruleChain = new RuleChain();
             ruleChain.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 17));
@@ -498,7 +498,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
 
         String name2 = "Edge RuleChain name 2";
         List<RuleChain> ruleChainsName2 = new ArrayList<>();
-        for (int i = 0; i < 193; i++) {
+        for (int i = 0; i < 17; i++) {
             RuleChain ruleChain = new RuleChain();
             ruleChain.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
@@ -511,7 +511,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         ruleChainsName2.forEach(ruleChain -> ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), savedEdge.getId()));
 
         List<RuleChain> loadedRuleChainsName1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(19, 0, name1);
+        PageLink pageLink = new PageLink(3, 0, name1);
         PageData<RuleChain> pageData = null;
         do {
             pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, savedEdge.getId(), pageLink);

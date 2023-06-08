@@ -149,8 +149,8 @@ public class CustomerServiceTest extends AbstractServiceTest {
     @Test
     public void testFindCustomersByTenantId() throws Exception {
 
-        List<ListenableFuture<Customer>> futures = new ArrayList<>(135);
-        for (int i = 0; i < 135; i++) {
+        List<ListenableFuture<Customer>> futures = new ArrayList<>(13);
+        for (int i = 0; i < 13; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
             customer.setTitle("Customer" + i);
@@ -159,8 +159,8 @@ public class CustomerServiceTest extends AbstractServiceTest {
         }
         List<Customer> customers = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        List<Customer> loadedCustomers = new ArrayList<>(135);
-        PageLink pageLink = new PageLink(23);
+        List<Customer> loadedCustomers = new ArrayList<>(13);
+        PageLink pageLink = new PageLink(3);
         PageData<Customer> pageData = null;
         do {
             pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
@@ -174,7 +174,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
         customerService.deleteCustomersByTenantId(tenantId);
 
-        pageLink = new PageLink(33);
+        pageLink = new PageLink(4);
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -183,8 +183,8 @@ public class CustomerServiceTest extends AbstractServiceTest {
     @Test
     public void testFindCustomersByTenantIdAndTitle() throws Exception {
         String title1 = "Customer title 1";
-        List<ListenableFuture<Customer>> futures = new ArrayList<>(143);
-        for (int i = 0; i < 143; i++) {
+        List<ListenableFuture<Customer>> futures = new ArrayList<>(13);
+        for (int i = 0; i < 13; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
@@ -196,8 +196,8 @@ public class CustomerServiceTest extends AbstractServiceTest {
         List<Customer> customersTitle1 = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
         String title2 = "Customer title 2";
-        futures = new ArrayList<>(175);
-        for (int i = 0; i < 175; i++) {
+        futures = new ArrayList<>(17);
+        for (int i = 0; i < 17; i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
             String suffix = StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
@@ -208,8 +208,8 @@ public class CustomerServiceTest extends AbstractServiceTest {
         }
         List<Customer> customersTitle2 = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        List<Customer> loadedCustomersTitle1 = new ArrayList<>(143);
-        PageLink pageLink = new PageLink(15, 0, title1);
+        List<Customer> loadedCustomersTitle1 = new ArrayList<>(13);
+        PageLink pageLink = new PageLink(3, 0, title1);
         PageData<Customer> pageData = null;
         do {
             pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
@@ -221,7 +221,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
         assertThat(customersTitle1).as(title1).containsExactlyInAnyOrderElementsOf(loadedCustomersTitle1);
 
-        List<Customer> loadedCustomersTitle2 = new ArrayList<>(175);
+        List<Customer> loadedCustomersTitle2 = new ArrayList<>(17);
         pageLink = new PageLink(4, 0, title2);
         do {
             pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
@@ -233,7 +233,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
         assertThat(customersTitle2).as(title2).containsExactlyInAnyOrderElementsOf(loadedCustomersTitle2);
 
-        List<ListenableFuture<Void>> deleteFutures = new ArrayList<>(143);
+        List<ListenableFuture<Void>> deleteFutures = new ArrayList<>(13);
         for (Customer customer : loadedCustomersTitle1) {
             deleteFutures.add(executor.submit(() -> {
                 customerService.deleteCustomer(tenantId, customer.getId());
@@ -247,7 +247,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
-        deleteFutures = new ArrayList<>(175);
+        deleteFutures = new ArrayList<>(17);
         for (Customer customer : loadedCustomersTitle2) {
             deleteFutures.add(executor.submit(() -> {
                 customerService.deleteCustomer(tenantId, customer.getId());

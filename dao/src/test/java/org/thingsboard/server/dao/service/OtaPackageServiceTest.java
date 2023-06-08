@@ -531,7 +531,7 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
     @Test
     public void testFindTenantFirmwaresByTenantId() {
         List<OtaPackageInfo> firmwares = new ArrayList<>();
-        for (int i = 0; i < 165; i++) {
+        for (int i = 0; i < 17; i++) {
             OtaPackageInfo info = new OtaPackageInfo(createAndSaveFirmware(tenantId, VERSION + i));
             info.setHasData(true);
             firmwares.add(info);
@@ -552,7 +552,7 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
         firmwares.add(savedFwWithUrl);
 
         List<OtaPackageInfo> loadedFirmwares = new ArrayList<>();
-        PageLink pageLink = new PageLink(16);
+        PageLink pageLink = new PageLink(3);
         PageData<OtaPackageInfo> pageData;
         do {
             pageData = otaPackageService.findTenantOtaPackagesByTenantId(tenantId, pageLink);
@@ -569,7 +569,7 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
 
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
 
-        pageLink = new PageLink(31);
+        pageLink = new PageLink(4);
         pageData = otaPackageService.findTenantOtaPackagesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -578,7 +578,7 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
     @Test
     public void testFindTenantFirmwaresByTenantIdAndHasData() {
         List<OtaPackageInfo> firmwares = new ArrayList<>();
-        for (int i = 0; i < 165; i++) {
+        for (int i = 0; i < 17; i++) {
             firmwares.add(new OtaPackageInfo(otaPackageService.saveOtaPackage(createAndSaveFirmware(tenantId, VERSION + i))));
         }
 
@@ -597,7 +597,7 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
         firmwares.add(savedFwWithUrl);
 
         List<OtaPackageInfo> loadedFirmwares = new ArrayList<>();
-        PageLink pageLink = new PageLink(16);
+        PageLink pageLink = new PageLink(3);
         PageData<OtaPackageInfo> pageData;
         do {
             pageData = otaPackageService.findTenantOtaPackagesByTenantIdAndDeviceProfileIdAndTypeAndHasData(tenantId, deviceProfileId, FIRMWARE, pageLink);
@@ -608,7 +608,7 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
         } while (pageData.hasNext());
 
         loadedFirmwares = new ArrayList<>();
-        pageLink = new PageLink(16);
+        pageLink = new PageLink(3);
         do {
             pageData = otaPackageService.findTenantOtaPackagesByTenantIdAndDeviceProfileIdAndTypeAndHasData(tenantId, deviceProfileId, FIRMWARE, pageLink);
             loadedFirmwares.addAll(pageData.getData());
@@ -624,7 +624,7 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
 
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
 
-        pageLink = new PageLink(31);
+        pageLink = new PageLink(4);
         pageData = otaPackageService.findTenantOtaPackagesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());

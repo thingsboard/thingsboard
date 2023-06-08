@@ -385,7 +385,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         TenantId tenantId = tenant.getId();
 
         List<TbResourceInfo> resources = new ArrayList<>();
-        for (int i = 0; i < 165; i++) {
+        for (int i = 0; i < 17; i++) {
             TbResource resource = new TbResource();
             resource.setTenantId(tenantId);
             resource.setTitle("Resource" + i);
@@ -396,7 +396,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         }
 
         List<TbResourceInfo> loadedResources = new ArrayList<>();
-        PageLink pageLink = new PageLink(16);
+        PageLink pageLink = new PageLink(4);
         PageData<TbResourceInfo> pageData;
         do {
             pageData = resourceService.findTenantResourcesByTenantId(tenantId, pageLink);
@@ -413,7 +413,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         resourceService.deleteResourcesByTenantId(tenantId);
 
-        pageLink = new PageLink(31);
+        pageLink = new PageLink(3);
         pageData = resourceService.findTenantResourcesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());

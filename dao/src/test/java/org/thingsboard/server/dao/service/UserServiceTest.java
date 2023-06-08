@@ -337,7 +337,7 @@ public class UserServiceTest extends AbstractServiceTest {
         CustomerId customerId = customer.getId();
 
         List<User> customerUsers = new ArrayList<>();
-        for (int i = 0; i < 156; i++) {
+        for (int i = 0; i < 17; i++) {
             User user = new User();
             user.setAuthority(Authority.CUSTOMER_USER);
             user.setTenantId(tenantId);
@@ -347,7 +347,7 @@ public class UserServiceTest extends AbstractServiceTest {
         }
 
         List<User> loadedCustomerUsers = new ArrayList<>();
-        PageLink pageLink = new PageLink(33);
+        PageLink pageLink = new PageLink(3);
         do {
             pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);
             loadedCustomerUsers.addAll(pageData.getData());

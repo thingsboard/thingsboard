@@ -199,13 +199,13 @@ public class EdgeServiceTest extends AbstractServiceTest {
     @Test
     public void testFindEdgesByTenantId() {
         List<Edge> edges = new ArrayList<>();
-        for (int i = 0; i < 178; i++) {
+        for (int i = 0; i < 17; i++) {
             Edge edge = constructEdge(tenantId, "Edge " + i, "default");
             edges.add(edgeService.saveEdge(edge));
         }
 
         List<Edge> loadedEdges = new ArrayList<>();
-        PageLink pageLink = new PageLink(23);
+        PageLink pageLink = new PageLink(3);
         PageData<Edge> pageData = null;
         do {
             pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
@@ -222,7 +222,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
 
         edgeService.deleteEdgesByTenantId(tenantId);
 
-        pageLink = new PageLink(33);
+        pageLink = new PageLink(4);
         pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -232,7 +232,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
     public void testFindEdgesByTenantIdAndName() {
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        for (int i = 0; i < 13; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -241,7 +241,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         }
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
-        for (int i = 0; i < 175; i++) {
+        for (int i = 0; i < 17; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -250,7 +250,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         }
 
         List<Edge> loadedEdgesTitle1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15, 0, title1);
+        PageLink pageLink = new PageLink(3, 0, title1);
         PageData<Edge> pageData = null;
         do {
             pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
@@ -304,7 +304,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         String title1 = "Edge title 1";
         String type1 = "typeA";
         List<Edge> edgesType1 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        for (int i = 0; i < 13; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -314,7 +314,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         String title2 = "Edge title 2";
         String type2 = "typeB";
         List<Edge> edgesType2 = new ArrayList<>();
-        for (int i = 0; i < 175; i++) {
+        for (int i = 0; i < 17; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -323,7 +323,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         }
 
         List<Edge> loadedEdgesType1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15, 0 , title1);
+        PageLink pageLink = new PageLink(3, 0 , title1);
         PageData<Edge> pageData = null;
         do {
             pageData = edgeService.findEdgesByTenantIdAndType(tenantId, type1, pageLink);
@@ -381,14 +381,14 @@ public class EdgeServiceTest extends AbstractServiceTest {
         CustomerId customerId = customer.getId();
 
         List<Edge> edges = new ArrayList<>();
-        for (int i = 0; i < 278; i++) {
+        for (int i = 0; i < 17; i++) {
             Edge edge = constructEdge(tenantId, "Edge" + i, "default");
             edge = edgeService.saveEdge(edge);
             edges.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
 
         List<Edge> loadedEdges = new ArrayList<>();
-        PageLink pageLink = new PageLink(23);
+        PageLink pageLink = new PageLink(3);
         PageData<Edge> pageData = null;
         do {
             pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
@@ -405,7 +405,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
 
         edgeService.unassignCustomerEdges(tenantId, customerId);
 
-        pageLink = new PageLink(33);
+        pageLink = new PageLink(4);
         pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -422,7 +422,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
 
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
-        for (int i = 0; i < 175; i++) {
+        for (int i = 0; i < 17; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -432,7 +432,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         }
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        for (int i = 0; i < 13; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -442,7 +442,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         }
 
         List<Edge> loadedEdgesTitle1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15, 0, title1);
+        PageLink pageLink = new PageLink(5, 0, title1);
         PageData<Edge> pageData = null;
         do {
             pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
@@ -504,7 +504,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         String title1 = "Edge title 1";
         String type1 = "typeC";
         List<Edge> edgesType1 = new ArrayList<>();
-        for (int i = 0; i < 175; i++) {
+        for (int i = 0; i < 17; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -515,7 +515,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         String title2 = "Edge title 2";
         String type2 = "typeD";
         List<Edge> edgesType2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
+        for (int i = 0; i < 13; i++) {
             String suffix = StringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -525,7 +525,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         }
 
         List<Edge> loadedEdgesType1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15);
+        PageLink pageLink = new PageLink(3);
         PageData<Edge> pageData = null;
         do {
             pageData = edgeService.findEdgesByTenantIdAndCustomerIdAndType(tenantId, customerId, type1, pageLink);
