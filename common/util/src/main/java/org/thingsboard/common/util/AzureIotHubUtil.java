@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.Iterator;
 
 @Slf4j
 public final class AzureIotHubUtil {
@@ -100,8 +101,9 @@ public final class AzureIotHubUtil {
         } else {
             Path azureDirectory = FULL_FILE_PATH.getParent();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(azureDirectory)) {
-                if (stream.iterator().hasNext()) {
-                    Path firstFile = stream.iterator().next();
+                Iterator<Path> iterator = stream.iterator();
+                if (iterator.hasNext()) {
+                    Path firstFile = iterator.next();
                     fileBytes = Files.readAllBytes(firstFile);
                 } else {
                     log.error("Default CaCert file not found in the directory [{}]!!!", azureDirectory);
