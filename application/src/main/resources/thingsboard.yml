@@ -135,6 +135,10 @@ security:
     path: "${SECURITY_JAVA_CACERTS_PATH:${java.home}/lib/security/cacerts}"
     password: "${SECURITY_JAVA_CACERTS_PASSWORD:changeit}"
 
+mail:
+  oauth2:
+    refreshTokenCheckingInterval: "${REFRESH_TOKEN_EXPIRATION_CHECKING_INTERVAL:86400}" # Number of seconds (1 day).
+
 # Usage statistics parameters
 usage:
   stats:
