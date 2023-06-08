@@ -101,7 +101,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
             };
 
     private static final PermissionChecker customerResourcePermissionChecker =
-            new PermissionChecker.GenericPermissionChecker<TbResourceId, TbResourceInfo>(Operation.READ) {
+            new PermissionChecker<TbResourceId, TbResourceInfo>() {
 
                 @Override
                 @SuppressWarnings("unchecked")
