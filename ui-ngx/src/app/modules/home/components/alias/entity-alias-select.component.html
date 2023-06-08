@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field [floatLabel]="showLabel ? 'auto' : 'always'"
-                [hideRequiredMarker]="!showLabel" [formGroup]="selectEntityAliasFormGroup" class="mat-block">
-  <mat-label *ngIf="!showLabel"></mat-label>
-  <input matInput type="text" placeholder="{{ 'entity.entity-alias' | translate }}"
+<mat-form-field [formGroup]="selectEntityAliasFormGroup" class="mat-block">
+  <mat-label *ngIf="showLabel">{{ 'entity.entity-alias' | translate }}</mat-label>
+  <input matInput type="text" placeholder="{{ !showLabel ? ('entity.entity-alias' | translate) : ''}}"
          #entityAliasInput
          formControlName="entityAlias"
          (focusin)="onFocus()"
@@ -31,6 +30,13 @@
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <button *ngIf="!selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
+          style="margin-right: 8px;"
+          type="button"
+          matSuffix mat-button color="primary"
+          (click)="createEntityAlias($event, searchText, false)">
+    {{ 'entity.create-new' | translate }}
   </button>
   <mat-autocomplete class="tb-autocomplete"
                     #entityAliasAutocomplete="matAutocomplete"

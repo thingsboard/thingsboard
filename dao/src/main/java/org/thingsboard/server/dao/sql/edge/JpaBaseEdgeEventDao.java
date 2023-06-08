@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.EdgeEventEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
@@ -55,7 +55,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @SqlDao
 @RequiredArgsConstructor
 @Slf4j
-public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntity, EdgeEvent> implements EdgeEventDao {
+public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEvent> implements EdgeEventDao {
 
     private final UUID systemTenantId = NULL_UUID;
 
@@ -80,13 +80,13 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     @Value("${sql.edge_events.stats_print_interval_ms:10000}")
     private long statsPrintIntervalMs;
 
-    @Value("${sql.edge_events.partitions_size:168}")
+    @Value("${sql.edge_events.partition_size:168}")
     private int partitionSizeInHours;
 
     @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
-    private long edge_events_ttl;
+    private long edgeEventsTtl;
 
-    private static final String TABLE_NAME = ModelConstants.EDGE_EVENT_COLUMN_FAMILY_NAME;
+    private static final String TABLE_NAME = ModelConstants.EDGE_EVENT_TABLE_NAME;
 
     private TbSqlBlockingQueueWrapper<EdgeEventEntity> queue;
 
@@ -203,7 +203,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
 
     @Override
     public void migrateEdgeEvents() {
-        long startTime = edge_events_ttl > 0 ? System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(edge_events_ttl) : 1629158400000L;
+        long startTime = edgeEventsTtl > 0 ? System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(edgeEventsTtl) : 1629158400000L;
 
         long currentTime = System.currentTimeMillis();
         var partitionStepInMs = TimeUnit.HOURS.toMillis(partitionSizeInHours);

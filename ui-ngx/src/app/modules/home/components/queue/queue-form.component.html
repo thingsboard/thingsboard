@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
     limitations under the License.
 
 -->
-
 <form [formGroup]="queueFormGroup" fxLayout="column">
   <mat-form-field class="mat-block" appearance="fill">
     <mat-label translate>admin.queue-name</mat-label>
@@ -38,10 +37,10 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="16px" formGroupName="submitStrategy" style="padding-bottom: 15px;">
+        <div fxFlex fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="16px" formGroupName="submitStrategy">
           <div fxFlex>
             <label class="group-label" translate>queue.submit-strategy</label>
-            <mat-radio-group fxFlex fxLayout="column" fxLayoutGap="15px" formControlName="type" required>
+            <mat-radio-group fxFlex fxLayout="column" formControlName="type" required>
               <mat-radio-button *ngFor="let strategy of submitStrategies" [value]="strategy">
                 {{ queueSubmitStrategyTypesMap.get(queueSubmitStrategyTypes[strategy]).label | translate }}
                 <mat-icon
@@ -76,10 +75,10 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="16px" formGroupName="processingStrategy" style="padding-bottom: 15px;">
+        <div fxFlex fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="16px" formGroupName="processingStrategy">
           <div fxFlex>
             <label class="group-label" translate>queue.processing-strategy</label>
-              <mat-radio-group fxFlex fxLayout="column" fxLayoutGap="15px" formControlName="type" required>
+              <mat-radio-group fxFlex fxLayout="column" formControlName="type" required>
                 <mat-radio-button *ngFor="let strategy of processingStrategies" [value]="strategy">
                   {{ queueProcessingStrategyTypesMap.get(queueProcessingStrategyTypes[strategy]).label | translate }}
                   <mat-icon
@@ -153,7 +152,7 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <div fxFlex fxLayout="column" fxLayoutGap="10px" style="padding-bottom: 15px;">
+        <div fxFlex fxLayout="column" fxLayoutGap="10px">
           <div fxFlex>
             <label class="group-label" translate>queue.batch-processing</label>
             <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px">

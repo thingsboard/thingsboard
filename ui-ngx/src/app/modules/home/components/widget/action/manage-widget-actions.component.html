@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="mat-padding tb-entity-table tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
+<div class="tb-entity-table tb-absolute-fill">
+  <div fxFlex fxLayout="column" class="tb-entity-table-content">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <span class="tb-entity-table-title" translate>widget-config.actions</span>
         <span fxFlex></span>
@@ -36,7 +36,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 type="button"
@@ -69,7 +69,7 @@
              class="tb-drop-list">
         <ng-container matColumnDef="actionSourceId">
           <mat-header-cell *matHeaderCellDef style="width: 36px"></mat-header-cell>
-          <mat-cell *matCellDef="let action">
+          <mat-cell *matCellDef="let action" class="tb-icon-cell">
             <div cdkDragHandle
                  class="tb-drag-handle"
                  style="min-width: 36px"
@@ -95,7 +95,7 @@
         </ng-container>
         <ng-container matColumnDef="icon">
           <mat-header-cell *matHeaderCellDef style="width: 40px"> {{ 'widget-config.action-icon' | translate }} </mat-header-cell>
-          <mat-cell *matCellDef="let action" style="width: 40px">
+          <mat-cell *matCellDef="let action" class="tb-icon-cell" style="width: 40px">
             <mat-icon>{{ action.icon }}</mat-icon>
           </mat-cell>
         </ng-container>

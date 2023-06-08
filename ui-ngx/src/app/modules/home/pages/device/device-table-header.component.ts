@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableHeaderComponent } from '../../components/entity/entity-table-header.component';
-import { DeviceInfo } from '@app/shared/models/device.models';
+import { DeviceInfo, DeviceInfoFilter } from '@app/shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DeviceProfileId } from '../../../../shared/models/id/device-profile-id';
 
 @Component({
   selector: 'tb-device-table-header',
   templateUrl: './device-table-header.component.html',
-  styleUrls: ['./device-table-header.component.scss']
+  styleUrls: []
 })
 export class DeviceTableHeaderComponent extends EntityTableHeaderComponent<DeviceInfo> {
 
@@ -35,8 +35,8 @@ export class DeviceTableHeaderComponent extends EntityTableHeaderComponent<Devic
     super(store);
   }
 
-  deviceProfileChanged(deviceProfileId: DeviceProfileId) {
-    this.entitiesTableConfig.componentsData.deviceProfileId = deviceProfileId;
+  deviceInfoFilterChanged(deviceInfoFilter: DeviceInfoFilter) {
+    this.entitiesTableConfig.componentsData.deviceInfoFilter = deviceInfoFilter;
     this.entitiesTableConfig.getTable().resetSortAndFilter(true);
   }
 

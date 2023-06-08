@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -46,10 +46,14 @@ export class NodeScriptTestService {
           let msgType: string;
           if (debugIn) {
             if (debugIn.data) {
-              msg = JSON.parse(debugIn.data);
+              try {
+                msg = JSON.parse(debugIn.data);
+              } catch (e) {}
             }
             if (debugIn.metadata) {
-              metadata = JSON.parse(debugIn.metadata);
+              try {
+                metadata = JSON.parse(debugIn.metadata);
+              } catch (e) {}
             }
             msgType = debugIn.msgType;
           }

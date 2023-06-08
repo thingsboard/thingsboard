@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,13 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,6 +33,7 @@ import { catchError, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/op
 import { DataKey } from '@shared/models/widget.models';
 import { EntityService } from '@core/http/entity.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
   selector: 'tb-device-key-autocomplete',
@@ -77,7 +84,7 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
 
   private propagateChange = null;
 
-  public deviceKeyFormGroup: FormGroup;
+  public deviceKeyFormGroup: UntypedFormGroup;
 
   filteredKeys: Observable<Array<string>>;
   keySearchText = '';
@@ -88,7 +95,7 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private entityService: EntityService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -199,7 +206,7 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
       mergeMap((aliasInfo) => {
         return this.entityService.getEntityKeysByEntityFilter(
           aliasInfo.entityFilter,
-          dataKeyTypes,
+          dataKeyTypes, [EntityType.DEVICE],
           {ignoreLoading: true, ignoreErrors: true}
         ).pipe(
           catchError(() => of([]))

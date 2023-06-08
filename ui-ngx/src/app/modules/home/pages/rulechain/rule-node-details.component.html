@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 <form [formGroup]="ruleNodeFormGroup" class="mat-padding">
   <fieldset [disabled]="(isLoading$ | async) || !isEdit || isReadOnly">
     <section>
-      <section fxLayout="column" fxLayout.gt-sm="row">
+      <section class="title-row">
         <mat-form-field fxFlex class="mat-block">
           <mat-label translate>rulenode.name</mat-label>
           <input matInput formControlName="name" required>
@@ -36,9 +36,14 @@
             {{ 'rulenode.name-max-length' | translate }}
           </mat-error>
         </mat-form-field>
-        <mat-checkbox formControlName="debugMode">
-          {{ 'rulenode.debug-mode' | translate }}
-        </mat-checkbox>
+        <section class="node-setting">
+          <mat-slide-toggle formControlName="debugMode">
+            {{ 'rulenode.debug-mode' | translate }}
+          </mat-slide-toggle>
+          <mat-slide-toggle *ngIf="isSingletonEditAllowed()" formControlName="singletonMode">
+            {{ 'rulenode.singleton-mode' | translate }}
+          </mat-slide-toggle >
+        </section>
       </section>
       <tb-rule-node-config #ruleNodeConfigComponent
         formControlName="configuration"

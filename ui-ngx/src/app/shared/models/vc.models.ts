@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,8 +30,17 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.DEVICE_PROFILE,
   EntityType.ASSET_PROFILE,
   EntityType.RULE_CHAIN,
-  EntityType.WIDGETS_BUNDLE
+  EntityType.WIDGETS_BUNDLE,
+  EntityType.NOTIFICATION_TEMPLATE,
+  EntityType.NOTIFICATION_TARGET,
+  EntityType.NOTIFICATION_RULE
 ];
+
+export const entityTypesWithoutRelatedData: Set<EntityType> = new Set([
+  EntityType.NOTIFICATION_TEMPLATE,
+  EntityType.NOTIFICATION_TARGET,
+  EntityType.NOTIFICATION_RULE
+]);
 
 export interface VersionCreateConfig {
   saveRelations: boolean;

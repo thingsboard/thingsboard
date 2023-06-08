@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,36 +22,21 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.AssetProfileId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
-import org.thingsboard.server.dao.asset.AssetProfileService;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 @Service
 @TbCoreComponent
@@ -60,10 +45,9 @@ import java.util.function.BiConsumer;
 public class DefaultExportableEntitiesService implements ExportableEntitiesService {
 
     private final Map<EntityType, Dao<?>> daos = new HashMap<>();
-    private final Map<EntityType, BiConsumer<TenantId, EntityId>> removers = new HashMap<>();
 
+    private final EntityServiceRegistry entityServiceRegistry;
     private final AccessControlService accessControlService;
-
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> E findEntityByTenantIdAndExternalId(TenantId tenantId, I externalId) {
@@ -152,11 +136,11 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
     @Override
     public <I extends EntityId> void removeById(TenantId tenantId, I id) {
         EntityType entityType = id.getEntityType();
-        BiConsumer<TenantId, EntityId> entityRemover = removers.get(entityType);
-        if (entityRemover == null) {
+        EntityDaoService entityService = entityServiceRegistry.getServiceByEntityType(entityType);
+        if (entityService == null) {
             throw new IllegalArgumentException("Unsupported entity type " + entityType);
         }
-        entityRemover.accept(tenantId, id);
+        entityService.deleteEntity(tenantId, id);
     }
 
     private <I extends EntityId, E extends ExportableEntity<I>> ExportableEntityDao<I, E> getExportableEntityDao(EntityType entityType) {
@@ -179,36 +163,6 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
             if (dao.getEntityType() != null) {
                 this.daos.put(dao.getEntityType(), dao);
             }
-        });
-    }
-
-    @Autowired
-    private void setRemovers(CustomerService customerService, AssetService assetService, RuleChainService ruleChainService,
-                             DashboardService dashboardService, DeviceProfileService deviceProfileService,
-                             AssetProfileService assetProfileService, DeviceService deviceService, WidgetsBundleService widgetsBundleService) {
-        removers.put(EntityType.CUSTOMER, (tenantId, entityId) -> {
-            customerService.deleteCustomer(tenantId, (CustomerId) entityId);
-        });
-        removers.put(EntityType.ASSET, (tenantId, entityId) -> {
-            assetService.deleteAsset(tenantId, (AssetId) entityId);
-        });
-        removers.put(EntityType.RULE_CHAIN, (tenantId, entityId) -> {
-            ruleChainService.deleteRuleChainById(tenantId, (RuleChainId) entityId);
-        });
-        removers.put(EntityType.DASHBOARD, (tenantId, entityId) -> {
-            dashboardService.deleteDashboard(tenantId, (DashboardId) entityId);
-        });
-        removers.put(EntityType.DEVICE_PROFILE, (tenantId, entityId) -> {
-            deviceProfileService.deleteDeviceProfile(tenantId, (DeviceProfileId) entityId);
-        });
-        removers.put(EntityType.ASSET_PROFILE, (tenantId, entityId) -> {
-            assetProfileService.deleteAssetProfile(tenantId, (AssetProfileId) entityId);
-        });
-        removers.put(EntityType.DEVICE, (tenantId, entityId) -> {
-            deviceService.deleteDevice(tenantId, (DeviceId) entityId);
-        });
-        removers.put(EntityType.WIDGETS_BUNDLE, (tenantId, entityId) -> {
-            widgetsBundleService.deleteWidgetsBundle(tenantId, (WidgetsBundleId) entityId);
         });
     }
 

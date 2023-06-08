@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -22,10 +22,13 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { isNotEmptyStr } from '@core/utils';
 
 export interface JsonObjectEditDialogData {
   jsonValue: object;
   title?: string;
+  saveLabel?: string;
+  cancelLabel?: string;
 }
 
 @Component({
@@ -33,12 +36,12 @@ export interface JsonObjectEditDialogData {
   templateUrl: './json-object-edit-dialog.component.html',
   styleUrls: []
 })
-export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEditDialogComponent, object> implements OnInit {
+export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEditDialogComponent, object> {
 
   jsonFormGroup: FormGroup;
-  title: string;
-
-  submitted = false;
+  title = this.translate.instant('details.edit-json');
+  saveButtonLabel = this.translate.instant('action.save');
+  cancelButtonLabel = this.translate.instant('action.cancel');
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -47,10 +50,15 @@ export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEdi
               public fb: FormBuilder,
               private translate: TranslateService) {
     super(store, router, dialogRef);
-  }
-
-  ngOnInit(): void {
-    this.title = this.data.title ? this.data.title : this.translate.instant('details.edit-json');
+    if (isNotEmptyStr(this.data.title)) {
+      this.title = this.data.title;
+    }
+    if (isNotEmptyStr(this.data.saveLabel)) {
+      this.saveButtonLabel = this.data.saveLabel;
+    }
+    if (isNotEmptyStr(this.data.cancelLabel)) {
+      this.cancelButtonLabel = this.data.cancelLabel;
+    }
     this.jsonFormGroup = this.fb.group({
       json: [this.data.jsonValue, []]
     });

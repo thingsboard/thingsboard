@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,16 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId {
+public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId, NotificationRecipient {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -45,6 +48,8 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     @NoXss
     @Length(fieldName = "last name")
     private String lastName;
+    @NoXss
+    private String phone;
 
     public User() {
         super();
@@ -62,13 +67,14 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.authority = user.getAuthority();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
+        this.phone = user.getPhone();
     }
 
 
     @ApiModelProperty(position = 1, value = "JSON object with the User Id. " +
             "Specify this field to update the device. " +
             "Referencing non-existing User Id will cause error. " +
-            "Omit this field to create new customer." )
+            "Omit this field to create new customer.")
     @Override
     public UserId getId() {
         return super.getId();
@@ -141,15 +147,41 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.lastName = lastName;
     }
 
-    @ApiModelProperty(position = 10, value = "Additional parameters of the user", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @ApiModelProperty(position = 10, required = true, value = "Phone number of the user", example = "38012345123")
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    @ApiModelProperty(position = 11, value = "Additional parameters of the user", dataType = "com.fasterxml.jackson.databind.JsonNode")
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
     }
 
-    @Override
-    public String getSearchText() {
-        return getEmail();
+    @JsonIgnore
+    public String getTitle() {
+        return getTitle(email, firstName, lastName);
+    }
+
+    public static String getTitle(String email, String firstName, String lastName) {
+        String title = "";
+        if (isNotEmpty(firstName)) {
+            title += firstName;
+        }
+        if (isNotEmpty(lastName)) {
+            if (!title.isEmpty()) {
+                title += " ";
+            }
+            title += lastName;
+        }
+        if (title.isEmpty()) {
+            title = email;
+        }
+        return title;
     }
 
     @Override

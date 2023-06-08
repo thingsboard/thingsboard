@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ $previewSize: 96px !default;
 
   .tb-container {
     margin-top: 0;
+    padding: 0;
     label.tb-title {
       display: block;
       padding-bottom: 8px;
@@ -140,13 +141,10 @@ $previewSize: 96px !default;
   button.browse-file {
     padding: 0;
     font-size: 16px;
-    span.mat-button-wrapper {
+    label {
       display: block;
-      label {
-        display: block;
-        cursor: pointer;
-        padding: 0 16px;
-      }
+      cursor: pointer;
+      padding: 0 16px;
     }
   }
 }

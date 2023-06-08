@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,16 +15,21 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" [formGroup]="materialIconFormGroup">
-  <mat-icon class="icon-value" (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
+<div *ngIf="!asBoxInput; else boxInput"  fxLayout="row" [formGroup]="materialIconFormGroup">
+  <mat-icon class="icon-value" [ngStyle]="color ? { color: color } : {}" (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
   <mat-form-field fxFlex>
     <mat-label>{{ label }}</mat-label>
     <input [required]="required" matInput formControlName="icon" (mousedown)="openIconDialog()">
     <button *ngIf="iconClearButton"
             type="button"
-            matSuffix mat-button mat-icon-button aria-label="Clear"
+            matSuffix mat-icon-button aria-label="Clear"
             (click)="clear()">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-form-field>
 </div>
+<ng-template #boxInput>
+  <mat-icon class="icon-box" [ngStyle]="color && !disabled ? { color: color } : {}"
+            [ngClass]="{'disabled': disabled}"
+            (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
+</ng-template>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_TABLE_NAME;
 
 @Service
 @ConditionalOnExpression("${sql.ttl.audit_logs.enabled:true} && ${sql.ttl.audit_logs.ttl:0} > 0")
@@ -54,7 +54,7 @@ public class AuditLogsCleanUpService extends AbstractCleanUpService {
         if (isSystemTenantPartitionMine()) {
             auditLogDao.cleanUpAuditLogs(auditLogsExpTime);
         } else {
-            partitioningRepository.cleanupPartitionsCache(AUDIT_LOG_COLUMN_FAMILY_NAME, auditLogsExpTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
+            partitioningRepository.cleanupPartitionsCache(AUDIT_LOG_TABLE_NAME, auditLogsExpTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
         }
     }
 

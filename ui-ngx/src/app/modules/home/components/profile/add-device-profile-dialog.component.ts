@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import {
@@ -44,12 +44,17 @@ import {
 } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { MatHorizontalStepper } from '@angular/material/stepper';
+import { MatStepper, StepperOrientation } from '@angular/material/stepper';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { deepTrim } from '@core/utils';
 import { ServiceType } from '@shared/models/queue.models';
 import { DashboardId } from '@shared/models/id/dashboard-id';
+import { RuleChainType } from '@shared/models/rule-chain.models';
+import { Observable } from 'rxjs';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { MediaBreakpoints } from '@shared/models/constants';
+import { map } from 'rxjs/operators';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -65,8 +70,9 @@ export interface AddDeviceProfileDialogData {
 export class AddDeviceProfileDialogComponent extends
   DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> implements AfterViewInit {
 
-  @ViewChild('addDeviceProfileStepper', {static: true}) addDeviceProfileStepper: MatHorizontalStepper;
-
+  @ViewChild('addDeviceProfileStepper', {static: true}) addDeviceProfileStepper: MatStepper;
+  stepperOrientation: Observable<StepperOrientation>;
+  stepperLabelPosition: Observable<'bottom' | 'end'>;
   selectedIndex = 0;
 
   showNext = true;
@@ -83,15 +89,17 @@ export class AddDeviceProfileDialogComponent extends
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 
-  deviceProfileDetailsFormGroup: FormGroup;
+  deviceProfileDetailsFormGroup: UntypedFormGroup;
 
-  transportConfigFormGroup: FormGroup;
+  transportConfigFormGroup: UntypedFormGroup;
 
-  alarmRulesFormGroup: FormGroup;
+  alarmRulesFormGroup: UntypedFormGroup;
 
-  provisionConfigFormGroup: FormGroup;
+  provisionConfigFormGroup: UntypedFormGroup;
 
   serviceType = ServiceType.TB_RULE_ENGINE;
+
+  edgeRuleChainType = RuleChainType.EDGE;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -99,10 +107,17 @@ export class AddDeviceProfileDialogComponent extends
               public dialogRef: MatDialogRef<AddDeviceProfileDialogComponent, DeviceProfile>,
               private componentFactoryResolver: ComponentFactoryResolver,
               private injector: Injector,
+              private breakpointObserver: BreakpointObserver,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               private deviceProfileService: DeviceProfileService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
+    this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
+      .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
+
+    this.stepperLabelPosition = this.breakpointObserver.observe(MediaBreakpoints['gt-md'])
+      .pipe(map(({matches}) => matches ? 'end' : 'bottom'));
+
     this.deviceProfileDetailsFormGroup = this.fb.group(
       {
         name: [data.deviceProfileName, [Validators.required, Validators.maxLength(255)]],
@@ -111,6 +126,7 @@ export class AddDeviceProfileDialogComponent extends
         defaultRuleChainId: [null, []],
         defaultDashboardId: [null, []],
         defaultQueueName: [null, []],
+        defaultEdgeRuleChainId: [null, []],
         description: ['', []]
       }
     );
@@ -165,7 +181,7 @@ export class AddDeviceProfileDialogComponent extends
     }
   }
 
-  selectedForm(): FormGroup {
+  selectedForm(): UntypedFormGroup {
     switch (this.selectedIndex) {
       case 0:
         return this.deviceProfileDetailsFormGroup;
@@ -204,6 +220,9 @@ export class AddDeviceProfileDialogComponent extends
       }
       if (this.deviceProfileDetailsFormGroup.get('defaultDashboardId').value) {
         deviceProfile.defaultDashboardId = new DashboardId(this.deviceProfileDetailsFormGroup.get('defaultDashboardId').value);
+      }
+      if (this.deviceProfileDetailsFormGroup.get('defaultEdgeRuleChainId').value) {
+        deviceProfile.defaultEdgeRuleChainId = new RuleChainId(this.deviceProfileDetailsFormGroup.get('defaultEdgeRuleChainId').value);
       }
       this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).subscribe(
         (savedDeviceProfile) => {

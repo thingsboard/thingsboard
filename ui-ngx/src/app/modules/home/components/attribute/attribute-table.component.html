@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="mat-elevation-z1 tb-entity-table-content">
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="mode === 'default' && !textSearchMode && dataSource.selection.isEmpty()">
+  <div fxFlex fxLayout="column" class="tb-entity-table-content tb-outlined-border">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="mode === 'default' && !textSearchMode && dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
           <span class="tb-entity-table-title">{{telemetryTypeTranslationsMap.get(attributeScope) | translate}}</span>
-          <mat-form-field class="mat-block tb-attribute-scope" *ngIf="!disableAttributeScopeSelection">
+          <mat-form-field class="mat-block tb-attribute-scope" *ngIf="!disableAttributeScopeSelection && !attributeScopeSelectionReadonly">
             <mat-label translate>attribute.attributes-scope</mat-label>
-            <mat-select [disabled]="(isLoading$ | async) || attributeScopeSelectionReadonly"
+            <mat-select [disabled]="(isLoading$ | async)"
                         [ngModel]="attributeScope"
                         (ngModelChange)="attributeScopeChanged($event)">
               <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
@@ -58,7 +58,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="mode === 'default' && textSearchMode && dataSource.selection.isEmpty()">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="mode === 'default' && textSearchMode && dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
@@ -78,7 +78,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-table-toolbar" color="primary" [fxShow]="mode === 'default' && !dataSource.selection.isEmpty()">
+    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [fxShow]="mode === 'default' && !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools" fxLayout.xs="row wrap">
         <span class="tb-entity-table-info">
           {{ (attributeScope === latestTelemetryTypes.LATEST_TELEMETRY ?
@@ -104,7 +104,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-table-toolbar" color="primary" [fxShow]="mode === 'widget'">
+    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [fxShow]="mode === 'widget'">
       <div class="mat-toolbar-tools" fxLayoutGap="8px" fxLayout.xs="row wrap">
         <div fxFlex fxLayout="row" fxLayoutAlign="start">
           <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
@@ -139,7 +139,7 @@
       <table mat-table [dataSource]="dataSource"
                  matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
-          <mat-header-cell *matHeaderCellDef style="width: 30px;">
+          <mat-header-cell *matHeaderCellDef style="width: 40px;">
             <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
                           [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
                           [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
@@ -160,17 +160,41 @@
         </ng-container>
         <ng-container matColumnDef="key">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'attribute.key' | translate }} </mat-header-cell>
-          <mat-cell *matCellDef="let attribute">
-            {{ attribute.key }}
+          <mat-cell *matCellDef="let attribute" class="attribute">
+            <div fxLayout="row" style="align-items: center">
+              <span class="ellipsis">{{ attribute.key }}</span>
+              <tb-copy-button
+                class="attribute-copy"
+                [disabled]="isLoading$ | async"
+                [copyText]="attribute.key"
+                tooltipText="{{ 'attribute.copy-key' | translate }}"
+                tooltipPosition="above"
+                icon="content_copy"
+                [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+              >
+              </tb-copy-button>
+            </div>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="value">
           <mat-header-cell *matHeaderCellDef style="width: 60%"> {{ 'attribute.value' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute"
-                    class="tb-value-cell"
+                    class="tb-value-cell attribute"
                     (click)="editAttribute($event, attribute)">
-            <div fxLayout="row" style="align-items: center">
-              <span fxFlex>{{attribute.value | tbJson}}</span>
+            <div fxFlex fxLayout="row" style="align-items: center">
+              <div fxFlex fxLayout="row" style="overflow: hidden; align-items: center;">
+                <span class="ellipsis">{{attribute.value | tbJson}}</span>
+                <tb-copy-button
+                  class="attribute-copy"
+                  [disabled]="isLoading$ | async"
+                  [copyText]="attribute.value | tbJson"
+                  tooltipText="{{ 'attribute.copy-value' | translate }}"
+                  tooltipPosition="above"
+                  icon="content_copy"
+                  [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+                >
+                </tb-copy-button>
+              </div>
               <span [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)">
                 <mat-icon>edit</mat-icon>
               </span>
@@ -249,10 +273,10 @@
                            widgetBundleSet"
           fxFlex fxLayoutAlign="center center"
           style="display: flex;"
-          class="mat-headline">widgets-bundle.empty</span>
+          class="mat-headline-5">widgets-bundle.empty</span>
     <span translate *ngIf="mode === 'widget' && !widgetBundleSet"
           fxFlex fxLayoutAlign="center center"
           style="display: flex;"
-          class="mat-headline">widget.select-widgets-bundle</span>
+          class="mat-headline-5">widget.select-widgets-bundle</span>
   </div>
 </div>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -53,7 +53,7 @@ import { Subscription } from 'rxjs';
 
 export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValueAccessor, Validator, OnDestroy {
 
-  instancesFormGroup: FormGroup;
+  instancesFormGroup: UntypedFormGroup;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -75,11 +75,13 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
   private valueChange$: Subscription = null;
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               public translate: TranslateService) {
     this.instancesFormGroup = this.fb.group({
       instances: this.fb.array([])
     });
+
+    this.valueChange$ = this.instancesFormGroup.valueChanges.subscribe(value => this.updateModel(value.instances));
   }
 
   ngOnDestroy() {
@@ -114,34 +116,28 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
     };
   }
 
-  get instancesFormArray(): FormArray {
-    return this.instancesFormGroup.get('instances') as FormArray;
+  get instancesFormArray(): UntypedFormArray {
+    return this.instancesFormGroup.get('instances') as UntypedFormArray;
   }
 
   private updateInstances(instances: Instance[]): void {
     if (instances.length === this.instancesFormArray.length) {
       this.instancesFormArray.patchValue(instances, {emitEvent: false});
     } else {
-      if (this.valueChange$) {
-        this.valueChange$.unsubscribe();
-      }
       const instancesControl: Array<AbstractControl> = [];
       if (instances) {
         instances.forEach((instance) => {
           instancesControl.push(this.createInstanceFormGroup(instance));
         });
       }
-      this.instancesFormGroup.setControl('instances', this.fb.array(instancesControl));
+      this.instancesFormGroup.setControl('instances', this.fb.array(instancesControl), {emitEvent: false});
       if (this.disabled) {
         this.instancesFormGroup.disable({emitEvent: false});
       }
-      this.valueChange$ = this.instancesFormGroup.valueChanges.subscribe(value => {
-        this.updateModel(value.instances);
-      });
     }
   }
 
-  private createInstanceFormGroup(instance: Instance): FormGroup {
+  private createInstanceFormGroup(instance: Instance): UntypedFormGroup {
     return this.fb.group({
       id: [instance.id],
       attributes: [instance.attributes],

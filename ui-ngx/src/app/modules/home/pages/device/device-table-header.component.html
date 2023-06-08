@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
     limitations under the License.
 
 -->
-<tb-device-profile-autocomplete
-  [ngModel]="entitiesTableConfig.componentsData.deviceProfileId"
-  (ngModelChange)="deviceProfileChanged($event)"
-  [displayAllOnEmpty]="true"
-  [editProfileEnabled]="false">
-</tb-device-profile-autocomplete>
+<tb-device-info-filter [ngModel]="entitiesTableConfig.componentsData.deviceInfoFilter"
+                       (ngModelChange)="deviceInfoFilterChanged($event)">
+</tb-device-info-filter>

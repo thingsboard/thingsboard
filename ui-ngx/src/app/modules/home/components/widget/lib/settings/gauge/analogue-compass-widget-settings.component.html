@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,29 +20,29 @@
     <legend class="group-title" translate>widgets.gauge.ticks-settings</legend>
     <mat-form-field fxFlex class="mat-block" floatLabel="always">
       <mat-label translate>widgets.gauge.major-ticks-names</mat-label>
-      <mat-chip-list class="tb-drop-list"
+      <mat-chip-grid class="tb-drop-list"
                      #majorTicksNamesChipList
                      cdkDropList
                      cdkDropListOrientation="horizontal"
                      (cdkDropListDropped)="majorTickNameDrop($event)"
                      formControlName="majorTicks">
-        <mat-chip class="tb-draggable" cdkDrag *ngFor="let tickName of majorTicksNamesList()"
+        <mat-chip-row class="tb-draggable" cdkDrag *ngFor="let tickName of majorTicksNamesList()"
                   [removable]="true" (removed)="removeMajorTickName(tickName)">
           {{tickName}}
           <mat-icon matChipRemove>cancel</mat-icon>
-        </mat-chip>
+        </mat-chip-row>
         <input [matChipInputFor]="majorTicksNamesChipList"
                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                matChipInputAddOnBlur
                (matChipInputTokenEnd)="addMajorTickName($event)">
-      </mat-chip-list>
+      </mat-chip-grid>
     </mat-form-field>
     <tb-color-input fxFlex
                     formControlName="colorMajorTicks"
                     icon="format_color_fill"
                     label="{{ 'widgets.gauge.major-ticks-color' | translate }}" openOnInput colorClearButton>
     </tb-color-input>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.minor-ticks-count</mat-label>
         <input matInput type="number" min="0" formControlName="minorTicks">
@@ -71,7 +71,7 @@
     <mat-slide-toggle formControlName="showBorder" class="slide-block">
       {{ 'widgets.gauge.show-plate-border' | translate }}
     </mat-slide-toggle>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <tb-color-input fxFlex
                       formControlName="colorBorder"
                       icon="format_color_fill"
@@ -89,7 +89,7 @@
       <mat-label translate>widgets.gauge.needle-circle-size</mat-label>
       <input matInput type="number" min="0" formControlName="needleCircleSize">
     </mat-form-field>
-    <section fxLayout="row wrap" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <tb-color-input fxFlex
                       formControlName="colorNeedle"
                       icon="format_color_fill"

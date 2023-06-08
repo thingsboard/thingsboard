@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -39,22 +41,22 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.rpc.processor.AlarmEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.AssetEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.AssetProfileEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.DashboardEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.DeviceEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.DeviceProfileEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.EntityViewEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.OtaPackageEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.QueueEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.RelationEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.RuleChainEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.UserEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.WidgetBundleEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.WidgetTypeEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.asset.AssetProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.customer.CustomerEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.device.DeviceProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgeProcessor;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -66,6 +68,8 @@ import java.util.concurrent.Executors;
 @TbCoreComponent
 @Slf4j
 public class DefaultEdgeNotificationService implements EdgeNotificationService {
+
+    public static final String EDGE_IS_ROOT_BODY_KEY = "isRoot";
 
     @Autowired
     private EdgeService edgeService;
@@ -142,7 +146,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws Exception {
         edge.setRootRuleChainId(ruleChainId);
         Edge savedEdge = edgeService.saveEdge(edge);
-        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, null).get();
+        ObjectNode isRootBody = JacksonUtil.newObjectNode();
+        isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
+        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, isRootBody).get();
         return savedEdge;
     }
 

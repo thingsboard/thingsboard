@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.thingsboard.rule.engine.mail;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -44,15 +44,13 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 " where created using <code>to Email</code> transformation Node, please connect this Node " +
                 "with <code>to Email</code> Node using <code>Successful</code> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeSendEmailConfig",
+        configDirective = "tbExternalNodeSendEmailConfig",
         icon = "send"
 )
 public class TbSendEmailNode implements TbNode {
 
     private static final String MAIL_PROP = "mail.";
     static final String SEND_EMAIL_TYPE = "SEND_EMAIL";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
     private TbSendEmailNodeConfiguration config;
     private JavaMailSenderImpl mailSender;
 
@@ -93,7 +91,7 @@ public class TbSendEmailNode implements TbNode {
     }
 
     private TbEmail getEmail(TbMsg msg) throws IOException {
-        TbEmail email = MAPPER.readValue(msg.getData(), TbEmail.class);
+        TbEmail email = JacksonUtil.fromString(msg.getData(), TbEmail.class);
         if (StringUtils.isBlank(email.getTo())) {
             throw new IllegalStateException("Email destination can not be blank [" + email.getTo() + "]");
         }

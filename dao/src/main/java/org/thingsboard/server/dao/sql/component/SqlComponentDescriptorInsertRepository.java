@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,10 @@ public class SqlComponentDescriptorInsertRepository extends AbstractComponentDes
     }
 
     private static String getInsertOrUpdateStatement(String conflictKeyStatement, String updateKeyStatement) {
-        return "INSERT INTO component_descriptor (id, created_time, actions, clazz, configuration_descriptor, name, scope, search_text, type) VALUES (:id, :created_time, :actions, :clazz, :configuration_descriptor, :name, :scope, :search_text, :type) ON CONFLICT " + conflictKeyStatement + " DO UPDATE SET " + updateKeyStatement + " returning *";
+        return "INSERT INTO component_descriptor (id, created_time, actions, clazz, configuration_descriptor, name, scope, type, clustering_mode) VALUES (:id, :created_time, :actions, :clazz, :configuration_descriptor, :name, :scope, :type, :clustering_mode) ON CONFLICT " + conflictKeyStatement + " DO UPDATE SET " + updateKeyStatement + " returning *";
     }
 
     private static String getUpdateStatement(String id) {
-        return "actions = :actions, " + id + ",created_time = :created_time, configuration_descriptor = :configuration_descriptor, name = :name, scope = :scope, search_text = :search_text, type = :type";
+        return "actions = :actions, " + id + ",created_time = :created_time, configuration_descriptor = :configuration_descriptor, name = :name, scope = :scope, type = :type, clustering_mode = :clustering_mode";
     }
 }

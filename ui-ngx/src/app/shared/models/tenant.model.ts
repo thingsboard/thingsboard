@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ export interface DefaultTenantProfileConfiguration {
 
   tenantEntityExportRateLimit?: string;
   tenantEntityImportRateLimit?: string;
+  tenantNotificationRequestsRateLimit?: string;
+  tenantNotificationRequestsPerRuleRateLimit?: string;
 
   maxTransportMessages: number;
   maxTransportDataPoints: number;
@@ -52,6 +54,7 @@ export interface DefaultTenantProfileConfiguration {
   maxRuleNodeExecutionsPerMessage: number;
   maxEmails: number;
   maxSms: number;
+  smsEnabled: boolean;
   maxCreatedAlarms: number;
 
   tenantServerRestLimitsConfiguration: string;
@@ -103,6 +106,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxRuleNodeExecutionsPerMessage: 0,
           maxEmails: 0,
           maxSms: 0,
+          smsEnabled: true,
           maxCreatedAlarms: 0,
           tenantServerRestLimitsConfiguration: '',
           customerServerRestLimitsConfiguration: '',

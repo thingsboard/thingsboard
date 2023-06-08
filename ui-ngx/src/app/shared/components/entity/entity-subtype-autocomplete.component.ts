@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of, Subscription, throwError } from 'rxjs';
 import {
   catchError,
@@ -37,6 +37,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { EdgeService } from '@core/http/edge.service';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-subtype-autocomplete',
@@ -50,7 +51,7 @@ import { EdgeService } from '@core/http/edge.service';
 })
 export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
-  subTypeFormGroup: FormGroup;
+  subTypeFormGroup: UntypedFormGroup;
 
   modelValue: string | null;
 
@@ -70,6 +71,12 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  excludeSubTypes: Array<string>;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('subTypeInput', {static: true}) subTypeInput: ElementRef;
 
@@ -97,7 +104,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
               private assetService: AssetService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.subTypeFormGroup = this.fb.group({
       subType: [null, Validators.maxLength(255)]
     });
@@ -238,9 +245,14 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
           break;
       }
       if (subTypesObservable) {
+        const excludeSubTypesSet = new Set(this.excludeSubTypes);
         this.subTypes = subTypesObservable.pipe(
           catchError(() => of([] as Array<EntitySubtype>)),
-          map(subTypes => subTypes.map(subType => subType.type)),
+          map(subTypes => {
+            const filteredSubTypes: Array<string> = [];
+            subTypes.forEach(subType => !excludeSubTypesSet.has(subType.type) && filteredSubTypes.push(subType.type));
+            return filteredSubTypes;
+          }),
           publishReplay(1),
           refCount()
         );

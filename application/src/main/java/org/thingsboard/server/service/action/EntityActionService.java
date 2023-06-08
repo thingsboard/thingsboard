@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.action;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +28,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -40,7 +40,10 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.EntityActionTrigger;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 
 import java.util.List;
 import java.util.Map;
@@ -52,8 +55,7 @@ import java.util.stream.Collectors;
 public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
-
-    private static final ObjectMapper json = new ObjectMapper();
+    private final NotificationRuleProcessor notificationRuleProcessor;
 
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {
@@ -86,8 +88,20 @@ public class EntityActionService {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
+            case ALARM_ASSIGNED:
+                msgType = DataConstants.ALARM_ASSIGNED;
+                break;
+            case ALARM_UNASSIGNED:
+                msgType = DataConstants.ALARM_UNASSIGNED;
+                break;
             case ALARM_DELETE:
                 msgType = DataConstants.ALARM_DELETE;
+                break;
+            case ADDED_COMMENT:
+                msgType = DataConstants.COMMENT_CREATED;
+                break;
+            case UPDATED_COMMENT:
+                msgType = DataConstants.COMMENT_UPDATED;
                 break;
             case ASSIGNED_FROM_TENANT:
                 msgType = DataConstants.ENTITY_ASSIGNED_FROM_TENANT;
@@ -129,6 +143,13 @@ public class EntityActionService {
                 if (user != null) {
                     metaData.putValue("userId", user.getId().toString());
                     metaData.putValue("userName", user.getName());
+                    metaData.putValue("userEmail", user.getEmail());
+                    if (user.getFirstName() != null) {
+                        metaData.putValue("userFirstName", user.getFirstName());
+                    }
+                    if (user.getLastName() != null) {
+                        metaData.putValue("userLastName", user.getLastName());
+                    }
                 }
                 if (customerId != null && !customerId.isNullUid()) {
                     metaData.putValue("customerId", customerId.toString());
@@ -163,15 +184,20 @@ public class EntityActionService {
                     String strEdgeName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedEdgeId", strEdgeId);
                     metaData.putValue("unassignedEdgeName", strEdgeName);
+                } else if (actionType == ActionType.ADDED_COMMENT || actionType == ActionType.UPDATED_COMMENT) {
+                    AlarmComment comment = extractParameter(AlarmComment.class, 0, additionalInfo);
+                    metaData.putValue("comment", JacksonUtil.toString(comment));
                 }
                 ObjectNode entityNode;
                 if (entity != null) {
-                    entityNode = json.valueToTree(entity);
+                    entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(entity);
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {
                         entityNode.put("configuration", "");
                     }
+                    metaData.putValue("entityName", entity.getName());
+                    metaData.putValue("entityType", entityId.getEntityType().toString());
                 } else {
-                    entityNode = json.createObjectNode();
+                    entityNode = JacksonUtil.newObjectNode();
                     if (actionType == ActionType.ATTRIBUTES_UPDATED) {
                         String scope = extractParameter(String.class, 0, additionalInfo);
                         @SuppressWarnings("unchecked")
@@ -205,15 +231,31 @@ public class EntityActionService {
                         entityNode.put("startTs", extractParameter(Long.class, 1, additionalInfo));
                         entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
                     } else if (ActionType.RELATION_ADD_OR_UPDATE.equals(actionType) || ActionType.RELATION_DELETED.equals(actionType)) {
-                        entityNode = json.valueToTree(extractParameter(EntityRelation.class, 0, additionalInfo));
+                        entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(extractParameter(EntityRelation.class, 0, additionalInfo));
                     }
                 }
-                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+
                 if (tenantId == null || tenantId.isNullUid()) {
                     if (entity instanceof HasTenantId) {
                         tenantId = ((HasTenantId) entity).getTenantId();
                     }
                 }
+                if (tenantId != null && !tenantId.isSysTenantId()) {
+                    if (actionType == ActionType.ADDED) {
+                        notificationRuleProcessor.process(EntitiesLimitTrigger.builder()
+                                .tenantId(tenantId)
+                                .entityType(entityId.getEntityType())
+                                .build());
+                    }
+                    notificationRuleProcessor.process(EntityActionTrigger.builder()
+                            .tenantId(tenantId)
+                            .entityId(entityId)
+                            .entity(entity)
+                            .actionType(actionType)
+                            .user(user)
+                            .build());
+                }
+                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
                 tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
@@ -222,7 +264,7 @@ public class EntityActionService {
     }
 
     public <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
-                                                                           ActionType actionType, Exception e, Object... additionalInfo) {
+                                                                        ActionType actionType, Exception e, Object... additionalInfo) {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
         }
@@ -253,7 +295,7 @@ public class EntityActionService {
             Map<Long, List<TsKvEntry>> groupedTelemetry = timeseries.stream()
                     .collect(Collectors.groupingBy(TsKvEntry::getTs));
             for (Map.Entry<Long, List<TsKvEntry>> entry : groupedTelemetry.entrySet()) {
-                ObjectNode element = json.createObjectNode();
+                ObjectNode element = JacksonUtil.newObjectNode();
                 element.put("ts", entry.getKey());
                 ObjectNode values = element.putObject("values");
                 for (TsKvEntry tsKvEntry : entry.getValue()) {

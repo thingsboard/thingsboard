@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,11 +57,7 @@ public class ComponentDescriptorController extends BaseController {
             @ApiParam(value = "Component Descriptor class name", required = true)
             @PathVariable("componentDescriptorClazz") String strComponentDescriptorClazz) throws ThingsboardException {
         checkParameter("strComponentDescriptorClazz", strComponentDescriptorClazz);
-        try {
-            return checkComponentDescriptorByClazz(strComponentDescriptorClazz);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return checkComponentDescriptorByClazz(strComponentDescriptorClazz);
     }
 
     @ApiOperation(value = "Get Component Descriptors (getComponentDescriptorsByType)",
@@ -76,11 +72,7 @@ public class ComponentDescriptorController extends BaseController {
             @ApiParam(value = "Type of the Rule Chain", allowableValues = "CORE,EDGE")
             @RequestParam(value = "ruleChainType", required = false) String strRuleChainType) throws ThingsboardException {
         checkParameter("componentType", strComponentType);
-        try {
-            return checkComponentDescriptorsByType(ComponentType.valueOf(strComponentType), getRuleChainType(strRuleChainType));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return checkComponentDescriptorsByType(ComponentType.valueOf(strComponentType), getRuleChainType(strRuleChainType));
     }
 
     @ApiOperation(value = "Get Component Descriptors (getComponentDescriptorsByTypes)",
@@ -95,15 +87,11 @@ public class ComponentDescriptorController extends BaseController {
             @ApiParam(value = "Type of the Rule Chain", allowableValues = "CORE,EDGE")
             @RequestParam(value = "ruleChainType", required = false) String strRuleChainType) throws ThingsboardException {
         checkArrayParameter("componentTypes", strComponentTypes);
-        try {
-            Set<ComponentType> componentTypes = new HashSet<>();
-            for (String strComponentType : strComponentTypes) {
-                componentTypes.add(ComponentType.valueOf(strComponentType));
-            }
-            return checkComponentDescriptorsByTypes(componentTypes, getRuleChainType(strRuleChainType));
-        } catch (Exception e) {
-            throw handleException(e);
+        Set<ComponentType> componentTypes = new HashSet<>();
+        for (String strComponentType : strComponentTypes) {
+            componentTypes.add(ComponentType.valueOf(strComponentType));
         }
+        return checkComponentDescriptorsByTypes(componentTypes, getRuleChainType(strRuleChainType));
     }
 
     private RuleChainType getRuleChainType(String strRuleChainType) {

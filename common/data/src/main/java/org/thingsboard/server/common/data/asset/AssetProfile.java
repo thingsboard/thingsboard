@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasRuleEngineProfile;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -38,7 +39,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @ToString(exclude = {"image"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class AssetProfile extends SearchTextBased<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId> {
+public class AssetProfile extends BaseData<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId> {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
@@ -68,6 +69,11 @@ public class AssetProfile extends SearchTextBased<AssetProfileId> implements Has
             "Otherwise, the 'Main' queue will be used to store those messages.")
     private String defaultQueueName;
 
+    @ApiModelProperty(position = 13, value = "Reference to the edge rule chain. " +
+            "If present, the specified edge rule chain will be used on the edge to process all messages related to asset, including asset updates, telemetry, attribute updates, etc. " +
+            "Otherwise, the edge root rule chain will be used to process those messages.")
+    private RuleChainId defaultEdgeRuleChainId;
+
     private AssetProfileId externalId;
 
     public AssetProfile() {
@@ -88,6 +94,7 @@ public class AssetProfile extends SearchTextBased<AssetProfileId> implements Has
         this.defaultRuleChainId = assetProfile.getDefaultRuleChainId();
         this.defaultDashboardId = assetProfile.getDefaultDashboardId();
         this.defaultQueueName = assetProfile.getDefaultQueueName();
+        this.defaultEdgeRuleChainId = assetProfile.getDefaultEdgeRuleChainId();
         this.externalId = assetProfile.getExternalId();
     }
 
@@ -104,11 +111,6 @@ public class AssetProfile extends SearchTextBased<AssetProfileId> implements Has
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 
     @ApiModelProperty(position = 5, value = "Used to mark the default profile. Default profile is used when the asset profile is not specified during asset creation.")

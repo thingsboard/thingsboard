@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package org.thingsboard.rule.engine.mail;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -80,7 +80,7 @@ public class TbMsgToEmailNodeTest {
         assertEquals("oreo", metadataCaptor.getValue().getValue("username"));
         assertNotSame(metaData, metadataCaptor.getValue());
 
-        TbEmail actual = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), TbEmail.class);
+        TbEmail actual = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), TbEmail.class);
 
         TbEmail expected = TbEmail.builder()
                 .from("test@mail.org")
@@ -99,8 +99,7 @@ public class TbMsgToEmailNodeTest {
             config.setSubjectTemplate("Hi ${username} there");
             config.setBodyTemplate("${name} is to high. Current ${passed} and ${count}");
             config.setMailBodyType("false");
-            ObjectMapper mapper = new ObjectMapper();
-            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
             emailNode = new TbMsgToEmailNode();
             emailNode.init(ctx, nodeConfiguration);

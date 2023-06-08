@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -43,8 +43,7 @@ public class TbGetTelemetryNodeTest {
         node = spy(new TbGetTelemetryNode());
         config = new TbGetTelemetryNodeConfiguration();
         config.setFetchMode("ALL");
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
         willCallRealMethod().given(node).parseAggregationConfig(any());
@@ -70,14 +69,18 @@ public class TbGetTelemetryNodeTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void givenAggregationWhiteSpace_whenParseAggregation_thenException() {
-        node.parseAggregationConfig(" ");
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            node.parseAggregationConfig(" ");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void givenAggregationIncorrect_whenParseAggregation_thenException() {
-        node.parseAggregationConfig("TOP");
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            node.parseAggregationConfig("TOP");
+        });
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,7 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     }
 
     @PostConstruct
+    @Override
     public void init() {
         super.init();
         jsExecutor = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(jsExecutorThreadPoolSize));
@@ -122,10 +123,14 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     }
 
     @PreDestroy
+    @Override
     public void stop() {
         super.stop();
         if (monitorExecutorService != null) {
             monitorExecutorService.shutdownNow();
+        }
+        if (jsExecutor != null) {
+            jsExecutor.shutdownNow();
         }
     }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,14 +18,12 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
 import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
 import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-
-const tinycolor = tinycolor_;
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
@@ -33,6 +31,7 @@ type ColumnSelectionOptions = 'enabled' | 'disabled';
 
 export interface TableWidgetSettings {
   enableSearch: boolean;
+  enableSelectColumnDisplay: boolean;
   enableStickyAction: boolean;
   enableStickyHeader: boolean;
   displayPagination: boolean;
@@ -384,94 +383,97 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
   const mdDarkDivider = defaultColor.setAlpha(0.12).toRgbString();
 
   const cssString =
-    '.mat-input-element::placeholder {\n' +
+    '.mat-mdc-input-element::placeholder {\n' +
     '   color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-input-element::-moz-placeholder {\n' +
+    '.mat-mdc-input-element::-moz-placeholder {\n' +
     '   color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-input-element::-webkit-input-placeholder {\n' +
+    '.mat-mdc-input-element::-webkit-input-placeholder {\n' +
     '   color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-input-element:-ms-input-placeholder {\n' +
+    '.mat-mdc-input-element:-ms-input-placeholder {\n' +
     '   color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    'mat-toolbar.mat-table-toolbar {\n' +
+    'mat-toolbar.mat-mdc-table-toolbar {\n' +
     'color: ' + mdDark + ';\n' +
     '}\n' +
-    'mat-toolbar.mat-table-toolbar:not([color="primary"]) button.mat-icon-button mat-icon {\n' +
+    'mat-toolbar.mat-mdc-table-toolbar:not([color="primary"]) button.mat-mdc-icon-button mat-icon {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-tab-label {\n' +
+    '.mat-mdc-tab .mdc-tab__text-label {\n' +
     'color: ' + mdDark + ';\n' +
     '}\n' +
-    '.mat-tab-header-pagination-chevron {\n' +
+    '.mat-mdc-tab-header-pagination-chevron {\n' +
     'border-color: ' + mdDark + ';\n' +
     '}\n' +
-    '.mat-tab-header-pagination-disabled .mat-tab-header-pagination-chevron {\n' +
+    '.mat-mdc-tab-header-pagination-disabled .mat-mdc-tab-header-pagination-chevron {\n' +
     'border-color: ' + mdDarkDisabled2 + ';\n' +
     '}\n' +
-    '.mat-table .mat-header-row {\n' +
+    '.mat-mdc-table .mat-mdc-header-row {\n' +
     'background-color: ' + origBackgroundColor + ';\n' +
     '}\n' +
-    '.mat-table .mat-header-cell {\n' +
+    '.mat-mdc-table .mat-mdc-header-cell {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-table .mat-header-cell .mat-sort-header-arrow {\n' +
-    'color: ' + mdDarkDisabled + ';\n' +
-    '}\n' +
-    '.mat-table .mat-cell, .mat-table .mat-header-cell {\n' +
+    '.mat-mdc-table .mat-mdc-cell, .mat-mdc-table .mat-mdc-header-cell {\n' +
     'border-bottom-color: ' + mdDarkDivider + ';\n' +
     '}\n' +
-    '.mat-table .mat-cell .mat-checkbox-frame, .mat-table .mat-header-cell .mat-checkbox-frame {\n' +
+    '.mat-mdc-table .mat-mdc-cell .mat-mdc-checkbox ' +
+    '.mdc-checkbox__native-control:focus:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])'+
+    '~.mdc-checkbox__background, ' +
+    '.mat-table .mat-header-cell .mat-mdc-checkbox ' +
+    '.mdc-checkbox__native-control:focus:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])'+
+    '~.mdc-checkbox__background {\n' +
     'border-color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-table .mat-row .mat-cell.mat-table-sticky {\n' +
+    '.mat-mdc-table .mat-mdc-row .mat-mdc-cell.mat-mdc-table-sticky {\n' +
     'transition: background-color .2s;\n' +
     '}\n' +
-    '.mat-table .mat-row.tb-current-entity {\n' +
+    '.mat-mdc-table .mat-mdc-row.tb-current-entity {\n' +
     'background-color: ' + currentEntityColor + ';\n' +
     '}\n' +
-    '.mat-table .mat-row.tb-current-entity .mat-cell.mat-table-sticky {\n' +
+    '.mat-mdc-table .mat-mdc-row.tb-current-entity .mat-mdc-cell.mat-mdc-table-sticky {\n' +
     'background-color: ' + currentEntityStickyColor + ';\n' +
     '}\n' +
-    '.mat-table .mat-row:hover:not(.tb-current-entity) {\n' +
+    '.mat-mdc-table .mat-mdc-row:hover:not(.tb-current-entity) {\n' +
     'background-color: ' + hoverColor + ';\n' +
     '}\n' +
-    '.mat-table .mat-row:hover:not(.tb-current-entity) .mat-cell.mat-table-sticky {\n' +
+    '.mat-mdc-table .mat-mdc-row:hover:not(.tb-current-entity) .mat-mdc-cell.mat-mdc-table-sticky {\n' +
     'background-color: ' + hoverStickyColor + ';\n' +
     '}\n' +
-    '.mat-table .mat-row.mat-row-select.mat-selected:not(.tb-current-entity) {\n' +
+    '.mat-mdc-table .mat-mdc-row.mat-row-select.mat-selected:not(.tb-current-entity) {\n' +
     'background-color: ' + selectedColor + ';\n' +
     '}\n' +
-    '.mat-table .mat-row.mat-row-select.mat-selected:not(.tb-current-entity) .mat-cell.mat-table-sticky {\n' +
+    '.mat-mdc-table .mat-mdc-row.mat-row-select.mat-selected:not(.tb-current-entity) .mat-mdc-cell.mat-mdc-table-sticky {\n' +
     'background-color: ' + selectedStickyColor + ';\n' +
     '}\n' +
-    '.mat-table .mat-row .mat-cell.mat-table-sticky, .mat-table .mat-header-cell.mat-table-sticky {\n' +
+    '.mat-mdc-table .mat-mdc-row .mat-mdc-cell.mat-mdc-table-sticky, .mat-mdc-table .mat-mdc-header-cell.mat-mdc-table-sticky {\n' +
     'background-color: ' + origBackgroundColor + ';\n' +
     '}\n' +
-    '.mat-table .mat-cell {\n' +
+    '.mat-mdc-table .mat-mdc-cell {\n' +
     'color: ' + mdDark + ';\n' +
+    'background-color: rgba(0, 0, 0, 0);\n' +
     '}\n' +
-    '.mat-table .mat-cell button.mat-icon-button mat-icon {\n' +
+    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button mat-icon {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-table .mat-cell button.mat-icon-button[disabled][disabled] mat-icon {\n' +
+    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button[disabled][disabled] mat-icon {\n' +
     'color: ' + mdDarkDisabled + ';\n' +
     '}\n' +
     '.mat-divider {\n' +
     'border-top-color: ' + mdDarkDivider + ';\n' +
     '}\n' +
-    '.mat-paginator {\n' +
+    '.mat-mdc-paginator {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-paginator button.mat-icon-button {\n' +
+    '.mat-mdc-paginator button.mat-mdc-icon-button {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    '.mat-paginator button.mat-icon-button[disabled][disabled] {\n' +
+    '.mat-mdc-paginator button.mat-mdc-icon-button[disabled][disabled] {\n' +
     'color: ' + mdDarkDisabled + ';\n' +
     '}\n' +
-    '.mat-paginator .mat-select-value {\n' +
+    '.mat-mdc-paginator .mat-mdc-select-value {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}';
   return cssString;

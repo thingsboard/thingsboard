@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.CREATED_TIME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ALARM_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ALARM_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 
 @Data
 @Entity
-@Table(name = ENTITY_ALARM_COLUMN_FAMILY_NAME)
+@Table(name = ENTITY_ALARM_TABLE_NAME)
 @IdClass(EntityAlarmCompositeKey.class)
 public final class EntityAlarmEntity implements ToData<EntityAlarm> {
 

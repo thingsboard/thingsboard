@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfileType;
 
 @AllArgsConstructor
@@ -46,6 +47,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     private String tenantEntityExportRateLimit;
     private String tenantEntityImportRateLimit;
+    private String tenantNotificationRequestsRateLimit;
+    private String tenantNotificationRequestsPerRuleRateLimit;
 
     private long maxTransportMessages;
     private long maxTransportDataPoints;
@@ -54,6 +57,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxDPStorageDays;
     private int maxRuleNodeExecutionsPerMessage;
     private long maxEmails;
+    private Boolean smsEnabled;
     private long maxSms;
     private long maxCreatedAlarms;
 
@@ -103,8 +107,37 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     }
 
     @Override
+    public boolean getProfileFeatureEnabled(ApiUsageRecordKey key) {
+        switch (key) {
+            case SMS_EXEC_COUNT:
+                return smsEnabled == null || Boolean.TRUE.equals(smsEnabled);
+            default:
+                return true;
+        }
+    }
+
+    @Override
     public long getWarnThreshold(ApiUsageRecordKey key) {
         return (long) (getProfileThreshold(key) * (warnThreshold > 0.0 ? warnThreshold : 0.8));
+    }
+
+    public long getEntitiesLimit(EntityType entityType) {
+        switch (entityType) {
+            case DEVICE:
+                return maxDevices;
+            case ASSET:
+                return maxAssets;
+            case CUSTOMER:
+                return maxCustomers;
+            case USER:
+                return maxUsers;
+            case DASHBOARD:
+                return maxDashboards;
+            case RULE_CHAIN:
+                return maxRuleChains;
+            default:
+                return 0;
+        }
     }
 
     @Override

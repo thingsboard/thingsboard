@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.google.common.collect.Lists;
 import org.apache.cassandra.io.sstable.CQLSSTableWriter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
-import org.thingsboard.server.common.data.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.File;
 import java.io.IOException;

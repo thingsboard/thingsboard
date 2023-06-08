@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ import org.snmp4j.transport.TransportMappings;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 

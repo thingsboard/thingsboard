@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,12 +29,25 @@ import {
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { isDefined, isString, isUndefined } from '@core/utils';
-import { Datasource, DatasourceType, Widget, widgetType } from '@app/shared/models/widget.models';
+import { deepClone, isDefined, isDefinedAndNotNull, isString, isUndefined } from '@core/utils';
+import {
+  DataKey,
+  Datasource,
+  datasourcesHasOnlyComparisonAggregation,
+  DatasourceType,
+  defaultLegendConfig,
+  Widget,
+  WidgetConfig,
+  WidgetConfigMode,
+  widgetType,
+  WidgetTypeDescriptor
+} from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
+import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 @Injectable({
   providedIn: 'root'
@@ -201,29 +214,87 @@ export class DashboardUtilsService {
   }
 
   public validateAndUpdateWidget(widget: Widget): Widget {
-    if (!widget.config) {
-      widget.config = {};
+    widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
+    // Temp workaround
+    if (widget.isSystemType && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
+      widget.typeAlias = 'basic_timeseries';
     }
-    if (!widget.config.datasources) {
-      widget.config.datasources = [];
-    }
-    widget.config.datasources.forEach((datasource) => {
-      if (datasource.type === 'device') {
-        datasource.type = DatasourceType.entity;
+    if (widget.isSystemType && widget.bundleAlias === 'charts' &&
+      ['state_chart', 'basic_timeseries', 'timeseries_bars_flot'].includes(widget.typeAlias)) {
+      const widgetConfig = widget.config;
+      const widgetSettings = widget.config.settings;
+      if (isDefinedAndNotNull(widgetConfig.showLegend)) {
+        widgetSettings.showLegend = widgetConfig.showLegend;
+        delete widgetConfig.showLegend;
+      } else if (isUndefined(widgetSettings.showLegend)) {
+        widgetSettings.showLegend = true;
       }
+      if (isDefinedAndNotNull(widgetConfig.legendConfig)) {
+        widgetSettings.legendConfig = widgetConfig.legendConfig;
+        delete widgetConfig.legendConfig;
+      } else if (isUndefined(widgetSettings.legendConfig)) {
+        widgetSettings.legendConfig = defaultLegendConfig(widget.type);
+      }
+    }
+    return widget;
+  }
+
+  public validateAndUpdateWidgetConfig(widgetConfig: WidgetConfig | undefined, type: widgetType): WidgetConfig {
+    if (!widgetConfig) {
+      widgetConfig = {};
+    }
+    if (!widgetConfig.datasources) {
+      widgetConfig.datasources = [];
+    }
+    widgetConfig.datasources.forEach((datasource) => {
       if (datasource.deviceAliasId) {
+        datasource.type = DatasourceType.entity;
         datasource.entityAliasId = datasource.deviceAliasId;
         delete datasource.deviceAliasId;
       }
     });
-    if (widget.type === widgetType.latest) {
-      widget.config.timewindow = initModelFromDefaultTimewindow(widget.config.timewindow, true, this.timeService);
+    if (type === widgetType.latest) {
+      const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
+      widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true, onlyHistoryTimewindow, this.timeService);
     }
-    // Temp workaround
-    if (widget.isSystemType  && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
-      widget.typeAlias = 'basic_timeseries';
+    if (type === widgetType.alarm) {
+      if (!widgetConfig.alarmFilterConfig) {
+        widgetConfig.alarmFilterConfig = {};
+        const alarmFilterConfig = widgetConfig.alarmFilterConfig;
+        if (isDefined(widgetConfig.alarmStatusList) && widgetConfig.alarmStatusList.length) {
+          alarmFilterConfig.statusList = widgetConfig.alarmStatusList;
+        } else if (isDefined(widgetConfig.alarmSearchStatus) && widgetConfig.alarmSearchStatus !== AlarmSearchStatus.ANY) {
+          alarmFilterConfig.statusList = [widgetConfig.alarmSearchStatus];
+        } else {
+          alarmFilterConfig.statusList = [];
+        }
+        if (isDefined(widgetConfig.alarmStatusList)) {
+          delete widgetConfig.alarmStatusList;
+        }
+        if (isDefined(widgetConfig.alarmSearchStatus)) {
+          delete widgetConfig.alarmSearchStatus;
+        }
+        if (isDefined(widgetConfig.alarmSeverityList)) {
+          alarmFilterConfig.severityList = widgetConfig.alarmSeverityList;
+          delete widgetConfig.alarmSeverityList;
+        } else {
+          alarmFilterConfig.severityList = [];
+        }
+        if (isDefined(widgetConfig.alarmTypeList)) {
+          alarmFilterConfig.typeList = widgetConfig.alarmTypeList;
+          delete widgetConfig.alarmTypeList;
+        } else {
+          alarmFilterConfig.typeList = [];
+        }
+        if (isDefined(widgetConfig.searchPropagatedAlarms)) {
+          alarmFilterConfig.searchPropagatedAlarms = widgetConfig.searchPropagatedAlarms;
+          delete widgetConfig.searchPropagatedAlarms;
+        } else {
+          alarmFilterConfig.searchPropagatedAlarms = true;
+        }
+      }
     }
-    return widget;
+    return widgetConfig;
   }
 
   public createDefaultLayoutData(): DashboardLayout {
@@ -238,6 +309,7 @@ export class DashboardUtilsService {
       backgroundColor: '#eeeeee',
       columns: 24,
       margin: 10,
+      outerMargin: true,
       backgroundSizeMode: '100%'
     };
   }
@@ -264,6 +336,48 @@ export class DashboardUtilsService {
     };
   }
 
+  public widgetConfigFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor): WidgetConfig {
+    const config: WidgetConfig = JSON.parse(widgetTypeDescriptor.defaultConfig);
+    config.datasources = this.convertDatasourcesFromWidgetType(widgetTypeDescriptor, config, config.datasources);
+    if (isDefinedAndNotNull(config.alarmSource)) {
+      config.alarmSource = this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, config.alarmSource);
+    }
+    return config;
+  }
+
+  private convertDatasourcesFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor,
+                                           config: WidgetConfig, datasources?: Datasource[]): Datasource[] {
+    const newDatasources: Datasource[] = [];
+    if (datasources) {
+      datasources.forEach(datasource => {
+        newDatasources.push(this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, datasource));
+      });
+    }
+    return newDatasources;
+  }
+
+  private convertDatasourceFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor, config: WidgetConfig,
+                                          datasource: Datasource): Datasource {
+    const newDatasource = deepClone(datasource);
+    if (newDatasource.type === DatasourceType.function) {
+      newDatasource.type = DatasourceType.entity;
+      if (widgetTypeDescriptor.hasBasicMode && config.configMode === WidgetConfigMode.basic) {
+        newDatasource.type = DatasourceType.device;
+      }
+      const dataKeys = newDatasource.dataKeys;
+      newDatasource.dataKeys = [];
+      if (widgetTypeDescriptor.type === widgetType.alarm) {
+        dataKeys.forEach(dataKey => {
+          const newDataKey = deepClone(dataKey);
+          newDataKey.funcBody = null;
+          newDataKey.type = DataKeyType.alarm;
+          newDatasource.dataKeys.push(newDataKey);
+        });
+      }
+    }
+    return newDatasource;
+  }
+
   private validateAndUpdateState(state: DashboardState) {
     if (!state.layouts) {
       state.layouts = this.createDefaultLayouts();
@@ -282,6 +396,7 @@ export class DashboardUtilsService {
       layout.gridSettings.margin = layout.gridSettings.margins[0];
       delete layout.gridSettings.margins;
     }
+    layout.gridSettings.outerMargin = isDefined(layout.gridSettings.outerMargin) ? layout.gridSettings.outerMargin : true;
     layout.gridSettings.margin = isDefined(layout.gridSettings.margin) ? layout.gridSettings.margin : 10;
   }
 
@@ -376,7 +491,7 @@ export class DashboardUtilsService {
                            targetLayout: DashboardLayoutId,
                            widget: Widget,
                            originalColumns?: number,
-                           originalSize?: {sizeX: number, sizeY: number},
+                           originalSize?: {sizeX: number; sizeY: number},
                            row?: number,
                            column?: number): void {
     const dashboardConfiguration = dashboard.configuration;
@@ -449,7 +564,7 @@ export class DashboardUtilsService {
     this.removeUnusedWidgets(dashboard);
   }
 
-  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string, layout: DashboardLayoutId} {
+  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string; layout: DashboardLayoutId} {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const stateKeys = Object.keys(states);
@@ -603,6 +718,47 @@ export class DashboardUtilsService {
       }
       delete entityAlias.entityType;
       delete entityAlias.entityFilter;
+    }
+    entityAlias = this.validateAndUpdateEntityAliasSingleTypeFilters(entityAlias);
+    return entityAlias;
+  }
+
+  private validateAndUpdateEntityAliasSingleTypeFilters(entityAlias: EntityAlias): EntityAlias {
+    if (entityAlias.filter.type === AliasFilterType.deviceType) {
+      if (entityAlias.filter.deviceType) {
+        if (!entityAlias.filter.deviceTypes) {
+          entityAlias.filter.deviceTypes = [];
+        }
+        entityAlias.filter.deviceTypes.push(entityAlias.filter.deviceType);
+        delete entityAlias.filter.deviceType;
+      }
+    }
+    if (entityAlias.filter.type === AliasFilterType.assetType) {
+      if (entityAlias.filter.assetType) {
+        if (!entityAlias.filter.assetTypes) {
+          entityAlias.filter.assetTypes = [];
+        }
+        entityAlias.filter.assetTypes.push(entityAlias.filter.assetType);
+        delete entityAlias.filter.assetType;
+      }
+    }
+    if (entityAlias.filter.type === AliasFilterType.entityViewType) {
+      if (entityAlias.filter.entityViewType) {
+        if (!entityAlias.filter.entityViewTypes) {
+          entityAlias.filter.entityViewTypes = [];
+        }
+        entityAlias.filter.entityViewTypes.push(entityAlias.filter.entityViewType);
+        delete entityAlias.filter.entityViewType;
+      }
+    }
+    if (entityAlias.filter.type === AliasFilterType.edgeType) {
+      if (entityAlias.filter.edgeType) {
+        if (!entityAlias.filter.edgeTypes) {
+          entityAlias.filter.edgeTypes = [];
+        }
+        entityAlias.filter.edgeTypes.push(entityAlias.filter.edgeType);
+        delete entityAlias.filter.edgeType;
+      }
     }
     return entityAlias;
   }

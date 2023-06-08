@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -44,14 +45,15 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
+import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
-import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.ActivateUserRequest;
 import org.thingsboard.server.service.security.model.ChangePasswordRequest;
-import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.model.ResetPasswordEmailRequest;
 import org.thingsboard.server.service.security.model.ResetPasswordRequest;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -69,11 +71,14 @@ import java.net.URISyntaxException;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthController extends BaseController {
+
+    @Value("${server.rest.rate_limits.reset_password_per_user:5:3600}")
+    private String defaultLimitsConfiguration;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtTokenFactory tokenFactory;
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
-    private final AuditLogService auditLogService;
+    private final RateLimitService rateLimitService;
     private final ApplicationEventPublisher eventPublisher;
 
 
@@ -83,12 +88,8 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
     public @ResponseBody
     User getUser() throws ThingsboardException {
-        try {
-            SecurityUser securityUser = getCurrentUser();
-            return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        SecurityUser securityUser = getCurrentUser();
+        return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
     }
 
     @ApiOperation(value = "Logout (logout)",
@@ -108,31 +109,27 @@ public class AuthController extends BaseController {
     public ObjectNode changePassword(
             @ApiParam(value = "Change Password Request")
             @RequestBody ChangePasswordRequest changePasswordRequest) throws ThingsboardException {
-        try {
-            String currentPassword = changePasswordRequest.getCurrentPassword();
-            String newPassword = changePasswordRequest.getNewPassword();
-            SecurityUser securityUser = getCurrentUser();
-            UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, securityUser.getId());
-            if (!passwordEncoder.matches(currentPassword, userCredentials.getPassword())) {
-                throw new ThingsboardException("Current password doesn't match!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            }
-            systemSecurityService.validatePassword(securityUser.getTenantId(), newPassword, userCredentials);
-            if (passwordEncoder.matches(newPassword, userCredentials.getPassword())) {
-                throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            }
-            userCredentials.setPassword(passwordEncoder.encode(newPassword));
-            userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
-
-            sendEntityNotificationMsg(getTenantId(), userCredentials.getUserId(), EdgeEventActionType.CREDENTIALS_UPDATED);
-
-            eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
-            ObjectNode response = JacksonUtil.newObjectNode();
-            response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
-            response.put("refreshToken", tokenFactory.createRefreshToken(securityUser).getToken());
-            return response;
-        } catch (Exception e) {
-            throw handleException(e);
+        String currentPassword = changePasswordRequest.getCurrentPassword();
+        String newPassword = changePasswordRequest.getNewPassword();
+        SecurityUser securityUser = getCurrentUser();
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, securityUser.getId());
+        if (!passwordEncoder.matches(currentPassword, userCredentials.getPassword())) {
+            throw new ThingsboardException("Current password doesn't match!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+        systemSecurityService.validatePassword(securityUser.getTenantId(), newPassword, userCredentials);
+        if (passwordEncoder.matches(newPassword, userCredentials.getPassword())) {
+            throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        userCredentials.setPassword(passwordEncoder.encode(newPassword));
+        userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
+
+        sendEntityNotificationMsg(getTenantId(), userCredentials.getUserId(), EdgeEventActionType.CREDENTIALS_UPDATED);
+
+        eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
+        ObjectNode response = JacksonUtil.newObjectNode();
+        response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
+        response.put("refreshToken", tokenFactory.createRefreshToken(securityUser).getToken());
+        return response;
     }
 
     @ApiOperation(value = "Get the current User password policy (getUserPasswordPolicy)",
@@ -140,13 +137,9 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/noauth/userPasswordPolicy", method = RequestMethod.GET)
     @ResponseBody
     public UserPasswordPolicy getUserPasswordPolicy() throws ThingsboardException {
-        try {
-            SecuritySettings securitySettings =
-                    checkNotNull(systemSecurityService.getSecuritySettings(TenantId.SYS_TENANT_ID));
-            return securitySettings.getPasswordPolicy();
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        SecuritySettings securitySettings =
+                checkNotNull(systemSecurityService.getSecuritySettings(TenantId.SYS_TENANT_ID));
+        return securitySettings.getPasswordPolicy();
     }
 
     @ApiOperation(value = "Check Activate User Token (checkActivateToken)",
@@ -211,7 +204,11 @@ public class AuthController extends BaseController {
         HttpStatus responseStatus;
         String resetURI = "/login/resetPassword";
         UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
+
         if (userCredentials != null) {
+            if (!rateLimitService.checkRateLimit(LimitedApi.PASSWORD_RESET, userCredentials.getUserId(), defaultLimitsConfiguration)) {
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+            }
             try {
                 URI location = new URI(resetURI + "?resetToken=" + resetToken);
                 headers.setLocation(location);
@@ -241,34 +238,30 @@ public class AuthController extends BaseController {
             @RequestBody ActivateUserRequest activateRequest,
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail,
             HttpServletRequest request) throws ThingsboardException {
-        try {
-            String activateToken = activateRequest.getActivateToken();
-            String password = activateRequest.getPassword();
-            systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, null);
-            String encodedPassword = passwordEncoder.encode(password);
-            UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, activateToken, encodedPassword);
-            User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
-            UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-            SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
-            userService.setUserCredentialsEnabled(user.getTenantId(), user.getId(), true);
-            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
-            String loginUrl = String.format("%s/login", baseUrl);
-            String email = user.getEmail();
+        String activateToken = activateRequest.getActivateToken();
+        String password = activateRequest.getPassword();
+        systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, null);
+        String encodedPassword = passwordEncoder.encode(password);
+        UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, activateToken, encodedPassword);
+        User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
+        UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+        SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
+        userService.setUserCredentialsEnabled(user.getTenantId(), user.getId(), true);
+        String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+        String loginUrl = String.format("%s/login", baseUrl);
+        String email = user.getEmail();
 
-            if (sendActivationMail) {
-                try {
-                    mailService.sendAccountActivatedEmail(loginUrl, email);
-                } catch (Exception e) {
-                    log.info("Unable to send account activation email [{}]", e.getMessage());
-                }
+        if (sendActivationMail) {
+            try {
+                mailService.sendAccountActivatedEmail(loginUrl, email);
+            } catch (Exception e) {
+                log.info("Unable to send account activation email [{}]", e.getMessage());
             }
-
-            sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
-
-            return tokenFactory.createTokenPair(securityUser);
-        } catch (Exception e) {
-            throw handleException(e);
         }
+
+        sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
+
+        return tokenFactory.createTokenPair(securityUser);
     }
 
     @ApiOperation(value = "Reset password (resetPassword)",
@@ -282,45 +275,38 @@ public class AuthController extends BaseController {
             @ApiParam(value = "Reset password request.")
             @RequestBody ResetPasswordRequest resetPasswordRequest,
             HttpServletRequest request) throws ThingsboardException {
-        try {
-            String resetToken = resetPasswordRequest.getResetToken();
-            String password = resetPasswordRequest.getPassword();
-            UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
-            if (userCredentials != null) {
-                systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, userCredentials);
-                if (passwordEncoder.matches(password, userCredentials.getPassword())) {
-                    throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-                }
-                String encodedPassword = passwordEncoder.encode(password);
-                userCredentials.setPassword(encodedPassword);
-                userCredentials.setResetToken(null);
-                userCredentials = userService.replaceUserCredentials(TenantId.SYS_TENANT_ID, userCredentials);
-                User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
-                UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-                SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
-                String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
-                String loginUrl = String.format("%s/login", baseUrl);
-                String email = user.getEmail();
-                mailService.sendPasswordWasResetEmail(loginUrl, email);
-
-                eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
-
-                return tokenFactory.createTokenPair(securityUser);
-            } else {
-                throw new ThingsboardException("Invalid reset token!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        String resetToken = resetPasswordRequest.getResetToken();
+        String password = resetPasswordRequest.getPassword();
+        UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
+        if (userCredentials != null) {
+            systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, userCredentials);
+            if (passwordEncoder.matches(password, userCredentials.getPassword())) {
+                throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
-        } catch (Exception e) {
-            throw handleException(e);
+            String encodedPassword = passwordEncoder.encode(password);
+            userCredentials.setPassword(encodedPassword);
+            userCredentials.setResetToken(null);
+            userCredentials = userService.replaceUserCredentials(TenantId.SYS_TENANT_ID, userCredentials);
+            User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
+            UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+            SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
+            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+            String loginUrl = String.format("%s/login", baseUrl);
+            String email = user.getEmail();
+            mailService.sendPasswordWasResetEmail(loginUrl, email);
+
+            eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
+
+            return tokenFactory.createTokenPair(securityUser);
+        } else {
+            throw new ThingsboardException("Invalid reset token!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
     }
 
     private void logLogoutAction(HttpServletRequest request) throws ThingsboardException {
-        try {
-            var user = getCurrentUser();
-            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(request), ActionType.LOGOUT, null);
-            eventPublisher.publishEvent(new UserSessionInvalidationEvent(user.getSessionId()));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        var user = getCurrentUser();
+        systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(request), ActionType.LOGOUT, null);
+        eventPublisher.publishEvent(new UserSessionInvalidationEvent(user.getSessionId()));
     }
+
 }

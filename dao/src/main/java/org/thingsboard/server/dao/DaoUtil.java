@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,18 +109,37 @@ public abstract class DaoUtil {
         return ids;
     }
 
+    public static <I> I toEntityId(UUID uuid, Function<UUID, I> creator) {
+        if (uuid != null) {
+            return creator.apply(uuid);
+        } else {
+            return null;
+        }
+    }
+
     public static <T> void processInBatches(Function<PageLink, PageData<T>> finder, int batchSize, Consumer<T> processor) {
+        processBatches(finder, batchSize, batch -> batch.getData().forEach(processor));
+    }
+
+    public static <T> void processBatches(Function<PageLink, PageData<T>> finder, int batchSize, Consumer<PageData<T>> processor) {
         PageLink pageLink = new PageLink(batchSize);
         PageData<T> batch;
 
         boolean hasNextBatch;
         do {
             batch = finder.apply(pageLink);
-            batch.getData().forEach(processor);
+            processor.accept(batch);
 
             hasNextBatch = batch.hasNext();
             pageLink = pageLink.nextPageLink();
         } while (hasNextBatch);
     }
 
+    public static String getStringId(UUIDBased id) {
+        if (id != null) {
+            return id.toString();
+        } else {
+            return null;
+        }
+    }
 }

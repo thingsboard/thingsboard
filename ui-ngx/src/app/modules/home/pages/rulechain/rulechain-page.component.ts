@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,23 +15,35 @@
 ///
 
 import {
+  AfterViewChecked,
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
-  ElementRef, EventEmitter,
+  ElementRef,
+  EventEmitter,
   HostBinding,
   Inject,
   OnDestroy,
   OnInit,
-  QueryList, Renderer2,
+  QueryList,
+  Renderer2,
   SkipSelf,
   ViewChild,
-  ViewChildren, ViewContainerRef,
+  ViewChildren,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import {
+  FormGroupDirective,
+  NgForm,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorStateMatcher } from '@angular/material/core';
@@ -54,7 +66,9 @@ import {
   FcRuleNode,
   FcRuleNodeType,
   getRuleNodeHelpLink,
-  LinkLabel, outputNodeClazz, ruleChainNodeClazz,
+  LinkLabel,
+  outputNodeClazz,
+  ruleChainNodeClazz,
   RuleNode,
   RuleNodeComponentDescriptor,
   RuleNodeType,
@@ -74,12 +88,12 @@ import { MatMenuTrigger } from '@angular/material/menu';
 import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffer.service';
 import { Hotkey } from 'angular2-hotkeys';
 import { DebugEventType, EventType } from '@shared/models/event.models';
-import Timeout = NodeJS.Timeout;
-import { MatButton } from '@angular/material/button';
+import { MatMiniFabButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { EntityVersionCreateComponent } from '@home/components/vc/entity-version-create.component';
-import { VersionCreationResult } from '@shared/models/vc.models';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
+import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
+import { MatDrawer } from '@angular/material/sidenav';
+import Timeout = NodeJS.Timeout;
 
 @Component({
   selector: 'tb-rulechain-page',
@@ -88,7 +102,7 @@ import { VersionControlComponent } from '@home/components/vc/version-control.com
   encapsulation: ViewEncapsulation.None
 })
 export class RuleChainPageComponent extends PageComponent
-  implements AfterViewInit, OnInit, OnDestroy, HasDirtyFlag, ISearchableComponent {
+  implements AfterViewInit, OnInit, OnDestroy, HasDirtyFlag, ISearchableComponent, AfterViewChecked {
 
   get isDirty(): boolean {
     return this.isDirtyValue || this.isImport;
@@ -109,6 +123,8 @@ export class RuleChainPageComponent extends PageComponent
     {read: MatExpansionPanel}) expansionPanels: QueryList<MatExpansionPanel>;
 
   @ViewChild('ruleChainMenuTrigger', {static: true}) ruleChainMenuTrigger: MatMenuTrigger;
+
+  @ViewChild('drawer') drawer: MatDrawer;
 
   eventTypes = EventType;
 
@@ -148,7 +164,6 @@ export class RuleChainPageComponent extends PageComponent
   hotKeys: Hotkey[] = [];
 
   enableHotKeys = true;
-  isLibraryOpen = true;
 
   ruleNodeSearch = '';
   ruleNodeTypeSearch = '';
@@ -180,9 +195,8 @@ export class RuleChainPageComponent extends PageComponent
       mouseLeave: this.destroyTooltips.bind(this),
       mouseDown: this.destroyTooltips.bind(this)
     },
-    isValidEdge: (source, destination) => {
-      return source.type === FlowchartConstants.rightConnectorType && destination.type === FlowchartConstants.leftConnectorType;
-    },
+    isValidEdge: (source, destination) =>
+      source.type === FlowchartConstants.rightConnectorType && destination.type === FlowchartConstants.leftConnectorType,
     createEdge: (event, edge: FcRuleEdge) => {
       const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source) as FcRuleNode;
       if (sourceNode.component.type === RuleNodeType.INPUT) {
@@ -226,7 +240,7 @@ export class RuleChainPageComponent extends PageComponent
   nextConnectorID: number;
   inputConnectorId: number;
 
-  ruleNodeTypesModel: {[type: string]: {model: FcRuleNodeTypeModel, selectedObjects: any[]}} = {};
+  ruleNodeTypesModel: {[type: string]: {model: FcRuleNodeTypeModel; selectedObjects: any[]}} = {};
 
   nodeLibCallbacks: UserCallbacks = {
     nodeCallbacks: {
@@ -256,9 +270,10 @@ export class RuleChainPageComponent extends PageComponent
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
+              private changeDetector: ChangeDetectorRef,
               public dialog: MatDialog,
               public dialogService: DialogService,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store);
     this.rxSubscription = this.route.data.subscribe(
       () => {
@@ -269,6 +284,10 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   ngOnInit() {
+  }
+
+  ngAfterViewChecked(){
+    this.changeDetector.detectChanges();
   }
 
   ngAfterViewInit() {
@@ -287,6 +306,14 @@ export class RuleChainPageComponent extends PageComponent
   ngOnDestroy() {
     super.ngOnDestroy();
     this.rxSubscription.unsubscribe();
+  }
+
+  currentRuleChainIdChanged(ruleChainId: string) {
+    if (this.ruleChainType === RuleChainType.CORE) {
+      this.router.navigateByUrl(`ruleChains/${ruleChainId}`);
+    } else {
+      this.router.navigateByUrl(`edgeManagement/ruleChains/${ruleChainId}`);
+    }
   }
 
   onSearchTextUpdated(searchText: string) {
@@ -460,6 +487,7 @@ export class RuleChainPageComponent extends PageComponent
         component: ruleNodeComponent,
         name: '',
         nodeClass: desc.nodeClass,
+        singletonMode: ruleNodeComponent.clusteringMode !== ComponentClusteringMode.ENABLED,
         icon,
         iconUrl,
         x: 30,
@@ -486,9 +514,7 @@ export class RuleChainPageComponent extends PageComponent
     });
     if (this.expansionPanels) {
       for (let i = 0; i < ruleNodeTypesLibrary.length; i++) {
-        const panel = this.expansionPanels.find((item, index) => {
-          return index === i;
-        });
+        const panel = this.expansionPanels.find((item, index) => index === i);
         if (panel) {
           const type = ruleNodeTypesLibrary[i];
           if (!this.ruleNodeTypesModel[type].model.nodes.length) {
@@ -547,6 +573,7 @@ export class RuleChainPageComponent extends PageComponent
         additionalInfo: ruleNode.additionalInfo,
         configuration: ruleNode.configuration,
         debugMode: ruleNode.debugMode,
+        singletonMode: ruleNode.singletonMode,
         x: Math.round(ruleNode.additionalInfo.layoutX),
         y: Math.round(ruleNode.additionalInfo.layoutY),
         component,
@@ -905,7 +932,8 @@ export class RuleChainPageComponent extends PageComponent
             name: node.name,
             configuration: deepClone(node.configuration),
             additionalInfo: node.additionalInfo ? deepClone(node.additionalInfo) : {},
-            debugMode: node.debugMode
+            debugMode: node.debugMode,
+            singletonMode: node.singletonMode
           };
           if (minX === null) {
             minX = node.x;
@@ -976,7 +1004,8 @@ export class RuleChainPageComponent extends PageComponent
             name: outputEdge.label,
             configuration: {},
             additionalInfo: {},
-            debugMode: false
+            debugMode: false,
+            singletonMode: false
           };
           outputNode.additionalInfo.layoutX = Math.round(destNode.x);
           outputNode.additionalInfo.layoutY = Math.round(destNode.y);
@@ -1022,6 +1051,7 @@ export class RuleChainPageComponent extends PageComponent
               ruleChainId: ruleChain.id.id
             },
             debugMode: false,
+            singletonMode: false,
             x: Math.round(ruleChainNodeX),
             y: Math.round(ruleChainNodeY),
             nodeClass: descriptor.nodeClass,
@@ -1390,7 +1420,7 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   saveRuleChain(): Observable<any> {
-    const saveResult = new ReplaySubject();
+    const saveResult = new ReplaySubject<void>();
     let saveRuleChainObservable: Observable<RuleChain>;
     if (this.isImport) {
       saveRuleChainObservable = this.ruleChainService.saveRuleChain(this.ruleChain);
@@ -1413,7 +1443,8 @@ export class RuleChainPageComponent extends PageComponent
             name: node.name,
             configuration: node.configuration,
             additionalInfo: node.additionalInfo ? node.additionalInfo : {},
-            debugMode: node.debugMode
+            debugMode: node.debugMode,
+            singletonMode: node.singletonMode
           };
           ruleNode.additionalInfo.layoutX = Math.round(node.x);
           ruleNode.additionalInfo.layoutY = Math.round(node.y);
@@ -1537,7 +1568,7 @@ export class RuleChainPageComponent extends PageComponent
     }).afterClosed();
   }
 
-  toggleVersionControl($event: Event, versionControlButton: MatButton) {
+  toggleVersionControl($event: Event, versionControlButton: MatMiniFabButton) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -1674,7 +1705,7 @@ export interface AddRuleNodeLinkDialogData {
 export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeLinkDialogComponent, FcRuleEdge>
   implements OnInit, ErrorStateMatcher {
 
-  ruleNodeLinkFormGroup: FormGroup;
+  ruleNodeLinkFormGroup: UntypedFormGroup;
 
   link: FcRuleEdge;
   labels: {[label: string]: LinkLabel};
@@ -1688,7 +1719,7 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
               @Inject(MAT_DIALOG_DATA) public data: AddRuleNodeLinkDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddRuleNodeLinkDialogComponent, FcRuleEdge>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
     this.link = this.data.link;
@@ -1705,7 +1736,7 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
   ngOnInit(): void {
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
@@ -1761,7 +1792,7 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
   ngOnInit(): void {
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
@@ -1798,7 +1829,7 @@ export interface CreateNestedRuleChainDialogData {
 export class CreateNestedRuleChainDialogComponent extends DialogComponent<CreateNestedRuleChainDialogComponent, RuleChain>
   implements OnInit, ErrorStateMatcher {
 
-  createNestedRuleChainFormGroup: FormGroup;
+  createNestedRuleChainFormGroup: UntypedFormGroup;
 
   submitted = false;
 
@@ -1806,7 +1837,7 @@ export class CreateNestedRuleChainDialogComponent extends DialogComponent<Create
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CreateNestedRuleChainDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private ruleChainService: RuleChainService,
               public dialogRef: MatDialogRef<CreateNestedRuleChainDialogComponent, RuleChain>) {
     super(store, router, dialogRef);
@@ -1826,7 +1857,7 @@ export class CreateNestedRuleChainDialogComponent extends DialogComponent<Create
     );
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

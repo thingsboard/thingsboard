@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
@@ -36,9 +39,12 @@ import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadCon
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
+import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
 import java.util.List;
 
@@ -46,8 +52,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @TestPropertySource(properties = {
+        "service.integrations.supported=ALL",
         "transport.mqtt.enabled=true",
-        "js.evaluator=mock",
 })
 @Slf4j
 public abstract class AbstractMqttIntegrationTest extends AbstractTransportIntegrationTest {
@@ -103,6 +109,8 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
             if (StringUtils.hasLength(config.getAttributesTopicFilter())) {
                 mqttDeviceProfileTransportConfiguration.setDeviceAttributesTopic(config.getAttributesTopicFilter());
             }
+            mqttDeviceProfileTransportConfiguration.setSparkplug(config.isSparkplug());
+            mqttDeviceProfileTransportConfiguration.setSparkplugAttributesMetricNames(config.sparkplugAttributesMetricNames);
             mqttDeviceProfileTransportConfiguration.setSendAckOnValidationException(config.isSendAckOnValidationException());
             TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
             if (TransportPayloadType.JSON.equals(transportPayloadType)) {
@@ -163,7 +171,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         device.setName(name);
         device.setType(type);
         if (gateway) {
-            ObjectNode additionalInfo = mapper.createObjectNode();
+            ObjectNode additionalInfo = JacksonUtil.newObjectNode();
             additionalInfo.put("gateway", true);
             device.setAdditionalInfo(additionalInfo);
         }
@@ -175,5 +183,26 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         TransportProtos.PostAttributeMsg.Builder builder = TransportProtos.PostAttributeMsg.newBuilder();
         builder.addAllKv(kvProtos);
         return builder.build();
+    }
+
+    protected void subscribeAndWait(MqttTestClient client, String attrSubTopic, DeviceId deviceId, FeatureType featureType) throws MqttException {
+        int subscriptionCount = getDeviceActorSubscriptionCount(deviceId, featureType);
+        client.subscribeAndWait(attrSubTopic, MqttQoS.AT_MOST_ONCE);
+        // TODO: This test awaits for the device actor to receive the subscription. Ideally it should not happen. See details below:
+        // The transport layer acknowledge subscription request once the message about subscription is in the queue.
+        // Test sends data immediately after acknowledgement.
+        // But there is a time lag between push to the queue and read from the queue in the tb-core component.
+        // Ideally, we should reply to device with SUBACK only when the device actor on the tb-core receives the message.
+        awaitForDeviceActorToReceiveSubscription(deviceId, featureType, subscriptionCount + 1);
+    }
+
+    protected void subscribeAndCheckSubscription(MqttTestClient client, String attrSubTopic, DeviceId deviceId, FeatureType featureType) throws MqttException {
+        client.subscribeAndWait(attrSubTopic, MqttQoS.AT_MOST_ONCE);
+        // TODO: This test awaits for the device actor to receive the subscription. Ideally it should not happen. See details below:
+        // The transport layer acknowledge subscription request once the message about subscription is in the queue.
+        // Test sends data immediately after acknowledgement.
+        // But there is a time lag between push to the queue and read from the queue in the tb-core component.
+        // Ideally, we should reply to device with SUBACK only when the device actor on the tb-core receives the message.
+        awaitForDeviceActorToReceiveSubscription(deviceId, featureType, 1);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import './../scss/constants';
+
 :host {
   form {
     overflow-x: hidden !important;
+  }
+  .title-row {
+    display: flex;
+    flex-direction: column;
+
+    .node-setting {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    @media #{$mat-gt-sm} {
+      flex-direction: row;
+      gap: 8px;
+
+      .node-setting {
+        margin-top: 5px;
+      }
+    }
   }
 }

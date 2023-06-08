@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 import {
   AlarmDataCmd,
   DataKeyType,
-  TelemetryService,
   TelemetrySubscriber
 } from '@shared/models/telemetry/telemetry.models';
 import { DatasourceType } from '@shared/models/widget.models';
@@ -34,6 +33,7 @@ import { AlarmDataListener } from '@core/api/alarm-data.service';
 import { PageData } from '@shared/models/page/page-data';
 import { deepClone, isDefined, isDefinedAndNotNull, isObject } from '@core/utils';
 import { simulatedAlarm } from '@shared/models/alarm.models';
+import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 
 export interface AlarmSubscriptionDataKey {
   name: string;
@@ -68,7 +68,7 @@ export class AlarmDataSubscription {
   private subsTw: SubscriptionTimewindow;
 
   constructor(private listener: AlarmDataListener,
-              private telemetryService: TelemetryService) {
+              private telemetryService: TelemetryWebsocketService) {
   }
 
   public unsubscribe() {

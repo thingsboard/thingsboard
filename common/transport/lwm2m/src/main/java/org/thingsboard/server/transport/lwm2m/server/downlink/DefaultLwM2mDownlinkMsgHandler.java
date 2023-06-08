@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.link.Link;
 import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
+import org.eclipse.leshan.core.link.Link;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -85,6 +85,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -103,7 +104,7 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.ge
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.validateVersionedId;
 
 @Slf4j
-@Service
+@Service("lwM2mDownlinkMsgHandler")
 @TbLwM2mTransportComponent
 @RequiredArgsConstructor
 public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService implements LwM2mDownlinkMsgHandler {
@@ -124,6 +125,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @PreDestroy
     public void destroy() {
+        log.trace("Destroying {}", getClass().getSimpleName());
         super.destroy();
     }
 
@@ -521,16 +523,22 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     private <R extends DownlinkRequest<T>, T extends LwM2mResponse> void handleDownlinkError(LwM2mClient client, R request, DownlinkRequestCallback<R, T> callback, Exception e) {
         log.trace("[{}] Received downlink error: {}.", client.getEndpoint(), e);
-        client.updateLastUplinkTime();
-        executor.submit(() -> {
-            if (e instanceof TimeoutException || e instanceof ClientSleepingException) {
-                log.trace("[{}] Received {}, client is probably sleeping", client.getEndpoint(), e.getClass().getSimpleName());
-                clientContext.asleep(client);
-            } else {
-                log.trace("[{}] Received {}", client.getEndpoint(), e.getClass().getSimpleName());
-            }
-            callback.onError(toString(request), e);
-        });
+        try {
+            client.updateLastUplinkTime();
+            executor.submit(() -> {
+                if (e instanceof TimeoutException || e instanceof ClientSleepingException) {
+                    log.trace("[{}] Received {}, client is probably sleeping", client.getEndpoint(), e.getClass().getSimpleName());
+                    clientContext.asleep(client);
+                } else {
+                    log.trace("[{}] Received {}", client.getEndpoint(), e.getClass().getSimpleName());
+                }
+                callback.onError(toString(request), e);
+            });
+        } catch (RejectedExecutionException ree) {
+            log.warn("[{}] Can not handle downlink error. Executor already down", client.getEndpoint(), ree);
+        } catch (Exception exception) {
+            log.warn("[{}] Can not handle downlink error", client.getEndpoint(), exception);
+        }
     }
 
     private WriteRequest getWriteRequestSingleResource(ResourceModel.Type type, ContentFormat contentFormat, int objectId, int instanceId, int resourceId, Object value) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package org.thingsboard.server.service.install.update;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.thingsboard.common.util.JacksonUtil;
 
 import java.io.IOException;
 
@@ -34,8 +34,6 @@ import static org.mockito.BDDMockito.willCallRealMethod;
 @SpringBootTest(classes = DefaultDataUpdateService.class)
 class DefaultDataUpdateServiceTest {
 
-    ObjectMapper mapper = new ObjectMapper();
-
     @MockBean
     DefaultDataUpdateService service;
 
@@ -46,7 +44,7 @@ class DefaultDataUpdateServiceTest {
     }
 
     JsonNode readFromResource(String resourceName) throws IOException {
-        return mapper.readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));
+        return JacksonUtil.OBJECT_MAPPER.readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));
     }
 
     @Test
@@ -69,8 +67,8 @@ class DefaultDataUpdateServiceTest {
 
     @Test
     void convertDeviceProfileAlarmRulesForVersion330EmptyJson() throws JsonProcessingException {
-        JsonNode spec = mapper.readTree("{ }");
-        JsonNode expected = mapper.readTree("{ }");
+        JsonNode spec = JacksonUtil.toJsonNode("{ }");
+        JsonNode expected = JacksonUtil.toJsonNode("{ }");
 
         assertThat(service.convertDeviceProfileForVersion330(spec)).isFalse();
         assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString());
@@ -78,8 +76,8 @@ class DefaultDataUpdateServiceTest {
 
     @Test
     void convertDeviceProfileAlarmRulesForVersion330AlarmNodeNull() throws JsonProcessingException {
-        JsonNode spec = mapper.readTree("{ \"alarms\" : null }");
-        JsonNode expected = mapper.readTree("{ \"alarms\" : null }");
+        JsonNode spec = JacksonUtil.toJsonNode("{ \"alarms\" : null }");
+        JsonNode expected = JacksonUtil.toJsonNode("{ \"alarms\" : null }");
 
         assertThat(service.convertDeviceProfileForVersion330(spec)).isFalse();
         assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString());
@@ -87,8 +85,8 @@ class DefaultDataUpdateServiceTest {
 
     @Test
     void convertDeviceProfileAlarmRulesForVersion330NoAlarmNode() throws JsonProcessingException {
-        JsonNode spec = mapper.readTree("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
-        JsonNode expected = mapper.readTree("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
+        JsonNode spec = JacksonUtil.toJsonNode("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
+        JsonNode expected = JacksonUtil.toJsonNode("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
 
         assertThat(service.convertDeviceProfileForVersion330(spec)).isFalse();
         assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString());

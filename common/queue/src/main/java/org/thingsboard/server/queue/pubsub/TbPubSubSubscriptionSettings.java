@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import javax.annotation.PostConstruct;
-import java.util.HashMap;
 import java.util.Map;
 
 @Component
@@ -56,24 +55,12 @@ public class TbPubSubSubscriptionSettings {
 
     @PostConstruct
     private void init() {
-        coreSettings = getSettings(coreProperties);
-        ruleEngineSettings = getSettings(ruleEngineProperties);
-        transportApiSettings = getSettings(transportApiProperties);
-        notificationsSettings = getSettings(notificationsProperties);
-        jsExecutorSettings = getSettings(jsExecutorProperties);
-        vcSettings = getSettings(vcProperties);
+        coreSettings = PropertyUtils.getProps(coreProperties);
+        ruleEngineSettings = PropertyUtils.getProps(ruleEngineProperties);
+        transportApiSettings = PropertyUtils.getProps(transportApiProperties);
+        notificationsSettings = PropertyUtils.getProps(notificationsProperties);
+        jsExecutorSettings = PropertyUtils.getProps(jsExecutorProperties);
+        vcSettings = PropertyUtils.getProps(vcProperties);
     }
 
-    private Map<String, String> getSettings(String properties) {
-        Map<String, String> configs = new HashMap<>();
-        if (StringUtils.isNotEmpty(properties)) {
-            for (String property : properties.split(";")) {
-                int delimiterPosition = property.indexOf(":");
-                String key = property.substring(0, delimiterPosition);
-                String value = property.substring(delimiterPosition + 1);
-                configs.put(key, value);
-            }
-        }
-        return configs;
-    }
 }

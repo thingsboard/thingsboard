@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@ package org.thingsboard.server.service.entitiy.widgets.bundle;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -34,17 +35,31 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
 
     @Override
     public WidgetsBundle save(WidgetsBundle widgetsBundle, User user) throws Exception {
-        WidgetsBundle savedWidgetsBundle = checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
-        autoCommit(user, savedWidgetsBundle.getId());
-        notificationEntityService.notifySendMsgToEdgeService(widgetsBundle.getTenantId(), savedWidgetsBundle.getId(),
-                widgetsBundle.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
-        return savedWidgetsBundle;
+        ActionType actionType = widgetsBundle.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = widgetsBundle.getTenantId();
+        try {
+            WidgetsBundle savedWidgetsBundle = checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
+            autoCommit(user, savedWidgetsBundle.getId());
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedWidgetsBundle.getId(),
+                    savedWidgetsBundle, user, actionType, true, null);
+            return savedWidgetsBundle;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), widgetsBundle, actionType, user, e);
+            throw e;
+        }
     }
 
     @Override
-    public void delete(WidgetsBundle widgetsBundle) throws ThingsboardException {
-        widgetsBundleService.deleteWidgetsBundle(widgetsBundle.getTenantId(), widgetsBundle.getId());
-        notificationEntityService.notifySendMsgToEdgeService(widgetsBundle.getTenantId(), widgetsBundle.getId(),
-                EdgeEventActionType.DELETED);
+    public void delete(WidgetsBundle widgetsBundle, User user) {
+        TenantId tenantId = widgetsBundle.getTenantId();
+        try {
+            widgetsBundleService.deleteWidgetsBundle(widgetsBundle.getTenantId(), widgetsBundle.getId());
+            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, widgetsBundle.getId(), widgetsBundle,
+                    user, ActionType.DELETED, true, null);
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE),
+                    ActionType.DELETED, user, e, widgetsBundle.getId());
+            throw e;
+        }
     }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ export const SHARED_HOME_COMPONENTS_MODULE_TOKEN: InjectionToken<Type<any>> =
 
 export const HOME_COMPONENTS_MODULE_TOKEN: InjectionToken<Type<any>> =
   new InjectionToken<Type<any>>('HOME_COMPONENTS_MODULE_TOKEN');
+
+export const WIDGET_COMPONENTS_MODULE_TOKEN: InjectionToken<Type<any>> =
+  new InjectionToken<Type<any>>('WIDGET_COMPONENTS_MODULE_TOKEN');
 
 export const COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN: InjectionToken<ComponentType<any>> =
   new InjectionToken<ComponentType<any>>('COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN');

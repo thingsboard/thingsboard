@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,7 +22,43 @@
       [functionsOnly]="widgetEditMode"
       [dashboard]="dashboard"
       [widget]="widget"
+      [hideToggleHeader]="previewMode"
+      [widgetConfigMode]="widgetConfigMode"
       formControlName="widgetConfig">
+      <div class="tb-widget-config-header-prefix">
+        <button mat-button
+                *ngIf="previewMode"
+                (click)="previewMode = false">
+          <mat-icon>chevron_left</mat-icon>
+          {{ 'action.back' | translate }}
+        </button>
+      </div>
+      <div class="tb-widget-config-header-suffix" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+        <button *ngIf="!previewMode" [disabled]="(isLoading$ | async) || widgetFormGroup.invalid"
+          mat-button color="primary"
+          (click)="previewMode = true">
+          <mat-icon>visibility</mat-icon>
+          {{ 'widget-config.preview' | translate }}
+        </button>
+        <button [disabled]="(isLoading$ | async) || !widgetFormGroup.dirty"
+          mat-stroked-button color="primary"
+          (click)="onRevertWidgetConfig()">
+          <mat-icon>close</mat-icon>
+          {{ 'action.decline' | translate }}
+        </button>
+        <button [disabled]="(isLoading$ | async) || widgetFormGroup.invalid || !widgetFormGroup.dirty"
+          mat-flat-button color="primary"
+          (click)="onApplyWidgetConfig()">
+          <mat-icon>done</mat-icon>
+          {{ 'action.apply' | translate }}
+        </button>
+      </div>
     </tb-widget-config>
+    <tb-widget-preview *ngIf="previewMode" class="widget-preview-section"
+                       [aliasController]="aliasController"
+                       [stateController]="stateController"
+                       [widget]="widget"
+                       [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config">
+    </tb-widget-preview>
   </fieldset>
 </form>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -489,9 +489,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     if (!this.gotError) {
       this.gotError = true;
       let errorInfo = 'Error:';
-      if (details.name) {
-        errorInfo += ' ' + details.name + ':';
-      }
       if (details.message) {
         errorInfo += ' ' + details.message;
       }

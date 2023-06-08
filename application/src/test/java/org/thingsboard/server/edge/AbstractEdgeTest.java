@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.thingsboard.server.edge;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import org.junit.After;
@@ -28,7 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
@@ -38,9 +41,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
-import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
-import org.thingsboard.server.common.data.device.data.DeviceData;
-import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
@@ -55,11 +55,13 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
@@ -67,6 +69,7 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.edge.EdgeEventService;
@@ -74,6 +77,7 @@ import org.thingsboard.server.edge.imitator.EdgeImitator;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
@@ -93,7 +97,6 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
@@ -146,7 +149,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(21);
+        edgeImitator.expectMessageAmount(22);
         edgeImitator.connect();
 
         requestEdgeRuleChainMetadata();
@@ -273,6 +276,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
         // 1 message from user fetcher
         validateUsers();
+
+        // 1 message from public customer fetcher
+        validatePublicCustomer();
     }
 
     private void validateEdgeConfiguration() throws Exception {
@@ -316,9 +322,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         UUID deviceUUID = new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB());
         Device device = doGet("/api/device/" + deviceUUID, Device.class);
         Assert.assertNotNull(device);
-        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/devices?",
-                new TypeReference<PageData<Device>>() {}, new PageLink(100)).getData();
-        Assert.assertTrue(edgeDevices.contains(device));
+        List<DeviceInfo> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/devices?",
+                new TypeReference<PageData<DeviceInfo>>() {}, new PageLink(100)).getData();
+        Assert.assertTrue(edgeDevices.stream().map(DeviceInfo::getId).anyMatch(id -> id.equals(device.getId())));
 
         testAutoGeneratedCodeByProtobuf(deviceUpdateMsg);
     }
@@ -388,7 +394,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private void validateMailAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) throws JsonProcessingException {
-        JsonNode jsonNode = mapper.readTree(adminSettingsUpdateMsg.getJsonValue());
+        JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
         Assert.assertNotNull(jsonNode.get("mailFrom"));
         Assert.assertNotNull(jsonNode.get("smtpProtocol"));
         Assert.assertNotNull(jsonNode.get("smtpHost"));
@@ -397,7 +403,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private void validateMailTemplatesAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) throws JsonProcessingException {
-        JsonNode jsonNode = mapper.readTree(adminSettingsUpdateMsg.getJsonValue());
+        JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
         Assert.assertNotNull(jsonNode.get("accountActivated"));
         Assert.assertNotNull(jsonNode.get("accountLockout"));
         Assert.assertNotNull(jsonNode.get("activation"));
@@ -427,8 +433,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         UUID queueUUID = new UUID(queueUpdateMsg.getIdMSB(), queueUpdateMsg.getIdLSB());
         Queue queue = doGet("/api/queues/" + queueUUID, Queue.class);
         Assert.assertNotNull(queue);
-        Assert.assertEquals("Main", queueUpdateMsg.getName());
-        Assert.assertEquals("tb_rule_engine.main", queueUpdateMsg.getTopic());
+        Assert.assertEquals(DataConstants.MAIN_QUEUE_NAME, queueUpdateMsg.getName());
+        Assert.assertEquals(DataConstants.MAIN_QUEUE_TOPIC, queueUpdateMsg.getTopic());
         Assert.assertEquals(10, queueUpdateMsg.getPartitions());
         Assert.assertEquals(25, queueUpdateMsg.getPollInterval());
         testAutoGeneratedCodeByProtobuf(queueUpdateMsg);
@@ -446,12 +452,18 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         testAutoGeneratedCodeByProtobuf(userUpdateMsg);
     }
 
-    protected Device saveDeviceOnCloudAndVerifyDeliveryToEdge() throws Exception {
-        // create ota package
-        edgeImitator.expectMessageAmount(1);
-        OtaPackageInfo firmwareOtaPackageInfo = saveOtaPackageInfo(thermostatDeviceProfile.getId());
-        Assert.assertTrue(edgeImitator.waitForMessages());
+    private void validatePublicCustomer() throws Exception {
+        Optional<CustomerUpdateMsg> customerUpdateMsgOpt = edgeImitator.findMessageByType(CustomerUpdateMsg.class);
+        Assert.assertTrue(customerUpdateMsgOpt.isPresent());
+        CustomerUpdateMsg customerUpdateMsg = customerUpdateMsgOpt.get();
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUpdateMsg.getMsgType());
+        UUID customerUUID = new UUID(customerUpdateMsg.getIdMSB(), customerUpdateMsg.getIdLSB());
+        Customer customer = doGet("/api/customer/" + customerUUID, Customer.class);
+        Assert.assertNotNull(customer);
+        Assert.assertTrue(customer.isPublic());
+    }
 
+    protected Device saveDeviceOnCloudAndVerifyDeliveryToEdge() throws Exception {
         // create device and assign to edge
         Device savedDevice = saveDevice(StringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
         edgeImitator.expectMessageAmount(2); // device and device profile messages
@@ -471,46 +483,14 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
         Assert.assertEquals(thermostatDeviceProfile.getUuidId().getMostSignificantBits(), deviceProfileUpdateMsg.getIdMSB());
         Assert.assertEquals(thermostatDeviceProfile.getUuidId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
-
-        // update device
-        edgeImitator.expectMessageAmount(1);
-        savedDevice.setFirmwareId(firmwareOtaPackageInfo.getId());
-
-        DeviceData deviceData = new DeviceData();
-        deviceData.setConfiguration(new DefaultDeviceConfiguration());
-        MqttDeviceTransportConfiguration transportConfiguration = new MqttDeviceTransportConfiguration();
-        transportConfiguration.getProperties().put("topic", "tb_rule_engine.thermostat");
-        deviceData.setTransportConfiguration(transportConfiguration);
-        savedDevice.setDeviceData(deviceData);
-
-        savedDevice = doPost("/api/device", savedDevice, Device.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof DeviceUpdateMsg);
-        deviceUpdateMsg = (DeviceUpdateMsg) latestMessage;
-        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
-        Assert.assertEquals(savedDevice.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedDevice.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getIdLSB());
-        Assert.assertEquals(savedDevice.getName(), deviceUpdateMsg.getName());
-        Assert.assertEquals(savedDevice.getType(), deviceUpdateMsg.getType());
-        Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getFirmwareIdMSB());
-        Assert.assertEquals(firmwareOtaPackageInfo.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getFirmwareIdLSB());
-        Optional<DeviceData> deviceDataOpt =
-                dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
-        Assert.assertTrue(deviceDataOpt.isPresent());
-        deviceData = deviceDataOpt.get();
-        Assert.assertTrue(deviceData.getTransportConfiguration() instanceof MqttDeviceTransportConfiguration);
-        MqttDeviceTransportConfiguration mqttDeviceTransportConfiguration =
-                (MqttDeviceTransportConfiguration) deviceData.getTransportConfiguration();
-        Assert.assertEquals("tb_rule_engine.thermostat", mqttDeviceTransportConfiguration.getProperties().get("topic"));
         return savedDevice;
     }
 
     protected Device findDeviceByName(String deviceName) throws Exception {
-        List<Device> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/devices?",
-                new TypeReference<PageData<Device>>() {
+        List<DeviceInfo> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/devices?",
+                new TypeReference<PageData<DeviceInfo>>() {
                 }, new PageLink(100)).getData();
-        Optional<Device> foundDevice = edgeDevices.stream().filter(d -> d.getName().equals(deviceName)).findAny();
+        Optional<DeviceInfo> foundDevice = edgeDevices.stream().filter(d -> d.getName().equals(deviceName)).findAny();
         Assert.assertTrue(foundDevice.isPresent());
         Device device = foundDevice.get();
         Assert.assertEquals(deviceName, device.getName());
@@ -541,13 +521,13 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         return doPost("/api/asset", asset, Asset.class);
     }
 
-    protected OtaPackageInfo saveOtaPackageInfo(DeviceProfileId deviceProfileId) {
+    protected OtaPackageInfo saveOtaPackageInfo(DeviceProfileId deviceProfileId, OtaPackageType type) {
         SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
         firmwareInfo.setDeviceProfileId(deviceProfileId);
-        firmwareInfo.setType(FIRMWARE);
-        firmwareInfo.setTitle("Firmware Edge " + StringUtils.randomAlphanumeric(3));
+        firmwareInfo.setType(type);
+        firmwareInfo.setTitle(type.name() + " Edge " + StringUtils.randomAlphanumeric(3));
         firmwareInfo.setVersion("v1.0");
-        firmwareInfo.setTag("My firmware #1 v1.0");
+        firmwareInfo.setTag("My " + type.name() + " #1 v1.0");
         firmwareInfo.setUsesUrl(true);
         firmwareInfo.setUrl("http://localhost:8080/v1/package");
         firmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
@@ -582,6 +562,49 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(source.hashCode(), target.hashCode());
     }
 
+    protected RuleChainId createEdgeRuleChainAndAssignToEdge(String ruleChainName) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName(ruleChainName);
+        ruleChain.setType(RuleChainType.EDGE);
+        RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+        doPost("/api/edge/" + edge.getUuidId()
+                + "/ruleChain/" + savedRuleChain.getUuidId(), RuleChain.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        return savedRuleChain.getId();
+    }
 
+    protected void unAssignFromEdgeAndDeleteRuleChain(RuleChainId ruleChainId) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/edge/" + edge.getUuidId()
+                + "/ruleChain/" + ruleChainId.getId(), RuleChain.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        // delete rule chain
+        doDelete("/api/ruleChain/" + ruleChainId.getId())
+                .andExpect(status().isOk());
+    }
+
+    protected DashboardId createDashboardAndAssignToEdge(String dashboardName) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle(dashboardName);
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+        doPost("/api/edge/" + edge.getUuidId()
+                + "/dashboard/" + savedDashboard.getUuidId(), Dashboard.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        return savedDashboard.getId();
+    }
+
+    protected void unAssignFromEdgeAndDeleteDashboard(DashboardId dashboardId) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/edge/" + edge.getUuidId()
+                + "/dashboard/" + dashboardId.getId(), RuleChain.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        // delete dashboard
+        doDelete("/api/dashboard/" + dashboardId.getId())
+                .andExpect(status().isOk());
+    }
 
 }

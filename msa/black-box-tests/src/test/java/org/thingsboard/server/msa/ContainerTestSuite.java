@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import static org.testng.Assert.fail;
 @Slf4j
 public class ContainerTestSuite {
     final static boolean IS_REDIS_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
+    final static boolean IS_REDIS_SENTINEL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSentinel"));
     final static boolean IS_HYBRID_MODE = Boolean.parseBoolean(System.getProperty("blackBoxTests.hybridMode"));
     final static String QUEUE_TYPE = System.getProperty("blackBoxTests.queue", "kafka");
     private static final String SOURCE_DIR = "./../../docker/";
@@ -80,8 +81,9 @@ public class ContainerTestSuite {
         installTb = new ThingsBoardDbInstaller();
         installTb.createVolumes();
         log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_CLUSTER);
+        log.info("System property of blackBoxTests.redisSentinel is {}", IS_REDIS_SENTINEL);
         log.info("System property of blackBoxTests.hybridMode is {}", IS_HYBRID_MODE);
-        boolean skipTailChildContainers = Boolean.valueOf(System.getProperty("blackBoxTests.skipTailChildContainers"));
+        boolean skipTailChildContainers = Boolean.parseBoolean(System.getProperty("blackBoxTests.skipTailChildContainers"));
         try {
             final String targetDir = FileUtils.getTempDirectoryPath() + "/" + "ContainerTestSuite-" + UUID.randomUUID() + "/";
             log.info("targetDir {}", targetDir);
@@ -106,10 +108,12 @@ public class ContainerTestSuite {
                     new File(targetDir + "docker-compose.yml"),
                     new File(targetDir + "docker-compose.volumes.yml"),
                     new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid.yml" : "docker-compose.postgres.yml")),
+                    new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid-test-extras.yml" : "docker-compose.postgres-test-extras.yml")),
                     new File(targetDir + "docker-compose.postgres.volumes.yml"),
                     new File(targetDir + "docker-compose." + QUEUE_TYPE + ".yml"),
-                    new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.yml" : "docker-compose.redis.yml")),
-                    new File(targetDir + (IS_REDIS_CLUSTER ? "docker-compose.redis-cluster.volumes.yml" : "docker-compose.redis.volumes.yml"))
+                    new File(targetDir + resolveRedisComposeFile()),
+                    new File(targetDir + resolveRedisComposeVolumesFile()),
+                    new File(targetDir + ("docker-selenium.yml"))
             ));
 
             Map<String, String> queueEnv = new HashMap<>();
@@ -152,6 +156,7 @@ public class ContainerTestSuite {
             testContainer = new DockerComposeContainerImpl<>(composeFiles)
                     .withPull(false)
                     .withLocalCompose(true)
+                    .withOptions("--compatibility")
                     .withTailChildContainers(!skipTailChildContainers)
                     .withEnv(installTb.getEnv())
                     .withEnv(queueEnv)
@@ -173,6 +178,27 @@ public class ContainerTestSuite {
             fail("Failed to create test container");
         }
     }
+
+    private static String resolveRedisComposeFile() {
+        if (IS_REDIS_CLUSTER) {
+            return "docker-compose.redis-cluster.yml";
+        }
+        if (IS_REDIS_SENTINEL) {
+            return "docker-compose.redis-sentinel.yml";
+        }
+        return "docker-compose.redis.yml";
+    }
+
+    private static String resolveRedisComposeVolumesFile() {
+        if (IS_REDIS_CLUSTER) {
+            return "docker-compose.redis-cluster.volumes.yml";
+        }
+        if (IS_REDIS_SENTINEL) {
+            return "docker-compose.redis-sentinel.volumes.yml";
+        }
+        return "docker-compose.redis.volumes.yml";
+    }
+
     public void stop() {
         if (isActive) {
             testContainer.stop();
@@ -229,5 +255,9 @@ public class ContainerTestSuite {
             log.error("failed to update file " + sourceFilename, e);
             fail("failed to update file");
         }
+    }
+
+    public DockerComposeContainer<?> getTestContainer() {
+        return testContainer;
     }
 }

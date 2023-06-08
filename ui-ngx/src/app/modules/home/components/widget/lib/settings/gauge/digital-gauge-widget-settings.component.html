@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="digitalGaugeWidgetSettingsForm" fxLayout="column">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gauge.common-settings</legend>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.min-value</mat-label>
         <input matInput type="number" formControlName="minValue">
@@ -70,7 +70,7 @@
         <mat-label translate>widgets.gauge.stripes-thickness</mat-label>
         <input matInput type="number" min="0" formControlName="dashThickness">
       </mat-form-field>
-      <mat-checkbox fxFlex formControlName="roundedLineCap" style="margin-bottom: 16px;">
+      <mat-checkbox fxFlex formControlName="roundedLineCap">
         {{ 'widgets.gauge.rounded-line-cap' | translate }}
       </mat-checkbox>
     </section>
@@ -182,7 +182,7 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gauge.unit-title-and-timestamp-settings</legend>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-slide-toggle fxFlex formControlName="showUnitTitle">
         {{ 'widgets.gauge.show-unit-title' | translate }}
       </mat-slide-toggle>
@@ -191,7 +191,7 @@
         <input matInput formControlName="unitTitle">
       </mat-form-field>
     </section>
-    <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-slide-toggle fxFlex formControlName="showTimestamp">
         {{ 'widgets.gauge.show-timestamp' | translate }}
       </mat-slide-toggle>

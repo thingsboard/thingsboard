@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,13 +27,20 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
@@ -52,6 +60,10 @@ public class JacksonUtil {
             .configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false)
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
             .build();
+
+    public static ObjectMapper getObjectMapperWithJavaTimeModule() {
+        return new ObjectMapper().registerModule(new JavaTimeModule());
+    }
 
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
         try {
@@ -85,6 +97,15 @@ public class JacksonUtil {
             return string != null ? OBJECT_MAPPER.readValue(string, valueTypeRef) : null;
         } catch (IOException e) {
             throw new IllegalArgumentException("The given string value: "
+                    + string + " cannot be transformed to Json object", e);
+        }
+    }
+
+    public static <T> T fromString(String string, JavaType javaType) {
+        try {
+            return string != null ? OBJECT_MAPPER.readValue(string, javaType) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given String value: "
                     + string + " cannot be transformed to Json object", e);
         }
     }
@@ -147,12 +168,29 @@ public class JacksonUtil {
         }
     }
 
+    public static JsonNode toJsonNode(File value) {
+        try {
+            return value != null ? OBJECT_MAPPER.readTree(value) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given File object value: "
+                    + value + " cannot be transformed to a JsonNode", e);
+        }
+    }
+
     public static ObjectNode newObjectNode() {
         return newObjectNode(OBJECT_MAPPER);
     }
 
     public static ObjectNode newObjectNode(ObjectMapper mapper) {
         return mapper.createObjectNode();
+    }
+
+    public static ArrayNode newArrayNode() {
+        return newArrayNode(OBJECT_MAPPER);
+    }
+
+    public static ArrayNode newArrayNode(ObjectMapper mapper) {
+        return mapper.createArrayNode();
     }
 
     public static <T> T clone(T value) {
@@ -226,6 +264,46 @@ public class JacksonUtil {
                     }
                 }
             }
+        }
+    }
+
+    public static Map<String, String> toFlatMap(JsonNode node) {
+        HashMap<String, String> map = new HashMap<>();
+        toFlatMap(node, "", map);
+        return map;
+    }
+
+    public static <T> T fromReader(Reader reader, Class<T> clazz) {
+        try {
+            return reader != null ? OBJECT_MAPPER.readValue(reader, clazz) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Invalid request payload", e);
+        }
+    }
+
+    public static <T> void writeValue(Writer writer, T value) {
+        try {
+            OBJECT_MAPPER.writeValue(writer, value);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given writer value: "
+                    + writer + "cannot be wrote", e);
+        }
+    }
+
+    public static JavaType constructCollectionType(Class collectionClass, Class<?> elementClass) {
+        return OBJECT_MAPPER.getTypeFactory().constructCollectionType(collectionClass, elementClass);
+    }
+
+    private static void toFlatMap(JsonNode node, String currentPath, Map<String, String> map) {
+        if (node.isObject()) {
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            currentPath = currentPath.isEmpty() ? "" : currentPath + ".";
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                toFlatMap(entry.getValue(), currentPath + entry.getKey(), map);
+            }
+        } else if (node.isValueNode()) {
+            map.put(currentPath, node.asText());
         }
     }
 

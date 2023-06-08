@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import {
 } from '@shared/components/dialog/material-icons-dialog.component';
 import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
+import { ErrorAlertDialogComponent } from '@shared/components/dialog/error-alert-dialog.component';
 import { TodoDialogComponent } from '@shared/components/dialog/todo-dialog.component';
 
 @Injectable(
@@ -75,6 +76,23 @@ export class DialogService {
       dialogConfig.panelClass = ['tb-fullscreen-dialog'];
     }
     const dialogRef = this.dialog.open(AlertDialogComponent, dialogConfig);
+    return dialogRef.afterClosed();
+  }
+
+  errorAlert(title: string, message: string, error: any, ok: string = null, fullscreen: boolean = false): Observable<any> {
+    const dialogConfig: MatDialogConfig = {
+      disableClose: true,
+      data: {
+        title,
+        message,
+        error,
+        ok: ok || this.translate.instant('action.ok')
+      }
+    };
+    if (fullscreen) {
+      dialogConfig.panelClass = ['tb-fullscreen-dialog'];
+    }
+    const dialogRef = this.dialog.open(ErrorAlertDialogComponent, dialogConfig);
     return dialogRef.afterClosed();
   }
 

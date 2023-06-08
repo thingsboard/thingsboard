@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.common.util.JacksonUtil;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
@@ -38,8 +37,6 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfiguration> implements TbNode {
 
     static final String PREV_ALARM_DETAILS = "prevAlarmDetails";
-
-    private final ObjectMapper mapper = new ObjectMapper();
 
     protected C config;
     private ScriptEngine scriptEngine;
@@ -79,7 +76,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
             TbMsg dummyMsg = msg;
             if (previousDetails != null) {
                 TbMsgMetaData metaData = msg.getMetaData().copy();
-                metaData.putValue(PREV_ALARM_DETAILS, mapper.writeValueAsString(previousDetails));
+                metaData.putValue(PREV_ALARM_DETAILS, JacksonUtil.toString(previousDetails));
                 dummyMsg = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msg.getData());
             }
             return scriptEngine.executeJsonAsync(dummyMsg);

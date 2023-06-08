@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
-import org.thingsboard.server.dao.service.BaseTenantProfileServiceTest;
+import org.thingsboard.server.dao.service.TenantProfileServiceTest;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.tenant.TenantProfileDao;
 
@@ -54,7 +54,7 @@ public class JpaTenantDaoTest extends AbstractJpaDaoTest {
 
     @Before
     public void setUp() throws Exception {
-        tenantProfile = tenantProfileDao.save(TenantId.SYS_TENANT_ID, BaseTenantProfileServiceTest.createTenantProfile("default tenant profile"));
+        tenantProfile = tenantProfileDao.save(TenantId.SYS_TENANT_ID, TenantProfileServiceTest.createTenantProfile("default tenant profile"));
         assertThat(tenantProfile).as("tenant profile").isNotNull();
     }
 

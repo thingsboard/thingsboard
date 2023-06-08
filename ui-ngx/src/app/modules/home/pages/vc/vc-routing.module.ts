@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 
-const routes: Routes = [
+export const vcRoutes: Routes = [
   {
     path: 'vc',
     component: VersionControlComponent,
@@ -33,6 +33,13 @@ const routes: Routes = [
         icon: 'history'
       }
     }
+  }
+];
+
+const routes: Routes = [
+  {
+    path: 'vc',
+    redirectTo: '/features/vc'
   }
 ];
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,12 +74,8 @@ public class WidgetsBundleController extends BaseController {
             @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
-        try {
-            WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
-            return checkWidgetsBundleId(widgetsBundleId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        return checkWidgetsBundleId(widgetsBundleId, Operation.READ);
     }
 
     @ApiOperation(value = "Create Or Update Widget Bundle (saveWidgetsBundle)",
@@ -121,7 +117,7 @@ public class WidgetsBundleController extends BaseController {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         WidgetsBundle widgetsBundle = checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
-        tbWidgetsBundleService.delete(widgetsBundle);
+        tbWidgetsBundleService.delete(widgetsBundle, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Widget Bundles (getWidgetsBundles)",
@@ -141,16 +137,12 @@ public class WidgetsBundleController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-                return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(getTenantId(), pageLink));
-            } else {
-                TenantId tenantId = getCurrentUser().getTenantId();
-                return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink));
-            }
-        } catch (Exception e) {
-            throw handleException(e);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+            return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(getTenantId(), pageLink));
+        } else {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink));
         }
     }
 
@@ -160,15 +152,11 @@ public class WidgetsBundleController extends BaseController {
     @RequestMapping(value = "/widgetsBundles", method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetsBundle> getWidgetsBundles() throws ThingsboardException {
-        try {
-            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-                return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));
-            } else {
-                TenantId tenantId = getCurrentUser().getTenantId();
-                return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
-            }
-        } catch (Exception e) {
-            throw handleException(e);
+        if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+            return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));
+        } else {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
         }
     }
 

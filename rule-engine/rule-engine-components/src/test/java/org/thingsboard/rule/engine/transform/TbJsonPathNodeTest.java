@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.PathNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,8 +44,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbJsonPathNodeTest {
-    final ObjectMapper mapper = new ObjectMapper();
-
     DeviceId deviceId;
     TbJsonPathNode node;
     TbJsonPathNodeConfiguration config;
@@ -61,7 +58,7 @@ public class TbJsonPathNodeTest {
         ctx = mock(TbContext.class);
         config = new TbJsonPathNodeConfiguration();
         config.setJsonPath("$.Attribute_2");
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node = spy(new TbJsonPathNode());
         node.init(ctx, nodeConfiguration);
     }
@@ -74,7 +71,7 @@ public class TbJsonPathNodeTest {
     @Test
     void givenDefaultConfig_whenInit_thenFail() {
         config.setJsonPath("");
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         assertThatThrownBy(() -> node.init(ctx, nodeConfiguration)).isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -96,7 +93,7 @@ public class TbJsonPathNodeTest {
     @Test
     void givenJsonMsg_whenOnMsg_thenVerifyJavaPrimitiveOutput() throws Exception {
         config.setJsonPath("$.attributes.length()");
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
         String data = "{\"attributes\":[{\"attribute_1\":10},{\"attribute_2\":20},{\"attribute_3\":30},{\"attribute_4\":40}]}";
@@ -119,7 +116,7 @@ public class TbJsonPathNodeTest {
     @Test
     void givenJsonArrayWithFilter_whenOnMsg_thenVerifyOutput() throws Exception {
         config.setJsonPath("$.Attribute_2[?(@.voltage > 200)]");
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
         String data = "{\"Attribute_1\":22.5,\"Attribute_2\":[{\"voltage\":220}, {\"voltage\":250}, {\"voltage\":110}]}";

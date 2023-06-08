@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.servic
 import {
   BulkImportRequest,
   BulkImportResult,
+  CSV_TYPE,
   FileType,
   ImportWidgetResult,
   JSON_TYPE,
@@ -466,6 +467,7 @@ export class ImportExportService {
           const ruleChainNode: RuleNode = {
             name: '',
             debugMode: false,
+            singletonMode: false,
             type: 'org.thingsboard.rule.engine.flow.TbRuleChainInputNode',
             configuration: {
               ruleChainId: ruleChainConnection.targetRuleChainId.id
@@ -595,6 +597,35 @@ export class ImportExportService {
         return of(null);
       })
     );
+  }
+
+  private processCSVCell(cellData: any): any {
+    if (isString(cellData)) {
+      let result = cellData.replace(/"/g, '""');
+      if (result.search(/([",\n])/g) >= 0) {
+        result = `"${result}"`;
+      }
+      return result;
+    }
+    return cellData;
+  }
+
+  public exportCsv(data: {[key: string]: any}[], filename: string) {
+    let colsHead: string;
+    let colsData: string;
+    if (data && data.length) {
+      colsHead = Object.keys(data[0]).map(key => [this.processCSVCell(key)]).join(';');
+      colsData = data.map(obj => [
+        Object.keys(obj).map(col => [
+          this.processCSVCell(obj[col])
+        ]).join(';')
+      ]).join('\n');
+    } else {
+      colsHead = '';
+      colsData = '';
+    }
+    const csvData = `${colsHead}\n${colsData}`;
+    this.downloadFile(csvData, filename, CSV_TYPE);
   }
 
   public exportText(data: string | Array<string>, filename: string) {

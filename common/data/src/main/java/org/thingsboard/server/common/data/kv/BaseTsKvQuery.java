@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,12 @@ public class BaseTsKvQuery implements TsKvQuery {
     private final long endTs;
 
     public BaseTsKvQuery(String key, long startTs, long endTs) {
-        this.id = idSeq.get();
+        this(idSeq.get(), key, startTs, endTs);
         idSeq.set(id + 1);
+    }
+
+    protected BaseTsKvQuery(int id, String key, long startTs, long endTs) {
+        this.id = id;
         this.key = key;
         this.startTs = startTs;
         this.endTs = endTs;

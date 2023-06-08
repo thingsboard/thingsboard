@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,14 @@ package org.thingsboard.server.common.data;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.RandomStringUtils;
 
+import java.security.SecureRandom;
+import java.util.Base64;
+
 import static org.apache.commons.lang3.StringUtils.repeat;
 
 public class StringUtils {
+    public static final SecureRandom RANDOM = new SecureRandom();
+
     public static final String EMPTY = "";
 
     public static final int INDEX_NOT_FOUND = -1;
@@ -39,6 +44,10 @@ public class StringUtils {
 
     public static boolean isNotBlank(String source) {
         return source != null && !source.isEmpty() && !source.trim().isEmpty();
+    }
+
+    public static String notBlankOrDefault(String src, String def) {
+        return isNotBlank(src) ? src : def;
     }
 
     public static String removeStart(final String str, final String remove) {
@@ -142,6 +151,15 @@ public class StringUtils {
         return org.apache.commons.lang3.StringUtils.equals(str1, str2);
     }
 
+    public static boolean equalsAny(String string, String... otherStrings) {
+        for (String otherString : otherStrings) {
+            if (equals(string, otherString)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static String substringAfterLast(String str, String sep) {
         return org.apache.commons.lang3.StringUtils.substringAfterLast(str, sep);
     }
@@ -178,6 +196,13 @@ public class StringUtils {
 
     public static String randomAlphabetic(int count) {
         return RandomStringUtils.randomAlphabetic(count);
+    }
+
+    public static String generateSafeToken(int length) {
+        byte[] bytes = new byte[length];
+        RANDOM.nextBytes(bytes);
+        Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
+        return encoder.encodeToString(bytes);
     }
 
 }

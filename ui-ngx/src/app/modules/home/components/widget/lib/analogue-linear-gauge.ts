@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,19 +15,16 @@
 ///
 
 import * as CanvasGauges from 'canvas-gauges';
-import { JsonSettingsSchema } from '@shared/models/widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TbAnalogueGauge } from '@home/components/widget/lib/analogue-gauge.models';
 import {
   AnalogueLinearGaugeSettings
 } from '@home/components/widget/lib/analogue-linear-gauge.models';
 import { isDefined } from '@core/utils';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import LinearGaugeOptions = CanvasGauges.LinearGaugeOptions;
 import LinearGauge = CanvasGauges.LinearGauge;
 import BaseGauge = CanvasGauges.BaseGauge;
-
-const tinycolor = tinycolor_;
 
 // @dynamic
 export class TbAnalogueLinearGauge extends TbAnalogueGauge<AnalogueLinearGaugeSettings, LinearGaugeOptions>{

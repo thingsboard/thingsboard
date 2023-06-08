@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -30,10 +30,11 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { QueueInfo } from '@shared/models/queue.models';
 import { UtilsService } from '@core/services/utils.service';
 import { guid } from '@core/utils';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-tenant-profile-queues',
@@ -52,9 +53,9 @@ import { guid } from '@core/utils';
     }
   ]
 })
-export class TenantProfileQueuesComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class TenantProfileQueuesComponent implements ControlValueAccessor, Validator, OnDestroy, OnInit {
 
-  tenantProfileQueuesFormGroup: FormGroup;
+  tenantProfileQueuesFormGroup: UntypedFormGroup;
   newQueue = false;
   idMap = [];
 
@@ -70,23 +71,16 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
   @Input()
   disabled: boolean;
 
-  private valueChangeSubscription$: Subscription = null;
-
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               private utils: UtilsService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
-  }
-
-  ngOnDestroy() {
-    if (this.valueChangeSubscription$) {
-      this.valueChangeSubscription$.unsubscribe();
-    }
   }
 
   registerOnTouched(fn: any): void {
@@ -96,14 +90,24 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     this.tenantProfileQueuesFormGroup = this.fb.group({
       queues: this.fb.array([])
     });
+
+    this.tenantProfileQueuesFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
-  get queuesFormArray(): FormArray {
-    return this.tenantProfileQueuesFormGroup.get('queues') as FormArray;
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  get queuesFormArray(): UntypedFormArray {
+    return this.tenantProfileQueuesFormGroup.get('queues') as UntypedFormArray;
   }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    this.newQueue = false;
     if (this.disabled) {
       this.tenantProfileQueuesFormGroup.disable({emitEvent: false});
     } else {
@@ -112,30 +116,28 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
   }
 
   writeValue(queues: Array<QueueInfo> | null): void {
-    if (this.valueChangeSubscription$) {
-      this.valueChangeSubscription$.unsubscribe();
-    }
-    const queuesControls: Array<AbstractControl> = [];
-    if (queues) {
-      queues.forEach((queue, index) => {
-        if (!queue.id) {
-          if (!this.idMap[index]) {
-            this.idMap.push(guid());
-          }
-          queue.id = this.idMap[index];
-        }
-        queuesControls.push(this.fb.control(queue, [Validators.required]));
-      });
-    }
-    this.tenantProfileQueuesFormGroup.setControl('queues', this.fb.array(queuesControls));
-    if (this.disabled) {
-      this.tenantProfileQueuesFormGroup.disable({emitEvent: false});
+    if (queues?.length === this.queuesFormArray.length) {
+      this.queuesFormArray.patchValue(queues, {emitEvent: false});
     } else {
-      this.tenantProfileQueuesFormGroup.enable({emitEvent: false});
+      const queuesControls: Array<AbstractControl> = [];
+      if (queues) {
+        queues.forEach((queue, index) => {
+          if (!queue.id) {
+            if (!this.idMap[index]) {
+              this.idMap.push(guid());
+            }
+            queue.id = this.idMap[index];
+          }
+          queuesControls.push(this.fb.control(queue, [Validators.required]));
+        });
+      }
+      this.tenantProfileQueuesFormGroup.setControl('queues', this.fb.array(queuesControls), {emitEvent: false});
+      if (this.disabled) {
+        this.tenantProfileQueuesFormGroup.disable({emitEvent: false});
+      } else {
+        this.tenantProfileQueuesFormGroup.enable({emitEvent: false});
+      }
     }
-    this.valueChangeSubscription$ = this.tenantProfileQueuesFormGroup.valueChanges.subscribe(() =>
-      this.updateModel()
-    );
   }
 
   public trackByQueue(index: number, queueControl: AbstractControl) {
@@ -146,7 +148,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
   }
 
   public removeQueue(index: number) {
-    (this.tenantProfileQueuesFormGroup.get('queues') as FormArray).removeAt(index);
+    (this.tenantProfileQueuesFormGroup.get('queues') as UntypedFormArray).removeAt(index);
     this.idMap.splice(index, 1);
   }
 
@@ -176,7 +178,7 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     };
     this.idMap.push(queue.id);
     this.newQueue = true;
-    const queuesArray = this.tenantProfileQueuesFormGroup.get('queues') as FormArray;
+    const queuesArray = this.tenantProfileQueuesFormGroup.get('queues') as UntypedFormArray;
     queuesArray.push(this.fb.control(queue, []));
     this.tenantProfileQueuesFormGroup.updateValueAndValidity();
     if (!this.tenantProfileQueuesFormGroup.valid) {

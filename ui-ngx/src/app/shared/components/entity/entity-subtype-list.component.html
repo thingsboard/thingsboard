@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="standard" [formGroup]="entitySubtypeListFormGroup" class="mat-block">
-  <mat-chip-list #chipList formControlName="entitySubtypeList">
-    <mat-chip
+<mat-form-field [formGroup]="entitySubtypeListFormGroup" class="mat-block tb-chip-list">
+  <mat-chip-grid #chipList formControlName="entitySubtypeList">
+    <mat-chip-row
       *ngFor="let entitySubtype of entitySubtypeList"
-      [selectable]="!disabled"
       [removable]="!disabled"
       (removed)="remove(entitySubtype)">
       {{entitySubtype}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip>
+    </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? ((!entitySubtypeList || !entitySubtypeList.length) ? placeholder : secondaryPlaceholder) : '' }}"
            style="max-width: 200px;"
            #entitySubtypeInput
@@ -37,7 +36,7 @@
            [matChipInputFor]="chipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
            (matChipInputTokenEnd)="chipAdd($event)">
-  </mat-chip-list>
+  </mat-chip-grid>
   <mat-autocomplete #entitySubtypeAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     (optionSelected)="selected($event)"

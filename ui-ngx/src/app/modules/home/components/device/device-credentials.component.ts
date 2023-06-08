@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -34,7 +34,7 @@ import {
 } from '@shared/models/device.models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { isDefinedAndNotNull } from '@core/utils';
+import { generateSecret, isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-device-credentials',
@@ -73,9 +73,9 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     }
   }
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
-  deviceCredentialsFormGroup: FormGroup;
+  deviceCredentialsFormGroup: UntypedFormGroup;
 
   deviceCredentialsType = DeviceCredentialsType;
 
@@ -85,7 +85,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   private propagateChange = (v: any) => {};
 
-  constructor(public fb: FormBuilder) {
+  constructor(public fb: UntypedFormBuilder) {
     this.deviceCredentialsFormGroup = this.fb.group({
       credentialsType: [DeviceCredentialsType.ACCESS_TOKEN],
       credentialsId: [null],
@@ -148,7 +148,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     }
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.deviceCredentialsFormGroup.valid ? null : {
       deviceCredentials: {
         valid: false,
@@ -180,5 +180,9 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
         break;
     }
+  }
+
+  public generate(formControlName: string) {
+    this.deviceCredentialsFormGroup.get(formControlName).patchValue(generateSecret(20));
   }
 }

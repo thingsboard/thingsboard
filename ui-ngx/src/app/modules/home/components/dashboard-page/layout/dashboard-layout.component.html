@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
           [ngStyle]="dashboardStyle">
   <section *ngIf="layoutCtx.widgets.isEmpty()" fxLayoutAlign="center center"
            style="display: flex; z-index: 1; pointer-events: none;"
-           class="mat-headline tb-absolute-fill">
+           class="mat-headline-5 tb-absolute-fill">
     <span *ngIf="!isEdit" style="text-align: center;">
       {{'dashboard.no-widgets' | translate}}
     </span>
@@ -42,6 +42,7 @@
                 [widgets]="layoutCtx.widgets"
                 [widgetLayouts]="layoutCtx.widgetLayouts"
                 [columns]="layoutCtx.gridSettings.columns"
+                [outerMargin]="layoutCtx.gridSettings.outerMargin"
                 [margin]="layoutCtx.gridSettings.margin"
                 [aliasController]="dashboardCtx.aliasController"
                 [stateController]="dashboardCtx.stateController"

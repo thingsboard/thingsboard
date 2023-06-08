@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.sync;
 
 import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -26,6 +27,9 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
@@ -47,7 +51,11 @@ import java.lang.annotation.Target;
         @Type(name = "DASHBOARD", value = Dashboard.class),
         @Type(name = "CUSTOMER", value = Customer.class),
         @Type(name = "ENTITY_VIEW", value = EntityView.class),
-        @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundle.class)
+        @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundle.class),
+        @Type(name = "NOTIFICATION_TEMPLATE", value = NotificationTemplate.class),
+        @Type(name = "NOTIFICATION_TARGET", value = NotificationTarget.class),
+        @Type(name = "NOTIFICATION_RULE", value = NotificationRule.class)
 })
+@JsonIgnoreProperties(value = {"tenantId", "createdTime"}, ignoreUnknown = true)
 public @interface JsonTbEntity {
 }

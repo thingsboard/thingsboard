@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.service.apiusage;
 
+import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
-import org.springframework.data.util.Pair;
+import lombok.Setter;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -26,16 +28,16 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class BaseApiUsageState {
     private final Map<ApiUsageRecordKey, Long> currentCycleValues = new ConcurrentHashMap<>();
     private final Map<ApiUsageRecordKey, Long> currentHourValues = new ConcurrentHashMap<>();
+
+    private final Map<ApiUsageRecordKey, Map<String, Long>> lastGaugesByServiceId = new HashMap<>();
+    private final Map<ApiUsageRecordKey, Long> gaugesReportCycles = new HashMap<>();
 
     @Getter
     private final ApiUsageState apiUsageState;
@@ -46,6 +48,9 @@ public abstract class BaseApiUsageState {
     @Getter
     private volatile long currentHourTs;
 
+    @Setter
+    private long gaugeReportInterval;
+
     public BaseApiUsageState(ApiUsageState apiUsageState) {
         this.apiUsageState = apiUsageState;
         this.currentCycleTs = SchedulerUtils.getStartOfCurrentMonth();
@@ -53,43 +58,81 @@ public abstract class BaseApiUsageState {
         this.currentHourTs = SchedulerUtils.getStartOfCurrentHour();
     }
 
-    public void put(ApiUsageRecordKey key, Long value) {
-        currentCycleValues.put(key, value);
-    }
+    public StatsCalculationResult calculate(ApiUsageRecordKey key, long value, String serviceId) {
+        long currentValue = get(key);
+        long currentHourlyValue = getHourly(key);
 
-    public void putHourly(ApiUsageRecordKey key, Long value) {
-        currentHourValues.put(key, value);
-    }
+        StatsCalculationResult result;
+        if (key.isCounter()) {
+            result = StatsCalculationResult.builder()
+                    .newValue(currentValue + value).valueChanged(true)
+                    .newHourlyValue(currentHourlyValue + value).hourlyValueChanged(true)
+                    .build();
+        } else {
+            Long newGaugeValue = calculateGauge(key, value, serviceId);
+            long newValue = newGaugeValue != null ? newGaugeValue : currentValue;
+            long newHourlyValue = newGaugeValue != null ? Math.max(newGaugeValue, currentHourlyValue) : currentHourlyValue;
+            result = StatsCalculationResult.builder()
+                    .newValue(newValue).valueChanged(newValue != currentValue || !currentCycleValues.containsKey(key))
+                    .newHourlyValue(newHourlyValue).hourlyValueChanged(newHourlyValue != currentHourlyValue || !currentHourValues.containsKey(key))
+                    .build();
+        }
 
-    public long add(ApiUsageRecordKey key, long value) {
-        long result = currentCycleValues.getOrDefault(key, 0L) + value;
-        currentCycleValues.put(key, result);
+        set(key, result.getNewValue());
+        setHourly(key, result.getNewHourlyValue());
         return result;
+    }
+
+    private Long calculateGauge(ApiUsageRecordKey key, long value, String serviceId) {
+        Map<String, Long> lastByServiceId = lastGaugesByServiceId.computeIfAbsent(key, k -> {
+            gaugesReportCycles.put(key, System.currentTimeMillis());
+            return new HashMap<>();
+        });
+        lastByServiceId.put(serviceId, value);
+
+        Long gaugeReportCycle = gaugesReportCycles.get(key);
+        if (gaugeReportCycle <= System.currentTimeMillis() - gaugeReportInterval) {
+            long newValue = lastByServiceId.values().stream().mapToLong(Long::longValue).sum();
+            lastGaugesByServiceId.remove(key);
+            gaugesReportCycles.remove(key);
+            return newValue;
+        } else {
+            return null;
+        }
+    }
+
+    public void set(ApiUsageRecordKey key, Long value) {
+        currentCycleValues.put(key, value);
     }
 
     public long get(ApiUsageRecordKey key) {
         return currentCycleValues.getOrDefault(key, 0L);
     }
 
-    public long addToHourly(ApiUsageRecordKey key, long value) {
-        long result = currentHourValues.getOrDefault(key, 0L) + value;
-        currentHourValues.put(key, result);
-        return result;
+    public void setHourly(ApiUsageRecordKey key, Long value) {
+        currentHourValues.put(key, value);
+    }
+
+    public long getHourly(ApiUsageRecordKey key) {
+        return currentHourValues.getOrDefault(key, 0L);
     }
 
     public void setHour(long currentHourTs) {
         this.currentHourTs = currentHourTs;
-        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            currentHourValues.put(key, 0L);
-        }
+        currentHourValues.clear();
+        lastGaugesByServiceId.clear();
+        gaugesReportCycles.clear();
     }
 
     public void setCycles(long currentCycleTs, long nextCycleTs) {
         this.currentCycleTs = currentCycleTs;
         this.nextCycleTs = nextCycleTs;
-        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            currentCycleValues.put(key, 0L);
-        }
+        currentCycleValues.clear();
+    }
+
+    public void onRepartitionEvent() {
+        lastGaugesByServiceId.clear();
+        gaugesReportCycles.clear();
     }
 
     public ApiUsageStateValue getFeatureValue(ApiFeature feature) {
@@ -150,4 +193,14 @@ public abstract class BaseApiUsageState {
     public EntityId getEntityId() {
         return getApiUsageState().getEntityId();
     }
+
+    @Data
+    @Builder
+    public static class StatsCalculationResult {
+        private final long newValue;
+        private final boolean valueChanged;
+        private final long newHourlyValue;
+        private final boolean hourlyValueChanged;
+    }
+
 }

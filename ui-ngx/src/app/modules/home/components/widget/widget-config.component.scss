@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,216 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import "../../../../../theme";
 @import '../../../../../scss/constants';
 
-.tb-datasource-list-item.tb-draggable {
-  &.cdk-drag-preview {
-    background: #fff;
+.tb-widget-config {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  .tb-widget-config-header {
+    padding: 24px 24px 8px;
+    height: 56px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
-}
-
-:host {
-  .tb-widget-config {
-    .tb-advanced-widget-config {
-      height: 100%;
+  .tb-widget-config-content {
+    flex: 1;
+    overflow: auto;
+    & > div {
+      padding: 16px;
     }
-    .tb-datasources {
-
-      .handle {
-        cursor: move;
-      }
-
-      .mat-list {
-        min-height: 68px;
-        padding-left: 0;
-      }
-
-      .mat-list-item {
-        height: auto;
-        min-height: 68px;
-        display: block;
-      }
+    .mat-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-    .tb-datasource-type {
-      min-width: 120px;
-      @media #{$mat-gt-sm} {
-        max-width: 120px;
-      }
-    }
-    .tb-datasource {
-      @media #{$mat-gt-sm} {
-        padding-left: 8px;
-      }
-    }
-    .tb-datasource-name {
-      @media #{$mat-gt-sm} {
-        width: 200px;
-        max-width: 200px;
-      }
-    }
-    .tb-datasource-params {
-      position: relative;
-      padding: 0 0 0 10px;
-      margin: 5px;
-      tb-error.tb-datasource-error {
-        position: absolute;
-        bottom: 4px;
-        left: 8px;
-      }
-    }
-    .tb-data-keys {
-      @media #{$mat-gt-sm} {
-        padding-left: 8px;
-      }
-    }
-    .fields-group {
-      padding: 0 16px 8px;
-      margin-bottom: 10px;
-      border: 1px groove rgba(0, 0, 0, .25);
-      border-radius: 4px;
-      legend {
-        color: rgba(0, 0, 0, .7);
-        width: fit-content;
-      }
-    }
-    .fields-group-slider {
-      padding: 0;
-      legend {
-        margin-left: 16px;
-      }
-      .tb-settings {
-        padding: 0 16px 8px;
-      }
-    }
-    .tb-widget-style {
-      margin-top: 16px;
-    }
+  }
+  .tb-basic-mode-directive-error {
+    font-size: 13px;
+    font-weight: 400;
+    color: rgb(221, 44, 0);
   }
 }
 
 :host ::ng-deep {
   .tb-widget-config {
-    .mat-tab-body-wrapper {
+    .tb-widget-config-header {
+      .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+        padding: 0 20px;
+      }
+    }
+    .mat-mdc-tab-body-wrapper {
       position: absolute;
       top: 49px;
       left: 0;
       right: 0;
       bottom: 0;
-    }
-    .tb-panel-hint {
-      font-size: 12px;
-      color: #808080;
-    }
-    //.mat-tab-body.mat-tab-body-active {
-    //  .mat-tab-body-content > div {
-    //    height: 100%;
-    //  }
-    //}
-    .mat-checkbox-label {
-      white-space: normal;
-    }
-    .mat-expansion-panel {
-      &.tb-settings {
-        box-shadow: none;
-        .mat-content {
-          overflow: visible;
-        }
-        .mat-expansion-panel-header {
-          padding: 0;
-          &:hover {
-            background: none;
-          }
-          .mat-expansion-indicator {
-            padding: 2px;
-          }
-        }
-        .mat-expansion-panel-header-description {
-          align-items: center;
-        }
-        > .mat-expansion-panel-content {
-          > .mat-expansion-panel-body {
-            padding: 0;
-          }
-        }
-        .tb-json-object-panel, .tb-css-content-panel {
-          margin: 0 0 8px;
-        }
-        .mat-checkbox-layout {
-          margin: 5px 0;
-        }
-        .mat-checkbox-inner-container {
-          margin-right: 12px;
-        }
-      }
-      &.tb-datasources {
-        &.mat-expanded {
-          overflow: visible;
-        }
-        .mat-expansion-panel-body{
-          padding: 0 12px 16px;
-        }
-        .mat-list-base .mat-list-item {
-          .mat-list-item-content {
-            padding: 0;
-          }
-        }
-      }
-      .mat-expansion-panel-content {
-        font: inherit;
-      }
-    }
-    .tb-datasource-type {
-      .mat-form-field-infix {
-        width: 100%;
-      }
-      .mat-select-value {
-        min-width: 92px;
-      }
-    }
-    .tb-datasource {
-      tb-entity-alias-select {
-        .mat-form-field {
-          margin-top: 20px;
-        }
-        @media #{$mat-gt-sm} {
-          .mat-form-field {
-            width: 200px;
-            max-width: 200px;
-          }
-        }
-      }
-      tb-filter-select {
-        @media #{$mat-gt-sm} {
-          .mat-form-field {
-            width: 200px;
-            max-width: 200px;
-          }
-        }
-      }
-      .tb-datasource-name.no-border-top {
-        .mat-form-field-infix {
-          border-top: 0;
-        }
-      }
-    }
-    .tb-data-keys {
-      @media #{$mat-gt-sm} {
-        .mat-input-element {
-          min-height: 32px;
-        }
-      }
-    }
-    .mat-slide {
-      margin: 8px 0;
-    }
-    .slide-block {
-      display: block;
-      &:not(:last-child) {
-        margin-bottom: 8px;
-      }
-    }
-    .mat-slide-toggle-content {
-      white-space: normal;
     }
   }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { getDescendantProp, isObject } from '@core/utils';
 import { SortDirection } from '@angular/material/sort';
+import { EntitiesTableAction } from '@home/models/entity/entity-table-component.models';
 
 export const MAX_SAFE_PAGE_SIZE = 2147483647;
 
@@ -27,6 +28,7 @@ export interface PageQueryParam extends Partial<SortOrder>{
   textSearch?: string;
   pageSize?: number;
   page?: number;
+  action?: EntitiesTableAction;
 }
 
 export function defaultPageLinkSearchFunction(searchProperty?: string): PageLinkSearchFunction<any> {

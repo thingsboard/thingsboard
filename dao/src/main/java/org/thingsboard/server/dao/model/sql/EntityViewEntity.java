@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import javax.persistence.Table;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.ENTITY_VIEW_TABLE_FAMILY_NAME)
+@Table(name = ModelConstants.ENTITY_VIEW_TABLE_NAME)
 public class EntityViewEntity extends AbstractEntityViewEntity<EntityView> {
 
     public EntityViewEntity() {

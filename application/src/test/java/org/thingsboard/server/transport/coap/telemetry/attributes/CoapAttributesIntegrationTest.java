@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.session.FeatureType;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.transport.coap.CoapTestClient;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 

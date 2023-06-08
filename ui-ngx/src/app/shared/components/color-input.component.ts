@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,14 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DialogService } from '@core/services/dialog.service';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-color-input',
@@ -36,6 +37,10 @@ import { DialogService } from '@core/services/dialog.service';
   ]
 })
 export class ColorInputComponent extends PageComponent implements OnInit, ControlValueAccessor {
+
+  @Input()
+  @coerceBoolean()
+  asBoxInput = false;
 
   @Input()
   icon: string;
@@ -90,12 +95,13 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
 
   private propagateChange = null;
 
-  public colorFormGroup: FormGroup;
+  public colorFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private dialogs: DialogService,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -154,6 +160,7 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
           this.colorFormGroup.patchValue(
             {color}, {emitEvent: true}
           );
+          this.cd.markForCheck();
         }
       }
     );
@@ -161,5 +168,6 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
 
   clear() {
     this.colorFormGroup.get('color').patchValue(null, {emitEvent: true});
+    this.cd.markForCheck();
   }
 }

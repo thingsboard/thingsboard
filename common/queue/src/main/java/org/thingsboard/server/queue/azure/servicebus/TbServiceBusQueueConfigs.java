@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import javax.annotation.PostConstruct;
-import java.util.HashMap;
 import java.util.Map;
 
 @Component
@@ -55,24 +54,12 @@ public class TbServiceBusQueueConfigs {
 
     @PostConstruct
     private void init() {
-        coreConfigs = getConfigs(coreProperties);
-        ruleEngineConfigs = getConfigs(ruleEngineProperties);
-        transportApiConfigs = getConfigs(transportApiProperties);
-        notificationsConfigs = getConfigs(notificationsProperties);
-        jsExecutorConfigs = getConfigs(jsExecutorProperties);
-        vcConfigs = getConfigs(vcProperties);
+        coreConfigs = PropertyUtils.getProps(coreProperties);
+        ruleEngineConfigs = PropertyUtils.getProps(ruleEngineProperties);
+        transportApiConfigs = PropertyUtils.getProps(transportApiProperties);
+        notificationsConfigs = PropertyUtils.getProps(notificationsProperties);
+        jsExecutorConfigs = PropertyUtils.getProps(jsExecutorProperties);
+        vcConfigs = PropertyUtils.getProps(vcProperties);
     }
 
-    private Map<String, String> getConfigs(String properties) {
-        Map<String, String> configs = new HashMap<>();
-        if (StringUtils.isNotEmpty(properties)) {
-            for (String property : properties.split(";")) {
-                int delimiterPosition = property.indexOf(":");
-                String key = property.substring(0, delimiterPosition);
-                String value = property.substring(delimiterPosition + 1);
-                configs.put(key, value);
-            }
-        }
-        return configs;
-    }
 }

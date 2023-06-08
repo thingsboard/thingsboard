@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlarmInfo, AlarmSearchStatus, AlarmSeverity } from '../alarm.models';
 import { Filter } from '@material-ui/icons';
 import { DatePipe } from '@angular/common';
+import { UserId } from '../id/user-id';
 
 export enum EntityKeyType {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -705,7 +706,7 @@ export interface EntityDataPageLink {
   dynamic?: boolean;
 }
 
-export interface AlarmDataPageLink extends EntityDataPageLink {
+export interface AlarmFilter {
   startTs?: number;
   endTs?: number;
   timeWindow?: number;
@@ -713,7 +714,16 @@ export interface AlarmDataPageLink extends EntityDataPageLink {
   statusList?: Array<AlarmSearchStatus>;
   severityList?: Array<AlarmSeverity>;
   searchPropagatedAlarms?: boolean;
+  assigneeId?: UserId;
 }
+
+export interface AlarmFilterConfig extends AlarmFilter {
+  assignedToCurrentUser?: boolean;
+}
+
+export type AlarmCountQuery = EntityCountQuery & AlarmFilter;
+
+export type AlarmDataPageLink = EntityDataPageLink & AlarmFilter;
 
 export function entityDataPageLinkSortDirection(pageLink: EntityDataPageLink): SortDirection {
   if (pageLink.sortOrder) {
@@ -738,6 +748,14 @@ export function createDefaultEntityDataPageLink(pageSize: number): EntityDataPag
 }
 
 export const singleEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1);
+
+export const singleEntityFilterFromDeviceId = (deviceId: string): EntityFilter => ({
+  type: AliasFilterType.singleEntity,
+  singleEntity: {
+    entityType: EntityType.DEVICE,
+    id: deviceId
+  }
+});
 
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
@@ -843,7 +861,8 @@ export function updateDatasourceFromEntityInfo(datasource: Datasource, entity: E
   };
   datasource.entityId = entity.id;
   datasource.entityType = entity.entityType;
-  if (datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) {
+  if (datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount
+    || datasource.type === DatasourceType.alarmCount) {
     if (datasource.type === DatasourceType.entity) {
       datasource.entityName = entity.name;
       datasource.entityLabel = entity.label;

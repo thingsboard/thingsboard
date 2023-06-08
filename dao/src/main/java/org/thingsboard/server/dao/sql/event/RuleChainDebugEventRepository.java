@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
-import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.dao.model.sql.RuleChainDebugEventEntity;
-import org.thingsboard.server.dao.model.sql.RuleNodeDebugEventEntity;
 
 import java.util.List;
 import java.util.UUID;

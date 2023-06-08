@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,45 @@
 package org.thingsboard.server.common.data.query;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Collections;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@ToString
+@EqualsAndHashCode
+@Setter
 public class DeviceTypeFilter implements EntityFilter {
+
+    /**
+     * Replaced by {@link DeviceTypeFilter#getDeviceTypes()} instead.
+     */
+    @Deprecated(since = "3.5", forRemoval = true)
+    private String deviceType;
+
+    private List<String> deviceTypes;
+
+    public List<String> getDeviceTypes() {
+        return !CollectionUtils.isEmpty(deviceTypes) ? deviceTypes : Collections.singletonList(deviceType);
+    }
+
+    @Getter
+    private String deviceNameFilter;
+
+    public DeviceTypeFilter(List<String> deviceTypes, String deviceNameFilter) {
+        this.deviceTypes = deviceTypes;
+        this.deviceNameFilter = deviceNameFilter;
+    }
 
     @Override
     public EntityFilterType getType() {
         return EntityFilterType.DEVICE_TYPE;
     }
-
-    private String deviceType;
-
-    private String deviceNameFilter;
-
 }

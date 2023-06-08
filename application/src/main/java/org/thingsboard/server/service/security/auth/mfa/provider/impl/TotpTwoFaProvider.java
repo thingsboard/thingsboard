@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import org.jboss.aerogear.security.otp.api.Base32;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.common.data.security.model.mfa.account.TotpTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TotpTwoFaProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFaProvider;
 import org.thingsboard.server.service.security.model.SecurityUser;
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { AfterViewInit, EventEmitter, Inject, OnInit, Directive } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { AbstractControl, FormGroup } from '@angular/forms';
+import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 
 export interface RuleNodeConfiguration {
@@ -36,6 +36,7 @@ export interface RuleNode extends BaseData<RuleNodeId> {
   type: string;
   name: string;
   debugMode: boolean;
+  singletonMode: boolean;
   configuration: RuleNodeConfiguration;
   additionalInfo?: any;
 }
@@ -77,7 +78,7 @@ export interface IRuleNodeConfigurationComponent {
 }
 
 @Directive()
-// tslint:disable-next-line:directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class RuleNodeConfigurationComponent extends PageComponent implements
   IRuleNodeConfigurationComponent, OnInit, AfterViewInit {
 
@@ -179,7 +180,7 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
 
   protected onValidate() {}
 
-  protected abstract configForm(): FormGroup;
+  protected abstract configForm(): UntypedFormGroup;
 
   protected abstract onConfigurationSet(configuration: RuleNodeConfiguration);
 
@@ -308,6 +309,7 @@ export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
 
 export interface FcRuleNodeType extends FcNode {
   component?: RuleNodeComponentDescriptor;
+  singletonMode?: boolean;
   nodeClass?: string;
   icon?: string;
   iconUrl?: string;
@@ -373,6 +375,10 @@ export enum MessageType {
   ATTRIBUTES_DELETED = 'ATTRIBUTES_DELETED',
   ALARM_ACKNOWLEDGED = 'ALARM_ACKNOWLEDGED',
   ALARM_CLEARED = 'ALARM_CLEARED',
+  ALARM_ASSIGNED = 'ALARM_ASSIGNED',
+  ALARM_UNASSIGNED = 'ALARM_UNASSIGNED',
+  COMMENT_CREATED = 'COMMENT_CREATED',
+  COMMENT_UPDATED = 'COMMENT_UPDATED',
   ENTITY_ASSIGNED_FROM_TENANT = 'ENTITY_ASSIGNED_FROM_TENANT',
   ENTITY_ASSIGNED_TO_TENANT = 'ENTITY_ASSIGNED_TO_TENANT',
   TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
@@ -406,6 +412,10 @@ export const messageTypeNames = new Map<MessageType, string>(
     [MessageType.ATTRIBUTES_DELETED, 'Attributes Deleted'],
     [MessageType.ALARM_ACKNOWLEDGED, 'Alarm Acknowledged'],
     [MessageType.ALARM_CLEARED, 'Alarm Cleared'],
+    [MessageType.ALARM_ASSIGNED, 'Alarm Assigned'],
+    [MessageType.ALARM_UNASSIGNED, 'Alarm Unassigned'],
+    [MessageType.COMMENT_CREATED, 'Comment Created'],
+    [MessageType.COMMENT_UPDATED, 'Comment Updated'],
     [MessageType.ENTITY_ASSIGNED_FROM_TENANT, 'Entity Assigned From Tenant'],
     [MessageType.ENTITY_ASSIGNED_TO_TENANT, 'Entity Assigned To Tenant'],
     [MessageType.TIMESERIES_UPDATED, 'Timeseries Updated'],
@@ -422,6 +432,9 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.geo.TbGpsGeofencingFilterNode': 'ruleNodeGpsGeofencingFilter',
   'org.thingsboard.rule.engine.filter.TbJsFilterNode': 'ruleNodeJsFilter',
   'org.thingsboard.rule.engine.filter.TbJsSwitchNode': 'ruleNodeJsSwitch',
+  'org.thingsboard.rule.engine.filter.TbAssetTypeSwitchNode': 'ruleNodeAssetProfileSwitch',
+  'org.thingsboard.rule.engine.filter.TbDeviceTypeSwitchNode': 'ruleNodeDeviceProfileSwitch',
+  'org.thingsboard.rule.engine.filter.TbCheckAlarmStatusNode': 'ruleNodeCheckAlarmStatus',
   'org.thingsboard.rule.engine.filter.TbMsgTypeFilterNode': 'ruleNodeMessageTypeFilter',
   'org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode': 'ruleNodeMessageTypeSwitch',
   'org.thingsboard.rule.engine.filter.TbOriginatorTypeFilterNode': 'ruleNodeOriginatorTypeFilter',
@@ -435,6 +448,7 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode': 'ruleNodeRelatedAttributes',
   'org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode': 'ruleNodeTenantAttributes',
   'org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode': 'ruleNodeTenantDetails',
+  'org.thingsboard.rule.engine.metadata.CalculateDeltaNode': 'ruleNodeCalculateDelta',
   'org.thingsboard.rule.engine.transform.TbChangeOriginatorNode': 'ruleNodeChangeOriginator',
   'org.thingsboard.rule.engine.transform.TbTransformMsgNode': 'ruleNodeTransformMsg',
   'org.thingsboard.rule.engine.mail.TbMsgToEmailNode': 'ruleNodeMsgToEmail',

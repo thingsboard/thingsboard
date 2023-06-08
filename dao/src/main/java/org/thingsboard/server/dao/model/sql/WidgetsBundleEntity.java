@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -33,8 +32,8 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
-public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> implements SearchTextEntity<WidgetsBundle> {
+@Table(name = ModelConstants.WIDGETS_BUNDLE_TABLE_NAME)
+public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> {
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -44,9 +43,6 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_TITLE_PROPERTY)
     private String title;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_IMAGE_PROPERTY)
     private String image;
@@ -76,16 +72,6 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
         if (widgetsBundle.getExternalId() != null) {
             this.externalId = widgetsBundle.getExternalId().getId();
         }
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return title;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     @Override
