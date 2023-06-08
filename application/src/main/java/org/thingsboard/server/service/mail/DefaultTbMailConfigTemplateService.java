@@ -21,14 +21,22 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 
 @Service
 @Slf4j
 public class DefaultTbMailConfigTemplateService implements TbMailConfigTemplateService {
 
+    private JsonNode mailConfigTemplates;
+
+    @PostConstruct
+    private void postConstruct() throws IOException {
+        mailConfigTemplates = JacksonUtil.toJsonNode(new ClassPathResource("/templates/mail_config_templates.json").getFile());
+    }
+
     @Override
-    public JsonNode findAllMailConfigTemplates() throws IOException {
-        return JacksonUtil.toJsonNode(new ClassPathResource("/templates/mail_config_templates.json").getFile());
+    public JsonNode findAllMailConfigTemplates() {
+        return mailConfigTemplates;
     }
 }
