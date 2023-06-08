@@ -15,33 +15,31 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotEmpty;
-import java.util.Set;
-import java.util.UUID;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class DeviceActivityNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+public class EntitiesLimitTrigger implements NotificationRuleTrigger {
 
-    private Set<UUID> devices;
-    private Set<UUID> deviceProfiles; // set either devices or profiles
-    @NotEmpty
-    private Set<DeviceEvent> notifyOn;
+    private final TenantId tenantId;
+    private final EntityType entityType;
+
+    private long limit;
+    private long currentCount;
 
     @Override
-    public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.DEVICE_ACTIVITY;
+    public NotificationRuleTriggerType getType() {
+        return NotificationRuleTriggerType.ENTITIES_LIMIT;
     }
 
-    public enum DeviceEvent {
-        ACTIVE, INACTIVE
+    @Override
+    public EntityId getOriginatorEntityId() {
+        return tenantId;
     }
 
 }

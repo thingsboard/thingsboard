@@ -13,30 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.notification.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
 @Data
 @Builder
-public class AlarmTrigger implements NotificationRuleTrigger {
+public class AlarmCommentTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
-    private final AlarmApiCallResult alarmUpdate;
+    private final AlarmComment comment;
+    private final Alarm alarm;
+    private final ActionType actionType;
+    private final User user;
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.ALARM;
+        return NotificationRuleTriggerType.ALARM_COMMENT;
     }
 
     @Override
     public EntityId getOriginatorEntityId() {
-        return alarmUpdate.getAlarm().getId();
+        return alarm.getId();
     }
 
 }

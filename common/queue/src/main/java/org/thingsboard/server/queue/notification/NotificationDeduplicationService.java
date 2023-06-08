@@ -13,31 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.queue.notification;
 
-import lombok.Getter;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
 
-@Getter
-public enum NotificationRuleTriggerType {
+public interface NotificationDeduplicationService {
 
-    ENTITY_ACTION,
-    ALARM,
-    ALARM_COMMENT,
-    ALARM_ASSIGNMENT,
-    DEVICE_ACTIVITY,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    NEW_PLATFORM_VERSION(false),
-    ENTITIES_LIMIT(false),
-    API_USAGE_LIMIT(false);
+    boolean alreadyProcessed(NotificationRuleTrigger trigger);
 
-    private final boolean tenantLevel;
-
-    NotificationRuleTriggerType() {
-        this(true);
-    }
-
-    NotificationRuleTriggerType(boolean tenantLevel) {
-        this.tenantLevel = tenantLevel;
-    }
+    boolean alreadyProcessed(NotificationRuleTrigger trigger, NotificationRule rule);
 
 }

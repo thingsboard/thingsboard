@@ -13,16 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.EntityType;
+
+import javax.validation.constraints.Max;
+import java.util.Set;
 
 @Data
-public class NewPlatformVersionNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class EntitiesLimitNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+
+    private Set<EntityType> entityTypes;
+    @Max(1)
+    private float threshold; // in percents,
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.NEW_PLATFORM_VERSION;
+        return NotificationRuleTriggerType.ENTITIES_LIMIT;
     }
 
 }

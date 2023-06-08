@@ -13,11 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.settings;
+package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
-import lombok.Data;
+import lombok.Getter;
 
-@Data
-public class TriggerTypeConfig {
-    private long deduplicationDuration;
+@Getter
+public enum NotificationRuleTriggerType {
+
+    ENTITY_ACTION,
+    ALARM,
+    ALARM_COMMENT,
+    ALARM_ASSIGNMENT,
+    DEVICE_ACTIVITY,
+    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
+    NEW_PLATFORM_VERSION(false),
+    ENTITIES_LIMIT(false),
+    API_USAGE_LIMIT(false);
+
+    private final boolean tenantLevel;
+
+    NotificationRuleTriggerType() {
+        this(true);
+    }
+
+    NotificationRuleTriggerType(boolean tenantLevel) {
+        this.tenantLevel = tenantLevel;
+    }
+
 }

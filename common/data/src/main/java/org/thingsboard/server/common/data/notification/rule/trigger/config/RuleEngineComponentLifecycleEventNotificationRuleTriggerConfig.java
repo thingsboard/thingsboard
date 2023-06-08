@@ -13,30 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EntityActionNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+public class RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    private Set<EntityType> entityTypes; // maybe add name filter ?
-    private boolean created;
-    private boolean updated;
-    private boolean deleted;
+    private Set<UUID> ruleChains; // if empty - all rule chains
+
+    private Set<ComponentLifecycleEvent> ruleChainEvents; // available options: STARTED, UPDATED, STOPPED. if empty - all events
+    private boolean onlyRuleChainLifecycleFailures;
+
+    private boolean trackRuleNodeEvents;
+    private Set<ComponentLifecycleEvent> ruleNodeEvents; // available options: STARTED, UPDATED, STOPPED. if empty - all events
+    private boolean onlyRuleNodeLifecycleFailures;
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.ENTITY_ACTION;
+        return NotificationRuleTriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT;
     }
 
 }
