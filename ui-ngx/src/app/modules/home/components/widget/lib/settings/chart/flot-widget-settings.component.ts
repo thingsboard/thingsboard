@@ -45,7 +45,7 @@ import { defaultLegendConfig, widgetType } from '@shared/models/widget.models';
 export const flotDefaultSettings = (chartType: ChartType): Partial<TbFlotSettings> => {
   const settings: Partial<TbFlotSettings> = {
     stack: false,
-    enableSelection: 'enable',
+    enableSelection: true,
     fontColor: '#545454',
     fontSize: 10,
     showTooltip: true,
@@ -149,7 +149,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
       // Common settings
 
       stack: [false, []],
-      enableSelection: ['enable', []],
+      enableSelection: [true, []],
       fontSize: [10, [Validators.min(0)]],
       fontColor: ['#545454', []],
 
