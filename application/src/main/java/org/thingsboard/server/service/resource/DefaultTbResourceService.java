@@ -170,7 +170,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
             resource.setResourceKey(resource.getFileName());
         }
         HashCode hashCode = Hashing.sha256().hashBytes(Base64.getDecoder().decode(resource.getData().getBytes()));
-        resource.setHashCode(hashCode.toString());
+        resource.setEtag(hashCode.toString());
         return resourceService.saveResource(resource);
     }
 }

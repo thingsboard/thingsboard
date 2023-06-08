@@ -526,7 +526,6 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 .andExpect(status().isNotModified());
     }
 
-    @Ignore
     @Test
     public void testDownloadTbResourceIfChangedAsPublicCustomer() throws Exception {
         loginTenantAdmin();
@@ -569,6 +568,25 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         headers.setIfNoneMatch(eTag);
         doGet("/api/resource/js/" + savedResource.getId().getId().toString() + "/download", headers)
                 .andExpect(status().isNotModified());
+    }
+
+    @Test
+    public void testDownloadTbResourceIfChangedAsCustomerOfDifferentTenant() throws Exception {
+        loginTenantAdmin();
+        Mockito.reset(tbClusterService, auditLogService);
+
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setTitle("Js resource");
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setData(TEST_DATA);
+
+        TbResource savedResource = save(resource);
+
+        loginDifferentTenant();
+        loginDifferentTenantCustomer();
+        doGet("/api/resource/js/" + savedResource.getId().getId().toString() + "/download")
+                .andExpect(status().isForbidden());
     }
 
     private TbResource save(TbResource tbResource) throws Exception {

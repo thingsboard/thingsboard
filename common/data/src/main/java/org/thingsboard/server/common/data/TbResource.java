@@ -75,7 +75,7 @@ public class TbResource extends TbResourceInfo {
         builder.append(", data=");
         builder.append(data);
         builder.append(", hashCode=");
-        builder.append(getHashCode());
+        builder.append(getEtag());
         builder.append("]");
         return builder.toString();
     }

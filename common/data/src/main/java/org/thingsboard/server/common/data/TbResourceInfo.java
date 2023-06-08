@@ -48,8 +48,8 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     private String resourceKey;
     @ApiModelProperty(position = 7, value = "Resource search text.", example = "19_1.0:binaryappdatacontainer", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String searchText;
-    @ApiModelProperty(position = 8, value = "Resource hash code.", example = "33a64df551425fcc55e4d42a148795d9f25f89d4", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private String hashCode;
+    @ApiModelProperty(position = 8, value = "Resource etag.", example = "33a64df551425fcc55e4d42a148795d9f25f89d4", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private String etag;
 
     public TbResourceInfo() {
         super();
@@ -66,7 +66,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         this.resourceType = resourceInfo.getResourceType();
         this.resourceKey = resourceInfo.getResourceKey();
         this.searchText = resourceInfo.getSearchText();
-        this.hashCode = resourceInfo.getHashCode();
+        this.etag = resourceInfo.getEtag();
     }
 
     @ApiModelProperty(position = 1, value = "JSON object with the Resource Id. " +
@@ -111,7 +111,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         builder.append(", resourceKey=");
         builder.append(resourceKey);
         builder.append(", hashCode=");
-        builder.append(hashCode);
+        builder.append(etag);
         builder.append("]");
         return builder.toString();
     }

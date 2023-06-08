@@ -54,8 +54,8 @@ $$;
 -- NOTIFICATION CONFIGS VERSION CONTROL END
 
 ALTER TABLE resource
-    ADD COLUMN IF NOT EXISTS hash_code varchar;
+    ADD COLUMN IF NOT EXISTS etag varchar;
 
 UPDATE resource
-    SET hash_code = encode(sha256(decode(resource.data, 'base64')),'hex') WHERE resource.data is not null;
+    SET etag = encode(sha256(decode(resource.data, 'base64')),'hex') WHERE resource.data is not null;
 
