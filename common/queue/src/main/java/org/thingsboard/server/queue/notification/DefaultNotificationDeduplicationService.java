@@ -69,8 +69,8 @@ public class DefaultNotificationDeduplicationService implements NotificationDedu
         }
 
         boolean alreadyProcessed = false;
+        long deduplicationDuration = getDeduplicationDuration(trigger);
         if (lastProcessedTs != null) {
-            long deduplicationDuration = getDeduplicationDuration(trigger);
             long passed = System.currentTimeMillis() - lastProcessedTs;
             log.trace("Deduplicating trigger {} by key '{}'. Deduplication duration: {} ms, passed: {} ms",
                     trigger.getType(), deduplicationKey, deduplicationDuration, passed);
@@ -84,9 +84,12 @@ public class DefaultNotificationDeduplicationService implements NotificationDedu
         }
         localCache.put(deduplicationKey, lastProcessedTs);
         if (!onlyLocalCache) {
-            Cache externalCache = cacheManager.getCache(CacheConstants.SENT_NOTIFICATIONS_CACHE);
-            if (externalCache != null) {
-                externalCache.put(deduplicationKey, lastProcessedTs);
+            if (!alreadyProcessed || deduplicationDuration == 0) {
+                // if lastProcessedTs is changed or if deduplicating infinitely (so that cache value not removed by ttl)
+                Cache externalCache = cacheManager.getCache(CacheConstants.SENT_NOTIFICATIONS_CACHE);
+                if (externalCache != null) {
+                    externalCache.put(deduplicationKey, lastProcessedTs);
+                }
             }
         }
         return alreadyProcessed;
