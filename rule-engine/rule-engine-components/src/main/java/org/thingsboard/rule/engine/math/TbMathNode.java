@@ -51,6 +51,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.rule.engine.math.TbMathArgumentType.CONSTANT;
+
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @RuleNode(
@@ -121,7 +123,7 @@ public class TbMathNode implements TbNode {
             var argumentValues = Futures.allAsList(arguments.stream()
                     .map(arg -> resolveArguments(ctx, msg, msgBodyOpt, arg)).collect(Collectors.toList()));
             ListenableFuture<TbMsg> resultMsgFuture = Futures.transformAsync(argumentValues, args ->
-                    updateMsgAndDb(ctx, msg, msgBodyOpt, calculateResult(ctx, msg, args)), ctx.getDbCallbackExecutor());
+                    updateMsgAndDb(ctx, msg, msgBodyOpt, calculateResult(args)), ctx.getDbCallbackExecutor());
             DonAsynchron.withCallback(resultMsgFuture, resultMsg -> {
                 try {
                     ctx.tellSuccess(resultMsg);
@@ -155,17 +157,18 @@ public class TbMathNode implements TbNode {
 
     private ListenableFuture<TbMsg> updateMsgAndDb(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result) {
         TbMathResult mathResultDef = config.getResult();
+        String mathResultKey = !mathResultDef.getType().equals(CONSTANT) ? TbNodeUtils.processPattern(mathResultDef.getKey(), msg) : mathResultDef.getKey();
         switch (mathResultDef.getType()) {
             case MESSAGE_BODY:
-                return Futures.immediateFuture(addToBody(msg, mathResultDef, msgBodyOpt, result));
+                return Futures.immediateFuture(addToBody(msg, mathResultDef, mathResultKey, msgBodyOpt, result));
             case MESSAGE_METADATA:
-                return Futures.immediateFuture(addToMeta(msg, mathResultDef, result));
+                return Futures.immediateFuture(addToMeta(msg, mathResultDef, mathResultKey, result));
             case ATTRIBUTE:
                 ListenableFuture<Void> attrSave = saveAttribute(ctx, msg, result, mathResultDef);
-                return Futures.transform(attrSave, attr -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef), ctx.getDbCallbackExecutor());
+                return Futures.transform(attrSave, attr -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef, mathResultKey), ctx.getDbCallbackExecutor());
             case TIME_SERIES:
                 ListenableFuture<Void> tsSave = saveTimeSeries(ctx, msg, result, mathResultDef);
-                return Futures.transform(tsSave, ts -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef), ctx.getDbCallbackExecutor());
+                return Futures.transform(tsSave, ts -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef, mathResultKey), ctx.getDbCallbackExecutor());
             default:
                 throw new RuntimeException("Result type is not supported: " + mathResultDef.getType() + "!");
         }
@@ -217,38 +220,38 @@ public class TbMathNode implements TbNode {
         return msgBodyOpt;
     }
 
-    private TbMsg addToBodyAndMeta(TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result, TbMathResult mathResultDef) {
+    private TbMsg addToBodyAndMeta(TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result, TbMathResult mathResultDef, String mathResultKey) {
         TbMsg tmpMsg = msg;
         if (mathResultDef.isAddToBody()) {
-            tmpMsg = addToBody(tmpMsg, mathResultDef, msgBodyOpt, result);
+            tmpMsg = addToBody(tmpMsg, mathResultDef, mathResultKey, msgBodyOpt, result);
         }
         if (mathResultDef.isAddToMetadata()) {
-            tmpMsg = addToMeta(tmpMsg, mathResultDef, result);
+            tmpMsg = addToMeta(tmpMsg, mathResultDef, mathResultKey, result);
         }
         return tmpMsg;
     }
 
-    private TbMsg addToBody(TbMsg msg, TbMathResult mathResultDef, Optional<ObjectNode> msgBodyOpt, double result) {
+    private TbMsg addToBody(TbMsg msg, TbMathResult mathResultDef, String mathResultKey, Optional<ObjectNode> msgBodyOpt, double result) {
         ObjectNode body = msgBodyOpt.get();
         if (isIntegerResult(mathResultDef, config.getOperation())) {
-            body.put(mathResultDef.getKey(), toIntValue(mathResultDef, result));
+            body.put(mathResultKey, toIntValue(mathResultDef, result));
         } else {
-            body.put(mathResultDef.getKey(), toDoubleValue(mathResultDef, result));
+            body.put(mathResultKey, toDoubleValue(mathResultDef, result));
         }
         return TbMsg.transformMsgData(msg, JacksonUtil.toString(body));
     }
 
-    private TbMsg addToMeta(TbMsg msg, TbMathResult mathResultDef, double result) {
+    private TbMsg addToMeta(TbMsg msg, TbMathResult mathResultDef, String mathResultKey, double result) {
         var md = msg.getMetaData();
         if (isIntegerResult(mathResultDef, config.getOperation())) {
-            md.putValue(mathResultDef.getKey(), Long.toString(toIntValue(mathResultDef, result)));
+            md.putValue(mathResultKey, Long.toString(toIntValue(mathResultDef, result)));
         } else {
-            md.putValue(mathResultDef.getKey(), Double.toString(toDoubleValue(mathResultDef, result)));
+            md.putValue(mathResultKey, Double.toString(toDoubleValue(mathResultDef, result)));
         }
         return TbMsg.transformMsg(msg, md);
     }
 
-    private double calculateResult(TbContext ctx, TbMsg msg, List<TbMathArgumentValue> args) {
+    private double calculateResult(List<TbMathArgumentValue> args) {
         switch (config.getOperation()) {
             case ADD:
                 return apply(args.get(0), args.get(1), Double::sum);
@@ -345,21 +348,22 @@ public class TbMathNode implements TbNode {
     }
 
     private ListenableFuture<TbMathArgumentValue> resolveArguments(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, TbMathArgument arg) {
+        String argKey = !arg.getType().equals(CONSTANT) ? TbNodeUtils.processPattern(arg.getKey(), msg) : arg.getKey();
         switch (arg.getType()) {
             case CONSTANT:
                 return Futures.immediateFuture(TbMathArgumentValue.constant(arg));
             case MESSAGE_BODY:
-                return Futures.immediateFuture(TbMathArgumentValue.fromMessageBody(arg, msgBodyOpt));
+                return Futures.immediateFuture(TbMathArgumentValue.fromMessageBody(arg, argKey, msgBodyOpt));
             case MESSAGE_METADATA:
-                return Futures.immediateFuture(TbMathArgumentValue.fromMessageMetadata(arg, msg.getMetaData()));
+                return Futures.immediateFuture(TbMathArgumentValue.fromMessageMetadata(arg, argKey, msg.getMetaData()));
             case ATTRIBUTE:
                 String scope = getAttributeScope(arg.getAttributeScope());
-                return Futures.transform(ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, arg.getKey()),
-                        opt -> getTbMathArgumentValue(arg, opt, "Attribute: " + arg.getKey() + " with scope: " + scope + " not found for entity: " + msg.getOriginator())
+                return Futures.transform(ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, argKey),
+                        opt -> getTbMathArgumentValue(arg, opt, "Attribute: " + argKey + " with scope: " + scope + " not found for entity: " + msg.getOriginator())
                         , MoreExecutors.directExecutor());
             case TIME_SERIES:
-                return Futures.transform(ctx.getTimeseriesService().findLatest(ctx.getTenantId(), msg.getOriginator(), arg.getKey()),
-                        opt -> getTbMathArgumentValue(arg, opt, "Time-series: " + arg.getKey() + " not found for entity: " + msg.getOriginator())
+                return Futures.transform(ctx.getTimeseriesService().findLatest(ctx.getTenantId(), msg.getOriginator(), argKey),
+                        opt -> getTbMathArgumentValue(arg, opt, "Time-series: " + argKey + " not found for entity: " + msg.getOriginator())
                         , MoreExecutors.directExecutor());
             default:
                 throw new RuntimeException("Unsupported argument type: " + arg.getType() + "!");
