@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.mvel2.CompileException;
 import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
@@ -65,6 +66,8 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
 
     protected final Map<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
     protected final Map<String, TbelScript> scriptMap = new ConcurrentHashMap<>();
+    private final String tbelSwitch = "switch";
+    private final String tbelSwitchErrorMsg =  "TBEL does not support the 'switch'.";
     protected Cache<String, Serializable> compiledScriptsCache;
 
     private SandboxedParserConfiguration parserConfig;
@@ -181,6 +184,9 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
                 }
                 return scriptId;
             } catch (Exception e) {
+                if (((CompileException) e).getExpr() != null && new String(((CompileException) e).getExpr()).contains(tbelSwitch)) {
+                    e = new CompileException(tbelSwitchErrorMsg, ((CompileException) e).getExpr(), ((CompileException) e).getCursor(), e.getCause());
+                }
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
             }
         });
