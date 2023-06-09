@@ -31,18 +31,21 @@ tb-widget-editor {
     overflow-y: auto;
   }
 
-  mat-form-field.resource-field {
-    max-height: 40px;
-    margin: 10px 0 0;
-    .mat-mdc-text-field-wrapper {
-      padding-bottom: 0;
-      .mat-mdc-form-field-flex {
-        max-height: 40px;
-        .mat-mdc-form-field-infix {
-          border: 0;
-          padding-top: 7px;
-          padding-bottom: 7px;
-          min-height: 32px;
+  .resource-field {
+    mat-form-field {
+      .mat-mdc-text-field-wrapper {
+        padding-bottom: 0;
+        height: 40px;
+
+        .mat-mdc-form-field-flex {
+          max-height: 40px;
+
+          .mat-mdc-form-field-infix {
+            border: 0;
+            padding-top: 7px;
+            padding-bottom: 7px;
+            min-height: 32px;
+          }
         }
       }
     }

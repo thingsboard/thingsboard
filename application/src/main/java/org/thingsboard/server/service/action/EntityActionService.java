@@ -28,7 +28,9 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -40,10 +42,12 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.notification.trigger.AlarmAssignmentTrigger;
+import org.thingsboard.server.common.msg.notification.trigger.AlarmCommentTrigger;
 import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
 import org.thingsboard.server.common.msg.notification.trigger.EntityActionTrigger;
 import org.thingsboard.server.dao.audit.AuditLogService;
-import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 
 import java.util.List;
 import java.util.Map;
@@ -241,25 +245,60 @@ public class EntityActionService {
                     }
                 }
                 if (tenantId != null && !tenantId.isSysTenantId()) {
-                    if (actionType == ActionType.ADDED) {
-                        notificationRuleProcessor.process(EntitiesLimitTrigger.builder()
-                                .tenantId(tenantId)
-                                .entityType(entityId.getEntityType())
-                                .build());
-                    }
-                    notificationRuleProcessor.process(EntityActionTrigger.builder()
-                            .tenantId(tenantId)
-                            .entityId(entityId)
-                            .entity(entity)
-                            .actionType(actionType)
-                            .user(user)
-                            .build());
+                    processNotificationRules(tenantId, entityId, entity, actionType, user, additionalInfo);
                 }
                 TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
                 tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }
+        }
+    }
+
+    private void processNotificationRules(TenantId tenantId, EntityId entityId, HasName entity, ActionType actionType, User user, Object... additionalInfo) {
+        switch (actionType) {
+            case ADDED:
+                notificationRuleProcessor.process(EntitiesLimitTrigger.builder()
+                        .tenantId(tenantId)
+                        .entityType(entityId.getEntityType())
+                        .build());
+            case UPDATED:
+            case DELETED:
+                notificationRuleProcessor.process(EntityActionTrigger.builder()
+                        .tenantId(tenantId)
+                        .entityId(entityId)
+                        .entity(entity)
+                        .actionType(actionType)
+                        .user(user)
+                        .build());
+                break;
+            case ALARM_ASSIGNED:
+            case ALARM_UNASSIGNED:
+                if (!(entity instanceof AlarmInfo)) { // should not normally happen
+                    log.warn("Invalid alarm assignment event: entity is not instance of AlarmInfo");
+                    break;
+                }
+                notificationRuleProcessor.process(AlarmAssignmentTrigger.builder()
+                        .tenantId(tenantId)
+                        .alarmInfo((AlarmInfo) entity)
+                        .actionType(actionType)
+                        .user(user)
+                        .build());
+                break;
+            case ADDED_COMMENT:
+            case UPDATED_COMMENT:
+                if (!(entity instanceof Alarm)) { // should not normally happen
+                    log.warn("Invalid alarm comment event: entity is not instance of Alarm");
+                    break;
+                }
+                notificationRuleProcessor.process(AlarmCommentTrigger.builder()
+                        .tenantId(tenantId)
+                        .comment(extractParameter(AlarmComment.class, 0, additionalInfo))
+                        .alarm((Alarm) entity)
+                        .actionType(actionType)
+                        .user(user)
+                        .build());
+                break;
         }
     }
 

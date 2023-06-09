@@ -816,7 +816,8 @@ export class EntityService {
     );
   }
 
-  public getEntityKeysByEntityFilter(filter: EntityFilter, types: DataKeyType[], config?: RequestConfig): Observable<Array<DataKey>> {
+  public getEntityKeysByEntityFilter(filter: EntityFilter, types: DataKeyType[],
+                                     entityTypes?: EntityType[], config?: RequestConfig): Observable<Array<DataKey>> {
     if (!types.length) {
       return of([]);
     }
@@ -832,7 +833,7 @@ export class EntityService {
       entitiesKeysByQuery$ = of({
         attribute: [],
         timeseries: [],
-        entityTypes: [],
+        entityTypes: entityTypes || [],
       });
     }
     return entitiesKeysByQuery$.pipe(

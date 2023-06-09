@@ -15,7 +15,9 @@
 ///
 
 import {
+  AfterViewChecked,
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -90,6 +92,7 @@ import { MatMiniFabButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
+import { MatDrawer } from '@angular/material/sidenav';
 import Timeout = NodeJS.Timeout;
 
 @Component({
@@ -99,7 +102,7 @@ import Timeout = NodeJS.Timeout;
   encapsulation: ViewEncapsulation.None
 })
 export class RuleChainPageComponent extends PageComponent
-  implements AfterViewInit, OnInit, OnDestroy, HasDirtyFlag, ISearchableComponent {
+  implements AfterViewInit, OnInit, OnDestroy, HasDirtyFlag, ISearchableComponent, AfterViewChecked {
 
   get isDirty(): boolean {
     return this.isDirtyValue || this.isImport;
@@ -120,6 +123,8 @@ export class RuleChainPageComponent extends PageComponent
     {read: MatExpansionPanel}) expansionPanels: QueryList<MatExpansionPanel>;
 
   @ViewChild('ruleChainMenuTrigger', {static: true}) ruleChainMenuTrigger: MatMenuTrigger;
+
+  @ViewChild('drawer') drawer: MatDrawer;
 
   eventTypes = EventType;
 
@@ -159,7 +164,6 @@ export class RuleChainPageComponent extends PageComponent
   hotKeys: Hotkey[] = [];
 
   enableHotKeys = true;
-  isLibraryOpen = true;
 
   ruleNodeSearch = '';
   ruleNodeTypeSearch = '';
@@ -266,6 +270,7 @@ export class RuleChainPageComponent extends PageComponent
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
+              private changeDetector: ChangeDetectorRef,
               public dialog: MatDialog,
               public dialogService: DialogService,
               public fb: UntypedFormBuilder) {
@@ -279,6 +284,10 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   ngOnInit() {
+  }
+
+  ngAfterViewChecked(){
+    this.changeDetector.detectChanges();
   }
 
   ngAfterViewInit() {
@@ -297,6 +306,14 @@ export class RuleChainPageComponent extends PageComponent
   ngOnDestroy() {
     super.ngOnDestroy();
     this.rxSubscription.unsubscribe();
+  }
+
+  currentRuleChainIdChanged(ruleChainId: string) {
+    if (this.ruleChainType === RuleChainType.CORE) {
+      this.router.navigateByUrl(`ruleChains/${ruleChainId}`);
+    } else {
+      this.router.navigateByUrl(`edgeManagement/ruleChains/${ruleChainId}`);
+    }
   }
 
   onSearchTextUpdated(searchText: string) {
