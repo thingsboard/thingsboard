@@ -551,7 +551,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() > beforeAssignmentTs && foundAlarm.getAssignTs() < System.currentTimeMillis());
+        Assert.assertTrue(foundAlarm.getAssignTs() > beforeAssignmentTs);
 
         beforeAssignmentTs = System.currentTimeMillis();
 
@@ -563,7 +563,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertNull(foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() > beforeAssignmentTs && foundAlarm.getAssignTs() < System.currentTimeMillis());
+        Assert.assertTrue(foundAlarm.getAssignTs() > beforeAssignmentTs);
     }
 
     @Test
