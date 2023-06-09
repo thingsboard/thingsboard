@@ -220,9 +220,6 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         AlarmQueryV2 alarmQuery = AlarmQueryV2.builder().assigneeId(user.getId()).pageLink(new TimePageLink(Integer.MAX_VALUE)).build();
         try {
             List<AlarmInfo> alarms = alarmService.findAlarmsV2(tenantId, alarmQuery).get(30, TimeUnit.SECONDS).getData();
-            if (alarms.isEmpty()) {
-                throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
-            }
             for (AlarmInfo alarm : alarms) {
                 AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, alarm.getId(), getOrDefault(unassignTs));
                 if (!result.isSuccessful()) {
