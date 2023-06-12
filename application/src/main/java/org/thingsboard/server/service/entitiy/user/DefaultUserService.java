@@ -66,8 +66,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                     throw e;
                 }
             }
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, savedUser.getId(),
-                    savedUser, user, actionType, true, null);
+            notificationEntityService.logEntityAction(tenantId, savedUser.getId(), savedUser, customerId, actionType, user);
             return savedUser;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER), tbUser, actionType, user, e);
@@ -77,15 +76,15 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
 
     @Override
     public void delete(TenantId tenantId, CustomerId customerId, User tbUser, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.DELETED;
         UserId userId = tbUser.getId();
 
         try {
             userService.deleteUser(tenantId, userId);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, userId, tbUser,
-                    user, ActionType.DELETED, true, null, customerId.toString());
+            notificationEntityService.logEntityAction(tenantId, userId, tbUser, customerId, actionType, user, customerId.toString());
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER),
-                    ActionType.DELETED, user, e, userId.toString());
+                    actionType, user, e, userId.toString());
             throw e;
         }
     }

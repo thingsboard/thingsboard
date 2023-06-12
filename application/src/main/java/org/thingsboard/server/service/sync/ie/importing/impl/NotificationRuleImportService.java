@@ -126,6 +126,7 @@ public class NotificationRuleImportService extends BaseEntityImportService<Notif
     @Override
     protected NotificationRule saveOrUpdate(EntitiesImportCtx ctx, NotificationRule notificationRule, EntityExportData<NotificationRule> exportData, IdProvider idProvider) {
         ConstraintValidator.validateFields(notificationRule);
+        // take a look of publishEvent
         return notificationRuleService.saveNotificationRule(ctx.getTenantId(), notificationRule);
     }
 

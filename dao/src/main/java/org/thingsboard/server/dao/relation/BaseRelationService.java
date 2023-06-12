@@ -155,6 +155,11 @@ public class BaseRelationService implements RelationService {
         validate(relation);
         var result = relationDao.saveRelation(tenantId, relation);
         publishEvictEvent(EntityRelationEvent.from(relation));
+        // EdgeEventType.RELATION do we need it in publish ?
+//        if (!EntityType.EDGE.equals(relation.getFrom().getEntityType()) && !EntityType.EDGE.equals(relation.getTo().getEntityType())) {
+//            eventPublisher.publishEvent(new EntityRelationUpdateEvent<>(tenantId, null, null,
+//                    JacksonUtil.toString(relation), EdgeEventActionType.RELATION_ADD_OR_UPDATE));
+//        }
         return result;
     }
 

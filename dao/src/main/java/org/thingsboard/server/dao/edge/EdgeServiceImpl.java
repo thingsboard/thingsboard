@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -179,6 +180,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(customerId);
+        eventPublisher.publishEvent(new EdgeUpdateEdgeEvent(tenantId, null, edgeId, edge, EdgeEventActionType.ASSIGNED_TO_CUSTOMER));
         return saveEdge(edge);
     }
 
@@ -187,6 +189,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(null);
+        eventPublisher.publishEvent(new EdgeUpdateEdgeEvent(tenantId, null, edgeId, edge, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER));
         return saveEdge(edge);
     }
 

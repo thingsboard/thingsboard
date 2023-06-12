@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
@@ -55,6 +56,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
@@ -248,6 +250,12 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected QueueMsgConstructor queueMsgConstructor;
+
+    @Autowired
+    protected EdgeSynchronizationManager edgeSynchronizationManager;
+
+    @Autowired
+    protected ApplicationEventPublisher eventPublisher;
 
     @Autowired
     protected DbCallbackExecutorService dbCallbackExecutorService;

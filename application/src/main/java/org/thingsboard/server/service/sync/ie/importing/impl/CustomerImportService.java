@@ -56,6 +56,7 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
         if (!customer.isPublic()) {
             return customerService.saveCustomer(customer);
         } else {
+            // do we need to add publish here?
             return customerDao.save(ctx.getTenantId(), customer);
         }
     }

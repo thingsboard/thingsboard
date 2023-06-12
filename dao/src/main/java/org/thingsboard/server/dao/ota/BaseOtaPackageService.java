@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -38,11 +39,14 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -81,6 +85,9 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             if (otaPackageId != null) {
                 publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
+            if (result.hasUrl() || result.isHasData()) {
+                eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(result.getTenantId()).entityId(result.getId()).entity(result).build());
+            }
             return result;
         } catch (Exception t) {
             if (otaPackageId != null) {
@@ -105,6 +112,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             if (otaPackageId != null) {
                 publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(result.getTenantId()).entityId(result.getId()).entity(result).build());
             return result;
         } catch (Exception t) {
             if (otaPackageId != null) {
@@ -194,6 +202,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         validateId(otaPackageId, INCORRECT_OTA_PACKAGE_ID + otaPackageId);
         try {
             otaPackageDao.removeById(tenantId, otaPackageId.getId());
+            publishDeleteOtaPackage(tenantId, otaPackageId);
             publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
@@ -208,6 +217,13 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             } else {
                 throw t;
             }
+        }
+    }
+
+    private void publishDeleteOtaPackage(TenantId tenantId, OtaPackageId otaPackageId) {
+        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, otaPackageId);
+        if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
+            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(otaPackageId).entity(otaPackageId).relatedEdgeIds(relatedEdgeIds));
         }
     }
 

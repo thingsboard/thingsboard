@@ -312,6 +312,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     private void validateDevices() throws Exception {
         List<DeviceUpdateMsg> deviceUpdateMsgs = edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class);
+        System.out.println("validateDevices: messages = " + deviceUpdateMsgs);
         Assert.assertEquals(2, deviceUpdateMsgs.size());
         validateDevice(deviceUpdateMsgs.get(0));
         validateDevice(deviceUpdateMsgs.get(1));

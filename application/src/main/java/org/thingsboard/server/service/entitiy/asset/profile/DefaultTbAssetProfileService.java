@@ -59,8 +59,8 @@ public class DefaultTbAssetProfileService extends AbstractTbEntityService implem
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedAssetProfile.getId(),
                     actionType.equals(ActionType.ADDED) ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedAssetProfile.getId(),
-                    savedAssetProfile, user, actionType, true, null);
+            notificationEntityService.logEntityAction(tenantId, savedAssetProfile.getId(), savedAssetProfile,
+                    null, actionType, user);
             return savedAssetProfile;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET_PROFILE), assetProfile, actionType, user, e);
@@ -70,16 +70,17 @@ public class DefaultTbAssetProfileService extends AbstractTbEntityService implem
 
     @Override
     public void delete(AssetProfile assetProfile, User user) {
+        ActionType actionType = ActionType.DELETED;
         AssetProfileId assetProfileId = assetProfile.getId();
         TenantId tenantId = assetProfile.getTenantId();
         try {
             assetProfileService.deleteAssetProfile(tenantId, assetProfileId);
 
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, assetProfileId, ComponentLifecycleEvent.DELETED);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, assetProfileId, assetProfile,
-                    user, ActionType.DELETED, true, null, assetProfileId.toString());
+            notificationEntityService.logEntityAction(tenantId, assetProfileId, assetProfile, null,
+                    actionType, user, assetProfileId.toString());
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET_PROFILE), ActionType.DELETED,
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET_PROFILE), actionType,
                     user, e, assetProfileId.toString());
             throw e;
         }

@@ -31,6 +31,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -44,6 +45,8 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -135,6 +138,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
             userCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
             userCredentialsDao.save(user.getTenantId(), userCredentials);
         }
+        eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedUser.getTenantId()).entityId(savedUser.getId()).entity(savedUser).build());
         return savedUser;
     }
 
@@ -233,6 +237,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
         userAuthSettingsDao.removeByUserId(userId);
+        publishDeleteUser(tenantId, userId);
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
@@ -411,6 +416,13 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
             ((ObjectNode) additionalInfo).set(USER_PASSWORD_HISTORY, userPasswordHistoryJson);
         }
         userCredentials.setAdditionalInfo(additionalInfo);
+    }
+
+    private void publishDeleteUser(TenantId tenantId, UserId userId) {
+        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, userId);
+        if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
+            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(userId).entity(userId).relatedEdgeIds(relatedEdgeIds));
+        }
     }
 
     private final PaginatedRemover<TenantId, User> tenantAdminsRemover = new PaginatedRemover<>() {

@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -56,6 +57,7 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -186,6 +188,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (alarm == null) {
             return AlarmApiCallResult.builder().successful(false).build();
         } else {
+            publishAlarmDelete(tenantId, alarmId);
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
             return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
@@ -485,6 +488,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         }
         if (request.getEndTs() == 0L) {
             request.setEndTs(request.getStartTs());
+        }
+    }
+
+
+    private void publishAlarmDelete(TenantId tenantId, AlarmId alarmId) {
+        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, alarmId);
+        if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
+            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(alarmId).entity(alarmId).relatedEdgeIds(relatedEdgeIds));
         }
     }
 

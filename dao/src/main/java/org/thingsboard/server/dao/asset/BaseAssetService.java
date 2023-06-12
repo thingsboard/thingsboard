@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -47,6 +49,9 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.EntityUpdateEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -155,6 +160,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             asset.setType(assetProfile.getName());
             savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedAsset.getTenantId()).entityId(savedAsset.getId()).entity(savedAsset).build());
             if (asset.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedAsset.getTenantId(), EntityType.ASSET);
             }
@@ -172,13 +178,18 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     public Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, CustomerId customerId) {
         Asset asset = findAssetById(tenantId, assetId);
         asset.setCustomerId(customerId);
+        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, null, assetId, JacksonUtil.toString(customerId),
+                EdgeEventActionType.ASSIGNED_TO_CUSTOMER));
         return saveAsset(asset);
     }
 
     @Override
     public Asset unassignAssetFromCustomer(TenantId tenantId, AssetId assetId) {
         Asset asset = findAssetById(tenantId, assetId);
+        CustomerId customerId = asset.getCustomerId();
         asset.setCustomerId(null);
+        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, null, assetId, JacksonUtil.toString(customerId),
+                EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER));
         return saveAsset(asset);
     }
 
@@ -196,6 +207,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         }
 
         publishEvictEvent(new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), null));
+        publishDeleteAsset(tenantId, assetId);
         countService.publishCountEntityEvictEvent(tenantId, EntityType.ASSET);
 
         assetDao.removeById(tenantId, assetId.getId());
@@ -372,6 +384,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             log.warn("[{}] Failed to create asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, edgeId, assetId, null, EdgeEventActionType.ASSIGNED_TO_EDGE));
         return asset;
     }
 
@@ -391,6 +404,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             log.warn("[{}] Failed to delete asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, edgeId, assetId, null, EdgeEventActionType.ASSIGNED_TO_EDGE));
         return asset;
     }
 
@@ -411,6 +425,13 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         validateString(type, "Incorrect type " + type);
         validatePageLink(pageLink);
         return assetDao.findAssetsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
+    }
+
+    private void publishDeleteAsset(TenantId tenantId, AssetId assetId) {
+        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, assetId);
+        if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
+            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(assetId).entity(assetId).relatedEdgeIds(relatedEdgeIds));
+        }
     }
 
     private PaginatedRemover<TenantId, Asset> tenantAssetsRemover =

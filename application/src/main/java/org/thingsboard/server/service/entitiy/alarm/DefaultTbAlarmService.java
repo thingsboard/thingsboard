@@ -33,12 +33,9 @@ import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-
-import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -212,10 +209,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Override
     public Boolean delete(Alarm alarm, User user) {
+        ActionType actionType = ActionType.DELETED;
         TenantId tenantId = alarm.getTenantId();
-        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, alarm.getOriginator());
-        notificationEntityService.notifyDeleteAlarm(tenantId, alarm, alarm.getOriginator(), alarm.getCustomerId(),
-                relatedEdgeIds, user, JacksonUtil.toString(alarm));
+        notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
+                actionType, user);
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }
 
