@@ -49,8 +49,7 @@
         </div>
         <div *ngIf="notificationRequestForm.get('useTemplate').value; else scratchTemplate">
           <tb-template-autocomplete
-            required
-            allowCreate
+            required allowCreate allowEdit
             formControlName="templateId"
             [notificationTypes]="notificationType.GENERAL">
           </tb-template-autocomplete>

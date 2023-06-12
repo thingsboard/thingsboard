@@ -67,7 +67,9 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
             dockerInstallInstructions = dockerInstallInstructions.replace("${LOCALHOST_WARNING}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
         }
-        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", appVersion + "EDGE");
+        String edgeVersion = appVersion + "EDGE";
+        edgeVersion = edgeVersion.replace("-SNAPSHOT", "");
+        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
         dockerInstallInstructions = dockerInstallInstructions.replace("${CLOUD_ROUTING_KEY}", edge.getRoutingKey());
         dockerInstallInstructions = dockerInstallInstructions.replace("${CLOUD_ROUTING_SECRET}", edge.getSecret());
         dockerInstallInstructions = dockerInstallInstructions.replace("${CLOUD_RPC_PORT}", Integer.toString(rpcPort));

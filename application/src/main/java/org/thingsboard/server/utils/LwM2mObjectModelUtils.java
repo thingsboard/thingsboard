@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.lwm2m.LwM2mInstance;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.lwm2m.LwM2mResourceObserve;
+import org.thingsboard.server.common.data.util.TbDDFFileParser;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.io.ByteArrayInputStream;
@@ -41,7 +42,7 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 @Slf4j
 public class LwM2mObjectModelUtils {
     
-    private static final DDFFileParser ddfFileParser = new DDFFileParser(new DefaultDDFFileValidator());
+    private static final TbDDFFileParser ddfFileParser = new TbDDFFileParser();
     
     public static void toLwm2mResource (TbResource resource) throws ThingsboardException {
         try {

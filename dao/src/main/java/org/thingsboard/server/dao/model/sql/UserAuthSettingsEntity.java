@@ -41,7 +41,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Entity
-@Table(name = ModelConstants.USER_AUTH_SETTINGS_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.USER_AUTH_SETTINGS_TABLE_NAME)
 public class UserAuthSettingsEntity extends BaseSqlEntity<UserAuthSettings> implements BaseEntity<UserAuthSettings> {
 
     @Column(name = ModelConstants.USER_AUTH_SETTINGS_USER_ID_PROPERTY, nullable = false, unique = true)

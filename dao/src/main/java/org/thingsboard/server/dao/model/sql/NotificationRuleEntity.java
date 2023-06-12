@@ -50,6 +50,9 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
     @Column(name = ModelConstants.NAME_PROPERTY, nullable = false)
     private String name;
 
+    @Column(name = ModelConstants.NOTIFICATION_RULE_ENABLED_PROPERTY, nullable = false)
+    private boolean enabled;
+
     @Column(name = ModelConstants.NOTIFICATION_RULE_TEMPLATE_ID_PROPERTY, nullable = false)
     private UUID templateId;
 
@@ -69,6 +72,9 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
     @Column(name = ModelConstants.NOTIFICATION_RULE_ADDITIONAL_CONFIG_PROPERTY)
     private JsonNode additionalConfig;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public NotificationRuleEntity() {}
 
     public NotificationRuleEntity(NotificationRule notificationRule) {
@@ -76,11 +82,13 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         setCreatedTime(notificationRule.getCreatedTime());
         setTenantId(getTenantUuid(notificationRule.getTenantId()));
         setName(notificationRule.getName());
+        setEnabled(notificationRule.isEnabled());
         setTemplateId(getUuid(notificationRule.getTemplateId()));
         setTriggerType(notificationRule.getTriggerType());
         setTriggerConfig(toJson(notificationRule.getTriggerConfig()));
         setRecipientsConfig(toJson(notificationRule.getRecipientsConfig()));
         setAdditionalConfig(toJson(notificationRule.getAdditionalConfig()));
+        setExternalId(getUuid(notificationRule.getExternalId()));
     }
 
     public NotificationRuleEntity(NotificationRuleEntity other) {
@@ -88,11 +96,13 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         this.createdTime = other.createdTime;
         this.tenantId = other.tenantId;
         this.name = other.name;
+        this.enabled = other.enabled;
         this.templateId = other.templateId;
         this.triggerType = other.triggerType;
         this.triggerConfig = other.triggerConfig;
         this.recipientsConfig = other.recipientsConfig;
         this.additionalConfig = other.additionalConfig;
+        this.externalId = other.externalId;
     }
 
     @Override
@@ -102,11 +112,13 @@ public class NotificationRuleEntity extends BaseSqlEntity<NotificationRule> {
         notificationRule.setCreatedTime(createdTime);
         notificationRule.setTenantId(getTenantId(tenantId));
         notificationRule.setName(name);
+        notificationRule.setEnabled(enabled);
         notificationRule.setTemplateId(getEntityId(templateId, NotificationTemplateId::new));
         notificationRule.setTriggerType(triggerType);
         notificationRule.setTriggerConfig(fromJson(triggerConfig, NotificationRuleTriggerConfig.class));
         notificationRule.setRecipientsConfig(fromJson(recipientsConfig, NotificationRuleRecipientsConfig.class));
         notificationRule.setAdditionalConfig(fromJson(additionalConfig, NotificationRuleConfig.class));
+        notificationRule.setExternalId(getEntityId(externalId, NotificationRuleId::new));
         return notificationRule;
     }
 

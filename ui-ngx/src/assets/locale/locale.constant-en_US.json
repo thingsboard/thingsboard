@@ -35,6 +35,7 @@
         "edit-mode": "Edit mode",
         "enter-edit-mode": "Enter edit mode",
         "decline-changes": "Decline changes",
+        "decline": "Decline",
         "close": "Close",
         "back": "Back",
         "run": "Run",
@@ -173,6 +174,7 @@
         "domain-name-unique": "Domain name and protocol need to unique.",
         "domain-name-max-length": "Domain name should be less than 256",
         "error-verification-url": "A domain name shouldn't contain symbols '/' and ':'. Example: thingsboard.io",
+        "connection-settings": "Connection settings",
         "oauth2": {
           "access-token-uri": "Access token URI",
           "access-token-uri-required": "Access token URI is required.",
@@ -263,7 +265,28 @@
           "platform-android": "Android",
           "platform-ios": "iOS",
           "all-platforms": "All platforms",
-          "allowed-platforms": "Allowed platforms"
+          "smtp-provider": "SMTP provider",
+          "allowed-platforms": "Allowed platforms",
+          "authentication": "Authentication",
+          "basic": "Basic",
+          "provider": "Provider",
+          "redirect-url": "Redirect URI",
+          "domain-name": "Domain name",
+          "redirect-url-template": "Redirect URI template",
+          "microsoft-tenant-id": "Directory (tenant) Id",
+          "microsoft-tenant-id-required": "Directory (tenant) Id is required",
+          "token-uri": "Token URI",
+          "token-uri-required": "Token URI is required",
+          "redirect-uri": "Redirect URI",
+          "google-provider": "Google",
+          "microsoft-provider": "Office 365",
+          "sendgrid-provider": "Sendgrid",
+          "custom-provider": "Custom",
+          "generate-access-token": "Generate access token",
+          "update-access-token": "Update access token",
+          "access-token-status": "Access token status:",
+          "token-status-generated": "generated",
+          "token-status-not-generated": "not generated"
         },
         "smpp-provider": {
             "smpp-version": "SMPP version",
@@ -810,7 +833,8 @@
         "type-provision-success": "Device provisioned",
         "type-provision-failure": "Device provisioning was failed",
         "type-timeseries-updated": "Telemetry updated",
-        "type-timeseries-deleted": "Telemetry deleted"
+        "type-timeseries-deleted": "Telemetry deleted",
+        "type-sms-sent": "SMS sent"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -933,6 +957,7 @@
         "no-dashboards-text": "No dashboards found",
         "no-widgets": "No widgets configured",
         "add-widget": "Add new widget",
+        "add-widget-button-text": "Add widget",
         "title": "Title",
         "image": "Dashboard image",
         "mobile-app-settings": "Mobile application settings",
@@ -1061,6 +1086,7 @@
         "public-link-copied-message": "Dashboard public link has been copied to clipboard",
         "manage-states": "Manage dashboard states",
         "states": "Dashboard states",
+        "states-short": "States",
         "search-states": "Search dashboard states",
         "selected-states": "{ count, plural, =1 {1 dashboard state} other {# dashboard states} } selected",
         "edit-state": "Edit dashboard state",
@@ -1089,11 +1115,13 @@
         "unassign-dashboards-from-edge-text": "After the confirmation all selected dashboards will be unassigned and won't be accessible by the edge.",
         "assign-dashboard-to-edge": "Assign Dashboard(s) To Edge",
         "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
-        "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found"
+        "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found",
+        "edit-mode": "Edit mode"
     },
     "datakey": {
         "settings": "Settings",
         "advanced": "Advanced",
+        "key": "Key",
         "label": "Label",
         "color": "Color",
         "units": "Special symbol to show next to value",
@@ -1113,6 +1141,10 @@
         "function-types": "Function types",
         "function-type": "Function type",
         "function-types-required": "Function types are required.",
+        "data-keys": "Data keys",
+        "data-key": "Data key",
+        "data-keys-required": "Data keys are required.",
+        "data-key-required": "Data key is required.",
         "alarm-keys": "Alarm data keys",
         "alarm-key": "Alarm data key",
         "alarm-key-functions": "Alarm key functions",
@@ -1792,7 +1824,9 @@
         }
     },
     "dialog": {
-        "close": "Close dialog"
+        "close": "Close dialog",
+        "error-message-title": "Error message:",
+        "error-details-title": "Error details"
     },
     "direction": {
         "column": "Column",
@@ -1940,6 +1974,7 @@
         "entities-count": "Entities count",
         "alarms-count": "Alarms count",
         "aliases": "Entity aliases",
+        "aliases-short": "Aliases",
         "entity-alias": "Entity alias",
         "unable-delete-entity-alias-title": "Unable to delete entity alias",
         "unable-delete-entity-alias-text": "Entity alias '{{entityAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
@@ -1970,6 +2005,7 @@
         "no-aliases-found": "No aliases found.",
         "no-alias-matching": "'{{alias}}' not found.",
         "create-new-alias": "Create a new one!",
+        "create-new": "Create new",
         "key": "Key",
         "key-name": "Key name",
         "no-keys-found": "No keys found.",
@@ -2063,9 +2099,15 @@
         "type-queue": "Queue",
         "type-notification": "Notification",
         "type-notification-rule": "Notification rule",
+        "type-notification-rules": "Notification rules",
+        "list-of-notification-rules": "{ count, plural, =1 {One notification rule} other {List of # notification rules} }",
         "type-notification-target": "Notification recipient",
+        "type-notification-targets": "Notification recipients",
+        "list-of-notification-targets": "{ count, plural, =1 {One notification recipient} other {List of # notification recipients} }",
         "type-notification-request": "Notification request",
-        "type-notification-template": "Notification template"
+        "type-notification-template": "Notification template",
+        "type-notification-templates": "Notification templates",
+        "list-of-notification-templates": "{ count, plural, =1 {One notification template} other {List of # notification templates} }"
     },
     "entity-field": {
         "created-time": "Created time",
@@ -2424,6 +2466,7 @@
          "add-filter-prompt": "Please add filter",
          "no-filter-matching": "'{{filter}}' not found.",
          "create-new-filter": "Create a new one!",
+         "create-new": "Create new",
          "filter-required": "Filter is required.",
          "operation": {
            "operation": "Operation",
@@ -2701,6 +2744,7 @@
     },
     "layout": {
         "layout": "Layout",
+        "layouts": "Layouts",
         "manage": "Manage layouts",
         "settings": "Layout settings",
         "color": "Color",
@@ -2959,6 +3003,8 @@
         "rule-engine-filter": "Rule engine filter",
         "rule-name": "Rule name",
         "rule-name-required": "Name is required",
+        "rule-disable": "Disable notification rule",
+        "rule-enable": "Enable notification rule",
         "rule-node-filter": "Rule node filter",
         "rules": "Rules",
         "notification-rules": "Notifications / Rules",
@@ -3234,6 +3280,7 @@
     },
     "resource": {
         "add": "Add Resource",
+        "all-types": "All",
         "copyId": "Copy resource Id",
         "delete": "Delete resource",
         "delete-resource-text": "Be careful, after the confirmation the resource will become unrecoverable.",
@@ -3259,7 +3306,13 @@
         "system": "System",
         "title": "Title",
         "title-required": "Title is required.",
-        "title-max-length": "Title should be less than 256"
+        "title-max-length": "Title should be less than 256",
+        "type": {
+            "jks": "JKS",
+            "js-module": "JS module",
+            "lwm2m-model": "LWM2M model",
+            "pkcs-12": "PKCS #12"
+        }
     },
     "rulechain": {
         "rulechain": "Rule chain",
@@ -3330,6 +3383,7 @@
         "events": "Events",
         "search": "Search nodes",
         "open-node-library": "Open node library",
+        "close-node-library": "Close node library",
         "add": "Add rule node",
         "name": "Name",
         "name-required": "Name is required.",
@@ -3757,6 +3811,7 @@
         "days": "Days"
     },
     "timewindow": {
+        "timewindow": "Timewindow",
         "years": "{ years, plural, =1 { year } other {# years } }",
         "months": "{ months, plural, =1 { month } other {# months } }",
         "weeks": "{ weeks, plural, =1 { week } other {# weeks } }",
@@ -3980,6 +4035,10 @@
         "settings-form-selector": "Settings form selector",
         "data-key-settings-form-selector": "Data key settings form selector",
         "latest-data-key-settings-form-selector": "Latest data key settings form selector",
+        "has-basic-mode": "Has basic mode",
+        "basic-mode-form-selector": "Basic mode form selector",
+        "basic-mode": "Basic",
+        "advanced-mode": "Advanced",
         "javascript": "Javascript",
         "js": "JS",
         "remove-widget-type-title": "Are you sure you want to remove the widget type '{{widgetName}}'?",
@@ -3996,7 +4055,8 @@
         "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
         "search": "Search widget",
         "filter": "Widget filter type",
-        "loading-widgets": "Loading widgets..."
+        "loading-widgets": "Loading widgets...",
+        "widget-template-error": "Invalid widget HTML template."
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -4005,6 +4065,9 @@
         "open-dashboard": "Navigate to other dashboard",
         "custom": "Custom action",
         "custom-pretty": "Custom action (with HTML template)",
+        "custom-pretty-error-title": "Custom dialog error",
+        "custom-pretty-template-error": "Invalid custom dialog template.",
+        "custom-pretty-controller-error": "Error occurred while evaluating custom dialog function.",
         "mobile-action": "Mobile action",
         "target-dashboard-state": "Target dashboard state",
         "target-dashboard-state-required": "Target dashboard state is required",
@@ -4090,10 +4153,14 @@
         "data": "Data",
         "settings": "Settings",
         "advanced": "Advanced",
+        "appearance": "Appearance",
+        "widget-card": "Widget card",
+        "mobile": "Mobile",
         "title": "Title",
         "title-tooltip": "Title Tooltip",
         "general-settings": "General settings",
         "display-title": "Display widget title",
+        "card-title": "Card title",
         "drop-shadow": "Drop shadow",
         "enable-fullscreen": "Enable fullscreen",
         "background-color": "Background color",
@@ -4110,12 +4177,16 @@
         "desktop-hide": "Hide widget in desktop mode",
         "units": "Special symbol to show next to value",
         "decimals": "Number of digits after floating point",
+        "units-short": "Units",
+        "decimals-short": "Decimals",
         "timewindow": "Timewindow",
         "use-dashboard-timewindow": "Use dashboard timewindow",
+        "use-widget-timewindow": "Use widget timewindow",
         "display-timewindow": "Display timewindow",
         "legend": "Legend",
         "display-legend": "Display legend",
         "datasources": "Datasources",
+        "datasource": "Datasource",
         "maximum-datasources": "Maximum { count, plural, =1 {1 datasource is allowed.} other {# datasources are allowed} }",
         "timeseries-key-error": "At least one timeseries data key should be specified",
         "datasource-type": "Type",
@@ -4144,13 +4215,25 @@
         "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?",
         "title-icon": "Title icon",
         "display-icon": "Display title icon",
+        "card-icon": "Card icon",
         "icon-color": "Icon color",
         "icon-size": "Icon size",
         "advanced-settings": "Advanced settings",
         "data-settings": "Data settings",
+        "limits": "Limits",
         "no-data-display-message": "\"No data to display\" alternative message",
         "data-page-size": "Maximum entities per datasource",
-        "settings-component-not-found": "Settings form component not found for selector '{{selector}}'"
+        "settings-component-not-found": "Settings form component not found for selector '{{selector}}'",
+        "preview": "Preview",
+        "set": "Set",
+        "set-message": "Set message",
+        "card-title": "Card title",
+        "advanced-title-style": "Advanced title style",
+        "card-style": "Card style",
+        "text": "Text",
+        "background": "Background",
+        "advanced-widget-style": "Advanced widget style",
+        "card-buttons": "Card buttons"
     },
     "widget-type": {
         "import": "Import widget type",
@@ -5076,6 +5159,7 @@
             "markdown-css": "Markdown/HTML CSS"
         },
         "simple-card": {
+            "label": "Label",
             "label-position": "Label position",
             "label-position-left": "Left",
             "label-position-top": "Top"
@@ -5130,7 +5214,11 @@
             "allow-alarms-ack": "Allow alarms acknowledgment",
             "allow-alarms-clear": "Allow alarms clear",
             "display-alarm-activity": "Display alarm activity",
-            "allow-alarms-assign": "Allow alarms assignment"
+            "allow-alarms-assign": "Allow alarms assignment",
+            "columns": "Columns",
+            "remove-column": "Remove column",
+            "add-column": "Add column",
+            "no-columns": "No columns configured"
         },
         "value-source": {
             "value-source": "Value source",
