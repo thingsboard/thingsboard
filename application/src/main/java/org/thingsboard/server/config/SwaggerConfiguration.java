@@ -89,7 +89,7 @@ public class SwaggerConfiguration {
     private String appVersion;
 
     @Bean
-    public OpenAPI tbOpenAPI() {
+    public OpenAPI thingsboardApi() {
         Contact contact = new Contact()
                 .name(contactName)
                 .url(contactUrl)
@@ -193,7 +193,7 @@ public class SwaggerConfiguration {
     }
 
     @Bean
-    public GroupedOpenApi thingsboardApi() {
+    public GroupedOpenApi groupedApi() {
         return GroupedOpenApi.builder()
                 .group("thingsboard")
                 .pathsToMatch(apiPath)
@@ -230,24 +230,32 @@ public class SwaggerConfiguration {
     }
 
     public OpenApiCustomizer customOpenApiCustomizer() {
-        SecurityRequirement loginForm = new SecurityRequirement().addList("HTTP login form");
-
+        var loginForm = new SecurityRequirement().addList("HTTP login form");
         return openAPI -> openAPI.getPaths().entrySet().stream().peek(entry -> {
-            if (!(entry.getKey().matches(nonSecurityPathRegex) || entry.getKey().equals(LOGIN_ENDPOINT))) {
-                entry.getValue()
-                        .readOperationsMap()
-                        .values()
-                        .forEach(operation -> operation.addSecurityItem(loginForm));
-            }
+            securityCustomization(loginForm, entry);
+            defaultErrorResponsesCustomization(entry.getValue());
+        }).map(this::tagsCustomization).forEach(openAPI::addTagsItem);
+    }
 
-            entry.getValue().readOperationsMap().forEach(((httpMethod, operation) -> {
-                operation.setResponses(getResponses(operation.getResponses(), httpMethod.equals(PathItem.HttpMethod.POST)));
-            }));
+    private Tag tagsCustomization(Map.Entry<String, PathItem> entry) {
+        var operations = entry.getValue().readOperationsMap().values();
+        var tagItem = operations.stream().findAny().get().getTags().get(0);
+        return tagFromTagItem(tagItem);
+    }
 
-        }).map(entry -> {
-            String tagItem = entry.getValue().readOperationsMap().values().stream().findAny().get().getTags().get(0);
-            return tagFromTagItem(tagItem);
-        }).forEach(openAPI::addTagsItem);
+    private void defaultErrorResponsesCustomization(PathItem pathItem) {
+        pathItem.readOperationsMap().forEach(((httpMethod, operation) -> {
+            operation.setResponses(getResponses(operation.getResponses(), httpMethod.equals(PathItem.HttpMethod.POST)));
+        }));
+    }
+
+    private void securityCustomization(SecurityRequirement loginForm, Map.Entry<String, PathItem> entry) {
+        if (!(entry.getKey().matches(nonSecurityPathRegex) || entry.getKey().equals(LOGIN_ENDPOINT))) {
+            entry.getValue()
+                    .readOperationsMap()
+                    .values()
+                    .forEach(operation -> operation.addSecurityItem(loginForm));
+        }
     }
 
     private Tag tagFromTagItem(String tagItem) {

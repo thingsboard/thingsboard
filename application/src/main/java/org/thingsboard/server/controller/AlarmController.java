@@ -90,11 +90,8 @@ public class AlarmController extends BaseController {
     private static final String ALARM_QUERY_SEARCH_STATUS_DESCRIPTION = "A string value representing one of the AlarmSearchStatus enumeration value";
 
     private static final String ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing one of the AlarmSearchStatus enumeration value";
-    private static final String ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES = "ANY, ACTIVE, CLEARED, ACK, UNACK";
     private static final String ALARM_QUERY_STATUS_DESCRIPTION = "A string value representing one of the AlarmStatus enumeration value";
-    private static final String ALARM_QUERY_STATUS_ALLOWABLE_VALUES = "ACTIVE_UNACK, ACTIVE_ACK, CLEARED_UNACK, CLEARED_ACK";
     private static final String ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing one of the AlarmSeverity enumeration value";
-    private static final String ALARM_QUERY_SEVERITY_ALLOWABLE_VALUES = "CRITICAL, MAJOR, MINOR, WARNING, INDETERMINATE";
 
     private static final String ALARM_QUERY_TYPE_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing alarm types";
     private static final String ALARM_QUERY_ASSIGNEE_DESCRIPTION = "A string value representing the assignee user id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
@@ -246,9 +243,9 @@ public class AlarmController extends BaseController {
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
-            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, schema = @Schema(allowableValues = {"ANY", "ACTIVE", "CLEARED", "ACK", "UNACK"}))
             @RequestParam(required = false) String searchStatus,
-            @Parameter(description = ALARM_QUERY_STATUS_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_STATUS_DESCRIPTION, schema = @Schema(allowableValues = {"ACTIVE_UNACK", "ACTIVE_ACK", "CLEARED_UNACK", "CLEARED_ACK"}))
             @RequestParam(required = false) String status,
             @Parameter(description = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
             @RequestParam(required = false) String assigneeId,
@@ -298,9 +295,9 @@ public class AlarmController extends BaseController {
     @RequestMapping(value = "/alarms", method = RequestMethod.GET)
     @ResponseBody
     public PageData<AlarmInfo> getAllAlarms(
-            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, schema = @Schema(allowableValues = {"ANY", "ACTIVE", "CLEARED", "ACK", "UNACK"}))
             @RequestParam(required = false) String searchStatus,
-            @Parameter(description = ALARM_QUERY_STATUS_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_STATUS_DESCRIPTION, schema = @Schema(allowableValues = {"ACTIVE_UNACK", "ACTIVE_ACK", "CLEARED_UNACK", "CLEARED_ACK"}))
             @RequestParam(required = false) String status,
             @Parameter(description = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
             @RequestParam(required = false) String assigneeId,
@@ -351,9 +348,9 @@ public class AlarmController extends BaseController {
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
-            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"ANY", "ACTIVE", "CLEARED", "ACK", "UNACK"}))
             @RequestParam(required = false) String[] statusList,
-            @Parameter(description = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_SEVERITY_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"CRITICAL", "MAJOR", "MINOR", "WARNING", "INDETERMINATE"}))
             @RequestParam(required = false) String[] severityList,
             @Parameter(description = ALARM_QUERY_TYPE_ARRAY_DESCRIPTION)
             @RequestParam(required = false) String[] typeList,
@@ -413,9 +410,9 @@ public class AlarmController extends BaseController {
     @RequestMapping(value = "/v2/alarms", method = RequestMethod.GET)
     @ResponseBody
     public PageData<AlarmInfo> getAllAlarmsV2(
-            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"ANY", "ACTIVE", "CLEARED", "ACK", "UNACK"}))
             @RequestParam(required = false) String[] statusList,
-            @Parameter(description = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_SEVERITY_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"CRITICAL", "MAJOR", "MINOR", "WARNING", "INDETERMINATE"}))
             @RequestParam(required = false) String[] severityList,
             @Parameter(description = ALARM_QUERY_TYPE_ARRAY_DESCRIPTION)
             @RequestParam(required = false) String[] typeList,
@@ -478,9 +475,9 @@ public class AlarmController extends BaseController {
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
-            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, schema = @Schema(allowableValues = {"ANY", "ACTIVE", "CLEARED", "ACK", "UNACK"}))
             @RequestParam(required = false) String searchStatus,
-            @Parameter(description = ALARM_QUERY_STATUS_DESCRIPTION, schema = @Schema(allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES))
+            @Parameter(description = ALARM_QUERY_STATUS_DESCRIPTION, schema = @Schema(allowableValues = {"ACTIVE_UNACK", "ACTIVE_ACK", "CLEARED_UNACK", "CLEARED_ACK"}))
             @RequestParam(required = false) String status,
             @Parameter(description = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
             @RequestParam(required = false) String assigneeId
