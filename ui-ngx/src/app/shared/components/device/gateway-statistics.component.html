@@ -16,7 +16,7 @@
 
 -->
 
-<div class="statistics-container" fxLayout="row">
+<div class="statistics-container" fxLayout="row" fxLayout.lt-md="column">
   <mat-card [formGroup]="statisticForm" *ngIf="!general">
     <mat-form-field class="mat-block">
       <mat-label>{{'gateway.statistics.statistic' | translate}}</mat-label>

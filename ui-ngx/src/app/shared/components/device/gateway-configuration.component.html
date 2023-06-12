@@ -131,9 +131,6 @@
                               fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                 <mat-label translate>security.password</mat-label>
                 <input matInput formControlName="password"/>
-                <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.password').hasError('required')">
-                  {{'security.password-required' | translate}}
-                </mat-error>
                 <mat-icon class="mat-form-field-infix pe suffix-icon" aria-hidden="false" aria-label="help-icon"
                           matSuffix style="cursor:pointer;"
                           matTooltip="{{'gateway.hints.password' | translate }}">info_outlined
@@ -466,14 +463,14 @@
       <div formGroupName="grpc" fxLayout="column" class="mat-content mat-padding">
         <mat-accordion multi>
           <mat-expansion-panel expanded="true" disabled style="padding-top: 20px">
-            <div fxLayout="row wrap">
+            <div fxLayout="row wrap" fxLayout.lt-md="column">
               <mat-slide-toggle color="primary" fxFlex="100" formControlName="enabled">
                 {{ 'gateway.grpc'  | translate }}
               </mat-slide-toggle>
               <mat-slide-toggle color="primary" fxFlex="100" formControlName="keepalivePermitWithoutCalls">
                 {{ 'gateway.permit-without-calls'  | translate }}
               </mat-slide-toggle>
-              <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
+              <mat-form-field fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.server-port</mat-label>
                 <input matInput formControlName="serverPort" type="number" min="0" />
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.serverPort').hasError('required')">
@@ -489,7 +486,7 @@
                   {{'gateway.thingsboard-port-pattern' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
+              <mat-form-field fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-keep-alive-timeout</mat-label>
                 <input matInput formControlName="keepAliveTimeoutMs" type="number" min="0" />
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.keepAliveTimeoutMs').hasError('required')">
@@ -502,7 +499,7 @@
                   {{'gateway.grpc-keep-alive-timeout-pattern' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
+              <mat-form-field fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-keep-alive</mat-label>
                 <input matInput formControlName="keepAliveTimeMs" type="number" min="0" />
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.keepAliveTimeMs').hasError('required')">
@@ -515,7 +512,7 @@
                   {{'gateway.grpc-keep-alive-pattern' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
+              <mat-form-field fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-min-time-between-pings</mat-label>
                 <input matInput formControlName="minTimeBetweenPingsMs" type="number" min="0" />
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.minTimeBetweenPingsMs').hasError('required')">
@@ -528,7 +525,7 @@
                   {{'gateway.grpc-min-time-between-pings-pattern' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
+              <mat-form-field fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-max-pings-without-data</mat-label>
                 <input matInput formControlName="maxPingsWithoutData" type="number" min="0" />
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.maxPingsWithoutData').hasError('required')">
@@ -541,7 +538,7 @@
                   {{'gateway.grpc-max-pings-without-data-pattern' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
+              <mat-form-field fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-min-ping-interval-without-data</mat-label>
                 <input matInput formControlName="minPingIntervalWithoutDataMs" type="number" min="0" />
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.minPingIntervalWithoutDataMs').hasError('required')">
@@ -592,11 +589,11 @@
                   {{'gateway.hints.commands' | translate}}</span></mat-panel-title>
             </mat-expansion-panel-header>
             <div fxLayout="column" formGroupName="statistics">
-              <div fxLayout="row" formArrayName="commands"
+              <div fxLayout="row"  formArrayName="commands"
                    *ngFor="let commandControl of commandFormArray().controls; let $index = index"
                    style="margin-bottom: 15px">
-                <mat-card fxLayout="row wrap" [formGroupName]="$index" class="statistics-block">
-                  <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
+                <mat-card fxFlex.lt-md fxLayout="row wrap" fxLayout.lt-md="column" [formGroupName]="$index" class="statistics-block">
+                  <mat-form-field fxFlex="calc(50%-15px)" fxFlex.lt-md class="mat-block tb-value-type">
                     <mat-label translate>gateway.statistics.attribute-name</mat-label>
                     <input matInput formControlName="attributeOnGateway"/>
                     <mat-error
@@ -608,7 +605,7 @@
                               matTooltip="{{'gateway.hints.attribute' | translate }}">info_outlined
                     </mat-icon>
                   </mat-form-field>
-                  <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
+                  <mat-form-field fxFlex="calc(50%-15px)" fxFlex.lt-md class="mat-block tb-value-type">
                     <mat-label translate>gateway.statistics.timeout</mat-label>
                     <input matInput formControlName="timeout" type="number" min="0" />
                     <mat-error
@@ -628,7 +625,7 @@
                               matTooltip="{{'gateway.hints.timeout' | translate }}">info_outlined
                     </mat-icon>
                   </mat-form-field>
-                  <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type" style="flex-grow: 0">
+                  <mat-form-field fxFlex="calc(50%-15px)" fxFlex.lt-md class="mat-block tb-value-type" style="flex-grow: 0">
                     <mat-label translate>gateway.statistics.command</mat-label>
                     <input matInput formControlName="command"/>
                     <mat-error

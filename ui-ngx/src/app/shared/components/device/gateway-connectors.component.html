@@ -16,8 +16,8 @@
 
 -->
 <form style="height: calc(100% - 7px)" fxLayout="column">
-  <div fxLayout="row" fxLayoutGap="15px" fxFlex class="connector-container">
-    <mat-card fxLayout="column" style="overflow: auto;">
+  <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="15px" fxFlex class="connector-container">
+    <mat-card fxLayout="column" fxFlex.lt-md style="overflow: auto;">
       <mat-toolbar class="mat-mdc-table-toolbar">
         <h2>Connectors</h2>
         <span fxFlex></span>
@@ -117,7 +117,7 @@
       <mat-divider></mat-divider>
     </mat-card>
     <div [formGroup]="connectorForm" fxLayout="column">
-      <mat-card fxLayout="row" fxLayoutGap="15px">
+      <mat-card fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="15px" fxLayoutGap.lt-md="5px">
         <mat-form-field class="mat-block tb-value-type">
           <mat-label>Name</mat-label>
           <input matInput formControlName="name"/>

@@ -84,7 +84,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   inactiveConnectorsDataSource: AttributeDatasource;
 
-  dataSource: MatTableDataSource<AttributeData>
+  dataSource: MatTableDataSource<AttributeData>;
 
   displayedColumns = ['enabled', 'key', 'type', 'actions'];
 
@@ -142,7 +142,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       class: [''],
       configuration: [''],
       configurationJson: [{}, [Validators.required]]
-    })
+    });
     this.connectorForm.disable();
   }
 
@@ -172,19 +172,19 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
           this.inactiveConnectors = [];
           this.updateData(true);
         }
-      })
+      });
     }
   }
 
   saveConnector(): void {
     const value = this.connectorForm.value;
-    value.configuration = this.camelize(value.name) + ".json";
+    value.configuration = this.camelize(value.name) + '.json';
     if (value.type !== 'grpc') {
       delete value.key;
     }
     const attributesToSave = [{
       key: value.name,
-      value: value
+      value
     }];
     const attributesToDelete = [];
     const scope = (this.activeConnectors.includes(value.name) || !this.initialConnector) ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
@@ -194,8 +194,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       updateActiveConnectors = true;
       const activeIndex = this.activeConnectors.indexOf(this.initialConnector.name);
       const inactiveIndex = this.inactiveConnectors.indexOf(this.initialConnector.name);
-      if (activeIndex !== -1) this.activeConnectors.splice(activeIndex, 1);
-      if (inactiveIndex !== -1) this.inactiveConnectors.splice(activeIndex, 1);
+      if (activeIndex !== -1) {this.activeConnectors.splice(activeIndex, 1);}
+      if (inactiveIndex !== -1) {this.inactiveConnectors.splice(activeIndex, 1);}
     }
     if (!this.activeConnectors.includes(value.name) && scope == AttributeScope.SHARED_SCOPE) {
       this.activeConnectors.push(value.name);
@@ -217,9 +217,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributesToDelete));
     }
     forkJoin(tasks).subscribe(_ => {
-      this.showToast("Update Successful")
+      this.showToast('Update Successful');
       this.updateData(true);
-    })
+    });
   }
 
   resetSortAndFilter(update: boolean = true) {
@@ -240,15 +240,15 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
     this.attributeDataSource.loadAttributes(this.device, AttributeScope.CLIENT_SCOPE, this.pageLink, reload).subscribe(data => {
       this.activeData = data.data.filter(value => this.activeConnectors.includes(value.key));
-      this.combineData()
+      this.combineData();
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
       this.inactiveData = data.data.filter(value =>this.inactiveConnectors.includes(value.key));
-      this.combineData()
+      this.combineData();
     });
   }
 
-  combineData () {
+  combineData() {
     this.dataSource.data = [...this.activeData, ...this.inactiveData];
   }
 
@@ -268,7 +268,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       class: '',
       configuration: '',
       configurationJson: {}
-    })
+    });
     this.initialConnector = null;
     this.connectorForm.markAsPristine();
   }
@@ -279,7 +279,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
     const connector = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
     if (!connector.configuration) {
-      connector.configuration = "";
+      connector.configuration = '';
     }
     if (!connector.key) {
       connector.key = 'auto';
@@ -303,9 +303,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       }));
   }
 
-  returnType (attribute) {
+  returnType(attribute) {
     const value = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
-    return  this.gatewayConnectorDefaultTypes.get(value.type)
+    return  this.gatewayConnectorDefaultTypes.get(value.type);
   }
 
   deleteConnector(attribute: AttributeData, $event: Event): void {
@@ -321,8 +321,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [attribute]));
         const activeIndex = this.activeConnectors.indexOf(attribute.key);
         const inactiveIndex = this.inactiveConnectors.indexOf(attribute.key);
-        if (activeIndex !== -1) this.activeConnectors.splice(activeIndex, 1);
-        if (inactiveIndex !== -1) this.inactiveConnectors.splice(activeIndex, 1);
+        if (activeIndex !== -1) {this.activeConnectors.splice(activeIndex, 1);}
+        if (inactiveIndex !== -1) {this.inactiveConnectors.splice(activeIndex, 1);}
         tasks.push(this.attributeService.saveEntityAttributes(this.device, scope, [{
           key: scope == AttributeScope.SHARED_SCOPE ? 'active_connectors' : 'inactive_connectors',
           value: scope == AttributeScope.SHARED_SCOPE ? this.activeConnectors : this.inactiveConnectors
@@ -333,10 +333,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
             this.cd.detectChanges();
             this.connectorForm.disable();
           }
-          this.updateData()
-        })
+          this.updateData();
+        });
       }
-    })
+    });
   }
 
   camelize(str): string {
@@ -350,8 +350,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
     const params = deepClone(this.ctx.stateController.getStateParams());
     params.connector_logs = attribute;
-    params.targetEntityParamName = "connector_logs";
-    this.ctx.stateController.openState("connector_logs", params);
+    params.targetEntityParamName = 'connector_logs';
+    this.ctx.stateController.openState('connector_logs', params);
   }
 
   connectorRpc(attribute: AttributeData, $event: Event): void {
@@ -361,19 +361,19 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
     const params = deepClone(this.ctx.stateController.getStateParams());
     params.connector_rpc = attribute;
-    params.targetEntityParamName = "connector_rpc";
-    this.ctx.stateController.openState("connector_rpc", params);
+    params.targetEntityParamName = 'connector_rpc';
+    this.ctx.stateController.openState('connector_rpc', params);
   }
 
 
   enableConnector(attribute): void {
     const wasEnabled = this.activeConnectors.includes(attribute.key);
     if (wasEnabled) {
-      let index = this.activeConnectors.indexOf(attribute.key);
+      const index = this.activeConnectors.indexOf(attribute.key);
       this.activeConnectors.splice(index, 1);
       this.inactiveConnectors.push(attribute.key);
     } else {
-      let index = this.inactiveConnectors.indexOf(attribute.key);
+      const index = this.inactiveConnectors.indexOf(attribute.key);
       this.inactiveConnectors.splice(index, 1);
       this.activeConnectors.push(attribute.key);
     }
@@ -385,7 +385,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       value: this.inactiveConnectors
     }]),]).subscribe(_ => {
       this.updateData();
-    })
+    });
   }
 
 }

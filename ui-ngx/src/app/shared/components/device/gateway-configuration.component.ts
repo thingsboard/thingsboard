@@ -70,7 +70,7 @@ export const localLogsConfigLabels = new Map<LocalLogsConfigs, string>([
   [LocalLogsConfigs.tb_connection, 'TB Connection'],
   [LocalLogsConfigs.storage, 'Storage'],
   [LocalLogsConfigs.extension, 'Extension']
-])
+]);
 
 export const logSavingPeriodTranslations = new Map<LogSavingPeriod, string>(
   [
@@ -213,6 +213,18 @@ export class GatewayConfigurationComponent implements OnInit {
       })
     });
 
+    this.gatewayConfigGroup.get('thingsboard.security').valueChanges.subscribe(security => {
+      if (security.username) {
+        this.clientIdUserNameFieldsToggle('clientId');
+      } else if (security.clientId) {
+        this.clientIdUserNameFieldsToggle('username');
+      } else if (!security.username && !security.clientId) {
+        this.clientIdUserNameFieldsToggle();
+      }
+    });
+
+    this.toggleRpcFields(false);
+
     this.gatewayConfigGroup.get('thingsboard.remoteConfiguration').valueChanges.subscribe(enabled => {
       if (!enabled) {
         this.openConfigurationConfirmDialog();
@@ -239,6 +251,10 @@ export class GatewayConfigurationComponent implements OnInit {
       }
     });
 
+    this.gatewayConfigGroup.get('grpc.enabled').valueChanges.subscribe(value => {
+      this.toggleRpcFields(value);
+    });
+
     const securityGroup = this.gatewayConfigGroup.get('thingsboard.security') as FormGroup;
     securityGroup.get('type').valueChanges.subscribe(type => {
       this.removeAllSecurityValidators();
@@ -262,15 +278,15 @@ export class GatewayConfigurationComponent implements OnInit {
         securityGroup.get('clientId').updateValueAndValidity();
         securityGroup.get('username').addValidators([Validators.required]);
         securityGroup.get('username').updateValueAndValidity();
-        securityGroup.get('password').addValidators([Validators.required]);
-        securityGroup.get('password').updateValueAndValidity();
+        // securityGroup.get('password').addValidators([Validators.required]);
+        // securityGroup.get('password').updateValueAndValidity();
       }
       securityGroup.updateValueAndValidity();
     });
 
-    securityGroup.get('caCert').valueChanges.subscribe(_ => this.cd.detectChanges())
-    securityGroup.get('privateKey').valueChanges.subscribe(_ => this.cd.detectChanges())
-    securityGroup.get('cert').valueChanges.subscribe(_ => this.cd.detectChanges())
+    securityGroup.get('caCert').valueChanges.subscribe(_ => this.cd.detectChanges());
+    securityGroup.get('privateKey').valueChanges.subscribe(_ => this.cd.detectChanges());
+    securityGroup.get('cert').valueChanges.subscribe(_ => this.cd.detectChanges());
 
     const storageGroup = this.gatewayConfigGroup.get('storage') as FormGroup;
     storageGroup.get('type').valueChanges.subscribe(type => {
@@ -304,7 +320,8 @@ export class GatewayConfigurationComponent implements OnInit {
     this.attributeService.getEntityAttributes(entityId, AttributeScope.CLIENT_SCOPE,
       ['general_configuration', 'grpc_configuration', 'logs_configuration', 'storage_configuration', 'RemoteLoggingLevel']).pipe(
       mergeMap(attributes => attributes.length ? of(attributes) : this.attributeService.getEntityAttributes(
-        entityId, AttributeScope.SHARED_SCOPE, ['general_configuration', 'grpc_configuration', 'logs_configuration', 'storage_configuration', 'RemoteLoggingLevel']))
+        entityId, AttributeScope.SHARED_SCOPE, ['general_configuration', 'grpc_configuration',
+          'logs_configuration', 'storage_configuration', 'RemoteLoggingLevel']))
     ).subscribe(attributes => {
       if (attributes.length) {
         const general_configuration = attributes.find(attribute => attribute.key === 'general_configuration')?.value;
@@ -330,6 +347,7 @@ export class GatewayConfigurationComponent implements OnInit {
         if (grpc_configuration) {
           const configObj = {grpc: grpc_configuration};
           this.gatewayConfigGroup.patchValue(configObj, {emitEvent: false});
+          this.toggleRpcFields(grpc_configuration.enabled);
         }
         if (logs_configuration) {
           const configObj = {logs: this.logsToObj(logs_configuration)};
@@ -365,7 +383,7 @@ export class GatewayConfigurationComponent implements OnInit {
           this.gatewayConfigGroup.get('thingsboard.security.clientId').setValue(parsedValue.clientId);
           this.gatewayConfigGroup.get('thingsboard.security.username').setValue(parsedValue.userName);
           this.gatewayConfigGroup.get('thingsboard.security.password').setValue(parsedValue.password);
-        } else if (credentials.credentialsType === DeviceCredentialsType.X509_CERTIFICATE ) {
+        } else if (credentials.credentialsType === DeviceCredentialsType.X509_CERTIFICATE) {
           //if sertificate is present set sertificate as present
         }
       });
@@ -375,22 +393,66 @@ export class GatewayConfigurationComponent implements OnInit {
   logsToObj(logsConfig) {
     const logsObject = {
       local: {}
-    }
+    };
     const logFormat = logsConfig.formatters.LogFormatter.format;
     const dateFormat = logsConfig.formatters.LogFormatter.datefmt;
     for (const localLogsConfigsKey of Object.keys(LocalLogsConfigs)) {
-      const handlerKey = localLogsConfigsKey + "Handler";
+      const handlerKey = localLogsConfigsKey + 'Handler';
       logsObject[localLogsConfigsKey] = {
         logLevel: logsConfig.loggers[localLogsConfigsKey].level,
-        filePath: logsConfig.handlers[handlerKey].filename.split('/'+localLogsConfigsKey)[0],
+        filePath: logsConfig.handlers[handlerKey].filename.split('/' + localLogsConfigsKey)[0],
         backupCount: logsConfig.handlers[handlerKey].backupCount,
         savingTime: logsConfig.handlers[handlerKey].interval,
         savingPeriod: logsConfig.handlers[handlerKey].when,
-      }
+      };
     }
 
 
     return {local: logsObject, logFormat, dateFormat};
+  }
+
+  toggleRpcFields(enable: boolean) {
+    const grpcGroup = this.gatewayConfigGroup.get('grpc') as FormGroup;
+    if (enable) {
+      grpcGroup.get('serverPort').enable();
+      grpcGroup.get('keepAliveTimeMs').enable();
+      grpcGroup.get('keepAliveTimeoutMs').enable();
+      grpcGroup.get('maxPingsWithoutData').enable();
+      grpcGroup.get('minTimeBetweenPingsMs').enable();
+      grpcGroup.get('minPingIntervalWithoutDataMs').enable();
+    } else {
+      grpcGroup.get('serverPort').disable();
+      grpcGroup.get('keepAliveTimeMs').disable();
+      grpcGroup.get('keepAliveTimeoutMs').disable();
+      grpcGroup.get('maxPingsWithoutData').disable();
+      grpcGroup.get('minTimeBetweenPingsMs').disable();
+      grpcGroup.get('minPingIntervalWithoutDataMs').disable();
+    }
+  }
+
+  clientIdUserNameFieldsToggle(type?: string) {
+    const clientIdForm = this.gatewayConfigGroup.get('thingsboard.security.clientId');
+    const usernameForm = this.gatewayConfigGroup.get('thingsboard.security.username');
+    switch (type) {
+      case 'clientId':
+        if (clientIdForm.enabled) {
+          clientIdForm.disable({emitEvent: false});
+        }
+        break;
+      case 'username':
+        if (usernameForm.enabled) {
+          usernameForm.disable({emitEvent: false});
+        }
+        break;
+      default:
+        if (clientIdForm.disabled) {
+          clientIdForm.enable({emitEvent: false});
+        }
+        if (usernameForm.disabled) {
+          usernameForm.enable({emitEvent: false});
+        }
+        break;
+    }
   }
 
   addCommand(command?): void {
@@ -465,42 +527,42 @@ export class GatewayConfigurationComponent implements OnInit {
       disable_existing_loggers: false,
       formatters: {
         LogFormatter: {
-          class: "logging.Formatter",
+          class: 'logging.Formatter',
           format: logsObj.logFormat,
           datefmt: logsObj.dateFormat,
         }
       },
       handlers: {
         consoleHandler: {
-          class: "logging.StreamHandler",
-          formatter: "LogFormatter",
-          level: "DEBUG",
-          stream: "ext://sys.stdout"
+          class: 'logging.StreamHandler',
+          formatter: 'LogFormatter',
+          level: 'DEBUG',
+          stream: 'ext://sys.stdout'
         },
         databaseHandler: {
-          class: "thingsboard_gateway.tb_utility.tb_logger.TimedRotatingFileHandler",
-          formatter: "LogFormatter",
-          filename: "./logs/database.log",
+          class: 'thingsboard_gateway.tb_utility.tb_logger.TimedRotatingFileHandler',
+          formatter: 'LogFormatter',
+          filename: './logs/database.log',
           backupCount: 1,
-          encoding: "utf-8"
+          encoding: 'utf-8'
         }
       },
       loggers: {
         database: {
-          handlers: ["databaseHandler", "consoleHandler"],
-          level: "DEBUG",
+          handlers: ['databaseHandler', 'consoleHandler'],
+          level: 'DEBUG',
           propagate: false
         }
       },
       root: {
-        level: "ERROR",
+        level: 'ERROR',
         handlers: [
-          "consoleHandler"
+          'consoleHandler'
         ]
       }
-    }
+    };
     for (const key of Object.keys(logsObj.local)) {
-      logAttrObj.handlers[key+"Handler"] = this.createHandlerObj(logsObj.local[key], key);
+      logAttrObj.handlers[key + 'Handler'] = this.createHandlerObj(logsObj.local[key], key);
       logAttrObj.loggers[key] = this.createLoggerObj(logsObj.local[key], key);
     }
     return logAttrObj;
@@ -508,22 +570,22 @@ export class GatewayConfigurationComponent implements OnInit {
 
   createHandlerObj(logObj, key) {
     return {
-      class: "thingsboard_gateway.tb_utility.tb_logger.TimedRotatingFileHandler",
-      formatter: "LogFormatter",
+      class: 'thingsboard_gateway.tb_utility.tb_logger.TimedRotatingFileHandler',
+      formatter: 'LogFormatter',
       filename: `${logObj.filePath}/${key}.log`,
       backupCount: logObj.backupCount,
       interval: logObj.savingTime,
       when: logObj.savingPeriod,
-      encoding: "utf-8"
-    }
+      encoding: 'utf-8'
+    };
   }
 
   createLoggerObj(logObj, key) {
     return {
-      handlers: [`${key}Handler`, "consoleHandler"],
+      handlers: [`${key}Handler`, 'consoleHandler'],
       level: logObj.logLevel,
       propagate: false
-    }
+    };
   }
 
   saveConfig(): void {

@@ -179,10 +179,10 @@
     </mat-step>
   </mat-horizontal-stepper>
   <div *ngIf="deviceCredentials" class="commands-container">
-    <tb-gateway-command *ngIf="device.additionalInfo?.gateway"
+    <tb-gateway-command *ngIf="device?.additionalInfo?.gateway"
                         [token]="deviceCredentials.credentialsId">
     </tb-gateway-command>
-    <tb-device-example-command *ngIf="!device.additionalInfo?.gateway"
+    <tb-device-example-command *ngIf="!device?.additionalInfo?.gateway"
                                [token]="deviceCredentials.credentialsId">
     </tb-device-example-command>
   </div>

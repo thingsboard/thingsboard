@@ -57,6 +57,7 @@
     background: transparent !important;
     margin-bottom: 15px;
     border: none;
+    overflow: auto;
 
     .mat-button-toggle {
       border-radius: 15px;
@@ -187,7 +188,7 @@
     color: rgba(0, 0, 0, .54);
     width: fit-content;
     cursor: pointer;
-    text-transform: none!important;
+    text-transform: none !important;
   }
 
   .line-break {
@@ -196,6 +197,12 @@
 
   textarea {
     resize: none;
+  }
+
+  @media only screen and (max-width: 750px) {
+    .mat-expansion-panel-header.mat-expanded {
+      height: auto;
+    }
   }
 }
 
