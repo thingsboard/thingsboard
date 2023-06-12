@@ -135,6 +135,10 @@ security:
     path: "${SECURITY_JAVA_CACERTS_PATH:${java.home}/lib/security/cacerts}"
     password: "${SECURITY_JAVA_CACERTS_PASSWORD:changeit}"
 
+mail:
+  oauth2:
+    refreshTokenCheckingInterval: "${REFRESH_TOKEN_EXPIRATION_CHECKING_INTERVAL:86400}" # Number of seconds (1 day).
+
 # Usage statistics parameters
 usage:
   stats:
@@ -502,7 +506,7 @@ cache:
 spring.data.redis.repositories.enabled: false
 
 redis:
-  # standalone or cluster
+  # standalone or cluster or sentinel
   connection:
     type: "${REDIS_CONNECTION_TYPE:standalone}"
   standalone:
@@ -522,6 +526,16 @@ redis:
     nodes: "${REDIS_NODES:}"
     # Maximum number of redirects to follow when executing commands across the cluster.
     max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    # if set false will be used pool config build from values of the pool config section
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+  sentinel:
+    # name of master node
+    master: "${REDIS_MASTER:}"
+    # comma-separated list of "host:port" pairs of sentinels
+    sentinels: "${REDIS_SENTINELS:}"
+    # password to authenticate with sentinel
+    password: "${REDIS_SENTINEL_PASSWORD:}"
+    # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   # db index
   db: "${REDIS_DB:0}"

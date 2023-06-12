@@ -127,7 +127,7 @@ export class TbFlot {
   private pieAnimationLastTime: number;
   private pieAnimationCaf: CancelAnimationFrame;
 
-  constructor(private ctx: WidgetContext, private readonly chartType: ChartType) {
+  constructor(private ctx: WidgetContext, private readonly chartType: ChartType, private $flotElement?: JQuery<any>) {
     this.chartType = this.chartType || 'line';
     this.settings = ctx.settings as TbFlotSettings;
     this.utils = this.ctx.$injector.get(UtilsService);
@@ -334,7 +334,7 @@ export class TbFlot {
     }
 
     if (this.ctx.defaultSubscription) {
-      this.init(this.ctx.$container, this.ctx.defaultSubscription);
+      this.init(this.$flotElement || this.ctx.$container, this.ctx.defaultSubscription);
     }
   }
 

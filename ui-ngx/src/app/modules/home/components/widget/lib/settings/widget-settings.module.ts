@@ -265,6 +265,7 @@ import {
 import {
   QuickLinksWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/home-page/quick-links-widget-settings.component';
+import { LegendConfigComponent } from '@home/components/widget/lib/settings/common/legend-config.component';
 
 @NgModule({
   declarations: [
@@ -290,6 +291,7 @@ import {
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
     ValueSourceComponent,
+    LegendConfigComponent,
     FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,
@@ -395,6 +397,7 @@ import {
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
     ValueSourceComponent,
+    LegendConfigComponent,
     FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,

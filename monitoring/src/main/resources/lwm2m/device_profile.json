@@ -1,5 +1,4 @@
 {
-  "name": "LwM2M Monitoring",
   "type": "DEFAULT",
   "image": null,
   "defaultQueueName": null,

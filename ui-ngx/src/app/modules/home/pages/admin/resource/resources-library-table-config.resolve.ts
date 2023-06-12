@@ -36,6 +36,7 @@ import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { map } from 'rxjs/operators';
+import { ResourcesTableHeaderComponent } from '@home/pages/admin/resource/resources-table-header.component';
 
 @Injectable()
 export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableConfig<Resource, PageLink, ResourceInfo>> {
@@ -53,6 +54,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.entityComponent = ResourcesLibraryComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.TB_RESOURCE);
     this.config.entityResources = entityTypeResources.get(EntityType.TB_RESOURCE);
+    this.config.headerComponent = ResourcesTableHeaderComponent;
 
     this.config.entityTitle = (resource) => resource ?
       resource.title : '';
@@ -61,11 +63,9 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
       new DateEntityTableColumn<ResourceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<ResourceInfo>('title', 'resource.title', '60%'),
       new EntityTableColumn<ResourceInfo>('resourceType', 'resource.resource-type', '40%',
-        entity => this.resourceTypesTranslationMap.get(entity.resourceType)),
+        entity => this.translate.instant(this.resourceTypesTranslationMap.get(entity.resourceType))),
       new EntityTableColumn<ResourceInfo>('tenantId', 'resource.system', '60px',
-        entity => {
-          return checkBoxCell(entity.tenantId.id === NULL_UUID);
-        }),
+        entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
     );
 
     this.config.cellActionDescriptors.push(
@@ -83,7 +83,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.deleteEntitiesTitle = count => this.translate.instant('resource.delete-resources-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('resource.delete-resources-text');
 
-    this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink);
+    this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink, this.config.componentsData.resourceType);
     this.config.loadEntity = id => this.resourceService.getResource(id.id);
     this.config.saveEntity = resource => this.saveResource(resource);
     this.config.deleteEntity = id => this.resourceService.deleteResource(id.id);
@@ -112,6 +112,9 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
 
   resolve(): EntityTableConfig<Resource, PageLink, ResourceInfo> {
     this.config.tableTitle = this.translate.instant('resource.resources-library');
+    this.config.componentsData = {
+      resourceType: ''
+    };
     const authUser = getCurrentAuthUser(this.store);
     this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
@@ -124,7 +127,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
       $event.stopPropagation();
     }
     const url = this.router.createUrlTree(['resources', 'resources-library', resourceInfo.id.id]);
-    this.router.navigateByUrl(url);
+    this.router.navigateByUrl(url).then(() => {});
   }
 
   downloadResource($event: Event, resource: ResourceInfo) {

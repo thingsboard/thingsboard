@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" [formGroup]="materialIconFormGroup">
-  <mat-icon class="icon-value" (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
+<div *ngIf="!asBoxInput; else boxInput"  fxLayout="row" [formGroup]="materialIconFormGroup">
+  <mat-icon class="icon-value" [ngStyle]="color ? { color: color } : {}" (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
   <mat-form-field fxFlex>
     <mat-label>{{ label }}</mat-label>
     <input [required]="required" matInput formControlName="icon" (mousedown)="openIconDialog()">
@@ -28,3 +28,8 @@
     </button>
   </mat-form-field>
 </div>
+<ng-template #boxInput>
+  <mat-icon class="icon-box" [ngStyle]="color && !disabled ? { color: color } : {}"
+            [ngClass]="{'disabled': disabled}"
+            (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
+</ng-template>

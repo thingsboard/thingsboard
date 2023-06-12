@@ -51,6 +51,9 @@
     <!-- MQTT transport debug -->
     <!--    <logger name="org.thingsboard.server.transport.mqtt.MqttTransportHandler" level="DEBUG" /> -->
 
+    <!-- Device actor message processor debug -->
+    <!--    <logger name="org.thingsboard.server.actors.device.DeviceActorMessageProcessor" level="DEBUG" />-->
+
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 
     <root level="INFO">
