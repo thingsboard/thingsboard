@@ -17,8 +17,6 @@ package org.thingsboard.server.service.notification.channels;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -35,7 +33,6 @@ import org.thingsboard.server.common.data.notification.settings.MobileNotificati
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.MobileDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
-import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
 import java.nio.charset.StandardCharsets;
@@ -45,52 +42,48 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MobileNotificationChannel implements NotificationChannel<User, MobileDeliveryMethodNotificationTemplate> {
 
-    private final ExternalCallExecutorService executor;
     private final NotificationSettingsService notificationSettingsService;
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, MobileDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
+    public void sendNotification(User recipient, MobileDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
         String fcmToken = Optional.ofNullable(recipient.getAdditionalInfo())
                 .map(info -> info.get("fcmToken")).filter(JsonNode::isTextual).map(JsonNode::asText)
                 .orElse(null);
         if (StringUtils.isEmpty(fcmToken)) {
-            return Futures.immediateFailedFuture(new RuntimeException("User doesn't have the mobile app installed"));
+            throw new RuntimeException("User doesn't have the mobile app installed");
         }
 
         MobileNotificationDeliveryMethodConfig config = ctx.getDeliveryMethodConfig(NotificationDeliveryMethod.MOBILE);
-        return executor.submit(() -> {
-            FirebaseOptions firebaseOptions = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(IOUtils.toInputStream(config.getFirebaseServiceAccountCredentials(), StandardCharsets.UTF_8)))
-                    .build();
-            String appName = ctx.getTenantId().toString();
+        FirebaseOptions firebaseOptions = FirebaseOptions.builder()
+                .setCredentials(GoogleCredentials.fromStream(IOUtils.toInputStream(config.getFirebaseServiceAccountCredentials(), StandardCharsets.UTF_8)))
+                .build();
+        String appName = ctx.getTenantId().toString();
 
-            FirebaseApp firebaseApp = FirebaseApp.getApps().stream()
-                    .filter(app -> app.getName().equals(appName))
-                    .findFirst().orElseGet(() -> {
-                        try {
-                            return FirebaseApp.initializeApp(firebaseOptions, appName);
-                        } catch (IllegalStateException e) {
-                            return FirebaseApp.getInstance(appName);
-                        }
-                    });
-            FirebaseMessaging firebaseMessaging;
-            try {
-                firebaseMessaging = FirebaseMessaging.getInstance(firebaseApp);
-            } catch (IllegalArgumentException e) {
-                // because of concurrency issues: FirebaseMessaging.getInstance lazily loads FirebaseMessagingService
-                firebaseMessaging = FirebaseMessaging.getInstance(firebaseApp);
-            }
+        FirebaseApp firebaseApp = FirebaseApp.getApps().stream()
+                .filter(app -> app.getName().equals(appName))
+                .findFirst().orElseGet(() -> {
+                    try {
+                        return FirebaseApp.initializeApp(firebaseOptions, appName);
+                    } catch (IllegalStateException e) {
+                        return FirebaseApp.getInstance(appName);
+                    }
+                });
+        FirebaseMessaging firebaseMessaging;
+        try {
+            firebaseMessaging = FirebaseMessaging.getInstance(firebaseApp);
+        } catch (IllegalArgumentException e) {
+            // because of concurrency issues: FirebaseMessaging.getInstance lazily loads FirebaseMessagingService
+            firebaseMessaging = FirebaseMessaging.getInstance(firebaseApp);
+        }
 
-            Message message = Message.builder()
-                    .setNotification(Notification.builder()
-                            .setTitle(processedTemplate.getSubject())
-                            .setBody(processedTemplate.getBody())
-                            .build())
-                    .setToken(fcmToken)
-                    .build();
-            firebaseMessaging.send(message);
-            return null;
-        });
+        Message message = Message.builder()
+                .setNotification(Notification.builder()
+                        .setTitle(processedTemplate.getSubject())
+                        .setBody(processedTemplate.getBody())
+                        .build())
+                .setToken(fcmToken)
+                .build();
+        firebaseMessaging.send(message);
     }
 
     @Override
