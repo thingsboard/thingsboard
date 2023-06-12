@@ -105,6 +105,10 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
           { value: ImportEntityColumnType.lwm2mServerSecurityMode },
           { value: ImportEntityColumnType.lwm2mServerClientPublicKeyOrId },
           { value: ImportEntityColumnType.lwm2mServerClientSecretKey },
+          { value: ImportEntityColumnType.snmpHost },
+          { value: ImportEntityColumnType.snmpPort },
+          { value: ImportEntityColumnType.snmpVersion },
+          { value: ImportEntityColumnType.snmpCommunityString },
         );
         break;
       case EntityType.ASSET:

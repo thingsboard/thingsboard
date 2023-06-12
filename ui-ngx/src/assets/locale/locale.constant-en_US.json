@@ -2664,6 +2664,12 @@
               "lwm2m-server-secret-key": "LwM2M server secret key",
               "lwm2m-server-public-key-id": "LwM2M server public key or id"
             },
+            "snmp": {
+                "host": "SNMP host",
+                "port": "SNMP port",
+                "version": "SNMP version (v1, v2c or v3)",
+                "community-string": "SNMP community string"
+            },
             "isgateway": "Is Gateway",
             "activity-time-from-gateway-device": "Activity time from gateway device",
             "description": "Description",
