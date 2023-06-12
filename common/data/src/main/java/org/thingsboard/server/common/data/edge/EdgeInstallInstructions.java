@@ -15,18 +15,17 @@
  */
 package org.thingsboard.server.common.data.edge;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@ApiModel
+@Schema
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class EdgeInstallInstructions {
 
-    @ApiModelProperty(position = 1, value = "Markdown with docker install instructions")
+    @Schema(description = "Markdown with docker install instructions")
     private String dockerInstallInstructions;
 }

@@ -16,8 +16,7 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-@ApiModel
+@Schema
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -34,19 +33,19 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
 
     private static final long serialVersionUID = 7282664529021651736L;
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id. Tenant Id of the resource can't be changed.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id. Tenant Id of the resource can't be changed.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "title")
-    @ApiModelProperty(position = 4, value = "Resource title.", example = "BinaryAppDataContainer id=19 v1.0")
+    @Schema(description = "Resource title.", example = "BinaryAppDataContainer id=19 v1.0")
     private String title;
-    @ApiModelProperty(position = 5, value = "Resource type.", example = "LWM2M_MODEL", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Resource type.", example = "LWM2M_MODEL", accessMode = Schema.AccessMode.READ_ONLY)
     private ResourceType resourceType;
     @NoXss
     @Length(fieldName = "resourceKey")
-    @ApiModelProperty(position = 6, value = "Resource key.", example = "19_1.0", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Resource key.", example = "19_1.0", accessMode = Schema.AccessMode.READ_ONLY)
     private String resourceKey;
-    @ApiModelProperty(position = 7, value = "Resource search text.", example = "19_1.0:binaryappdatacontainer", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Resource search text.", example = "19_1.0:binaryappdatacontainer", accessMode = Schema.AccessMode.READ_ONLY)
     private String searchText;
 
     public TbResourceInfo() {
@@ -66,7 +65,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         this.searchText = resourceInfo.getSearchText();
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the Resource Id. " +
+    @Schema(description = "JSON object with the Resource Id. " +
             "Specify this field to update the Resource. " +
             "Referencing non-existing Resource Id will cause error. " +
             "Omit this field to create new Resource." )
@@ -75,7 +74,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the resource creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the resource creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

@@ -59,7 +59,7 @@
         <cassandra-all.version>3.11.14</cassandra-all.version>
         <guava.version>31.1-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
-        <commons-lang3.version>3.4</commons-lang3.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-logging.version>1.2</commons-logging.version>
@@ -92,8 +92,8 @@
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surefire.version>3.0.0-M9</surefire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
-        <springfox-swagger.version>3.0.4</springfox-swagger.version>
-        <swagger-annotations.version>1.6.3</swagger-annotations.version>
+        <springdoc-swagger.version>2.1.0</springdoc-swagger.version>
+        <swagger-annotations.version>2.2.9</swagger-annotations.version>
         <spatial4j.version>0.7</spatial4j.version>
         <jts.version>1.18.2</jts.version>
         <bouncycastle.version>1.69</bouncycastle.version>
@@ -135,7 +135,7 @@
         <java-websocket.version>1.5.2</java-websocket.version>
         <jupiter.version>5.9.3</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->
         <json-path.version>2.6.0</json-path.version>
-        <mock-server.version>5.13.1</mock-server.version>
+        <mock-server.version>5.15.0</mock-server.version>
         <spring-test-dbunit.version>1.3.0</spring-test-dbunit.version> <!-- 2016 -->
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version> <!-- 2015 -->
         <!--      BLACKBOX TEST SCOPE     -->
@@ -143,7 +143,7 @@
         <assertj.version>3.23.1</assertj.version>
         <rest-assured.version>5.2.0</rest-assured.version>
         <hamcrest.version>1.3</hamcrest.version>
-        <testcontainers.version>1.17.3</testcontainers.version>
+        <testcontainers.version>1.18.3</testcontainers.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <opensmpp.version>3.0.0</opensmpp.version>
         <jgit.version>6.1.0.202203080745-r</jgit.version>
@@ -1768,13 +1768,13 @@
                 <version>${curator.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.thingsboard</groupId>
-                <artifactId>springfox-boot-starter</artifactId>
-                <version>${springfox-swagger.version}</version>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc-swagger.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-annotations</artifactId>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
                 <version>${swagger-annotations.version}</version>
             </dependency>
             <dependency>
@@ -2010,6 +2010,16 @@
                 <artifactId>mockserver-netty</artifactId>
                 <version>${mock-server.version}</version>
                 <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.swagger.parser.v3</groupId>
+                        <artifactId>swagger-parser-v2-converter</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.swagger.parser.v3</groupId>
+                        <artifactId>swagger-parser</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.mock-server</groupId>

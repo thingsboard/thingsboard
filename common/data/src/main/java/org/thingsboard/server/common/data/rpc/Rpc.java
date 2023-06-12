@@ -16,8 +16,7 @@
 package org.thingsboard.server.common.data.rpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
@@ -26,24 +25,24 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@ApiModel
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Rpc extends BaseData<RpcId> implements HasTenantId {
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
-    @ApiModelProperty(position = 4, value = "JSON object with Device Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Device Id.", accessMode = Schema.AccessMode.READ_ONLY)
     private DeviceId deviceId;
-    @ApiModelProperty(position = 5, value = "Expiration time of the request.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Expiration time of the request.", accessMode = Schema.AccessMode.READ_ONLY)
     private long expirationTime;
-    @ApiModelProperty(position = 6, value = "The request body that will be used to send message to device.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "The request body that will be used to send message to device.", accessMode = Schema.AccessMode.READ_ONLY)
     private JsonNode request;
-    @ApiModelProperty(position = 7, value = "The response from the device.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "The response from the device.", accessMode = Schema.AccessMode.READ_ONLY)
     private JsonNode response;
-    @ApiModelProperty(position = 8, value = "The current status of the RPC call.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "The current status of the RPC call.", accessMode = Schema.AccessMode.READ_ONLY)
     private RpcStatus status;
-    @ApiModelProperty(position = 9, value = "Additional info used in the rule engine to process the updates to the RPC state.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Additional info used in the rule engine to process the updates to the RPC state.", accessMode = Schema.AccessMode.READ_ONLY)
     private JsonNode additionalInfo;
 
     public Rpc() {
@@ -65,13 +64,13 @@ public class Rpc extends BaseData<RpcId> implements HasTenantId {
         this.additionalInfo = rpc.getAdditionalInfo();
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the rpc Id. Referencing non-existing rpc Id will cause error.")
+    @Schema(description = "JSON object with the rpc Id. Referencing non-existing rpc Id will cause error.")
     @Override
     public RpcId getId() {
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the rpc creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the rpc creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

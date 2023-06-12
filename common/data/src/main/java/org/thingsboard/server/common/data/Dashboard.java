@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -59,10 +59,10 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
         this.externalId = dashboard.getExternalId();
     }
 
-    @ApiModelProperty(position = 9, value = "JSON object with main configuration of the dashboard: layouts, widgets, aliases, etc. " +
+    @Schema(description = "JSON object with main configuration of the dashboard: layouts, widgets, aliases, etc. " +
             "The JSON structure of the dashboard configuration is quite complex. " +
             "The easiest way to learn it is to export existing dashboard to JSON."
-            , dataType = "com.fasterxml.jackson.databind.JsonNode")
+            ,implementation = com.fasterxml.jackson.databind.JsonNode.class)
     public JsonNode getConfiguration() {
         return configuration;
     }

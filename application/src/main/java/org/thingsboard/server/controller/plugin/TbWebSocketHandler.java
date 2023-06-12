@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.controller.plugin;
 
+import jakarta.websocket.RemoteEndpoint;
+import jakarta.websocket.SendHandler;
+import jakarta.websocket.SendResult;
+import jakarta.websocket.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanCreationNotAllowedException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +51,6 @@ import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.WebSocketSessionType;
 
-import jakarta.websocket.RemoteEndpoint;
-import jakarta.websocket.SendHandler;
-import jakarta.websocket.SendResult;
-import jakarta.websocket.Session;
 import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidParameterException;

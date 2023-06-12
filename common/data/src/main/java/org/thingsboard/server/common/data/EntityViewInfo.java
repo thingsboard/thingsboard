@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -24,9 +24,9 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 @EqualsAndHashCode(callSuper = true)
 public class EntityViewInfo extends EntityView {
 
-    @ApiModelProperty(position = 12, value = "Title of the Customer that owns the entity view.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Title of the Customer that owns the entity view.", accessMode = Schema.AccessMode.READ_ONLY)
     private String customerTitle;
-    @ApiModelProperty(position = 13, value = "Indicates special 'Public' Customer that is auto-generated to use the entity view on public dashboards.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Indicates special 'Public' Customer that is auto-generated to use the entity view on public dashboards.", accessMode = Schema.AccessMode.READ_ONLY)
     private boolean customerIsPublic;
 
     public EntityViewInfo() {

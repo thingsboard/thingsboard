@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,6 +36,7 @@ import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -67,7 +67,7 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.GET)
     @ResponseBody
     public WidgetTypeDetails getWidgetTypeById(
-            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
@@ -88,7 +88,7 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetType", method = RequestMethod.POST)
     @ResponseBody
     public WidgetTypeDetails saveWidgetType(
-            @ApiParam(value = "A JSON value representing the Widget Type Details.", required = true)
+            @Parameter(description = "A JSON value representing the Widget Type Details.", required = true)
             @RequestBody WidgetTypeDetails widgetTypeDetails) throws Exception {
         var currentUser = getCurrentUser();
         if (Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
@@ -119,7 +119,7 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteWidgetType(
-            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetTypeId") String strWidgetTypeId) throws Exception {
         checkParameter("widgetTypeId", strWidgetTypeId);
         var currentUser = getCurrentUser();
@@ -143,9 +143,9 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetTypes", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetType> getBundleWidgetTypes(
-            @ApiParam(value = "System or Tenant", required = true)
+            @Parameter(description = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
-            @ApiParam(value = "Widget Bundle alias", required = true)
+            @Parameter(description = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias) throws ThingsboardException {
         TenantId tenantId;
         if (isSystem) {
@@ -162,9 +162,9 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetTypesDetails", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(
-            @ApiParam(value = "System or Tenant", required = true)
+            @Parameter(description = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
-            @ApiParam(value = "Widget Bundle alias", required = true)
+            @Parameter(description = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias) throws ThingsboardException {
         TenantId tenantId;
         if (isSystem) {
@@ -181,9 +181,9 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetTypesInfos", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetTypeInfo> getBundleWidgetTypesInfos(
-            @ApiParam(value = "System or Tenant", required = true)
+            @Parameter(description = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
-            @ApiParam(value = "Widget Bundle alias", required = true)
+            @Parameter(description = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias) throws ThingsboardException {
         TenantId tenantId;
         if (isSystem) {
@@ -200,11 +200,11 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetType", params = {"isSystem", "bundleAlias", "alias"}, method = RequestMethod.GET)
     @ResponseBody
     public WidgetType getWidgetType(
-            @ApiParam(value = "System or Tenant", required = true)
+            @Parameter(description = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
-            @ApiParam(value = "Widget Bundle alias", required = true)
+            @Parameter(description = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias,
-            @ApiParam(value = "Widget Type alias", required = true)
+            @Parameter(description = "Widget Type alias", required = true)
             @RequestParam String alias) throws ThingsboardException {
         TenantId tenantId;
         if (isSystem) {

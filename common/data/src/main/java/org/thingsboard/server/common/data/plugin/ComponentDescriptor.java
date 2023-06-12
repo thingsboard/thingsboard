@@ -16,8 +16,7 @@
 package org.thingsboard.server.common.data.plugin;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -29,27 +28,27 @@ import org.thingsboard.server.common.data.validation.Length;
 /**
  * @author Andrew Shvayka
  */
-@ApiModel
+@Schema
 @ToString
 public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
 
     private static final long serialVersionUID = 1L;
 
-    @ApiModelProperty(position = 3, value = "Type of the Rule Node", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Type of the Rule Node", accessMode = Schema.AccessMode.READ_ONLY)
     @Getter @Setter private ComponentType type;
-    @ApiModelProperty(position = 4, value = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "TENANT", example = "TENANT")
+    @Schema(description = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", accessMode = Schema.AccessMode.READ_ONLY, allowableValues = "TENANT", example = "TENANT")
     @Getter @Setter private ComponentScope scope;
-    @ApiModelProperty(position = 5, value = "Clustering mode of the RuleNode. This mode represents the ability to start Rule Node in multiple microservices.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "USER_PREFERENCE, ENABLED, SINGLETON", example = "ENABLED")
+    @Schema(description = "Clustering mode of the RuleNode. This mode represents the ability to start Rule Node in multiple microservices.", accessMode = Schema.AccessMode.READ_ONLY, allowableValues = "USER_PREFERENCE, ENABLED, SINGLETON", example = "ENABLED")
     @Getter @Setter private ComponentClusteringMode clusteringMode;
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 6, value = "Name of the Rule Node. Taken from the @RuleNode annotation.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "Custom Rule Node")
+    @Schema(description = "Name of the Rule Node. Taken from the @RuleNode annotation.", accessMode = Schema.AccessMode.READ_ONLY, example = "Custom Rule Node")
     @Getter @Setter private String name;
-    @ApiModelProperty(position = 7, value = "Full name of the Java class that implements the Rule Engine Node interface.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "com.mycompany.CustomRuleNode")
+    @Schema(description = "Full name of the Java class that implements the Rule Engine Node interface.", accessMode = Schema.AccessMode.READ_ONLY, example = "com.mycompany.CustomRuleNode")
     @Getter @Setter private String clazz;
-    @ApiModelProperty(position = 8, value = "Complex JSON object that represents the Rule Node configuration.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Complex JSON object that represents the Rule Node configuration.", accessMode = Schema.AccessMode.READ_ONLY)
     @Getter @Setter private transient JsonNode configurationDescriptor;
     @Length(fieldName = "actions")
-    @ApiModelProperty(position = 9, value = "Rule Node Actions. Deprecated. Always null.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Rule Node Actions. Deprecated. Always null.", accessMode = Schema.AccessMode.READ_ONLY)
     @Getter @Setter private String actions;
 
     public ComponentDescriptor() {
@@ -70,7 +69,7 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
         this.actions = plugin.getActions();
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the descriptor Id. " +
+    @Schema(description = "JSON object with the descriptor Id. " +
             "Specify existing descriptor id to update the descriptor. " +
             "Referencing non-existing descriptor Id will cause error. " +
             "Omit this field to create new descriptor." )
@@ -79,7 +78,7 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the descriptor creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the descriptor creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
