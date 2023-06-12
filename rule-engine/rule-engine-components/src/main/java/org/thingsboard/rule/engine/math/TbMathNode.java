@@ -157,7 +157,7 @@ public class TbMathNode implements TbNode {
 
     private ListenableFuture<TbMsg> updateMsgAndDb(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result) {
         TbMathResult mathResultDef = config.getResult();
-        String mathResultKey = !mathResultDef.getType().equals(CONSTANT) ? TbNodeUtils.processPattern(mathResultDef.getKey(), msg) : mathResultDef.getKey();
+        String mathResultKey = getKeyFromTemplate(msg, mathResultDef.getType(), mathResultDef.getKey());
         switch (mathResultDef.getType()) {
             case MESSAGE_BODY:
                 return Futures.immediateFuture(addToBody(msg, mathResultDef, mathResultKey, msgBodyOpt, result));
@@ -183,7 +183,7 @@ public class TbMathNode implements TbNode {
     private ListenableFuture<Void> saveAttribute(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
         String attributeScope = getAttributeScope(mathResultDef.getAttributeScope());
         if (isIntegerResult(mathResultDef, config.getOperation())) {
-            var value = toIntValue(mathResultDef, result);
+            var value = toIntValue(result);
             return ctx.getTelemetryService().saveAttrAndNotify(
                     ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
         } else {
@@ -197,7 +197,7 @@ public class TbMathNode implements TbNode {
         return function.isIntegerResult() || mathResultDef.getResultValuePrecision() == 0;
     }
 
-    private long toIntValue(TbMathResult mathResultDef, double value) {
+    private long toIntValue(double value) {
         return (long) value;
     }
 
@@ -234,7 +234,7 @@ public class TbMathNode implements TbNode {
     private TbMsg addToBody(TbMsg msg, TbMathResult mathResultDef, String mathResultKey, Optional<ObjectNode> msgBodyOpt, double result) {
         ObjectNode body = msgBodyOpt.get();
         if (isIntegerResult(mathResultDef, config.getOperation())) {
-            body.put(mathResultKey, toIntValue(mathResultDef, result));
+            body.put(mathResultKey, toIntValue(result));
         } else {
             body.put(mathResultKey, toDoubleValue(mathResultDef, result));
         }
@@ -244,7 +244,7 @@ public class TbMathNode implements TbNode {
     private TbMsg addToMeta(TbMsg msg, TbMathResult mathResultDef, String mathResultKey, double result) {
         var md = msg.getMetaData();
         if (isIntegerResult(mathResultDef, config.getOperation())) {
-            md.putValue(mathResultKey, Long.toString(toIntValue(mathResultDef, result)));
+            md.putValue(mathResultKey, Long.toString(toIntValue(result)));
         } else {
             md.putValue(mathResultKey, Double.toString(toDoubleValue(mathResultDef, result)));
         }
@@ -348,7 +348,7 @@ public class TbMathNode implements TbNode {
     }
 
     private ListenableFuture<TbMathArgumentValue> resolveArguments(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, TbMathArgument arg) {
-        String argKey = !arg.getType().equals(CONSTANT) ? TbNodeUtils.processPattern(arg.getKey(), msg) : arg.getKey();
+        String argKey = getKeyFromTemplate(msg, arg.getType(), arg.getKey());
         switch (arg.getType()) {
             case CONSTANT:
                 return Futures.immediateFuture(TbMathArgumentValue.constant(arg));
@@ -369,6 +369,10 @@ public class TbMathNode implements TbNode {
                 throw new RuntimeException("Unsupported argument type: " + arg.getType() + "!");
         }
 
+    }
+
+    private String getKeyFromTemplate(TbMsg msg, TbMathArgumentType type, String keyPattern) {
+        return CONSTANT.equals(type) ? keyPattern : TbNodeUtils.processPattern(keyPattern, msg);
     }
 
     private String getAttributeScope(String attrScope) {
