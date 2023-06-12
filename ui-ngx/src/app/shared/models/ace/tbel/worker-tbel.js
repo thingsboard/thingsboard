@@ -11271,7 +11271,7 @@ var errors = {
   E065: "Functions defined outside of strict mode with non-simple parameter lists may not " +
     "enable strict mode.",
   E066: "Asynchronous iteration is only available with for-of loops.",
-  E067: "Expected without the 'switch' statement. TBEL does not support the 'switch' statement."
+  E067: "Expected an 'if/else' and instead saw 'switch'. TBEL does not support the 'switch' statement."
 };
 
 var warnings = {
