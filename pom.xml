@@ -2010,16 +2010,6 @@
                 <artifactId>mockserver-netty</artifactId>
                 <version>${mock-server.version}</version>
                 <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>io.swagger.parser.v3</groupId>
-                        <artifactId>swagger-parser-v2-converter</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.swagger.parser.v3</groupId>
-                        <artifactId>swagger-parser</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.mock-server</groupId>
