@@ -17,7 +17,7 @@
 @import "../../../../../../theme";
 
 :host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
-  width: 800px;
+  width: 840px;
   height: 100%;
   max-width: 100%;
   max-height: 100vh;
@@ -70,6 +70,7 @@
     .delivery-method-container {
       display: inline-flex;
       flex: 1 1 calc(50% - 8px);
+      max-width: calc(50% - 8px);
       padding: 16px 12px;
       border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 6px;

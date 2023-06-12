@@ -39,13 +39,19 @@
     <mat-step [stepControl]="notificationRequestForm">
       <ng-template matStepLabel>{{ 'notification.compose' | translate }}</ng-template>
       <form [formGroup]="notificationRequestForm">
-        <div fxLayout="row" fxLayoutAlign="center">
-          <mat-button-toggle-group class="tb-notification-use-template-toggle-group"
-                                   style="width: 320px;"
-                                   formControlName="useTemplate">
-            <mat-button-toggle fxFlex [value]=false>{{ 'notification.start-from-scratch' | translate }}</mat-button-toggle>
-            <mat-button-toggle fxFlex [value]=true>{{ 'notification.use-template' | translate }}</mat-button-toggle>
-          </mat-button-toggle-group>
+        <div fxLayoutAlign="center">
+          <tb-toggle-header (valueChange)="notificationRequestForm.get('useTemplate').patchValue($event)"
+                            class="tb-notification-use-template-toggle-group"
+                            ignoreMdLgSize
+                            useSelectOnMdLg="false"
+                            appearance="fill"
+                            name="useTemplate"
+                            [options]="[
+                                         { name: translate.instant('notification.start-from-scratch'), value: false},
+                                         { name: translate.instant('notification.use-template'), value: true}
+                                       ]"
+                            [value]="notificationRequestForm.get('useTemplate').value">
+          </tb-toggle-header>
         </div>
         <div *ngIf="notificationRequestForm.get('useTemplate').value; else scratchTemplate">
           <tb-template-autocomplete
@@ -413,11 +419,12 @@
         </section>
         <section class="preview-group notification" *ngIf="preview.processedTemplates.MOBILE?.enabled">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon class="tb-mat-18" svgIcon="mdi:smartphone"></mat-icon>
+            <mat-icon class="tb-mat-18" svgIcon="mdi:cellphone-text"></mat-icon>
             <div class="group-title" translate>notification.delivery-method.mobile-preview</div>
           </div>
           <div class="notification-content">
-            {{ preview.processedTemplates.MOBILE.body }}
+            <div class="subject">{{ preview.processedTemplates.MOBILE.subject }}</div>
+            <div>{{ preview.processedTemplates.MOBILE.body }}</div>
           </div>
         </section>
         <section class="preview-group">

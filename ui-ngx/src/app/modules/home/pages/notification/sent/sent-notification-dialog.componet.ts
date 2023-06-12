@@ -90,7 +90,7 @@ export class SentNotificationDialogComponent extends
               protected fb: FormBuilder,
               private notificationService: NotificationService,
               private dialog: MatDialog,
-              private translate: TranslateService) {
+              public translate: TranslateService) {
     super(store, router, dialogRef, fb);
 
     this.notificationDeliveryMethods.forEach(method => {
@@ -309,13 +309,17 @@ export class SentNotificationDialogComponent extends
   }
 
   allowConfigureDeliveryMethod(deliveryMethod: NotificationDeliveryMethod): boolean {
+    const tenantAllowConfigureDeliveryMethod = new Set([
+      NotificationDeliveryMethod.SLACK,
+      NotificationDeliveryMethod.MOBILE
+    ]);
     if (deliveryMethod === NotificationDeliveryMethod.WEB) {
       return false;
     }
     if(this.isSysAdmin()) {
       return true;
     } else if (this.isTenantAdmin()) {
-      return deliveryMethod === NotificationDeliveryMethod.SLACK || deliveryMethod === NotificationDeliveryMethod.MOBILE;
+      return tenantAllowConfigureDeliveryMethod.has(deliveryMethod);
     }
     return false;
   }

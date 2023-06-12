@@ -26,7 +26,7 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-  <mat-card-content style="padding-top: 16px;">
+  <mat-card-content>
     <form [formGroup]="smsProvider" (ngSubmit)="save()">
       <fieldset [disabled]="isLoading$ | async">
         <tb-sms-provider-configuration
@@ -46,53 +46,54 @@
     </form>
   </mat-card-content>
 </mat-card>
-<mat-card appearance="outlined" class="settings-card">
-    <mat-card-header>
-      <mat-card-title>
-        <span class="mat-headline-5" translate>admin.slack-settings</span>
-      </mat-card-title>
-      <span fxFlex></span>
-      <div tb-help="slackSettings"></div>
-    </mat-card-header>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-  <mat-card-content style="padding-top: 16px;">
-    <form [formGroup]="notificationSettingsForm" (ngSubmit)="saveNotification()">
-      <fieldset [disabled]="isLoading$ | async" formGroupName="deliveryMethodsConfigs">
+<form [formGroup]="notificationSettingsForm" (ngSubmit)="saveNotification()">
+  <fieldset [disabled]="isLoading$ | async" formGroupName="deliveryMethodsConfigs">
+    <mat-card appearance="outlined" class="settings-card">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="mat-headline-5" translate>admin.slack-settings</span>
+        </mat-card-title>
+        <span fxFlex></span>
+        <div tb-help="slackSettings"></div>
+      </mat-card-header>
+      <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+      </mat-progress-bar>
+      <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+      <mat-card-content>
         <section formGroupName="SLACK">
           <mat-form-field class="mat-block">
             <mat-label translate>admin.slack-api-token</mat-label>
-            <input matInput formControlName="botToken" />
+            <input matInput formControlName="botToken"/>
           </mat-form-field>
         </section>
-      </fieldset>
-    </form>
-  </mat-card-content>
-  <mat-card-header>
-    <mat-card-title>
-      <span class="mat-headline-5" translate>admin.mobile-settings</span>
-    </mat-card-title>
-    <span fxFlex></span>
-<!--    <div tb-help="slackSettings"></div>-->
-  </mat-card-header>
-  <mat-card-content style="padding-top: 16px;">
-    <form [formGroup]="notificationSettingsForm" (ngSubmit)="saveNotification()">
-      <fieldset [disabled]="isLoading$ | async" formGroupName="deliveryMethodsConfigs">
-        <section formGroupName="MOBILE">
-          <tb-file-input style="margin-bottom: 16px;"
-                         required
+      </mat-card-content>
+      <mat-card-header>
+        <mat-card-title>
+          <span class="mat-headline-5" translate>admin.mobile-settings</span>
+        </mat-card-title>
+        <span fxFlex></span>
+        <!--    <div tb-help="mobileSettings"></div>-->
+      </mat-card-header>
+      <mat-card-content>
+        <section formGroupName="MOBILE" style="margin-bottom: 16px;">
+          <tb-file-input required
                          formControlName="firebaseServiceAccountCredentials"
                          dropLabel="{{ 'admin.select-firebase-service-account-file' | translate }}"
-                         [label]="'admin.firebase-service-account-file' | translate">
+                         label="{{ 'admin.firebase-service-account-file' | translate }}"
+                         accept=".json,application/json"
+                         allowedExtensions="json"
+                         [existingFileName]="notificationSettingsForm.get('deliveryMethodsConfigs.MOBILE.firebaseServiceAccountCredentialsFileName')?.value"
+                         (fileNameChanged)="notificationSettingsForm?.get('deliveryMethodsConfigs.MOBILE.firebaseServiceAccountCredentialsFileName').patchValue($event)">
           </tb-file-input>
         </section>
-        <div fxLayout="row" fxLayoutAlign="end center" class="layout-wrap">
-          <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || notificationSettingsForm.invalid || !notificationSettingsForm.dirty"
+        <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end">
+          <button mat-button mat-raised-button color="primary"
+                  [disabled]="(isLoading$ | async) || notificationSettingsForm.invalid || !notificationSettingsForm.dirty"
                   type="submit">{{'action.save' | translate}}
           </button>
         </div>
-      </fieldset>
-    </form>
-  </mat-card-content>
-</mat-card>
+      </mat-card-content>
+    </mat-card>
+  </fieldset>
+</form>
+

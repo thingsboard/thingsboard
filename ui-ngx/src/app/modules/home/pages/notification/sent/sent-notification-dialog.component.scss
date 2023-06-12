@@ -17,7 +17,7 @@
 @import "../../../../../../theme";
 
 :host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
-  width: 820px;
+  width: 930px;
   height: 100%;
   max-width: 100%;
   max-height: 100vh;
@@ -76,6 +76,7 @@
     .delivery-method-container {
       display: inline-flex;
       flex: 1 1 calc(50% - 8px);
+      max-width: calc(50% - 8px);
       padding: 16px 12px;
       border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 6px;
@@ -211,58 +212,8 @@
     }
   }
 
-  .mat-button-toggle-group.tb-notification-use-template-toggle-group {
-    &.mat-button-toggle-group-appearance-standard {
-      border: none;
-      border-radius: 18px;
-      margin-bottom: 24px;
-
-      .mat-button-toggle + .mat-button-toggle {
-        border-left: none;
-      }
-    }
-
-    .mat-button-toggle {
-      background: rgba(0, 0, 0, 0.06);
-      height: 36px;
-      align-items: center;
-      display: flex;
-
-      .mat-button-toggle-ripple {
-        top: 2px;
-        left: 2px;
-        right: 2px;
-        bottom: 2px;
-        border-radius: 18px;
-      }
-    }
-
-    .mat-button-toggle-button {
-      color: #959595;
-    }
-
-    .mat-button-toggle-focus-overlay {
-      border-radius: 18px;
-      margin: 2px;
-    }
-
-    .mat-button-toggle-checked .mat-button-toggle-button {
-      background-color: $tb-primary-color;
-      color: #fff;
-      border-radius: 18px;
-      margin-left: 2px;
-      margin-right: 2px;
-    }
-
-    .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
-      line-height: 34px;
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
-      opacity: .01;
-    }
+  .tb-notification-use-template-toggle-group {
+    margin-bottom: 24px;
   }
 
   .preview-group {

@@ -88,7 +88,8 @@ export interface NotificationSettings {
   deliveryMethodsConfigs: { [key in NotificationDeliveryMethod]: NotificationDeliveryMethodConfig };
 }
 
-export interface NotificationDeliveryMethodConfig extends Partial<SlackNotificationDeliveryMethodConfig & MobileNotificationDeliveryMethodConfig>{
+export interface NotificationDeliveryMethodConfig extends Partial<SlackNotificationDeliveryMethodConfig &
+  MobileNotificationDeliveryMethodConfig>{
   enabled: boolean;
   method: NotificationDeliveryMethod;
 }
@@ -99,6 +100,7 @@ interface SlackNotificationDeliveryMethodConfig {
 
 interface MobileNotificationDeliveryMethodConfig {
   firebaseServiceAccountCredentials: string;
+  firebaseServiceAccountCredentialsFileName: string;
 }
 
 export interface SlackConversation {
