@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -63,6 +64,8 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
     @Getter
     private boolean isActive = true;
+    @Setter
+    private Runnable sessionTimeoutHandler;
 
     @Getter
     private final List<ScheduledFuture<?>> queryingTasks = new LinkedList<>();
@@ -137,6 +140,11 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     @Override
     public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
         log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
+        if (sessionCloseNotification.getMessage().equals(DefaultTransportService.SESSION_EXPIRED_MESSAGE)) {
+            if (sessionTimeoutHandler != null) {
+                sessionTimeoutHandler.run();
+            }
+        }
     }
 
     @Override

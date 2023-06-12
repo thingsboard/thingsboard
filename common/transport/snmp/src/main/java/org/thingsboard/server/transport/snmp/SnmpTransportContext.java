@@ -178,17 +178,10 @@ public class SnmpTransportContext extends TransportContext {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                         if (msg.hasDeviceInfo()) {
-                            SessionInfoProto sessionInfo = SessionInfoCreator.create(
-                                    msg, SnmpTransportContext.this, UUID.randomUUID()
-                            );
-
-                            transportService.registerAsyncSession(sessionInfo, deviceSessionContext);
-                            transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), TransportServiceCallback.EMPTY);
-                            transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().build(), TransportServiceCallback.EMPTY);
-
-                            deviceSessionContext.setSessionInfo(sessionInfo);
-                            deviceSessionContext.setDeviceInfo(msg.getDeviceInfo());
-                            deviceSessionContext.setConnected(true);
+                            registerTransportSession(deviceSessionContext, msg);
+                            deviceSessionContext.setSessionTimeoutHandler(() -> {
+                                registerTransportSession(deviceSessionContext, msg);
+                            });
                         } else {
                             log.warn("[{}] Failed to process device auth", deviceSessionContext.getDeviceId());
                         }
@@ -199,6 +192,21 @@ public class SnmpTransportContext extends TransportContext {
                         log.warn("[{}] Failed to process device auth: {}", deviceSessionContext.getDeviceId(), e);
                     }
                 });
+    }
+
+    private void registerTransportSession(DeviceSessionContext deviceSessionContext, ValidateDeviceCredentialsResponse msg) {
+        SessionInfoProto sessionInfo = SessionInfoCreator.create(
+                msg, SnmpTransportContext.this, UUID.randomUUID()
+        );
+        log.debug("Registering transport session: {}", sessionInfo);
+
+        transportService.registerAsyncSession(sessionInfo, deviceSessionContext);
+        transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), TransportServiceCallback.EMPTY);
+        transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().build(), TransportServiceCallback.EMPTY);
+
+        deviceSessionContext.setSessionInfo(sessionInfo);
+        deviceSessionContext.setDeviceInfo(msg.getDeviceInfo());
+        deviceSessionContext.setConnected(true);
     }
 
     @EventListener(DeviceUpdatedEvent.class)

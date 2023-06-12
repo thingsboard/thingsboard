@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.snmp;
 
-import org.snmp4j.CommandResponderEvent;
 import org.snmp4j.CommunityTarget;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
@@ -35,7 +34,6 @@ import org.snmp4j.agent.mo.snmp.SnmpTargetMIB;
 import org.snmp4j.agent.mo.snmp.StorageType;
 import org.snmp4j.agent.mo.snmp.VacmMIB;
 import org.snmp4j.agent.security.MutableVACM;
-import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.security.SecurityLevel;
 import org.snmp4j.security.SecurityModel;
@@ -53,26 +51,10 @@ import org.snmp4j.transport.TransportMappings;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("deprecation")
 public class SnmpDeviceSimulatorV2 extends BaseAgent {
-
-    public static class RequestProcessor extends CommandProcessor {
-        private final Consumer<CommandResponderEvent> processor;
-
-        public RequestProcessor(Consumer<CommandResponderEvent> processor) {
-            super(new OctetString(MPv3.createLocalEngineID()));
-            this.processor = processor;
-        }
-
-        @Override
-        public void processPdu(CommandResponderEvent event) {
-            processor.accept(event);
-        }
-    }
-
 
     private final Target target;
     private final Address address;
@@ -81,10 +63,7 @@ public class SnmpDeviceSimulatorV2 extends BaseAgent {
     private final String password;
 
     public SnmpDeviceSimulatorV2(int port, String password) throws IOException {
-        super(new File("conf.agent"), new File("bootCounter.agent"), new RequestProcessor(event -> {
-            System.out.println("aboba");
-            ((Snmp) event.getSource()).cancel(event.getPDU(), event1 -> System.out.println("canceled"));
-        }));
+        super(new File("conf.agent"), new File("bootCounter.agent"), new CommandProcessor(new OctetString("12312")));
         CommunityTarget target = new CommunityTarget();
         target.setCommunity(new OctetString(password));
         this.address = GenericAddress.parse("udp:0.0.0.0/" + port);

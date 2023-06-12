@@ -45,7 +45,6 @@ import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
 import org.thingsboard.server.common.data.transport.snmp.config.RepeatingQueryingSnmpCommunicationConfig;
 import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
@@ -161,18 +160,20 @@ public class SnmpTransportService implements TbTransportService {
     }
 
     private void sendRequest(DeviceSessionContext sessionContext, SnmpCommunicationConfig communicationConfig, Map<String, String> values) {
-        PDU request = pduService.createPdu(sessionContext, communicationConfig, values);
+        List<PDU> request = pduService.createPdus(sessionContext, communicationConfig, values);
         RequestInfo requestInfo = new RequestInfo(communicationConfig.getSpec(), communicationConfig.getAllMappings());
         sendRequest(sessionContext, request, requestInfo);
     }
 
-    private void sendRequest(DeviceSessionContext sessionContext, PDU request, RequestInfo requestInfo) {
-        if (request.size() > 0) {
-            log.trace("Executing SNMP request for device {}. Variables bindings: {}", sessionContext.getDeviceId(), request.getVariableBindings());
-            try {
-                snmp.send(request, sessionContext.getTarget(), requestInfo, sessionContext);
-            } catch (IOException e) {
-                log.error("Failed to send SNMP request to device {}: {}", sessionContext.getDeviceId(), e.toString());
+    private void sendRequest(DeviceSessionContext sessionContext, List<PDU> request, RequestInfo requestInfo) {
+        for (PDU pdu : request) {
+            if (pdu.size() > 0) {
+                log.trace("Executing SNMP request for device {}. Variables bindings: {}", sessionContext.getDeviceId(), pdu.getVariableBindings());
+                try {
+                    snmp.send(pdu, sessionContext.getTarget(), requestInfo, sessionContext);
+                } catch (IOException e) {
+                    log.error("Failed to send SNMP request to device {}: {}", sessionContext.getDeviceId(), e.toString());
+                }
             }
         }
     }
@@ -216,7 +217,7 @@ public class SnmpTransportService implements TbTransportService {
 
         PDU request = pduService.createSingleVariablePdu(sessionContext, snmpMethod, oid, value, dataType);
         RequestInfo requestInfo = new RequestInfo(toDeviceRpcRequestMsg.getRequestId(), communicationConfig.getSpec(), communicationConfig.getAllMappings());
-        sendRequest(sessionContext, request, requestInfo);
+        sendRequest(sessionContext, List.of(request), requestInfo);
     }
 
 
@@ -247,7 +248,7 @@ public class SnmpTransportService implements TbTransportService {
         JsonObject responseData = responseDataMappers.get(requestInfo.getCommunicationSpec()).map(response, requestInfo);
 
         if (responseData.entrySet().isEmpty()) {
-            log.debug("No values is the SNMP response for device {}. Request id: {}", sessionContext.getDeviceId(), response.getRequestID());
+            log.debug("No values in the SNMP response for device {}. Request id: {}", sessionContext.getDeviceId(), response.getRequestID());
             return;
         }
 
@@ -302,11 +303,7 @@ public class SnmpTransportService implements TbTransportService {
     }
 
     private void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
-        transportService.process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
-                .setAttributeSubscription(true)
-                .setRpcSubscription(true)
-                .setLastActivityTime(System.currentTimeMillis())
-                .build(), TransportServiceCallback.EMPTY);
+        transportService.reportActivity(sessionInfo);
     }
 
 

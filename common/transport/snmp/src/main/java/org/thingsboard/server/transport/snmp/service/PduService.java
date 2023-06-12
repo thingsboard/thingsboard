@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.snmp.service;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
@@ -25,6 +26,7 @@ import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
 import org.snmp4j.smi.Variable;
 import org.snmp4j.smi.VariableBinding;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.kv.DataType;
@@ -35,6 +37,7 @@ import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicatio
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,21 +50,30 @@ import java.util.stream.IntStream;
 @Service
 @Slf4j
 public class PduService {
-    public PDU createPdu(DeviceSessionContext sessionContext, SnmpCommunicationConfig communicationConfig, Map<String, String> values) {
-        PDU pdu = setUpPdu(sessionContext);
 
-        pdu.setType(communicationConfig.getMethod().getCode());
-        pdu.addAll(communicationConfig.getAllMappings().stream()
-                .filter(mapping -> values.isEmpty() || values.containsKey(mapping.getKey()))
-                .map(mapping -> Optional.ofNullable(values.get(mapping.getKey()))
-                        .map(value -> {
-                            Variable variable = toSnmpVariable(value, mapping.getDataType());
-                            return new VariableBinding(new OID(mapping.getOid()), variable);
-                        })
-                        .orElseGet(() -> new VariableBinding(new OID(mapping.getOid()))))
-                .collect(Collectors.toList()));
+    @Value("${transport.snmp.max_request_oids:100}")
+    private int maxRequestOids;
 
-        return pdu;
+    public List<PDU> createPdus(DeviceSessionContext sessionContext, SnmpCommunicationConfig communicationConfig, Map<String, String> values) {
+        List<PDU> pdus = new ArrayList<>();
+        List<SnmpMapping> allMappings = communicationConfig.getAllMappings();
+
+        for (List<SnmpMapping> mappings : Lists.partition(allMappings, maxRequestOids)) {
+            PDU pdu = setUpPdu(sessionContext);
+            pdu.setType(communicationConfig.getMethod().getCode());
+            pdu.addAll(mappings.stream()
+                    .filter(mapping -> values.isEmpty() || values.containsKey(mapping.getKey()))
+                    .map(mapping -> Optional.ofNullable(values.get(mapping.getKey()))
+                            .map(value -> {
+                                Variable variable = toSnmpVariable(value, mapping.getDataType());
+                                return new VariableBinding(new OID(mapping.getOid()), variable);
+                            })
+                            .orElseGet(() -> new VariableBinding(new OID(mapping.getOid()))))
+                    .collect(Collectors.toList()));
+            pdus.add(pdu);
+        }
+
+        return pdus;
     }
 
     public PDU createSingleVariablePdu(DeviceSessionContext sessionContext, SnmpMethod snmpMethod, String oid, String value, DataType dataType) {
