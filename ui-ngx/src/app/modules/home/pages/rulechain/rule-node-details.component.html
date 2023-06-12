@@ -46,6 +46,7 @@
         </section>
       </section>
       <tb-rule-node-config #ruleNodeConfigComponent
+        [disabled]="(isLoading$ | async) || !isEdit || isReadOnly"
         formControlName="configuration"
         [ruleNodeId]="ruleNode.ruleNodeId?.id"
         [ruleChainId]="ruleChainId"

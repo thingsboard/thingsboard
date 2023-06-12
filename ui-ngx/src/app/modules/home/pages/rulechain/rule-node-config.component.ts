@@ -148,7 +148,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       this.changeSubscription = null;
     }
     if (this.definedConfigComponent) {
-      this.definedConfigComponent.configuration = this.configuration;
+      this.definedConfigComponent.configuration = this.transformControls(this.configuration);
       this.changeSubscription = this.definedConfigComponent.configurationChanged.subscribe((configuration) => {
         this.updateModel(configuration);
       });
@@ -206,5 +206,16 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
     if (this.useDefinedDirective()) {
       this.definedConfigComponent.validate();
     }
+  }
+
+  private transformControls(configuration: RuleNodeConfiguration): any {
+    const result = {};
+    for (const [key, value] of Object.entries(configuration)) {
+      result[key] = {
+        value,
+        disabled: this.disabled
+      };
+    }
+    return result;
   }
 }
