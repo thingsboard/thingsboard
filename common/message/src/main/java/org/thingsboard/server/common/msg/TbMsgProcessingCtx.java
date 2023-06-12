@@ -64,12 +64,7 @@ public final class TbMsgProcessingCtx implements Serializable {
     }
 
     public TbMsgProcessingStackItem pop() {
-        if (stack == null) {
-            throw new RuntimeException("Stack is null!");
-        } else if (stack.isEmpty()) {
-            return null;
-        }
-        return stack.removeLast();
+        return stack == null || stack.isEmpty() ? null : stack.removeLast();
     }
 
     public static TbMsgProcessingCtx fromProto(MsgProtos.TbMsgProcessingCtxProto ctx) {
