@@ -183,11 +183,13 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
                     lock.unlock();
                 }
                 return scriptId;
-            } catch (Exception e) {
-                if (((CompileException) e).getExpr() != null && new String(((CompileException) e).getExpr()).contains(tbelSwitch)) {
-                    e = new CompileException(tbelSwitchErrorMsg, ((CompileException) e).getExpr(), ((CompileException) e).getCursor(), e.getCause());
+            } catch (CompileException ce) {
+                if ( ce.getExpr() != null && new String(ce.getExpr()).contains(tbelSwitch)) {
+                    ce = new CompileException(tbelSwitchErrorMsg, ce.getExpr(), ce.getCursor(), ce.getCause());
                 }
-                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, ce);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         });
     }
