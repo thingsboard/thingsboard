@@ -133,9 +133,10 @@ export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notif
         this.config.getTable().dataSource.pageData$.pipe(take(1)).subscribe(
           (value) => {
             if (value.data.length === 1 && this.config.getTable().pageLink.page) {
-              this.config.getTable().pageLink.page--;
+              this.config.getTable().paginator.previousPage();
+            } else {
+              this.config.updateData();
             }
-            this.config.updateData();
           }
         );
       } else {
