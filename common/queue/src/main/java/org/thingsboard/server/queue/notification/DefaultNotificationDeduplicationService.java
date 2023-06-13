@@ -31,6 +31,7 @@ import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType.SOFT;
@@ -42,7 +43,8 @@ public class DefaultNotificationDeduplicationService implements NotificationDedu
 
     private Map<NotificationRuleTriggerType, Long> deduplicationDurations;
 
-    private final CacheManager cacheManager;
+    @Autowired(required = false)
+    private CacheManager cacheManager;
     private final ConcurrentMap<String, Long> localCache = new ConcurrentReferenceHashMap<>(16, SOFT);
 
     @Override
@@ -60,7 +62,7 @@ public class DefaultNotificationDeduplicationService implements NotificationDedu
     private boolean alreadyProcessed(NotificationRuleTrigger trigger, String deduplicationKey, boolean onlyLocalCache) {
         Long lastProcessedTs = localCache.get(deduplicationKey);
         if (lastProcessedTs == null && !onlyLocalCache) {
-            Cache externalCache = cacheManager.getCache(CacheConstants.SENT_NOTIFICATIONS_CACHE);
+            Cache externalCache = getExternalCache();
             if (externalCache != null) {
                 lastProcessedTs = externalCache.get(deduplicationKey, Long.class);
             } else {
@@ -86,7 +88,7 @@ public class DefaultNotificationDeduplicationService implements NotificationDedu
         if (!onlyLocalCache) {
             if (!alreadyProcessed || deduplicationDuration == 0) {
                 // if lastProcessedTs is changed or if deduplicating infinitely (so that cache value not removed by ttl)
-                Cache externalCache = cacheManager.getCache(CacheConstants.SENT_NOTIFICATIONS_CACHE);
+                Cache externalCache = getExternalCache();
                 if (externalCache != null) {
                     externalCache.put(deduplicationKey, lastProcessedTs);
                 }
@@ -103,6 +105,12 @@ public class DefaultNotificationDeduplicationService implements NotificationDedu
         return deduplicationDurations.computeIfAbsent(trigger.getType(), triggerType -> {
             return trigger.getDefaultDeduplicationDuration();
         });
+    }
+
+    private Cache getExternalCache() {
+        return Optional.ofNullable(cacheManager)
+                .map(cacheManager -> cacheManager.getCache(CacheConstants.SENT_NOTIFICATIONS_CACHE))
+                .orElse(null);
     }
 
     @Autowired

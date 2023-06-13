@@ -177,6 +177,7 @@ import * as CopyButtonComponent from '@shared/components/button/copy-button.comp
 import * as TogglePasswordComponent from '@shared/components/button/toggle-password.component';
 import * as ProtobufContentComponent from '@shared/components/protobuf-content.component';
 import * as SlackConversationAutocompleteComponent from '@shared/components/slack-conversation-autocomplete.component';
+import * as StringItemsListComponent from '@shared/components/string-items-list.component';
 import * as ToggleHeaderComponent from '@shared/components/toggle-header.component';
 
 import * as AddEntityDialogComponent from '@home/components/entity/add-entity-dialog.component';
@@ -475,6 +476,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/button/toggle-password.component': TogglePasswordComponent,
     '@shared/components/protobuf-content.component': ProtobufContentComponent,
     '@shared/components/slack-conversation-autocomplete.component': SlackConversationAutocompleteComponent,
+    '@shared/components/string-items-list.component': StringItemsListComponent,
     '@shared/components/toggle-header.component': ToggleHeaderComponent,
 
     '@home/components/entity/add-entity-dialog.component': AddEntityDialogComponent,

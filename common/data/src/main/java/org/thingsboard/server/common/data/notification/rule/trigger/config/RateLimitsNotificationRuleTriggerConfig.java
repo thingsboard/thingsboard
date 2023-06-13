@@ -15,30 +15,31 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 
-@Getter
-public enum NotificationRuleTriggerType {
+import java.util.Set;
+import java.util.stream.Collectors;
 
-    ENTITY_ACTION,
-    ALARM,
-    ALARM_COMMENT,
-    ALARM_ASSIGNMENT,
-    DEVICE_ACTIVITY,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    NEW_PLATFORM_VERSION(false),
-    ENTITIES_LIMIT(false),
-    API_USAGE_LIMIT(false),
-    RATE_LIMITS(false);
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class RateLimitsNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    private final boolean tenantLevel;
+    private Set<LimitedApi> apis;
 
-    NotificationRuleTriggerType() {
-        this(true);
+    @Override
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.RATE_LIMITS;
     }
 
-    NotificationRuleTriggerType(boolean tenantLevel) {
-        this.tenantLevel = tenantLevel;
+    @Override
+    public String getDeduplicationKey() {
+        return apis == null ? "#" : apis.stream().sorted().map(Enum::name).collect(Collectors.joining(","));
     }
 
 }

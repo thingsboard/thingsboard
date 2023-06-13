@@ -24,11 +24,12 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.util.limits.DefaultRateLimitService;
-import org.thingsboard.server.dao.util.limits.LimitedApi;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.UUID;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +52,7 @@ public class RateLimitServiceTest {
     @Before
     public void beforeEach() {
         tenantProfileCache = Mockito.mock(TbTenantProfileCache.class);
-        rateLimitService = new DefaultRateLimitService(tenantProfileCache, 60, 100);
+        rateLimitService = new DefaultRateLimitService(tenantProfileCache, mock(NotificationRuleProcessor.class), 60, 100);
         tenantId = new TenantId(UUID.randomUUID());
     }
 
@@ -73,14 +75,14 @@ public class RateLimitServiceTest {
                 LimitedApi.ENTITY_EXPORT,
                 LimitedApi.ENTITY_IMPORT,
                 LimitedApi.NOTIFICATION_REQUESTS,
-                LimitedApi.REST_REQUESTS,
+                LimitedApi.REST_REQUESTS_PER_CUSTOMER,
                 LimitedApi.CASSANDRA_QUERIES
         )) {
             testRateLimits(limitedApi, max, tenantId);
         }
 
         CustomerId customerId = new CustomerId(UUID.randomUUID());
-        testRateLimits(LimitedApi.REST_REQUESTS, max, customerId);
+        testRateLimits(LimitedApi.REST_REQUESTS_PER_CUSTOMER, max, customerId);
 
         NotificationRuleId notificationRuleId = new NotificationRuleId(UUID.randomUUID());
         testRateLimits(LimitedApi.NOTIFICATION_REQUESTS_PER_RULE, max, notificationRuleId);
