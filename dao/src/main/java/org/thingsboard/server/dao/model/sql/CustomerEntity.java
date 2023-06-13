@@ -25,7 +25,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
@@ -38,17 +37,14 @@ import java.util.UUID;
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.CUSTOMER_TABLE_NAME)
-public final class CustomerEntity extends BaseSqlEntity<Customer> implements SearchTextEntity<Customer> {
+public final class CustomerEntity extends BaseSqlEntity<Customer> {
 
     @Column(name = ModelConstants.CUSTOMER_TENANT_ID_PROPERTY)
     private UUID tenantId;
     
     @Column(name = ModelConstants.CUSTOMER_TITLE_PROPERTY)
     private String title;
-    
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
-    
+
     @Column(name = ModelConstants.COUNTRY_PROPERTY)
     private String country;
     
@@ -103,16 +99,6 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
         if (customer.getExternalId() != null) {
             this.externalId = customer.getExternalId().getId();
         }
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return title;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     @Override

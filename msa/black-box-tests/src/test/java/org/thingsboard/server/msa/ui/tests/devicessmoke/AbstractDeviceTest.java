@@ -45,9 +45,5 @@ abstract public class AbstractDeviceTest extends AbstractDriverBaseTest {
     public void delete() {
         deleteDeviceByName(deviceName);
         deviceName = null;
-        if (deviceProfileTitle != null) {
-            deleteDeviceProfileByTitle(deviceProfileTitle);
-            deviceProfileTitle = null;
-        }
     }
 }

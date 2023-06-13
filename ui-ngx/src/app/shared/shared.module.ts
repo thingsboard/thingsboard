@@ -123,6 +123,7 @@ import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
 import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
+import { ErrorAlertDialogComponent } from '@shared/components/dialog/error-alert-dialog.component';
 import { TodoDialogComponent } from '@shared/components/dialog/todo-dialog.component';
 import { MaterialIconsDialogComponent } from '@shared/components/dialog/material-icons-dialog.component';
 import { MaterialIconSelectComponent } from '@shared/components/material-icon-select.component';
@@ -188,7 +189,10 @@ import {
   GtMdLgShowHideDirective
 } from '@shared/layout/layout.directives';
 import { ColorPickerComponent } from '@shared/components/color-picker/color-picker.component';
+import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
 import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
+import { ToggleHeaderComponent } from '@shared/components/toggle-header.component';
+import { RuleChainSelectComponent } from '@shared/components/rule-chain/rule-chain-select.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -305,6 +309,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetsBundleSelectComponent,
     ConfirmDialogComponent,
     AlertDialogComponent,
+    ErrorAlertDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
@@ -356,7 +361,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     GtMdLgLayoutAlignDirective,
     GtMdLgLayoutGapDirective,
     GtMdLgShowHideDirective,
-    ColorPickerComponent
+    ColorPickerComponent,
+    ResourceAutocompleteComponent,
+    ToggleHeaderComponent,
+    RuleChainSelectComponent
   ],
   imports: [
     CommonModule,
@@ -528,6 +536,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MarkdownModule,
     ConfirmDialogComponent,
     AlertDialogComponent,
+    ErrorAlertDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
@@ -580,7 +589,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     GtMdLgLayoutAlignDirective,
     GtMdLgLayoutGapDirective,
     GtMdLgShowHideDirective,
-    ColorPickerComponent
+    ColorPickerComponent,
+    ResourceAutocompleteComponent,
+    ToggleHeaderComponent,
+    RuleChainSelectComponent
   ]
 })
 export class SharedModule { }

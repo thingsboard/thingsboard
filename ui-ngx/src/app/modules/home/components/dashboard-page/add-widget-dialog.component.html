@@ -15,11 +15,25 @@
     limitations under the License.
 
 -->
-<form [formGroup]="widgetFormGroup" (ngSubmit)="add()" style="width: 1200px;">
+<form [formGroup]="widgetFormGroup" style="width: 1200px;">
   <mat-toolbar color="primary">
     <h2 translate>widget.add</h2>
     <span fxFlex>: {{data.widgetInfo.widgetName}}</span>
-    <div [tb-help]="helpLinkIdForWidgetType()"></div>
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+      <tb-toggle-header *ngIf="hasBasicMode" (valueChange)="widgetConfigMode = $event" ignoreMdLgSize="true"
+                        appearance="fill-invert" [options]="[
+                                {
+                                   name: translate.instant('widget.basic-mode'),
+                                   value: 'basic'
+                                },
+                                {
+                                   name: translate.instant('widget.advanced-mode'),
+                                   value: 'advanced'
+                                }
+                              ]" [value]="widgetConfigMode" name="widgetConfigModeHeader" useSelectOnMdLg="false">
+      </tb-toggle-header>
+      <div [tb-help]="helpLinkIdForWidgetType()"></div>
+    </div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -35,11 +49,27 @@
         [functionsOnly]="false"
         [dashboard]="dashboard"
         [widget]="widget"
+        [widgetConfigMode]="widgetConfigMode"
+        [hideHeader]="widgetConfigMode === widgetConfigModes.basic"
+        isAdd
         formControlName="widgetConfig">
       </tb-widget-config>
+      <tb-widget-preview *ngIf="previewMode" class="tb-absolute-fill"
+        [aliasController]="aliasController"
+        [stateController]="stateController"
+        [widget]="widget"
+        [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config">
+        <div class="tb-preview-panel-content">
+          <button mat-button
+                  (click)="previewMode = false">
+            <mat-icon>chevron_left</mat-icon>
+            {{ 'action.back' | translate }}
+          </button>
+        </div>
+      </tb-widget-preview>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions fxLayoutAlign="space-between center">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
@@ -47,10 +77,20 @@
             cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || widgetFormGroup.invalid">
-      {{ 'action.add' | translate }}
-    </button>
+    <div fxLayout="row" fxLayoutGap="8px">
+      <button *ngIf="!previewMode"
+              mat-button color="primary"
+              type="button"
+              [disabled]="(isLoading$ | async) || widgetFormGroup.invalid"
+              (click)="previewMode = true"
+              cdkFocusInitial>
+        {{ 'widget-config.preview' | translate }}
+      </button>
+      <button mat-raised-button color="primary"
+              (click)="add()"
+              [disabled]="(isLoading$ | async) || widgetFormGroup.invalid">
+        {{ 'action.add' | translate }}
+      </button>
+    </div>
   </div>
 </form>

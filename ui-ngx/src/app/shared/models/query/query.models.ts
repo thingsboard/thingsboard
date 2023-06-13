@@ -749,6 +749,14 @@ export function createDefaultEntityDataPageLink(pageSize: number): EntityDataPag
 
 export const singleEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1);
 
+export const singleEntityFilterFromDeviceId = (deviceId: string): EntityFilter => ({
+  type: AliasFilterType.singleEntity,
+  singleEntity: {
+    entityType: EntityType.DEVICE,
+    id: deviceId
+  }
+});
+
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
   keyFilters?: Array<KeyFilter>;

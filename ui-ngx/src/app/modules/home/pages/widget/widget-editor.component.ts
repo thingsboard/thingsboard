@@ -489,9 +489,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     if (!this.gotError) {
       this.gotError = true;
       let errorInfo = 'Error:';
-      if (details.name) {
-        errorInfo += ' ' + details.name + ':';
-      }
       if (details.message) {
         errorInfo += ' ' + details.message;
       }

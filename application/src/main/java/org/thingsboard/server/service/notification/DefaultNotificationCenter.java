@@ -15,13 +15,10 @@
  */
 package org.thingsboard.server.service.notification;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -59,14 +56,12 @@ import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
-import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.dao.util.limits.LimitedApi;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.channels.NotificationChannel;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -74,7 +69,6 @@ import org.thingsboard.server.service.telemetry.AbstractSubscriptionService;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -87,7 +81,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@SuppressWarnings({"UnstableApiUsage", "rawtypes"})
+@SuppressWarnings({"rawtypes"})
 public class DefaultNotificationCenter extends AbstractSubscriptionService implements NotificationCenter, NotificationChannel<User, WebDeliveryMethodNotificationTemplate> {
 
     private final NotificationTargetService notificationTargetService;
@@ -95,9 +89,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final NotificationService notificationService;
     private final NotificationTemplateService notificationTemplateService;
     private final NotificationSettingsService notificationSettingsService;
-    private final UserService userService;
     private final NotificationExecutorService notificationExecutor;
-    private final DbCallbackExecutorService dbCallbackExecutorService;
     private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducerProvider producerProvider;
     private final RateLimitService rateLimitService;
@@ -172,37 +164,32 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .build();
 
         notificationExecutor.submit(() -> {
-            List<ListenableFuture<Void>> results = new ArrayList<>();
-
             for (NotificationTarget target : targets) {
-                List<ListenableFuture<Void>> result = processForTarget(target, ctx);
-                results.addAll(result);
+                processForTarget(target, ctx);
             }
 
-            Futures.whenAllComplete(results).run(() -> {
-                NotificationRequestId requestId = ctx.getRequest().getId();
-                log.debug("[{}] Notification request processing is finished", requestId);
-                NotificationRequestStats stats = ctx.getStats();
-                try {
-                    notificationRequestService.updateNotificationRequest(tenantId, requestId, NotificationRequestStatus.SENT, stats);
-                } catch (Exception e) {
-                    log.error("[{}] Failed to update stats for notification request", requestId, e);
-                }
+            NotificationRequestId requestId = ctx.getRequest().getId();
+            log.debug("[{}] Notification request processing is finished", requestId);
+            NotificationRequestStats stats = ctx.getStats();
+            try {
+                notificationRequestService.updateNotificationRequest(tenantId, requestId, NotificationRequestStatus.SENT, stats);
+            } catch (Exception e) {
+                log.error("[{}] Failed to update stats for notification request", requestId, e);
+            }
 
-                if (callback != null) {
-                    try {
-                        callback.accept(stats);
-                    } catch (Exception e) {
-                        log.error("Failed to process callback for notification request {}", requestId, e);
-                    }
+            if (callback != null) {
+                try {
+                    callback.accept(stats);
+                } catch (Exception e) {
+                    log.error("Failed to process callback for notification request {}", requestId, e);
                 }
-            }, dbCallbackExecutorService);
+            }
         });
 
         return request;
     }
 
-    private List<ListenableFuture<Void>> processForTarget(NotificationTarget target, NotificationProcessingContext ctx) {
+    private void processForTarget(NotificationTarget target, NotificationProcessingContext ctx) {
         Iterable<? extends NotificationRecipient> recipients;
         switch (target.getConfiguration().getType()) {
             case PLATFORM_USERS: {
@@ -231,43 +218,35 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         Set<NotificationDeliveryMethod> deliveryMethods = new HashSet<>(ctx.getDeliveryMethods());
         deliveryMethods.removeIf(deliveryMethod -> !target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod));
         log.debug("[{}] Processing notification request for {} target ({}) for delivery methods {}", ctx.getRequest().getId(), target.getConfiguration().getType(), target.getId(), deliveryMethods);
+        if (deliveryMethods.isEmpty()) {
+            return;
+        }
 
-        List<ListenableFuture<Void>> results = new ArrayList<>();
-        if (!deliveryMethods.isEmpty()) {
-            for (NotificationRecipient recipient : recipients) {
-                for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
-                    ListenableFuture<Void> resultFuture = processForRecipient(deliveryMethod, recipient, ctx);
-                    DonAsynchron.withCallback(resultFuture, result -> {
-                        ctx.getStats().reportSent(deliveryMethod, recipient);
-                    }, error -> {
-                        ctx.getStats().reportError(deliveryMethod, error, recipient);
-                    });
-                    results.add(resultFuture);
+        for (NotificationRecipient recipient : recipients) {
+            for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
+                try {
+                    processForRecipient(deliveryMethod, recipient, ctx);
+                    ctx.getStats().reportSent(deliveryMethod, recipient);
+                } catch (Exception error) {
+                    ctx.getStats().reportError(deliveryMethod, error, recipient);
                 }
             }
         }
-        return results;
     }
 
-    private ListenableFuture<Void> processForRecipient(NotificationDeliveryMethod deliveryMethod, NotificationRecipient recipient, NotificationProcessingContext ctx) {
+    private void processForRecipient(NotificationDeliveryMethod deliveryMethod, NotificationRecipient recipient, NotificationProcessingContext ctx) throws Exception {
         if (ctx.getStats().contains(deliveryMethod, recipient.getId())) {
-            return Futures.immediateFailedFuture(new AlreadySentException());
+            throw new AlreadySentException();
         }
-
-        DeliveryMethodNotificationTemplate processedTemplate;
-        try {
-            processedTemplate = ctx.getProcessedTemplate(deliveryMethod, recipient);
-        } catch (Exception e) {
-            return Futures.immediateFailedFuture(e);
-        }
-
         NotificationChannel notificationChannel = channels.get(deliveryMethod);
+        DeliveryMethodNotificationTemplate processedTemplate = ctx.getProcessedTemplate(deliveryMethod, recipient);
+
         log.trace("[{}] Sending {} notification for recipient {}", ctx.getRequest().getId(), deliveryMethod, recipient);
-        return notificationChannel.sendNotification(recipient, processedTemplate, ctx);
+        notificationChannel.sendNotification(recipient, processedTemplate, ctx);
     }
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, WebDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
+    public void sendNotification(User recipient, WebDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
         NotificationRequest request = ctx.getRequest();
         Notification notification = Notification.builder()
                 .requestId(request.getId())
@@ -283,14 +262,14 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             notification = notificationService.saveNotification(recipient.getTenantId(), notification);
         } catch (Exception e) {
             log.error("Failed to create notification for recipient {}", recipient.getId(), e);
-            return Futures.immediateFailedFuture(e);
+            throw e;
         }
 
         NotificationUpdate update = NotificationUpdate.builder()
                 .created(true)
                 .notification(notification)
                 .build();
-        return onNotificationUpdate(recipient.getTenantId(), recipient.getId(), update);
+        onNotificationUpdate(recipient.getTenantId(), recipient.getId(), update);
     }
 
     @Override
@@ -384,13 +363,11 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         clusterService.pushMsgToCore(tenantId, notificationRequestId, toCoreMsg, null);
     }
 
-    private ListenableFuture<Void> onNotificationUpdate(TenantId tenantId, UserId recipientId, NotificationUpdate update) {
+    private void onNotificationUpdate(TenantId tenantId, UserId recipientId, NotificationUpdate update) {
         log.trace("Submitting notification update for recipient {}: {}", recipientId, update);
-        return Futures.submit(() -> {
-            forwardToSubscriptionManagerService(tenantId, recipientId, subscriptionManagerService -> {
-                subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, update, TbCallback.EMPTY);
-            }, () -> TbSubscriptionUtils.notificationUpdateToProto(tenantId, recipientId, update));
-        }, wsCallBackExecutor);
+        forwardToSubscriptionManagerService(tenantId, recipientId, subscriptionManagerService -> {
+            subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, update, TbCallback.EMPTY);
+        }, () -> TbSubscriptionUtils.notificationUpdateToProto(tenantId, recipientId, update));
     }
 
     private void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate update) {

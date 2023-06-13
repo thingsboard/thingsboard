@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -36,7 +37,6 @@ import java.util.function.Supplier;
 @Slf4j
 public abstract class BaseDataWithAdditionalInfo<I extends UUIDBased> extends BaseData<I> implements HasAdditionalInfo {
 
-    public static final ObjectMapper mapper = new ObjectMapper();
     @NoXss
     private transient JsonNode additionalInfo;
     @JsonIgnore
