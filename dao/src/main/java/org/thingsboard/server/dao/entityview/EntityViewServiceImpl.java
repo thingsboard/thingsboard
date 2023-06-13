@@ -45,8 +45,8 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
-import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
-import org.thingsboard.server.dao.eventsourcing.EntityUpdateEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
+import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
 import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -109,7 +109,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         try {
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
             publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
-            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(saved.getTenantId()).entityId(saved.getId()).entity(saved).build());
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(saved.getTenantId()).entityId(saved.getId()).build());
             return saved;
         } catch (Exception t) {
             checkConstraintViolation(t,
@@ -122,7 +122,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, CustomerId customerId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
         entityView.setCustomerId(customerId);
-        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, null, entityViewId,
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, entityViewId,
                 JacksonUtil.toString(customerId), EdgeEventActionType.ASSIGNED_TO_CUSTOMER));
         return saveEntityView(entityView);
     }
@@ -132,7 +132,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
         CustomerId customerId = entityView.getCustomerId();
         entityView.setCustomerId(null);
-        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, null, entityViewId,
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, entityViewId,
                 JacksonUtil.toString(customerId), EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER));
         return saveEntityView(entityView);
     }
@@ -361,8 +361,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to create entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, edgeId, entityViewId,
-                null, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER));
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, entityViewId,
+                null, EdgeEventActionType.ASSIGNED_TO_EDGE));
         return entityView;
     }
 
@@ -379,7 +379,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to delete entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, edgeId, entityViewId,
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, entityViewId,
                 null, EdgeEventActionType.UNASSIGNED_FROM_EDGE));
         return entityView;
     }
@@ -406,7 +406,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     private void publishDeleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, entityViewId);
         if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
-            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(entityViewId).entity(entityViewId).relatedEdgeIds(relatedEdgeIds));
+            eventPublisher.publishEvent(DeleteDaoEventByRelatedEdges.builder().tenantId(tenantId).entityId(entityViewId).relatedEdgeIds(relatedEdgeIds).build());
         }
     }
 

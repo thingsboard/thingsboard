@@ -15,17 +15,23 @@
  */
 package org.thingsboard.server.dao.eventsourcing;
 
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import lombok.NonNull;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.List;
+
+
+@Builder
 @Data
-public class EntityUpdateEvent {
-    private final TenantId tenantId;
-    private final EdgeId edgeId;
-    private final EntityId entityId;
-    private final String body;
-    private final EdgeEventActionType actionType;
+public class DeleteDaoEventByRelatedEdges {
+    @NonNull
+    final TenantId tenantId;
+    @NonNull
+    final EntityId entityId;
+    @NonNull
+    final List<EdgeId> relatedEdgeIds;
 }

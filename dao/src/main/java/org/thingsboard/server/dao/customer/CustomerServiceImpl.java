@@ -36,7 +36,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
-import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
 import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -114,7 +114,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             if (customer.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedCustomer.getTenantId(), EntityType.CUSTOMER);
             }
-            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedCustomer.getTenantId()).entityId(savedCustomer.getId()).entity(savedCustomer).build());
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedCustomer.getTenantId()).entityId(savedCustomer.getId()).build());
             return savedCustomer;
         } catch (Exception e) {
             checkConstraintViolation(e, "customer_external_id_unq_key", "Customer with such external id already exists!");
@@ -185,7 +185,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     private void publishDeleteCustomer(TenantId tenantId, CustomerId customerId) {
         List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, customerId);
         if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
-            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(customerId).entity(customerId).relatedEdgeIds(relatedEdgeIds));
+            eventPublisher.publishEvent(DeleteDaoEventByRelatedEdges.builder().tenantId(tenantId).entityId(customerId).relatedEdgeIds(relatedEdgeIds).build());
         }
     }
 

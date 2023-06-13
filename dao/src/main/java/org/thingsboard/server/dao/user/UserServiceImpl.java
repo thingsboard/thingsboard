@@ -138,7 +138,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
             userCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
             userCredentialsDao.save(user.getTenantId(), userCredentials);
         }
-        eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedUser.getTenantId()).entityId(savedUser.getId()).entity(savedUser).build());
+        eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedUser.getTenantId()).entityId(savedUser.getId()).build());
         return savedUser;
     }
 
@@ -237,11 +237,11 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
         userAuthSettingsDao.removeByUserId(userId);
-        publishDeleteUser(tenantId, userId);
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.USER);
+        eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(userId).build());
     }
 
     @Override
@@ -416,13 +416,6 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
             ((ObjectNode) additionalInfo).set(USER_PASSWORD_HISTORY, userPasswordHistoryJson);
         }
         userCredentials.setAdditionalInfo(additionalInfo);
-    }
-
-    private void publishDeleteUser(TenantId tenantId, UserId userId) {
-        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, userId);
-        if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
-            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(userId).entity(userId).relatedEdgeIds(relatedEdgeIds));
-        }
     }
 
     private final PaginatedRemover<TenantId, User> tenantAdminsRemover = new PaginatedRemover<>() {

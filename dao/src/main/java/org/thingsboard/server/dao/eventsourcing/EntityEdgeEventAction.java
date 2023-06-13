@@ -15,21 +15,17 @@
  */
 package org.thingsboard.server.dao.eventsourcing;
 
-import lombok.Builder;
 import lombok.Data;
-import lombok.NonNull;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasUUID;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@Builder
 @Data
-//EdgeEventActionType.DELETED
-public class DeleteDaoEdgeEvent<T extends HasUUID> {
-    @NonNull
-    final TenantId tenantId;
-    @NonNull
-    final EntityId entityId; //useful for partitioning to put the coupled entities to the same partition. Like device and device credentials
-    @NonNull
-    final T entity;
+public class EntityEdgeEventAction {
+    private final TenantId tenantId;
+    private final EdgeId edgeId;
+    private final EntityId entityId;
+    private final String body;
+    private final EdgeEventActionType actionType;
 }

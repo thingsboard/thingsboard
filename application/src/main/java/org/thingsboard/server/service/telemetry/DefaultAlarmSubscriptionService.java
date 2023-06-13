@@ -52,6 +52,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;

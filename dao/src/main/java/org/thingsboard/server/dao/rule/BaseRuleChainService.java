@@ -55,8 +55,8 @@ import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
 import org.thingsboard.server.common.data.util.ReflectionUtils;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
-import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
-import org.thingsboard.server.dao.eventsourcing.EntityUpdateEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
+import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
 import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -113,7 +113,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
             }
             if (RuleChainType.EDGE.equals(savedRuleChain.getType())) {
-                eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedRuleChain.getTenantId()).entityId(savedRuleChain.getId()).entity(savedRuleChain).build());
+                eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedRuleChain.getTenantId()).entityId(savedRuleChain.getId()).build());
             }
             return savedRuleChain;
         } catch (Exception e) {
@@ -257,6 +257,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
+        }
+        if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(tenantId).entityId(ruleChain.getId()).build());
         }
 
         return RuleChainUpdateResult.successful(updatedRuleNodes);
@@ -420,7 +423,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                             if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
                                 throw new DataValidationException("Can't delete rule chain that is root for edge [" + edge.getName() + "]. Please assign another root rule chain first to the edge!");
                             }
-                            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(ruleChainId).entity(ruleChainId).relatedEdgeIds(List.of(edge.getId())));
+                            eventPublisher.publishEvent(DeleteDaoEventByRelatedEdges.builder().tenantId(tenantId).entityId(ruleChainId).relatedEdgeIds(List.of(edge.getId())).build());
                         }
                         if (pageData.hasNext()) {
                             pageLink = pageLink.nextPageLink();
@@ -594,7 +597,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, edgeId, ruleChainId,
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, ruleChainId,
                 null, EdgeEventActionType.ASSIGNED_TO_EDGE));
         return ruleChain;
     }
@@ -615,7 +618,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             log.warn("[{}] Failed to delete rule chain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, edgeId, ruleChainId,
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, ruleChainId,
                 null, EdgeEventActionType.UNASSIGNED_FROM_EDGE));
         return ruleChain;
     }

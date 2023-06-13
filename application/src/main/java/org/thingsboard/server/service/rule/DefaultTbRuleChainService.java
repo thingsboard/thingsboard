@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -300,14 +299,8 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
 
             notificationEntityService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user, ruleChainMetaData);
 
-            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                notificationEntityService.notifySendMsgToEdgeService(tenantId, ruleChain.getId(), EdgeEventActionType.UPDATED);
-            }
-
             for (RuleChain updatedRuleChain : updatedRuleChains) {
-                if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                    notificationEntityService.notifySendMsgToEdgeService(tenantId, updatedRuleChain.getId(), EdgeEventActionType.UPDATED);
-                } else {
+                if (RuleChainType.CORE.equals(ruleChain.getType())) {
                     RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
                     notificationEntityService.logEntityAction(tenantId, updatedRuleChain.getId(), updatedRuleChain,
                             ActionType.UPDATED, user, updatedRuleChainMetaData);

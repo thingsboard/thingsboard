@@ -20,14 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
-import org.thingsboard.server.dao.eventsourcing.DeleteDaoEdgeEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
-import org.thingsboard.server.dao.eventsourcing.EntityUpdateEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
+import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
 import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 
 import javax.annotation.PostConstruct;
@@ -60,7 +59,7 @@ public class EdgeEventSourcingListener {
     }
 
     @EventListener
-    public void failEvent(SaveDaoEvent.SaveDaoEventBuilder<?> event) {
+    public void failEvent(SaveDaoEvent.SaveDaoEventBuilder event) {
         String message = "SaveDaoEvent.SaveDaoEventBuilder event is not allowed " + event;
         RuntimeException exception = new RuntimeException(message);
         log.error(message, exception);
@@ -68,25 +67,33 @@ public class EdgeEventSourcingListener {
     }
 
     @EventListener
-    public void failEvent(DeleteDaoEvent.DeleteDaoEventBuilder<?> event) {
+    public void failEvent(DeleteDaoEvent.DeleteDaoEventBuilder event) {
         String message = "DeleteDaoEvent.DeleteDaoEventBuilder event is not allowed" + event;
         RuntimeException exception = new RuntimeException(message);
         log.error(message, exception);
         throw exception;
     }
 
+    @EventListener
+    public void failEvent(DeleteDaoEventByRelatedEdges.DeleteDaoEventByRelatedEdgesBuilder event) {
+        String message = "DeleteDaoEventByRelatedEdges.DeleteDaoEventByRelatedEdgesBuilder event is not allowed" + event;
+        RuntimeException exception = new RuntimeException(message);
+        log.error(message, exception);
+        throw exception;
+    }
+
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(SaveDaoEvent<?> event) {
+    public void handleEvent(SaveDaoEvent event) {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
         log.trace("SaveDaoEvent called: {}", event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
-                JacksonUtil.toPrettyString(event.getEntity()), null, EdgeEventActionType.UPDATED);
+                null, null, EdgeEventActionType.UPDATED);
     }
 
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(DeleteDaoEvent<?> event) {
+    public void handleEvent(DeleteDaoEventByRelatedEdges event) {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
@@ -98,7 +105,7 @@ public class EdgeEventSourcingListener {
     }
 
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(DeleteDaoEdgeEvent<?> event) {
+    public void handleEvent(DeleteDaoEvent event) {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
@@ -108,7 +115,7 @@ public class EdgeEventSourcingListener {
     }
 
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(EntityUpdateEvent event) {
+    public void handleEvent(EntityEdgeEventAction event) {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }

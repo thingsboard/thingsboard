@@ -121,8 +121,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
             savedAssetProfile = assetProfileDao.saveAndFlush(assetProfile.getTenantId(), assetProfile);
             publishEvictEvent(new AssetProfileEvictEvent(savedAssetProfile.getTenantId(), savedAssetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, savedAssetProfile.getId(), savedAssetProfile.isDefault()));
-            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedAssetProfile.getTenantId()).entityId(savedAssetProfile.getId())
-                    .entity(savedAssetProfile).build());
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedAssetProfile.getTenantId()).entityId(savedAssetProfile.getId()).build());
         } catch (Exception t) {
             handleEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, null, assetProfile.isDefault()));
@@ -165,7 +164,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
             assetProfileDao.removeById(tenantId, assetProfileId.getId());
             publishEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     null, assetProfile.getId(), assetProfile.isDefault()));
-            publishAssetProfileDelete(tenantId, assetProfileId);
+            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(assetProfileId).build());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_asset_profile")) {
@@ -312,7 +311,6 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     private void publishAssetProfileDelete(TenantId tenantId, AssetProfileId assetProfileId) {
         List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, assetProfileId);
         if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
-            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(assetProfileId).entity(assetProfileId).relatedEdgeIds(relatedEdgeIds));
         }
     }
 

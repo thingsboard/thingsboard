@@ -23,11 +23,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 @Builder
 @Data
-public class SaveDaoEvent<T> {
+public class SaveDaoEvent {
     @NonNull
     final TenantId tenantId;
     @NonNull
     final EntityId entityId;
-    @NonNull
-    final T entity;
 }

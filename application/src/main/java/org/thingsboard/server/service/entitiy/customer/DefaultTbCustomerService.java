@@ -47,16 +47,17 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
 
     @Override
     public void delete(Customer customer, User user) {
+        ActionType actionType = ActionType.DELETED;
         TenantId tenantId = customer.getTenantId();
         CustomerId customerId = customer.getId();
         try {
             customerService.deleteCustomer(tenantId, customerId);
-            notificationEntityService.logEntityAction(tenantId, customer.getId(), customer, customerId,
-                    ActionType.DELETED, user, customerId.toString());
+            notificationEntityService.logEntityAction(tenantId, customer.getId(), customer, customerId, actionType,
+                    user, customerId.toString());
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, customer.getId(), ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.CUSTOMER), ActionType.DELETED,
-                    user, e, customerId.toString());
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.CUSTOMER), actionType, user,
+                    e, customerId.toString());
             throw e;
         }
     }

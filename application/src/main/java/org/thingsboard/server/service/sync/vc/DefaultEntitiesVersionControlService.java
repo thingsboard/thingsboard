@@ -435,8 +435,10 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(ctx.getTenantId(), entity.getId());
                 exportableEntitiesService.removeById(ctx.getTenantId(), entity.getId());
 
-                ctx.addEventCallback(() -> entityNotificationService.notifyDeleteEntity(ctx.getTenantId(), entity.getId(),
-                        entity, null, ActionType.DELETED, relatedEdgeIds, ctx.getUser()));
+                ctx.addEventCallback(() -> {
+                    entityNotificationService.notifyDeleteEntity(ctx.getTenantId(), entity.getId(),
+                            entity, null, ActionType.DELETED, relatedEdgeIds, ctx.getUser());
+                });
                 ctx.registerDeleted(entityType);
             }
         });

@@ -211,7 +211,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         importResult.setUpdatedRelatedEntities(true);
                         relationService.deleteRelation(ctx.getTenantId(), existingRelation.getFrom(), existingRelation.getTo(), existingRelation.getType(), existingRelation.getTypeGroup());
                         importResult.addSendEventsCallback(() -> {
-                            entityNotificationService.notifyRelation(tenantId, null,
+                            entityNotificationService.logEntityRelationAction(tenantId, null,
                                     existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, existingRelation);
                         });
                     } else if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {

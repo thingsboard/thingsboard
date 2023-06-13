@@ -18,23 +18,14 @@ package org.thingsboard.server.dao.eventsourcing;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasUUID;
 import org.thingsboard.server.common.data.id.TenantId;
-
-import java.util.List;
-
 
 @Builder
 @Data
-public class DeleteDaoEvent<T extends HasUUID> {
+public class DeleteDaoEvent {
     @NonNull
     final TenantId tenantId;
     @NonNull
-    final EntityId entityId; //useful for partitioning to put the coupled entities to the same partition. Like device and device credentials
-    @NonNull
-    final T entity;
-    @NonNull
-    final List<EdgeId> relatedEdgeIds;
+    final EntityId entityId;
 }

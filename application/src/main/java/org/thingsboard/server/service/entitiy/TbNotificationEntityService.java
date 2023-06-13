@@ -21,10 +21,8 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -59,8 +57,6 @@ public interface TbNotificationEntityService {
                                                                     List<EdgeId> relatedEdgeIds,
                                                                     User user, Object... additionalInfo);
 
-    <I extends EntityId> void notifySendMsgToEdgeService(TenantId tenantId, I entityId, EdgeEventActionType edgeEventActionType);
-
     void notifyCreateOrUpdateTenant(Tenant tenant, ComponentLifecycleEvent event);
 
     void notifyDeleteTenant(Tenant tenant);
@@ -80,10 +76,8 @@ public interface TbNotificationEntityService {
     void notifyCreateOrUpdateOrDeleteEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge, ActionType actionType,
                                           User user, Object... additionalInfo);
 
-    void notifyCreateOrUpdateAlarm(AlarmInfo alarm, ActionType actionType, User user, Object... additionalInfo);
-
     void notifyAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user);
 
-    void notifyRelation(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user,
-                        ActionType actionType, Object... additionalInfo);
+    void logEntityRelationAction(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user,
+                                 ActionType actionType, Object... additionalInfo);
 }
