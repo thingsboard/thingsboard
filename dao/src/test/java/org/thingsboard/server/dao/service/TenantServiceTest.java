@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -505,8 +506,11 @@ public class TenantServiceTest extends AbstractServiceTest {
         assertThat(resourceService.findResourceById(tenant.getId(), resource.getId()))
                 .as("resource").isNull();
         PageLink pageLinkResources = new PageLink(1);
+        TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
+                .tenantId(tenantId)
+                .build();
         PageData<TbResourceInfo> tenantResources =
-                resourceService.findAllTenantResourcesByTenantId(tenant.getId(), pageLinkResources);
+                resourceService.findAllTenantResourcesByTenantId(filter, pageLinkResources);
         Assert.assertEquals(0, tenantResources.getTotalElements());
     }
 

@@ -337,6 +337,7 @@ public class ModelConstants {
     public static final String COMPONENT_DESCRIPTOR_NAME_PROPERTY = "name";
     public static final String COMPONENT_DESCRIPTOR_CLASS_PROPERTY = "clazz";
     public static final String COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY = "configuration_descriptor";
+    public static final String COMPONENT_DESCRIPTOR_CONFIGURATION_VERSION_PROPERTY = "configuration_version";
     public static final String COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY = "actions";
 
     /**
@@ -392,6 +393,7 @@ public class ModelConstants {
     public static final String RULE_NODE_CHAIN_ID_PROPERTY = "rule_chain_id";
     public static final String RULE_NODE_TYPE_PROPERTY = "type";
     public static final String RULE_NODE_NAME_PROPERTY = "name";
+    public static final String RULE_NODE_VERSION_PROPERTY = "configuration_version";
     public static final String RULE_NODE_CONFIGURATION_PROPERTY = "configuration";
 
     /**
@@ -480,6 +482,7 @@ public class ModelConstants {
     public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
     public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
     public static final String RESOURCE_DATA_COLUMN = "data";
+    public static final String RESOURCE_ETAG_COLUMN = "etag";
 
     /**
      * Ota Package constants.

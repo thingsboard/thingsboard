@@ -59,8 +59,7 @@
           </mat-error>
         </mat-form-field>
         <tb-template-autocomplete
-          required
-          allowCreate
+          required allowCreate allowEdit
           formControlName="templateId"
           [notificationTypes]="ruleNotificationForm.get('triggerType').value">
         </tb-template-autocomplete>

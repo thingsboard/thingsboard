@@ -22,10 +22,10 @@ import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.notification.info.AlarmAssignmentNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig.Action;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.notification.trigger.AlarmAssignmentTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmAssignmentNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmAssignmentNotificationRuleTriggerConfig.Action;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentTrigger;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;

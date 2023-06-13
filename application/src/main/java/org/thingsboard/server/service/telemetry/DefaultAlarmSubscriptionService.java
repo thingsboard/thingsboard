@@ -47,7 +47,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.common.msg.notification.trigger.AlarmTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmTrigger;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;

@@ -1087,6 +1087,27 @@ mat-label {
     border-radius: 50%;
     box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .14), 0 2px 2px 0 rgba(0, 0, 0, .098), 0 1px 5px 0 rgba(0, 0, 0, .084);
 
+    &.box {
+      border: none;
+      box-shadow: none;
+      border-radius: 4px;
+      .tb-color-result {
+        border: 1px solid rgba(0, 0, 0, 0.12);
+      }
+      &.disabled {
+        cursor: initial;
+        .tb-color-result {
+          background: rgba(0, 0, 0, 0.38);
+        }
+      }
+    }
+
+    &.small {
+      width: 18px;
+      min-width: 18px;
+      height: 18px;
+    }
+
     @include tb-checkered-bg();
 
     .tb-color-result {
@@ -1162,4 +1183,166 @@ mat-label {
   .mat-expansion-panel {
     color: inherit;
   }
+
+  // Widget config
+
+  .tb-widget-config-panel {
+    box-shadow: 0 0 10px 6px rgba(11, 17, 51, 0.04);
+    border-radius: 4px;
+    padding: 16px;
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    color: rgba(0, 0, 0, 0.87);
+    letter-spacing: 0.15px;
+    position: relative;
+    &.no-padding-bottom {
+      padding-bottom: 0;
+    }
+    &.stroked {
+      box-shadow: none;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+    }
+    .mat-expansion-panel {
+      &.tb-settings {
+        box-shadow: none;
+        .mat-content {
+          overflow: visible;
+        }
+        .mat-expansion-panel-header {
+          font-weight: 500;
+          font-size: 16px;
+          line-height: 24px;
+          letter-spacing: 0.25px;
+          padding: 0;
+          .mat-content {
+            flex: 0;
+            white-space: nowrap;
+          }
+          &:hover {
+            background: none;
+          }
+          .mat-expansion-indicator {
+            height: 32px;
+            padding: 2px;
+          }
+        }
+        .mat-expansion-panel-header-description {
+          align-items: center;
+        }
+        > .mat-expansion-panel-content {
+          > .mat-expansion-panel-body {
+            padding: 0;
+          }
+        }
+        .tb-json-object-panel, .tb-css-content-panel {
+          margin: 0 0 8px;
+        }
+      }
+      .mat-expansion-panel-content {
+        font: inherit;
+      }
+    }
+    .mat-slide {
+      margin: 8px 0;
+      .mdc-form-field>label {
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 24px;
+        margin-left: 12px;
+      }
+    }
+  }
+
+  .tb-widget-config-panel-title {
+    font-weight: 500;
+    font-size: 16px;
+  }
+  .tb-widget-config-panel-hint {
+    font-size: 12px;
+    color: #808080;
+  }
+  .tb-widget-config-row {
+    height: 56px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding-left: 16px;
+    padding-right: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    &.same-padding {
+      padding-right: 16px;
+    }
+    &.space-between {
+      justify-content: space-between;
+    }
+    .mat-divider-vertical {
+      height: 56px;
+    }
+    .mat-mdc-form-field {
+      width: 80px;
+    }
+  }
+
+  .tb-widget-config-row .mat-mdc-form-field, .mat-mdc-form-field.tb-inline-field {
+    &.mat-form-field-appearance-fill {
+      .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+        &:before {
+          opacity: 0;
+        }
+        .mdc-line-ripple::before {
+          border-bottom-color: rgba(0, 0, 0, 0.12);
+        }
+      }
+      .mat-mdc-form-field-focus-overlay {
+        opacity: 0;
+      }
+    }
+    .mat-mdc-text-field-wrapper {
+      &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
+        padding-right: 12px;
+        padding-left: 12px;
+        &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(:hover) {
+          .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+            border-color: rgba(0, 0, 0, 0.12);
+          }
+        }
+        .mat-mdc-form-field-infix {
+          padding-top: 7px;
+          padding-bottom: 7px;
+          min-height: 38px;
+          width: auto;
+          .mdc-text-field__input, .mat-mdc-select {
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+          }
+        }
+      }
+    }
+    &.center {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-infix {
+          .mdc-text-field__input {
+            text-align: center;
+          }
+        }
+      }
+    }
+    &.number {
+      .mat-mdc-text-field-wrapper {
+        padding-right: 4px;
+        .mat-mdc-form-field-infix {
+          input.mdc-text-field__input[type=number]::-webkit-inner-spin-button,
+          input.mdc-text-field__input[type=number]::-webkit-outer-spin-button {
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+
 }

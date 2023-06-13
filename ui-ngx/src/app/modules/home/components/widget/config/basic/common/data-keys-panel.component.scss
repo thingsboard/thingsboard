@@ -1,0 +1,76 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.tb-data-keys-table {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 12px;
+  .tb-data-keys-header {
+    height: 48px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: row;
+    place-content: center flex-start;
+    align-items: center;
+    gap: 12px;
+    padding-left: 12px;
+    .tb-data-keys-header-cell {
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.2px;
+      color: rgba(0, 0, 0, 0.54);
+      &.tb-color-header, &.tb-units-header, &.tb-decimals-header {
+        width: 60px;
+      }
+      &.tb-actions-header {
+        width: 76px;
+      }
+    }
+  }
+  .tb-data-keys-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tb-prompt {
+    height: 38px;
+  }
+}
+
+.tb-data-keys-table-row {
+  height: 38px;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  background: #fff;
+
+  .tb-data-keys-table-row-buttons {
+    display: flex;
+    flex-direction: row;
+    button.mat-mdc-icon-button.mat-mdc-button-base {
+      padding: 7px;
+      width: 38px;
+      height: 38px;
+      .mat-icon {
+        color: rgba(0, 0, 0, 0.38);
+      }
+    }
+  }
+
+}

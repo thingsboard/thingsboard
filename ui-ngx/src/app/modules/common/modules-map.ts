@@ -178,6 +178,7 @@ import * as TogglePasswordComponent from '@shared/components/button/toggle-passw
 import * as ProtobufContentComponent from '@shared/components/protobuf-content.component';
 import * as SlackConversationAutocompleteComponent from '@shared/components/slack-conversation-autocomplete.component';
 import * as StringItemsListComponent from '@shared/components/string-items-list.component';
+import * as ToggleHeaderComponent from '@shared/components/toggle-header.component';
 
 import * as AddEntityDialogComponent from '@home/components/entity/add-entity-dialog.component';
 import * as EntitiesTableComponent from '@home/components/entity/entities-table.component';
@@ -197,7 +198,7 @@ import * as AddAttributeDialogComponent from '@home/components/attribute/add-att
 import * as EditAttributeValuePanelComponent from '@home/components/attribute/edit-attribute-value-panel.component';
 import * as DashboardComponent from '@home/components/dashboard/dashboard.component';
 import * as WidgetComponent from '@home/components/widget/widget.component';
-import * as LegendComponent from '@home/components/widget/legend.component';
+import * as LegendComponent from '@home/components/widget/lib/legend.component';
 import * as AliasesEntitySelectPanelComponent from '@home/components/alias/aliases-entity-select-panel.component';
 import * as AliasesEntitySelectComponent from '@home/components/alias/aliases-entity-select.component';
 import * as WidgetConfigComponent from '@home/components/widget/widget-config.component';
@@ -207,10 +208,10 @@ import * as EntityAliasDialogComponent from '@home/components/alias/entity-alias
 import * as EntityFilterComponent from '@home/components/entity/entity-filter.component';
 import * as RelationFiltersComponent from '@home/components/relation/relation-filters.component';
 import * as EntityAliasSelectComponent from '@home/components/alias/entity-alias-select.component';
-import * as DataKeysComponent from '@home/components/widget/data-keys.component';
-import * as DataKeyConfigDialogComponent from '@home/components/widget/data-key-config-dialog.component';
-import * as DataKeyConfigComponent from '@home/components/widget/data-key-config.component';
-import * as LegendConfigComponent from '@home/components/widget/legend-config.component';
+import * as DataKeysComponent from '@home/components/widget/config/data-keys.component';
+import * as DataKeyConfigDialogComponent from '@home/components/widget/config/data-key-config-dialog.component';
+import * as DataKeyConfigComponent from '@home/components/widget/config/data-key-config.component';
+import * as LegendConfigComponent from '@home/components/widget/lib/settings/common/legend-config.component';
 import * as ManageWidgetActionsComponent from '@home/components/widget/action/manage-widget-actions.component';
 import * as WidgetActionDialogComponent from '@home/components/widget/action/widget-action-dialog.component';
 import * as CustomActionPrettyResourcesTabsComponent from '@home/components/widget/action/custom-action-pretty-resources-tabs.component';
@@ -301,6 +302,7 @@ import * as QueueFormComponent from '@home/components/queue/queue-form.component
 import * as AssetProfileComponent from '@home/components/profile/asset-profile.component';
 import * as AssetProfileDialogComponent from '@home/components/profile/asset-profile-dialog.component';
 import * as AssetProfileAutocompleteComponent from '@home/components/profile/asset-profile-autocomplete.component';
+import * as RuleChainSelectComponent from '@shared/components/rule-chain/rule-chain-select.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 
@@ -419,6 +421,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/quick-time-interval.component': QuickTimeIntervalComponent,
     '@shared/components/dashboard-select.component': DashboardSelectComponent,
     '@shared/components/dashboard-select-panel.component': DashboardSelectPanelComponent,
+    '@shared/components/rule-chain/rule-chain-select.component': RuleChainSelectComponent,
     '@shared/components/time/datetime-period.component': DatetimePeriodComponent,
     '@shared/components/time/datetime.component': DatetimeComponent,
     '@shared/components/time/timezone-select.component': TimezoneSelectComponent,
@@ -474,6 +477,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/protobuf-content.component': ProtobufContentComponent,
     '@shared/components/slack-conversation-autocomplete.component': SlackConversationAutocompleteComponent,
     '@shared/components/string-items-list.component': StringItemsListComponent,
+    '@shared/components/toggle-header.component': ToggleHeaderComponent,
 
     '@home/components/entity/add-entity-dialog.component': AddEntityDialogComponent,
     '@home/components/entity/entities-table.component': EntitiesTableComponent,
@@ -493,7 +497,7 @@ class ModulesMap implements IModulesMap {
     '@home/components/attribute/edit-attribute-value-panel.component': EditAttributeValuePanelComponent,
     '@home/components/dashboard/dashboard.component': DashboardComponent,
     '@home/components/widget/widget.component': WidgetComponent,
-    '@home/components/widget/legend.component': LegendComponent,
+    '@home/components/widget/lib/legend.component': LegendComponent,
     '@home/components/alias/aliases-entity-select-panel.component': AliasesEntitySelectPanelComponent,
     '@home/components/alias/aliases-entity-select.component': AliasesEntitySelectComponent,
     '@home/components/widget/widget-config.component': WidgetConfigComponent,
@@ -503,10 +507,10 @@ class ModulesMap implements IModulesMap {
     '@home/components/entity/entity-filter.component': EntityFilterComponent,
     '@home/components/relation/relation-filters.component': RelationFiltersComponent,
     '@home/components/alias/entity-alias-select.component': EntityAliasSelectComponent,
-    '@home/components/widget/data-keys.component': DataKeysComponent,
-    '@home/components/widget/data-key-config-dialog.component': DataKeyConfigDialogComponent,
-    '@home/components/widget/data-key-config.component': DataKeyConfigComponent,
-    '@home/components/widget/legend-config.component': LegendConfigComponent,
+    '@home/components/widget/config/data-keys.component': DataKeysComponent,
+    '@home/components/widget/config/data-key-config-dialog.component': DataKeyConfigDialogComponent,
+    '@home/components/widget/config/data-key-config.component': DataKeyConfigComponent,
+    '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,
     '@home/components/widget/action/custom-action-pretty-resources-tabs.component': CustomActionPrettyResourcesTabsComponent,
@@ -616,6 +620,13 @@ class ModulesMap implements IModulesMap {
       for (const moduleId of Object.keys(this.modulesMap)) {
         System.set('app:' + moduleId, this.modulesMap[moduleId]);
       }
+      System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download');
+      System.constructor.prototype.fetch = (url, options: RequestInit & {meta?: any}) => {
+        if (options?.meta?.additionalHeaders) {
+          options.headers = { ...options.headers, ...options.meta.additionalHeaders };
+        }
+        return fetch(url, options);
+      };
       this.initialized = true;
     }
   }

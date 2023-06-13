@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.settings;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,10 +59,18 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     public AdminSettings saveAdminSettings(TenantId tenantId, AdminSettings adminSettings) {
         log.trace("Executing saveAdminSettings [{}]", adminSettings);
         adminSettingsValidator.validate(adminSettings, data -> tenantId);
-        if (adminSettings.getKey().equals("mail") && !adminSettings.getJsonValue().has("password")) {
+        if (adminSettings.getKey().equals("mail")){
             AdminSettings mailSettings = findAdminSettingsByKey(tenantId, "mail");
             if (mailSettings != null) {
-                ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
+                JsonNode newJsonValue = adminSettings.getJsonValue();
+                JsonNode oldJsonValue = mailSettings.getJsonValue();
+                if (!newJsonValue.has("password") && oldJsonValue.has("password")){
+                     ((ObjectNode) newJsonValue).put("password", oldJsonValue.get("password").asText());
+                }
+                if (!newJsonValue.has("refreshToken") && oldJsonValue.has("refreshToken")){
+                    ((ObjectNode) newJsonValue).put("refreshToken", oldJsonValue.get("refreshToken").asText());
+                }
+                dropTokenIfProviderInfoChanged(newJsonValue, oldJsonValue);
             }
         }
         if (adminSettings.getTenantId() == null) {
@@ -80,6 +89,20 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     @Override
     public void deleteAdminSettingsByTenantId(TenantId tenantId) {
         adminSettingsDao.removeByTenantId(tenantId.getId());
+    }
+
+    private void dropTokenIfProviderInfoChanged(JsonNode newJsonValue, JsonNode oldJsonValue) {
+        if (newJsonValue.has("enableOauth2") && newJsonValue.get("enableOauth2").asBoolean()){
+            if (!newJsonValue.get("providerId").equals(oldJsonValue.get("providerId")) ||
+                    !newJsonValue.get("clientId").equals(oldJsonValue.get("clientId")) ||
+                    !newJsonValue.get("clientSecret").equals(oldJsonValue.get("clientSecret")) ||
+                    !newJsonValue.get("redirectUri").equals(oldJsonValue.get("redirectUri")) ||
+                    (newJsonValue.has("providerTenantId") && !newJsonValue.get("providerTenantId").equals(oldJsonValue.get("providerTenantId")))){
+                ((ObjectNode) newJsonValue).put("tokenGenerated", false);
+                ((ObjectNode) newJsonValue).remove("refreshToken");
+                ((ObjectNode) newJsonValue).remove("refreshTokenExpires");
+            }
+        }
     }
 
 }
