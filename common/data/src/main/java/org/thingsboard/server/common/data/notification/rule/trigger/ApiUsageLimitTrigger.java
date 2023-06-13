@@ -13,34 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.notification.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
-import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.ApiUsageRecordState;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
 @Data
 @Builder
-public class AlarmAssignmentTrigger implements NotificationRuleTrigger {
+public class ApiUsageLimitTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
-    private final AlarmInfo alarmInfo;
-    private final ActionType actionType;
-    private final User user;
-
-    @Override
-    public EntityId getOriginatorEntityId() {
-        return alarmInfo.getOriginator();
-    }
+    private final ApiUsageRecordState state;
+    private final ApiUsageStateValue status;
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.ALARM_ASSIGNMENT;
+        return NotificationRuleTriggerType.API_USAGE_LIMIT;
+    }
+
+    @Override
+    public EntityId getOriginatorEntityId() {
+        return tenantId;
     }
 
 }

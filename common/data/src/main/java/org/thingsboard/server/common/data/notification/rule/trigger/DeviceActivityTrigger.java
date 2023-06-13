@@ -13,35 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.notification.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
 @Data
 @Builder
-public class EntityActionTrigger implements NotificationRuleTrigger {
+public class DeviceActivityTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
-    private final EntityId entityId;
-    private final HasName entity;
-    private final ActionType actionType;
-    private final User user;
+    private final CustomerId customerId;
+    private final DeviceId deviceId;
+    private final boolean active;
 
-    @Override
-    public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.ENTITY_ACTION;
-    }
+    private final String deviceName;
+    private final String deviceType;
+    private final String deviceLabel;
 
     @Override
     public EntityId getOriginatorEntityId() {
-        return entityId;
+        return deviceId;
+    }
+
+    @Override
+    public NotificationRuleTriggerType getType() {
+        return NotificationRuleTriggerType.DEVICE_ACTIVITY;
     }
 
 }

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.ApiFeature;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 
 import java.util.Set;
 
@@ -28,17 +28,14 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AlarmCommentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+public class ApiUsageLimitNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    private Set<String> alarmTypes;
-    private Set<AlarmSeverity> alarmSeverities;
-    private Set<AlarmSearchStatus> alarmStatuses;
-    private boolean onlyUserComments;
-    private boolean notifyOnCommentUpdate;
+    private Set<ApiFeature> apiFeatures;
+    private Set<ApiUsageStateValue> notifyOn;
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.ALARM_COMMENT;
+        return NotificationRuleTriggerType.API_USAGE_LIMIT;
     }
 
 }

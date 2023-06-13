@@ -13,33 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.notification.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+
+import java.util.Set;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class EntitiesLimitTrigger implements NotificationRuleTrigger {
+public class EntityActionNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    private final TenantId tenantId;
-    private final EntityType entityType;
-
-    private long limit;
-    private long currentCount;
-
-    @Override
-    public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.ENTITIES_LIMIT;
-    }
+    private Set<EntityType> entityTypes; // maybe add name filter ?
+    private boolean created;
+    private boolean updated;
+    private boolean deleted;
 
     @Override
-    public EntityId getOriginatorEntityId() {
-        return tenantId;
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.ENTITY_ACTION;
     }
 
 }

@@ -13,36 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.notification.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmComment;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 @Data
 @Builder
-public class AlarmCommentTrigger implements NotificationRuleTrigger {
+public class RuleEngineComponentLifecycleEventTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
-    private final AlarmComment comment;
-    private final Alarm alarm;
-    private final ActionType actionType;
-    private final User user;
+    private final RuleChainId ruleChainId;
+    private final String ruleChainName;
+    private final EntityId componentId;
+    private final String componentName;
+    private final ComponentLifecycleEvent eventType;
+    private final Throwable error;
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.ALARM_COMMENT;
+        return NotificationRuleTriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT;
     }
 
     @Override
     public EntityId getOriginatorEntityId() {
-        return alarm.getId();
+        return componentId;
     }
 
 }

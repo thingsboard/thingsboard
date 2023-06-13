@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,27 +23,34 @@ import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
 import javax.validation.constraints.NotEmpty;
+import java.io.Serializable;
 import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AlarmAssignmentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     private Set<String> alarmTypes;
     private Set<AlarmSeverity> alarmSeverities;
-    private Set<AlarmSearchStatus> alarmStatuses;
     @NotEmpty
-    private Set<Action> notifyOn;
+    private Set<AlarmAction> notifyOn;
+
+    private ClearRule clearRule;
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.ALARM_ASSIGNMENT;
+        return NotificationRuleTriggerType.ALARM;
     }
 
-    public enum Action {
-        ASSIGNED, UNASSIGNED
+    @Data
+    public static class ClearRule implements Serializable {
+        private Set<AlarmSearchStatus> alarmStatuses;
+    }
+
+    public enum AlarmAction {
+        CREATED, SEVERITY_CHANGED, ACKNOWLEDGED, CLEARED
     }
 
 }

@@ -13,35 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger;
+package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.Set;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+public class AlarmAssignmentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    private Set<UUID> ruleChains; // if empty - all rule chains
-
-    private Set<ComponentLifecycleEvent> ruleChainEvents; // available options: STARTED, UPDATED, STOPPED. if empty - all events
-    private boolean onlyRuleChainLifecycleFailures;
-
-    private boolean trackRuleNodeEvents;
-    private Set<ComponentLifecycleEvent> ruleNodeEvents; // available options: STARTED, UPDATED, STOPPED. if empty - all events
-    private boolean onlyRuleNodeLifecycleFailures;
+    private Set<String> alarmTypes;
+    private Set<AlarmSeverity> alarmSeverities;
+    private Set<AlarmSearchStatus> alarmStatuses;
+    @NotEmpty
+    private Set<Action> notifyOn;
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT;
+        return NotificationRuleTriggerType.ALARM_ASSIGNMENT;
+    }
+
+    public enum Action {
+        ASSIGNED, UNASSIGNED
     }
 
 }
