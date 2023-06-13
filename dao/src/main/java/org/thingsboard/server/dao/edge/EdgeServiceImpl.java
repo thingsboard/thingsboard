@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.EntityUpdateEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -180,7 +181,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(customerId);
-        eventPublisher.publishEvent(new EdgeUpdateEdgeEvent(tenantId, null, edgeId, edge, EdgeEventActionType.ASSIGNED_TO_CUSTOMER));
+        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, null, edgeId, JacksonUtil.toString(customerId), EdgeEventActionType.ASSIGNED_TO_CUSTOMER));
         return saveEdge(edge);
     }
 
@@ -188,8 +189,9 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     public Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
         Edge edge = findEdgeById(tenantId, edgeId);
+        CustomerId customerId = edge.getCustomerId();
         edge.setCustomerId(null);
-        eventPublisher.publishEvent(new EdgeUpdateEdgeEvent(tenantId, null, edgeId, edge, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER));
+        eventPublisher.publishEvent(new EntityUpdateEvent(tenantId, null, edgeId, JacksonUtil.toString(customerId), EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER));
         return saveEdge(edge);
     }
 

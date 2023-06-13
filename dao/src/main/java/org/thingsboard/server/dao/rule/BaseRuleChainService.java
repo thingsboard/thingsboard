@@ -113,7 +113,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
             }
             if (RuleChainType.EDGE.equals(savedRuleChain.getType())) {
-                eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(ruleChain.getTenantId()).entityId(ruleChain.getId()).entity(ruleChain).build());
+                eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedRuleChain.getTenantId()).entityId(savedRuleChain.getId()).entity(savedRuleChain).build());
             }
             return savedRuleChain;
         } catch (Exception e) {
