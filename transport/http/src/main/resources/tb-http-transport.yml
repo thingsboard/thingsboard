@@ -300,7 +300,5 @@ management:
 
 notification_system:
   rules:
-    trigger_types_configs:
-      RATE_LIMITS:
-        # In milliseconds, 4 hours by default
-        deduplication_duration: "${RATE_LIMITS_NOTIFICATION_RULE_DEDUPLICATION_DURATION:14400000}"
+    # Semicolon-separated deduplication durations (in millis) for trigger types. Format: 'NotificationRuleTriggerType1:123;NotificationRuleTriggerType2:456'
+    deduplication_durations: "${TB_NOTIFICATION_RULES_DEDUPLICATION_DURATIONS:RATE_LIMITS:14400000;}"

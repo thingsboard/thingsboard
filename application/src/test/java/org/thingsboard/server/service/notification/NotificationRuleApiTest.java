@@ -64,6 +64,8 @@ import org.thingsboard.server.common.data.notification.rule.DefaultNotificationR
 import org.thingsboard.server.common.data.notification.rule.EscalatedNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmAssignmentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig;
@@ -73,7 +75,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Entit
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
-import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.RateLimitsNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.AffectedTenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
@@ -87,14 +89,12 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
-import org.thingsboard.server.common.msg.notification.trigger.RateLimitsTrigger;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
-import org.thingsboard.server.service.notification.rule.DefaultNotificationRuleProcessor;
+import org.thingsboard.server.queue.notification.DefaultNotificationDeduplicationService;
 import org.thingsboard.server.service.notification.rule.cache.DefaultNotificationRulesCache;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
@@ -125,7 +125,7 @@ import static org.thingsboard.server.common.data.notification.rule.trigger.confi
 @DaoSqlTest
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
-        "notification_system.rules.trigger_types_configs.RATE_LIMITS.deduplication_duration=10000"
+        "notification_system.rules.deduplication_durations=RATE_LIMITS:10000"
 })
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
@@ -700,7 +700,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .api(LimitedApi.ENTITY_EXPORT)
                 .limitLevel(tenantId)
                 .build();
-        assertThat(DefaultNotificationRuleProcessor.getDeduplicationKey(expectedTrigger, rule))
+        assertThat(DefaultNotificationDeduplicationService.getDeduplicationKey(expectedTrigger, rule))
                 .isEqualTo("RATE_LIMITS:TENANT:" + tenantId + ":ENTITY_EXPORT_" +
                         target.getId() + ":ENTITY_EXPORT,TRANSPORT_MESSAGES_PER_DEVICE");
 
