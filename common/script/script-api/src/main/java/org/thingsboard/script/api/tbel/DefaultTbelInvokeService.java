@@ -189,7 +189,7 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
                 }
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, ce);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
             }
         });
     }
