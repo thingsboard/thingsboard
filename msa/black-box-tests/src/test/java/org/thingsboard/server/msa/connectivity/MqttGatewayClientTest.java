@@ -32,6 +32,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
@@ -76,8 +77,18 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     private MqttMessageListener listener;
     private JsonParser jsonParser = new JsonParser();
 
+    AbstractListeningExecutor handlerExecutor;
+
     @BeforeMethod
     public void createGateway() throws Exception {
+        this.handlerExecutor = new AbstractListeningExecutor() {
+            @Override
+            protected int getThreadPollSize() {
+                return 4;
+            }
+        };
+        handlerExecutor.init();
+
         testRestClient.login("tenant@thingsboard.org", "tenant");
         gatewayDevice = testRestClient.postDevice("", defaultGatewayPrototype());
         DeviceCredentials gatewayDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(gatewayDevice.getId());
@@ -94,6 +105,9 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         this.listener = null;
         this.mqttClient = null;
         this.createdDevice = null;
+        if (handlerExecutor != null) {
+            handlerExecutor.destroy();
+        }
     }
 
     @Test
@@ -407,7 +421,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         MqttClientConfig clientConfig = new MqttClientConfig();
         clientConfig.setClientId("MQTT client from test");
         clientConfig.setUsername(deviceCredentials.getCredentialsId());
-        MqttClient mqttClient = MqttClient.create(clientConfig, listener);
+        MqttClient mqttClient = MqttClient.create(clientConfig, listener, handlerExecutor);
         mqttClient.connect("localhost", 1883).get();
         return mqttClient;
     }

@@ -114,7 +114,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 
         prepareMqttClientConfig(config);
-        MqttClient client = MqttClient.create(config, null);
+        MqttClient client = MqttClient.create(config, null, ctx.getExternalCallExecutor());
         client.setEventLoop(ctx.getSharedEventLoop());
         Future<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
         MqttConnectResult result;
