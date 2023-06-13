@@ -188,7 +188,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (alarm == null) {
             return AlarmApiCallResult.builder().successful(false).build();
         } else {
-            publishAlarmDelete(tenantId, alarmId);
+            publishAlarmDelete(tenantId, alarm.getOriginator());
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
             return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
@@ -492,10 +492,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
 
-    private void publishAlarmDelete(TenantId tenantId, AlarmId alarmId) {
-        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, alarmId);
+    private void publishAlarmDelete(TenantId tenantId, EntityId entityId) {
+        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, entityId);
         if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
-            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(alarmId).entity(alarmId).relatedEdgeIds(relatedEdgeIds));
+            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(entityId).entity(entityId).relatedEdgeIds(relatedEdgeIds));
         }
     }
 

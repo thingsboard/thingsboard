@@ -25,6 +25,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEdgeEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
 import org.thingsboard.server.dao.eventsourcing.EntityUpdateEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
@@ -96,6 +97,15 @@ public class EdgeEventSourcingListener {
         }
     }
 
+    @TransactionalEventListener(fallbackExecution = true)
+    public void handleEvent(DeleteDaoEdgeEvent<?> event) {
+        if (edgeSynchronizationManager.isSync()) {
+            return;
+        }
+        log.trace("DeleteDaoEdgeEvent called: {}", event);
+        tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
+                null, null, EdgeEventActionType.DELETED);
+    }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(EntityUpdateEvent event) {
