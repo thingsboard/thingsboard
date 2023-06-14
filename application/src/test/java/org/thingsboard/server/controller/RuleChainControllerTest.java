@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNode;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbVersionedNode;
+import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetRelatedDataNodeConfiguration;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -127,6 +131,78 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         testNotifyEntityOneTimeMsgToEdgeServiceNever(savedRuleChain, savedRuleChain.getId(), savedRuleChain.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.UPDATED);
+    }
+
+    @Test
+    public void testSaveRuleChainMetadataWithVersionedNodes() throws Exception {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName("RuleChain");
+
+        RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+        Assert.assertNotNull(savedRuleChain);
+        RuleChainId ruleChainId = savedRuleChain.getId();
+        Assert.assertNotNull(ruleChainId);
+        Assert.assertTrue(savedRuleChain.getCreatedTime() > 0);
+        Assert.assertEquals(ruleChain.getName(), savedRuleChain.getName());
+
+        var annotation = TbGetRelatedAttributeNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class);
+        String ruleNodeType = TbGetRelatedAttributeNode.class.getName();
+        int currentVersion = annotation.version();
+
+        String oldConfig = "{\"attrMapping\":{\"serialNumber\":\"sn\"}," +
+                        "\"relationsQuery\":{\"direction\":\"FROM\",\"maxLevel\":1," +
+                        "\"filters\":[{\"relationType\":\"Contains\",\"entityTypes\":[]}]," +
+                        "\"fetchLastLevelOnly\":false},\"telemetry\":false}";
+
+        TbGetRelatedDataNodeConfiguration defaultConfiguration = new TbGetRelatedDataNodeConfiguration().defaultConfiguration();
+        String newConfig = JacksonUtil.toString(defaultConfiguration);
+
+        var ruleChainMetaData = createRuleChainMetadataWithTbVersionedNodes(
+                ruleChainId,
+                ruleNodeType,
+                currentVersion,
+                oldConfig,
+                newConfig
+        );
+        var savedRuleChainMetaData = doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
+
+        Assert.assertEquals(ruleChainId, savedRuleChainMetaData.getRuleChainId());
+        Assert.assertEquals(2, savedRuleChainMetaData.getNodes().size());
+
+        for (RuleNode ruleNode : savedRuleChainMetaData.getNodes()) {
+            Assert.assertNotNull(ruleNode.getId());
+            Assert.assertEquals(currentVersion, ruleNode.getConfigurationVersion());
+            Assert.assertEquals(defaultConfiguration, JacksonUtil.treeToValue(ruleNode.getConfiguration(), defaultConfiguration.getClass()));
+        }
+    }
+
+    private RuleChainMetaData createRuleChainMetadataWithTbVersionedNodes(
+            RuleChainId ruleChainId,
+            String ruleNodeType,
+            int currentVersion,
+            String oldConfig,
+            String newConfig
+    ) {
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        ruleChainMetaData.setRuleChainId(ruleChainId);
+
+        var ruleNodeWithOldConfig = new RuleNode();
+        ruleNodeWithOldConfig.setName("Old Rule Node");
+        ruleNodeWithOldConfig.setType(ruleNodeType);
+        ruleNodeWithOldConfig.setConfiguration(JacksonUtil.toJsonNode(oldConfig));
+
+        var ruleNodeWithNewConfig = new RuleNode();
+        ruleNodeWithNewConfig.setName("New Rule Node");
+        ruleNodeWithNewConfig.setType(ruleNodeType);
+        ruleNodeWithNewConfig.setConfigurationVersion(currentVersion);
+        ruleNodeWithNewConfig.setConfiguration(JacksonUtil.toJsonNode(newConfig));
+
+        List<RuleNode> ruleNodes = new ArrayList<>();
+        ruleNodes.add(ruleNodeWithOldConfig);
+        ruleNodes.add(ruleNodeWithNewConfig);
+        ruleChainMetaData.setFirstNodeIndex(0);
+        ruleChainMetaData.setNodes(ruleNodes);
+        return ruleChainMetaData;
     }
 
     @Test

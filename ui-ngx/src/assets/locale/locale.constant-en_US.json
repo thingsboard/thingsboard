@@ -174,6 +174,7 @@
         "domain-name-unique": "Domain name and protocol need to unique.",
         "domain-name-max-length": "Domain name should be less than 256",
         "error-verification-url": "A domain name shouldn't contain symbols '/' and ':'. Example: thingsboard.io",
+        "connection-settings": "Connection settings",
         "oauth2": {
           "access-token-uri": "Access token URI",
           "access-token-uri-required": "Access token URI is required.",
@@ -264,7 +265,28 @@
           "platform-android": "Android",
           "platform-ios": "iOS",
           "all-platforms": "All platforms",
-          "allowed-platforms": "Allowed platforms"
+          "smtp-provider": "SMTP provider",
+          "allowed-platforms": "Allowed platforms",
+          "authentication": "Authentication",
+          "basic": "Basic",
+          "provider": "Provider",
+          "redirect-url": "Redirect URI",
+          "domain-name": "Domain name",
+          "redirect-url-template": "Redirect URI template",
+          "microsoft-tenant-id": "Directory (tenant) Id",
+          "microsoft-tenant-id-required": "Directory (tenant) Id is required",
+          "token-uri": "Token URI",
+          "token-uri-required": "Token URI is required",
+          "redirect-uri": "Redirect URI",
+          "google-provider": "Google",
+          "microsoft-provider": "Office 365",
+          "sendgrid-provider": "Sendgrid",
+          "custom-provider": "Custom",
+          "generate-access-token": "Generate access token",
+          "update-access-token": "Update access token",
+          "access-token-status": "Access token status:",
+          "token-status-generated": "generated",
+          "token-status-not-generated": "not generated"
         },
         "smpp-provider": {
             "smpp-version": "SMPP version",
@@ -757,6 +779,18 @@
         "view-details": "View details",
         "view-statistics": "View statistics"
     },
+    "api-limit": {
+        "cassandra-queries": "Cassandra queries",
+        "entity-version-creation": "Entity version creation",
+        "entity-version-load": "Entity version load",
+        "notification-requests": "Notification requests",
+        "notification-requests-per-rule": "Notification requests per rule",
+        "rest-api-requests": "REST API requests",
+        "rest-api-requests-per-customer": "REST API requests per customer",
+        "transport-messages": "Transport messages",
+        "transport-messages-per-device": "Transport messages per device",
+        "ws-updates-per-session": "WS updates per session"
+    },
     "audit-log": {
         "audit": "Audit",
         "audit-logs": "Audit Logs",
@@ -840,7 +874,8 @@
         "created-time": "Created time",
         "loading": "Loading...",
         "proceed": "Proceed",
-        "open-details-page": "Open details page"
+        "open-details-page": "Open details page",
+        "not-found": "Not found"
     },
     "content-type": {
         "json": "Json",
@@ -1290,13 +1325,13 @@
         "password": "Password",
         "secret": "Secret",
         "secret-required": "Secret is required.",
-        "device-type": "Device type",
+        "device-type": "Device profile",
         "device-type-required": "Device type is required.",
         "select-device-type": "Select device type",
-        "enter-device-type": "Enter device type",
+        "enter-device-type": "Enter device profile",
         "any-device": "Any device",
-        "no-device-types-matching": "No device types matching '{{entitySubtype}}' were found.",
-        "device-type-list-empty": "No device types selected.",
+        "no-device-types-matching": "No device profiles matching '{{entitySubtype}}' were found.",
+        "device-type-list-empty": "No device profiles selected!",
         "device-types": "Device types",
         "name": "Name",
         "name-required": "Name is required.",
@@ -1994,6 +2029,7 @@
         "device-name-starts-with": "Devices whose names start with '{{prefix}}'",
         "type-device-profile": "Device profile",
         "type-device-profiles": "Device profiles",
+        "clear-selected-profiles": "Clear selected profiles",
         "list-of-device-profiles": "{ count, plural, =1 {One device profile} other {List of # device profiles} }",
         "device-profile-name-starts-with": "Device profiles whose names start with '{{prefix}}'",
         "type-asset-profile": "Asset profile",
@@ -2826,6 +2862,7 @@
         "api-feature-hint": "If the field is empty, the trigger will be applied to all api features",
         "api-usage-trigger-settings": "API usage trigger settings",
         "new-platform-version-trigger-settings": "New platform version trigger settings",
+        "rate-limits-trigger-settings": "Exceeded rate limits trigger settings",
         "at-least-one-should-be-selected": "At least one should be selected",
         "basic-settings": "Basic settings",
         "button-text": "Button text",
@@ -2943,6 +2980,8 @@
         "only-rule-chain-lifecycle-failures": "Only rule chain lifecycle failures",
         "only-rule-node-lifecycle-failures": "Only rule node lifecycle failures",
         "platform-users": "Platform users",
+        "rate-limits": "Rate limits",
+        "rate-limits-hint": "If the field is empty, the trigger will be applied to all rate limits",
         "recipient": "Recipient",
         "recipient-group": "Recipient group",
         "recipient-type": {
@@ -3021,7 +3060,8 @@
             "general": "General",
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "rule-node": "Rule node",
-            "new-platform-version": "New platform version"
+            "new-platform-version": "New platform version",
+            "rate-limits": "Exceeded rate limits"
         },
         "templates": "Templates",
         "notification-templates": "Notifications / Templates",
@@ -3040,6 +3080,7 @@
             "entity-action": "Entity action",
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "new-platform-version": "New platform version",
+            "rate-limits": "Exceeded rate limits",
             "trigger": "Trigger",
             "trigger-required": "Trigger is required"
         },
@@ -3210,6 +3251,7 @@
     "relation": {
         "relations": "Relations",
         "direction": "Direction",
+        "clear-relation-type": "Clear relation type",
         "search-direction": {
             "FROM": "From",
             "TO": "To"
@@ -3362,7 +3404,7 @@
         "name-required": "Name is required.",
         "name-max-length": "Name should be less than 256",
         "type": "Type",
-        "description": "Description",
+        "rule-node-description": "Rule node description",
         "delete": "Delete rule node",
         "select-all-objects": "Select all nodes and connections",
         "deselect-all-objects": "Deselect all nodes and connections",

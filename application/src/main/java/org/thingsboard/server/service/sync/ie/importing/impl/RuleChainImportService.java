@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleNodeDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 import java.util.Arrays;
@@ -52,6 +53,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
 
     private static final LinkedHashSet<EntityType> HINTS = new LinkedHashSet<>(Arrays.asList(EntityType.RULE_CHAIN, EntityType.DEVICE, EntityType.ASSET));
 
+    private final TbRuleChainService tbRuleChainService;
     private final RuleChainService ruleChainService;
     private final RuleNodeDao ruleNodeDao;
 
@@ -106,7 +108,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
         ruleChain = ruleChainService.saveRuleChain(ruleChain);
         if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
             exportData.getMetaData().setRuleChainId(ruleChain.getId());
-            ruleChainService.saveRuleChainMetaData(ctx.getTenantId(), exportData.getMetaData());
+            ruleChainService.saveRuleChainMetaData(ctx.getTenantId(), exportData.getMetaData(), tbRuleChainService::updateRuleNodeConfiguration);
             return ruleChainService.findRuleChainById(ctx.getTenantId(), ruleChain.getId());
         } else {
             return ruleChain;
