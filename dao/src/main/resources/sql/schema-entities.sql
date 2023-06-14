@@ -744,6 +744,7 @@ CREATE TABLE IF NOT EXISTS edge_event (
     tenant_id uuid,
     ts bigint NOT NULL
 ) PARTITION BY RANGE(created_time);
+ALTER TABLE IF EXISTS edge_event ALTER COLUMN seq_id SET CYCLE;
 
 CREATE TABLE IF NOT EXISTS rpc (
     id uuid NOT NULL CONSTRAINT rpc_pkey PRIMARY KEY,

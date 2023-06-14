@@ -71,7 +71,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         EdgeEvent edgeEvent = generateEdgeEvent(tenantId, edgeId, deviceId, EdgeEventActionType.ADDED);
         edgeEventService.saveAsync(edgeEvent).get();
 
-        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, new TimePageLink(1));
+        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, new TimePageLink(1));
         Assert.assertFalse(edgeEvents.getData().isEmpty());
 
         EdgeEvent saved = edgeEvents.getData().get(0);
@@ -113,7 +113,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Futures.allAsList(futures).get();
 
         TimePageLink pageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
-        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, pageLink);
+        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, pageLink);
 
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertEquals(2, edgeEvents.getData().size());
@@ -122,7 +122,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertTrue(edgeEvents.hasNext());
         Assert.assertNotNull(pageLink.nextPageLink());
 
-        edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, pageLink.nextPageLink());
+        edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, pageLink.nextPageLink());
 
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertEquals(1, edgeEvents.getData().size());

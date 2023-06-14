@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.edge.rpc.fetch;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,10 +28,12 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 
 @AllArgsConstructor
+@Slf4j
 public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
 
     private final Long queueStartTs;
     private Long seqIdOffset;
+    private Long maxReadRecordsCount;
     private final EdgeEventService edgeEventService;
 
     @Override
@@ -45,11 +49,12 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdOffset, (TimePageLink) pageLink);
+        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdOffset, null, (TimePageLink) pageLink);
         if (edgeEvents.getData().isEmpty()) {
+            log.info("[{}] seqId column of edge_event table started new cycle [{}]", tenantId, edge.getId());
             // reset in case seq_id column started new cycle
             this.seqIdOffset = 0L;
-            edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdOffset, (TimePageLink) pageLink);
+            edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, this.maxReadRecordsCount, (TimePageLink) pageLink);
         }
         return edgeEvents;
     }

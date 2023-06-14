@@ -23,6 +23,7 @@ import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -38,6 +39,9 @@ import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @DaoSqlTest
@@ -198,11 +202,14 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
             EdgeEvent successEdgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.UPDATED,
                     device.getId().getId(), EdgeEventType.DEVICE, null);
             edgeEventService.saveAsync(successEdgeEvent).get();
-
-            clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         }
+        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope"));
+        ScheduledFuture<?> scheduledFuture = scheduler.scheduleAtFixedRate(() -> clusterService.onEdgeEventUpdate(tenantId, edge.getId()), 1, 1, TimeUnit.SECONDS);
 
         Assert.assertTrue(edgeImitator.waitForMessages(120));
+
+        scheduledFuture.cancel(true);
+        scheduler.shutdown();
 
         List<EntityDataProto> allTelemetryMsgs = edgeImitator.findAllMessagesByType(EntityDataProto.class);
         Assert.assertTrue(allTelemetryMsgs.isEmpty());

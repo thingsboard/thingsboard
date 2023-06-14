@@ -43,11 +43,12 @@ public interface EdgeEventDao extends Dao<EdgeEvent> {
      *
      * @param tenantId the tenantId
      * @param edgeId   the edgeId
-     * @param seqIdOffset  the seq id offset
+     * @param seqIdStart  the seq id start
+     * @param seqIdEnd  the seq id end
      * @param pageLink the pageLink
      * @return the event list
      */
-    PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long seqIdOffset, TimePageLink pageLink);
+    PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink);
 
     /**
      * Executes stored procedure to cleanup old edge events.

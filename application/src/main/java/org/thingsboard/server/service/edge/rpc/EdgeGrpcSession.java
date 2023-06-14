@@ -318,6 +318,7 @@ public final class EdgeGrpcSession implements Closeable {
             GeneralEdgeEventFetcher fetcher = new GeneralEdgeEventFetcher(
                     queueStartTs,
                     queueSeqIdOffset,
+                    Integer.toUnsignedLong(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount()),
                     ctx.getEdgeEventService());
             ListenableFuture<Pair<UUID, Long>> ifOffsetFuture = startProcessingEdgeEvents(fetcher);
             Futures.addCallback(ifOffsetFuture, new FutureCallback<>() {
