@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.rest;
 
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -113,6 +114,8 @@ public class TbHttpClient {
                             o.username(proxyUser).password(u -> proxyPassword);
                         }
                     });
+                    SslContext sslContext = SslContextBuilder.forClient().build();
+                    httpClient.secure(t -> t.sslContext(sslContext));
                 }
             } else if (!config.isUseSimpleClientHttpFactory()) {
                 if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
