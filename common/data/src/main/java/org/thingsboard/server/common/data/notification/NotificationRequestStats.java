@@ -62,6 +62,9 @@ public class NotificationRequestStats {
             return;
         }
         String errorMessage = error.getMessage();
+        if (errorMessage == null) {
+            errorMessage = error.getClass().getSimpleName();
+        }
         errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(recipient.getTitle(), errorMessage);
     }
 

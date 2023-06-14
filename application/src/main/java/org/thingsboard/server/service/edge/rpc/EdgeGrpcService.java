@@ -450,7 +450,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private void pushRuleEngineMessage(TenantId tenantId, EdgeId edgeId, long ts, String msgType) {
         try {
-            ObjectNode edgeState = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            ObjectNode edgeState = JacksonUtil.newObjectNode();
             if (msgType.equals(CONNECT_EVENT)) {
                 edgeState.put(DefaultDeviceStateService.ACTIVITY_STATE, true);
                 edgeState.put(DefaultDeviceStateService.LAST_CONNECT_TIME, ts);

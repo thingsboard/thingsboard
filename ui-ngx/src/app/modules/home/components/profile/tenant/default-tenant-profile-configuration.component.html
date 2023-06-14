@@ -268,6 +268,22 @@
     <legend class="group-title">
       {{ 'tenant-profile.alarms-and-notifications' | translate }} <span translate>tenant-profile.unlimited</span>
     </legend>
+    <mat-slide-toggle class="slide-toggle-element" fxFlex formControlName="smsEnabled">
+      {{ 'tenant-profile.sms-enabled' | translate }}
+    </mat-slide-toggle>
+    <mat-form-field *ngIf="defaultTenantProfileConfigurationFormGroup.get('smsEnabled').value" fxFlex class="mat-block"
+                    appearance="fill" subscriptSizing="dynamic">
+      <mat-label translate>tenant-profile.max-sms</mat-label>
+      <input matInput required min="0" step="1"
+             formControlName="maxSms"
+             type="number">
+      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('required')">
+        {{ 'tenant-profile.max-sms-required' | translate}}
+      </mat-error>
+      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('min')">
+        {{ 'tenant-profile.max-sms-range' | translate}}
+      </mat-error>
+    </mat-form-field>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
       <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-emails</mat-label>
@@ -296,22 +312,6 @@
         <mat-hint></mat-hint>
       </mat-form-field>
     </div>
-    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
-        <mat-label translate>tenant-profile.max-sms</mat-label>
-        <input matInput required min="0" step="1"
-               formControlName="maxSms"
-               type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('required')">
-          {{ 'tenant-profile.max-sms-required' | translate}}
-        </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('min')">
-          {{ 'tenant-profile.max-sms-range' | translate}}
-        </mat-error>
-        <mat-hint></mat-hint>
-      </mat-form-field>
-      <div fxFlex></div>
-  </div>
   </fieldset>
 
   <fieldset class="fields-group">

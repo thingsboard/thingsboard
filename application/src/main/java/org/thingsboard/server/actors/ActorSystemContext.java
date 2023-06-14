@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.actors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,6 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.SmsService;
@@ -90,7 +90,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
@@ -149,8 +149,6 @@ public class ActorSystemContext {
             log.error("Could not save debug Event for Node", th);
         }
     };
-
-    protected final ObjectMapper mapper = new ObjectMapper();
 
     private final ConcurrentMap<TenantId, DebugTbRateLimits> debugPerTenantLimits = new ConcurrentHashMap<>();
 
@@ -646,7 +644,7 @@ public class ActorSystemContext {
                         .dataType(tbMsg.getDataType().name())
                         .relationType(relationType)
                         .data(tbMsg.getData())
-                        .metadata(mapper.writeValueAsString(tbMsg.getMetaData().getData()));
+                        .metadata(JacksonUtil.toString(tbMsg.getMetaData().getData()));
 
                 if (error != null) {
                     event.error(toString(error));
@@ -656,7 +654,7 @@ public class ActorSystemContext {
 
                 ListenableFuture<Void> future = eventService.saveAsync(event.build());
                 Futures.addCallback(future, RULE_NODE_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
-            } catch (IOException ex) {
+            } catch (IllegalArgumentException ex) {
                 log.warn("Failed to persist rule node debug message", ex);
             }
         }

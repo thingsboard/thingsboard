@@ -2795,7 +2795,6 @@
         "name-required": "名稱必填。",
         "name-max-length": "名稱應小於256",
         "type": "類型",
-        "description": "描述",
         "delete": "刪除規則節點",
         "select-all-objects": "選擇所有節點和連接",
         "deselect-all-objects": "取消選擇所有節點和連接",

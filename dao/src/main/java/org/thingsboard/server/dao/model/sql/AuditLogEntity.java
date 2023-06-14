@@ -57,7 +57,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_USER_NAM
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.AUDIT_LOG_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.AUDIT_LOG_TABLE_NAME)
 public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntity<AuditLog> {
 
     @Column(name = AUDIT_LOG_TENANT_ID_PROPERTY)

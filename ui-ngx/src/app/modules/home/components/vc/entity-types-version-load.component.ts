@@ -18,22 +18,26 @@ import { Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } fro
 import {
   AbstractControl,
   ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
   UntypedFormArray,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
   Validator,
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { EntityTypeVersionLoadConfig, exportableEntityTypes, VersionCreationResult } from '@shared/models/vc.models';
+import {
+  entityTypesWithoutRelatedData,
+  EntityTypeVersionLoadConfig,
+  exportableEntityTypes
+} from '@shared/models/vc.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { MatCheckbox, MatCheckboxChange } from '@angular/material/checkbox';
+import { MatCheckbox } from '@angular/material/checkbox';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { RemoveOtherEntitiesConfirmComponent } from '@home/components/vc/remove-other-entities-confirm.component';
 
@@ -66,6 +70,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
   public entityTypesVersionLoadFormGroup: UntypedFormGroup;
 
   entityTypes = EntityType;
+  entityTypesWithoutRelatedData = entityTypesWithoutRelatedData;
 
   loading = true;
 

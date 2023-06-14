@@ -30,14 +30,14 @@ import java.util.UUID;
 public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID>, ExportableEntityRepository<RuleChainEntity> {
 
     @Query("SELECT rc FROM RuleChainEntity rc WHERE rc.tenantId = :tenantId " +
-            "AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(rc.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<RuleChainEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                          @Param("searchText") String searchText,
                                          Pageable pageable);
 
     @Query("SELECT rc FROM RuleChainEntity rc WHERE rc.tenantId = :tenantId " +
             "AND rc.type = :type " +
-            "AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(rc.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<RuleChainEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                 @Param("type") RuleChainType type,
                                                 @Param("searchText") String searchText,
@@ -46,7 +46,7 @@ public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID
     @Query("SELECT rc FROM RuleChainEntity rc, RelationEntity re WHERE rc.tenantId = :tenantId " +
             "AND rc.id = re.toId AND re.toType = 'RULE_CHAIN' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
-            "AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(rc.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<RuleChainEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
                                                   @Param("edgeId") UUID edgeId,
                                                   @Param("searchText") String searchText,
@@ -55,7 +55,7 @@ public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID
     @Query("SELECT rc FROM RuleChainEntity rc, RelationEntity re WHERE rc.tenantId = :tenantId " +
             "AND rc.id = re.toId AND re.toType = 'RULE_CHAIN' AND re.relationTypeGroup = 'EDGE_AUTO_ASSIGN_RULE_CHAIN' " +
             "AND re.relationType = 'Contains' AND re.fromId = :tenantId AND re.fromType = 'TENANT' " +
-            "AND LOWER(rc.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(rc.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<RuleChainEntity> findAutoAssignByTenantId(@Param("tenantId") UUID tenantId,
                                                    @Param("searchText") String searchText,
                                                    Pageable pageable);

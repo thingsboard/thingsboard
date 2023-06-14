@@ -41,6 +41,7 @@ import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
+import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestSubscribeOnTopicCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
 import java.util.ArrayList;
@@ -81,7 +82,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
     protected void processOneWayRpcTest(String rpcSubTopic) throws Exception {
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(accessToken);
-        MqttTestCallback callback = new MqttTestCallback(rpcSubTopic.replace("+", "0"));
+        MqttTestCallback callback = new MqttTestSubscribeOnTopicCallback(rpcSubTopic.replace("+", "0"));
         client.setCallback(callback);
         subscribeAndWait(client, rpcSubTopic, savedDevice.getId(), FeatureType.RPC);
 
@@ -221,7 +222,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         );
         assertNotNull(savedDevice);
 
-        MqttTestCallback  callback = new MqttTestCallback(GATEWAY_RPC_TOPIC);
+        MqttTestCallback  callback = new MqttTestSubscribeOnTopicCallback(GATEWAY_RPC_TOPIC);
         client.setCallback(callback);
         subscribeAndCheckSubscription(client, GATEWAY_RPC_TOPIC, savedDevice.getId(), FeatureType.RPC);
 
@@ -320,7 +321,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
     }
 
-    protected class MqttTestRpcJsonCallback extends MqttTestCallback {
+    protected class MqttTestRpcJsonCallback extends MqttTestSubscribeOnTopicCallback {
 
         private final MqttTestClient client;
 
@@ -330,7 +331,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
 
         @Override
-        protected void messageArrivedOnAwaitSubTopic(String requestTopic, MqttMessage mqttMessage) {
+        public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
             log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
             if (awaitSubTopic.equals(requestTopic)) {
                 qoS = mqttMessage.getQos();
@@ -349,9 +350,10 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
                 subscribeLatch.countDown();
             }
         }
+
     }
 
-    protected class MqttTestRpcProtoCallback extends MqttTestCallback {
+    protected class MqttTestRpcProtoCallback extends MqttTestSubscribeOnTopicCallback {
 
         private final MqttTestClient client;
 
@@ -361,7 +363,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
 
         @Override
-        protected void messageArrivedOnAwaitSubTopic(String requestTopic, MqttMessage mqttMessage) {
+        public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
             log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
             if (awaitSubTopic.equals(requestTopic)) {
                 qoS = mqttMessage.getQos();
@@ -380,6 +382,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
                 subscribeLatch.countDown();
             }
         }
+
     }
 
     protected byte[] processProtoMessageArrived(String requestTopic, MqttMessage mqttMessage) throws MqttException, InvalidProtocolBufferException {
@@ -446,7 +449,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
 
         @Override
         public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
-            log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
+            log.warn("messageArrived on topic: {}", requestTopic);
             expected.add(new String(mqttMessage.getPayload()));
             String responseTopic = requestTopic.replace("request", "response");
             qoS = mqttMessage.getQos();

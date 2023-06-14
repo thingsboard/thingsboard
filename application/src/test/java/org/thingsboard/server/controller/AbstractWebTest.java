@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -57,6 +56,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.actors.DefaultTbActorSystem;
 import org.thingsboard.server.actors.TbActorId;
@@ -150,8 +150,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     public static final int TIMEOUT = 30;
 
-    protected ObjectMapper mapper = new ObjectMapper();
-
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
     protected static final String TEST_DIFFERENT_TENANT_NAME = "TEST DIFFERENT TENANT";
 
@@ -168,6 +166,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     private static final String CUSTOMER_USER_PASSWORD = "customer";
 
     protected static final String DIFFERENT_CUSTOMER_USER_EMAIL = "testdifferentcustomer@thingsboard.org";
+
+    protected static final String DIFFERENT_TENANT_CUSTOMER_USER_EMAIL = "testdifferenttenantcustomer@thingsboard.org";
     private static final String DIFFERENT_CUSTOMER_USER_PASSWORD = "diffcustomer";
 
     /**
@@ -193,8 +193,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected CustomerId customerId;
     protected TenantId differentTenantId;
     protected CustomerId differentCustomerId;
+
+    protected CustomerId differentTenantCustomerId;
     protected UserId customerUserId;
     protected UserId differentCustomerUserId;
+
+    protected UserId differentTenantCustomerUserId;
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
@@ -367,7 +371,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected Tenant savedDifferentTenant;
     protected User savedDifferentTenantUser;
     private Customer savedDifferentCustomer;
+    private Customer savedDifferentTenantCustomer;
     protected User differentCustomerUser;
+    protected User differentTenantCustomerUser;
 
     protected void loginDifferentTenant() throws Exception {
         if (savedDifferentTenant != null) {
@@ -409,6 +415,24 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         }
     }
 
+    protected void loginDifferentTenantCustomer() throws Exception {
+        if (savedDifferentTenantCustomer != null) {
+            login(savedDifferentTenantCustomer.getEmail(), CUSTOMER_USER_PASSWORD);
+        } else {
+            createDifferentTenantCustomer();
+
+            loginDifferentTenant();
+            differentTenantCustomerUser = new User();
+            differentTenantCustomerUser.setAuthority(Authority.CUSTOMER_USER);
+            differentTenantCustomerUser.setTenantId(savedDifferentTenantCustomer.getTenantId());
+            differentTenantCustomerUser.setCustomerId(savedDifferentTenantCustomer.getId());
+            differentTenantCustomerUser.setEmail(DIFFERENT_TENANT_CUSTOMER_USER_EMAIL);
+
+            differentTenantCustomerUser = createUserAndLogin(differentTenantCustomerUser, DIFFERENT_CUSTOMER_USER_PASSWORD);
+            differentTenantCustomerUserId = differentTenantCustomerUser.getId();
+        }
+    }
+
     protected void createDifferentCustomer() throws Exception {
         loginTenantAdmin();
 
@@ -417,6 +441,18 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         savedDifferentCustomer = doPost("/api/customer", customer, Customer.class);
         Assert.assertNotNull(savedDifferentCustomer);
         differentCustomerId = savedDifferentCustomer.getId();
+
+        resetTokens();
+    }
+
+    protected void createDifferentTenantCustomer() throws Exception {
+        loginDifferentTenant();
+
+        Customer customer = new Customer();
+        customer.setTitle("Different tenant customer");
+        savedDifferentTenantCustomer = doPost("/api/customer", customer, Customer.class);
+        Assert.assertNotNull(savedDifferentTenantCustomer);
+        differentTenantCustomerId = savedDifferentTenantCustomer.getId();
 
         resetTokens();
     }
@@ -451,7 +487,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         doGet("/api/noauth/activate?activateToken={activateToken}", this.currentActivateToken)
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + this.currentActivateToken));
-        return new ObjectMapper().createObjectNode()
+        return JacksonUtil.newObjectNode()
                 .put("activateToken", this.currentActivateToken)
                 .put("password", password);
     }
@@ -599,6 +635,13 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected ResultActions doGet(String urlTemplate, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
+        setJwtToken(getRequest);
+        return mockMvc.perform(getRequest);
+    }
+
+    protected ResultActions doGet(String urlTemplate, HttpHeaders httpHeaders, Object... urlVariables) throws Exception {
+        MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
+        getRequest.headers(httpHeaders);
         setJwtToken(getRequest);
         return mockMvc.perform(getRequest);
     }
@@ -815,7 +858,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T> T readResponse(MvcResult result, TypeReference<T> type) throws Exception {
         byte[] content = result.getResponse().getContentAsByteArray();
-        return mapper.readerFor(type).readValue(content);
+        return JacksonUtil.OBJECT_MAPPER.readerFor(type).readValue(content);
     }
 
     protected String getErrorMessage(ResultActions result) throws Exception {

@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RuleNodeEntity;
 import org.thingsboard.server.dao.rule.RuleNodeDao;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @SqlDao
-public class JpaRuleNodeDao extends JpaAbstractSearchTextDao<RuleNodeEntity, RuleNode> implements RuleNodeDao {
+public class JpaRuleNodeDao extends JpaAbstractDao<RuleNodeEntity, RuleNode> implements RuleNodeDao {
 
     @Autowired
     private RuleNodeRepository ruleNodeRepository;
@@ -65,6 +65,16 @@ public class JpaRuleNodeDao extends JpaAbstractSearchTextDao<RuleNodeEntity, Rul
         return DaoUtil.toPageData(ruleNodeRepository
                 .findAllRuleNodesByType(
                         type,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<RuleNode> findAllRuleNodesByTypeAndVersionLessThan(String type, int version, PageLink pageLink) {
+        return DaoUtil.toPageData(ruleNodeRepository
+                .findAllRuleNodesByTypeAndVersionLessThan(
+                        type,
+                        version,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }

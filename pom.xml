@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.5.1-SNAPSHOT</version>
+    <version>3.5.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -111,7 +111,7 @@
         <aws.sdk.version>1.11.747</aws.sdk.version>
         <pubsub.client.version>1.105.0</pubsub.client.version>
         <google.common.protos.version>2.1.0</google.common.protos.version> <!-- required by io.grpc:grpc-protobuf:1.38.0-->
-        <azure-servicebus.version>3.2.0</azure-servicebus.version>
+        <azure-servicebus.version>3.6.7</azure-servicebus.version>
         <passay.version>1.5.0</passay.version>
         <ua-parser.version>1.5.4</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
@@ -151,6 +151,7 @@
         <allure-maven.version>2.12.0</allure-maven.version>
         <slack-api.version>1.12.1</slack-api.version>
         <oshi.version>6.4.2</oshi.version>
+        <google-oauth-client.version>1.34.1</google-oauth-client.version>
     </properties>
 
     <modules>
@@ -1836,6 +1837,16 @@
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-servicebus</artifactId>
                 <version>${azure-servicebus.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.nimbusds</groupId>
+                        <artifactId>content-type</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>
@@ -2006,6 +2017,11 @@
                 <groupId>com.github.oshi</groupId>
                 <artifactId>oshi-core</artifactId>
                 <version>${oshi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.oauth-client</groupId>
+                <artifactId>google-oauth-client</artifactId>
+                <version>${google-oauth-client.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

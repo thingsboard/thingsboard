@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
-public abstract class ContactBased<I extends UUIDBased> extends SearchTextBasedWithAdditionalInfo<I> implements HasEmail {
+public abstract class ContactBased<I extends UUIDBased> extends BaseDataWithAdditionalInfo<I> implements HasEmail {
 
     private static final long serialVersionUID = 5047448057830660988L;
 
