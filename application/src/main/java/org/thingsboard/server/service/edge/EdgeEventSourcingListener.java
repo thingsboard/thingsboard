@@ -22,11 +22,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
 import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
+import org.thingsboard.server.dao.eventsourcing.EntityRelationEdgeEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 
 import javax.annotation.PostConstruct;
@@ -122,5 +124,15 @@ public class EdgeEventSourcingListener {
         log.trace("EntityRelationUpdateEvent called: {}", event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                 event.getBody(), null, event.getActionType());
+    }
+
+    @TransactionalEventListener(fallbackExecution = true)
+    public void handleEvent(EntityRelationEdgeEvent event) {
+        if (edgeSynchronizationManager.isSync()) {
+            return;
+        }
+        log.trace("EntityRelationUpdateEvent called: {}", event);
+        tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
+                event.getBody(), EdgeEventType.RELATION, event.getActionType());
     }
 }

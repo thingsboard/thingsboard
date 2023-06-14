@@ -48,7 +48,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
+import org.thingsboard.server.dao.eventsourcing.EntityRelationEdgeEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
@@ -174,8 +174,7 @@ public class BaseRelationService implements RelationService {
         }
         for (EntityRelation relation : relations) {
             publishEvictEvent(EntityRelationEvent.from(relation));
-            eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, null,
-                    JacksonUtil.toString(relation), EdgeEventActionType.RELATION_ADD_OR_UPDATE));
+            eventPublisher.publishEvent(new EntityRelationEdgeEvent(tenantId, JacksonUtil.toString(relation), EdgeEventActionType.RELATION_ADD_OR_UPDATE));
         }
     }
 
@@ -215,8 +214,7 @@ public class BaseRelationService implements RelationService {
         //TODO: evict cache only if the relation was deleted. Note: relationDao.deleteRelation requires improvement.
         publishEvictEvent(new EntityRelationEvent(from, to, relationType, typeGroup));
         EntityRelation entityRelation = new EntityRelation(from, to, relationType, typeGroup);
-        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, null,
-                JacksonUtil.toString(entityRelation), EdgeEventActionType.RELATION_DELETED));
+        eventPublisher.publishEvent(new EntityRelationEdgeEvent(tenantId, JacksonUtil.toString(entityRelation), EdgeEventActionType.RELATION_DELETED));
         return result;
     }
 
@@ -647,8 +645,8 @@ public class BaseRelationService implements RelationService {
 
     private void publishSaveOrUpdateRelation(TenantId tenantId, EntityRelation relation) {
         if (!EntityType.EDGE.equals(relation.getFrom().getEntityType()) && !EntityType.EDGE.equals(relation.getTo().getEntityType())) {
-            eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, null,
-                    JacksonUtil.toString(relation), EdgeEventActionType.RELATION_ADD_OR_UPDATE));
+            eventPublisher.publishEvent(new EntityRelationEdgeEvent(tenantId, JacksonUtil.toString(relation),
+                    EdgeEventActionType.RELATION_ADD_OR_UPDATE));
         }
     }
 
