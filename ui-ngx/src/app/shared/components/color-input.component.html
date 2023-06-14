@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="colorFormGroup">
+<mat-form-field *ngIf="!asBoxInput; else boxInput" [formGroup]="colorFormGroup">
   <mat-label *ngIf="icon || label">
     <mat-icon *ngIf="icon">{{icon}}</mat-icon>
     <span *ngIf="label">{{label}}</span>
@@ -34,3 +34,8 @@
     {{ requiredText }}
   </mat-error>
 </mat-form-field>
+<ng-template #boxInput>
+  <div class="tb-color-preview no-margin box" [ngClass]="{'disabled': disabled}" (click)="!disabled && showColorPicker()">
+    <div class="tb-color-result" [ngStyle]="!disabled ? {background: colorFormGroup.get('color').value} : {}"></div>
+  </div>
+</ng-template>

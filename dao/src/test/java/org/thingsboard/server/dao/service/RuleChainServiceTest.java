@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Created by igor on 3/13/18.
@@ -280,7 +281,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
 
         ruleNodes.set(name3Index, ruleNode4);
 
-        Assert.assertTrue(ruleChainService.saveRuleChainMetaData(tenantId, savedRuleChainMetaData).isSuccess());
+        Assert.assertTrue(ruleChainService.saveRuleChainMetaData(tenantId, savedRuleChainMetaData, Function.identity()).isSuccess());
         RuleChainMetaData updatedRuleChainMetaData = ruleChainService.loadRuleChainMetaData(tenantId, savedRuleChainMetaData.getRuleChainId());
 
         Assert.assertEquals(3, updatedRuleChainMetaData.getNodes().size());
@@ -311,14 +312,14 @@ public class RuleChainServiceTest extends AbstractServiceTest {
     @Test
     public void testUpdateRuleChainMetaDataWithCirclingRelation() {
         Assertions.assertThrows(DataValidationException.class, () -> {
-            ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation());
+            ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation(), Function.identity());
         });
     }
 
     @Test
     public void testUpdateRuleChainMetaDataWithCirclingRelation2() {
         Assertions.assertThrows(DataValidationException.class, () -> {
-            ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation2());
+            ruleChainService.saveRuleChainMetaData(tenantId, createRuleChainMetadataWithCirclingRelation2(), Function.identity());
         });
     }
 
@@ -395,7 +396,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         ruleChainMetaData.addConnectionInfo(0,2,"fail");
         ruleChainMetaData.addConnectionInfo(1,2,"success");
 
-        Assert.assertTrue(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData).isSuccess());
+        Assert.assertTrue(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData, Function.identity()).isSuccess());
         return ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId());
     }
 

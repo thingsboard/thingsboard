@@ -2457,7 +2457,6 @@
         "name": "Název",
         "name-required": "Název je povinný.",
         "type": "Typ",
-        "description": "Popis",
         "delete": "Smazat uzel pravidla",
         "select-all-objects": "Vybrat všechny uzly a spojení",
         "deselect-all-objects": "Zrušit výběr všech uzlů a spojení",

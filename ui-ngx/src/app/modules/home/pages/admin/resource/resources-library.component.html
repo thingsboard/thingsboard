@@ -52,7 +52,7 @@
         <mat-label translate>resource.resource-type</mat-label>
         <mat-select formControlName="resourceType" required>
           <mat-option *ngFor="let resourceType of resourceTypes" [value]="resourceType">
-            {{ resourceTypesTranslationMap.get(resourceType) }}
+            {{ resourceTypesTranslationMap.get(resourceType) | translate }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -66,7 +66,7 @@
           {{ 'resource.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-file-input *ngIf="isAdd"
+      <tb-file-input *ngIf="isAdd || (isEdit && entityForm.get('resourceType').value === resourceType.JS_MODULE)"
         formControlName="data"
         required
         [readAsBinary]="true"
@@ -78,7 +78,7 @@
         [existingFileName]="entityForm.get('fileName')?.value"
         (fileNameChanged)="entityForm?.get('fileName').patchValue($event)">
       </tb-file-input>
-      <div *ngIf="!isAdd" fxLayout="row" fxLayoutGap.gt-md="8px" fxLayoutGap.sm="8px" fxLayout.xs="column" fxLayout.md="column">
+      <div *ngIf="!isAdd && !(isEdit && entityForm.get('resourceType').value === resourceType.JS_MODULE)" fxLayout="row" fxLayoutGap.gt-md="8px" fxLayoutGap.sm="8px" fxLayout.xs="column" fxLayout.md="column">
         <mat-form-field fxFlex>
           <mat-label translate>resource.file-name</mat-label>
           <input matInput formControlName="fileName" type="text">

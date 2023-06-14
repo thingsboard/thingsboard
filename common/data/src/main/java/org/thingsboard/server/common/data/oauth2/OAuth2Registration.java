@@ -20,8 +20,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.OAuth2ParamsId;
 import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
 
@@ -31,7 +31,7 @@ import java.util.List;
 @Data
 @ToString(exclude = {"clientSecret"})
 @NoArgsConstructor
-public class OAuth2Registration extends SearchTextBasedWithAdditionalInfo<OAuth2RegistrationId> implements HasName {
+public class OAuth2Registration extends BaseDataWithAdditionalInfo<OAuth2RegistrationId> implements HasName {
 
     private OAuth2ParamsId oauth2ParamsId;
     private OAuth2MapperConfig mapperConfig;
@@ -70,10 +70,5 @@ public class OAuth2Registration extends SearchTextBasedWithAdditionalInfo<OAuth2
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return loginButtonLabel;
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 }

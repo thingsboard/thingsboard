@@ -3330,7 +3330,6 @@
         "name-required": "El nombre es requerido.",
         "name-max-length": "Nombre debe ser menor de 256",
         "type": "Tipo",
-        "description": "Descripción",
         "delete": "Eliminar nodo de reglas",
         "select-all-objects": "Seleccionar todos los nodos y conexiones",
         "deselect-all-objects": "Deshacer selección de todos los nodos y conexiones",

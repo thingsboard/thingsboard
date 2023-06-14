@@ -16,7 +16,7 @@
 package org.thingsboard.server.msa.ui.tests.devicessmoke;
 
 import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 
-@Epic("Filter devices (By device profile and state)")
+@Feature("Filter devices (By device profile and state)")
 public class DeviceFilterTest extends AbstractDeviceTest {
 
     private String activeDeviceName;

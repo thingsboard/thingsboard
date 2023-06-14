@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.OtaPackageInfoEntity;
 import org.thingsboard.server.dao.ota.OtaPackageInfoDao;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Objects;
@@ -38,7 +38,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @SqlDao
-public class JpaOtaPackageInfoDao extends JpaAbstractSearchTextDao<OtaPackageInfoEntity, OtaPackageInfo> implements OtaPackageInfoDao {
+public class JpaOtaPackageInfoDao extends JpaAbstractDao<OtaPackageInfoEntity, OtaPackageInfo> implements OtaPackageInfoDao {
 
     @Autowired
     private OtaPackageInfoRepository otaPackageInfoRepository;

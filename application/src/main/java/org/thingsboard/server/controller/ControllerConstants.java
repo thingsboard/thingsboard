@@ -140,6 +140,9 @@ public class ControllerConstants {
 
     protected static final String RESOURCE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the resource title.";
     protected static final String RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, resourceType, tenantId";
+    protected static final String RESOURCE_TYPE_PROPERTY_ALLOWABLE_VALUES = "LWM2M_MODEL, JKS, PKCS_12, JS_MODULE";
+    protected static final String RESOURCE_TYPE = "A string value representing the resource type.";
+
     protected static final String LWM2M_OBJECT_DESCRIPTION = "LwM2M Object is a object that includes information about the LwM2M model which can be used in transport configuration for the LwM2M device profile. ";
     protected static final String LWM2M_OBJECT_SORT_PROPERTY_ALLOWABLE_VALUES = "id, name";
 

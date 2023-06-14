@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 import java.util.Collections;
@@ -25,7 +26,8 @@ import java.util.List;
  * Created by ashvayka on 19.01.18.
  */
 @Data
-public class TbGetAttributesNodeConfiguration implements NodeConfiguration<TbGetAttributesNodeConfiguration> {
+@EqualsAndHashCode(callSuper = true)
+public class TbGetAttributesNodeConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbGetAttributesNodeConfiguration> {
 
     private List<String> clientAttributeNames;
     private List<String> sharedAttributeNames;
@@ -35,18 +37,18 @@ public class TbGetAttributesNodeConfiguration implements NodeConfiguration<TbGet
 
     private boolean tellFailureIfAbsent;
     private boolean getLatestValueWithTs;
-    private boolean fetchToData;
 
     @Override
     public TbGetAttributesNodeConfiguration defaultConfiguration() {
-        TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
+        var configuration = new TbGetAttributesNodeConfiguration();
         configuration.setClientAttributeNames(Collections.emptyList());
         configuration.setSharedAttributeNames(Collections.emptyList());
         configuration.setServerAttributeNames(Collections.emptyList());
         configuration.setLatestTsKeyNames(Collections.emptyList());
         configuration.setTellFailureIfAbsent(true);
         configuration.setGetLatestValueWithTs(false);
-        configuration.setFetchToData(false);
+        configuration.setFetchTo(FetchTo.METADATA);
         return configuration;
     }
+
 }

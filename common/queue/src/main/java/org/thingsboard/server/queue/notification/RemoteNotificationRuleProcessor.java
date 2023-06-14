@@ -20,7 +20,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -38,6 +39,7 @@ import java.util.UUID;
 @Slf4j
 public class RemoteNotificationRuleProcessor implements NotificationRuleProcessor {
 
+    private final NotificationDeduplicationService deduplicationService;
     private final TbQueueProducerProvider producerProvider;
     private final NotificationsTopicService notificationsTopicService;
     private final PartitionService partitionService;
@@ -46,7 +48,11 @@ public class RemoteNotificationRuleProcessor implements NotificationRuleProcesso
     @Override
     public void process(NotificationRuleTrigger trigger) {
         try {
-            log.trace("Submitting notification rule trigger: {}", trigger);
+            if (trigger.deduplicate() && deduplicationService.alreadyProcessed(trigger)) {
+                return;
+            }
+
+            log.debug("Submitting notification rule trigger: {}", trigger);
             TransportProtos.NotificationRuleProcessorMsg.Builder msg = TransportProtos.NotificationRuleProcessorMsg.newBuilder()
                     .setTrigger(ByteString.copyFrom(encodingService.encode(trigger)));
 
@@ -57,7 +63,7 @@ public class RemoteNotificationRuleProcessor implements NotificationRuleProcesso
                                 .setNotificationRuleProcessorMsg(msg)
                                 .build()), null);
             });
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("Failed to submit notification rule trigger: {}", trigger, e);
         }
     }

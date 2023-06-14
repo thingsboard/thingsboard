@@ -26,7 +26,7 @@ import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { FloatLabelType, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 interface EntityTypeInfo {
@@ -56,6 +56,11 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   get required(): boolean {
     return this.requiredValue;
   }
+
+  @Input() label: string;
+
+  @Input() floatLabel: FloatLabelType = 'auto';
+
   @Input()
   set required(value: boolean) {
     const newVal = coerceBooleanProperty(value);

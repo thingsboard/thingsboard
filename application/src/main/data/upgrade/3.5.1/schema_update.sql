@@ -115,3 +115,10 @@ BEGIN
 END;
 $$;
 -- EDGE EVENTS MIGRATION END
+
+ALTER TABLE resource
+    ADD COLUMN IF NOT EXISTS etag varchar;
+
+UPDATE resource
+    SET etag = encode(sha256(decode(resource.data, 'base64')),'hex') WHERE resource.data is not null;
+
