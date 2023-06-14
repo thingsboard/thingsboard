@@ -87,6 +87,7 @@ public class NotificationTargetImportService extends BaseEntityImportService<Not
     @Override
     protected NotificationTarget saveOrUpdate(EntitiesImportCtx ctx, NotificationTarget notificationTarget, EntityExportData<NotificationTarget> exportData, IdProvider idProvider) {
         ConstraintValidator.validateFields(notificationTarget);
+        // take a look at publish event
         return notificationTargetService.saveNotificationTarget(ctx.getTenantId(), notificationTarget);
     }
 

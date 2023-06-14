@@ -31,9 +31,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -45,6 +48,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
@@ -155,6 +159,7 @@ public class BaseRelationService implements RelationService {
         validate(relation);
         var result = relationDao.saveRelation(tenantId, relation);
         publishEvictEvent(EntityRelationEvent.from(relation));
+        publishSaveOrUpdateRelation(tenantId, relation);
         return result;
     }
 
@@ -169,6 +174,8 @@ public class BaseRelationService implements RelationService {
         }
         for (EntityRelation relation : relations) {
             publishEvictEvent(EntityRelationEvent.from(relation));
+            eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, null,
+                    JacksonUtil.toString(relation), EdgeEventActionType.RELATION_ADD_OR_UPDATE));
         }
     }
 
@@ -207,6 +214,9 @@ public class BaseRelationService implements RelationService {
         var result = relationDao.deleteRelation(tenantId, from, to, relationType, typeGroup);
         //TODO: evict cache only if the relation was deleted. Note: relationDao.deleteRelation requires improvement.
         publishEvictEvent(new EntityRelationEvent(from, to, relationType, typeGroup));
+        EntityRelation entityRelation = new EntityRelation(from, to, relationType, typeGroup);
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, null,
+                JacksonUtil.toString(entityRelation), EdgeEventActionType.RELATION_DELETED));
         return result;
     }
 
@@ -632,6 +642,13 @@ public class BaseRelationService implements RelationService {
             eventPublisher.publishEvent(event);
         } else {
             handleEvictEvent(event);
+        }
+    }
+
+    private void publishSaveOrUpdateRelation(TenantId tenantId, EntityRelation relation) {
+        if (!EntityType.EDGE.equals(relation.getFrom().getEntityType()) && !EntityType.EDGE.equals(relation.getTo().getEntityType())) {
+            eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, null,
+                    JacksonUtil.toString(relation), EdgeEventActionType.RELATION_ADD_OR_UPDATE));
         }
     }
 

@@ -42,7 +42,6 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,7 +86,6 @@ public class DefaultTbAlarmServiceTest {
                 .build());
         service.save(alarm, new User());
 
-        verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
         verify(alarmSubscriptionService, times(1)).createAlarm(any());
     }
 
@@ -99,7 +97,6 @@ public class DefaultTbAlarmServiceTest {
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
-        verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
         verify(alarmSubscriptionService, times(1)).acknowledgeAlarm(any(), any(), anyLong());
     }
 
@@ -112,7 +109,6 @@ public class DefaultTbAlarmServiceTest {
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
-        verify(notificationEntityService, times(1)).notifyCreateOrUpdateAlarm(any(), any(), any());
         verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), anyLong(), any());
     }
 
@@ -120,7 +116,6 @@ public class DefaultTbAlarmServiceTest {
     public void testDelete() {
         service.delete(new Alarm(), new User());
 
-        verify(notificationEntityService, times(1)).notifyDeleteAlarm(any(), any(), any(), any(), any(), any(), anyString());
         verify(alarmSubscriptionService, times(1)).deleteAlarm(any(), any());
     }
 }

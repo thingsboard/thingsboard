@@ -38,12 +38,9 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -104,46 +101,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                                                                            List<EdgeId> relatedEdgeIds,
                                                                            User user, Object... additionalInfo) {
         logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
-        sendDeleteNotificationMsg(tenantId, entityId, relatedEdgeIds, null);
-    }
-
-    @Override
-    public void notifyDeleteAlarm(TenantId tenantId, Alarm alarm, EntityId originatorId, CustomerId customerId,
-                                  List<EdgeId> relatedEdgeIds, User user, String body, Object... additionalInfo) {
-        logEntityAction(tenantId, originatorId, alarm, customerId, ActionType.DELETED, user, additionalInfo);
-        sendAlarmDeleteNotificationMsg(tenantId, alarm, relatedEdgeIds, body);
-    }
-
-    @Override
-    public void notifyDeleteRuleChain(TenantId tenantId, RuleChain ruleChain, List<EdgeId> relatedEdgeIds, User user) {
-        RuleChainId ruleChainId = ruleChain.getId();
-        logEntityAction(tenantId, ruleChainId, ruleChain, null, ActionType.DELETED, user, null, ruleChainId.toString());
-        if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-            sendDeleteNotificationMsg(tenantId, ruleChainId, relatedEdgeIds, null);
-        }
-    }
-
-    @Override
-    public <I extends EntityId> void notifySendMsgToEdgeService(TenantId tenantId, I entityId, EdgeEventActionType edgeEventActionType) {
-        sendEntityNotificationMsg(tenantId, entityId, edgeEventActionType);
-    }
-
-    @Override
-    public <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToCustomer(TenantId tenantId, I entityId,
-                                                                                               CustomerId customerId, E entity,
-                                                                                               ActionType actionType,
-                                                                                               User user, Object... additionalInfo) {
-        logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
-        sendEntityNotificationMsg(tenantId, entityId, edgeTypeByActionType(actionType), JacksonUtil.toString(customerId));
-    }
-
-    @Override
-    public <E extends HasName, I extends EntityId> void notifyAssignOrUnassignEntityToEdge(TenantId tenantId, I entityId,
-                                                                                           CustomerId customerId, EdgeId edgeId,
-                                                                                           E entity, ActionType actionType,
-                                                                                           User user, Object... additionalInfo) {
-        logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
-        sendEntityAssignToEdgeNotificationMsg(tenantId, edgeId, entityId, edgeTypeByActionType(actionType));
+        sendDeleteNotificationMsg(tenantId, entityId, relatedEdgeIds);
     }
 
     @Override
@@ -168,18 +126,16 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
 
     @Override
     public void notifyDeleteDevice(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
-                                   List<EdgeId> relatedEdgeIds, User user, Object... additionalInfo) {
+                                   User user, Object... additionalInfo) {
         gatewayNotificationsService.onDeviceDeleted(device);
         tbClusterService.onDeviceDeleted(device, null);
-
-        notifyDeleteEntity(tenantId, deviceId, device, customerId, ActionType.DELETED, relatedEdgeIds, user, additionalInfo);
+        logEntityAction(tenantId, deviceId, device, customerId, ActionType.DELETED, user, additionalInfo);
     }
 
     @Override
     public void notifyUpdateDeviceCredentials(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
                                               DeviceCredentials deviceCredentials, User user) {
         tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(tenantId, deviceCredentials.getDeviceId(), deviceCredentials), null);
-        sendEntityNotificationMsg(tenantId, deviceId, EdgeEventActionType.CREDENTIALS_UPDATED);
         logEntityAction(tenantId, deviceId, device, customerId, ActionType.CREDENTIALS_UPDATED, user, deviceCredentials);
     }
 
@@ -188,16 +144,6 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
                                            Device device, Tenant tenant, User user, Object... additionalInfo) {
         logEntityAction(tenantId, deviceId, device, customerId, ActionType.ASSIGNED_TO_TENANT, user, additionalInfo);
         pushAssignedFromNotification(tenant, newTenantId, device);
-    }
-
-    @Override
-    public <E extends HasName, I extends EntityId> void notifyCreateOrUpdateEntity(TenantId tenantId, I entityId, E entity,
-                                                                                   CustomerId customerId, ActionType actionType,
-                                                                                   User user, Object... additionalInfo) {
-        logEntityAction(tenantId, entityId, entity, customerId, actionType, user, additionalInfo);
-        if (actionType == ActionType.UPDATED) {
-            sendEntityNotificationMsg(tenantId, entityId, EdgeEventActionType.UPDATED);
-        }
     }
 
     @Override
@@ -222,60 +168,23 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public void notifyCreateOrUpdateAlarm(AlarmInfo alarm, ActionType actionType, User user, Object... additionalInfo) {
-        logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarm, alarm.getCustomerId(), actionType, user, additionalInfo);
-        sendEntityNotificationMsg(alarm.getTenantId(), alarm.getId(), edgeTypeByActionType(actionType));
-    }
-
-    @Override
     public void notifyAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user) {
         logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), actionType, user, alarmComment);
     }
 
     @Override
-    public <E extends HasName, I extends EntityId> void notifyCreateOrUpdateOrDelete(TenantId tenantId, CustomerId customerId,
-                                                                                     I entityId, E entity, User user,
-                                                                                     ActionType actionType, boolean sendNotifyMsgToEdge, Exception e,
-                                                                                     Object... additionalInfo) {
-        logEntityAction(tenantId, entityId, entity, customerId, actionType, user, e, additionalInfo);
-        if (sendNotifyMsgToEdge) {
-            sendEntityNotificationMsg(tenantId, entityId, edgeTypeByActionType(actionType));
-        }
-    }
-
-    @Override
-    public void notifyRelation(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user,
-                               ActionType actionType, Object... additionalInfo) {
+    public void logEntityRelationAction(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user,
+                                        ActionType actionType, Object... additionalInfo) {
         logEntityAction(tenantId, relation.getFrom(), null, customerId, actionType, user, additionalInfo);
         logEntityAction(tenantId, relation.getTo(), null, customerId, actionType, user, additionalInfo);
-        if (!EntityType.EDGE.equals(relation.getFrom().getEntityType()) && !EntityType.EDGE.equals(relation.getTo().getEntityType())) {
-            sendNotificationMsgToEdge(tenantId, null, null, JacksonUtil.toString(relation),
-                    EdgeEventType.RELATION, edgeTypeByActionType(actionType));
-        }
     }
 
-    private void sendEntityNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
-        sendEntityNotificationMsg(tenantId, entityId, action, null);
-    }
-
-    private void sendEntityNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action, String body) {
-        sendNotificationMsgToEdge(tenantId, null, entityId, body, null, action);
-    }
-
-    private void sendAlarmDeleteNotificationMsg(TenantId tenantId, Alarm alarm, List<EdgeId> edgeIds, String body) {
-        sendDeleteNotificationMsg(tenantId, alarm.getId(), edgeIds, body);
-    }
-
-    private void sendDeleteNotificationMsg(TenantId tenantId, EntityId entityId, List<EdgeId> edgeIds, String body) {
+    private void sendDeleteNotificationMsg(TenantId tenantId, EntityId entityId, List<EdgeId> edgeIds) {
         if (edgeIds != null && !edgeIds.isEmpty()) {
             for (EdgeId edgeId : edgeIds) {
-                sendNotificationMsgToEdge(tenantId, edgeId, entityId, body, null, EdgeEventActionType.DELETED);
+                sendNotificationMsgToEdge(tenantId, edgeId, entityId, null, null, EdgeEventActionType.DELETED);
             }
         }
-    }
-
-    private void sendEntityAssignToEdgeNotificationMsg(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
-        sendNotificationMsgToEdge(tenantId, edgeId, entityId, null, null, action);
     }
 
     private void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body,

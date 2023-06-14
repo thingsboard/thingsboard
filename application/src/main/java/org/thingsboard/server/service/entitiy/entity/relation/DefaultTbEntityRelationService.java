@@ -40,33 +40,34 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
 
     @Override
     public void save(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.RELATION_ADD_OR_UPDATE;
         try {
             relationService.saveRelation(tenantId, relation);
-            notificationEntityService.notifyRelation(tenantId, customerId,
+            notificationEntityService.logEntityRelationAction(tenantId, customerId,
                     relation, user, ActionType.RELATION_ADD_OR_UPDATE, relation);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, relation.getFrom(), null, customerId,
-                    ActionType.RELATION_ADD_OR_UPDATE, user, e, relation);
+                    actionType, user, e, relation);
             notificationEntityService.logEntityAction(tenantId, relation.getTo(), null, customerId,
-                    ActionType.RELATION_ADD_OR_UPDATE, user, e, relation);
+                    actionType, user, e, relation);
             throw e;
         }
     }
 
     @Override
     public void delete(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.RELATION_DELETED;
         try {
             boolean found = relationService.deleteRelation(tenantId, relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
             if (!found) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
-            notificationEntityService.notifyRelation(tenantId, customerId,
-                    relation, user, ActionType.RELATION_DELETED, relation);
+            notificationEntityService.logEntityRelationAction(tenantId, customerId, relation, user, actionType, relation);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, relation.getFrom(), null, customerId,
-                    ActionType.RELATION_DELETED, user, e, relation);
+                    actionType, user, e, relation);
             notificationEntityService.logEntityAction(tenantId, relation.getTo(), null, customerId,
-                    ActionType.RELATION_DELETED, user, e, relation);
+                    actionType, user, e, relation);
             throw e;
         }
     }

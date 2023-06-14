@@ -31,6 +31,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -62,7 +64,9 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public Queue saveQueue(Queue queue) {
         log.trace("Executing createOrUpdateQueue [{}]", queue);
         queueValidator.validate(queue, Queue::getTenantId);
-        return queueDao.save(queue.getTenantId(), queue);
+        Queue savedQueue = queueDao.save(queue.getTenantId(), queue);
+        eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedQueue.getTenantId()).entityId(savedQueue.getId()).build());
+        return savedQueue;
     }
 
     @Override
@@ -70,6 +74,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
         try {
             queueDao.removeById(tenantId, queueId.getId());
+            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(queueId).build());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_queue_device_profile")) {

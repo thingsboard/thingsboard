@@ -64,7 +64,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             }
             actionType = result.isCreated() ? ActionType.ADDED : ActionType.UPDATED;
             if (result.isModified()) {
-                notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), actionType, user);
+                notificationEntityService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(),
+                        result.getAlarm(), result.getAlarm().getCustomerId(), actionType, user);
             }
             AlarmInfo resultAlarm = result.getAlarm();
             if (alarm.isAcknowledged() && !resultAlarm.isAcknowledged()) {
@@ -112,7 +113,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } catch (ThingsboardException e) {
                 log.error("Failed to save alarm comment", e);
             }
-            notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_ACK, user);
+            notificationEntityService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(),
+                    result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_ACK, user);
         } else {
             throw new ThingsboardException("Alarm was already acknowledged!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
@@ -144,7 +146,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } catch (ThingsboardException e) {
                 log.error("Failed to save alarm comment", e);
             }
-            notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_CLEAR, user);
+            notificationEntityService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(),
+                    result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_CLEAR, user);
         } else {
             throw new ThingsboardException("Alarm was already cleared!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
@@ -175,7 +178,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } catch (ThingsboardException e) {
                 log.error("Failed to save alarm comment", e);
             }
-            notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_ASSIGNED, user);
+            notificationEntityService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(),
+                    result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_ASSIGNED, user);
         } else {
             throw new ThingsboardException("Alarm was already assigned to this user!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
@@ -203,7 +207,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } catch (ThingsboardException e) {
                 log.error("Failed to save alarm comment", e);
             }
-            notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_UNASSIGNED, user);
+            notificationEntityService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(),
+                    result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, user);
         } else {
             throw new ThingsboardException("Alarm was already unassigned!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
@@ -212,10 +217,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Override
     public Boolean delete(Alarm alarm, User user) {
+        ActionType actionType = ActionType.DELETED;
         TenantId tenantId = alarm.getTenantId();
-        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, alarm.getOriginator());
-        notificationEntityService.notifyDeleteAlarm(tenantId, alarm, alarm.getOriginator(), alarm.getCustomerId(),
-                relatedEdgeIds, user, JacksonUtil.toString(alarm));
+        notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
+                actionType, user);
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }
 

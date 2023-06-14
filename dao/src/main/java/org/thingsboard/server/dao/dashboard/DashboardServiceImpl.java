@@ -25,12 +25,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -45,6 +47,9 @@ import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
+import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
+import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -140,6 +145,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         try {
             var saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(saved.getTenantId()).entityId(saved.getId()).build());
             if (dashboard.getId() == null) {
                 countService.publishCountEntityEvictEvent(saved.getTenantId(), EntityType.DASHBOARD);
             }
@@ -170,6 +176,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                 log.warn("[{}] Failed to create dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
             }
+            eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, dashboardId,
+                    JacksonUtil.toString(customerId), EdgeEventActionType.ASSIGNED_TO_CUSTOMER));
             return saveDashboard(dashboard);
         } else {
             return dashboard;
@@ -190,6 +198,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                 log.warn("[{}] Failed to delete dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
             }
+            eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, dashboardId,
+                    JacksonUtil.toString(customerId), EdgeEventActionType.UNASSIGNED_FROM_EDGE));
             return saveDashboard(dashboard);
         } else {
             return dashboard;
@@ -210,6 +220,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     public void deleteDashboard(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
+        publishDeleteDashboard(tenantId, dashboardId);
         deleteEntityRelations(tenantId, dashboardId);
         try {
             dashboardDao.removeById(tenantId, dashboardId.getId());
@@ -304,6 +315,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, dashboardId, null, EdgeEventActionType.ASSIGNED_TO_EDGE));
         return dashboard;
     }
 
@@ -320,6 +332,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, dashboardId, null, EdgeEventActionType.UNASSIGNED_FROM_EDGE));
         return dashboard;
     }
 
@@ -340,6 +353,13 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public List<Dashboard> findTenantDashboardsByTitle(TenantId tenantId, String title) {
         return dashboardDao.findByTenantIdAndTitle(tenantId.getId(), title);
+    }
+
+    private void publishDeleteDashboard(TenantId tenantId, DashboardId dashboardId) {
+        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, dashboardId);
+        if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
+            eventPublisher.publishEvent(DeleteDaoEventByRelatedEdges.builder().tenantId(tenantId).entityId(dashboardId).relatedEdgeIds(relatedEdgeIds).build());
+        }
     }
 
     private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover =

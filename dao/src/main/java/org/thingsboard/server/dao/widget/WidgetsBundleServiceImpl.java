@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.widget;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -27,6 +28,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -53,6 +56,9 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     @Autowired
     private DataValidator<WidgetsBundle> widgetsBundleValidator;
 
+    @Autowired
+    protected ApplicationEventPublisher eventPublisher;
+
     @Override
     public WidgetsBundle findWidgetsBundleById(TenantId tenantId, WidgetsBundleId widgetsBundleId) {
         log.trace("Executing findWidgetsBundleById [{}]", widgetsBundleId);
@@ -65,7 +71,9 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
         log.trace("Executing saveWidgetsBundle [{}]", widgetsBundle);
         widgetsBundleValidator.validate(widgetsBundle, WidgetsBundle::getTenantId);
         try {
-            return widgetsBundleDao.save(widgetsBundle.getTenantId(), widgetsBundle);
+            WidgetsBundle result = widgetsBundleDao.save(widgetsBundle.getTenantId(), widgetsBundle);
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(result.getTenantId()).entityId(result.getId()).build());
+            return result;
         } catch (Exception e) {
             AbstractCachedEntityService.checkConstraintViolation(e, "widgets_bundle_external_id_unq_key", "Widget Bundle with such external id already exists!");
             throw e;
@@ -81,6 +89,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
             throw new IncorrectParameterException("Unable to delete non-existent widgets bundle.");
         }
         widgetTypeService.deleteWidgetTypesByTenantIdAndBundleAlias(widgetsBundle.getTenantId(), widgetsBundle.getAlias());
+        eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(widgetsBundleId).build());
         widgetsBundleDao.removeById(tenantId, widgetsBundleId.getId());
     }
 

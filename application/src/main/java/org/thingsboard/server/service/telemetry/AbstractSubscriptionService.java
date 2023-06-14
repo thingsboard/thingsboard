@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -55,6 +56,8 @@ public abstract class AbstractSubscriptionService extends TbApplicationEventList
     protected TbClusterService clusterService;
     @Autowired
     protected PartitionService partitionService;
+    @Autowired
+    protected ApplicationEventPublisher eventPublisher;
     @Autowired
     protected Optional<SubscriptionManagerService> subscriptionManagerService;
 

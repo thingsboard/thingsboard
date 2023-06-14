@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfig
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -69,6 +70,9 @@ import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
+import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
+import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -237,6 +241,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             device.setDeviceData(syncDeviceData(deviceProfile, device.getDeviceData()));
             Device result = deviceDao.saveAndFlush(device.getTenantId(), device);
             publishEvictEvent(deviceCacheEvictEvent);
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(result.getTenantId()).entityId(result.getId()).build());
             if (device.getId() == null) {
                 countService.publishCountEntityEvictEvent(result.getTenantId(), EntityType.DEVICE);
             }
@@ -300,6 +305,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId) {
         Device device = findDeviceById(tenantId, deviceId);
         device.setCustomerId(customerId);
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, deviceId, JacksonUtil.toString(customerId),
+                EdgeEventActionType.ASSIGNED_TO_CUSTOMER));
         return saveDevice(device);
     }
 
@@ -307,7 +314,10 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public Device unassignDeviceFromCustomer(TenantId tenantId, DeviceId deviceId) {
         Device device = findDeviceById(tenantId, deviceId);
+        var customerId = device.getCustomerId();
         device.setCustomerId(null);
+        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, deviceId, JacksonUtil.toString(customerId),
+                EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER));
         return saveDevice(device);
     }
 
@@ -323,11 +333,11 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         if (entityViews != null && !entityViews.isEmpty()) {
             throw new DataValidationException("Can't delete device that has entity views!");
         }
-
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceId);
         if (deviceCredentials != null) {
             deviceCredentialsService.deleteDeviceCredentials(tenantId, deviceCredentials);
         }
+        publishDeleteDevice(tenantId, deviceId);
         deleteEntityRelations(tenantId, deviceId);
 
         deviceDao.removeById(tenantId, deviceId.getId());
@@ -588,6 +598,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         }
         try {
             createRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, deviceId, null, EdgeEventActionType.ASSIGNED_TO_EDGE));
         } catch (Exception e) {
             log.warn("[{}] Failed to create device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);
@@ -607,6 +618,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, deviceId, null, EdgeEventActionType.UNASSIGNED_FROM_EDGE));
         } catch (Exception e) {
             log.warn("[{}] Failed to delete device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);
@@ -642,6 +654,13 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id) {
         deleteDevice(tenantId, (DeviceId) id);
+    }
+
+    private void publishDeleteDevice(TenantId tenantId, DeviceId deviceId) {
+        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, deviceId);
+        if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
+            eventPublisher.publishEvent(DeleteDaoEventByRelatedEdges.builder().tenantId(tenantId).entityId(deviceId).relatedEdgeIds(relatedEdgeIds).build());
+        }
     }
 
     private PaginatedRemover<TenantId, Device> tenantDevicesRemover =

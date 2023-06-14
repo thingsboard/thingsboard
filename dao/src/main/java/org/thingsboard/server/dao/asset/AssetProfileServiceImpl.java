@@ -27,12 +27,15 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -118,6 +121,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
             savedAssetProfile = assetProfileDao.saveAndFlush(assetProfile.getTenantId(), assetProfile);
             publishEvictEvent(new AssetProfileEvictEvent(savedAssetProfile.getTenantId(), savedAssetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, savedAssetProfile.getId(), savedAssetProfile.isDefault()));
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedAssetProfile.getTenantId()).entityId(savedAssetProfile.getId()).build());
         } catch (Exception t) {
             handleEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, null, assetProfile.isDefault()));
@@ -160,6 +164,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
             assetProfileDao.removeById(tenantId, assetProfileId.getId());
             publishEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     null, assetProfile.getId(), assetProfile.isDefault()));
+            eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(assetProfileId).build());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_asset_profile")) {
@@ -301,6 +306,12 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     private AssetProfileInfo toAssetProfileInfo(AssetProfile profile) {
         return profile == null ? null : new AssetProfileInfo(profile.getId(), profile.getTenantId(), profile.getName(), profile.getImage(),
                 profile.getDefaultDashboardId());
+    }
+
+    private void publishAssetProfileDelete(TenantId tenantId, AssetProfileId assetProfileId) {
+        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, assetProfileId);
+        if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
+        }
     }
 
 }
