@@ -16,6 +16,7 @@
 package org.thingsboard.script.api.tbel;
 
 import com.google.common.primitives.Bytes;
+import org.apache.commons.lang3.ArrayUtils;
 import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
@@ -31,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
@@ -89,6 +91,14 @@ public class TbUtils {
        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
                List.class, int.class, boolean.class)));
         parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+                List.class, int.class)));
+        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+                byte[].class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+                byte[].class, int.class)));
+       parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+               List.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
                 List.class, int.class)));
         parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
                 double.class, int.class)));
@@ -327,6 +337,39 @@ public class TbUtils {
 
     public static float parseBytesToFloat(List data, int offset, boolean bigEndian) {
         return parseBytesToFloat(Bytes.toArray(data), offset, bigEndian);
+    }
+
+
+    public static double parseBytesToDouble(byte[] data, int offset) {
+        return parseBytesToDouble(data, offset, true);
+    }
+
+    public static double parseBytesToDouble(byte[] data, int offset, boolean bigEndian) {
+        if (data != null && data.length > 0) {
+            int length = 8;
+            if (offset > data.length) {
+                throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
+            }
+            if ((offset + length) > data.length) {
+                throw new IllegalArgumentException("Default length is always 4 bytes. Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
+            }
+
+            byte[] dataBytesArray = Arrays.copyOfRange(data, offset, (offset+length));
+            if (!bigEndian) {
+                ArrayUtils.reverse(dataBytesArray);
+            }
+            return ByteBuffer.wrap(dataBytesArray).getDouble();
+        } else {
+            throw new IllegalArgumentException("Array is null or array length is 0!");
+        }
+    }
+
+    public static double parseBytesToDouble(List data, int offset) {
+        return parseBytesToDouble(data, offset, true);
+    }
+
+    public static double parseBytesToDouble(List data, int offset, boolean bigEndian) {
+        return parseBytesToDouble(Bytes.toArray(data), offset, bigEndian);
     }
 
     public static String bytesToHex(ExecutionArrayList<?> bytesList) {
