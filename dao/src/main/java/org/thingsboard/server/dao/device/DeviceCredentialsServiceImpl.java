@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKBootstrapC
 import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509BootstrapClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -112,7 +113,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         try {
             var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
             publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
-            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(tenantId).entityId(value.getDeviceId()).build()); // maybe need to add type here, to send credentials update
+            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(tenantId).entityId(value.getDeviceId()).actionType(EdgeEventActionType.CREDENTIALS_UPDATED).build());
             return value;
         } catch (Exception t) {
             handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));

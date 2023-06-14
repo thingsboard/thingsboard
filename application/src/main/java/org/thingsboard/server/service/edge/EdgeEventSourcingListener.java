@@ -89,7 +89,7 @@ public class EdgeEventSourcingListener {
         }
         log.trace("SaveDaoEvent called: {}", event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
-                null, null, EdgeEventActionType.UPDATED);
+                null, null, event.getActionType() != null ? event.getActionType() : EdgeEventActionType.UPDATED);
     }
 
     @TransactionalEventListener(fallbackExecution = true)

@@ -99,7 +99,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (result.isModified()) {
             eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(result.getAlarm().getTenantId()).entityId(result.getAlarm().getId()).build());
         }
-        return withPropagated(alarmDao.updateAlarm(request));
+        return result;
     }
 
     @Override
@@ -121,7 +121,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (!result.isSuccessful() && !alarmCreationEnabled) {
             throw new ApiUsageLimitsExceededException("Alarms creation is disabled");
         }
-        eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(result.getAlarm().getTenantId()).entityId(result.getAlarm().getId()).build());
+        eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(result.getAlarm().getTenantId())
+                .entityId(result.getAlarm().getId()).actionType(EdgeEventActionType.ADDED).build());
         return withPropagated(result);
     }
 

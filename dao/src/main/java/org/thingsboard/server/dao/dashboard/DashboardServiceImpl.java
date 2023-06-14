@@ -177,7 +177,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                 throw new RuntimeException(e);
             }
             eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, dashboardId,
-                    JacksonUtil.toString(customerId), EdgeEventActionType.ASSIGNED_TO_CUSTOMER));
+                    JacksonUtil.toPrettyString(customer.getId()), EdgeEventActionType.ASSIGNED_TO_CUSTOMER));
             return saveDashboard(dashboard);
         } else {
             return dashboard;
@@ -199,7 +199,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                 throw new RuntimeException(e);
             }
             eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, null, dashboardId,
-                    JacksonUtil.toString(customerId), EdgeEventActionType.UNASSIGNED_FROM_EDGE));
+                    JacksonUtil.toPrettyString(customer.getId()), EdgeEventActionType.UNASSIGNED_FROM_EDGE));
             return saveDashboard(dashboard);
         } else {
             return dashboard;
