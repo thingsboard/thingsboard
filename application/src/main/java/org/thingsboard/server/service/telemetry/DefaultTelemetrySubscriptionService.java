@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -77,6 +78,9 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TbApiUsageStateService apiUsageStateService;
 
     private ExecutorService tsCallBackExecutor;
+
+    @Value("${sql.ts.value_no_xss_validation:false}")
+    private boolean valueNoXssValidation;
 
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
@@ -135,7 +139,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         checkInternalEntity(entityId);
         boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
         if (sysTenant || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
-            KvUtils.validate(ts);
+            KvUtils.validate(ts, valueNoXssValidation);
             if (saveLatest) {
                 saveAndNotifyInternal(tenantId, entityId, ts, ttl, getCallback(tenantId, customerId, sysTenant, callback));
             } else {

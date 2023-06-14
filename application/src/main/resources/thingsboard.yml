@@ -267,11 +267,13 @@ sql:
     batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_ATTRIBUTES_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    value_no_xss_validation: "${SQL_ATTRIBUTES_VALUE_NO_XSS_VALIDATION:false}"
   ts:
     batch_size: "${SQL_TS_BATCH_SIZE:10000}"
     batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_TS_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    value_no_xss_validation: "${SQL_TS_VALUE_NO_XSS_VALIDATION:false}"
   ts_latest:
     batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
     batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
@@ -346,6 +348,7 @@ sql:
     max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonable small to prevent infinite recursion as early as possible
     pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonable small to prevent relation query blocking all other DB calls
     query_timeout: "${SQL_RELATIONS_QUERY_TIMEOUT_SEC:20}" # This value has to be reasonable small to prevent relation query blocking all other DB calls
+
 
 # Actor system parameters
 actors:
