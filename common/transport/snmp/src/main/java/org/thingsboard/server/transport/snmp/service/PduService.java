@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @TbSnmpTransportComponent
 @Service
@@ -70,7 +69,9 @@ public class PduService {
                             })
                             .orElseGet(() -> new VariableBinding(new OID(mapping.getOid()))))
                     .collect(Collectors.toList()));
-            pdus.add(pdu);
+            if (pdu.size() > 0) {
+                pdus.add(pdu);
+            }
         }
 
         return pdus;
@@ -128,8 +129,8 @@ public class PduService {
     }
 
 
-    public JsonObject processPdu(PDU pdu, List<SnmpMapping> responseMappings) {
-        Map<OID, String> values = processPdu(pdu);
+    public JsonObject processPdus(List<PDU> pdus, List<SnmpMapping> responseMappings) {
+        Map<OID, String> values = processPdus(pdus);
 
         Map<OID, SnmpMapping> mappings = new HashMap<>();
         if (responseMappings != null) {
@@ -155,9 +156,9 @@ public class PduService {
         return data;
     }
 
-    public Map<OID, String> processPdu(PDU pdu) {
-        return IntStream.range(0, pdu.size())
-                .mapToObj(pdu::get)
+    public Map<OID, String> processPdus(List<PDU> pdus) {
+        return pdus.stream()
+                .flatMap(pdu -> pdu.getVariableBindings().stream())
                 .filter(Objects::nonNull)
                 .filter(variableBinding -> !(variableBinding.getVariable() instanceof Null))
                 .collect(Collectors.toMap(VariableBinding::getOid, VariableBinding::toValueString));

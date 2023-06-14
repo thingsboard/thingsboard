@@ -212,7 +212,7 @@ public class SnmpTransportContext extends TransportContext {
     @EventListener(DeviceUpdatedEvent.class)
     public void onDeviceUpdatedOrCreated(DeviceUpdatedEvent deviceUpdatedEvent) {
         Device device = deviceUpdatedEvent.getDevice();
-        log.trace("Got creating or updating device event for device {}", device);
+        log.debug("Got creating or updating device event for device {}", device);
         DeviceTransportType transportType = Optional.ofNullable(device.getDeviceData().getTransportConfiguration())
                 .map(DeviceTransportConfiguration::getType)
                 .orElse(null);
@@ -246,6 +246,7 @@ public class SnmpTransportContext extends TransportContext {
     }
 
     public void onDeviceProfileUpdated(DeviceProfile deviceProfile, DeviceSessionContext sessionContext) {
+        log.debug("Handling device profile {} update event for device {}", deviceProfile.getId(), sessionContext.getDeviceId());
         updateDeviceSession(sessionContext, sessionContext.getDevice(), deviceProfile);
     }
 
