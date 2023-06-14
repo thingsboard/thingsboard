@@ -173,7 +173,7 @@ public class SnmpTransportService implements TbTransportService {
 
     private void sendRequest(DeviceSessionContext sessionContext, List<PDU> request, RequestContext requestContext) {
         for (PDU pdu : request) {
-            log.trace("Executing SNMP request for device {} with {} variable bindings", sessionContext.getDeviceId(), pdu.size());
+            log.debug("Executing SNMP request for device {} with {} variable bindings", sessionContext.getDeviceId(), pdu.size());
             try {
                 snmp.send(pdu, sessionContext.getTarget(), requestContext, sessionContext);
             } catch (IOException e) {
@@ -260,7 +260,7 @@ public class SnmpTransportService implements TbTransportService {
                         response.add(responsePart);
                     }
                 }
-                log.trace("All response parts are collected for request to device {}", sessionContext.getDeviceId());
+                log.debug("All response parts are collected for request to device {}", sessionContext.getDeviceId());
             } else {
                 log.trace("Awaiting other response parts for request to device {}", sessionContext.getDeviceId());
                 return;
