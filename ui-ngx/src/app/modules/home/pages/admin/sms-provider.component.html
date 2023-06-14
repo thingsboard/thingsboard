@@ -76,8 +76,7 @@
       </mat-card-header>
       <mat-card-content>
         <section formGroupName="MOBILE" style="margin-bottom: 16px;">
-          <tb-file-input required
-                         formControlName="firebaseServiceAccountCredentials"
+          <tb-file-input formControlName="firebaseServiceAccountCredentials"
                          dropLabel="{{ 'admin.select-firebase-service-account-file' | translate }}"
                          label="{{ 'admin.firebase-service-account-file' | translate }}"
                          accept=".json,application/json"

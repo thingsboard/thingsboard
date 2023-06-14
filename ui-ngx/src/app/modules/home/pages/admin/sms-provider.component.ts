@@ -26,7 +26,7 @@ import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { MatDialog } from '@angular/material/dialog';
 import { SendTestSmsDialogComponent, SendTestSmsDialogData } from '@home/pages/admin/send-test-sms-dialog.component';
 import { NotificationSettings } from '@shared/models/notification.models';
-import { deepTrim, isEmptyStr } from '@core/utils';
+import { deepTrim, isNotEmptyStr } from '@core/utils';
 import { NotificationService } from '@core/http/notification.service';
 import { Authority } from '@shared/models/authority.enum';
 import { AuthUser } from '@shared/models/user.model';
@@ -134,7 +134,7 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
     // eslint-disable-next-line guard-for-in
     for (const method in this.notificationSettings.deliveryMethodsConfigs) {
       const keys = Object.keys(this.notificationSettings.deliveryMethodsConfigs[method]);
-      if (keys.some(item => isEmptyStr(this.notificationSettings.deliveryMethodsConfigs[method][item]))) {
+      if (keys.some(item => !isNotEmptyStr(this.notificationSettings.deliveryMethodsConfigs[method][item]))) {
         delete this.notificationSettings.deliveryMethodsConfigs[method];
       } else {
         this.notificationSettings.deliveryMethodsConfigs[method].method = method;
