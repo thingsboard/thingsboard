@@ -15,6 +15,7 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import com.google.common.primitives.Bytes;
 import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
@@ -81,6 +82,14 @@ public class TbUtils {
                 byte[].class, int.class, int.class)));
         parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
                 byte[].class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+                byte[].class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+                byte[].class, int.class)));
+       parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+               List.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+                List.class, int.class)));
         parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
                 double.class, int.class)));
         parserConfig.addImport("hexToBytes", new MethodStub(TbUtils.class.getMethod("hexToBytes",
@@ -291,6 +300,33 @@ public class TbUtils {
         bb.put(data, offset, length);
         bb.position(0);
         return bb.getInt();
+    }
+
+    public static float parseBytesToFloat(byte[] data, int offset) {
+        return parseBytesToFloat(data, offset, true);
+    }
+
+    public static float parseBytesToFloat(byte[] data, int offset, boolean bigEndian) {
+        if (data != null && data.length > 0) {
+            int length = 4;
+            if (offset > data.length) {
+                throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
+            }
+            if ((offset + length) > data.length) {
+                throw new IllegalArgumentException("Default length is always 4 bytes. Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
+            }
+            int i = parseBytesToInt(data, offset, length, bigEndian);
+            return Float.intBitsToFloat(i);
+        } else {
+            throw new IllegalArgumentException("Array is null or array length is 0!");
+        }
+    }
+    public static float parseBytesToFloat(List data, int offset) {
+        return parseBytesToFloat(data, offset, true);
+    }
+
+    public static float parseBytesToFloat(List data, int offset, boolean bigEndian) {
+        return parseBytesToFloat(Bytes.toArray(data), offset, bigEndian);
     }
 
     public static String bytesToHex(ExecutionArrayList<?> bytesList) {
