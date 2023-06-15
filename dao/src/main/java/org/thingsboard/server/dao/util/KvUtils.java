@@ -57,6 +57,14 @@ public class KvUtils {
             throw new DataValidationException("Validation error: key length must be equal or less than 255");
         }
 
+        if (valueNoXssValidation) {
+            if (value instanceof CharSequence || value instanceof JsonNode) {
+                if (!NoXssValidator.isValid(value.toString())) {
+                    throw new DataValidationException("Validation error: value is malformed");
+                }
+            }
+        }
+
         if (validatedKeys.getIfPresent(key) != null) {
             return;
         }
@@ -66,13 +74,5 @@ public class KvUtils {
         }
 
         validatedKeys.put(key, Boolean.TRUE);
-
-        if (valueNoXssValidation) {
-            if (value instanceof CharSequence || value instanceof JsonNode) {
-                if (!NoXssValidator.isValid(value.toString())) {
-                    throw new DataValidationException("Validation error: value is malformed");
-                }
-            }
-        }
     }
 }
