@@ -467,13 +467,11 @@ public class TbUtils {
         if ((offset + length) > data.length) {
             throw new IllegalArgumentException("Default length is always " + length + " bytes. Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
         }
-        byte[] bytesToNumber = new byte[length];
         byte[] dataBytesArray = Arrays.copyOfRange(data, offset, (offset+length));
         if (!bigEndian) {
             ArrayUtils.reverse(dataBytesArray);
         }
-        System.arraycopy(dataBytesArray, 0, bytesToNumber, 0, length);
-        return bytesToNumber;
+        return dataBytesArray;
     }
 
     public static String bytesToHex(ExecutionArrayList<?> bytesList) {
