@@ -16,16 +16,10 @@
 package org.thingsboard.server.service.notification.channels;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
@@ -35,13 +29,13 @@ import org.thingsboard.server.common.data.notification.template.MobileDeliveryMe
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class MobileNotificationChannel implements NotificationChannel<User, MobileDeliveryMethodNotificationTemplate> {
 
+    private final FirebaseService firebaseService;
     private final NotificationSettingsService notificationSettingsService;
 
     @Override
@@ -54,36 +48,8 @@ public class MobileNotificationChannel implements NotificationChannel<User, Mobi
         }
 
         MobileNotificationDeliveryMethodConfig config = ctx.getDeliveryMethodConfig(NotificationDeliveryMethod.MOBILE);
-        FirebaseOptions firebaseOptions = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(IOUtils.toInputStream(config.getFirebaseServiceAccountCredentials(), StandardCharsets.UTF_8)))
-                .build();
-        String appName = ctx.getTenantId().toString();
-
-        FirebaseApp firebaseApp = FirebaseApp.getApps().stream()
-                .filter(app -> app.getName().equals(appName))
-                .findFirst().orElseGet(() -> {
-                    try {
-                        return FirebaseApp.initializeApp(firebaseOptions, appName);
-                    } catch (IllegalStateException e) {
-                        return FirebaseApp.getInstance(appName);
-                    }
-                });
-        FirebaseMessaging firebaseMessaging;
-        try {
-            firebaseMessaging = FirebaseMessaging.getInstance(firebaseApp);
-        } catch (IllegalArgumentException e) {
-            // because of concurrency issues: FirebaseMessaging.getInstance lazily loads FirebaseMessagingService
-            firebaseMessaging = FirebaseMessaging.getInstance(firebaseApp);
-        }
-
-        Message message = Message.builder()
-                .setNotification(Notification.builder()
-                        .setTitle(processedTemplate.getSubject())
-                        .setBody(processedTemplate.getBody())
-                        .build())
-                .setToken(fcmToken)
-                .build();
-        firebaseMessaging.send(message);
+        firebaseService.sendMessage(ctx.getTenantId(), config.getFirebaseServiceAccountCredentials(),
+                fcmToken, processedTemplate.getSubject(), processedTemplate.getBody());
     }
 
     @Override
