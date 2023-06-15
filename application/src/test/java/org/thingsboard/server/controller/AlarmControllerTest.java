@@ -535,7 +535,6 @@ public class AlarmControllerTest extends AbstractControllerTest {
     public void testUnassignAlarmOnUserRemoving() throws Exception {
         loginTenantAdmin();
 
-
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setTenantId(tenantId);
