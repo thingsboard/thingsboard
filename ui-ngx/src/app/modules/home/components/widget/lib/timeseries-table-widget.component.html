@@ -64,32 +64,32 @@
                                                                       maxWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
                                                                       width: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px' }">
                 </mat-header-cell>
-                <mat-cell *matCellDef="let row" [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
+                <mat-cell *matCellDef="let entity; let row = index" [style]="rowStyle(source, entity, row)" [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
                                                                    maxWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
                                                                    width: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px' }">
                   <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
-                    <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
+                    <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                       <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
                       <button *ngIf="actionDescriptor.icon"
                               mat-icon-button [disabled]="isLoading$ | async"
                               matTooltip="{{ actionDescriptor.displayName }}"
                               matTooltipPosition="above"
-                              (click)="onActionButtonClick($event, row, actionDescriptor)">
+                              (click)="onActionButtonClick($event, entity, actionDescriptor)">
                         <mat-icon>{{actionDescriptor.icon}}</mat-icon>
                       </button>
                     </ng-container>
                   </div>
-                  <div fxHide fxShow.lt-lg *ngIf="row.hasActions">
+                  <div fxHide fxShow.lt-lg *ngIf="entity.hasActions">
                     <button mat-icon-button
                             (click)="$event.stopPropagation(); ctx.detectChanges();"
                             [matMenuTriggerFor]="cellActionsMenu">
                       <mat-icon class="material-icons">more_vert</mat-icon>
                     </button>
                     <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                      <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
+                      <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                         <button mat-menu-item *ngIf="actionDescriptor.icon"
                                 [disabled]="isLoading$ | async"
-                                (click)="onActionButtonClick($event, row, actionDescriptor)">
+                                (click)="onActionButtonClick($event, entity, actionDescriptor)">
                           <mat-icon>{{actionDescriptor.icon}}</mat-icon>
                           <span>{{ actionDescriptor.displayName }}</span>
                         </button>

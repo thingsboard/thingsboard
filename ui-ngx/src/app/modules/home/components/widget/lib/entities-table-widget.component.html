@@ -52,7 +52,7 @@
                                                                 maxWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
                                                                 width: (entityDatasource.countCellButtonAction * 48) + 'px' }">
           </mat-header-cell>
-          <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
+          <mat-cell *matCellDef="let entity; let row = index" [style]="rowStyle(entity, row)" [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
                                                                 maxWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
                                                                 width: (entityDatasource.countCellButtonAction * 48) + 'px' }">
             <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">

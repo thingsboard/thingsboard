@@ -664,6 +664,21 @@ mat-label {
     table-layout: auto;
     border-collapse: separate;
     margin: 0;
+
+    .mat-mdc-row {
+      font-size: 13px;
+    }
+
+    .mat-mdc-cell {
+      background: inherit;
+      color: inherit;
+      font-size: inherit;
+      font-family: inherit;
+      font-weight: inherit;
+      line-height: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
+    }
   }
 
   .mat-mdc-footer-row::after, .mat-mdc-header-row::after, .mat-mdc-row::after {

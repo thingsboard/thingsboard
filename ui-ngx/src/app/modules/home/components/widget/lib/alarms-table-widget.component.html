@@ -70,7 +70,7 @@
                           [indeterminate]="alarmsDatasource.selection.hasValue() && !(alarmsDatasource.isAllSelected() | async)">
             </mat-checkbox>
           </mat-header-cell>
-          <mat-cell *matCellDef="let alarm">
+          <mat-cell *matCellDef="let alarm; let row = index" [style]="rowStyle(alarm, row)">
             <mat-checkbox (click)="$event.stopPropagation();"
                           (change)="$event ? alarmsDatasource.toggleSelection(alarm) : null"
                           [checked]="alarmsDatasource.isSelected(alarm)">
@@ -122,7 +122,7 @@
                                                                 maxWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
                                                                 width: (alarmsDatasource.countCellButtonAction * 48) + 'px' }">
           </mat-header-cell>
-          <mat-cell *matCellDef="let alarm" [ngStyle.gt-md]="{ minWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
+          <mat-cell *matCellDef="let alarm; let row = index" [style]="rowStyle(alarm, row)" [ngStyle.gt-md]="{ minWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
                                                                maxWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
                                                                width: (alarmsDatasource.countCellButtonAction * 48) + 'px' }">
             <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
