@@ -38,7 +38,7 @@ public interface TbAlarmService {
 
     AlarmInfo unassign(Alarm alarm, long unassignTs, User user) throws ThingsboardException;
 
-    void unassignUserAlarms(TenantId tenantId, User user, long unassignTs) throws ThingsboardException;
+    void unassignUserAlarms(TenantId tenantId, User user, long unassignTs);
 
     Boolean delete(Alarm alarm, User user);
 }

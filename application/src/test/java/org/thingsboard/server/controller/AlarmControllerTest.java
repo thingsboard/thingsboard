@@ -557,25 +557,23 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
         long beforeAssignmentTs = System.currentTimeMillis();
-        Thread.sleep(2);
 
         doPost("/api/alarm/" + alarm.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
         AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() > beforeAssignmentTs);
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
 
         beforeAssignmentTs = System.currentTimeMillis();
 
         Mockito.reset(tbClusterService, auditLogService);
 
         doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
-        Thread.sleep(2);
 
         foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertNull(foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() > beforeAssignmentTs);
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
     }
 
     @Test
