@@ -233,7 +233,9 @@ public class SwaggerConfiguration {
         var loginForm = new SecurityRequirement().addList("HTTP login form");
         return openAPI -> openAPI.getPaths().entrySet().stream().peek(entry -> {
             securityCustomization(loginForm, entry);
-            defaultErrorResponsesCustomization(entry.getValue());
+            if (!entry.getKey().equals(LOGIN_ENDPOINT)) {
+                defaultErrorResponsesCustomization(entry.getValue());
+            }
         }).map(this::tagsCustomization).forEach(openAPI::addTagsItem);
     }
 
