@@ -47,7 +47,6 @@ public class KvUtils {
         }
 
         String key = tsKvEntry.getKey();
-        Object value = tsKvEntry.getValue();
 
         if (key == null) {
             throw new DataValidationException("Key can't be null");
@@ -58,14 +57,13 @@ public class KvUtils {
         }
 
         if (validatedKeys.getIfPresent(key) == null) {
-
             if (!NoXssValidator.isValid(key)) {
                 throw new DataValidationException("Validation error: key is malformed");
             }
-
             validatedKeys.put(key, Boolean.TRUE);
         }
 
+        Object value = tsKvEntry.getValue();
         if (valueNoXssValidation) {
             if (value instanceof CharSequence || value instanceof JsonNode) {
                 if (!NoXssValidator.isValid(value.toString())) {
