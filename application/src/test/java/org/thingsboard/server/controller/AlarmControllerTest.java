@@ -533,7 +533,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
     @Test
     public void testUnassignAlarmOnUserRemoving() throws Exception {
-        loginTenantAdmin();
+        loginDifferentTenant();
 
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
@@ -541,7 +541,20 @@ public class AlarmControllerTest extends AbstractControllerTest {
         user.setEmail("tenantForAssign@thingsboard.org");
         User savedUser = createUser(user, "password");
 
-        Alarm alarm = createAlarm(TEST_ALARM_TYPE);
+        Device device = createDevice("Different tenant device", "default", "differentTenantTest");
+
+        Alarm alarm = Alarm.builder()
+                .type(TEST_ALARM_TYPE)
+                .tenantId(differentTenantId)
+                .originator(device.getId())
+                .severity(AlarmSeverity.MAJOR)
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        alarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(alarm);
+
         Mockito.reset(tbClusterService, auditLogService);
         long beforeAssignmentTs = System.currentTimeMillis();
         Thread.sleep(2);
