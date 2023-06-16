@@ -41,6 +41,7 @@ zk:
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
   # Name of the directory in zookeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
+  recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:120000}"
 
 cache:
   type: "${CACHE_TYPE:redis}"
