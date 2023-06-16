@@ -26,6 +26,7 @@ import org.mvel2.SandboxedParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.execution.ExecutionHashMap;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -181,6 +182,98 @@ public class TbUtilsTest {
 
         Assert.assertEquals(expectedMapWithoutPaths, actualMapWithoutPaths);
     }
+
+    @Test
+    public void parseInt() {
+        Assert.assertNull(TbUtils.parseInt(null));
+        Assert.assertNull(TbUtils.parseInt(""));
+        Assert.assertNull(TbUtils.parseInt(" "));
+
+        Assert.assertEquals(java.util.Optional.of(0).get(), TbUtils.parseInt("0"));
+        Assert.assertEquals(java.util.Optional.of(0).get(), TbUtils.parseInt("-0"));
+        Assert.assertEquals(java.util.Optional.of(473).get(), TbUtils.parseInt("473"));
+        Assert.assertEquals(java.util.Optional.of(-255).get(), TbUtils.parseInt("-0xFF"));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("FF"));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("0xFG"));
+
+        Assert.assertEquals(java.util.Optional.of(102).get(), TbUtils.parseInt("1100110", 2));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("1100210", 2));
+
+        Assert.assertEquals(java.util.Optional.of(63).get(), TbUtils.parseInt("77", 8));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("18", 8));
+
+        Assert.assertEquals(java.util.Optional.of(-255).get(), TbUtils.parseInt("-FF", 16));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("FG", 16));
+
+
+        Assert.assertEquals(java.util.Optional.of(Integer.MAX_VALUE).get(), TbUtils.parseInt(Integer.toString(Integer.MAX_VALUE), 10));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt(BigInteger.valueOf(Integer.MAX_VALUE).add(BigInteger.valueOf(1)).toString(10), 10));
+        Assert.assertEquals(java.util.Optional.of(Integer.MIN_VALUE).get(), TbUtils.parseInt(Integer.toString(Integer.MIN_VALUE), 10));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt(BigInteger.valueOf(Integer.MIN_VALUE).subtract(BigInteger.valueOf(1)).toString(10), 10));
+
+        Assert.assertEquals(java.util.Optional.of(506070563).get(), TbUtils.parseInt("KonaIn", 30));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("KonaIn", 10));
+    }
+
+    @Test
+    public void parseLong() {
+        Assert.assertNull(TbUtils.parseLong(null));
+        Assert.assertNull(TbUtils.parseLong(""));
+        Assert.assertNull(TbUtils.parseLong(" "));
+
+        Assert.assertEquals(java.util.Optional.of(0L).get(), TbUtils.parseLong("0"));
+        Assert.assertEquals(java.util.Optional.of(0L).get(), TbUtils.parseLong("-0"));
+        Assert.assertEquals(java.util.Optional.of(473L).get(), TbUtils.parseLong("473"));
+        Assert.assertEquals(java.util.Optional.of(-65535L).get(), TbUtils.parseLong("-0xFFFF"));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("FFFF"));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("0xFGFF"));
+
+        Assert.assertEquals(java.util.Optional.of(13158L).get(), TbUtils.parseLong("11001101100110", 2));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("11001101100210", 2));
+
+        Assert.assertEquals(java.util.Optional.of(9223372036854775807L).get(), TbUtils.parseLong("777777777777777777777", 8));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("1787", 8));
+
+        Assert.assertEquals(java.util.Optional.of(-255L).get(), TbUtils.parseLong("-FF", 16));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("FG", 16));
+
+
+        Assert.assertEquals(java.util.Optional.of(Long.MAX_VALUE).get(), TbUtils.parseLong(Long.toString(Long.MAX_VALUE), 10));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.valueOf(1)).toString(10), 10));
+        Assert.assertEquals(java.util.Optional.of(Long.MIN_VALUE).get(), TbUtils.parseLong(Long.toString(Long.MIN_VALUE), 10));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong(BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.valueOf(1)).toString(10), 10));
+
+        Assert.assertEquals(java.util.Optional.of(218840926543L).get(), TbUtils.parseLong("KonaLong", 27));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("KonaLong", 10));
+    }
+
+
+                // parseLong String.class, int.class
+// parseLittleEndianHexToLong String.class
+    // parseBigEndianHexToLong String.class
+    // parseHexToLong String.class
+    // parseHexToLong String.class boolean.class
+    // parseBytesToLong List.class, int.class, int.class
+    // parseBytesToLong List.class, int.class, int.class, boolean.class
+    // parseBytesToLong byte[].class, int.class, int.class
+    // parseBytesToLong byte[].class, int.class, int.class, boolean.class
+    // parseLittleEndianHexToFloat String.class
+    // parseBigEndianHexToFloat String.class
+    // parseHexToFloat String.class
+    // parseHexToFloat String.class boolean.class
+    // parseBytesToFloat byte[].class, int.class, boolean.class
+    // parseBytesToFloat byte[].class, int.class
+    // parseBytesToFloat List.class, int.class, boolean.class
+    // parseBytesToFloat List.class, int.class
+    // toFixed float.class, int.class
+    // parseLittleEndianHexToDouble String.class
+    // parseBigEndianHexToDouble String.class
+    // parseHexToDouble String.class
+    // parseHexToDouble String.class boolean.class
+    // parseBytesToDouble byte[].class, int.class
+    // parseBytesToDouble byte[].class, int.class, boolean.class
+    // parseBytesToDouble List.class, int.class
+    // parseBytesToDouble List.class, int.class boolean.class
 
 
     private static String keyToValue(String key, String extraSymbol) {

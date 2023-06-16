@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -211,67 +212,71 @@ public class TbUtils {
     }
 
     public static Integer parseInt(String value) {
-        if (value != null) {
-            try {
-                int radix = 10;
-                if (isHexadecimal(value)) {
-                    radix = 16;
-                }
-                return Integer.parseInt(prepareNumberString(value), radix);
-            } catch (NumberFormatException e) {
-                Float f = parseFloat(value);
-                if (f != null) {
-                    return f.intValue();
-                }
-            }
-        }
-        return null;
+        int radix = getRadix(value);
+        return parseInt(value, radix);
     }
 
     public static Integer parseInt(String value, int radix) {
-        if (value != null) {
+        if (StringUtils.isNotBlank(value)) {
             try {
-                return Integer.parseInt(prepareNumberString(value), radix);
-            } catch (NumberFormatException e) {
-                Float f = parseFloat(value);
-                if (f != null) {
-                    return f.intValue();
+                String valueP = prepareNumberString(value);
+                isValidRadix(valueP, radix);
+                try {
+                    return Integer.parseInt(valueP, radix);
+                } catch (NumberFormatException e) {
+                    BigInteger bi = new BigInteger(valueP, radix);
+                    if (bi.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0)
+                        throw new NumberFormatException("Value \"" + value + "\" is greater than the maximum Integer value " + Integer.MAX_VALUE + " !");
+                    if (bi.compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) < 0)
+                        throw new NumberFormatException("Value \"" + value + "\" is less than the minimum Integer value " + Integer.MIN_VALUE + " !");
+                    Float f = parseFloat(valueP);
+                    if (f != null) {
+                        return f.intValue();
+                    } else {
+                        throw new NumberFormatException(e.getMessage());
+                    }
                 }
+            } catch (NumberFormatException e) {
+                throw new NumberFormatException(e.getMessage());
             }
         }
         return null;
     }
 
     public static Long parseLong(String value) {
-        if (value != null) {
+        int radix = getRadix(value);
+        return parseLong(value, radix);
+    }
+
+    public static Long parseLong(String value, int radix) {
+        if (StringUtils.isNotBlank(value)) {
             try {
-                int radix = 10;
-                if (isHexadecimal(value)) {
-                    radix = 16;
+                String valueP = prepareNumberString(value);
+                isValidRadix(valueP, radix);
+                try {
+                    return Long.parseLong(valueP, radix);
+                } catch (NumberFormatException e) {
+                    BigInteger bi = new BigInteger(valueP, radix);
+                    if (bi.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0)
+                        throw new NumberFormatException("Value \"" + value + "\"is greater than the maximum Long value " + Long.MAX_VALUE + " !");
+                    if (bi.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0)
+                        throw new NumberFormatException("Value \"" + value + "\" is  less than the minimum Long value " + Long.MIN_VALUE + " !");
+                    Double dd = parseDouble(valueP);
+                    if (dd != null) {
+                        return dd.longValue();
+                    } else {
+                        throw new NumberFormatException(e.getMessage());
+                    }
                 }
-                return Long.parseLong(prepareNumberString(value), radix);
             } catch (NumberFormatException e) {
-                Double d = parseDouble(value);
-                if (d != null) {
-                    return d.longValue();
-                }
+                throw new NumberFormatException(e.getMessage());
             }
         }
         return null;
     }
 
-    public static Long parseLong(String value, int radix) {
-        if (value != null) {
-            try {
-                return Long.parseLong(prepareNumberString(value), radix);
-            } catch (NumberFormatException e) {
-                Double d = parseDouble(value);
-                if (d != null) {
-                    return d.longValue();
-                }
-            }
-        }
-        return null;
+    private static int getRadix(String value, int... radixS) {
+        return radixS.length > 0 ? radixS[0] : isHexadecimal(value) ? 16 : 10;
     }
 
     public static Float parseFloat(String value) {
@@ -622,4 +627,19 @@ public class TbUtils {
             }
         }
     }
+
+    public static boolean isValidRadix(String value, int radix) {
+        for (int i = 0; i < value.length(); i++) {
+            if (i == 0 && value.charAt(i) == '-') {
+                if (value.length() == 1)
+                    throw new NumberFormatException("Failed radix [" + radix + "] for value: \"" + value + "\"!");
+                else
+                    continue;
+            }
+            if (Character.digit(value.charAt(i), radix) < 0)
+                throw new NumberFormatException("Failed radix: [" + radix + "] for value: \"" + value + "\"!");
+        }
+        return true;
+    }
+
 }
