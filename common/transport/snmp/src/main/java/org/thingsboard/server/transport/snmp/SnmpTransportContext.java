@@ -201,8 +201,12 @@ public class SnmpTransportContext extends TransportContext {
         log.debug("Registering transport session: {}", sessionInfo);
 
         transportService.registerAsyncSession(sessionInfo, deviceSessionContext);
-        transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), TransportServiceCallback.EMPTY);
-        transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().build(), TransportServiceCallback.EMPTY);
+        transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder()
+                .setSessionType(TransportProtos.SessionType.ASYNC)
+                .build(), TransportServiceCallback.EMPTY);
+        transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder()
+                .setSessionType(TransportProtos.SessionType.ASYNC)
+                .build(), TransportServiceCallback.EMPTY);
 
         deviceSessionContext.setSessionInfo(sessionInfo);
         deviceSessionContext.setDeviceInfo(msg.getDeviceInfo());
