@@ -1,0 +1,312 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+import "proto_measurement_types.proto";
+import "proto_rule.proto";
+
+option java_package = "org.thingsboard.server.gen.transport.coap";
+option java_outer_classname = "ConfigProtos";
+
+/* Message containing optional channels control parameters                                                                      */
+message ProtoChannelControl {
+
+  /* Channel index                                                                                                              */
+  uint32 channel_index = 1;
+
+  /* Control parameters. Maximal number equals 4. This field is channel specific:                                               */
+  /* IO_control channel:                                                                                                        */
+  /*        - control_params[0]:                                                                                                */
+  /*                      - Byte 0: On state configuration                                                                      */
+  /*                            0x01 - Low                                                                                      */
+  /*                            0x02 - High                                                                                     */
+  /*                            0x03 - High-Z (disconnected)                                                                    */
+  /*                      - Byte 1: Off state configuration                                                                     */
+  /*                            0x01 - Low                                                                                      */
+  /*                            0x02 - High                                                                                     */
+  /*                            0x03 - High-Z (disconnected)                                                                    */
+  /*                      - Byte 2: Power on channel state                                                                      */
+  /*                            0x01 - On                                                                                       */
+  /*                            0x02 - Off                                                                                      */
+  repeated uint32 control_params = 2;
+}
+
+/* Message containing request data for accesing calibration parameters                                                          */
+message ProtoCalibrationParameters {
+
+  /* Request details. Bitmask:                                                                                                  */
+  /*      - calibration_request[0:2] - requested channel number.                                                                */
+  uint32 calibration_request = 1;
+
+  /* Assignment of a channel.                                                                                                   */
+  uint32 channel_assignment = 2;
+
+  /* Table of calibration parameters. Max size = 8.                                                                             */
+  repeated int32 parameters = 3;
+}
+
+/* Main message sent in the payload. Each field in this message is independent of the others - only parameters that should be   */
+/* changed need to be sent in the payload.                                                                                      */
+/* If the value of a selected parameter shall not be changed, do not include it in the payload                                  */
+message ProtoConfig {
+
+  /* DEPRECATED - Used for backward compatibility with fw versions 5.x                                                          */
+  /* repeated Threshold thresholds = 1;                                                                                         */
+
+  /* 'Measurement_period_base' and 'measurement_period_factor' define how often the measurements are taken.                     */
+  /* Sensors of 'Continuous' type take measurement each Measurement_period_base * measurement_period_factor.                    */
+  /* Sensors of 'Binary' type take measurement each Measurement_period_base.                                                    */
+  /* For backward compatibility with versions 5.x in case of binary/mixed sensors, if the 'measurement_period_factor' is        */
+  /* not sent (equal to 0), then the default value '14' shall be used for period calculation.                                   */
+  /* For backward compatibility with versions 5.x in case of continues sensors, if the measurement_period_factor is             */
+  /* not sent (equal to 0), then the default value '1' shall be used for period calculation.                                    */
+  /* measurement period base in seconds                                                                                         */
+  /* Range [1:65535] - minimum value can vary depends on installed sensors */
+  uint32 measurement_period_base = 2;
+
+  /* Measurement period factor                                                                                                  */
+  /* Range [1:65535] - minimum value can vary depends on installed sensors */
+  uint32 measurement_period_factor = 26;
+
+  /* Transmission interval in seconds. Range: [60:604800]                                                                       */
+  uint32 transmission_interval = 3;
+
+  /* BLE turnoff time in seconds. Once receiving this setting, BLE will be switched off after the set number of seconds.        */
+  /* If BLE is already switched off, it will switch on for the set number of seconds and switch off afterwards.                 */
+  /* Range [60:604800] and 0xFFFFFFFF                                                                                           */
+  /* 0xFFFFFFFF  - always on                                                                                                    */
+  uint32 ble_turnoff_time = 4;
+
+  /* ACK interval in seconds                                                                                                    */
+  /* Range [180:2592000] and 0xFFFFFFFF                                                                                         */
+  /* 0xFFFFFFFF  - always request ACK                                                                                           */
+  uint32 ack_interval = 5;
+
+  /* Specifies, if the additional device info is requested. If true, sensor will send a message to endpoint '/i' with the       */
+  /* device info. This field is only sent by server                                                                             */
+  bool request_device_info = 6;
+
+  /* Specifies, if software update is available. This field is only sent by server                                              */
+  bool request_fw_update = 7;
+
+  /* Current time in seconds sine 1st of January 1970 (epoch time).                                                             */
+  uint32 current_time = 8;
+
+  /* NB-IoT transfer limit                                                                                                      */
+  /* Range: [1:65535]                                                                                                           */
+  /* 65535 - disable transfer limit function                                                                                    */
+  uint32 transfer_limit = 9;
+
+  /* NB-IoT transfer limit timer in seconds                                                                                     */
+  /* Range: [1:65535]                                                                                                           */
+  /* 65535 - disable transfer limit function                                                                                    */
+  uint32 transfer_limit_timer = 10;
+
+  /* Data (measurements) server IP address                                                                                      */
+  /* IP of the data server as string in form x.x.x.x. For example: 18.184.24.239                                                */
+  string data_server_ip = 11;
+
+  /* Data (measurements) server port                                                                                            */
+  /* Range: [1:65535]                                                                                                           */
+  uint32 data_server_port = 12;
+
+  /* Update server IP address                                                                                                   */
+  /* IP of data server as string in form x.x.x.x. For example: 18.184.24.239                                                    */
+  string update_server_ip = 13;
+
+  /* Update server port for UDP transmission                                                                                    */
+  /* Range: [1:65535]                                                                                                           */
+  uint32 update_server_port_udp = 14;
+
+  /* Update server port for CoAP transmission                                                                                   */
+  /* Range: [1:65535]                                                                                                           */
+  uint32 update_server_port_coap = 15;
+
+  /* APN as string. Max length 49                                                                                               */
+  /* String with special character 0x7F (DEL) only indicates that automatic apn is turn on                                      */
+  string apn = 16;
+
+  /* PLMN selection                                                                                                             */
+  /* Range: [100:999999]                                                                                                        */
+  /* 0xFFFFFFFF or 1000000 - automatic selection                                                                                */
+  uint32 plmn_selection = 17;
+
+  /* Device will power off its cellular modem for requested number of seconds. Maximum number of seconds 604800 (7 days)        */
+  /* This field is only sent by server                                                                                          */
+  uint32 disable_modem_request = 18;
+
+  /* If set, the device will send its configuration to the endpoint '/c' as a confirmable message                               */
+  /* This field is only sent by server                                                                                          */
+  bool request_configuration = 19;
+
+  /* Device's error codes.                                                                                                      */
+  /* This field is only sent by device                                                                                          */
+  repeated uint32 errors = 20;
+
+  /* Identifier of current configuration - Every change of the configuration results in change of the value of this field       */
+  /* This field is only sent by device                                                                                          */
+  uint32 hash = 21;
+
+  /* If true, the device will accept the configuration without functional testing (eg. network connection)                      */
+  bool accept_without_testing = 22;
+
+  /* Cloud token configuration:                                                                                                 */
+  /*   - 1: cloud token set to the value of cloud_token field                                                                   */
+  /*   - 2: cloud token set to IMEI of the cellular module                                                                      */
+  /*   - 255: do not send cloud_token field                                                                                     */
+  uint32 cloud_token_config = 23;
+
+  /* Cloud token that should be sent with each measurement frame                                                                */
+  string cloud_token = 24;
+
+  /* Serial number of the device                                                                                                */
+  /* This field is only sent by device                                                                                          */
+  bytes serial_number = 25;
+
+  /* Type of channel                                                                                                            */
+  /* This field is only sent by device                                                                                          */
+  repeated MeasurementType channel_types = 27;
+
+  /* Edge logic rules set on the device. Up to 12 rules are supported                                                           */
+  repeated ProtoRule rules = 28;
+
+  /* Supervision period                                                                                                         */
+  /* Range: [180:604800]                                                                                                        */
+  /* 0xFFFFFFFF - Functionality disabled                                                                                        */
+  uint32 supervision_period = 29;
+
+  /* If true, sensor's measurement memory will be erased                                                                        */
+  bool memory_reset_request = 30;
+
+  /* Bytes 0-4 - Band selection mask. Mask =  1 << position                                                                     */
+  /* Band       | 1 | 2 | 3 | 4 | 5 | 8 | 12 | 13 | 17 | 18 | 19 | 20 | 25 | 26 | 28 | 66 | 71 | 85 |                           */
+  /* Position:  | 0 | 1 | 2 | 3 | 4 | 5 | 6  |  7 |  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 |                           */
+  /* example: To enable band 3, 8 and 20 set to  (1 << 2) + (1 << 5) + (1 << 11) = 2084                                         */
+  uint32 modem_bands_mask = 31;
+
+  /* Data endpoint (string - max length 16)                                                                                     */
+  string data_endpoint = 32;
+
+  /* Configuration endpoint (string - max length 16)                                                                            */
+  string configuration_endpoint = 33;
+
+  /* Device info endpoint (string - max length 16)                                                                              */
+  string device_info_endpoint = 34;
+
+  /* Time endpoint (string - max length 16)                                                                                     */
+  string time_endpoint = 35;
+
+  /* Bluetooth TX power level. Value is the index of the absolute value of TX power, that depends on the BLE module             */
+  /* Range: [1:4]                                                                                                               */
+  uint32 ble_tx_power_level = 36;
+
+  /* Deprecated field                                                                                                           */
+  /* If true, the sensor's runtime errors will be cleared                                                                       */
+  bool request_runtime_errors_clear = 37;
+
+  /* Timestamp when a new error code was reported                                                                               */
+  uint32 error_timestamp = 38;
+
+  /* Timestamp when the new configuration was set                                                                               */
+  uint32 hash_timestamp = 39;
+
+  /* Cloud token CoAP option ID:                                                                                                */
+  /*   - [1:64999] - CoAP option ID containing cloud token                                                                      */
+  /*   - 65000 - cloud token sent in the payload                                                                                */
+  uint32 cloud_token_coap_option = 40;
+
+  /* ECDSA payload signature CoAP option ID:                                                                                    */
+  /*   - [1:64999] - CoAP option ID containing ECDSA payload signature                                                          */
+  /*   - 65000 - no payload signature in CoAP option                                                                            */
+  uint32 payload_signature_coap_option = 41;
+
+  /* DNS server IP address grouped in the array as four octets. Set 255.255.255.255 to use a network DNS server                 */
+  /* Note: when setting less than four octets the remaining will be filled with zeros.                                          */
+  repeated uint32 dns_server_ip = 42;
+
+  /* DNS TTL configuration:                                                                                                     */
+  /*   - [1:864000] - custom TTL in seconds (additionally, the DNS request when communication has failed)                       */
+  /*   - 864001 - accept TTL from the DNS server (additionally, the DNS request when communication has failed)                  */
+  /*   - 864002 - DNS request is only after communication failed                                                                */
+  uint32 dns_ttl_config = 43;
+
+  /* Configuration payload split information. Information about dividing the payload into parts                                 */
+  /* values < 0 - payload has been split, expect another part of the payload in the next message.                               */
+  /*             The absolute value indicates an index of the current message.                                                  */
+  /* value = 0 - payload has not been splitted                                                                                  */
+  /* values > 0 - last part of the split payload, the value indicates the total number of the messages sent                     */
+  sint32 payload_split_info = 44;
+
+  /* Modem update request (string - max length 48)                                                                              */
+  /* This field is only sent by server                                                                                          */
+  /* For BC66 module, this field is a DFOTA URL                                                                                 */
+  string modem_update_request = 45;
+
+  /* Cellular configuration parameters.                                                                                         */
+  /* 1st item - Number of used cellular parameters                                                                              */
+  /* 2nd - 12th items - Cellular parameters                                                                                     */
+  repeated uint32 cellular_config_params = 46;
+
+  /* Calendar configuration. Up to 6 calendars are supported                                                                    */
+  repeated ProtoCalendar calendars = 47;
+
+  /* Control parameters for channels. Maximal number of requests equals 6                                                       */
+  /* This field is only sent by server                                                                                          */
+  repeated ProtoChannelControl channels_control_request = 48;
+
+  /* Set/get calibration parameters for single channel.                                                                         */
+  ProtoCalibrationParameters calibration_parameters_request = 49;
+
+  /* LED behaviour configuration:                                                                                               */
+  /*    Period of LEDs flashing (5-600 seconds in 5 seconds resolution):                                                        */
+  /*        - led_config[0] - green LED                                                                                         */
+  /*        - led_config[1] - red LED                                                                                           */
+  /*    Time from entering the normal state, after which the LED indication is turned off                                       */
+  /*    (0-240 minutes in 1 minute resolution, or 255 for always turned on):                                                    */
+  /*        - led_config[2] - flashing red led on communication problem                                                         */
+  /*        - led_config[3] - flashing red led on a sensor problem                                                              */
+  /*        - led_config[4] - flashing red led on a low power                                                                   */
+  /*        - led_config[5] - flashing green led on measurement                                                                 */
+  /*        - led_config[6] - flashing green led on transmission                                                                */
+  /*        - led_config[7] - flashing green led to indicate sensor's proper operation                                          */
+  /*    - led_config[8] - Blink duration (20-1000ms in 5 ms resolution)                                                         */
+  repeated uint32 led_config = 50;
+
+  /* Network troubleshooting configuration, if bluetooth is turned off and communication with the server is faulty,             */
+  /* bluetooth will be automatically turned on until the connection is stabilized                                               */
+  /*   - 1: network troubleshooting disabled                                                                                    */
+  /*   - 2: network troubleshooting enabled                                                                                     */
+  uint32 network_troubleshooting = 51;
+
+  /* Reserved by gateway client                                                                                                 */
+  reserved 52, 53;
+
+  /* Encryption key configuration. Sensor sends in this field two last bytes of SHA256 hash calculated from its current         */
+  /* encryption_key configuration.                                                                                              */
+  /* Max length: 16 bytes.                                                                                                      */
+  /* 0x7F - encryption key disabled.                                                                                            */
+  bytes encryption_key = 54;
+
+  /* User name as string. Max length 31                                                                                         */
+  /* String with special character 0x7F (DEL) only indicates that automatic user name is turn on                                */
+  /* User name can only be set to custom value if apn has been configured (is not automatic)                                    */
+  string apn_user_name = 55;
+
+  /* Password as string. Max length 31                                                                                          */
+  /* String with special character 0x7F (DEL) only indicates that automatic password is turn on                                 */
+  /* Password can only be set to custom value if apn_user_name has been configured (is not automatic)                           */
+  string apn_password = 56;
+}
