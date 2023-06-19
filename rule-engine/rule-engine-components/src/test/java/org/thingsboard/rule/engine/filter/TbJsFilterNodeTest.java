@@ -27,6 +27,8 @@ import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
@@ -55,21 +57,21 @@ public class TbJsFilterNodeTest {
     private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Test
-    public void falseEvaluationDoNotSendMsg() throws TbNodeException, ScriptException {
+    public void falseEvaluationDoNotSendMsg() throws TbNodeException {
         initWithScript();
-        TbMsg msg = TbMsg.newMsg("USER", null, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(EntityType.USER.name(), null, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(false));
 
         node.onMsg(ctx, msg);
         verify(ctx).getDbCallbackExecutor();
-        verify(ctx).tellNext(msg, "False");
+        verify(ctx).tellNext(msg, TbNodeConnectionType.FALSE);
     }
 
     @Test
     public void exceptionInJsThrowsException() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg("USER", null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(EntityType.USER.name(), null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFailedFuture(new ScriptException("error")));
 
 
@@ -81,12 +83,12 @@ public class TbJsFilterNodeTest {
     public void metadataConditionCanBeTrue() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg("USER", null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(EntityType.USER.name(), null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(true));
 
         node.onMsg(ctx, msg);
         verify(ctx).getDbCallbackExecutor();
-        verify(ctx).tellNext(msg, "True");
+        verify(ctx).tellNext(msg, TbNodeConnectionType.TRUE);
     }
 
     private void initWithScript() throws TbNodeException {

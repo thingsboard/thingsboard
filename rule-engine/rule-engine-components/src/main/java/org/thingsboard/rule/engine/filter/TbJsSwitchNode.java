@@ -44,7 +44,8 @@ import java.util.Set;
                 "If Array is empty - message not routed to next Node. " +
                 "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code><br/>" +
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code><br/>" +
-                "Message type can be accessed via <code>msgType</code> property.",
+                "Message type can be accessed via <code>msgType</code> property.<br><br>" +
+                "Output connection types: Custom connection(s) defined by switch node or <code>Failure</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeSwitchConfig")
 public class TbJsSwitchNode implements TbNode {

@@ -52,7 +52,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.DataConstants.RPC_DELETED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.RPC_DELETED;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
@@ -239,7 +239,7 @@ public class RpcV2Controller extends AbstractRpcController {
             rpcService.deleteRpc(getTenantId(), rpcId);
             rpc.setStatus(RpcStatus.DELETED);
 
-            TbMsg msg = TbMsg.newMsg(RPC_DELETED, rpc.getDeviceId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(rpc));
+            TbMsg msg = TbMsg.newMsg(RPC_DELETED.name(), rpc.getDeviceId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(rpc));
             tbClusterService.pushMsgToRuleEngine(getTenantId(), rpc.getDeviceId(), msg, null);
         }
     }

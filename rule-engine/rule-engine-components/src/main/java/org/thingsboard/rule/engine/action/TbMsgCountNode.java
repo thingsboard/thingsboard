@@ -33,7 +33,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
+import static org.thingsboard.rule.engine.api.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 @RuleNode(

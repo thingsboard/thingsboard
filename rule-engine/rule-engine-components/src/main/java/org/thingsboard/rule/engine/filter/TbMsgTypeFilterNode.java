@@ -21,6 +21,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -33,9 +34,10 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.FILTER,
         name = "message type",
         configClazz = TbMsgTypeFilterNodeConfiguration.class,
-        relationTypes = {"True", "False"},
+        relationTypes = {TbNodeConnectionType.TRUE, TbNodeConnectionType.FALSE},
         nodeDescription = "Filter incoming messages by Message Type",
-        nodeDetails = "If incoming MessageType is expected - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
+        nodeDetails = "If incoming message type is expected - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.<br><br>" +
+                "Output connection types: <code>True</code>, <code>False</code>, <code>Failure</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeMessageTypeConfig")
 public class TbMsgTypeFilterNode implements TbNode {
@@ -49,7 +51,7 @@ public class TbMsgTypeFilterNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.tellNext(msg, config.getMessageTypes().contains(msg.getType()) ? "True" : "False");
+        ctx.tellNext(msg, config.getMessageTypes().contains(msg.getType()) ? TbNodeConnectionType.TRUE : TbNodeConnectionType.FALSE);
     }
 
 }

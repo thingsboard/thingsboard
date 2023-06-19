@@ -28,8 +28,8 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -54,6 +54,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_CREATED;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbCreateRelationNodeTest {
@@ -111,7 +112,7 @@ public class TbCreateRelationNodeTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
-        msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        msg = TbMsg.newMsg(ENTITY_CREATED.name(), deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         when(ctx.getRelationService().checkRelationAsync(any(), eq(assetId), eq(deviceId), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
                 .thenReturn(Futures.immediateFuture(false));
@@ -119,7 +120,7 @@ public class TbCreateRelationNodeTest {
                 .thenReturn(Futures.immediateFuture(true));
 
         node.onMsg(ctx, msg);
-        verify(ctx).tellNext(msg, TbRelationTypes.SUCCESS);
+        verify(ctx).tellNext(msg, TbNodeConnectionType.SUCCESS);
     }
 
     @Test
@@ -138,7 +139,7 @@ public class TbCreateRelationNodeTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
-        msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        msg = TbMsg.newMsg(ENTITY_CREATED.name(), deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         EntityRelation relation = new EntityRelation();
         when(ctx.getRelationService().findByToAndTypeAsync(any(), eq(msg.getOriginator()), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
@@ -150,7 +151,7 @@ public class TbCreateRelationNodeTest {
                 .thenReturn(Futures.immediateFuture(true));
 
         node.onMsg(ctx, msg);
-        verify(ctx).tellNext(msg, TbRelationTypes.SUCCESS);
+        verify(ctx).tellNext(msg, TbNodeConnectionType.SUCCESS);
     }
 
     @Test
@@ -169,7 +170,7 @@ public class TbCreateRelationNodeTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
-        msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        msg = TbMsg.newMsg(ENTITY_CREATED.name(), deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         when(ctx.getRelationService().checkRelationAsync(any(), eq(assetId), eq(deviceId), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
                 .thenReturn(Futures.immediateFuture(false));

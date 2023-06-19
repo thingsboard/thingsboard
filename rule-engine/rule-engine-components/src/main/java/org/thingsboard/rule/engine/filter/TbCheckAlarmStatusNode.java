@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.filter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -26,26 +25,27 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "check alarm status",
+        name = "alarm status filter",
         configClazz = TbCheckAlarmStatusNodeConfig.class,
-        relationTypes = {"True", "False"},
+        relationTypes = {TbNodeConnectionType.TRUE, TbNodeConnectionType.FALSE},
         nodeDescription = "Checks alarm status.",
-        nodeDetails = "Checks the alarm status to match one of the specified statuses.",
+        nodeDetails = "Checks the alarm status to match one of the specified statuses.<br><br>" +
+                "Output connection types: <code>True</code>, <code>False</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckAlarmStatusConfig")
 public class TbCheckAlarmStatusNode implements TbNode {
+
     private TbCheckAlarmStatusNodeConfig config;
 
     @Override
@@ -60,33 +60,24 @@ public class TbCheckAlarmStatusNode implements TbNode {
 
             ListenableFuture<Alarm> latest = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), alarm.getId());
 
-            Futures.addCallback(latest, new FutureCallback<Alarm>() {
+            Futures.addCallback(latest, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable Alarm result) {
-                    if (result != null) {
-                        boolean isPresent = false;
-                        for (AlarmStatus alarmStatus : config.getAlarmStatusList()) {
-                            if (result.getStatus() == alarmStatus) {
-                                isPresent = true;
-                                break;
-                            }
-                        }
-                        if (isPresent) {
-                            ctx.tellNext(msg, "True");
-                        } else {
-                            ctx.tellNext(msg, "False");
-                        }
-                    } else {
+                    if (result == null) {
                         ctx.tellFailure(msg, new TbNodeException("No such alarm found."));
+                        return;
                     }
+                    boolean isPresent = config.getAlarmStatusList().stream()
+                            .anyMatch(alarmStatus -> result.getStatus() == alarmStatus);
+                    ctx.tellNext(msg, isPresent ? TbNodeConnectionType.TRUE : TbNodeConnectionType.FALSE);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
                     ctx.tellFailure(msg, t);
                 }
-            }, MoreExecutors.directExecutor());
-        } catch (IllegalArgumentException e) {
+            }, ctx.getDbCallbackExecutor());
+        } catch (Exception e) {
             log.error("Failed to parse alarm: [{}]", msg.getData());
             throw new TbNodeException(e);
         }

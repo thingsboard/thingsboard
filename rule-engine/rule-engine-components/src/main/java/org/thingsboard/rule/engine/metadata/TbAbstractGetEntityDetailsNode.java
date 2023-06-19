@@ -49,7 +49,7 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     protected void checkIfDetailsListIsNotEmptyOrElseThrow(List<ContactBasedEntityDetails> detailsList) throws TbNodeException {
         if (detailsList == null || detailsList.isEmpty()) {
-            throw new TbNodeException("No entity details selected!");
+            throw new TbNodeException("At least one entity detail should be selected!");
         }
     }
 

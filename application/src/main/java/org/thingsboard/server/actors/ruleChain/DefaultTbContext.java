@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.EventLoopGroup;
@@ -34,7 +33,7 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.rule.engine.util.TenantIdLoader;
@@ -42,7 +41,6 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
@@ -114,6 +112,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_CREATED;
+
 /**
  * Created by ashvayka on 19.03.18.
  */
@@ -132,7 +134,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void tellSuccess(TbMsg msg) {
-        tellNext(msg, Collections.singleton(TbRelationTypes.SUCCESS), null);
+        tellNext(msg, Collections.singleton(TbNodeConnectionType.SUCCESS), null);
     }
 
     @Override
@@ -211,7 +213,7 @@ class DefaultTbContext implements TbContext {
     @Override
     public void enqueueForTellFailure(TbMsg tbMsg, String failureMessage) {
         TopicPartitionInfo tpi = resolvePartition(tbMsg);
-        enqueueForTellNext(tpi, tbMsg, Collections.singleton(TbRelationTypes.FAILURE), failureMessage, null, null);
+        enqueueForTellNext(tpi, tbMsg, Collections.singleton(TbNodeConnectionType.FAILURE), failureMessage, null, null);
     }
 
     @Override
@@ -309,7 +311,7 @@ class DefaultTbContext implements TbContext {
     @Override
     public void tellFailure(TbMsg msg, Throwable th) {
         if (nodeCtx.getSelf().isDebugMode()) {
-            mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, TbRelationTypes.FAILURE, th);
+            mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, TbNodeConnectionType.FAILURE, th);
         }
         String failureMessage;
         if (th != null) {
@@ -322,7 +324,7 @@ class DefaultTbContext implements TbContext {
             failureMessage = null;
         }
         nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getRuleChainId(),
-                nodeCtx.getSelf().getId(), Collections.singleton(TbRelationTypes.FAILURE),
+                nodeCtx.getSelf().getId(), Collections.singleton(TbNodeConnectionType.FAILURE),
                 msg, failureMessage));
     }
 
@@ -346,7 +348,7 @@ class DefaultTbContext implements TbContext {
     }
 
     public TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId) {
-        return entityActionMsg(customer, customer.getId(), ruleNodeId, DataConstants.ENTITY_CREATED);
+        return entityActionMsg(customer, customer.getId(), ruleNodeId, ENTITY_CREATED.name());
     }
 
     public TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId) {
@@ -354,7 +356,7 @@ class DefaultTbContext implements TbContext {
         if (device.getDeviceProfileId() != null) {
             deviceProfile = mainCtx.getDeviceProfileCache().find(device.getDeviceProfileId());
         }
-        return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED, deviceProfile);
+        return entityActionMsg(device, device.getId(), ruleNodeId, ENTITY_CREATED.name(), deviceProfile);
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
@@ -362,7 +364,7 @@ class DefaultTbContext implements TbContext {
         if (asset.getAssetProfileId() != null) {
             assetProfile = mainCtx.getAssetProfileCache().find(asset.getAssetProfileId());
         }
-        return entityActionMsg(asset, asset.getId(), ruleNodeId, DataConstants.ENTITY_CREATED, assetProfile);
+        return entityActionMsg(asset, asset.getId(), ruleNodeId, ENTITY_CREATED.name(), assetProfile);
     }
 
     public TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action) {
@@ -382,7 +384,7 @@ class DefaultTbContext implements TbContext {
         if (attributes != null) {
             attributes.forEach(attributeKvEntry -> JacksonUtil.addKvEntry(entityNode, attributeKvEntry));
         }
-        return attributesActionMsg(originator, ruleNodeId, scope, DataConstants.ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
+        return attributesActionMsg(originator, ruleNodeId, scope, ATTRIBUTES_UPDATED.name(), JacksonUtil.toString(entityNode));
     }
 
     public TbMsg attributesDeletedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys) {
@@ -391,7 +393,7 @@ class DefaultTbContext implements TbContext {
         if (keys != null) {
             keys.forEach(attrsArrayNode::add);
         }
-        return attributesActionMsg(originator, ruleNodeId, scope, DataConstants.ATTRIBUTES_DELETED, JacksonUtil.toString(entityNode));
+        return attributesActionMsg(originator, ruleNodeId, scope, ATTRIBUTES_DELETED.name(), JacksonUtil.toString(entityNode));
     }
 
     private TbMsg attributesActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, String action, String msgData) {

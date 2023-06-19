@@ -62,6 +62,8 @@ import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_CREATED;
+
 @Component
 @Slf4j
 @TbCoreComponent
@@ -124,7 +126,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         try {
             Device device = deviceService.findDeviceById(tenantId, deviceId);
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(device);
-            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, device.getCustomerId(),
+            TbMsg tbMsg = TbMsg.newMsg(ENTITY_CREATED.name(), deviceId, device.getCustomerId(),
                     getActionTbMsgMetaData(edge, device.getCustomerId()), TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
@@ -138,7 +140,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push device action to rule engine: {}", deviceId, DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}] Failed to push device action to rule engine: {}", deviceId, ENTITY_CREATED.name(), e);
         }
     }
 

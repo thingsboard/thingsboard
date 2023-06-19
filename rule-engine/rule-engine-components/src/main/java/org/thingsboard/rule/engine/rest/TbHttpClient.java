@@ -43,7 +43,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
@@ -212,7 +212,7 @@ public class TbHttpClient {
                     ctx.tellSuccess(next);
                 } else {
                     TbMsg next = processFailureResponse(ctx, msg, responseEntity);
-                    ctx.tellNext(next, TbRelationTypes.FAILURE);
+                    ctx.tellNext(next, TbNodeConnectionType.FAILURE);
                 }
             }
         });

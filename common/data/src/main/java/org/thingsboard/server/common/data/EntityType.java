@@ -18,6 +18,10 @@ package org.thingsboard.server.common.data;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author Andrew Shvayka
  */
@@ -48,6 +52,10 @@ public enum EntityType {
     NOTIFICATION_REQUEST,
     NOTIFICATION,
     NOTIFICATION_RULE;
+
+
+    public static final List<String> NORMAL_NAMES = EnumSet.allOf(EntityType.class).stream()
+            .map(EntityType::getNormalName).collect(Collectors.toUnmodifiableList());
 
     @Getter
     private final String normalName = StringUtils.capitalize(StringUtils.removeStart(name(), "TB_")

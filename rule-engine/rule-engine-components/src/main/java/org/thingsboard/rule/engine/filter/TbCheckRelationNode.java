@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -43,12 +44,14 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "check relation",
+        name = "check relation presence",
         configClazz = TbCheckRelationNodeConfiguration.class,
-        relationTypes = {"True", "False"},
+        relationTypes = {TbNodeConnectionType.TRUE, TbNodeConnectionType.FALSE},
         nodeDescription = "Checks the presence of the relation between the originator of the message and other entities.",
-        nodeDetails = "If 'check relation to specific entity' is selected, one must specify a related entity. " +
-                "Otherwise, the rule node checks the presence of a relation to any entity that matches the direction and relation type criteria.",
+        nodeDetails = "If 'check relation to specific entity' is selected, you should specify a related entity. " +
+                "Otherwise, the rule node checks the presence of a relation to any entity. " +
+                "In both cases, relation lookup is based on configured direction and type.<br><br>" +
+                "Output connection types: <code>True</code>, <code>False</code>, <code>Failure</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckRelationConfig")
 public class TbCheckRelationNode implements TbNode {
@@ -67,13 +70,11 @@ public class TbCheckRelationNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        ListenableFuture<Boolean> checkRelationFuture;
-        if (config.isCheckForSingleEntity()) {
-            checkRelationFuture = processSingle(ctx, msg);
-        } else {
-            checkRelationFuture = processList(ctx, msg);
-        }
-        withCallback(checkRelationFuture, filterResult -> ctx.tellNext(msg, filterResult ? "True" : "False"), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+        ListenableFuture<Boolean> checkRelationFuture = config.isCheckForSingleEntity() ?
+                processSingle(ctx, msg) : processList(ctx, msg);
+        withCallback(checkRelationFuture,
+                filterResult -> ctx.tellNext(msg, filterResult ? TbNodeConnectionType.TRUE : TbNodeConnectionType.FALSE),
+                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg) {
@@ -100,11 +101,7 @@ public class TbCheckRelationNode implements TbNode {
     }
 
     private ListenableFuture<Boolean> isEmptyList(List<EntityRelation> entityRelations) {
-        if (entityRelations.isEmpty()) {
-            return Futures.immediateFuture(false);
-        } else {
-            return Futures.immediateFuture(true);
-        }
+        return entityRelations.isEmpty() ? Futures.immediateFuture(false) : Futures.immediateFuture(true);
     }
 
 }

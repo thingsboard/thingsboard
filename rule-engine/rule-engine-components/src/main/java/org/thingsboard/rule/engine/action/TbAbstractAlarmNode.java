@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
@@ -31,6 +32,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_CLEAR;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_CREATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_UPDATED;
 
 
 @Slf4j
@@ -55,13 +60,13 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
         withCallback(processAlarm(ctx, msg),
                 alarmResult -> {
                     if (alarmResult.alarm == null) {
-                        ctx.tellNext(msg, "False");
+                        ctx.tellNext(msg, TbNodeConnectionType.FALSE);
                     } else if (alarmResult.isCreated) {
-                        tellNext(ctx, msg, alarmResult, DataConstants.ENTITY_CREATED, "Created");
+                        tellNext(ctx, msg, alarmResult, ENTITY_CREATED.name(), "Created");
                     } else if (alarmResult.isUpdated) {
-                        tellNext(ctx, msg, alarmResult, DataConstants.ENTITY_UPDATED, "Updated");
+                        tellNext(ctx, msg, alarmResult, ENTITY_UPDATED.name(), "Updated");
                     } else if (alarmResult.isCleared) {
-                        tellNext(ctx, msg, alarmResult, DataConstants.ALARM_CLEAR, "Cleared");
+                        tellNext(ctx, msg, alarmResult, ALARM_CLEAR.name(), "Cleared");
                     } else {
                         ctx.tellSuccess(msg);
                     }
@@ -96,7 +101,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
         } else if (alarmResult.isCleared) {
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
-        return ctx.transformMsg(originalMsg, "ALARM", originalMsg.getOriginator(), metaData, data);
+        return ctx.transformMsg(originalMsg, ALARM.name(), originalMsg.getOriginator(), metaData, data);
     }
 
     @Override

@@ -49,9 +49,17 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.CONNECT_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.DISCONNECT_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbMsgPushToEdgeNodeTest {
+
+    private static final List<String> MISC_EVENTS = List.of(CONNECT_EVENT.name(), DISCONNECT_EVENT.name(),
+            ACTIVITY_EVENT.name(), INACTIVITY_EVENT.name());
 
     TbMsgPushToEdgeNode node;
 
@@ -102,7 +110,7 @@ public class TbMsgPushToEdgeNodeTest {
         PageData<EdgeId> edgePageData = new PageData<>(List.of(edgeId), 1, 1, false);
         Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(TbMsgPushToEdgeNode.DEFAULT_PAGE_SIZE))).thenReturn(edgePageData);
 
-        TbMsg msg = TbMsg.newMsg(DataConstants.ATTRIBUTES_UPDATED, userId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(ATTRIBUTES_UPDATED.name(), userId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, "{}", null, null);
 
         node.onMsg(ctx, msg);
@@ -112,9 +120,7 @@ public class TbMsgPushToEdgeNodeTest {
 
     @Test
     public void testMiscEventsProcessedAsAttributesUpdated() {
-        List<String> miscEvents = List.of(DataConstants.CONNECT_EVENT, DataConstants.DISCONNECT_EVENT,
-                DataConstants.ACTIVITY_EVENT, DataConstants.INACTIVITY_EVENT);
-        for (String event : miscEvents) {
+        for (String event : MISC_EVENTS) {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue(DataConstants.SCOPE, DataConstants.SERVER_SCOPE);
             testEvent(event, metaData, EdgeEventActionType.ATTRIBUTES_UPDATED, "kv");
@@ -123,9 +129,7 @@ public class TbMsgPushToEdgeNodeTest {
 
     @Test
     public void testMiscEventsProcessedAsTimeseriesUpdated() {
-        List<String> miscEvents = List.of(DataConstants.CONNECT_EVENT, DataConstants.DISCONNECT_EVENT,
-                DataConstants.ACTIVITY_EVENT, DataConstants.INACTIVITY_EVENT);
-        for (String event : miscEvents) {
+        for (String event : MISC_EVENTS) {
             testEvent(event, new TbMsgMetaData(), EdgeEventActionType.TIMESERIES_UPDATED, "data");
         }
     }

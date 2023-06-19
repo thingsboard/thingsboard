@@ -54,52 +54,8 @@ public class DataConstants {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
     }
 
-    public static final String ALARM = "ALARM";
     public static final String IN = "IN";
     public static final String OUT = "OUT";
-
-    public static final String INACTIVITY_EVENT = "INACTIVITY_EVENT";
-    public static final String CONNECT_EVENT = "CONNECT_EVENT";
-    public static final String DISCONNECT_EVENT = "DISCONNECT_EVENT";
-    public static final String ACTIVITY_EVENT = "ACTIVITY_EVENT";
-
-    public static final String ENTITY_CREATED = "ENTITY_CREATED";
-    public static final String ENTITY_UPDATED = "ENTITY_UPDATED";
-    public static final String ENTITY_DELETED = "ENTITY_DELETED";
-    public static final String ENTITY_ASSIGNED = "ENTITY_ASSIGNED";
-    public static final String ENTITY_UNASSIGNED = "ENTITY_UNASSIGNED";
-    public static final String ATTRIBUTES_UPDATED = "ATTRIBUTES_UPDATED";
-    public static final String ATTRIBUTES_DELETED = "ATTRIBUTES_DELETED";
-    public static final String TIMESERIES_UPDATED = "TIMESERIES_UPDATED";
-    public static final String TIMESERIES_DELETED = "TIMESERIES_DELETED";
-    public static final String ALARM_ACK = "ALARM_ACK";
-    public static final String ALARM_CLEAR = "ALARM_CLEAR";
-    public static final String ALARM_ASSIGNED = "ALARM_ASSIGNED";
-    public static final String ALARM_UNASSIGNED = "ALARM_UNASSIGNED";
-    public static final String ALARM_DELETE = "ALARM_DELETE";
-    public static final String COMMENT_CREATED = "COMMENT_CREATED";
-    public static final String COMMENT_UPDATED = "COMMENT_UPDATED";
-    public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";
-    public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
-    public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
-    public static final String PROVISION_FAILURE = "PROVISION_FAILURE";
-    public static final String ENTITY_ASSIGNED_TO_EDGE = "ENTITY_ASSIGNED_TO_EDGE";
-    public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
-
-    public static final String RELATION_ADD_OR_UPDATE = "RELATION_ADD_OR_UPDATE";
-    public static final String RELATION_DELETED = "RELATION_DELETED";
-    public static final String RELATIONS_DELETED = "RELATIONS_DELETED";
-
-    public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
-
-    public static final String RPC_QUEUED = "RPC_QUEUED";
-    public static final String RPC_SENT = "RPC_SENT";
-    public static final String RPC_DELIVERED = "RPC_DELIVERED";
-    public static final String RPC_SUCCESSFUL = "RPC_SUCCESSFUL";
-    public static final String RPC_TIMEOUT = "RPC_TIMEOUT";
-    public static final String RPC_EXPIRED = "RPC_EXPIRED";
-    public static final String RPC_FAILED = "RPC_FAILED";
-    public static final String RPC_DELETED = "RPC_DELETED";
 
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";

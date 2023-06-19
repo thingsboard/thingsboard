@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
@@ -38,19 +37,21 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionTrigger;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentTrigger;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentTrigger;
-import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitTrigger;
-import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionTrigger;
 import org.thingsboard.server.dao.audit.AuditLogService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,85 +64,8 @@ public class EntityActionService {
 
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {
-        String msgType = null;
-        switch (actionType) {
-            case ADDED:
-                msgType = DataConstants.ENTITY_CREATED;
-                break;
-            case DELETED:
-                msgType = DataConstants.ENTITY_DELETED;
-                break;
-            case UPDATED:
-                msgType = DataConstants.ENTITY_UPDATED;
-                break;
-            case ASSIGNED_TO_CUSTOMER:
-                msgType = DataConstants.ENTITY_ASSIGNED;
-                break;
-            case UNASSIGNED_FROM_CUSTOMER:
-                msgType = DataConstants.ENTITY_UNASSIGNED;
-                break;
-            case ATTRIBUTES_UPDATED:
-                msgType = DataConstants.ATTRIBUTES_UPDATED;
-                break;
-            case ATTRIBUTES_DELETED:
-                msgType = DataConstants.ATTRIBUTES_DELETED;
-                break;
-            case ALARM_ACK:
-                msgType = DataConstants.ALARM_ACK;
-                break;
-            case ALARM_CLEAR:
-                msgType = DataConstants.ALARM_CLEAR;
-                break;
-            case ALARM_ASSIGNED:
-                msgType = DataConstants.ALARM_ASSIGNED;
-                break;
-            case ALARM_UNASSIGNED:
-                msgType = DataConstants.ALARM_UNASSIGNED;
-                break;
-            case ALARM_DELETE:
-                msgType = DataConstants.ALARM_DELETE;
-                break;
-            case ADDED_COMMENT:
-                msgType = DataConstants.COMMENT_CREATED;
-                break;
-            case UPDATED_COMMENT:
-                msgType = DataConstants.COMMENT_UPDATED;
-                break;
-            case ASSIGNED_FROM_TENANT:
-                msgType = DataConstants.ENTITY_ASSIGNED_FROM_TENANT;
-                break;
-            case ASSIGNED_TO_TENANT:
-                msgType = DataConstants.ENTITY_ASSIGNED_TO_TENANT;
-                break;
-            case PROVISION_SUCCESS:
-                msgType = DataConstants.PROVISION_SUCCESS;
-                break;
-            case PROVISION_FAILURE:
-                msgType = DataConstants.PROVISION_FAILURE;
-                break;
-            case TIMESERIES_UPDATED:
-                msgType = DataConstants.TIMESERIES_UPDATED;
-                break;
-            case TIMESERIES_DELETED:
-                msgType = DataConstants.TIMESERIES_DELETED;
-                break;
-            case ASSIGNED_TO_EDGE:
-                msgType = DataConstants.ENTITY_ASSIGNED_TO_EDGE;
-                break;
-            case UNASSIGNED_FROM_EDGE:
-                msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
-                break;
-            case RELATION_ADD_OR_UPDATE:
-                msgType = DataConstants.RELATION_ADD_OR_UPDATE;
-                break;
-            case RELATION_DELETED:
-                msgType = DataConstants.RELATION_DELETED;
-                break;
-            case RELATIONS_DELETED:
-                msgType = DataConstants.RELATIONS_DELETED;
-                break;
-        }
-        if (!StringUtils.isEmpty(msgType)) {
+        Optional<TbMsgType> msgType = actionType.getRuleEngineMsgType();
+        if (msgType.isPresent()) {
             try {
                 TbMsgMetaData metaData = new TbMsgMetaData();
                 if (user != null) {
@@ -247,7 +171,7 @@ public class EntityActionService {
                 if (tenantId != null && !tenantId.isSysTenantId()) {
                     processNotificationRules(tenantId, entityId, entity, actionType, user, additionalInfo);
                 }
-                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
+                TbMsg tbMsg = TbMsg.newMsg(msgType.get().name(), entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
                 tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);

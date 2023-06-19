@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 
@@ -54,6 +53,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_ACK;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_CLEAR;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_DELETE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_ASSIGNED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_UNASSIGNED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
 class DeviceState {
@@ -136,24 +147,24 @@ class DeviceState {
             latestValues = fetchLatestValues(ctx, deviceId);
         }
         boolean stateChanged = false;
-        if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
+        if (msg.getType().equals(POST_TELEMETRY_REQUEST.name())) {
             stateChanged = processTelemetry(ctx, msg);
-        } else if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
+        } else if (msg.getType().equals(POST_ATTRIBUTES_REQUEST.name())) {
             stateChanged = processAttributesUpdateRequest(ctx, msg);
-        } else if (msg.getType().equals(DataConstants.ACTIVITY_EVENT) || msg.getType().equals(DataConstants.INACTIVITY_EVENT)) {
+        } else if (msg.getType().equals(ACTIVITY_EVENT.name()) || msg.getType().equals(INACTIVITY_EVENT.name())) {
             stateChanged = processDeviceActivityEvent(ctx, msg);
-        } else if (msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
+        } else if (msg.getType().equals(ATTRIBUTES_UPDATED.name())) {
             stateChanged = processAttributesUpdateNotification(ctx, msg);
-        } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
+        } else if (msg.getType().equals(ATTRIBUTES_DELETED.name())) {
             stateChanged = processAttributesDeleteNotification(ctx, msg);
-        } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
+        } else if (msg.getType().equals(ALARM_CLEAR.name())) {
             stateChanged = processAlarmClearNotification(ctx, msg);
-        } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
+        } else if (msg.getType().equals(ALARM_ACK.name())) {
             processAlarmAckNotification(ctx, msg);
-        } else if (msg.getType().equals(DataConstants.ALARM_DELETE)) {
+        } else if (msg.getType().equals(ALARM_DELETE.name())) {
             processAlarmDeleteNotification(ctx, msg);
         } else {
-            if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED) || msg.getType().equals(DataConstants.ENTITY_UNASSIGNED)) {
+            if (msg.getType().equals(ENTITY_ASSIGNED.name()) || msg.getType().equals(ENTITY_UNASSIGNED.name())) {
                 dynamicPredicateValueCtx.resetCustomer();
             }
             ctx.tellSuccess(msg);

@@ -57,8 +57,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
+import static org.thingsboard.rule.engine.api.TbNodeConnectionType.FAILURE;
+import static org.thingsboard.rule.engine.api.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationActionNodeConfiguration> implements TbNode {

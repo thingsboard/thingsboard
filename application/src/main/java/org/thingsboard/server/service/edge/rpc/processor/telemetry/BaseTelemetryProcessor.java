@@ -73,6 +73,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
+
 @Slf4j
 public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
@@ -257,7 +259,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             @Override
             public void onSuccess(@Nullable Void tmp) {
                 var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-                TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), DataConstants.ATTRIBUTES_UPDATED, entityId,
+                TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), ATTRIBUTES_UPDATED.name(), entityId,
                         customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
                 tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                     @Override

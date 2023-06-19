@@ -71,9 +71,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-import static org.thingsboard.server.common.data.DataConstants.CONNECT_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.DISCONNECT_EVENT;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.CONNECT_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.DISCONNECT_EVENT;
 
 @Service
 @Slf4j
@@ -278,7 +278,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
         long lastConnectTs = System.currentTimeMillis();
         save(edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, lastConnectTs);
-        pushRuleEngineMessage(edgeGrpcSession.getEdge().getTenantId(), edgeId, lastConnectTs, CONNECT_EVENT);
+        pushRuleEngineMessage(edgeGrpcSession.getEdge().getTenantId(), edgeId, lastConnectTs, CONNECT_EVENT.name());
         cancelScheduleEdgeEventsCheck(edgeId);
         scheduleEdgeEventsCheck(edgeGrpcSession);
     }
@@ -395,7 +395,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
             save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, lastDisconnectTs);
-            pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edgeId, lastDisconnectTs, DISCONNECT_EVENT);
+            pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edgeId, lastDisconnectTs, DISCONNECT_EVENT.name());
             cancelScheduleEdgeEventsCheck(edgeId);
         } else {
             log.debug("[{}] edge session [{}] is not available anymore, nothing to remove. most probably this session is already outdated!", edgeId, sessionId);
@@ -451,7 +451,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void pushRuleEngineMessage(TenantId tenantId, EdgeId edgeId, long ts, String msgType) {
         try {
             ObjectNode edgeState = JacksonUtil.newObjectNode();
-            if (msgType.equals(CONNECT_EVENT)) {
+            if (msgType.equals(CONNECT_EVENT.name())) {
                 edgeState.put(DefaultDeviceStateService.ACTIVITY_STATE, true);
                 edgeState.put(DefaultDeviceStateService.LAST_CONNECT_TIME, ts);
             } else {

@@ -30,7 +30,7 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.deduplication.DeduplicationStrategy;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNode;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNodeConfiguration;
@@ -173,7 +173,7 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         TbMsg firstMsg = inputMsgs.get(0);
         TbMsg actualMsg = newMsgCaptor.getValue();
@@ -221,7 +221,7 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         TbMsg actualMsg = newMsgCaptor.getValue();
         // msg ids should be different because we create new msg before enqueueForTellNext
@@ -263,7 +263,7 @@ public class TbMsgDeduplicationNodeTest {
 
         verify(ctx, times(msgCount)).ack(any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         Assertions.assertEquals(1, newMsgCaptor.getAllValues().size());
         TbMsg outMessage = newMsgCaptor.getAllValues().get(0);
@@ -309,7 +309,7 @@ public class TbMsgDeduplicationNodeTest {
 
         verify(ctx, times(msgCount)).ack(any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
-        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
         Assertions.assertEquals(2, resultMsgs.size());
@@ -363,7 +363,7 @@ public class TbMsgDeduplicationNodeTest {
 
         verify(ctx, times(msgCount)).ack(any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
-        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
         Assertions.assertEquals(2, resultMsgs.size());

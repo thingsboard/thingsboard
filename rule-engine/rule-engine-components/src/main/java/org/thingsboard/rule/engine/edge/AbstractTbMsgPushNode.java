@@ -30,12 +30,22 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.CONNECT_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.DISCONNECT_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.TIMESERIES_UPDATED;
 
 @Slf4j
 public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfiguration, S, U> implements TbNode {
@@ -73,7 +83,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
 
     protected S buildEvent(TbMsg msg, TbContext ctx) {
         String msgType = msg.getType();
-        if (DataConstants.ALARM.equals(msgType)) {
+        if (ALARM.name().equals(msgType)) {
             EdgeEventActionType actionType = getAlarmActionType(msg);
             return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
         } else {
@@ -150,19 +160,19 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
 
     protected EdgeEventActionType getEdgeEventActionTypeByMsgType(String msgType, Map<String, String> metadata) {
         EdgeEventActionType actionType;
-        if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)
-                || DataConstants.TIMESERIES_UPDATED.equals(msgType)) {
+        if (POST_TELEMETRY_REQUEST.name().equals(msgType)
+                || TIMESERIES_UPDATED.name().equals(msgType)) {
             actionType = EdgeEventActionType.TIMESERIES_UPDATED;
-        } else if (DataConstants.ATTRIBUTES_UPDATED.equals(msgType)) {
+        } else if (ATTRIBUTES_UPDATED.name().equals(msgType)) {
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
-        } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
+        } else if (POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
             actionType = EdgeEventActionType.POST_ATTRIBUTES;
-        } else if (DataConstants.ATTRIBUTES_DELETED.equals(msgType)) {
+        } else if (ATTRIBUTES_DELETED.name().equals(msgType)) {
             actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
-        } else if (DataConstants.CONNECT_EVENT.equals(msgType)
-                || DataConstants.DISCONNECT_EVENT.equals(msgType)
-                || DataConstants.ACTIVITY_EVENT.equals(msgType)
-                || DataConstants.INACTIVITY_EVENT.equals(msgType)) {
+        } else if (CONNECT_EVENT.name().equals(msgType)
+                || DISCONNECT_EVENT.name().equals(msgType)
+                || ACTIVITY_EVENT.name().equals(msgType)
+                || INACTIVITY_EVENT.name().equals(msgType)) {
             String scope = metadata.get(SCOPE);
             if ( StringUtils.isEmpty(scope)) {
                 actionType = EdgeEventActionType.TIMESERIES_UPDATED;
@@ -177,16 +187,16 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     }
 
     protected boolean isSupportedMsgType(String msgType) {
-        return SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)
-                || SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)
-                || DataConstants.ATTRIBUTES_UPDATED.equals(msgType)
-                || DataConstants.ATTRIBUTES_DELETED.equals(msgType)
-                || DataConstants.TIMESERIES_UPDATED.equals(msgType)
-                || DataConstants.ALARM.equals(msgType)
-                || DataConstants.CONNECT_EVENT.equals(msgType)
-                || DataConstants.DISCONNECT_EVENT.equals(msgType)
-                || DataConstants.ACTIVITY_EVENT.equals(msgType)
-                || DataConstants.INACTIVITY_EVENT.equals(msgType);
+        return POST_TELEMETRY_REQUEST.name().equals(msgType)
+                || POST_ATTRIBUTES_REQUEST.name().equals(msgType)
+                || ATTRIBUTES_UPDATED.name().equals(msgType)
+                || ATTRIBUTES_DELETED.name().equals(msgType)
+                || TIMESERIES_UPDATED.name().equals(msgType)
+                || ALARM.name().equals(msgType)
+                || CONNECT_EVENT.name().equals(msgType)
+                || DISCONNECT_EVENT.name().equals(msgType)
+                || ACTIVITY_EVENT.name().equals(msgType)
+                || INACTIVITY_EVENT.name().equals(msgType);
     }
 
     protected boolean isSupportedOriginator(EntityType entityType) {

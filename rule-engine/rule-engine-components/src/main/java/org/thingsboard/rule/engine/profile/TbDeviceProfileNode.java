@@ -26,7 +26,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
@@ -45,6 +44,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_DELETED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_UPDATED;
 
 @Slf4j
 @RuleNode(
@@ -123,10 +125,10 @@ public class TbDeviceProfileNode implements TbNode {
         } else {
             if (EntityType.DEVICE.equals(originatorType)) {
                 DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
-                if (msg.getType().equals(DataConstants.ENTITY_UPDATED)) {
+                if (msg.getType().equals(ENTITY_UPDATED.name())) {
                     invalidateDeviceProfileCache(deviceId, msg.getData());
                     ctx.tellSuccess(msg);
-                } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
+                } else if (msg.getType().equals(ENTITY_DELETED.name())) {
                     removeDeviceState(deviceId);
                     ctx.tellSuccess(msg);
                 } else {

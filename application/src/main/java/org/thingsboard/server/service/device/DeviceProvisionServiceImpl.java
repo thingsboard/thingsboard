@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -68,6 +67,11 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_CREATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.PROVISION_FAILURE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.PROVISION_SUCCESS;
 
 
 @Service
@@ -162,7 +166,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 if (targetProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret().equals(provisionRequestSecret)) {
                     if (targetDevice != null) {
                         log.warn("[{}] The device is present and could not be provisioned once more!", targetDevice.getName());
-                        notify(targetDevice, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                        notify(targetDevice, provisionRequest, PROVISION_FAILURE.name(), false);
                         throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
                     } else {
                         return createDevice(provisionRequest, targetProfile);
@@ -188,13 +192,13 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private ProvisionResponse processProvision(Device device, ProvisionRequest provisionRequest) {
         try {
             Optional<AttributeKvEntry> provisionState = attributesService.find(device.getTenantId(), device.getId(),
-                    DataConstants.SERVER_SCOPE, DEVICE_PROVISION_STATE).get();
+                    SERVER_SCOPE, DEVICE_PROVISION_STATE).get();
             if (provisionState != null && provisionState.isPresent() && !provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
-                notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                notify(device, provisionRequest, PROVISION_FAILURE.name(), false);
                 throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
             } else {
                 saveProvisionStateAttribute(device).get();
-                notify(device, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
+                notify(device, provisionRequest, PROVISION_SUCCESS.name(), true);
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
@@ -222,14 +226,14 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             clusterService.onDeviceUpdated(savedDevice, null);
             saveProvisionStateAttribute(savedDevice).get();
             pushDeviceCreatedEventToRuleEngine(savedDevice);
-            notify(savedDevice, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
+            notify(savedDevice, provisionRequest, PROVISION_SUCCESS.name(), true);
 
             return new ProvisionResponse(getDeviceCredentials(savedDevice), ProvisionResponseStatus.SUCCESS);
         } catch (Exception e) {
             log.warn("[{}] Error during device creation from provision request: [{}]", provisionRequest.getDeviceName(), provisionRequest, e);
             Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
             if (device != null) {
-                notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                notify(device, provisionRequest, PROVISION_FAILURE.name(), false);
             }
             throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
         }
@@ -244,7 +248,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     }
 
     private ListenableFuture<List<String>> saveProvisionStateAttribute(Device device) {
-        return attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
+        return attributesService.save(device.getTenantId(), device.getId(), SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(DEVICE_PROVISION_STATE, PROVISIONED_STATE),
                         System.currentTimeMillis())));
     }
@@ -266,10 +270,10 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private void pushDeviceCreatedEventToRuleEngine(Device device) {
         try {
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(device);
-            TbMsg msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
+            TbMsg msg = TbMsg.newMsg(ENTITY_CREATED.name(), device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             sendToRuleEngine(device.getTenantId(), msg, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), ENTITY_CREATED, e);
         }
     }
 

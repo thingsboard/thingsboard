@@ -30,8 +30,12 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbVersionedNode;
+import org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode;
+import org.thingsboard.rule.engine.filter.TbOriginatorTypeSwitchNode;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -194,7 +198,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             scannedComponent.setName(ruleNodeAnnotation.name());
             scannedComponent.setScope(ruleNodeAnnotation.scope());
             scannedComponent.setClusteringMode(ruleNodeAnnotation.clusteringMode());
-            NodeDefinition nodeDefinition = prepareNodeDefinition(ruleNodeAnnotation);
+            NodeDefinition nodeDefinition = prepareNodeDefinition(clazz, ruleNodeAnnotation);
             ObjectNode configurationDescriptor = JacksonUtil.newObjectNode();
             JsonNode node = JacksonUtil.valueToTree(nodeDefinition);
             configurationDescriptor.set("nodeDefinition", node);
@@ -221,13 +225,13 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         return scannedComponent;
     }
 
-    private NodeDefinition prepareNodeDefinition(RuleNode nodeAnnotation) throws Exception {
+    private NodeDefinition prepareNodeDefinition(Class<?> clazz, RuleNode nodeAnnotation) throws Exception {
         NodeDefinition nodeDefinition = new NodeDefinition();
         nodeDefinition.setDetails(nodeAnnotation.nodeDetails());
         nodeDefinition.setDescription(nodeAnnotation.nodeDescription());
         nodeDefinition.setInEnabled(nodeAnnotation.inEnabled());
         nodeDefinition.setOutEnabled(nodeAnnotation.outEnabled());
-        nodeDefinition.setRelationTypes(getRelationTypesWithFailureRelation(nodeAnnotation));
+        nodeDefinition.setRelationTypes(getRelationTypesWithFailureRelation(clazz, nodeAnnotation));
         nodeDefinition.setCustomRelations(nodeAnnotation.customRelations());
         nodeDefinition.setRuleChainNode(nodeAnnotation.ruleChainNode());
         Class<? extends NodeConfiguration> configClazz = nodeAnnotation.configClazz();
@@ -242,10 +246,17 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         return nodeDefinition;
     }
 
-    private String[] getRelationTypesWithFailureRelation(RuleNode nodeAnnotation) {
+    private String[] getRelationTypesWithFailureRelation(Class<?> clazz, RuleNode nodeAnnotation) {
         List<String> relationTypes = new ArrayList<>(Arrays.asList(nodeAnnotation.relationTypes()));
-        if (!relationTypes.contains(TbRelationTypes.FAILURE)) {
-            relationTypes.add(TbRelationTypes.FAILURE);
+        if (TbOriginatorTypeSwitchNode.class.equals(clazz)) {
+            relationTypes.addAll(EntityType.NORMAL_NAMES);
+        }
+        if (TbMsgTypeSwitchNode.class.equals(clazz)) {
+            relationTypes.addAll(TbMsgType.NODE_CONNECTIONS);
+            relationTypes.add(TbMsgType.OTHER);
+        }
+        if (!relationTypes.contains(TbNodeConnectionType.FAILURE)) {
+            relationTypes.add(TbNodeConnectionType.FAILURE);
         }
         return relationTypes.toArray(new String[relationTypes.size()]);
     }

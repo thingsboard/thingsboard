@@ -18,9 +18,12 @@ package org.thingsboard.rule.engine.api;
 /**
  * Created by ashvayka on 19.01.18.
  */
-public final class TbRelationTypes {
+public final class TbNodeConnectionType {
 
-    public static String SUCCESS = "Success";
-    public static String FAILURE = "Failure";
+    public static final String SUCCESS = "Success";
+    public static final String FAILURE = "Failure";
+
+    public static final String TRUE = "True";
+    public static final String FALSE = "False";
 
 }
