@@ -338,7 +338,7 @@ public class TbUtilsTest {
     }
 
     @Test
-    public void arseBytesToDouble() {
+    public void parseBytesToDouble() {
         byte[] doubleValByte = {64, -101, 4, -79, 12, -78, -107, -22};
         Assert.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBytesToDouble(doubleValByte, 0)));
         Assert.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseBytesToDouble(doubleValByte, 0, false)));
