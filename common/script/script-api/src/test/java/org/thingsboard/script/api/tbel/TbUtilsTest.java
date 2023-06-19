@@ -15,6 +15,7 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import com.google.common.primitives.Bytes;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -38,6 +39,23 @@ import java.util.Random;
 public class TbUtilsTest {
 
     private ExecutionContext ctx;
+
+    private final String intValHex = "41EA62CC";
+    private final float floatVal = 29.29824f;
+    private final String floatValStr = "29.29824";
+
+
+    private final String floatValHexRev = "CC62EA41";
+    private final float floatValRev = -5.948442E7f;
+
+    private final long longVal = 0x409B04B10CB295EAL;
+    private final String longValHex = "409B04B10CB295EA";
+    private final long longValRev = 0xEA95B20CB1049B40L;
+    private final String longValHexRev = "EA95B20CB1049B40";
+    private final String doubleValStr = "1729.1729";
+    private final double doubleVal = 1729.1729;
+    private final double doubleValRev = -2.7208640774822924E205;
+
 
     @Before
     public void before() {
@@ -63,6 +81,7 @@ public class TbUtilsTest {
     @Test
     public void parseHexToInt() {
         Assert.assertEquals(0xAB, TbUtils.parseHexToInt("AB"));
+
         Assert.assertEquals(0xABBA, TbUtils.parseHexToInt("ABBA", true));
         Assert.assertEquals(0xBAAB, TbUtils.parseHexToInt("ABBA", false));
         Assert.assertEquals(0xAABBCC, TbUtils.parseHexToInt("AABBCC", true));
@@ -216,6 +235,37 @@ public class TbUtilsTest {
     }
 
     @Test
+    public void parseFloat() {
+        Assert.assertEquals(java.util.Optional.of(floatVal).get(), TbUtils.parseFloat(floatValStr));
+    }
+
+    @Test
+    public void toFixedFloat() {
+        float actualF = TbUtils.toFixed(floatVal, 3);
+        Assert.assertEquals(1, Float.compare(floatVal, actualF));
+        Assert.assertEquals(0, Float.compare(29.298f, actualF));
+    }
+
+    @Test
+    public void parseHexToFloat() {
+        Assert.assertEquals(0, Float.compare(floatVal, TbUtils.parseHexToFloat(intValHex)));
+        Assert.assertEquals(0, Float.compare(floatValRev, TbUtils.parseHexToFloat(intValHex, false)));
+        Assert.assertEquals(0, Float.compare(floatVal, TbUtils.parseBigEndianHexToFloat(intValHex)));
+        Assert.assertEquals(0, Float.compare(floatVal, TbUtils.parseLittleEndianHexToFloat(floatValHexRev)));
+    }
+
+    @Test
+    public void arseBytesToFloat() {
+        byte[] floatValByte = {65, -22, 98, -52};
+        Assert.assertEquals(0, Float.compare(floatVal, TbUtils.parseBytesToFloat(floatValByte, 0)));
+        Assert.assertEquals(0, Float.compare(floatValRev, TbUtils.parseBytesToFloat(floatValByte, 0, false)));
+
+        List <Byte> floatVaList = Bytes.asList(floatValByte);
+        Assert.assertEquals(0, Float.compare(floatVal, TbUtils.parseBytesToFloat(floatVaList, 0)));
+        Assert.assertEquals(0, Float.compare(floatValRev, TbUtils.parseBytesToFloat(floatVaList, 0, false)));
+    }
+
+    @Test
     public void parseLong() {
         Assert.assertNull(TbUtils.parseLong(null));
         Assert.assertNull(TbUtils.parseLong(""));
@@ -225,8 +275,8 @@ public class TbUtilsTest {
         Assert.assertEquals(java.util.Optional.of(0L).get(), TbUtils.parseLong("-0"));
         Assert.assertEquals(java.util.Optional.of(473L).get(), TbUtils.parseLong("473"));
         Assert.assertEquals(java.util.Optional.of(-65535L).get(), TbUtils.parseLong("-0xFFFF"));
-        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("FFFF"));
-        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("0xFGFF"));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("FFFFFFFF"));
+        Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("0xFGFFFFFF"));
 
         Assert.assertEquals(java.util.Optional.of(13158L).get(), TbUtils.parseLong("11001101100110", 2));
         Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("11001101100210", 2));
@@ -247,37 +297,55 @@ public class TbUtilsTest {
         Assert.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("KonaLong", 10));
     }
 
+    @Test
+    public void parseHexToLong() {
+        Assert.assertEquals(longVal, TbUtils.parseHexToLong(longValHex));
+        Assert.assertEquals(longVal, TbUtils.parseHexToLong(longValHexRev, false));
+        Assert.assertEquals(longVal, TbUtils.parseBigEndianHexToLong(longValHex));
+        Assert.assertEquals(longVal, TbUtils.parseLittleEndianHexToLong(longValHexRev));
+    }
 
-                // parseLong String.class, int.class
-// parseLittleEndianHexToLong String.class
-    // parseBigEndianHexToLong String.class
-    // parseHexToLong String.class
-    // parseHexToLong String.class boolean.class
-    // parseBytesToLong List.class, int.class, int.class
-    // parseBytesToLong List.class, int.class, int.class, boolean.class
-    // parseBytesToLong byte[].class, int.class, int.class
-    // parseBytesToLong byte[].class, int.class, int.class, boolean.class
-    // parseLittleEndianHexToFloat String.class
-    // parseBigEndianHexToFloat String.class
-    // parseHexToFloat String.class
-    // parseHexToFloat String.class boolean.class
-    // parseBytesToFloat byte[].class, int.class, boolean.class
-    // parseBytesToFloat byte[].class, int.class
-    // parseBytesToFloat List.class, int.class, boolean.class
-    // parseBytesToFloat List.class, int.class
-    // toFixed float.class, int.class
-    // parseLittleEndianHexToDouble String.class
-    // parseBigEndianHexToDouble String.class
-    // parseHexToDouble String.class
-    // parseHexToDouble String.class boolean.class
-    // parseBytesToDouble byte[].class, int.class
-    // parseBytesToDouble byte[].class, int.class, boolean.class
-    // parseBytesToDouble List.class, int.class
-    // parseBytesToDouble List.class, int.class boolean.class
+    @Test
+    public void parseBytesToLong() {
+        byte[] longValByte = {64, -101, 4, -79, 12, -78, -107, -22};
+        Assert.assertEquals(longVal, TbUtils.parseBytesToLong(longValByte, 0, 8));
+        Bytes.reverse(longValByte);
+        Assert.assertEquals(longVal, TbUtils.parseBytesToLong(longValByte, 0, 8, false));
 
+        List <Byte> longVaList = Bytes.asList(longValByte);
+        Assert.assertEquals(longVal, TbUtils.parseBytesToLong(longVaList, 0, 8, false));
+        Assert.assertEquals(longValRev, TbUtils.parseBytesToLong(longVaList, 0, 8));
+    }
 
-    private static String keyToValue(String key, String extraSymbol) {
-        return key + "Value" + (extraSymbol == null ? "" : extraSymbol);
+    @Test
+    public void parsDouble() {
+        Assert.assertEquals(java.util.Optional.of(doubleVal).get(), TbUtils.parseDouble(doubleValStr));
+    }
+
+    @Test
+    public void toFixedDouble() {
+        double actualD = TbUtils.toFixed(doubleVal, 3);
+        Assert.assertEquals(-1, Double.compare(doubleVal, actualD));
+        Assert.assertEquals(0, Double.compare(1729.173, actualD));
+    }
+
+    @Test
+    public void parseHexToDouble() {
+        Assert.assertEquals(0, Double.compare(doubleVal, TbUtils.parseHexToDouble(longValHex)));
+        Assert.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseHexToDouble(longValHex, false)));
+        Assert.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBigEndianHexToDouble(longValHex)));
+        Assert.assertEquals(0, Double.compare(doubleVal, TbUtils.parseLittleEndianHexToDouble(longValHexRev)));
+    }
+
+    @Test
+    public void arseBytesToDouble() {
+        byte[] doubleValByte = {64, -101, 4, -79, 12, -78, -107, -22};
+        Assert.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBytesToDouble(doubleValByte, 0)));
+        Assert.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseBytesToDouble(doubleValByte, 0, false)));
+
+        List <Byte> doubleVaList = Bytes.asList(doubleValByte);
+        Assert.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBytesToDouble(doubleVaList, 0)));
+        Assert.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseBytesToDouble(doubleVaList, 0, false)));
     }
 
     private static List<Byte> toList(byte[] data) {
@@ -287,5 +355,5 @@ public class TbUtilsTest {
         }
         return result;
     }
-
 }
+
