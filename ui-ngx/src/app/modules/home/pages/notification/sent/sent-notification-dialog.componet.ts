@@ -154,6 +154,7 @@ export class SentNotificationDialogComponent extends
       let useTemplate = true;
       if (isDefinedAndNotNull(this.data.request.template)) {
         useTemplate = false;
+        this.refreshAllowDeliveryMethod();
         // eslint-disable-next-line guard-for-in
         for (const method in this.data.request.template.configuration.deliveryMethodsTemplates) {
           this.deliveryMethodFormsMap.get(NotificationDeliveryMethod[method])
@@ -162,8 +163,6 @@ export class SentNotificationDialogComponent extends
       }
       this.notificationRequestForm.get('useTemplate').setValue(useTemplate, {onlySelf : true});
     }
-
-    this.refreshAllowDeliveryMethod();
   }
 
   ngOnDestroy() {
@@ -343,13 +342,15 @@ export class SentNotificationDialogComponent extends
   }
 
   private updateDeliveryMethodsDisableState() {
-    this.notificationDeliveryMethods.forEach(method => {
-      if (this.allowNotificationDeliveryMethods.includes(method)) {
-        this.getDeliveryMethodsTemplatesControl(method).enable({emitEvent: true});
-      } else {
-        this.getDeliveryMethodsTemplatesControl(method).disable({emitEvent: true});
-        this.getDeliveryMethodsTemplatesControl(method).setValue(false, {emitEvent: true}); //used for notify again
-      }
-    });
+    if (this.allowNotificationDeliveryMethods) {
+      this.notificationDeliveryMethods.forEach(method => {
+        if (this.allowNotificationDeliveryMethods.includes(method)) {
+          this.getDeliveryMethodsTemplatesControl(method).enable({emitEvent: true});
+        } else {
+          this.getDeliveryMethodsTemplatesControl(method).disable({emitEvent: true});
+          this.getDeliveryMethodsTemplatesControl(method).setValue(false, {emitEvent: true}); //used for notify again
+        }
+      });
+    }
   }
 }
