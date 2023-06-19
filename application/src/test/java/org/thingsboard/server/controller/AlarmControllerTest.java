@@ -545,7 +545,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         Alarm alarm = Alarm.builder()
                 .type(TEST_ALARM_TYPE)
-                .tenantId(differentTenantId)
+                .tenantId(savedDifferentTenant.getId())
                 .originator(device.getId())
                 .severity(AlarmSeverity.MAJOR)
                 .build();
