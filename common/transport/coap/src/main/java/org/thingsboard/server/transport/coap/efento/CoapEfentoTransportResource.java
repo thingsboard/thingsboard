@@ -184,7 +184,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                             validateEfentoTransportConfiguration(deviceProfile);
                             JsonObject config = getEfentoConfiguration(protoConfig);
                             transportService.process(sessionInfo,
-                                    transportContext.getEfentoCoapAdaptor().convertToPostAttribute(sessionId, config),
+                                    transportContext.getEfentoCoapAdaptor().convertToPostAttributes(sessionId, config),
                                     new CoapEfentoCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                             reportSubscriptionInfo(sessionInfo, false, false);
                         } catch (AdaptorException e) {
@@ -336,7 +336,6 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
     private EfentoTelemetry getEfentoDeviceInfo(DeviceInfoProtos.ProtoDeviceInfo protoDeviceInfo) {
         JsonObject values = new JsonObject();
         values.addProperty("sw_version", protoDeviceInfo.getSwVersion());
-        values.addProperty("cloud_token", protoDeviceInfo.getCloudToken());
 
         //memory statistics
         values.addProperty("nv_storage_status", getStorageStatus(protoDeviceInfo.getMemoryStatistics(0)));
@@ -424,7 +423,6 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         values.addProperty("timestamp", getDate(config.getHashTimestamp()));
         values.addProperty("current_time", getDate(config.getCurrentTime()));
         values.addProperty("apn", getString(config.getApn(), "\u007F", "Automatic"));
-        values.addProperty("cloud_token", config.getCloudToken());
         values.addProperty("token_config", getTokenConfigString(config.getCloudTokenConfig()));
         values.addProperty("data_server", config.getDataServerIp() + ":" + config.getDataServerPort() +
                 "/" + config.getDataEndpoint());

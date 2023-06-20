@@ -42,7 +42,7 @@ public class EfentoCoapAdaptor {
         }
     }
 
-    public TransportProtos.PostAttributeMsg convertToPostAttribute(UUID sessionId, JsonObject deviceInfo) throws AdaptorException {
+    public TransportProtos.PostAttributeMsg convertToPostAttributes(UUID sessionId, JsonObject deviceInfo) throws AdaptorException {
         try {
             return JsonConverter.convertToAttributesProto(deviceInfo);
         } catch (Exception ex) {
