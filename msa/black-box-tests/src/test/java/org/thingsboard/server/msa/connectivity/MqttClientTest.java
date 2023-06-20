@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.connectivity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -493,9 +494,10 @@ public class MqttClientTest extends AbstractContainerTest {
         }
 
         @Override
-        public void onMessage(String topic, ByteBuf message) {
+        public ListenableFuture<Void> onMessage(String topic, ByteBuf message) {
             log.info("MQTT message [{}], topic [{}]", message.toString(StandardCharsets.UTF_8), topic);
             events.add(new MqttEvent(topic, message.toString(StandardCharsets.UTF_8)));
+            return Futures.immediateVoidFuture();
         }
     }
 
