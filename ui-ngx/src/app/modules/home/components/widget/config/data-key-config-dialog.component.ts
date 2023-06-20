@@ -19,17 +19,27 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import {
+  FormGroupDirective,
+  NgForm,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { DataKey, Widget, widgetType } from '@shared/models/widget.models';
+import { DataKey, DataKeyConfigMode, Widget, widgetType } from '@shared/models/widget.models';
 import { DataKeysCallbacks } from './data-keys.component.models';
 import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
+import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface DataKeyConfigDialogData {
   dataKey: DataKey;
+  dataKeyConfigMode?: DataKeyConfigMode;
   dataKeySettingsSchema: any;
   dataKeySettingsDirective: string;
   dashboard: Dashboard;
@@ -57,6 +67,12 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
 
   @ViewChild('dataKeyConfig', {static: true}) dataKeyConfig: DataKeyConfigComponent;
 
+  hasAdvanced = false;
+
+  dataKeyConfigHeaderOptions: ToggleHeaderOption[];
+
+  dataKeyConfigMode: DataKeyConfigMode = DataKeyConfigMode.general;
+
   dataKeyFormGroup: UntypedFormGroup;
 
   submitted = false;
@@ -66,6 +82,7 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
               @Inject(MAT_DIALOG_DATA) public data: DataKeyConfigDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<DataKeyConfigDialogComponent, DataKey>,
+              private translate: TranslateService,
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
   }
@@ -74,6 +91,23 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
     this.dataKeyFormGroup = this.fb.group({
       dataKey: [this.data.dataKey, [Validators.required]]
     });
+    if (this.data.dataKeySettingsSchema && this.data.dataKeySettingsSchema.schema ||
+      this.data.dataKeySettingsDirective && this.data.dataKeySettingsDirective.length) {
+      this.hasAdvanced = true;
+      this.dataKeyConfigHeaderOptions = [
+        {
+          name: this.translate.instant('datakey.general'),
+          value: DataKeyConfigMode.general
+        },
+        {
+          name: this.translate.instant('datakey.advanced'),
+          value: DataKeyConfigMode.advanced
+        }
+      ];
+      if (this.data.dataKeyConfigMode) {
+        this.dataKeyConfigMode = this.data.dataKeyConfigMode;
+      }
+    }
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {

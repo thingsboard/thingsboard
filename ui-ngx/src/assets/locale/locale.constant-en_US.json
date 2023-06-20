@@ -1130,6 +1130,7 @@
     },
     "datakey": {
         "settings": "Settings",
+        "general": "General",
         "advanced": "Advanced",
         "key": "Key",
         "label": "Label",
@@ -5231,6 +5232,7 @@
             "display-alarm-activity": "Display alarm activity",
             "allow-alarms-assign": "Allow alarms assignment",
             "columns": "Columns",
+            "column-settings": "Column settings",
             "remove-column": "Remove column",
             "add-column": "Add column",
             "no-columns": "No columns configured"

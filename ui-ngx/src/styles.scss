@@ -224,6 +224,8 @@ div {
   line-height: var(--mdc-typography-caption-line-height, 20px);
   font-weight: var(--mdc-typography-caption-font-weight, 400);
   letter-spacing: var(--mdc-typography-caption-letter-spacing, 0.0333333333em);
+  color: rgba(0, 0, 0, 0.6);
+  white-space: normal;
 }
 
 .mat-caption {
@@ -1199,10 +1201,25 @@ mat-label {
     &.no-padding-bottom {
       padding-bottom: 0;
     }
+    &.no-padding {
+      padding: 0;
+    }
     &.stroked {
       box-shadow: none;
       border: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 6px;
+    }
+    &.tb-slide-toggle {
+      padding: 0;
+      .mat-expansion-panel {
+        padding: 16px;
+        .mat-expansion-panel-header {
+          height: 32px;
+          .mat-slide {
+            margin: 0;
+          }
+        }
+      }
     }
     .mat-expansion-panel {
       &.tb-settings {
@@ -1219,6 +1236,11 @@ mat-label {
           .mat-content {
             flex: 0;
             white-space: nowrap;
+          }
+          &.fill-width {
+            .mat-content {
+              flex: 1;
+            }
           }
           &:hover {
             background: none;
