@@ -26,7 +26,7 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 public class MockNotificationSettingsService extends DefaultNotificationSettingsService {
 
     public MockNotificationSettingsService(AdminSettingsService adminSettingsService) {
-        super(adminSettingsService, null, null, null);
+        super(adminSettingsService, null, null, null, null);
     }
 
     @Override
