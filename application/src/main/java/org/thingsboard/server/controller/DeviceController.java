@@ -184,8 +184,8 @@ public class DeviceController extends BaseController {
             notes = "Create or update the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
                     "Requires to provide the Device Credentials object as well. Useful to create device and credentials in one request. " +
                     "You may find the example of LwM2M device and RPK credentials below: \n\n" +
-                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN +
-                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
+                    "<h4>Example (below) to create new Device entity with credentials, credentialsType = \"ACCESS_TOKEN\". </h4>\n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN + "\n\n" +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device-with-credentials", method = RequestMethod.POST)

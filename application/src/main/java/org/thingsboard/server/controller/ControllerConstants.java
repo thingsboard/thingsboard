@@ -210,34 +210,17 @@ public class ControllerConstants {
     protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION =
                     "{\n" +
                     "  \"device\": {\n" +
-                    "    \"name\": \"LwRpk00000000\",\n" +
-                    "    \"type\": \"lwm2mProfileRpk\"\n" +
+                    "    \"name\": \"Name_DeviceWithCredential\",\n" +
+                    "    \"label\": \"Label_DeviceWithCredential\",\n" +
+                    "    \"type\": \"default\"\n" +
                     "  },\n" +
                     "  \"credentials\": {\n" +
-                    "    \"id\": \"null\",\n" +
+                    "    \"id\": null,\n" +
                     "    \"createdTime\": 0,\n" +
-                    "    \"deviceId\": \"null\",\n" +
-                    "    \"credentialsType\": \"LWM2M_CREDENTIALS\",\n" +
-                    "    \"credentialsId\": \"LwRpk00000000\",\n" +
-                    "    \"credentialsValue\": {\n" +
-                    "      \"client\": {\n" +
-                    "        \"endpoint\": \"LwRpk00000000\",\n" +
-                    "        \"securityConfigClientMode\": \"RPK\",\n" +
-                    "        \"key\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\"\n" +
-                    "      },\n" +
-                    "      \"bootstrap\": {\n" +
-                    "        \"bootstrapServer\": {\n" +
-                    "          \"securityMode\": \"RPK\",\n" +
-                    "          \"clientPublicKeyOrId\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
-                    "          \"clientSecretKey\": \"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"\n" +
-                    "        },\n" +
-                    "        \"lwm2mServer\": {\n" +
-                    "          \"securityMode\": \"RPK\",\n" +
-                    "          \"clientPublicKeyOrId\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
-                    "          \"clientSecretKey\": \"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"\n" +
-                    "        }\n" +
-                    "      }\n" +
-                    "    }\n" +
+                    "    \"deviceId\": null,\n" +
+                    "    \"credentialsType\": \"ACCESS_TOKEN\",\n" +
+                    "    \"credentialsId\": \"CREDO_ID_ACCESS_TOKEN\",\n" +
+                    "    \"credentialsValue\": \"CREDO_VALUE_ACCESS_TOKEN\"\n" +
                     "  }\n" +
                     "}";
 
