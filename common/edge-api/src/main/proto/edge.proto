@@ -383,6 +383,37 @@ message UserCredentialsUpdateMsg {
   string password = 4;
 }
 
+message TenantUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string title = 4;
+  int64 profileIdMSB = 5;
+  int64 profileIdLSB = 6;
+  string region = 7;
+  optional string country = 8;
+  optional string state = 9;
+  optional string city = 10;
+  optional string address = 11;
+  optional string address2 = 12;
+  optional string zip = 13;
+  optional string phone = 14;
+  optional string email = 15;
+  optional string additionalInfo = 16;
+  optional TenantProfileUpdateMsg tenantProfileUpdateMsg = 17;
+}
+
+message TenantProfileUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  optional string description = 5;
+  bool default = 6;
+  bool isolatedRuleChain = 7;
+  bytes profileDataBytes = 8;
+}
+
 message RuleChainMetadataRequestMsg {
   int64 ruleChainIdMSB = 1;
   int64 ruleChainIdLSB = 2;
@@ -569,5 +600,7 @@ message DownlinkMsg {
   repeated QueueUpdateMsg queueUpdateMsg = 23;
   repeated AssetProfileUpdateMsg assetProfileUpdateMsg = 24;
   EdgeConfiguration edgeConfiguration = 25;
+  repeated TenantUpdateMsg tenantUpdateMsg = 26;
+  repeated TenantProfileUpdateMsg tenantProfileUpdateMsg = 27;
 }
 

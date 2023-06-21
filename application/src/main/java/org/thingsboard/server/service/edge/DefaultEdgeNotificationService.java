@@ -54,6 +54,8 @@ import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProce
 import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.tenant.TenantEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.tenant.TenantProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgeProcessor;
@@ -121,6 +123,12 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Autowired
     private QueueEdgeProcessor queueProcessor;
+
+    @Autowired
+    private TenantEdgeProcessor tenantEdgeProcessor;
+
+    @Autowired
+    private TenantProfileEdgeProcessor tenantProfileEdgeProcessor;
 
     @Autowired
     private AlarmEdgeProcessor alarmProcessor;
@@ -224,6 +232,12 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     break;
                 case RELATION:
                     future = relationProcessor.processRelationNotification(tenantId, edgeNotificationMsg);
+                    break;
+                case TENANT:
+                    future = tenantEdgeProcessor.processTenantNotification(tenantId, edgeNotificationMsg);
+                    break;
+                case TENANT_PROFILE:
+                    future = tenantProfileEdgeProcessor.processTenantProfileNotification(tenantId, edgeNotificationMsg);
                     break;
                 default:
                     log.warn("Edge event type [{}] is not designed to be pushed to edge", type);

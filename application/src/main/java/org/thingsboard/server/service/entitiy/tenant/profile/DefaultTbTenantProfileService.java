@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -53,6 +54,9 @@ public class DefaultTbTenantProfileService extends AbstractTbEntityService imple
         tbClusterService.onTenantProfileChange(savedTenantProfile, null);
         tbClusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, savedTenantProfile.getId(),
                 tenantProfile.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        if (oldTenantProfile != null) {
+            notificationEntityService.notifySendMsgToEdgeService(tenantId, savedTenantProfile.getId(), EdgeEventActionType.UPDATED);
+        }
 
         return savedTenantProfile;
     }

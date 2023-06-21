@@ -33,6 +33,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
@@ -46,6 +47,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -59,6 +61,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 
 import javax.annotation.Nullable;
@@ -97,6 +100,9 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
     @Autowired
     private RelationService relationService;
+
+    @Autowired
+    private TenantService tenantService;
 
     @Autowired
     private DataValidator<Edge> edgeValidator;
@@ -451,6 +457,8 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                 } else {
                     return convertToEdgeIds(findEdgesByTenantIdAndCustomerId(tenantId, userById.getCustomerId(), pageLink));
                 }
+            case TENANT_PROFILE:
+                return convertToEdgeIds(findEdgesByTenantProfile(tenantId, entityId));
             default:
                 log.warn("[{}] Unsupported entity type {}", tenantId, entityId.getEntityType());
                 return createEmptyEdgeIdPageData();
@@ -520,6 +528,25 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         } while (pageData != null && pageData.hasNext());
         return result;
     }
+
+    protected PageData<Edge> findEdgesByTenantProfile(TenantId tenantId, EntityId entityId) {
+        PageData<Edge> edgeIds = new PageData<>();
+        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            PageDataIterable<Tenant> tenants = new PageDataIterable<>(
+                    link -> tenantService.findTenants(link), DEFAULT_PAGE_SIZE);
+            for (Tenant tenant : tenants) {
+                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+                if (tenant.getTenantProfileId().equals(entityId)) {
+                    do {
+                        edgeIds = findEdgesByTenantId(tenant.getId(), pageLink);
+                        pageLink = pageLink.nextPageLink();
+                    } while (edgeIds.hasNext());
+                }
+            }
+        }
+        return edgeIds;
+    }
+
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {

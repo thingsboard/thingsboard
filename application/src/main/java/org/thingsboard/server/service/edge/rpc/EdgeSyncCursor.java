@@ -34,6 +34,8 @@ import org.thingsboard.server.service.edge.rpc.fetch.QueuesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.RuleChainsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.SystemWidgetsBundlesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantAdminUsersEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.TenantEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.TenantProfilesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantWidgetsBundlesEdgeEventFetcher;
 
 import java.util.LinkedList;
@@ -53,6 +55,8 @@ public class EdgeSyncCursor {
             fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
             fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
             fetchers.add(new AssetProfilesEdgeEventFetcher(ctx.getAssetProfileService()));
+            fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
+            fetchers.add(new TenantProfilesEdgeEventFetcher(ctx.getTenantService(), ctx.getTenantProfileService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
             Customer publicCustomer = ctx.getCustomerService().findOrCreatePublicCustomer(edge.getTenantId());
             fetchers.add(new CustomerEdgeEventFetcher(publicCustomer.getId()));

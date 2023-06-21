@@ -47,6 +47,8 @@ import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
@@ -292,6 +294,16 @@ public class EdgeImitator {
         if (downlinkMsg.getQueueUpdateMsgCount() > 0) {
             for (QueueUpdateMsg queueUpdateMsg : downlinkMsg.getQueueUpdateMsgList()) {
                 result.add(saveDownlinkMsg(queueUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getTenantUpdateMsgCount() > 0) {
+            for (TenantUpdateMsg tenantUpdateMsg : downlinkMsg.getTenantUpdateMsgList()) {
+                result.add(saveDownlinkMsg(tenantUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getTenantProfileUpdateMsgCount() > 0) {
+            for (TenantProfileUpdateMsg tenantProfileUpdateMsg : downlinkMsg.getTenantProfileUpdateMsgList()) {
+                result.add(saveDownlinkMsg(tenantProfileUpdateMsg));
             }
         }
         if (downlinkMsg.hasEdgeConfiguration()) {
