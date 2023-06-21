@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 
@@ -32,7 +31,11 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
 
     private final Long queueStartTs;
-    private Long seqIdOffset;
+    private Long seqIdStart;
+    @Getter
+    private Long seqIdEnd;
+    @Getter
+    private boolean seqIdNewCycleStarted;
     private Long maxReadRecordsCount;
     private final EdgeEventService edgeEventService;
 
@@ -42,19 +45,26 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
                 pageSize,
                 0,
                 null,
-                new SortOrder("seqId"),
+                null,
                 queueStartTs,
                 System.currentTimeMillis());
     }
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdOffset, null, (TimePageLink) pageLink);
+        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdStart, seqIdEnd, (TimePageLink) pageLink);
         if (edgeEvents.getData().isEmpty()) {
-            log.info("[{}] seqId column of edge_event table started new cycle [{}]", tenantId, edge.getId());
-            // reset in case seq_id column started new cycle
-            this.seqIdOffset = 0L;
-            edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, this.maxReadRecordsCount, (TimePageLink) pageLink);
+            this.seqIdEnd = Math.max(this.maxReadRecordsCount, seqIdStart - this.maxReadRecordsCount);
+            edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, seqIdEnd, (TimePageLink) pageLink);
+            if (edgeEvents.getData().stream().anyMatch(ee -> ee.getSeqId() < seqIdStart)) {
+                log.info("[{}] seqId column of edge_event table started new cycle [{}]", tenantId, edge.getId());
+                // reset in case seq_id column started new cycle
+                this.seqIdStart = 0L;
+                seqIdNewCycleStarted = true;
+            } else {
+                log.warn("[{}] unexpected edge notification message received - no new events found and seqId column of edge_event table doesn't started new cycle [{}]", tenantId, edge.getId());
+                edgeEvents = new PageData<>();
+            }
         }
         return edgeEvents;
     }

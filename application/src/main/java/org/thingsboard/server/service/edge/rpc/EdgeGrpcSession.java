@@ -36,6 +36,8 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectRequestMsg;
@@ -78,7 +80,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 @Slf4j
 @Data
@@ -89,7 +90,7 @@ public final class EdgeGrpcSession implements Closeable {
     private static final int MAX_DOWNLINK_ATTEMPTS = 10; // max number of attemps to send downlink message if edge connected
 
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
-    private static final String QUEUE_SEQ_ID_OFFSET_ATTR_KEY = "queueSeqIdOffset";
+    private static final String QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
 
     private final UUID sessionId;
     private final BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener;
@@ -103,6 +104,12 @@ public final class EdgeGrpcSession implements Closeable {
     private StreamObserver<ResponseMsg> outputStream;
     private boolean connected;
     private boolean syncCompleted;
+
+    private Long newStartTs;
+    private Long previousStartTs;
+    private Long newStartSeqId;
+    private Long previousStartSeqId;
+    private Long seqIdEnd;
 
     private EdgeVersion edgeVersion;
 
@@ -205,10 +212,10 @@ public final class EdgeGrpcSession implements Closeable {
             EdgeEventFetcher next = cursor.getNext();
             log.info("[{}][{}] starting sync process, cursor current idx = {}, class = {}",
                     edge.getTenantId(), edge.getId(), cursor.getCurrentIdx(), next.getClass().getSimpleName());
-            ListenableFuture<Pair<UUID, Long>> uuidListenableFuture = startProcessingEdgeEvents(next);
-            Futures.addCallback(uuidListenableFuture, new FutureCallback<>() {
+            ListenableFuture<Pair<Long, Long>> future = startProcessingEdgeEvents(next);
+            Futures.addCallback(future, new FutureCallback<>() {
                 @Override
-                public void onSuccess(@Nullable Pair<UUID, Long> result) {
+                public void onSuccess(@Nullable Pair<Long, Long> result) {
                     doSync(cursor);
                 }
 
@@ -308,34 +315,57 @@ public final class EdgeGrpcSession implements Closeable {
         sendDownlinkMsg(edgeConfigMsg);
     }
 
-    ListenableFuture<Void> processEdgeEvents() throws Exception {
-        SettableFuture<Void> result = SettableFuture.create();
+    boolean isSeqIdStartedNewCycle() {
+        TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), 0, null, null, this.newStartTs, System.currentTimeMillis());
+        PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), 0L, this.previousStartSeqId == 0 ? null : this.previousStartSeqId - 1, pageLink);
+        return !edgeEvents.getData().isEmpty();
+    }
+
+    boolean isNewEdgeEventsAvailable() {
+        TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), 0, null, null, this.newStartTs, System.currentTimeMillis());
+        PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), this.newStartSeqId, null, pageLink);
+        return !edgeEvents.getData().isEmpty();
+    }
+
+    ListenableFuture<Boolean> processEdgeEvents() throws Exception {
+        SettableFuture<Boolean> result = SettableFuture.create();
         log.trace("[{}] starting processing edge events", this.sessionId);
         if (isConnected() && isSyncCompleted()) {
-            Pair<Long, Long> pair = getQueueStartTsAndSeqIdOffset().get();
-            Long queueStartTs = pair.getFirst();
-            Long queueSeqIdOffset = pair.getSecond();
+            Pair<Long, Long> startTsAndSeqId = getQueueStartTsAndSeqId().get();
+            this.previousStartTs = startTsAndSeqId.getFirst();
+            this.previousStartSeqId = startTsAndSeqId.getSecond();
             GeneralEdgeEventFetcher fetcher = new GeneralEdgeEventFetcher(
-                    queueStartTs,
-                    queueSeqIdOffset,
+                    this.previousStartTs,
+                    this.previousStartSeqId,
+                    this.seqIdEnd,
+                    false,
                     Integer.toUnsignedLong(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount()),
                     ctx.getEdgeEventService());
-            ListenableFuture<Pair<UUID, Long>> ifOffsetFuture = startProcessingEdgeEvents(fetcher);
-            Futures.addCallback(ifOffsetFuture, new FutureCallback<>() {
+            Futures.addCallback(startProcessingEdgeEvents(fetcher), new FutureCallback<>() {
                 @Override
-                public void onSuccess(@Nullable Pair<UUID, Long> pair) {
-                    if (pair != null) {
-                        ListenableFuture<List<String>> updateFuture = updateQueueStartTsAndSeqIdOffset(pair);
+                public void onSuccess(@Nullable Pair<Long, Long> newStartTsAndSeqId) {
+                    if (newStartTsAndSeqId != null) {
+                        ListenableFuture<List<String>> updateFuture = updateQueueStartTsAndSeqId(newStartTsAndSeqId);
                         Futures.addCallback(updateFuture, new FutureCallback<>() {
                             @Override
                             public void onSuccess(@Nullable List<String> list) {
-                                log.debug("[{}] queue offset was updated [{}]", sessionId, pair);
-                                result.set(null);
+                                log.debug("[{}] queue offset was updated [{}]", sessionId, newStartTsAndSeqId);
+                                if (fetcher.isSeqIdNewCycleStarted()) {
+                                    seqIdEnd = fetcher.getSeqIdEnd();
+                                    result.set(false);
+                                } else {
+                                    seqIdEnd = null;
+                                    boolean newEventsAvailable = isSeqIdStartedNewCycle();
+                                    if (!newEventsAvailable) {
+                                        newEventsAvailable = isNewEdgeEventsAvailable();
+                                    }
+                                    result.set(newEventsAvailable);
+                                }
                             }
 
                             @Override
                             public void onFailure(Throwable t) {
-                                log.error("[{}] Failed to update queue offset [{}]", sessionId, pair, t);
+                                log.error("[{}] Failed to update queue offset [{}]", sessionId, newStartTsAndSeqId, t);
                                 result.setException(t);
                             }
                         }, ctx.getGrpcCallbackExecutorService());
@@ -358,14 +388,14 @@ public final class EdgeGrpcSession implements Closeable {
         return result;
     }
 
-    private ListenableFuture<Pair<UUID, Long>> startProcessingEdgeEvents(EdgeEventFetcher fetcher) {
-        SettableFuture<Pair<UUID, Long>> result = SettableFuture.create();
+    private ListenableFuture<Pair<Long, Long>> startProcessingEdgeEvents(EdgeEventFetcher fetcher) {
+        SettableFuture<Pair<Long, Long>> result = SettableFuture.create();
         PageLink pageLink = fetcher.getPageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount());
         processEdgeEvents(fetcher, pageLink, result);
         return result;
     }
 
-    private void processEdgeEvents(EdgeEventFetcher fetcher, PageLink pageLink, SettableFuture<Pair<UUID, Long>> result) {
+    private void processEdgeEvents(EdgeEventFetcher fetcher, PageLink pageLink, SettableFuture<Pair<Long, Long>> result) {
         try {
             PageData<EdgeEvent> pageData = fetcher.fetchEdgeEvents(edge.getTenantId(), edge, pageLink);
             if (isConnected() && !pageData.getData().isEmpty()) {
@@ -384,7 +414,9 @@ public final class EdgeGrpcSession implements Closeable {
                             } else {
                                 UUID idOffset = latestEdgeEvent.getUuidId();
                                 if (idOffset != null) {
-                                    result.set(Pair.of(idOffset, latestEdgeEvent.getSeqId()));
+                                    Long newStartTs = Uuids.unixTimestamp(idOffset);
+                                    long newStartSeqId = latestEdgeEvent.getSeqId();
+                                    result.set(Pair.of(newStartTs, newStartSeqId));
                                 } else {
                                     result.set(null);
                                 }
@@ -513,31 +545,44 @@ public final class EdgeGrpcSession implements Closeable {
         return result;
     }
 
-    private ListenableFuture<Pair<Long, Long>> getQueueStartTsAndSeqIdOffset() {
+    private ListenableFuture<Pair<Long, Long>> getQueueStartTsAndSeqId() {
         ListenableFuture<List<AttributeKvEntry>> future =
-                ctx.getAttributesService().find(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, Arrays.asList(QUEUE_START_TS_ATTR_KEY, QUEUE_SEQ_ID_OFFSET_ATTR_KEY));
+                ctx.getAttributesService().find(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, Arrays.asList(QUEUE_START_TS_ATTR_KEY, QUEUE_START_SEQ_ID_ATTR_KEY));
         return Futures.transform(future, attributeKvEntries -> {
-            long queueStartTs = 0L;
-            long queueSeqIdOffset = 0L;
+            long startTs = 0L;
+            long startSeqId = 0L;
             for (AttributeKvEntry attributeKvEntry : attributeKvEntries) {
                 if (QUEUE_START_TS_ATTR_KEY.equals(attributeKvEntry.getKey())) {
-                    queueStartTs = attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
+                    startTs = attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
                 }
-                if (QUEUE_SEQ_ID_OFFSET_ATTR_KEY.equals(attributeKvEntry.getKey())) {
-                    queueSeqIdOffset = attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
+                if (QUEUE_START_SEQ_ID_ATTR_KEY.equals(attributeKvEntry.getKey())) {
+                    startSeqId = attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
                 }
             }
-            return Pair.of(queueStartTs, queueSeqIdOffset);
+            if (startSeqId == 0L) {
+                startSeqId = findStartSeqIdFromOldestEventIfAny();
+            }
+            return Pair.of(startTs, startSeqId);
         }, ctx.getGrpcCallbackExecutorService());
     }
 
-    private ListenableFuture<List<String>> updateQueueStartTsAndSeqIdOffset(Pair<UUID, Long> pair) {
-        Long startTs = Uuids.unixTimestamp(pair.getFirst());
-        Long seqIdOffset = pair.getSecond();
-        log.trace("[{}] updateQueueStartTsAndSeqIdOffset [{}][{}][{}]", this.sessionId, edge.getId(), startTs, seqIdOffset);
+    private long findStartSeqIdFromOldestEventIfAny() {
+        long startSeqId = 0L;
+        TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("createdTime"), null, null);
+        PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), null, null, pageLink);
+        if (!edgeEvents.getData().isEmpty()) {
+            startSeqId = edgeEvents.getData().get(0).getSeqId() - 1;
+        }
+        return startSeqId;
+    }
+
+    private ListenableFuture<List<String>> updateQueueStartTsAndSeqId(Pair<Long, Long> pair) {
+        this.newStartTs = pair.getFirst();
+        this.newStartSeqId = pair.getSecond();
+        log.trace("[{}] updateQueueStartTsAndSeqId [{}][{}][{}]", this.sessionId, edge.getId(), this.newStartTs, this.newStartSeqId);
         List<AttributeKvEntry> attributes = Arrays.asList(
-                new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_TS_ATTR_KEY, startTs), System.currentTimeMillis()),
-                new BaseAttributeKvEntry(new LongDataEntry(QUEUE_SEQ_ID_OFFSET_ATTR_KEY, seqIdOffset), System.currentTimeMillis()));
+                new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_TS_ATTR_KEY, this.newStartTs), System.currentTimeMillis()),
+                new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_SEQ_ID_ATTR_KEY, this.newStartSeqId), System.currentTimeMillis()));
         return ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
     }
 
@@ -707,8 +752,11 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private void interruptPreviousSendDownlinkMsgsTask() {
-        log.debug("[{}][{}][{}] Previous send downlink future was not properly completed, stopping it now!", edge.getTenantId(), edge.getId(), this.sessionId);
-        stopCurrentSendDownlinkMsgsTask(true);
+        if (sessionState.getSendDownlinkMsgsFuture() != null && !sessionState.getSendDownlinkMsgsFuture().isDone()
+                || sessionState.getScheduledSendDownlinkTask() != null && !sessionState.getScheduledSendDownlinkTask().isCancelled()) {
+            log.debug("[{}][{}][{}] Previous send downlink future was not properly completed, stopping it now!", edge.getTenantId(), edge.getId(), this.sessionId);
+            stopCurrentSendDownlinkMsgsTask(true);
+        }
     }
 
     private void interruptGeneralProcessingOnSync() {
