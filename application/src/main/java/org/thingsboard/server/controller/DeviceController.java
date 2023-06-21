@@ -73,8 +73,12 @@ import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -125,6 +129,8 @@ public class DeviceController extends BaseController {
 
     private final TbDeviceService tbDeviceService;
 
+    private final SystemSecurityService systemSecurityService;
+
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
                     "If the user has the authority of 'TENANT_ADMIN', the server checks that the device is owned by the same tenant. " +
@@ -153,6 +159,27 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         return checkDeviceInfoId(deviceId, Operation.READ);
+    }
+
+    @ApiOperation(value = "Get commands to publish device telemetry (getDevicePublishTelemetryCommands)",
+            notes = "Fetch the list of commands to publish device telemetry based on device profile " +
+                    "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
+                    "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/device/info/{deviceId}/commands", method = RequestMethod.GET)
+    @ResponseBody
+    public List<String> getDevicePublishTelemetryCommands(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
+                                        @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
+        checkParameter(DEVICE_ID, strDeviceId);
+        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
+        Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
+        URI baseUri = new URI(systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request));
+        List<String> commands = deviceService.findDevicePublishTelemetryCommands(device);
+        return commands.stream()
+                .map(s -> s.replace("$THINGSBOARD_HOST_NAME", baseUri.getHost())
+                        .replace("$THINGSBOARD_BASE_URL", baseUri.toString()))
+                .collect(Collectors.toList());
     }
 
     @ApiOperation(value = "Create Or Update Device (saveDevice)",

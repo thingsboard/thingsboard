@@ -43,6 +43,8 @@ public interface DeviceService extends EntityDaoService {
 
     DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId);
 
+    List<String> findDevicePublishTelemetryCommands(Device device);
+
     Device findDeviceById(TenantId tenantId, DeviceId deviceId);
 
     ListenableFuture<Device> findDeviceByIdAsync(TenantId tenantId, DeviceId deviceId);
