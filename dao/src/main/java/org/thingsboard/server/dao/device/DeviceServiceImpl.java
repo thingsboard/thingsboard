@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,6 +79,8 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -129,11 +130,12 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     @Override
-    public List<String> findDevicePublishTelemetryCommands(Device device) {
+    public List<String> findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
         DeviceId deviceId = device.getId();
         log.trace("Executing findDevicePublishTelemetryCommands [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
 
+        String hostname = new URI(baseUrl).getHost();
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
         DeviceCredentialsType credentialsType = deviceCredentials.getCredentialsType();
 
@@ -144,15 +146,15 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             case DEFAULT:
                 switch (credentialsType) {
                     case ACCESS_TOKEN:
-                        commands.add(getMqttAccessTokenCommand(deviceCredentials) + " -m {temperature:15}");
-                        commands.add(getHttpAccessTokenCommand(deviceCredentials) + " --data \"{temperature:16}\"");
-                        commands.add("echo -n {temperature:17} | " + getCoapAccessTokenCommand(deviceCredentials) + " -f-");
+                        commands.add(getMqttAccessTokenCommand(hostname, deviceCredentials) + " -m \"{temperature:15}\"");
+                        commands.add(getHttpAccessTokenCommand(baseUrl, deviceCredentials));
+                        commands.add("echo -n \"{temperature:17}\" | " + getCoapAccessTokenCommand(hostname, deviceCredentials) + " -f-");
                         break;
                     case MQTT_BASIC:
-                        commands.add(getMqttBasicPublishCommand(deviceCredentials) + " -m {temperature:18}");
+                        commands.add(getMqttBasicPublishCommand(hostname, deviceCredentials) + " -m \"{temperature:18}\"");
                         break;
                     case X509_CERTIFICATE:
-                        commands.add(getMqttX509Command() + " -m {temperature:19}");
+                        commands.add(getMqttX509Command(hostname) + " -m \"{temperature:19}\"");
                         break;
                 }
                 break;
@@ -160,16 +162,16 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 MqttDeviceProfileTransportConfiguration transportConfiguration =
                         (MqttDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
                 TransportPayloadType payloadType = transportConfiguration.getTransportPayloadTypeConfiguration().getTransportPayloadType();
-                String payload = (payloadType == TransportPayloadType.PROTOBUF) ? " -f protobufFileName" : " -m {temperature:25}";
+                String payload = (payloadType == TransportPayloadType.PROTOBUF) ? " -f protobufFileName" : " -m \"{temperature:25}\"";
                 switch (credentialsType) {
                     case ACCESS_TOKEN:
-                        commands.add(getMqttAccessTokenCommand(deviceCredentials) + payload);
+                        commands.add(getMqttAccessTokenCommand(hostname, deviceCredentials) + payload);
                         break;
                     case MQTT_BASIC:
-                        commands.add(getMqttBasicPublishCommand(deviceCredentials) + payload);
+                        commands.add(getMqttBasicPublishCommand(hostname, deviceCredentials) + payload);
                         break;
                     case X509_CERTIFICATE:
-                        commands.add(getMqttX509Command() + payload);
+                        commands.add(getMqttX509Command(hostname) + payload);
                         break;
                 }
                 break;
@@ -182,7 +184,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                             (DefaultCoapDeviceTypeConfiguration) coapTransportConfiguration.getCoapDeviceTypeConfiguration();
                     TransportPayloadType transportPayloadType = configuration.getTransportPayloadTypeConfiguration().getTransportPayloadType();
                     String payloadExample = (transportPayloadType == TransportPayloadType.PROTOBUF) ? " -t binary -f protobufFileName" : " -t json -f jsonFileName";
-                    commands.add(getCoapAccessTokenCommand(deviceCredentials) + payloadExample);
+                    commands.add(getCoapAccessTokenCommand(hostname, deviceCredentials) + payloadExample);
                 }
                 break;
         }
@@ -748,17 +750,17 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return EntityType.DEVICE;
     }
 
-    private static String getHttpAccessTokenCommand(DeviceCredentials deviceCredentials) {
-        return String.format("curl -v -X POST $THINGSBOARD_BASE_URL/api/v1/%s/telemetry --header Content-Type:application/json", deviceCredentials.getCredentialsId());
+    private String getHttpAccessTokenCommand(String baseurl, DeviceCredentials deviceCredentials) {
+        return String.format("curl -v -X POST %s/api/v1/%s/telemetry --header Content-Type:application/json --data \"{temperature:16}\"", baseurl, deviceCredentials.getCredentialsId());
     }
 
-    private static String getMqttAccessTokenCommand(DeviceCredentials deviceCredentials) {
-        return String.format("mosquitto_pub -d -q 1 -h $THINGSBOARD_HOST_NAME -t v1/devices/me/telemetry -u %s", deviceCredentials.getCredentialsId());
+    private String getMqttAccessTokenCommand(String hostname, DeviceCredentials deviceCredentials) {
+        return String.format("mosquitto_pub -d -q 1 -h %s -t v1/devices/me/telemetry -u %s", hostname, deviceCredentials.getCredentialsId());
     }
 
-    private String getMqttBasicPublishCommand(DeviceCredentials deviceCredentials) {
+    private String getMqttBasicPublishCommand(String hostname, DeviceCredentials deviceCredentials) {
         BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), BasicMqttCredentials.class);
-        StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1 -h $THINGSBOARD_HOST_NAME -p 1883 -t v1/devices/me/telemetry");
+        StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1 -h " + hostname + " -p 1883 -t v1/devices/me/telemetry");
         if (credentials != null) {
             if (credentials.getClientId() != null) {
                 command.append(" -i ").append(credentials.getClientId());
@@ -773,11 +775,11 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return command.toString();
     }
 
-    private static String getMqttX509Command() {
-        return "mosquitto_pub --cafile server.pem -d -q 1 -h $THINGSBOARD_HOST_NAME -p 8883 -t v1/devices/me/telemetry --key key.pem --cert cert.pem";
+    private String getMqttX509Command(String hostname) {
+        return String.format("mosquitto_pub --cafile server.pem -d -q 1 -h %s -p 8883 -t v1/devices/me/telemetry --key key.pem --cert cert.pem", hostname);
     }
 
-    private static String getCoapAccessTokenCommand(DeviceCredentials deviceCredentials) {
-        return String.format("coap-client -m post coap://$THINGSBOARD_HOST_NAME:5683/api/v1/%s/telemetry", deviceCredentials.getCredentialsId());
+    private String getCoapAccessTokenCommand(String hostname, DeviceCredentials deviceCredentials) {
+        return String.format("coap-client -m post coap://%s:5683/api/v1/%s/telemetry", hostname, deviceCredentials.getCredentialsId());
     }
 }

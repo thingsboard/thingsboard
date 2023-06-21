@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,7 +44,7 @@ public interface DeviceService extends EntityDaoService {
 
     DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId);
 
-    List<String> findDevicePublishTelemetryCommands(Device device);
+    List<String> findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException;
 
     Device findDeviceById(TenantId tenantId, DeviceId deviceId);
 

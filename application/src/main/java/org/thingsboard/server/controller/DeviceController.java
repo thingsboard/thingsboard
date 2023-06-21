@@ -77,7 +77,6 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -174,12 +173,9 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
-        URI baseUri = new URI(systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request));
-        List<String> commands = deviceService.findDevicePublishTelemetryCommands(device);
-        return commands.stream()
-                .map(s -> s.replace("$THINGSBOARD_HOST_NAME", baseUri.getHost())
-                        .replace("$THINGSBOARD_BASE_URL", baseUri.toString()))
-                .collect(Collectors.toList());
+
+        String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
+        return deviceService.findDevicePublishTelemetryCommands(baseUrl, device);
     }
 
     @ApiOperation(value = "Create Or Update Device (saveDevice)",
