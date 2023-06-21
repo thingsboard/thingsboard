@@ -35,6 +35,7 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
@@ -843,9 +844,9 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void checkTenantEntity(EntityId entityId) {
+    public void checkTenantEntity(EntityId entityId) throws TbNodeException {
         if (!this.getTenantId().equals(TenantIdLoader.findTenantId(this, entityId))) {
-            throw new RuntimeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.");
+            throw new TbNodeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.", true);
         }
     }
 
