@@ -95,7 +95,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -184,7 +183,6 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     @After
     public void afterTest() throws Exception {
         try {
-            TimeUnit.SECONDS.sleep(1);
             edgeImitator.disconnect();
         } catch (Exception ignored){}
 

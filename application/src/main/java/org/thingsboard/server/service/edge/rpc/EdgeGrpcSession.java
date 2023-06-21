@@ -315,18 +315,6 @@ public final class EdgeGrpcSession implements Closeable {
         sendDownlinkMsg(edgeConfigMsg);
     }
 
-    boolean isSeqIdStartedNewCycle() {
-        TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), 0, null, null, this.newStartTs, System.currentTimeMillis());
-        PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), 0L, this.previousStartSeqId == 0 ? null : this.previousStartSeqId - 1, pageLink);
-        return !edgeEvents.getData().isEmpty();
-    }
-
-    boolean isNewEdgeEventsAvailable() {
-        TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), 0, null, null, this.newStartTs, System.currentTimeMillis());
-        PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), this.newStartSeqId, null, pageLink);
-        return !edgeEvents.getData().isEmpty();
-    }
-
     ListenableFuture<Boolean> processEdgeEvents() throws Exception {
         SettableFuture<Boolean> result = SettableFuture.create();
         log.trace("[{}] starting processing edge events", this.sessionId);
@@ -352,7 +340,8 @@ public final class EdgeGrpcSession implements Closeable {
                                 log.debug("[{}] queue offset was updated [{}]", sessionId, newStartTsAndSeqId);
                                 if (fetcher.isSeqIdNewCycleStarted()) {
                                     seqIdEnd = fetcher.getSeqIdEnd();
-                                    result.set(false);
+                                    boolean newEventsAvailable = isNewEdgeEventsAvailable();
+                                    result.set(newEventsAvailable);
                                 } else {
                                     seqIdEnd = null;
                                     boolean newEventsAvailable = isSeqIdStartedNewCycle();
@@ -370,7 +359,7 @@ public final class EdgeGrpcSession implements Closeable {
                             }
                         }, ctx.getGrpcCallbackExecutorService());
                     } else {
-                        log.trace("[{}] ifOffset is null. Skipping iteration without db update", sessionId);
+                        log.trace("[{}] newStartTsAndSeqId is null. Skipping iteration without db update", sessionId);
                         result.set(null);
                     }
                 }
@@ -408,10 +397,10 @@ public final class EdgeGrpcSession implements Closeable {
                             log.debug("[{}][{}][{}] Send downlink messages task was interrupted", edge.getTenantId(), edge.getId(), sessionId);
                             result.set(null);
                         } else {
-                            EdgeEvent latestEdgeEvent = pageData.getData().get(pageData.getData().size() - 1);
                             if (isConnected() && pageData.hasNext()) {
                                 processEdgeEvents(fetcher, pageLink.nextPageLink(), result);
                             } else {
+                                EdgeEvent latestEdgeEvent = pageData.getData().get(pageData.getData().size() - 1);
                                 UUID idOffset = latestEdgeEvent.getUuidId();
                                 if (idOffset != null) {
                                     Long newStartTs = Uuids.unixTimestamp(idOffset);
@@ -566,12 +555,38 @@ public final class EdgeGrpcSession implements Closeable {
         }, ctx.getGrpcCallbackExecutorService());
     }
 
+    private boolean isSeqIdStartedNewCycle() {
+        try {
+            TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), 0, null, null, this.newStartTs, System.currentTimeMillis());
+            PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), 0L, this.previousStartSeqId == 0 ? null : this.previousStartSeqId - 1, pageLink);
+            return !edgeEvents.getData().isEmpty();
+        } catch (Exception e) {
+            log.error("[{}][{}][{}] Failed to execute isSeqIdStartedNewCycle", edge.getTenantId(), edge.getId(), sessionId, e);
+        }
+        return false;
+    }
+
+    private boolean isNewEdgeEventsAvailable() {
+        try {
+            TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), 0, null, null, this.newStartTs, System.currentTimeMillis());
+            PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), this.newStartSeqId, null, pageLink);
+            return !edgeEvents.getData().isEmpty();
+        } catch (Exception e) {
+            log.error("[{}][{}][{}] Failed to execute isNewEdgeEventsAvailable", edge.getTenantId(), edge.getId(), sessionId, e);
+        }
+        return false;
+    }
+
     private long findStartSeqIdFromOldestEventIfAny() {
         long startSeqId = 0L;
-        TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("createdTime"), null, null);
-        PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), null, null, pageLink);
-        if (!edgeEvents.getData().isEmpty()) {
-            startSeqId = edgeEvents.getData().get(0).getSeqId() - 1;
+        try {
+            TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("createdTime"), null, null);
+            PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), null, null, pageLink);
+            if (!edgeEvents.getData().isEmpty()) {
+                startSeqId = edgeEvents.getData().get(0).getSeqId() - 1;
+            }
+        } catch (Exception e) {
+            log.error("[{}][{}][{}] Failed to execute findStartSeqIdFromOldestEventIfAny", edge.getTenantId(), edge.getId(), sessionId, e);
         }
         return startSeqId;
     }

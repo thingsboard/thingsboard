@@ -52,20 +52,25 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdStart, seqIdEnd, (TimePageLink) pageLink);
-        if (edgeEvents.getData().isEmpty()) {
-            this.seqIdEnd = Math.max(this.maxReadRecordsCount, seqIdStart - this.maxReadRecordsCount);
-            edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, seqIdEnd, (TimePageLink) pageLink);
-            if (edgeEvents.getData().stream().anyMatch(ee -> ee.getSeqId() < seqIdStart)) {
-                log.info("[{}] seqId column of edge_event table started new cycle [{}]", tenantId, edge.getId());
-                // reset in case seq_id column started new cycle
-                this.seqIdStart = 0L;
-                seqIdNewCycleStarted = true;
-            } else {
-                log.warn("[{}] unexpected edge notification message received - no new events found and seqId column of edge_event table doesn't started new cycle [{}]", tenantId, edge.getId());
-                edgeEvents = new PageData<>();
+        try {
+            PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdStart, seqIdEnd, (TimePageLink) pageLink);
+            if (edgeEvents.getData().isEmpty()) {
+                this.seqIdEnd = Math.max(this.maxReadRecordsCount, seqIdStart - this.maxReadRecordsCount);
+                edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, seqIdEnd, (TimePageLink) pageLink);
+                if (edgeEvents.getData().stream().anyMatch(ee -> ee.getSeqId() < seqIdStart)) {
+                    log.info("[{}] seqId column of edge_event table started new cycle [{}]", tenantId, edge.getId());
+                    this.seqIdNewCycleStarted = true;
+                    this.seqIdStart = 0L;
+                } else {
+                    edgeEvents = new PageData<>();
+                    log.warn("[{}] unexpected edge notification message received. " +
+                            "no new events found and seqId column of edge_event table doesn't started new cycle [{}]", tenantId, edge.getId());
+                }
             }
+            return edgeEvents;
+        } catch (Exception e) {
+            log.error("[{}] failed to find edge events [{}]", tenantId, edge.getId());
         }
-        return edgeEvents;
+        return new PageData<>();
     }
 }
