@@ -92,7 +92,6 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   filteredEntityTypeList: Observable<Array<EntityTypeInfo>>;
 
   placeholder: string;
-  secondaryPlaceholder: string;
 
   searchText = '';
 
@@ -124,9 +123,7 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
 
   ngOnInit() {
 
-    this.placeholder = this.required ? this.translate.instant('entity.enter-entity-type')
-      : this.translate.instant('entity.any-entity');
-    this.secondaryPlaceholder = '+' + this.translate.instant('entity.entity-type');
+    this.placeholder = this.translate.instant('entity.add-entity-type');
 
     let entityTypes: Array<EntityType | AliasEntityType>;
     if (this.ignoreAuthorityFilter && this.allowedEntityTypes
@@ -245,6 +242,16 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   clear(value: string = '') {
     this.entityTypeInput.nativeElement.value = value;
     this.entityTypeListFormGroup.get('entityType').patchValue(value, {emitEvent: true});
+    setTimeout(() => {
+      this.entityTypeInput.nativeElement.blur();
+      this.entityTypeInput.nativeElement.focus();
+    }, 0);
+  }
+
+  allClear() {
+    this.entityTypeList = [];
+    this.modelValue = [];
+    this.entityTypeListFormGroup.get('entityTypeList').patchValue([], {emitEvent: true});
     setTimeout(() => {
       this.entityTypeInput.nativeElement.blur();
       this.entityTypeInput.nativeElement.focus();

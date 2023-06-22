@@ -25,7 +25,7 @@
       {{entitySubtype}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
-    <input matInput type="text" placeholder="{{ !disabled ? ((!entitySubtypeList || !entitySubtypeList.length) ? placeholder : secondaryPlaceholder) : '' }}"
+    <input matInput type="text" placeholder="{{ !disabled ? placeholder : '' }}"
            style="max-width: 200px;"
            #entitySubtypeInput
            (focusin)="onFocus()"
