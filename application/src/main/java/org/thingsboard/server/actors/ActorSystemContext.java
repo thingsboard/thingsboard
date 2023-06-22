@@ -538,6 +538,10 @@ public class ActorSystemContext {
     @Getter
     private int maxRpcRetries;
 
+    @Value("${actors.rule.external.force_ack:false}")
+    @Getter
+    private boolean externalNodeForceAck;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;

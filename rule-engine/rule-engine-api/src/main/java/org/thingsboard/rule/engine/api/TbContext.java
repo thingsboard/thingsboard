@@ -167,6 +167,8 @@ public interface TbContext {
 
     void enqueueForTellFailure(TbMsg msg, String failureMessage);
 
+    void enqueueForTellFailure(TbMsg tbMsg, Throwable t);
+
     void enqueueForTellNext(TbMsg msg, String relationType);
 
     void enqueueForTellNext(TbMsg msg, Set<String> relationTypes);
@@ -301,6 +303,8 @@ public interface TbContext {
     NotificationRuleService getNotificationRuleService();
 
     SlackService getSlackService();
+
+    boolean isExternalNodeForceAck();
 
     /**
      * Creates JS Script Engine
