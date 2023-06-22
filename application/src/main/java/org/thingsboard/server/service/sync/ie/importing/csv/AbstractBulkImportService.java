@@ -22,6 +22,7 @@ import com.google.gson.JsonPrimitive;
 import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -57,7 +58,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.CsvUtils;
-import org.thingsboard.server.utils.TypeCastUtil;
+import org.thingsboard.server.common.data.util.TypeCastUtil;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -269,7 +270,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                                 if (!entry.getKey().getType().isKv()) {
                                     entityData.getFields().put(entry.getKey().getType(), entry.getValue());
                                 } else {
-                                    Map.Entry<DataType, Object> castResult = TypeCastUtil.castValue(entry.getValue());
+                                    Pair<DataType, Object> castResult = TypeCastUtil.castValue(entry.getValue());
                                     entityData.getKvs().put(entry.getKey(), new ParsedValue(castResult.getValue(), castResult.getKey()));
                                 }
                             });

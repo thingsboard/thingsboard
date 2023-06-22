@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.snmp.service;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.ScopedPDU;
@@ -28,12 +29,14 @@ import org.snmp4j.smi.Variable;
 import org.snmp4j.smi.VariableBinding;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
 import org.thingsboard.server.common.data.transport.snmp.SnmpProtocolVersion;
 import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
+import org.thingsboard.server.common.data.util.TypeCastUtil;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 
@@ -48,10 +51,14 @@ import java.util.stream.Collectors;
 @TbSnmpTransportComponent
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class PduService {
 
     @Value("${transport.snmp.max_request_oids:100}")
     private int maxRequestOids;
+
+    @Value("${transport.snmp.response.ignore_type_cast_errors:false}")
+    private boolean ignoreTypeCastErrors;
 
     public List<PDU> createPdus(DeviceSessionContext sessionContext, SnmpCommunicationConfig communicationConfig, Map<String, String> values) {
         List<PDU> pdus = new ArrayList<>();
@@ -165,20 +172,31 @@ public class PduService {
     }
 
     public void processValue(String key, DataType dataType, String value, JsonObject result) {
-        switch (dataType) {
-            case LONG:
-                result.addProperty(key, Long.parseLong(value));
-                break;
-            case BOOLEAN:
-                result.addProperty(key, Boolean.parseBoolean(value));
-                break;
-            case DOUBLE:
-                result.addProperty(key, Double.parseDouble(value));
-                break;
-            case STRING:
-            case JSON:
-            default:
-                result.addProperty(key, value);
+        try {
+            switch (dataType) {
+                case STRING:
+                case JSON:
+                    result.addProperty(key, value);
+                    break;
+                case LONG:
+                case DOUBLE:
+                    result.addProperty(key, TypeCastUtil.castToNumber(value).getValue());
+                    break;
+                case BOOLEAN:
+                    if (StringUtils.equalsAnyIgnoreCase(value, "true", "false")) {
+                        result.addProperty(key, Boolean.parseBoolean(value));
+                    } else {
+                        throw new IllegalArgumentException("Can't parse '" + value + "' as boolean");
+                    }
+                    break;
+            }
+        } catch (IllegalArgumentException e) {
+            if (ignoreTypeCastErrors) {
+                log.debug("Ignoring value '{}' for key '{}' because of data type mismatch ({} required)", value, key, dataType);
+            } else {
+                throw e;
+            }
         }
     }
+
 }
