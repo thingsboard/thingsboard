@@ -15,11 +15,19 @@
  */
 package org.thingsboard.server.common.data.transport.snmp;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
 public enum SnmpCommunicationSpec {
-    TELEMETRY_QUERYING,
 
-    CLIENT_ATTRIBUTES_QUERYING,
-    SHARED_ATTRIBUTES_SETTING,
+    TELEMETRY_QUERYING("telemetryQuerying"),
+    CLIENT_ATTRIBUTES_QUERYING("clientAttributesQuerying"),
 
-    TO_DEVICE_RPC_REQUEST,
+    SHARED_ATTRIBUTES_SETTING("sharedAttributesSetting"),
+    TO_DEVICE_RPC_REQUEST("rpcRequest");
+
+    private final String label;
+
 }

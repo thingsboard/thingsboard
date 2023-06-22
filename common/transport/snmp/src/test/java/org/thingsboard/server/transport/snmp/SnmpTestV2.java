@@ -26,10 +26,11 @@ public class SnmpTestV2 {
 
         device.start();
         Map<String, String> mappings = new HashMap<>();
-        for (int i = 1; i <= 500; i++) {
-            String oid = String.format(".1.3.6.1.2.1.%s.1.52", i);
-            mappings.put(oid, "value_" + i);
-        }
+//        for (int i = 1; i <= 500; i++) {
+//            String oid = String.format(".1.3.6.1.2.1.%s.1.52", i);
+//            mappings.put(oid, "value_" + i);
+//        }
+        mappings.put("1.3.6.1.2.1.266.1.52", "****");
         device.setUpMappings(mappings);
 
         new Scanner(System.in).nextLine();

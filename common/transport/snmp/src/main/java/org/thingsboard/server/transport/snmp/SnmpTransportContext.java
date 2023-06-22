@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
@@ -113,19 +114,25 @@ public class SnmpTransportContext extends TransportContext {
         SnmpDeviceProfileTransportConfiguration profileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
         SnmpDeviceTransportConfiguration deviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
 
-        DeviceSessionContext deviceSessionContext;
+        DeviceSessionContext sessionContext;
         try {
-            deviceSessionContext = new DeviceSessionContext(
-                    device, deviceProfile, credentials.getCredentialsId(),
-                    profileTransportConfiguration, deviceTransportConfiguration, this
-            );
-            registerSessionMsgListener(deviceSessionContext);
+            sessionContext = DeviceSessionContext.builder()
+                    .tenantId(deviceProfile.getTenantId())
+                    .device(device)
+                    .deviceProfile(deviceProfile)
+                    .token(credentials.getCredentialsId())
+                    .profileTransportConfiguration(profileTransportConfiguration)
+                    .deviceTransportConfiguration(deviceTransportConfiguration)
+                    .snmpTransportContext(this)
+                    .build();
+            registerSessionMsgListener(sessionContext);
         } catch (Exception e) {
             log.error("Failed to establish session for SNMP device {}: {}", device.getId(), e.toString());
+            transportService.errorEvent(device.getTenantId(), device.getId(), "sessionEstablishing", e);
             return;
         }
-        sessions.put(device.getId(), deviceSessionContext);
-        snmpTransportService.createQueryingTasks(deviceSessionContext);
+        sessions.put(device.getId(), sessionContext);
+        snmpTransportService.createQueryingTasks(sessionContext);
         log.info("Established SNMP device session for device {}", device.getId());
     }
 
@@ -148,14 +155,17 @@ public class SnmpTransportContext extends TransportContext {
                 sessionContext.initializeTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
                 snmpTransportService.cancelQueryingTasks(sessionContext);
                 snmpTransportService.createQueryingTasks(sessionContext);
+                transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.UPDATED, true, null);
             } else if (!newDeviceTransportConfiguration.equals(sessionContext.getDeviceTransportConfiguration())) {
                 sessionContext.setDeviceTransportConfiguration(newDeviceTransportConfiguration);
                 sessionContext.initializeTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
+                transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.UPDATED, true, null);
             } else {
                 log.trace("Configuration of the device {} was not updated", device);
             }
         } catch (Exception e) {
             log.error("Failed to update session for SNMP device {}: {}", sessionContext.getDeviceId(), e.getMessage());
+            transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.UPDATED, false, e);
             destroyDeviceSession(sessionContext);
         }
     }
@@ -168,28 +178,31 @@ public class SnmpTransportContext extends TransportContext {
         transportService.deregisterSession(sessionContext.getSessionInfo());
         snmpTransportService.cancelQueryingTasks(sessionContext);
         sessions.remove(sessionContext.getDeviceId());
+        transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.STOPPED, true, null);
         log.trace("Unregistered and removed session");
     }
 
-    private void registerSessionMsgListener(DeviceSessionContext deviceSessionContext) {
+    private void registerSessionMsgListener(DeviceSessionContext sessionContext) {
         transportService.process(DeviceTransportType.SNMP,
-                TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceSessionContext.getToken()).build(),
+                TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(sessionContext.getToken()).build(),
                 new TransportServiceCallback<>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                         if (msg.hasDeviceInfo()) {
-                            registerTransportSession(deviceSessionContext, msg);
-                            deviceSessionContext.setSessionTimeoutHandler(() -> {
-                                registerTransportSession(deviceSessionContext, msg);
+                            registerTransportSession(sessionContext, msg);
+                            sessionContext.setSessionTimeoutHandler(() -> {
+                                registerTransportSession(sessionContext, msg);
                             });
+                            transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.STARTED, true, null);
                         } else {
-                            log.warn("[{}] Failed to process device auth", deviceSessionContext.getDeviceId());
+                            log.warn("[{}] Failed to process device auth", sessionContext.getDeviceId());
                         }
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        log.warn("[{}] Failed to process device auth: {}", deviceSessionContext.getDeviceId(), e);
+                        log.warn("[{}] Failed to process device auth: {}", sessionContext.getDeviceId(), e);
+                        transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.STARTED, false, e);
                     }
                 });
     }

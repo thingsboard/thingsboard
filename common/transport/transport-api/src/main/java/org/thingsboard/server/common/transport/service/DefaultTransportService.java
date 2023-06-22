@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -49,11 +50,12 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsTrigger;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsTrigger;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -818,6 +820,37 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
+    public void lifecycleEvent(TenantId tenantId, DeviceId deviceId, ComponentLifecycleEvent eventType, boolean success, Throwable error) {
+        ToCoreMsg msg = ToCoreMsg.newBuilder()
+                .setLifecycleEventMsg(TransportProtos.LifecycleEventProto.newBuilder()
+                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                        .setEntityIdMSB(deviceId.getId().getMostSignificantBits())
+                        .setEntityIdLSB(deviceId.getId().getLeastSignificantBits())
+                        .setServiceId(serviceInfoProvider.getServiceId())
+                        .setLcEventType(eventType.name())
+                        .setSuccess(success)
+                        .setError(error != null ? ExceptionUtils.getStackTrace(error) : ""))
+                .build();
+        sendToCore(tenantId, deviceId, msg, deviceId.getId(), TransportServiceCallback.EMPTY);
+    }
+
+    @Override
+    public void errorEvent(TenantId tenantId, DeviceId deviceId, String method, Throwable error) {
+        ToCoreMsg msg = ToCoreMsg.newBuilder()
+                .setErrorEventMsg(TransportProtos.ErrorEventProto.newBuilder()
+                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                        .setEntityIdMSB(deviceId.getId().getMostSignificantBits())
+                        .setEntityIdLSB(deviceId.getId().getLeastSignificantBits())
+                        .setServiceId(serviceInfoProvider.getServiceId())
+                        .setMethod(method)
+                        .setError(ExceptionUtils.getStackTrace(error)))
+                .build();
+        sendToCore(tenantId, deviceId, msg, deviceId.getId(), TransportServiceCallback.EMPTY);
+    }
+
+    @Override
     public SessionMetaData registerSyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout) {
         SessionMetaData currentSession = new SessionMetaData(sessionInfo, TransportProtos.SessionType.SYNC, listener);
         UUID sessionId = toSessionId(sessionInfo);
@@ -1108,18 +1141,21 @@ public class DefaultTransportService implements TransportService {
     }
 
     protected void sendToDeviceActor(TransportProtos.SessionInfoProto sessionInfo, TransportToDeviceActorMsg toDeviceActorMsg, TransportServiceCallback<Void> callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, getTenantId(sessionInfo), getDeviceId(sessionInfo));
+        ToCoreMsg toCoreMsg = ToCoreMsg.newBuilder().setToDeviceActorMsg(toDeviceActorMsg).build();
+        sendToCore(getTenantId(sessionInfo), getDeviceId(sessionInfo), toCoreMsg, getRoutingKey(sessionInfo), callback);
+    }
+
+    private void sendToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, UUID routingKey, TransportServiceCallback<Void> callback) {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (log.isTraceEnabled()) {
-            log.trace("[{}][{}] Pushing to topic {} message {}", getTenantId(sessionInfo), getDeviceId(sessionInfo), tpi.getFullTopicName(), toDeviceActorMsg);
+            log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, entityId, tpi.getFullTopicName(), msg);
         }
+
         TransportTbQueueCallback transportTbQueueCallback = callback != null ?
                 new TransportTbQueueCallback(callback) : null;
         tbCoreProducerStats.incrementTotal();
         StatsCallback wrappedCallback = new StatsCallback(transportTbQueueCallback, tbCoreProducerStats);
-        tbCoreMsgProducer.send(tpi,
-                new TbProtoQueueMsg<>(getRoutingKey(sessionInfo),
-                        ToCoreMsg.newBuilder().setToDeviceActorMsg(toDeviceActorMsg).build()),
-                wrappedCallback);
+        tbCoreMsgProducer.send(tpi, new TbProtoQueueMsg<>(routingKey, msg), wrappedCallback);
     }
 
     private void sendToRuleEngine(TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {

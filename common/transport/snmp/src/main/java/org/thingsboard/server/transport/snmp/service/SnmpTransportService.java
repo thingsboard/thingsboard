@@ -144,6 +144,7 @@ public class SnmpTransportService implements TbTransportService {
                             }
                         } catch (Exception e) {
                             log.error("Failed to send SNMP request for device {}: {}", sessionContext.getDeviceId(), e.toString());
+                            transportService.errorEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), config.getSpec().getLabel(), e);
                         }
                     }, queryingFrequency, queryingFrequency, TimeUnit.MILLISECONDS);
                 })
@@ -165,6 +166,7 @@ public class SnmpTransportService implements TbTransportService {
         List<PDU> request = pduService.createPdus(sessionContext, communicationConfig, values);
         RequestContext requestContext = RequestContext.builder()
                 .communicationSpec(communicationConfig.getSpec())
+                .method(communicationConfig.getMethod())
                 .responseMappings(communicationConfig.getAllMappings())
                 .requestSize(request.size())
                 .build();
@@ -178,6 +180,7 @@ public class SnmpTransportService implements TbTransportService {
                 snmp.send(pdu, sessionContext.getTarget(), requestContext, sessionContext);
             } catch (IOException e) {
                 log.error("Failed to send SNMP request to device {}: {}", sessionContext.getDeviceId(), e.toString());
+                transportService.errorEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), requestContext.getCommunicationSpec().getLabel(), e);
             }
         }
     }
@@ -223,6 +226,7 @@ public class SnmpTransportService implements TbTransportService {
         RequestContext requestContext = RequestContext.builder()
                 .requestId(toDeviceRpcRequestMsg.getRequestId())
                 .communicationSpec(communicationConfig.getSpec())
+                .method(snmpMethod)
                 .responseMappings(communicationConfig.getAllMappings())
                 .requestSize(1)
                 .build();
@@ -232,8 +236,10 @@ public class SnmpTransportService implements TbTransportService {
 
     public void processResponseEvent(DeviceSessionContext sessionContext, ResponseEvent event) {
         ((Snmp) event.getSource()).cancel(event.getRequest(), sessionContext);
+        RequestContext requestContext = (RequestContext) event.getUserObject();
         if (event.getError() != null) {
             log.warn("SNMP response error: {}", event.getError().toString());
+            transportService.errorEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), requestContext.getCommunicationSpec().getLabel(), new RuntimeException(event.getError()));
             return;
         }
 
@@ -241,12 +247,14 @@ public class SnmpTransportService implements TbTransportService {
         if (log.isTraceEnabled()) {
             log.trace("Received PDU for device {}: {}", sessionContext.getDeviceId(), responsePdu);
         }
-        RequestContext requestContext = (RequestContext) event.getUserObject();
 
         List<PDU> response;
         if (requestContext.getRequestSize() == 1) {
             if (responsePdu == null) {
                 log.debug("No response from SNMP device {}, requestId: {}", sessionContext.getDeviceId(), event.getRequest().getRequestID());
+                if (requestContext.getMethod() == SnmpMethod.GET) {
+                    transportService.errorEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), requestContext.getCommunicationSpec().getLabel(), new RuntimeException("No response from device"));
+                }
                 return;
             }
             response = List.of(responsePdu);
@@ -268,7 +276,11 @@ public class SnmpTransportService implements TbTransportService {
         }
 
         responseProcessingExecutor.execute(() -> {
-            processResponse(sessionContext, response, requestContext);
+            try {
+                processResponse(sessionContext, response, requestContext);
+            } catch (Exception e) {
+                transportService.errorEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), requestContext.getCommunicationSpec().getLabel(), e);
+            }
         });
     }
 
@@ -279,7 +291,7 @@ public class SnmpTransportService implements TbTransportService {
         JsonObject responseData = responseDataMappers.get(requestContext.getCommunicationSpec()).map(response, requestContext);
         if (responseData.size() == 0) {
             log.warn("No values in the SNMP response for device {}", sessionContext.getDeviceId());
-            return;
+            throw new IllegalArgumentException("No values in the response");
         }
 
         responseProcessor.process(responseData, requestContext, sessionContext);
@@ -365,15 +377,17 @@ public class SnmpTransportService implements TbTransportService {
     private static class RequestContext {
         private final Integer requestId;
         private final SnmpCommunicationSpec communicationSpec;
+        private final SnmpMethod method;
         private final List<SnmpMapping> responseMappings;
 
         private final int requestSize;
         private List<PDU> responseParts;
 
         @Builder
-        public RequestContext(Integer requestId, SnmpCommunicationSpec communicationSpec, List<SnmpMapping> responseMappings, int requestSize) {
+        public RequestContext(Integer requestId, SnmpCommunicationSpec communicationSpec, SnmpMethod method, List<SnmpMapping> responseMappings, int requestSize) {
             this.requestId = requestId;
             this.communicationSpec = communicationSpec;
+            this.method = method;
             this.responseMappings = responseMappings;
             this.requestSize = requestSize;
             if (requestSize > 1) {

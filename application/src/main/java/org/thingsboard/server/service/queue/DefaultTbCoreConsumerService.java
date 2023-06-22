@@ -28,14 +28,18 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.event.ErrorEvent;
+import org.thingsboard.server.common.data.event.Event;
+import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
@@ -44,7 +48,9 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ErrorEventProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
+import org.thingsboard.server.gen.transport.TransportProtos.LifecycleEventProto;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
@@ -63,7 +69,6 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
@@ -274,6 +279,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                     TransportProtos.NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = toCoreMsg.getNotificationSchedulerServiceMsg();
                                     log.trace("[{}] Forwarding message to notification scheduler service {}", id, toCoreMsg.getNotificationSchedulerServiceMsg());
                                     forwardToNotificationSchedulerService(notificationSchedulerServiceMsg, callback);
+                                } else if (toCoreMsg.hasErrorEventMsg()) {
+                                    forwardToEventService(toCoreMsg.getErrorEventMsg(), callback);
+                                } else if (toCoreMsg.hasLifecycleEventMsg()) {
+                                    forwardToEventService(toCoreMsg.getLifecycleEventMsg(), callback);
                                 }
                             } catch (Throwable e) {
                                 log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -519,50 +528,52 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             subscriptionManagerService.cancelSubscription(closeProto.getSessionId(), closeProto.getSubscriptionId(), callback);
         } else if (msg.hasTsUpdate()) {
             TbTimeSeriesUpdateProto proto = msg.getTsUpdate();
+            long tenantIdMSB = proto.getTenantIdMSB();
+            long tenantIdLSB = proto.getTenantIdLSB();
             subscriptionManagerService.onTimeSeriesUpdate(
-                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    toTenantId(tenantIdMSB, tenantIdLSB),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     TbSubscriptionUtils.toTsKvEntityList(proto.getDataList()), callback);
         } else if (msg.hasAttrUpdate()) {
             TbAttributeUpdateProto proto = msg.getAttrUpdate();
             subscriptionManagerService.onAttributesUpdate(
-                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    toTenantId(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     proto.getScope(), TbSubscriptionUtils.toAttributeKvList(proto.getDataList()), callback);
         } else if (msg.hasAttrDelete()) {
             TbAttributeDeleteProto proto = msg.getAttrDelete();
             subscriptionManagerService.onAttributesDelete(
-                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    toTenantId(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     proto.getScope(), proto.getKeysList(), proto.getNotifyDevice(), callback);
         } else if (msg.hasTsDelete()) {
             TbTimeSeriesDeleteProto proto = msg.getTsDelete();
             subscriptionManagerService.onTimeSeriesDelete(
-                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    toTenantId(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     proto.getKeysList(), callback);
         } else if (msg.hasAlarmUpdate()) {
             TbAlarmUpdateProto proto = msg.getAlarmUpdate();
             subscriptionManagerService.onAlarmUpdate(
-                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    toTenantId(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     JacksonUtil.fromString(proto.getAlarm(), AlarmInfo.class),
                     callback);
         } else if (msg.hasAlarmDelete()) {
             TbAlarmDeleteProto proto = msg.getAlarmDelete();
             subscriptionManagerService.onAlarmDeleted(
-                    TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                    toTenantId(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
                     JacksonUtil.fromString(proto.getAlarm(), AlarmInfo.class), callback);
         } else if (msg.hasNotificationUpdate()) {
             TransportProtos.NotificationUpdateProto updateProto = msg.getNotificationUpdate();
-            TenantId tenantId = TenantId.fromUUID(new UUID(updateProto.getTenantIdMSB(), updateProto.getTenantIdLSB()));
+            TenantId tenantId = toTenantId(updateProto.getTenantIdMSB(), updateProto.getTenantIdLSB());
             UserId recipientId = new UserId(new UUID(updateProto.getRecipientIdMSB(), updateProto.getRecipientIdLSB()));
             NotificationUpdate update = JacksonUtil.fromString(updateProto.getUpdate(), NotificationUpdate.class);
             subscriptionManagerService.onNotificationUpdate(tenantId, recipientId, update, callback);
         } else if (msg.hasNotificationRequestUpdate()) {
             TransportProtos.NotificationRequestUpdateProto updateProto = msg.getNotificationRequestUpdate();
-            TenantId tenantId = TenantId.fromUUID(new UUID(updateProto.getTenantIdMSB(), updateProto.getTenantIdLSB()));
+            TenantId tenantId = toTenantId(updateProto.getTenantIdMSB(), updateProto.getTenantIdLSB());
             NotificationRequestUpdate update = JacksonUtil.fromString(updateProto.getUpdate(), NotificationRequestUpdate.class);
             subscriptionManagerService.onNotificationRequestUpdate(tenantId, update, callback);
         } else {
@@ -584,7 +595,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         if (statsEnabled) {
             stats.log(deviceActivityMsg);
         }
-        TenantId tenantId = TenantId.fromUUID(new UUID(deviceActivityMsg.getTenantIdMSB(), deviceActivityMsg.getTenantIdLSB()));
+        TenantId tenantId = toTenantId(deviceActivityMsg.getTenantIdMSB(), deviceActivityMsg.getTenantIdLSB());
         DeviceId deviceId = new DeviceId(new UUID(deviceActivityMsg.getDeviceIdMSB(), deviceActivityMsg.getDeviceIdLSB()));
         try {
             stateService.onDeviceActivity(tenantId, deviceId, deviceActivityMsg.getLastActivityTime());
@@ -595,7 +606,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     private void forwardToNotificationSchedulerService(TransportProtos.NotificationSchedulerServiceMsg msg, TbCallback callback) {
-        TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        TenantId tenantId = toTenantId(msg.getTenantIdMSB(), msg.getTenantIdLSB());
         NotificationRequestId notificationRequestId = new NotificationRequestId(new UUID(msg.getRequestIdMSB(), msg.getRequestIdLSB()));
         try {
             notificationSchedulerService.scheduleNotificationRequest(tenantId, notificationRequestId, msg.getTs());
@@ -627,9 +638,47 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         callback.onSuccess();
     }
 
+    private void forwardToEventService(ErrorEventProto eventProto, TbCallback callback) {
+        Event event = ErrorEvent.builder()
+                .tenantId(toTenantId(eventProto.getTenantIdMSB(), eventProto.getTenantIdLSB()))
+                .entityId(new UUID(eventProto.getEntityIdMSB(), eventProto.getEntityIdLSB()))
+                .serviceId(eventProto.getServiceId())
+                .ts(System.currentTimeMillis())
+                .method(eventProto.getMethod())
+                .error(eventProto.getError())
+                .build();
+        forwardToEventService(event, callback);
+    }
+
+    private void forwardToEventService(LifecycleEventProto eventProto, TbCallback callback) {
+        Event event = LifecycleEvent.builder()
+                .tenantId(toTenantId(eventProto.getTenantIdMSB(), eventProto.getTenantIdLSB()))
+                .entityId(new UUID(eventProto.getEntityIdMSB(), eventProto.getEntityIdLSB()))
+                .serviceId(eventProto.getServiceId())
+                .ts(System.currentTimeMillis())
+                .lcEventType(eventProto.getLcEventType())
+                .success(eventProto.getSuccess())
+                .error(StringUtils.isNotEmpty(eventProto.getError()) ? eventProto.getError() : null)
+                .build();
+        forwardToEventService(event, callback);
+    }
+
+    private void forwardToEventService(Event event, TbCallback callback) {
+        try {
+            actorContext.getEventService().saveAsync(event);
+            callback.onSuccess();
+        } catch (Exception e) {
+            callback.onFailure(e);
+        }
+    }
+
     private void throwNotHandled(Object msg, TbCallback callback) {
         log.warn("Message not handled: {}", msg);
         callback.onFailure(new RuntimeException("Message not handled!"));
+    }
+
+    private TenantId toTenantId(long tenantIdMSB, long tenantIdLSB) {
+        return TenantId.fromUUID(new UUID(tenantIdMSB, tenantIdLSB));
     }
 
     @Override
