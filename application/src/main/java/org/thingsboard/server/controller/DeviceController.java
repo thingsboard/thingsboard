@@ -166,7 +166,7 @@ public class DeviceController extends BaseController {
                     "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/device/info/{deviceId}/commands", method = RequestMethod.GET)
+    @RequestMapping(value = "/device/{deviceId}/commands", method = RequestMethod.GET)
     @ResponseBody
     public List<String> getDevicePublishTelemetryCommands(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
                                         @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {

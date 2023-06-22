@@ -40,6 +40,8 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
@@ -49,6 +51,10 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -641,6 +647,59 @@ public class DeviceControllerTest extends AbstractControllerTest {
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+    }
+
+    @Test
+    public void testFetchPublishTelemetryCommandsForDefaultDevice() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        List<String> commands =
+                doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
+
+        DeviceCredentials credentials =
+                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+
+        assertThat(commands).hasSize(3);
+        assertThat(commands).containsExactly(String.format("mosquitto_pub -d -q 1 -h localhost -t v1/devices/me/telemetry -u %s -m \"{temperature:15}\"",
+                        credentials.getCredentialsId()),
+                String.format("curl -v -X POST http://localhost:80/api/v1/%s/telemetry --header Content-Type:application/json --data \"{temperature:16}\"",
+                        credentials.getCredentialsId()),
+                String.format("echo -n \"{temperature:17}\" | coap-client -m post coap://localhost:5683/api/v1/%s/telemetry -f-",
+                        credentials.getCredentialsId()));
+    }
+
+    @Test
+    public void testFetchPublishTelemetryCommandsForMqttDevice() throws Exception {
+        DeviceProfile mqttProfile = new DeviceProfile();
+        mqttProfile.setName("Mqtt device profile");
+        mqttProfile.setType(DeviceProfileType.DEFAULT);
+        mqttProfile.setTransportType(DeviceTransportType.MQTT);
+
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
+        deviceProfileData.setTransportConfiguration(new MqttDeviceProfileTransportConfiguration());
+
+        mqttProfile.setProfileData(deviceProfileData);
+        mqttProfile.setDefault(false);
+        mqttProfile.setDefaultRuleChainId(null);
+
+        mqttProfile = doPost("/api/deviceProfile", mqttProfile, DeviceProfile.class);
+
+        Device device = new Device();
+        device.setName("My device");
+        device.setDeviceProfileId(mqttProfile.getId());
+
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        DeviceCredentials credentials =
+                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+
+        List<String> commands =
+                doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
+        assertThat(commands).hasSize(1);
+        assertThat(commands.get(0)).isEqualTo("mosquitto_pub -d -q 1 -h localhost -t v1/devices/me/telemetry -u "
+                + credentials.getCredentialsId() + " -m \"{temperature:25}\"");
     }
 
     @Test
