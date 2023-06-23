@@ -22,5 +22,18 @@
     height: 48px;
     min-height: 100%;
     pointer-events: all;
+
+    &-trigger {
+      &-text {
+        max-width: 190px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      &-icon {
+        display: flex;
+        width: 36px;
+        justify-content: center;
+      }
+    }
   }
 }

@@ -19,9 +19,14 @@
             class="tb-rule-chain-select"
             [required]="required"
             [disabled]="disabled"
-            [(ngModel)]="ruleChainId"
+            [(ngModel)]="ruleChain"
+            [compareWith]="compareWith"
             (ngModelChange)="ruleChainIdChanged()">
-  <mat-option *ngFor="let ruleChain of ruleChains$ | async" [value]="ruleChain.id.id">
+  <mat-select-trigger fxFlex fxLayout="row">
+    <mat-icon class="tb-rule-chain-select-trigger-icon">settings_ethernet</mat-icon>
+    <span class="tb-rule-chain-select-trigger-text">{{ruleChain?.name}}</span>
+  </mat-select-trigger>
+  <mat-option *ngFor="let ruleChain of ruleChains$ | async" [value]="ruleChain">
     {{ruleChain.name}}
   </mat-option>
 </mat-select>

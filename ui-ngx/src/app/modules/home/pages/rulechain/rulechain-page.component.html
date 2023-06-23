@@ -30,7 +30,7 @@
                     fxLayout="column">
           <mat-toolbar color="primary" class="tb-dark">
             <tb-rule-chain-select
-              fxFlex
+              fxFlex fxLayout="row" fxLayoutAlign="start center"
               *ngIf="!isImport"
               [ruleChainType]="ruleChainType"
               [disabled]="isDirtyValue"
