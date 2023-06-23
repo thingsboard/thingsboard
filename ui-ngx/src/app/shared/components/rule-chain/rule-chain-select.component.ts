@@ -59,8 +59,6 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
 
   ruleChain: RuleChain;
 
-  selected: any;
-
   private propagateChange = (v: any) => { };
 
   constructor(private ruleChainService: RuleChainService) {
