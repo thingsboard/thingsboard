@@ -229,7 +229,7 @@
                 {{ logConfig.value }}
               </mat-button-toggle>
             </mat-button-toggle-group>
-            <div fxFlex="100" fxLayout="row wrap" [formGroup]="getLogFormGroup(logSelector.value)">
+            <div fxFlex="100" fxLayout="row wrap" fxLayout.lt-sm="column" [formGroup]="getLogFormGroup(logSelector.value)">
               <mat-form-field class="mat-block tb-value-type" fxFlex="calc(50%-15px)">
                 <mat-label translate>gateway.logs.level</mat-label>
                 <mat-select formControlName="logLevel">
@@ -244,26 +244,28 @@
                   {{'gateway.logs.file-path-required' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field class="mat-block tb-value-type" fxFlex="calc(35%-30px)">
-                <mat-label translate>gateway.logs.saving-period</mat-label>
-                <input matInput formControlName="savingTime" type="number" min="0" />
-                <mat-error
-                  *ngIf="gatewayConfigGroup.get('logs.local.' + logSelector.value + '.savingTime').hasError('required')">
-                  {{'gateway.logs.saving-period-required' | translate }}
-                </mat-error>
-                <mat-error
-                  *ngIf="gatewayConfigGroup.get('logs.local.' + logSelector.value + '.savingTime').hasError('min')">
-                  {{'gateway.logs.saving-period-min' | translate }}
-                </mat-error>
-              </mat-form-field>
-              <mat-form-field class="mat-block tb-value-type" fxFlex="calc(15%-30px)">
-                <mat-label translate></mat-label>
-                <mat-select formControlName="savingPeriod">
-                  <mat-option *ngFor="let period of logSavingPeriods | keyvalue" [value]="period.key">
-                    {{period.value | translate}}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+              <div fxLayout="row" fxFlex="50" fxLayoutGap="15px">
+                <mat-form-field class="mat-block tb-value-type" fxFlex>
+                  <mat-label translate>gateway.logs.saving-period</mat-label>
+                  <input matInput formControlName="savingTime" type="number" min="0" />
+                  <mat-error
+                    *ngIf="gatewayConfigGroup.get('logs.local.' + logSelector.value + '.savingTime').hasError('required')">
+                    {{'gateway.logs.saving-period-required' | translate }}
+                  </mat-error>
+                  <mat-error
+                    *ngIf="gatewayConfigGroup.get('logs.local.' + logSelector.value + '.savingTime').hasError('min')">
+                    {{'gateway.logs.saving-period-min' | translate }}
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field class="mat-block tb-value-type" style="min-width: 110px; width: 30%">
+                  <mat-label translate></mat-label>
+                  <mat-select formControlName="savingPeriod">
+                    <mat-option *ngFor="let period of logSavingPeriods | keyvalue" [value]="period.key">
+                      {{period.value | translate}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
               <mat-form-field class="mat-block tb-value-type" fxFlex="calc(50%-30px)">
                 <mat-label translate>gateway.logs.backup-count</mat-label>
                 <input matInput formControlName="backupCount" type="number" min="0" />
@@ -294,8 +296,8 @@
                 <span class="tb-hint">{{'gateway.hints.storage' | translate}}</span>
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <div fxLayout="row wrap">
-              <mat-button-toggle-group fxLayout="row wrap" class="security-toggle-group" formControlName="type"
+            <div fxLayout="row wrap" fxLayout.lt-sm="column">
+              <mat-button-toggle-group fxLayout="row wrap" fxLayout.lt-sm="column" class="security-toggle-group" formControlName="type"
                                        fxFlex="100">
                 <mat-button-toggle *ngFor="let storageType of storageTypes | keyvalue" [value]="storageType.key">
                   {{ storageType.value | translate }}
@@ -669,7 +671,7 @@
                 <span class="tb-hint" style="padding-left: 40px; margin-top: -15px;">{{'gateway.hints.check-device-activity' | translate}}</span>
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <div fxLayout="row wrap">
+            <div fxLayout="row wrap" fxLayout.lt-sm="column">
               <mat-form-field
                 *ngIf="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.checkDeviceInactivity').value"
                 fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
@@ -712,7 +714,7 @@
             <mat-expansion-panel-header>
               <mat-panel-title translate class="expansion-panel-header">gateway.advanced</mat-panel-title>
             </mat-expansion-panel-header>
-            <div fxLayout="row wrap">
+            <div fxLayout="row wrap" fxLayout.lt-sm="column">
               <mat-form-field fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                 <mat-label translate>gateway.min-pack-send-delay</mat-label>
                 <input matInput formControlName="minPackSendDelayMS" type="number" min="0" />

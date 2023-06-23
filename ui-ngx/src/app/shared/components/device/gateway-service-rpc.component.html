@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-card fxLayout="row" class="command-form" fxLayoutGap="10px" [formGroup]="commandForm">
+<mat-card fxLayout="row" fxLayout.lt-sm="column" class="command-form" fxLayoutGap="10px" [formGroup]="commandForm">
   <mat-form-field class="mat-block tb-value-type">
     <mat-label>{{'gateway.statistics.command' | translate}}</mat-label>
     <mat-select formControlName="command" *ngIf="!isConnector">

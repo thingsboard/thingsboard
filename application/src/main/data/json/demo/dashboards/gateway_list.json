@@ -5268,19 +5268,23 @@
                 "sizeX": 45,
                 "sizeY": 10,
                 "row": 12,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 1
               },
               "ce3065bf-d898-2c03-6236-ce1b6cdf1f3f": {
                 "sizeX": 45,
                 "sizeY": 9,
                 "row": 22,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 2
               },
               "46b68eb5-7e2d-bca1-c2ef-061b64575218": {
                 "sizeX": 45,
                 "sizeY": 12,
                 "row": 0,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 0,
+                "mobileHeight": 8
               }
             },
             "gridSettings": {
@@ -5307,19 +5311,24 @@
                 "sizeX": 48,
                 "sizeY": 13,
                 "row": 0,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 0,
+                "mobileHeight": 8
               },
               "0fc7dcf3-32a2-0159-738e-96956bf0d450": {
                 "sizeX": 48,
                 "sizeY": 10,
                 "row": 13,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 1,
+                "mobileHeight": null
               },
               "6e136fbc-545b-4926-c0a9-79348f35628a": {
                 "sizeX": 48,
                 "sizeY": 9,
                 "row": 23,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 2
               }
             },
             "gridSettings": {
