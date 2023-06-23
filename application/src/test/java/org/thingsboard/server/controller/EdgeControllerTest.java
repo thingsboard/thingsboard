@@ -62,6 +62,8 @@ import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 
@@ -892,7 +894,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         assertThat(edgeImitator.findAllMessagesByType(CustomerUpdateMsg.class)).as("one msg during sync process for 'Public' customer").hasSize(1);
         verifyRuleChainMsgsAreRoot(ruleChainUpdateMsgs);
 
-        edgeImitator.expectMessageAmount(15);
+        edgeImitator.expectMessageAmount(17);
         doPost("/api/edge/sync/" + edge.getId());
         assertThat(edgeImitator.waitForMessages()).as("await for messages after edge sync rest api call").isTrue();
 
@@ -906,6 +908,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         assertThat(edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class)).as("admin setting update msg").hasSize(4);
         assertThat(edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class)).as("asset update msg").hasSize(1);
         assertThat(edgeImitator.findAllMessagesByType(CustomerUpdateMsg.class)).as("one msg during sync process for 'Public' customer").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(TenantProfileUpdateMsg.class)).as("tenant profile update msg after sync").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(TenantUpdateMsg.class)).as("tenant update msg after sync").hasSize(1);
         verifyRuleChainMsgsAreRoot(ruleChainUpdateMsgs);
 
         edgeImitator.allowIgnoredTypes();
