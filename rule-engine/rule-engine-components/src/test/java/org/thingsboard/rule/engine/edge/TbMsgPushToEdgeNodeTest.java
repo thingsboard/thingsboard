@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 
@@ -54,6 +53,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATE
 import static org.thingsboard.server.common.data.msg.TbMsgType.CONNECT_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DISCONNECT_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbMsgPushToEdgeNodeTest {
@@ -89,7 +89,7 @@ public class TbMsgPushToEdgeNodeTest {
         Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
         Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(TbMsgPushToEdgeNode.DEFAULT_PAGE_SIZE))).thenReturn(new PageData<>());
 
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, "{}", null, null);
 
         node.onMsg(ctx, msg);

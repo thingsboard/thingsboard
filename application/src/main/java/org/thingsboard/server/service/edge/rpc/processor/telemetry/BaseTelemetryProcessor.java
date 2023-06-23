@@ -54,7 +54,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -74,6 +73,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
 public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
@@ -186,7 +187,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
             metaData.putValue("ts", tsKv.getTs() + "");
             var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-            TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
+            TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), POST_TELEMETRY_REQUEST.name(), entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
             tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
@@ -230,7 +231,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-        TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
+        TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), POST_ATTRIBUTES_REQUEST.name(), entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
         tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {

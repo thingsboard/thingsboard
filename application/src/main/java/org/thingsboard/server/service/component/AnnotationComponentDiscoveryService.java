@@ -31,7 +31,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.rule.engine.api.TbNodeConnectionType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode;
 import org.thingsboard.rule.engine.filter.TbOriginatorTypeSwitchNode;
@@ -253,7 +253,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         }
         if (TbMsgTypeSwitchNode.class.equals(clazz)) {
             relationTypes.addAll(TbMsgType.NODE_CONNECTIONS);
-            relationTypes.add(TbMsgType.OTHER);
+            relationTypes.add(TbNodeConnectionType.OTHER);
         }
         if (!relationTypes.contains(TbNodeConnectionType.FAILURE)) {
             relationTypes.add(TbNodeConnectionType.FAILURE);

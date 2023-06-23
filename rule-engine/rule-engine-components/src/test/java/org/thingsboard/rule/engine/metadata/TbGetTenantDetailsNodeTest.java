@@ -49,6 +49,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @ExtendWith(MockitoExtension.class)
 public class TbGetTenantDetailsNodeTest {
@@ -286,7 +287,7 @@ public class TbGetTenantDetailsNodeTest {
 
         var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
 
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
     }
 
     private void mockFindTenant() {

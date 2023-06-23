@@ -24,9 +24,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -44,6 +46,8 @@ import java.util.UUID;
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class RuleChainMsgConstructorTest {
+
+    private static final String RPC_CONNECTION_TYPE = "RPC";
 
     private RuleChainMsgConstructor constructor;
 
@@ -99,19 +103,19 @@ public class RuleChainMsgConstructorTest {
         Assert.assertEquals("Connections count incorrect!", 13, ruleChainMetadataUpdateMsg.getConnectionsCount());
         Assert.assertEquals("Rule chain connections count incorrect!", 0, ruleChainMetadataUpdateMsg.getRuleChainConnectionsCount());
 
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 6, "Success"), ruleChainMetadataUpdateMsg.getConnections(0));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 10, "Success"), ruleChainMetadataUpdateMsg.getConnections(1));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 0, "Success"), ruleChainMetadataUpdateMsg.getConnections(2));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 11, "Success"), ruleChainMetadataUpdateMsg.getConnections(3));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 11, "Success"), ruleChainMetadataUpdateMsg.getConnections(4));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 11, "Attributes Updated"), ruleChainMetadataUpdateMsg.getConnections(5));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 7, "RPC Request from Device"), ruleChainMetadataUpdateMsg.getConnections(6));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 4, "Post telemetry"), ruleChainMetadataUpdateMsg.getConnections(7));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 5, "Post attributes"), ruleChainMetadataUpdateMsg.getConnections(8));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 8, "Other"), ruleChainMetadataUpdateMsg.getConnections(9));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 9, "RPC Request to Device"), ruleChainMetadataUpdateMsg.getConnections(10));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(7, 11, "Success"), ruleChainMetadataUpdateMsg.getConnections(11));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(10, 9, "RPC"), ruleChainMetadataUpdateMsg.getConnections(12));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 6, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(0));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 10, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(1));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 0, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(2));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 11, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(3));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 11, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(4));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 11, TbMsgType.ATTRIBUTES_UPDATED.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(5));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 7, TbMsgType.TO_SERVER_RPC_REQUEST.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(6));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 4, TbMsgType.POST_TELEMETRY_REQUEST.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(7));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 5, TbMsgType.POST_ATTRIBUTES_REQUEST.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(8));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 8, TbNodeConnectionType.OTHER), ruleChainMetadataUpdateMsg.getConnections(9));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 9, TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(10));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(7, 11, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(11));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(10, 9, RPC_CONNECTION_TYPE), ruleChainMetadataUpdateMsg.getConnections(12));
     }
 
     @Test
@@ -130,20 +134,20 @@ public class RuleChainMsgConstructorTest {
         Assert.assertEquals("Connections count incorrect!", 10, ruleChainMetadataUpdateMsg.getConnectionsCount());
         Assert.assertEquals("Rule chain connections count incorrect!", 1, ruleChainMetadataUpdateMsg.getRuleChainConnectionsCount());
 
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(2, 5, "Success"), ruleChainMetadataUpdateMsg.getConnections(0));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 9, "Success"), ruleChainMetadataUpdateMsg.getConnections(1));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 9, "Success"), ruleChainMetadataUpdateMsg.getConnections(2));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 9, "Attributes Updated"), ruleChainMetadataUpdateMsg.getConnections(3));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 6, "RPC Request from Device"), ruleChainMetadataUpdateMsg.getConnections(4));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 3, "Post telemetry"), ruleChainMetadataUpdateMsg.getConnections(5));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 4, "Post attributes"), ruleChainMetadataUpdateMsg.getConnections(6));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 7, "Other"), ruleChainMetadataUpdateMsg.getConnections(7));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 8, "RPC Request to Device"), ruleChainMetadataUpdateMsg.getConnections(8));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 9, "Success"), ruleChainMetadataUpdateMsg.getConnections(9));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(2, 5, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(0));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 9, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(1));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 9, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(2));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 9, TbMsgType.ATTRIBUTES_UPDATED.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(3));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 6, TbMsgType.TO_SERVER_RPC_REQUEST.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(4));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 3, TbMsgType.POST_TELEMETRY_REQUEST.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(5));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 4, TbMsgType.POST_ATTRIBUTES_REQUEST.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(6));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 7, TbNodeConnectionType.OTHER), ruleChainMetadataUpdateMsg.getConnections(7));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 8, TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(8));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 9, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(9));
 
         RuleChainConnectionInfoProto ruleChainConnection = ruleChainMetadataUpdateMsg.getRuleChainConnections(0);
         Assert.assertEquals("From index incorrect!", 2, ruleChainConnection.getFromIndex());
-        Assert.assertEquals("Type index incorrect!", "Success", ruleChainConnection.getType());
+        Assert.assertEquals("Type index incorrect!", TbNodeConnectionType.SUCCESS, ruleChainConnection.getType());
         Assert.assertEquals("Additional info incorrect!",
                 "{\"description\":\"\",\"layoutX\":477,\"layoutY\":560,\"ruleChainNodeId\":\"rule-chain-node-UNDEFINED\"}",
                 ruleChainConnection.getAdditionalInfo());
@@ -172,20 +176,20 @@ public class RuleChainMsgConstructorTest {
         Assert.assertEquals("Connections count incorrect!", 10, ruleChainMetadataUpdateMsg.getConnectionsCount());
         Assert.assertEquals("Rule chain connections count incorrect!", 1, ruleChainMetadataUpdateMsg.getRuleChainConnectionsCount());
 
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 0, "Success"), ruleChainMetadataUpdateMsg.getConnections(0));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 0, "Attributes Updated"), ruleChainMetadataUpdateMsg.getConnections(1));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 3, "RPC Request from Device"), ruleChainMetadataUpdateMsg.getConnections(2));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 6, "Post telemetry"), ruleChainMetadataUpdateMsg.getConnections(3));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 5, "Post attributes"), ruleChainMetadataUpdateMsg.getConnections(4));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 2, "Other"), ruleChainMetadataUpdateMsg.getConnections(5));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 1, "RPC Request to Device"), ruleChainMetadataUpdateMsg.getConnections(6));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 0, "Success"), ruleChainMetadataUpdateMsg.getConnections(7));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 0, "Success"), ruleChainMetadataUpdateMsg.getConnections(8));
-        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(7, 4, "Success"), ruleChainMetadataUpdateMsg.getConnections(9));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 0, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(0));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 0, TbMsgType.ATTRIBUTES_UPDATED.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(1));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 3, TbMsgType.TO_SERVER_RPC_REQUEST.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(2));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 6, TbMsgType.POST_TELEMETRY_REQUEST.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(3));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 5, TbMsgType.POST_ATTRIBUTES_REQUEST.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(4));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 2, TbNodeConnectionType.OTHER), ruleChainMetadataUpdateMsg.getConnections(5));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 1, TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(6));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(5, 0, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(7));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 0, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(8));
+        compareNodeConnectionInfoAndProto(createNodeConnectionInfo(7, 4, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(9));
 
         RuleChainConnectionInfoProto ruleChainConnection = ruleChainMetadataUpdateMsg.getRuleChainConnections(0);
         Assert.assertEquals("From index incorrect!", 7, ruleChainConnection.getFromIndex());
-        Assert.assertEquals("Type index incorrect!", "Success", ruleChainConnection.getType());
+        Assert.assertEquals("Type index incorrect!", TbNodeConnectionType.SUCCESS, ruleChainConnection.getType());
         Assert.assertEquals("Additional info incorrect!",
                 "{\"description\":\"\",\"layoutX\":477,\"layoutY\":560,\"ruleChainNodeId\":\"rule-chain-node-UNDEFINED\"}",
                 ruleChainConnection.getAdditionalInfo());
@@ -225,19 +229,19 @@ public class RuleChainMsgConstructorTest {
 
     private List<NodeConnectionInfo> createConnections() {
         List<NodeConnectionInfo> result = new ArrayList<>();
-        result.add(createNodeConnectionInfo(3, 6, "Success"));
-        result.add(createNodeConnectionInfo(3, 10, "Success"));
-        result.add(createNodeConnectionInfo(3, 0, "Success"));
-        result.add(createNodeConnectionInfo(4, 11, "Success"));
-        result.add(createNodeConnectionInfo(5, 11, "Success"));
-        result.add(createNodeConnectionInfo(6, 11, "Attributes Updated"));
-        result.add(createNodeConnectionInfo(6, 7, "RPC Request from Device"));
-        result.add(createNodeConnectionInfo(6, 4, "Post telemetry"));
-        result.add(createNodeConnectionInfo(6, 5, "Post attributes"));
-        result.add(createNodeConnectionInfo(6, 8, "Other"));
-        result.add(createNodeConnectionInfo(6, 9, "RPC Request to Device"));
-        result.add(createNodeConnectionInfo(7, 11, "Success"));
-        result.add(createNodeConnectionInfo(10, 9, "RPC"));
+        result.add(createNodeConnectionInfo(3, 6, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(3, 10, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(3, 0, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(4, 11, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(5, 11, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(6, 11, TbMsgType.ATTRIBUTES_UPDATED.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(6, 7, TbMsgType.TO_SERVER_RPC_REQUEST.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(6, 4, TbMsgType.POST_TELEMETRY_REQUEST.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(6, 5, TbMsgType.POST_ATTRIBUTES_REQUEST.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(6, 8, TbNodeConnectionType.OTHER));
+        result.add(createNodeConnectionInfo(6, 9, TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(7, 11, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(10, 9, RPC_CONNECTION_TYPE));
         return result;
     }
 
@@ -280,19 +284,19 @@ public class RuleChainMsgConstructorTest {
 
     private List<NodeConnectionInfo> createConnectionsInDifferentOrder() {
         List<NodeConnectionInfo> result = new ArrayList<>();
-        result.add(createNodeConnectionInfo(0, 2, "RPC"));
-        result.add(createNodeConnectionInfo(4, 1, "Success"));
-        result.add(createNodeConnectionInfo(5, 1, "Attributes Updated"));
-        result.add(createNodeConnectionInfo(5, 4, "RPC Request from Device"));
-        result.add(createNodeConnectionInfo(5, 7, "Post telemetry"));
-        result.add(createNodeConnectionInfo(5, 6, "Post attributes"));
-        result.add(createNodeConnectionInfo(5, 3, "Other"));
-        result.add(createNodeConnectionInfo(5, 2, "RPC Request to Device"));
-        result.add(createNodeConnectionInfo(6, 1, "Success"));
-        result.add(createNodeConnectionInfo(7, 1, "Success"));
-        result.add(createNodeConnectionInfo(8, 11, "Success"));
-        result.add(createNodeConnectionInfo(8, 5, "Success"));
-        result.add(createNodeConnectionInfo(8, 0, "Success"));
+        result.add(createNodeConnectionInfo(0, 2, RPC_CONNECTION_TYPE));
+        result.add(createNodeConnectionInfo(4, 1, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(5, 1, TbMsgType.ATTRIBUTES_UPDATED.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(5, 4, TbMsgType.TO_SERVER_RPC_REQUEST.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(5, 7, TbMsgType.POST_TELEMETRY_REQUEST.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(5, 6, TbMsgType.POST_ATTRIBUTES_REQUEST.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(5, 3, TbNodeConnectionType.OTHER));
+        result.add(createNodeConnectionInfo(5, 2, TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE.getRuleNodeConnection()));
+        result.add(createNodeConnectionInfo(6, 1, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(7, 1, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(8, 11, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(8, 5, TbNodeConnectionType.SUCCESS));
+        result.add(createNodeConnectionInfo(8, 0, TbNodeConnectionType.SUCCESS));
         return result;
     }
 

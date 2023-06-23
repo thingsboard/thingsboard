@@ -26,17 +26,17 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -79,21 +79,7 @@ public class TbCreateRelationNodeTest {
 
     @Before
     public void before() {
-        dbExecutor = new ListeningExecutor() {
-            @Override
-            public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
-                try {
-                    return Futures.immediateFuture(task.call());
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            @Override
-            public void execute(Runnable command) {
-                command.run();
-            }
-        };
+        dbExecutor = new TestDbCallbackExecutor();
     }
 
     @Test

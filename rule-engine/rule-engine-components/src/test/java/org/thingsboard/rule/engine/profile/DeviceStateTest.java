@@ -43,7 +43,6 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 
@@ -109,7 +108,7 @@ public class DeviceStateTest {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
-        TbMsg attributeUpdateMsg = TbMsg.newMsg(SessionMsgType.POST_ATTRIBUTES_REQUEST.name(),
+        TbMsg attributeUpdateMsg = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(),
                 deviceId, new TbMsgMetaData(), "{ \"enabled\": false }");
 
         deviceState.process(ctx, attributeUpdateMsg);

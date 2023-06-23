@@ -42,6 +42,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
 public class TbCopyKeysNodeTest {
     DeviceId deviceId;
@@ -157,7 +158,7 @@ public class TbCopyKeysNodeTest {
                 "voltageDataValue", "220",
                 "city", "NY"
         );
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
+        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, new TbMsgMetaData(mdMap), data, callback);
     }
 
 }

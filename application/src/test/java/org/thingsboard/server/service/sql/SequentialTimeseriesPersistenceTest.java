@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -51,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @DaoSqlTest
 public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest {
@@ -133,7 +133,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
 
     void saveLatestTsForAssetAndDevice(List<Device> devices, Asset asset, int idx) throws ExecutionException, InterruptedException, TimeoutException {
         for (Device device : devices) {
-            TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(),
+            TbMsg tbMsg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(),
                     device.getId(),
                     getTbMsgMetadata(device.getName(), ts.get(idx)),
                     TbMsgDataType.JSON,

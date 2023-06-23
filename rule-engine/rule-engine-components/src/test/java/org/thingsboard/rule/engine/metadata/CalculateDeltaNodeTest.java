@@ -16,10 +16,8 @@
 package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -41,13 +40,13 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -64,27 +63,15 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @ExtendWith(MockitoExtension.class)
 public class CalculateDeltaNodeTest {
 
     private static final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
-    private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
-        @Override
-        public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
-            try {
-                return Futures.immediateFuture(task.call());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public void execute(@NotNull Runnable command) {
-            command.run();
-        }
-    };
+    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -117,13 +104,13 @@ public class CalculateDeltaNodeTest {
     public void givenInvalidMsgType_whenOnMsg_thenShouldTellNextOther() {
         // GIVEN
         var msgData = "{\"pulseCounter\": 42}";
-        var msg = TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN
         node.onMsg(ctxMock, msg);
 
         // THEN
-        verify(ctxMock, times(1)).tellNext(eq(msg), eq("Other"));
+        verify(ctxMock, times(1)).tellNext(eq(msg), eq(TbNodeConnectionType.OTHER));
         verify(ctxMock, never()).tellSuccess(any());
         verify(ctxMock, never()).tellFailure(any(), any());
     }
@@ -132,13 +119,13 @@ public class CalculateDeltaNodeTest {
     public void givenInvalidMsgDataType_whenOnMsg_thenShouldTellNextOther() {
         // GIVEN
         var msgData = "[]";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN
         node.onMsg(ctxMock, msg);
 
         // THEN
-        verify(ctxMock, times(1)).tellNext(eq(msg), eq("Other"));
+        verify(ctxMock, times(1)).tellNext(eq(msg), eq(TbNodeConnectionType.OTHER));
         verify(ctxMock, never()).tellSuccess(any());
         verify(ctxMock, never()).tellFailure(any(), any());
     }
@@ -147,13 +134,13 @@ public class CalculateDeltaNodeTest {
     @Test
     public void givenInputKeyIsNotPresent_whenOnMsg_thenShouldTellNextOther() {
         // GIVEN
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "{}");
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "{}");
 
         // WHEN
         node.onMsg(ctxMock, msg);
 
         // THEN
-        verify(ctxMock, times(1)).tellNext(eq(msg), eq("Other"));
+        verify(ctxMock, times(1)).tellNext(eq(msg), eq(TbNodeConnectionType.OTHER));
         verify(ctxMock, never()).tellSuccess(any());
         verify(ctxMock, never()).tellFailure(any(), any());
     }
@@ -171,7 +158,7 @@ public class CalculateDeltaNodeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 40.5)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -201,7 +188,7 @@ public class CalculateDeltaNodeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("temperature", 40L)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -231,7 +218,7 @@ public class CalculateDeltaNodeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("temperature", "40.0")));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -265,7 +252,7 @@ public class CalculateDeltaNodeTest {
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
         var firstMsgMetaData = new TbMsgMetaData();
         firstMsgMetaData.putValue("ts", String.valueOf(3L));
-        var firstMsg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, firstMsgMetaData, msgData);
+        var firstMsg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, firstMsgMetaData, msgData);
 
         // WHEN
         node.onMsg(ctxMock, firstMsg);
@@ -289,7 +276,7 @@ public class CalculateDeltaNodeTest {
 
         var secondMsgMetaData = new TbMsgMetaData();
         secondMsgMetaData.putValue("ts", String.valueOf(6L));
-        var secondMsg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, secondMsgMetaData, msgData);
+        var secondMsg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, secondMsgMetaData, msgData);
 
         // WHEN
         node.onMsg(ctxMock, secondMsg);
@@ -320,7 +307,7 @@ public class CalculateDeltaNodeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", null)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -348,7 +335,7 @@ public class CalculateDeltaNodeTest {
         mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("pulseCounter", 200L)));
 
         var msgData = "{\"pulseCounter\":\"123\"}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -377,7 +364,7 @@ public class CalculateDeltaNodeTest {
         mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("pulseCounter", "high")));
 
         var msgData = "{\"pulseCounter\":\"123\"}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN-THEN
         Assertions.assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
@@ -391,7 +378,7 @@ public class CalculateDeltaNodeTest {
         mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry("pulseCounter", false)));
 
         var msgData = "{\"pulseCounter\":true}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN-THEN
         Assertions.assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
@@ -405,7 +392,7 @@ public class CalculateDeltaNodeTest {
         mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new JsonDataEntry("pulseCounter", "{\"isActive\":false}")));
 
         var msgData = "{\"pulseCounter\":{\"isActive\":true}}";
-        var msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
+        var msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), msgData);
 
         // WHEN-THEN
         Assertions.assertThatThrownBy(() -> node.onMsg(ctxMock, msg))

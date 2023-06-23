@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -159,7 +160,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
 
         metaData.setNodes(Arrays.asList(ruleNode1, ruleNode2));
         metaData.setFirstNodeIndex(0);
-        metaData.addConnectionInfo(0, 1, "Success");
+        metaData.addConnectionInfo(0, 1, TbNodeConnectionType.SUCCESS);
         metaData = saveRuleChainMetaData(metaData);
         Assert.assertNotNull(metaData);
 
@@ -265,7 +266,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         NodeConnectionInfo connection = new NodeConnectionInfo();
         connection.setFromIndex(0);
         connection.setToIndex(1);
-        connection.setType("Success");
+        connection.setType(TbNodeConnectionType.SUCCESS);
         rootMetaData.setConnections(Collections.singletonList(connection));
         rootMetaData = saveRuleChainMetaData(rootMetaData);
         Assert.assertNotNull(rootMetaData);

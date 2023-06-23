@@ -27,13 +27,13 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.thingsboard.rule.engine.api.TbNodeConnectionType.SUCCESS;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -77,7 +77,7 @@ public class TbMsgCountNode implements TbNode {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("delta", Long.toString(System.currentTimeMillis() - lastScheduledTs + delay));
 
-            TbMsg tbMsg = TbMsg.newMsg(msg.getQueueName(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), ctx.getTenantId(), msg.getCustomerId(), metaData, gson.toJson(telemetryJson));
+            TbMsg tbMsg = TbMsg.newMsg(msg.getQueueName(), POST_TELEMETRY_REQUEST.name(), ctx.getTenantId(), msg.getCustomerId(), metaData, gson.toJson(telemetryJson));
             ctx.enqueueForTellNext(tbMsg, SUCCESS);
             scheduleTickMsg(ctx, tbMsg);
         } else {

@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -121,7 +122,7 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
     }
 
     private String invokeScript(UUID scriptId, String msg) throws ExecutionException, InterruptedException {
-        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", "POST_TELEMETRY_REQUEST").get().toString();
+        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.getRuleNodeConnection()).get().toString();
     }
 
 }

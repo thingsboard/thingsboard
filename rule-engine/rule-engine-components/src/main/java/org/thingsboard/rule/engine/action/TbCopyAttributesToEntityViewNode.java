@@ -49,7 +49,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETE
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
-import static org.thingsboard.rule.engine.api.TbNodeConnectionType.SUCCESS;
+import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 @RuleNode(

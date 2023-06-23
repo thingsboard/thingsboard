@@ -25,9 +25,9 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
         relationTypes = {TbNodeConnectionType.TRUE, TbNodeConnectionType.FALSE},
         nodeDescription = "Checks alarm status.",
         nodeDetails = "Checks the alarm status to match one of the specified statuses.<br><br>" +
-                "Output connection types: <code>True</code>, <code>False</code>, <code>Failure</code>.",
+                "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckAlarmStatusConfig")
 public class TbCheckAlarmStatusNode implements TbNode {

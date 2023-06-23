@@ -51,6 +51,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.common.data.security.DeviceCredentialsType.ACCESS_TOKEN;
 
 @ExtendWith(MockitoExtension.class)
@@ -171,7 +172,7 @@ public class TbFetchDeviceCredentialsNodeTest {
         final var metaData = new TbMsgMetaData(mdMap);
         final String data = "{\"TestAttribute_1\": \"humidity\", \"TestAttribute_2\": \"voltage\"}";
 
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, metaData, data, callbackMock);
+        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, metaData, data, callbackMock);
     }
 
 }

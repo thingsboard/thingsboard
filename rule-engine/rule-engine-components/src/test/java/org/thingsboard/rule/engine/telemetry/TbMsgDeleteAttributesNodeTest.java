@@ -53,6 +53,7 @@ import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_MET
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
 @Slf4j
 public class TbMsgDeleteAttributesNodeTest {
@@ -140,7 +141,7 @@ public class TbMsgDeleteAttributesNodeTest {
         }
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
 
-        TbMsg msg = TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", deviceId, metaData, data, callback);
+        TbMsg msg = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), deviceId, metaData, data, callback);
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);

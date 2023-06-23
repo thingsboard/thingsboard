@@ -68,27 +68,25 @@ public enum TbMsgType {
     PROVISION_SUCCESS(null),
     PROVISION_FAILURE(null);
 
-    public static final String OTHER = "Other";
-
     public static final List<String> NODE_CONNECTIONS = EnumSet.allOf(TbMsgType.class).stream()
-            .map(TbMsgType::getNodeConnection).filter(Objects::nonNull).collect(Collectors.toUnmodifiableList());
+            .map(TbMsgType::getRuleNodeConnection).filter(Objects::nonNull).collect(Collectors.toUnmodifiableList());
 
     @Getter
-    private final String nodeConnection;
+    private final String ruleNodeConnection;
 
-    TbMsgType(String nodeConnection) {
-        this.nodeConnection = nodeConnection;
+    TbMsgType(String ruleNodeConnection) {
+        this.ruleNodeConnection = ruleNodeConnection;
     }
 
-    public static String getNodeConnection(String msgType) {
+    public static String getRuleNodeConnection(String msgType) {
         if (msgType == null) {
-            return OTHER;
+            return TbNodeConnectionType.OTHER;
         } else {
             return Arrays.stream(TbMsgType.values())
                     .filter(type -> type.name().equals(msgType))
                     .findFirst()
-                    .map(TbMsgType::getNodeConnection)
-                    .orElse(OTHER);
+                    .map(TbMsgType::getRuleNodeConnection)
+                    .orElse(TbNodeConnectionType.OTHER);
         }
     }
 

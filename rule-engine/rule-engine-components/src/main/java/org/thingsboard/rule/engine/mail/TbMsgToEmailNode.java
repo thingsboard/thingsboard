@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.thingsboard.rule.engine.api.TbNodeConnectionType.SUCCESS;
+import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
 
 @Slf4j

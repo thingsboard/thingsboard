@@ -30,7 +30,6 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.deduplication.DeduplicationStrategy;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNode;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNodeConfiguration;
@@ -39,9 +38,9 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +65,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
 public class TbMsgDeduplicationNodeTest {
@@ -242,7 +243,7 @@ public class TbMsgDeduplicationNodeTest {
 
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
-        config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
+        config.setOutMsgType(POST_ATTRIBUTES_REQUEST.name());
         config.setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
@@ -282,7 +283,7 @@ public class TbMsgDeduplicationNodeTest {
 
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
-        config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
+        config.setOutMsgType(POST_ATTRIBUTES_REQUEST.name());
         config.setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
@@ -414,7 +415,7 @@ public class TbMsgDeduplicationNodeTest {
         metaData.putValue("ts", String.valueOf(ts));
         return TbMsg.newMsg(
                 DataConstants.MAIN_QUEUE_NAME,
-                SessionMsgType.POST_TELEMETRY_REQUEST.name(),
+                POST_TELEMETRY_REQUEST.name(),
                 deviceId,
                 metaData,
                 JacksonUtil.toString(dataNode));

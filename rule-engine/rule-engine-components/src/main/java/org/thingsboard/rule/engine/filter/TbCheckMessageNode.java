@@ -22,7 +22,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbNodeConnectionType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -39,7 +39,7 @@ import java.util.Map;
         nodeDescription = "Checks the presence of the specified fields in the message and/or metadata.",
         nodeDetails = "By default, the rule node checks that all specified fields are present. " +
                 "Uncheck the 'Check that all selected fields are present' if the presence of at least one field is sufficient.<br><br>" +
-                "Output connection types: <code>True</code>, <code>False</code>, <code>Failure</code>",
+                "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckMessageConfig")
 public class TbCheckMessageNode implements TbNode {
@@ -60,11 +60,10 @@ public class TbCheckMessageNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         try {
-            if (config.isCheckAllKeys()) {
-                ctx.tellNext(msg, allKeysData(msg) && allKeysMetadata(msg) ? TbNodeConnectionType.TRUE : TbNodeConnectionType.FALSE);
-            } else {
-                ctx.tellNext(msg, atLeastOneData(msg) || atLeastOneMetadata(msg) ? TbNodeConnectionType.TRUE : TbNodeConnectionType.FALSE);
-            }
+            String relationType = config.isCheckAllKeys() ?
+                    allKeysData(msg) && allKeysMetadata(msg) ? TbNodeConnectionType.TRUE : TbNodeConnectionType.FALSE :
+                    atLeastOneData(msg) || atLeastOneMetadata(msg) ? TbNodeConnectionType.TRUE : TbNodeConnectionType.FALSE;
+            ctx.tellNext(msg, relationType);
         } catch (Exception e) {
             ctx.tellFailure(msg, e);
         }

@@ -25,13 +25,14 @@ import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.math.BigDecimal;
@@ -45,7 +46,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "calculate delta", relationTypes = {"Success", "Failure", "Other"},
+        name = "calculate delta", relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, TbNodeConnectionType.OTHER},
         configClazz = CalculateDeltaNodeConfiguration.class,
         nodeDescription = "Calculates delta and amount of time passed between previous timeseries key reading " +
                 "and current value for this key from the incoming message",
@@ -73,14 +74,14 @@ public class CalculateDeltaNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
-            ctx.tellNext(msg, "Other");
+        if (!msg.getType().equals(TbMsgType.POST_TELEMETRY_REQUEST.name())) {
+            ctx.tellNext(msg, TbNodeConnectionType.OTHER);
             return;
         }
         JsonNode json = JacksonUtil.toJsonNode(msg.getData());
         String inputKey = config.getInputValueKey();
         if (!json.has(inputKey)) {
-            ctx.tellNext(msg, "Other");
+            ctx.tellNext(msg, TbNodeConnectionType.OTHER);
             return;
         }
         withCallback(getLastValue(msg.getOriginator()),

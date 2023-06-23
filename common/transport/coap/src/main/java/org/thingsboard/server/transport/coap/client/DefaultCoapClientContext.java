@@ -45,7 +45,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.session.FeatureType;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.transport.coap.CoapSessionMsgType;
 import org.thingsboard.server.common.transport.DeviceDeletedEvent;
 import org.thingsboard.server.common.transport.DeviceProfileUpdatedEvent;
 import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
@@ -388,7 +388,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     }
 
     @Override
-    public TbCoapClientState getOrCreateClient(SessionMsgType type, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) throws AdaptorException {
+    public TbCoapClientState getOrCreateClient(CoapSessionMsgType type, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) throws AdaptorException {
         DeviceId deviceId = deviceCredentials.getDeviceInfo().getDeviceId();
         TbCoapClientState state = getClientState(deviceId);
         state.lock();

@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.api.TbNodeConnectionType.SUCCESS;
+import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 @RuleNode(

@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.action;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +28,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -52,7 +52,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.script.ScriptException;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
@@ -105,21 +104,7 @@ public class TbAlarmNodeTest {
 
     @Before
     public void before() {
-        dbExecutor = new ListeningExecutor() {
-            @Override
-            public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
-                try {
-                    return Futures.immediateFuture(task.call());
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            @Override
-            public void execute(Runnable command) {
-                command.run();
-            }
-        };
+        dbExecutor = new TestDbCallbackExecutor();
     }
 
     @Test

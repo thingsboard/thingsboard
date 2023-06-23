@@ -17,14 +17,13 @@ package org.thingsboard.rule.engine.filter;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -51,7 +50,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         nodeDetails = "If 'check relation to specific entity' is selected, you should specify a related entity. " +
                 "Otherwise, the rule node checks the presence of a relation to any entity. " +
                 "In both cases, relation lookup is based on configured direction and type.<br><br>" +
-                "Output connection types: <code>True</code>, <code>False</code>, <code>Failure</code>",
+                "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckRelationConfig")
 public class TbCheckRelationNode implements TbNode {
@@ -91,13 +90,10 @@ public class TbCheckRelationNode implements TbNode {
     }
 
     private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
-        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-            return Futures.transformAsync(ctx.getRelationService()
-                    .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
-        } else {
-            return Futures.transformAsync(ctx.getRelationService()
-                    .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList, MoreExecutors.directExecutor());
-        }
+        ListenableFuture<List<EntityRelation>> relationListFuture = EntitySearchDirection.FROM.name().equals(config.getDirection()) ? ctx.getRelationService()
+                .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON) : ctx.getRelationService()
+                .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON);
+        return Futures.transformAsync(relationListFuture, this::isEmptyList, ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<Boolean> isEmptyList(List<EntityRelation> entityRelations) {
