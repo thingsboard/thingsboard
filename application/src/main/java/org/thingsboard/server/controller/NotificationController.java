@@ -298,7 +298,7 @@ public class NotificationController extends BaseController {
             if (targetType == NotificationTargetType.PLATFORM_USERS) {
                 PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(),
                         (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize, 0, null,
-                                new SortOrder("createdTime", SortOrder.Direction.DESC)));
+                                SortOrder.byCreatedTimeDesc));
                 recipientsCount = (int) recipients.getTotalElements();
                 recipientsPart = recipients.getData().stream().map(r -> (NotificationRecipient) r).collect(Collectors.toList());
             } else {
@@ -451,7 +451,7 @@ public class NotificationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public UserNotificationSettings getUserNotificationSettings(@AuthenticationPrincipal SecurityUser user) {
         return notificationSettingsService.getUserNotificationSettings(user.getTenantId(),
-                userService.findUserById(user.getTenantId(), user.getId()));
+                userService.findUserById(user.getTenantId(), user.getId()), true);
     }
 
 }

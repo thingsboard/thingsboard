@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.notification.NotificationRequestConfig
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
-import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
@@ -240,10 +239,9 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         if (ctx.getStats().contains(deliveryMethod, recipient.getId())) {
             throw new AlreadySentException();
         }
-        if (recipient instanceof User) {
-            NotificationType notificationType = ctx.getNotificationTemplate().getNotificationType();
-            UserNotificationSettings settings = notificationSettingsService.getUserNotificationSettings(ctx.getTenantId(), (User) recipient);
-            Set<NotificationDeliveryMethod> enabledDeliveryMethods = settings.getEnabledDeliveryMethods(notificationType);
+        if (recipient instanceof User && ctx.getRequest().getRuleId() != null) {
+            UserNotificationSettings settings = notificationSettingsService.getUserNotificationSettings(ctx.getTenantId(), (User) recipient, false);
+            Set<NotificationDeliveryMethod> enabledDeliveryMethods = settings.getEnabledDeliveryMethods(ctx.getRequest().getRuleId());
             if (!enabledDeliveryMethods.contains(deliveryMethod)) {
                 throw new RuntimeException("User disabled " + deliveryMethod.getName() + " notifications of this type");
             }

@@ -29,7 +29,7 @@ public interface NotificationSettingsService {
 
     void saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings);
 
-    UserNotificationSettings getUserNotificationSettings(TenantId tenantId, User user);
+    UserNotificationSettings getUserNotificationSettings(TenantId tenantId, User user, boolean format);
 
     void createDefaultNotificationConfigs(TenantId tenantId);
 
