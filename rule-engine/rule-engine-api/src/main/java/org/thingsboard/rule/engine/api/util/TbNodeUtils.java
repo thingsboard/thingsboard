@@ -44,7 +44,7 @@ public class TbNodeUtils {
         try {
             return JacksonUtil.treeToValue(configuration.getData(), clazz);
         } catch (IllegalArgumentException e) {
-            throw new TbNodeException(e);
+            throw new TbNodeException(e, true);
         }
     }
 
