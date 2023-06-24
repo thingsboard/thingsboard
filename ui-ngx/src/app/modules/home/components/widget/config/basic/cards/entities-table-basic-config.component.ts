@@ -24,7 +24,7 @@ import {
   DataKey,
   Datasource,
   datasourcesHasAggregation,
-  datasourcesHasOnlyComparisonAggregation
+  datasourcesHasOnlyComparisonAggregation, WidgetConfig
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -85,6 +85,7 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
       showTitleIcon: [configData.config.showTitleIcon, []],
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
+      cardButtons: [this.getCardButtons(configData.config), []],
       color: [configData.config.color, []],
       backgroundColor: [configData.config.backgroundColor, []],
       actions: [configData.config.actions || {}, []]
@@ -104,6 +105,7 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
     this.widgetConfig.config.showTitleIcon = config.showTitleIcon;
     this.widgetConfig.config.titleIcon = config.titleIcon;
     this.widgetConfig.config.iconColor = config.iconColor;
+    this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.color = config.color;
     this.widgetConfig.config.backgroundColor = config.backgroundColor;
     return this.widgetConfig;
@@ -149,6 +151,26 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
     if (datasources && datasources.length) {
       datasources[0].dataKeys = columns;
     }
+  }
+
+  private getCardButtons(config: WidgetConfig): string[] {
+    const buttons: string[] = [];
+    if (config.settings?.enableSearch) {
+      buttons.push('search');
+    }
+    if (config.settings?.enableSelectColumnDisplay) {
+      buttons.push('columnsToDisplay');
+    }
+    if (config.enableFullscreen) {
+      buttons.push('fullscreen');
+    }
+    return buttons;
+  }
+
+  private setCardButtons(buttons: string[], config: WidgetConfig) {
+    config.settings.enableSearch = buttons.includes('search');
+    config.settings.enableSelectColumnDisplay = buttons.includes('columnsToDisplay');
+    config.enableFullscreen = buttons.includes('fullscreen');
   }
 
 }

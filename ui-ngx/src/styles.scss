@@ -1211,6 +1211,11 @@ mat-label {
     }
     &.tb-slide-toggle {
       padding: 0;
+      gap: 0;
+      .tb-widget-config-panel-title {
+        padding-top: 16px;
+        padding-left: 16px;
+      }
       .mat-expansion-panel {
         padding: 16px;
         .mat-expansion-panel-header {
@@ -1268,6 +1273,9 @@ mat-label {
     }
     .mat-slide {
       margin: 8px 0;
+      &.no-margin {
+        margin: 0;
+      }
       .mdc-form-field>label {
         font-weight: 400;
         font-size: 16px;
