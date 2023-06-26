@@ -24,6 +24,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -66,6 +67,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
 
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
@@ -364,6 +367,11 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
         return alarmQueryRepository.countAlarmsByQuery(tenantId, customerId, query);
+    }
+
+    @Override
+    public ListenableFuture<List<EntitySubtype>> findTenantAlarmTypesAsync(UUID tenantId) {
+        return service.submit(() -> convertTenantEntityTypesToDto(tenantId, EntityType.ALARM, alarmRepository.findTenantAlarmTypes(tenantId)));
     }
 
     private static String getPropagationTypes(AlarmPropagationInfo ap) {

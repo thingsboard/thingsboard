@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Collection;
+import java.util.List;
 
 
 public interface AlarmService extends EntityDaoService {
@@ -121,4 +123,6 @@ public interface AlarmService extends EntityDaoService {
     void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId);
 
     long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
+
+    ListenableFuture<List<EntitySubtype>> findAlarmTypesByTenantId(TenantId tenantId);
 }

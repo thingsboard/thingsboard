@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -496,6 +498,16 @@ public class AlarmController extends BaseController {
         checkEntityId(entityId, Operation.READ);
         return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus,
                 alarmStatus, assigneeId);
+    }
+
+    @ApiOperation(value = "Get Alarm Types (getAlarmTypes)",
+            notes = "Returns a set of unique alarm types based on alarms that are either owned by the tenant or assigned to the customer which user is performing the request.", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/types", method = RequestMethod.GET)
+    @ResponseBody
+    public List<EntitySubtype> getAlarmTypes() throws ThingsboardException, ExecutionException, InterruptedException {
+        ListenableFuture<List<EntitySubtype>> alarmTypes = alarmService.findAlarmTypesByTenantId(getTenantId());
+        return checkNotNull(alarmTypes.get());
     }
 
 }

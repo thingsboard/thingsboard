@@ -535,7 +535,11 @@
         "search-propagated-alarms": "Search propagated alarms",
         "comments": "Alarm comments",
         "show-more": "Show more",
-        "additional-info": "Additional info"
+        "additional-info": "Additional info",
+        "alarm-type": "Alarm type",
+        "enter-alarm-type": "Enter alarm type",
+        "no-alarm-types-matching": "No alarm types matching '{{entitySubtype}}' were found.",
+        "alarm-type-list-empty": "No alarm types selected."
     },
     "alarm-activity": {
         "add": "Add a comment...",

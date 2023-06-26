@@ -42,6 +42,7 @@ import {
 import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityType } from "@shared/models/entity-type.models";
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmFilterConfigData');
 
@@ -106,6 +107,8 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
   alarmFilterOverlayRef: OverlayRef;
 
   panelResult: AlarmFilterConfig = null;
+
+  entityType = EntityType;
 
   private alarmFilterConfig: AlarmFilterConfig;
 
@@ -238,36 +241,6 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
 
   public alarmTypeList(): string[] {
     return this.alarmFilterConfigForm.get('typeList').value;
-  }
-
-  public removeAlarmType(type: string): void {
-    const types: string[] = this.alarmFilterConfigForm.get('typeList').value;
-    const index = types.indexOf(type);
-    if (index >= 0) {
-      types.splice(index, 1);
-      this.alarmFilterConfigForm.get('typeList').setValue(types);
-      this.alarmFilterConfigForm.get('typeList').markAsDirty();
-    }
-  }
-
-  public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.chipInput.inputElement;
-    const value = event.value;
-
-    let types: string[] = this.alarmFilterConfigForm.get('typeList').value;
-
-    if ((value || '').trim()) {
-      if (!types) {
-        types = [];
-      }
-      types.push(value.trim());
-      this.alarmFilterConfigForm.get('typeList').setValue(types);
-      this.alarmFilterConfigForm.get('typeList').markAsDirty();
-    }
-
-    if (input) {
-      input.value = '';
-    }
   }
 
   private updateAlarmConfigForm(alarmFilterConfig?: AlarmFilterConfig) {

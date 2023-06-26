@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.api;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by ashvayka on 02.04.18.
@@ -110,4 +112,6 @@ public interface RuleEngineAlarmService {
     AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus, AlarmStatus alarmStatus, String assigneeId);
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
+
+    ListenableFuture<List<EntitySubtype>> findAlarmTypesByTenantId(TenantId tenantId);
 }

@@ -72,21 +72,8 @@
     </div>
     <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start start"
          fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block" floatLabel="always">
-        <mat-label translate>alarm.alarm-type-list</mat-label>
-        <mat-chip-grid #alarmTypeChipList formControlName="typeList">
-          <mat-chip-row *ngFor="let type of alarmTypeList()"
-                        [removable]="true" (removed)="removeAlarmType(type)">
-            {{type}}
-            <mat-icon matChipRemove>cancel</mat-icon>
-          </mat-chip-row>
-          <input placeholder="{{ !alarmFilterConfigForm.get('typeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
-                 [matChipInputFor]="alarmTypeChipList"
-                 [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                 matChipInputAddOnBlur
-                 (matChipInputTokenEnd)="addAlarmType($event)">
-        </mat-chip-grid>
-      </mat-form-field>
+      <tb-entity-subtype-list fxFlex class="mat-block" floatLabel="always" [entityType]="entityType.ALARM" formControlName="typeList">
+      </tb-entity-subtype-list>
     </div>
     <div fxLayout="column" fxLayoutGap="16px">
       <mat-slide-toggle *ngIf="propagatedFilter" formControlName="searchPropagatedAlarms">

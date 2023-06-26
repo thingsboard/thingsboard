@@ -20,11 +20,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
@@ -64,6 +66,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -374,6 +377,18 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return alarmDao.countAlarmsByQuery(tenantId, customerId, query);
+    }
+
+    @Override
+    public ListenableFuture<List<EntitySubtype>> findAlarmTypesByTenantId(TenantId tenantId) {
+        log.trace("Executing findAlarmTypesByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        ListenableFuture<List<EntitySubtype>> tenantAssetTypes = alarmDao.findTenantAlarmTypesAsync(tenantId.getId());
+        return Futures.transform(tenantAssetTypes,
+                assetTypes -> {
+                    assetTypes.sort(Comparator.comparing(EntitySubtype::getType));
+                    return assetTypes;
+                }, MoreExecutors.directExecutor());
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {

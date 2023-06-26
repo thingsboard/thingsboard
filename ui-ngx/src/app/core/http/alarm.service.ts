@@ -29,6 +29,7 @@ import {
   AlarmStatus
 } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
+import { EntitySubtype } from "@shared/models/entity-type.models";
 
 @Injectable({
   providedIn: 'root'
@@ -106,6 +107,10 @@ export class AlarmService {
     }
     return this.http.get<AlarmSeverity>(url,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAlarmTypes(config?: RequestConfig): Observable<Array<EntitySubtype>> {
+    return this.http.get<Array<EntitySubtype>>('/api/alarm/types', defaultHttpOptionsFromConfig(config));
   }
 
 }

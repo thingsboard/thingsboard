@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -42,8 +43,12 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -689,6 +694,29 @@ public class AlarmControllerTest extends AbstractControllerTest {
                 .build();
 
         doPost("/api/alarm", alarm).andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testGetAlarmTypes() throws Exception {
+        loginTenantAdmin();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        List<String> types = new ArrayList<>();
+
+        for (int i = 1; i < 13; i++) {
+            types.add(createAlarm(TEST_ALARM_TYPE + i).getType());
+        }
+
+        List<String> foundTypes = doGetTyped("/api/alarm/types", new TypeReference<List<EntitySubtype>>() {})
+                .stream()
+                .map(EntitySubtype::getType)
+                .collect(Collectors.toList());
+
+        Collections.sort(types);
+        Collections.sort(foundTypes);
+
+        Assert.assertEquals(types, foundTypes);
     }
 
 }
