@@ -290,14 +290,16 @@ export enum SnmpSpecType {
   TELEMETRY_QUERYING = 'TELEMETRY_QUERYING',
   CLIENT_ATTRIBUTES_QUERYING = 'CLIENT_ATTRIBUTES_QUERYING',
   SHARED_ATTRIBUTES_SETTING = 'SHARED_ATTRIBUTES_SETTING',
-  TO_DEVICE_RPC_REQUEST = 'TO_DEVICE_RPC_REQUEST'
+  TO_DEVICE_RPC_REQUEST = 'TO_DEVICE_RPC_REQUEST',
+  TO_SERVER_RPC_REQUEST = 'TO_SERVER_RPC_REQUEST'
 }
 
 export const SnmpSpecTypeTranslationMap = new Map<SnmpSpecType, string>([
-  [SnmpSpecType.TELEMETRY_QUERYING, ' Telemetry'],
-  [SnmpSpecType.CLIENT_ATTRIBUTES_QUERYING, 'Client attributes'],
-  [SnmpSpecType.SHARED_ATTRIBUTES_SETTING, 'Shared attributes'],
-  [SnmpSpecType.TO_DEVICE_RPC_REQUEST, 'RPC request']
+  [SnmpSpecType.TELEMETRY_QUERYING, ' Telemetry (SNMP GET)'],
+  [SnmpSpecType.CLIENT_ATTRIBUTES_QUERYING, 'Client attributes (SNMP GET)'],
+  [SnmpSpecType.SHARED_ATTRIBUTES_SETTING, 'Shared attributes (SNMP SET)'],
+  [SnmpSpecType.TO_DEVICE_RPC_REQUEST, 'To-device RPC request (SNMP GET/SET)'],
+  [SnmpSpecType.TO_SERVER_RPC_REQUEST, 'From-device RPC request (SNMP TRAP)']
 ]);
 
 export interface SnmpCommunicationConfig {

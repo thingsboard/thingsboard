@@ -21,19 +21,36 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class SnmpTestV2 {
-    public static void main(String[] args) throws IOException {
-        SnmpDeviceSimulatorV2 device = new SnmpDeviceSimulatorV2(1610, "public");
 
-        device.start();
+    private static final Scanner scanner = new Scanner(System.in);
+
+    public static void main(String[] args) throws IOException {
+        SnmpDeviceSimulatorV2 client = new SnmpDeviceSimulatorV2(1610, "public");
+
+        client.start();
         Map<String, String> mappings = new HashMap<>();
 //        for (int i = 1; i <= 500; i++) {
 //            String oid = String.format(".1.3.6.1.2.1.%s.1.52", i);
 //            mappings.put(oid, "value_" + i);
 //        }
         mappings.put("1.3.6.1.2.1.266.1.52", "****");
-        device.setUpMappings(mappings);
 
-        new Scanner(System.in).nextLine();
+        client.setUpMappings(mappings);
+        inputTraps(client);
+
+        scanner.nextLine();
+    }
+
+    private static void inputTraps(SnmpDeviceSimulatorV2 client) throws IOException {
+        while (true) {
+            String data = scanner.nextLine();
+            if (!data.isEmpty()) {
+                client.sendTrap("127.0.0.1", 1620, Map.of(
+                        "1.3.6.1.2.1.266.1.52", data + " (266)",
+                        "1.3.6.1.2.1.267.1.52", data + " (267)"
+                ));
+            }
+        }
     }
 
 }

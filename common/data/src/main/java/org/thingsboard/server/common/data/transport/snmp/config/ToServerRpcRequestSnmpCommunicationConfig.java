@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.transport.snmp;
+package org.thingsboard.server.common.data.transport.snmp.config;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
 
-@AllArgsConstructor
-@Getter
-public enum SnmpCommunicationSpec {
+public class ToServerRpcRequestSnmpCommunicationConfig extends MultipleMappingsSnmpCommunicationConfig {
 
-    TELEMETRY_QUERYING("telemetryQuerying"),
-    CLIENT_ATTRIBUTES_QUERYING("clientAttributesQuerying"),
+    private static final long serialVersionUID = 4851028734093214L;
 
-    SHARED_ATTRIBUTES_SETTING("sharedAttributesSetting"),
-    TO_DEVICE_RPC_REQUEST("toDeviceRpcRequest"),
-
-    TO_SERVER_RPC_REQUEST("toServerRpcRequest");
-
-    private final String label;
+    @Override
+    public SnmpCommunicationSpec getSpec() {
+        return SnmpCommunicationSpec.TO_SERVER_RPC_REQUEST;
+    }
 
 }
