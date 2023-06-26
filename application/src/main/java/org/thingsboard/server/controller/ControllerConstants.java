@@ -207,45 +207,83 @@ public class ControllerConstants {
 
     protected static final String IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION = "A Boolean value representing the Server SecurityInfo for future Bootstrap client mode settings. Values: 'true' for Bootstrap Server; 'false' for Lwm2m Server. ";
 
-    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION =
+    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION =
                     "{\n" +
                     "  \"device\": {\n" +
-                    "    \"name\": \"LwRpk00000000\",\n" +
-                    "    \"type\": \"lwm2mProfileRpk\"\n" +
-                    "  },\n" +
+                    "    \"name\":\"Name_DeviceWithCredantial_AccessToken\",\n" +
+                    "    \"label\":\"Label_DeviceWithCredantial_AccessToken\",\n" +
+                    "    \"deviceProfileId\":{\n" +
+                    "      \"id\":\"9d9588c0-06c9-11ee-b618-19be30fdeb60\",\n" +
+                    "      \"entityType\":\"DEVICE_PROFILE\"\n" +
+                    "     }\n" +
+                    "   },\n" +
                     "  \"credentials\": {\n" +
-                    "    \"id\": \"null\",\n" +
-                    "    \"createdTime\": 0,\n" +
-                    "    \"deviceId\": \"null\",\n" +
-                    "    \"credentialsType\": \"LWM2M_CREDENTIALS\",\n" +
-                    "    \"credentialsId\": \"LwRpk00000000\",\n" +
-                    "    \"credentialsValue\": {\n" +
-                    "      \"client\": {\n" +
-                    "        \"endpoint\": \"LwRpk00000000\",\n" +
-                    "        \"securityConfigClientMode\": \"RPK\",\n" +
-                    "        \"key\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\"\n" +
-                    "      },\n" +
-                    "      \"bootstrap\": {\n" +
-                    "        \"bootstrapServer\": {\n" +
-                    "          \"securityMode\": \"RPK\",\n" +
-                    "          \"clientPublicKeyOrId\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
-                    "          \"clientSecretKey\": \"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"\n" +
-                    "        },\n" +
-                    "        \"lwm2mServer\": {\n" +
-                    "          \"securityMode\": \"RPK\",\n" +
-                    "          \"clientPublicKeyOrId\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
-                    "          \"clientSecretKey\": \"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"\n" +
-                    "        }\n" +
-                    "      }\n" +
-                    "    }\n" +
-                    "  }\n" +
+                    "    \"credentialsType\": \"ACCESS_TOKEN\",\n" +
+                    "    \"credentialsId\": \"6hmxew8pmmzng4e3une2\"\n" +
+                    "   }\n" +
                     "}";
 
-    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN =
-            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_DEFAULT_PARAM_DESCRIPTION =
+                    "{\n" +
+                    "  \"device\": {\n" +
+                    "    \"name\":\"Name_DeviceWithCredantial_AccessToken_Default\",\n" +
+                    "    \"label\":\"Label_DeviceWithCredantial_AccessToken_Default\",\n" +
+                    "    \"type\": \"default\"\n" +
+                    "   },\n" +
+                    "  \"credentials\": {\n" +
+                    "    \"credentialsType\": \"ACCESS_TOKEN\",\n" +
+                    "    \"credentialsId\": \"6hmxew8pmmzng4e3une3\"\n" +
+                    "   }\n" +
+                    "}";
+
+   protected static final String CREDENTIALS_VALUE_LVM2M_RPK_DESCRIPTION =
+       "       \"{" +
+                   "\\\"client\\\":{ " +
+                       "\\\"endpoint\\\":\\\"LwRpk00000000\\\", " +
+                       "\\\"securityConfigClientMode\\\":\\\"RPK\\\", " +
+                       "\\\"key\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\"" +
+               "   }, " +
+                   "\\\"bootstrap\\\":{ " +
+                        "\\\"bootstrapServer\\\":{ " +
+                            "\\\"securityMode\\\":\\\"RPK\\\", " +
+                            "\\\"clientPublicKeyOrId\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\", " +
+                            "\\\"clientSecretKey\\\":\\\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\\\"" +
+                        "}, " +
+                        "\\\"lwm2mServer\\\":{ \\\"securityMode\\\":\\\"RPK\\\", " +
+                            "\\\"clientPublicKeyOrId\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\", " +
+                            "\\\"clientSecretKey\\\":\\\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\\\"" +
+                        "}" +
+                   "} " +
+               "}\"";
+
+   protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION =
+           "{\n" +
+           "  \"device\": {\n" +
+           "    \"name\":\"Name_LwRpk00000000\",\n" +
+           "    \"label\":\"Label_LwRpk00000000\",\n" +
+           "    \"deviceProfileId\":{\n" +
+           "      \"id\":\"a660bd50-10ef-11ee-8737-b5634e73c779\",\n" +
+           "      \"entityType\":\"DEVICE_PROFILE\"\n" +
+           "     }\n" +
+           "   },\n" +
+           "  \"credentials\": {\n" +
+           "    \"credentialsType\": \"LWM2M_CREDENTIALS\",\n" +
+           "    \"credentialsId\": \"LwRpk00000000\",\n" +
+           "    \"credentialsValue\":\n" + CREDENTIALS_VALUE_LVM2M_RPK_DESCRIPTION + "\n" +
+           "   }\n" +
+           "}";
+
+   protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+   protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_DEFAULT_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+   protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
 
 
-    protected static final String FILTER_VALUE_TYPE = NEW_LINE + "## Value Type and Operations" + NEW_LINE +
+   protected static final String FILTER_VALUE_TYPE = NEW_LINE + "## Value Type and Operations" + NEW_LINE +
             "Provides a hint about the data type of the entity field that is defined in the filter key. " +
             "The value type impacts the list of possible operations that you may use in the corresponding predicate. For example, you may use 'STARTS_WITH' or 'END_WITH', but you can't use 'GREATER_OR_EQUAL' for string values." +
             "The following filter value types and corresponding predicate operations are supported: " + NEW_LINE +
@@ -254,7 +292,7 @@ public class ControllerConstants {
             " * 'BOOLEAN' - used for boolean values. Operations: EQUAL, NOT_EQUAL;\n" +
             " * 'DATE_TIME' - similar to numeric, transforms value to milliseconds since epoch. Operations: EQUAL, NOT_EQUAL, GREATER, LESS, GREATER_OR_EQUAL, LESS_OR_EQUAL; \n";
 
-    protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_SPECIFIC_TIME_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+   protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_SPECIFIC_TIME_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "   \"schedule\":{\n" +
             "      \"type\":\"SPECIFIC_TIME\",\n" +
@@ -269,7 +307,7 @@ public class ControllerConstants {
             "   }\n" +
             "}" +
             MARKDOWN_CODE_BLOCK_END;
-    protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_CUSTOM_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+   protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_CUSTOM_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "   \"schedule\":{\n" +
             "      \"type\":\"CUSTOM\",\n" +
@@ -321,9 +359,9 @@ public class ControllerConstants {
             "   }\n" +
             "}" +
             MARKDOWN_CODE_BLOCK_END;
-    protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_ALWAYS_EXAMPLE = MARKDOWN_CODE_BLOCK_START + "\"schedule\": null" + MARKDOWN_CODE_BLOCK_END;
+   protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_ALWAYS_EXAMPLE = MARKDOWN_CODE_BLOCK_START + "\"schedule\": null" + MARKDOWN_CODE_BLOCK_END;
 
-    protected static final String DEVICE_PROFILE_ALARM_CONDITION_REPEATING_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+   protected static final String DEVICE_PROFILE_ALARM_CONDITION_REPEATING_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "   \"spec\":{\n" +
             "      \"type\":\"REPEATING\",\n" +
@@ -339,7 +377,8 @@ public class ControllerConstants {
             "   }\n" +
             "}" +
             MARKDOWN_CODE_BLOCK_END;
-    protected static final String DEVICE_PROFILE_ALARM_CONDITION_DURATION_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+
+   protected static final String DEVICE_PROFILE_ALARM_CONDITION_DURATION_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "   \"spec\":{\n" +
             "      \"type\":\"DURATION\",\n" +

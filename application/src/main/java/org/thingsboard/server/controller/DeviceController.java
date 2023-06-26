@@ -93,7 +93,9 @@ import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFI
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_TYPE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
@@ -182,9 +184,15 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
             notes = "Create or update the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
-                    "Requires to provide the Device Credentials object as well. Useful to create device and credentials in one request. " +
-                    "You may find the example of LwM2M device and RPK credentials below: \n\n" +
-                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN +
+                    "Requires to provide the Device Credentials object as well as an existing device profile ID or use \"default\".\n" +
+                    "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
+                    "You may find the example of device with different type of credentials below: \n\n" +
+                    "- Credentials type: <b>\"Access token\"</b> with Device profile ID below: \n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    "- Credentials type: <b>\"Access token\"</b> with Device profile <b>default</b> below: \n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    "- You may find the example of <b>LwM2M</b> device and <b>RPK</b> credentials below: \n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
