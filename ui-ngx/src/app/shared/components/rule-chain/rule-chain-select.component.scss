@@ -25,8 +25,10 @@
 }
 
 :host ::ng-deep {
-  .mat-mdc-form-field-infix {
-    min-height: 48px;
-    padding: 12px 0 !important;
+  .mat-mdc-form-field.tb-rule-select .mdc-text-field {
+    .mat-mdc-form-field-infix {
+      min-height: 48px;
+      padding: 12px 0;
+    }
   }
 }
