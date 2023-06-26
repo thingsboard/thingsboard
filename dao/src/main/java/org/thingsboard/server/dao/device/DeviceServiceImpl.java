@@ -103,6 +103,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_DEVICE_ID = "Incorrect deviceId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+    public static final String PAYLOAD = "\"{temperature:25}\"";
+
 
     @Autowired
     private DeviceDao deviceDao;
@@ -146,15 +148,15 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             case DEFAULT:
                 switch (credentialsType) {
                     case ACCESS_TOKEN:
-                        commands.add(getMqttAccessTokenCommand(hostname, deviceCredentials) + " -m \"{temperature:15}\"");
+                        commands.add(getMqttAccessTokenCommand(hostname, deviceCredentials) + " -m " + PAYLOAD);
                         commands.add(getHttpAccessTokenCommand(baseUrl, deviceCredentials));
-                        commands.add("echo -n \"{temperature:17}\" | " + getCoapAccessTokenCommand(hostname, deviceCredentials) + " -f-");
+                        commands.add("echo -n " + PAYLOAD + " | " + getCoapAccessTokenCommand(hostname, deviceCredentials) + " -f-");
                         break;
                     case MQTT_BASIC:
-                        commands.add(getMqttBasicPublishCommand(hostname, deviceCredentials) + " -m \"{temperature:18}\"");
+                        commands.add(getMqttBasicPublishCommand(hostname, deviceCredentials) + " -m " + PAYLOAD);
                         break;
                     case X509_CERTIFICATE:
-                        commands.add(getMqttX509Command(hostname) + " -m \"{temperature:19}\"");
+                        commands.add(getMqttX509Command(hostname) + " -m " + PAYLOAD);
                         break;
                 }
                 break;
@@ -162,7 +164,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 MqttDeviceProfileTransportConfiguration transportConfiguration =
                         (MqttDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
                 TransportPayloadType payloadType = transportConfiguration.getTransportPayloadTypeConfiguration().getTransportPayloadType();
-                String payload = (payloadType == TransportPayloadType.PROTOBUF) ? " -f protobufFileName" : " -m \"{temperature:25}\"";
+                String payload = (payloadType == TransportPayloadType.PROTOBUF) ? " -f protobufFileName" : " -m " + PAYLOAD;
                 switch (credentialsType) {
                     case ACCESS_TOKEN:
                         commands.add(getMqttAccessTokenCommand(hostname, deviceCredentials) + payload);
@@ -751,7 +753,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private String getHttpAccessTokenCommand(String baseurl, DeviceCredentials deviceCredentials) {
-        return String.format("curl -v -X POST %s/api/v1/%s/telemetry --header Content-Type:application/json --data \"{temperature:16}\"", baseurl, deviceCredentials.getCredentialsId());
+        return String.format("curl -v -X POST %s/api/v1/%s/telemetry --header Content-Type:application/json --data " + PAYLOAD, baseurl, deviceCredentials.getCredentialsId());
     }
 
     private String getMqttAccessTokenCommand(String hostname, DeviceCredentials deviceCredentials) {

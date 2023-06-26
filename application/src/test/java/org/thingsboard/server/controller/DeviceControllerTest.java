@@ -662,11 +662,11 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
 
         assertThat(commands).hasSize(3);
-        assertThat(commands).containsExactly(String.format("mosquitto_pub -d -q 1 -h localhost -t v1/devices/me/telemetry -u %s -m \"{temperature:15}\"",
+        assertThat(commands).containsExactly(String.format("mosquitto_pub -d -q 1 -h localhost -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
                         credentials.getCredentialsId()),
-                String.format("curl -v -X POST http://localhost:80/api/v1/%s/telemetry --header Content-Type:application/json --data \"{temperature:16}\"",
+                String.format("curl -v -X POST http://localhost:80/api/v1/%s/telemetry --header Content-Type:application/json --data \"{temperature:25}\"",
                         credentials.getCredentialsId()),
-                String.format("echo -n \"{temperature:17}\" | coap-client -m post coap://localhost:5683/api/v1/%s/telemetry -f-",
+                String.format("echo -n \"{temperature:25}\" | coap-client -m post coap://localhost:5683/api/v1/%s/telemetry -f-",
                         credentials.getCredentialsId()));
     }
 
