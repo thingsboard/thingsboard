@@ -154,7 +154,6 @@ export class SentNotificationDialogComponent extends
       let useTemplate = true;
       if (isDefinedAndNotNull(this.data.request.template)) {
         useTemplate = false;
-        this.refreshAllowDeliveryMethod();
         // eslint-disable-next-line guard-for-in
         for (const method in this.data.request.template.configuration.deliveryMethodsTemplates) {
           this.deliveryMethodFormsMap.get(NotificationDeliveryMethod[method])
@@ -163,6 +162,7 @@ export class SentNotificationDialogComponent extends
       }
       this.notificationRequestForm.get('useTemplate').setValue(useTemplate, {onlySelf : true});
     }
+    this.refreshAllowDeliveryMethod();
   }
 
   ngOnDestroy() {
@@ -336,8 +336,10 @@ export class SentNotificationDialogComponent extends
   refreshAllowDeliveryMethod() {
     this.notificationService.getAvailableDeliveryMethods({ignoreLoading: true}).subscribe(allowMethods => {
       this.allowNotificationDeliveryMethods = allowMethods;
-      this.updateDeliveryMethodsDisableState();
-      this.showRefresh = (this.notificationDeliveryMethods.length !== allowMethods.length);
+      if (!this.notificationRequestForm.get('useTemplate').value) {
+        this.updateDeliveryMethodsDisableState();
+        this.showRefresh = (this.notificationDeliveryMethods.length !== allowMethods.length);
+      }
     });
   }
 
