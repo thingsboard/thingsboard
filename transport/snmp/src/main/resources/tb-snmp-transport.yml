@@ -98,6 +98,7 @@ redis:
 transport:
   snmp:
     enabled: "${SNMP_ENABLED:true}"
+    bind_port: "${SNMP_BIND_PORT:1620}"
     response_processing:
       # parallelism level for executor (workStealingPool) that is responsible for handling responses from SNMP devices
       parallelism_level: "${SNMP_RESPONSE_PROCESSING_PARALLELISM_LEVEL:20}"
