@@ -57,7 +57,7 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
 
   ruleChains$: Observable<Array<RuleChain>>;
 
-  ruleChain: RuleChain;
+  ruleChainId: string | null;
 
   private propagateChange = (v: any) => { };
 
@@ -76,10 +76,6 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
     );
   }
 
-  public compareWith(object1: any, object2: any) {
-    return object1 && object2 && object1.id.id === object2.id.id;
-  }
-
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
@@ -94,13 +90,8 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
 
   writeValue(value: string | null): void {
     if (isDefinedAndNotNull(value)) {
-      this.ruleChainService.getRuleChain(value)
-        .subscribe(ruleChain => this.ruleChain = ruleChain);
+      this.ruleChainId = value;
     }
-  }
-
-  getname() {
-    return this.ruleChain?.name;
   }
 
   ruleChainIdChanged() {
@@ -108,7 +99,7 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
   }
 
   private updateView() {
-    this.propagateChange(this.ruleChain.id.id);
+    this.propagateChange(this.ruleChainId);
   }
 
   private getRuleChains(pageLink: PageLink): Observable<PageData<RuleChain>> {
