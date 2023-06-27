@@ -18,15 +18,12 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { Authority } from '@shared/models/authority.enum';
-import { ProfileComponent } from '@home/pages/profile/profile.component';
-import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { SecurityComponent } from '@home/pages/security/security.component';
-import { UserTwoFAProvidersResolver } from '@home/pages/security/security-routing.module';
-import { NotificationSettingsComponent } from '@home/pages/notification/settings/notification-settings.component';
+import { SecurityRoutes, UserTwoFAProvidersResolver } from '@home/pages/security/security-routing.module';
 import {
-  NotificationUserSettingsResolver
+  NotificationUserSettingsResolver,
+  NotificationUserSettingsRoutes
 } from '@home/pages/notification/settings/notification-settings-routing.modules';
-import { UserProfileResolver } from '@home/pages/profile/profile-routing.module';
+import { ProfileRoutes, UserProfileResolver } from '@home/pages/profile/profile-routing.module';
 
 const routes: Routes = [
   {
@@ -48,55 +45,9 @@ const routes: Routes = [
           redirectTo: '/account/profile',
         }
       },
-      {
-        path: 'profile',
-        component: ProfileComponent,
-        canDeactivate: [ConfirmOnExitGuard],
-        data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          title: 'account.personal-info',
-          breadcrumb: {
-            label: 'account.personal-info',
-            icon: 'mdi:badge-account-horizontal',
-          }
-        },
-        resolve: {
-          user: UserProfileResolver
-        }
-      },
-      {
-        path: 'security',
-        component: SecurityComponent,
-        canDeactivate: [ConfirmOnExitGuard],
-        data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          title: 'security.security',
-          breadcrumb: {
-            label: 'security.security',
-            icon: 'lock'
-          }
-        },
-        resolve: {
-          user: UserProfileResolver,
-          providers: UserTwoFAProvidersResolver
-        }
-      },
-      {
-        path: 'notificationSettings',
-        component: NotificationSettingsComponent,
-        canDeactivate: [ConfirmOnExitGuard],
-        data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-          title: 'account.notification-settings',
-          breadcrumb: {
-            label: 'account.notification-settings',
-            icon: 'settings'
-          }
-        },
-        resolve: {
-          userSettings: NotificationUserSettingsResolver
-        }
-      }
+      ...ProfileRoutes,
+      ...SecurityRoutes,
+      ...NotificationUserSettingsRoutes
     ]
   }
 ];

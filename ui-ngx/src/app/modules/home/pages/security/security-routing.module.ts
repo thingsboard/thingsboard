@@ -53,7 +53,7 @@ export class UserTwoFAProvidersResolver implements Resolve<Array<TwoFactorAuthPr
   }
 }
 
-const routes: Routes = [
+export const SecurityRoutes: Routes = [
   {
     path: 'security',
     component: SecurityComponent,
@@ -70,6 +70,13 @@ const routes: Routes = [
       user: UserProfileResolver,
       providers: UserTwoFAProvidersResolver
     }
+  }
+];
+
+const routes: Routes = [
+  {
+    path: 'security',
+    redirectTo: '/account/security'
   }
 ];
 

@@ -46,9 +46,8 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   notificationDeliveryMethod = NotificationDeliveryMethod;
   notificationDeliveryMethodMap = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
 
-  private modelValue;
   private propagateChange = null;
-  private propagateChangePending = false;
+
   private valueChange$: Subscription = null;
 
   constructor(private utils: UtilsService,
@@ -57,12 +56,6 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
-    if (this.propagateChangePending) {
-      this.propagateChangePending = false;
-      setTimeout(() => {
-        this.propagateChange(this.modelValue);
-      }, 0);
-    }
   }
 
   registerOnTouched(fn: any): void {
@@ -98,8 +91,7 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   }
 
   toggleEnabled() {
-    this.notificationSettingsFormGroup.get('enabled').patchValue(!this.notificationSettingsFormGroup.get('enabled').value,
-      {emitEvent: true});
+    this.notificationSettingsFormGroup.get('enabled').patchValue(!this.notificationSettingsFormGroup.get('enabled').value);
   }
 
   getChecked(deliveryMethod: NotificationDeliveryMethod): boolean {
@@ -117,23 +109,12 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   }
 
   writeValue(value: NotificationUserSetting): void {
-    this.propagateChangePending = false;
-    this.modelValue = value;
-    if (isDefinedAndNotNull(this.modelValue)) {
-      this.notificationSettingsFormGroup.patchValue(this.modelValue, {emitEvent: false});
-      if (!this.disabled && !this.notificationSettingsFormGroup.valid) {
-        this.updateModel();
-      }
+    if (isDefinedAndNotNull(value)) {
+      this.notificationSettingsFormGroup.patchValue(value, {emitEvent: false});
     }
   }
 
   private updateModel() {
-    const value = this.notificationSettingsFormGroup.value;
-    this.modelValue = {...this.modelValue, ...value};
-    if (this.propagateChange) {
-      this.propagateChange(this.modelValue);
-    } else {
-      this.propagateChangePending = true;
-    }
+      this.propagateChange(this.notificationSettingsFormGroup.value);
   }
 }
