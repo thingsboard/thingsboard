@@ -39,7 +39,6 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
-import { isNumber } from '@core/utils';
 
 
 @Component({
@@ -131,7 +130,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
         this.attributeService.getEntityAttributes(gateway.id, AttributeScope.SHARED_SCOPE, ["general_configuration"]).subscribe((resp: AttributeData[]) => {
           if (resp && resp.length) {
             this.commands = resp[0].value.statistics.commands;
-            if (!this.statisticForm.get('statisticKey').value) {
+            if (!this.statisticForm.get('statisticKey').value && this.commands && this.commands.length) {
               this.statisticForm.get('statisticKey').setValue(this.commands[0].attributeOnGateway);
               this.createChartsSubscription(gateway, this.commands[0].attributeOnGateway);
             }

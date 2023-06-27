@@ -35,14 +35,14 @@
     <mat-icon class="material-icons-outlined" aria-hidden="false" aria-label="help-icon"
               matSuffix style="cursor:pointer;"
               (click)="openEditJSONDialog($event)"
-              matTooltip="Edit params">edit
+              matTooltip="{{'gateway.rpc-command-edit-params' | translate}}">edit
     </mat-icon>
   </mat-form-field>
   <button mat-raised-button color="primary" (click)="sendCommand()"
-  [disabled]="commandForm.invalid">Send</button>
+  [disabled]="commandForm.invalid">{{'gateway.rpc-command-send' | translate}}</button>
 </mat-card>
 <mat-card class="result-block" [formGroup]="commandForm" >
-  <span>Result</span>
+  <span>{{'gateway.rpc-command-result' | translate}}</span>
   <mat-divider></mat-divider>
   <tb-json-content [contentType]="contentTypes.JSON" readonly="true" formControlName="result"></tb-json-content>
 </mat-card>

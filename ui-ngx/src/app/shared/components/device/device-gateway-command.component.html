@@ -16,7 +16,7 @@
 
 -->
 <div mat-dialog-content tb-toast fxLayout="column" toastTarget="dockerCommandDialogContent">
-  <span style="padding-bottom: 15px;">In order to run ThingsBoard IoT gateway in docker with credentials for this device you can use the following commands.</span>
+  <span style="padding-bottom: 15px;">{{ 'gateway.docker-label' | translate }}</span>
   <div fxFlex fxLayout="row" style="justify-content: space-between; flex-grow: 0">
     <mat-button-toggle-group [formControl]="selectedOSCControl" aria-label="Favorite Color" style="width: max-content; flex-grow: 0">
       <mat-button-toggle [value]="osTypes.windows"><span translate>gateway.windows </span></mat-button-toggle>

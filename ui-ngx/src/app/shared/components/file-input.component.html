@@ -17,8 +17,8 @@
 -->
 <div class="tb-container">
   <label class="tb-title" [ngClass]="{'tb-required': !disabled && required}">{{ label }}
-    <mat-icon *ngIf="hint" class="material-icons-outlined pe"
-              matSuffix style="cursor:pointer;"
+    <mat-icon *ngIf="hint" class="material-icons-outlined pointer-event"
+              style="cursor:pointer;"
               matTooltip="{{hint}}">info_outlined
     </mat-icon>
   </label>

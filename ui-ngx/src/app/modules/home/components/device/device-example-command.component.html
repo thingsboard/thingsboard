@@ -27,12 +27,12 @@
       HTTP
     </mat-button-toggle>
   </mat-button-toggle-group>
-  <span  class="help-title">In order to publish telemetry data to (<a [href]="helpLink" target="_blank">ThingsBoard device</a>) with credentials of the current device you can use the following commands.</span>
+  <span  class="help-title" innerHTML="{{ translate.get('device.telemetry-commands-help-link', {helpLink}) | async }}"></span>
   <div class="mat-content" fxLayout="column">
     <div class="mat-content" fxLayout="column" *ngIf="protocolCtrl.value === 'mqtt'">
       <span>MQTT </span>
-      <span>1. Setup: <span [innerHTML]="mqttSetup"></span></span>
-      <span class="protocol-send-command">2. Send command:</span>
+      <span>{{'device.telemetry-command-setup-step'| translate}} <span [innerHTML]="mqttSetup"></span></span>
+      <span class="protocol-send-command">{{'device.telemetry-command-send-step'| translate}} </span>
       <div fxLayout="row wrap" fxLayoutAlign="start center">
         <pre class="tb-highlight" fxFlex><code class="pre-wrap">{{ mqttCode }}</code></pre>
         <button mat-icon-button
@@ -48,8 +48,8 @@
     </div>
     <div class="mat-content" fxLayout="column" *ngIf="protocolCtrl.value === 'coap'">
       <span>COAP </span>
-      <span>1. Setup: <span [innerHTML]="coapSetup"></span></span>
-      <span class="protocol-send-command">2. Send command:  (based on CoAP cli)</span>
+      <span>{{'device.telemetry-command-setup-step'| translate}} <span [innerHTML]="coapSetup"></span></span>
+      <span class="protocol-send-command">{{'device.telemetry-command-send-step-coap'| translate}}</span>
       <div fxLayout="row wrap" fxLayoutAlign="start center">
         <pre class="tb-highlight" fxFlex><code class="pre-wrap">{{ coapCode }}</code></pre>
         <button mat-icon-button
@@ -67,9 +67,9 @@
     </div>
     <div class="mat-content" fxLayout="column" *ngIf="protocolCtrl.value === 'http'">
       <span>HTTP </span>
-      <span>1. Setup: <span [innerHTML]="httpSetup"></span></span>
-      <span class="protocol-send-command">2. Send command:</span>
-      <div fxLayout="row wrpa"fxLayoutAlign="start center">
+      <span>{{'device.telemetry-command-setup-step'| translate}} <span [innerHTML]="httpSetup"></span></span>
+      <span class="protocol-send-command">{{'device.telemetry-command-send-step'| translate}}</span>
+      <div fxLayout="row wrpa" fxLayoutAlign="start center">
         <pre class="tb-highlight" fxFlex><code class="pre-wrap">{{ httpCode }}</code></pre>
         <button mat-icon-button
                 color="primary"

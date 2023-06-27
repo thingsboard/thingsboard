@@ -19,7 +19,7 @@
   <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="15px" fxFlex class="connector-container">
     <mat-card fxLayout="column" fxFlex.lt-md style="overflow: auto;">
       <mat-toolbar class="mat-mdc-table-toolbar">
-        <h2>Connectors</h2>
+        <h2>{{ 'gateway.connectors' | translate }}</h2>
         <span fxFlex></span>
         <button mat-icon-button
                 [disabled]="isLoading$ | async"
@@ -34,7 +34,7 @@
              matSortDisableClear>
         <ng-container matColumnDef="enabled" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">
-            Enabled
+            {{ 'gateway.connectors-table-enabled' | translate }}
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
             <mat-slide-toggle [checked]="activeConnectors.includes(attribute.key)"
@@ -42,13 +42,16 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="key">
-          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> Name</mat-header-cell>
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%">
+            {{ 'gateway.connectors-table-name' | translate }}</mat-header-cell>
           <mat-cell *matCellDef="let attribute">
             {{ attribute.key }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="type">
-          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%"> Type</mat-header-cell>
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
+            {{ 'gateway.connectors-table-type' | translate }}
+          </mat-header-cell>
           <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
             {{ returnType(attribute) }}
           </mat-cell>
@@ -56,7 +59,7 @@
         <ng-container matColumnDef="actions" stickyEnd>
           <mat-header-cell *matHeaderCellDef
                            [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px'}">
-            Actions
+            {{ 'gateway.connectors-table-actions' | translate }}
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute"
                     [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px'}">
@@ -119,22 +122,22 @@
     <div [formGroup]="connectorForm" fxLayout="column">
       <mat-card fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="15px" fxLayoutGap.lt-md="5px">
         <mat-form-field class="mat-block tb-value-type">
-          <mat-label>Name</mat-label>
+          <mat-label>{{ 'gateway.connectors-table-name' | translate }}</mat-label>
           <input matInput formControlName="name"/>
         </mat-form-field>
         <mat-form-field class="mat-block tb-value-type">
-          <mat-label>Type</mat-label>
+          <mat-label>{{ 'gateway.connectors-table-type' | translate }}</mat-label>
           <mat-select formControlName="type">
             <mat-option style="text-transform: uppercase"
                         *ngFor="let type of gatewayConnectorDefaultTypes | keyvalue" [value]="type.key">{{type.value}}</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field class="mat-block tb-value-type" *ngIf="connectorForm.get('type').value === 'grpc'">
-          <mat-label>Key</mat-label>
+          <mat-label>{{ 'gateway.connectors-table-key' | translate }}</mat-label>
           <input matInput formControlName="key"/>
         </mat-form-field>
         <mat-form-field class="mat-block tb-value-type" *ngIf="connectorForm.get('type').value === 'custom'">
-          <mat-label>Class</mat-label>
+          <mat-label>{{ 'gateway.connectors-table-class' | translate }}</mat-label>
           <input matInput formControlName="class"/>
         </mat-form-field>
         <mat-form-field class="mat-block tb-value-type">

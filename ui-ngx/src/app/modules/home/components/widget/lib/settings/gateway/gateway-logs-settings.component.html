@@ -17,10 +17,10 @@
 -->
 <section class="tb-widget-settings" [formGroup]="GatewayLogSettingForm" fxLayout="column">
   <mat-slide-toggle class="mat-slide" formControlName="isConnectorLog">
-    Is Connector
+    {{"widgets.gateway.is-connector" | translate}}
   </mat-slide-toggle>
   <mat-form-field fxFlex class="mat-block" *ngIf="GatewayLogSettingForm.get('isConnectorLog').value">
-    <mat-label translate>State parameter connector name</mat-label>
+    <mat-label>{{"widgets.gateway.state-param-name" | translate}}</mat-label>
     <input matInput formControlName="connectorLogState">
   </mat-form-field>
 </section>

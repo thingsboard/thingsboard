@@ -46,13 +46,13 @@
            matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
            matSortDisableClear>
       <ng-container matColumnDef="0">
-        <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
+        <mat-header-cell *matHeaderCellDef mat-sort-header>{{'audit-log.timestamp' | translate}}</mat-header-cell>
         <mat-cell *matCellDef="let row; let rowIndex = index">
           {{row[0]| date:'yyyy-MM-dd HH:mm:ss' }}
         </mat-cell>
       </ng-container>
       <ng-container matColumnDef="1">
-        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 70%">Message</mat-header-cell>
+        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 70%">{{"event.message" | translate}}</mat-header-cell>
         <mat-cell *matCellDef="let row">
           {{ row[1] }}
         </mat-cell>

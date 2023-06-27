@@ -31,9 +31,9 @@
       <span innerHTML="{{'gateway.configuration-delete-dialog-body' | translate}} <b>{{gatewayName}}</b>" > </span>
       <mat-form-field  class="mat-block tb-value-type" style="flex-grow: 0">
         <mat-label translate>gateway.configuration-delete-dialog-input</mat-label>
-        <input matInput [formControl]="gatewayForm" required/>
+        <input matInput [formControl]="gatewayControl" required/>
         <mat-error
-          *ngIf="gatewayForm.hasError('required')">
+          *ngIf="gatewayControl.hasError('required')">
           {{'gateway.configuration-delete-dialog-input-required' | translate }}
         </mat-error>
       </mat-form-field>
@@ -49,7 +49,7 @@
     <button mat-button color="warn"
             type="button"
             cdkFocusInitial
-            [disabled]="gatewayForm.value !== gatewayName"
+            [disabled]="gatewayControl.value !== gatewayName"
             (click)="turnOff()">
       {{ 'gateway.configuration-delete-dialog-confirm' | translate }}
     </button>

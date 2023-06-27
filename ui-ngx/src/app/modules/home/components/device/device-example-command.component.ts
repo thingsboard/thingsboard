@@ -52,7 +52,7 @@ export class DeviceExampleCommandComponent implements OnInit {
 
   constructor(protected router: Router,
               protected store: Store<AppState>,
-              private translate: TranslateService) {
+              public translate: TranslateService) {
   }
 
 
