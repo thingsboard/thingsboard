@@ -139,6 +139,42 @@ export class MenuService {
         ]
       },
       {
+        id: 'account',
+        name: 'profile.profile',
+        type: 'link',
+        path: '/account',
+        disabled: true,
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: 'personal_info',
+            name: 'account.personal-info',
+            fullName: 'account.personal-info',
+            type: 'link',
+            path: '/account/profile',
+            icon: 'mdi:badge-account-horizontal',
+            isMdiIcon: true
+          },
+          {
+            id: 'security',
+            name: 'security.security',
+            fullName: 'security.security',
+            type: 'link',
+            path: '/account/security',
+            icon: 'lock'
+          },
+          {
+            id: 'notificationSettings',
+            name: 'account.notification-settings',
+            fullName: 'account.notification-settings',
+            type: 'link',
+            path: '/account/notificationSettings',
+            icon: 'settings'
+          }
+        ]
+      },
+      {
         id: 'notifications_center',
         name: 'notification.notification-center',
         type: 'link',
@@ -519,6 +555,42 @@ export class MenuService {
         ]
       },
       {
+        id: 'account',
+        name: 'profile.profile',
+        type: 'link',
+        path: '/account',
+        disabled: true,
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: 'personal_info',
+            name: 'account.personal-info',
+            fullName: 'account.personal-info',
+            type: 'link',
+            path: '/account/profile',
+            icon: 'mdi:badge-account-horizontal',
+            isMdiIcon: true
+          },
+          {
+            id: 'security',
+            name: 'security.security',
+            fullName: 'security.security',
+            type: 'link',
+            path: '/account/security',
+            icon: 'lock'
+          },
+          {
+            id: 'notificationSettings',
+            name: 'account.notification-settings',
+            fullName: 'account.notification-settings',
+            type: 'link',
+            path: '/account/notificationSettings',
+            icon: 'settings'
+          }
+        ]
+      },
+      {
         id: 'notifications_center',
         name: 'notification.notification-center',
         type: 'link',
@@ -851,6 +923,34 @@ export class MenuService {
             type: 'link',
             path: '/entities/entityViews',
             icon: 'view_quilt'
+          }
+        ]
+      },
+      {
+        id: 'account',
+        name: 'profile.profile',
+        type: 'link',
+        path: '/account',
+        disabled: true,
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: 'personal_info',
+            name: 'account.personal-info',
+            fullName: 'account.personal-info',
+            type: 'link',
+            path: '/account/profile',
+            icon: 'mdi:badge-account-horizontal',
+            isMdiIcon: true
+          },
+          {
+            id: 'security',
+            name: 'security.security',
+            fullName: 'security.security',
+            type: 'link',
+            path: '/account/security',
+            icon: 'lock'
           }
         ]
       }

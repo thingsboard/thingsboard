@@ -589,3 +589,15 @@ export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.NEW_PLATFORM_VERSION, 'notification.trigger.new-platform-version'],
   [TriggerType.RATE_LIMITS, 'notification.trigger.rate-limits'],
 ]);
+
+export interface NotificationUserSettings {
+  prefs: Array<NotificationUserSetting>;
+}
+
+export interface NotificationUserSetting {
+  ruleId: string;
+  ruleName: string;
+  enabled: boolean;
+  enabledDeliveryMethods: Array<NotificationDeliveryMethod>;
+}
+
