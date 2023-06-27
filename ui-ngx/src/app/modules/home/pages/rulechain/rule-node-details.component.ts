@@ -27,6 +27,7 @@ import { RuleNodeConfigComponent } from './rule-node-config.component';
 import { Router } from '@angular/router';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
 import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
+import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 
 @Component({
   selector: 'tb-rule-node',
@@ -54,6 +55,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
 
   @Input()
   isAdd = false;
+
+  @Input()
+  debugEventBody: DebugRuleNodeEventBody;
 
   ruleNodeType = RuleNodeType;
   entityType = EntityType;

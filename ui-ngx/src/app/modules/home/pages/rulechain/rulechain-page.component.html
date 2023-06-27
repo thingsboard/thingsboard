@@ -100,7 +100,8 @@
                             (closeDetails)="onEditRuleNodeClosed()"
                             (toggleDetailsEditMode)="onRevertRuleNodeEdit()"
                             (applyDetails)="saveRuleNode()"
-                            [theForm]="tbRuleNode.ruleNodeFormGroup">
+                            [theForm]="tbRuleNode.ruleNodeFormGroup"
+                            (switchToFirstTab)="onSwitchToFirstTab()">
             <div class="details-buttons">
               <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
             </div>
@@ -111,7 +112,8 @@
                               [ruleChainId]="ruleChain.id?.id"
                               [ruleChainType]="ruleChainType"
                               [isEdit]="true"
-                              [isReadOnly]="false">
+                              [isReadOnly]="false"
+                              [debugEventBody]="debugEventBody">
                 </tb-rule-node>
               </mat-tab>
               <mat-tab *ngIf="editingRuleNode.ruleNodeId" label="{{ 'rulenode.events' | translate }}" #eventsTab="matTab">
@@ -119,7 +121,12 @@
                                 [defaultEventType]="debugEventTypes.DEBUG_RULE_NODE"
                                 [active]="eventsTab.isActive"
                                 [tenantId]="ruleChain.tenantId.id"
-                                [entityId]="editingRuleNode.ruleNodeId"></tb-event-table>
+                                [entityId]="editingRuleNode.ruleNodeId"
+                                [isRuleNodeDebugModeEnabled]="editingRuleNode?.debugMode"
+                                [editingRuleNodeHasScript]="editingRuleNodeHasScript"
+                                [rulenodeClazz]="editingRuleNode.component.clazz"
+                                (debugEventSelected)="onDebugEventSelected($event)">
+                </tb-event-table>
               </mat-tab>
               <mat-tab label="{{ 'rulenode.help' | translate }}">
                 <div class="tb-rule-node-help">

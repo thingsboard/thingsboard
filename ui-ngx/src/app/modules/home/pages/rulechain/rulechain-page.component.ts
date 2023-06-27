@@ -87,7 +87,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffer.service';
 import { Hotkey } from 'angular2-hotkeys';
-import { DebugEventType, EventType } from '@shared/models/event.models';
+import { DebugEventType, DebugRuleNodeEventBody, EventType } from '@shared/models/event.models';
 import { MatMiniFabButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
@@ -153,6 +153,8 @@ export class RuleChainPageComponent extends PageComponent
   editingRuleNodeAllowCustomLabels = false;
   editingRuleNodeLinkLabels: {[label: string]: LinkLabel};
   editingRuleNodeSourceRuleChainId: string;
+  debugEventBody: DebugRuleNodeEventBody;
+  editingRuleNodeHasScript: boolean = false;
 
   @ViewChild('tbRuleNode') ruleNodeComponent: RuleNodeDetailsComponent;
   @ViewChild('tbRuleNodeLink') ruleNodeLinkComponent: RuleNodeLinkComponent;
@@ -1110,6 +1112,7 @@ export class RuleChainPageComponent extends PageComponent
       this.isEditingRuleNode = true;
       this.editingRuleNodeIndex = this.ruleChainModel.nodes.indexOf(node);
       this.editingRuleNode = deepClone(node, ['component']);
+      this.editingRuleNodeHasScript = this.editingRuleNode.configuration.hasOwnProperty('scriptLang');
       setTimeout(() => {
         this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
       }, 0);
@@ -1258,6 +1261,7 @@ export class RuleChainPageComponent extends PageComponent
   onEditRuleNodeClosed() {
     this.editingRuleNode = null;
     this.isEditingRuleNode = false;
+    this.debugEventBody = null;
   }
 
   onEditRuleNodeLinkClosed() {
@@ -1275,6 +1279,16 @@ export class RuleChainPageComponent extends PageComponent
     this.ruleNodeLinkComponent.ruleNodeLinkFormGroup.markAsPristine();
     const edge = this.ruleChainModel.edges[this.editingRuleNodeLinkIndex];
     this.editingRuleNodeLink = deepClone(edge);
+  }
+
+  onDebugEventSelected(debugEventBody: DebugRuleNodeEventBody) {
+    if (debugEventBody) {
+      this.debugEventBody = debugEventBody;
+    }
+  }
+
+  onSwitchToFirstTab() {
+    this.selectedRuleNodeTabIndex = 0;
   }
 
   saveRuleNode() {

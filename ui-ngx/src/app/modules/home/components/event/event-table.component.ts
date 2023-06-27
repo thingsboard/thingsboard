@@ -17,10 +17,10 @@
 import {
   AfterViewInit,
   ChangeDetectorRef,
-  Component,
+  Component, EventEmitter,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Output,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -32,9 +32,10 @@ import { EntitiesTableComponent } from '@home/components/entity/entities-table.c
 import { EventTableConfig } from './event-table-config';
 import { EventService } from '@core/http/event.service';
 import { DialogService } from '@core/services/dialog.service';
-import { DebugEventType, EventType } from '@shared/models/event.models';
+import { DebugEventType, DebugRuleNodeEventBody, EventType } from '@shared/models/event.models';
 import { Overlay } from '@angular/cdk/overlay';
 import { Subscription } from 'rxjs';
+import { NodeScriptTestService } from '@core/services/script/node-script-test.service';
 
 @Component({
   selector: 'tb-event-table',
@@ -83,6 +84,18 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  @Input()
+  isRuleNodeDebugModeEnabled: boolean;
+
+  @Input()
+  editingRuleNodeHasScript: boolean;
+
+  @Input()
+  rulenodeClazz: string;
+
+  @Output()
+  debugEventSelected = new EventEmitter<DebugRuleNodeEventBody>(null);
+
   @ViewChild(EntitiesTableComponent, {static: true}) entitiesTable: EntitiesTableComponent;
 
   eventTableConfig: EventTableConfig;
@@ -96,7 +109,8 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
               private dialog: MatDialog,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private nodeScriptTestService: NodeScriptTestService) {
   }
 
   ngOnInit() {
@@ -114,8 +128,18 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.debugEventTypes,
       this.overlay,
       this.viewContainerRef,
-      this.cd
+      this.cd,
+      this.nodeScriptTestService,
+      this.isRuleNodeDebugModeEnabled,
+      this.editingRuleNodeHasScript,
+      this.rulenodeClazz
     );
+
+    this.eventTableConfig.debugEventSelectedSubject.subscribe((debugEventBody: DebugRuleNodeEventBody) => {
+      if (debugEventBody) {
+        this.debugEventSelected.emit(debugEventBody);
+      }
+    })
   }
 
   ngAfterViewInit() {

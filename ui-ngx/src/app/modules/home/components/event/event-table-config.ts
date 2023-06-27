@@ -21,7 +21,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { DebugEventType, Event, EventType, FilterEventBody } from '@shared/models/event.models';
+import { DebugEventType, DebugRuleNodeEventBody, Event, EventType, FilterEventBody } from '@shared/models/event.models';
 import { TimePageLink } from '@shared/models/page/page-link';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -30,7 +30,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EventService } from '@app/core/http/event.service';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EntityTypeResource } from '@shared/models/entity-type.models';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { Direction } from '@shared/models/page/sort-order';
 import { DialogService } from '@core/services/dialog.service';
@@ -49,6 +49,8 @@ import {
   EventFilterPanelData,
   FilterEntityColumn
 } from '@home/components/event/event-filter-panel.component';
+import { NodeScriptTestService } from '@core/services/script/node-script-test.service';
+import { ruleNodeClazzFunctionNameTranslations } from '@shared/models/rule-node.models';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -72,6 +74,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   eventTypes: Array<EventType | DebugEventType>;
 
+  debugEventSelectedSubject = new BehaviorSubject<DebugRuleNodeEventBody>(null);
+
   constructor(private eventService: EventService,
               private dialogService: DialogService,
               private translate: TranslateService,
@@ -84,7 +88,11 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private debugEventTypes: Array<DebugEventType> = null,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private nodeScriptTestService: NodeScriptTestService,
+              private isRuleNodeDebugModeEnabled: boolean,
+              private editingRuleNodeHasScript: boolean,
+              private rulenodeClazz: string) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
@@ -316,6 +324,18 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               isEnabled: (entity) => entity.body.error && entity.body.error.length > 0,
               onAction: ($event, entity) => this.showContent($event, entity.body.error,
                 'event.error')
+            },
+            '48px'),
+          new EntityActionTableColumn<Event>('test', '',
+            {
+              name: this.translate.instant('rulenode.test-function',
+                {function: this.translate.instant(ruleNodeClazzFunctionNameTranslations[this.rulenodeClazz])}),
+              icon: 'bug_report',
+              isEnabled: (entity) =>  this.isRuleNodeDebugModeEnabled && entity.body.type === 'IN' &&
+                  this.editingRuleNodeHasScript,
+              onAction: ($event, entity) => {
+                this.debugEventSelectedSubject.next(entity.body);
+              }
             },
             '48px')
         );
