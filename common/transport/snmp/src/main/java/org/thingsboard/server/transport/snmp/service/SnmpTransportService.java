@@ -297,7 +297,14 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
         });
     }
 
-    /* SNMP notifications handler */
+    /*
+    * SNMP notifications handler
+    *
+    * TODO: add check for host uniqueness when saving device (for backward compatibility - only for the ones using from-device RPC requests)
+    *
+    * TODO: this won't work properly in a cluster mode, due to load-balancing of requests from devices:
+    *  session might not be on this instance
+    * */
     @Override
     public void processPdu(CommandResponderEvent event) {
         Address sourceAddress = event.getPeerAddress();
@@ -331,6 +338,7 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
         RequestContext requestContext = RequestContext.builder()
                 .communicationSpec(communicationConfig.getSpec())
                 .responseMappings(communicationConfig.getAllMappings())
+                .method(SnmpMethod.TRAP)
                 .build();
 
         responseProcessingExecutor.execute(() -> {
@@ -400,7 +408,7 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
         responseProcessors.put(SnmpCommunicationSpec.TO_SERVER_RPC_REQUEST, (responseData, requestContext, sessionContext) -> {
             TransportProtos.ToServerRpcRequestMsg toServerRpcRequestMsg = TransportProtos.ToServerRpcRequestMsg.newBuilder()
                     .setRequestId(0)
-                    .setMethodName("TRAP")
+                    .setMethodName(requestContext.getMethod().name())
                     .setParams(JsonConverter.toJson(responseData))
                     .build();
             transportService.process(sessionContext.getSessionInfo(), toServerRpcRequestMsg, null);
