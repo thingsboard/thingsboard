@@ -19,6 +19,7 @@
   <div class="tb-widget-config-panel-title">{{ panelTitle }}</div>
   <div class="tb-data-keys-table">
     <div class="tb-data-keys-header">
+      <div *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys-header-cell tb-source-header" translate>datakey.source</div>
       <div class="tb-data-keys-header-cell" fxFlex translate>datakey.key</div>
       <div class="tb-data-keys-header-cell" fxFlex translate>datakey.label</div>
       <div *ngIf="!hideDataKeyColor" class="tb-data-keys-header-cell tb-color-header" translate>datakey.color</div>
@@ -52,6 +53,7 @@
         </div>
       </div>
     </div>
+    <tb-error *ngIf="errorText" noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
   </div>
   <div>
     <button type="button" mat-stroked-button color="primary" (click)="addKey()">
