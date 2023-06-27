@@ -28,27 +28,17 @@ import {
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { isUndefined } from '@core/utils';
+import { deepClone, isUndefined } from '@core/utils';
 
 @Component({
-  selector: 'tb-entities-table-basic-config',
-  templateUrl: './entities-table-basic-config.component.html',
+  selector: 'tb-timeseries-table-basic-config',
+  templateUrl: './timeseries-table-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
-export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponent {
-
-  public get displayTimewindowConfig(): boolean {
-    const datasources = this.entitiesTableWidgetConfigForm.get('datasources').value;
-    return datasourcesHasAggregation(datasources);
-  }
-
-  public onlyHistoryTimewindow(): boolean {
-    const datasources = this.entitiesTableWidgetConfigForm.get('datasources').value;
-    return datasourcesHasOnlyComparisonAggregation(datasources);
-  }
+export class TimeseriesTableBasicConfigComponent extends BasicWidgetConfigComponent {
 
   public get datasource(): Datasource {
-    const datasources: Datasource[] = this.entitiesTableWidgetConfigForm.get('datasources').value;
+    const datasources: Datasource[] = this.timeseriesTableWidgetConfigForm.get('datasources').value;
     if (datasources && datasources.length) {
       return datasources[0];
     } else {
@@ -56,7 +46,7 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
     }
   }
 
-  entitiesTableWidgetConfigForm: UntypedFormGroup;
+  timeseriesTableWidgetConfigForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -65,15 +55,16 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
   }
 
   protected configForm(): UntypedFormGroup {
-    return this.entitiesTableWidgetConfigForm;
+    return this.timeseriesTableWidgetConfigForm;
   }
 
   protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'name', type: DataKeyType.entityField }]);
+    this.setupDefaultDatasource(configData,
+      [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, units: '°C', decimals: 0 }]);
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    this.entitiesTableWidgetConfigForm = this.fb.group({
+    this.timeseriesTableWidgetConfigForm = this.fb.group({
       timewindowConfig: [{
         useDashboardTimewindow: configData.config.useDashboardTimewindow,
         displayTimewindow: configData.config.displayTimewindow,
@@ -82,7 +73,7 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
       datasources: [configData.config.datasources, []],
       columns: [this.getColumns(configData.config.datasources), []],
       showTitle: [configData.config.showTitle, []],
-      title: [configData.config.settings?.entitiesTitle, []],
+      title: [configData.config.title, []],
       showTitleIcon: [configData.config.showTitleIcon, []],
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
@@ -117,40 +108,53 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
-    const showTitle: boolean = this.entitiesTableWidgetConfigForm.get('showTitle').value;
-    const showTitleIcon: boolean = this.entitiesTableWidgetConfigForm.get('showTitleIcon').value;
+    const showTitle: boolean = this.timeseriesTableWidgetConfigForm.get('showTitle').value;
+    const showTitleIcon: boolean = this.timeseriesTableWidgetConfigForm.get('showTitleIcon').value;
     if (showTitle) {
-      this.entitiesTableWidgetConfigForm.get('title').enable();
-      this.entitiesTableWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
+      this.timeseriesTableWidgetConfigForm.get('title').enable();
+      this.timeseriesTableWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
       if (showTitleIcon) {
-        this.entitiesTableWidgetConfigForm.get('titleIcon').enable();
-        this.entitiesTableWidgetConfigForm.get('iconColor').enable();
+        this.timeseriesTableWidgetConfigForm.get('titleIcon').enable();
+        this.timeseriesTableWidgetConfigForm.get('iconColor').enable();
       } else {
-        this.entitiesTableWidgetConfigForm.get('titleIcon').disable();
-        this.entitiesTableWidgetConfigForm.get('iconColor').disable();
+        this.timeseriesTableWidgetConfigForm.get('titleIcon').disable();
+        this.timeseriesTableWidgetConfigForm.get('iconColor').disable();
       }
     } else {
-      this.entitiesTableWidgetConfigForm.get('title').disable();
-      this.entitiesTableWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
-      this.entitiesTableWidgetConfigForm.get('titleIcon').disable();
-      this.entitiesTableWidgetConfigForm.get('iconColor').disable();
+      this.timeseriesTableWidgetConfigForm.get('title').disable();
+      this.timeseriesTableWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
+      this.timeseriesTableWidgetConfigForm.get('titleIcon').disable();
+      this.timeseriesTableWidgetConfigForm.get('iconColor').disable();
     }
-    this.entitiesTableWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
-    this.entitiesTableWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
-    this.entitiesTableWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
-    this.entitiesTableWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});
+    this.timeseriesTableWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
+    this.timeseriesTableWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
+    this.timeseriesTableWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
+    this.timeseriesTableWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});
   }
 
   private getColumns(datasources?: Datasource[]): DataKey[] {
     if (datasources && datasources.length) {
-      return datasources[0].dataKeys || [];
+      const dataKeys = deepClone(datasources[0].dataKeys) || [];
+      dataKeys.forEach(k => {
+        (k as any).latest = false;
+      });
+      const latestDataKeys = deepClone(datasources[0].latestDataKeys) || [];
+      latestDataKeys.forEach(k => {
+        (k as any).latest = true;
+      });
+      return dataKeys.concat(latestDataKeys);
     }
     return [];
   }
 
   private setColumns(columns: DataKey[], datasources?: Datasource[]) {
     if (datasources && datasources.length) {
-      datasources[0].dataKeys = columns;
+      const dataKeys = deepClone(columns.filter(c => !(c as any).latest));
+      dataKeys.forEach(k => delete (k as any).latest);
+      const latestDataKeys = deepClone(columns.filter(c => (c as any).latest));
+      latestDataKeys.forEach(k => delete (k as any).latest);
+      datasources[0].dataKeys = dataKeys;
+      datasources[0].latestDataKeys = latestDataKeys;
     }
   }
 
