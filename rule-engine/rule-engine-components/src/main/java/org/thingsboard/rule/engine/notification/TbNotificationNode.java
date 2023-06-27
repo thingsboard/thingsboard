@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.info.RuleEngineOriginatedNotificationInfo;
@@ -42,12 +43,13 @@ import java.util.concurrent.ExecutionException;
         configDirective = "tbExternalNodeNotificationConfig",
         icon = "notifications"
 )
-public class TbNotificationNode implements TbNode {
+public class TbNotificationNode extends TbAbstractExternalNode {
 
     private TbNotificationNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        super.init(ctx);
         this.config = TbNodeUtils.convert(configuration, TbNotificationNodeConfiguration.class);
     }
 
@@ -69,15 +71,16 @@ public class TbNotificationNode implements TbNode {
                 .originatorEntityId(ctx.getSelf().getRuleChainId())
                 .build();
 
-        DonAsynchron.withCallback(ctx.getNotificationExecutor().executeAsync(() -> {
-                    return ctx.getNotificationCenter().processNotificationRequest(ctx.getTenantId(), notificationRequest, stats -> {
-                        TbMsgMetaData metaData = msg.getMetaData().copy();
-                        metaData.putValue("notificationRequestResult", JacksonUtil.toString(stats));
-                        ctx.tellSuccess(TbMsg.transformMsg(msg, metaData));
-                    });
-                }),
-                r -> {},
-                e -> ctx.tellFailure(msg, e));
+        DonAsynchron.withCallback(ctx.getNotificationExecutor().executeAsync(() ->
+                        ctx.getNotificationCenter().processNotificationRequest(ctx.getTenantId(), notificationRequest, stats -> {
+                            TbMsgMetaData metaData = msg.getMetaData().copy();
+                            metaData.putValue("notificationRequestResult", JacksonUtil.toString(stats));
+                            tellSuccess(ctx, TbMsg.transformMsg(msg, metaData));
+                        })),
+                r -> {
+                },
+                e -> tellFailure(ctx, msg, e));
+        ackIfNeeded(ctx, msg);
     }
 
 }

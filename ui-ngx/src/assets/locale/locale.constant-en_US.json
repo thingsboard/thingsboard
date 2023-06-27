@@ -1130,6 +1130,7 @@
     },
     "datakey": {
         "settings": "Settings",
+        "general": "General",
         "advanced": "Advanced",
         "key": "Key",
         "label": "Label",
@@ -4242,7 +4243,6 @@
         "preview": "Preview",
         "set": "Set",
         "set-message": "Set message",
-        "card-title": "Card title",
         "advanced-title-style": "Advanced title style",
         "card-style": "Card style",
         "text": "Text",
@@ -5231,9 +5231,16 @@
             "display-alarm-activity": "Display alarm activity",
             "allow-alarms-assign": "Allow alarms assignment",
             "columns": "Columns",
+            "column-settings": "Column settings",
             "remove-column": "Remove column",
             "add-column": "Add column",
-            "no-columns": "No columns configured"
+            "no-columns": "No columns configured",
+            "show-card-buttons": "Show card buttons",
+            "columns-to-display": "Columns to display",
+            "table-header": "Table header",
+            "header-buttons": "Header buttons",
+            "pagination": "Pagination",
+            "rows": "Rows"
         },
         "value-source": {
             "value-source": "Value source",

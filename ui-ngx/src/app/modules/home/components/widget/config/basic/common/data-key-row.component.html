@@ -151,6 +151,22 @@
       <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
   </div>
+  <div class="tb-data-keys-table-row-buttons">
+    <button type="button"
+            mat-icon-button
+            (click)="editKey(true)"
+            [matTooltip]="keySettingsTitle"
+            matTooltipPosition="above">
+      <mat-icon>settings</mat-icon>
+    </button>
+    <button type="button"
+            mat-icon-button
+            (click)="keyRemoved.emit()"
+            [matTooltip]="removeKeyTitle"
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
 </div>
 <ng-template #keyName>
   <ng-container *ngIf="dataKeyHasPostprocessing(); else keyName">

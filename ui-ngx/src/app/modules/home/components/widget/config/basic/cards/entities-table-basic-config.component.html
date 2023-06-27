@@ -28,6 +28,7 @@
   <tb-data-keys-panel
     panelTitle="{{ 'widgets.table.columns' | translate }}"
     addKeyTitle="{{ 'widgets.table.add-column' | translate }}"
+    keySettingsTitle="{{ 'widgets.table.column-settings' | translate }}"
     removeKeyTitle="{{ 'widgets.table.remove-column' | translate }}"
     noKeysText="{{ 'widgets.table.no-columns' | translate }}"
     hideDataKeyColor
@@ -61,6 +62,14 @@
         </tb-color-input>
       </div>
     </div>
+    <div class="tb-widget-config-row space-between">
+      <div translate>widgets.table.show-card-buttons</div>
+      <mat-chip-listbox multiple formControlName="cardButtons">
+        <mat-chip-option value="search">{{ 'action.search' | translate }}</mat-chip-option>
+        <mat-chip-option value="columnsToDisplay">{{ 'widgets.table.columns-to-display' | translate }}</mat-chip-option>
+        <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
     <div class="tb-widget-config-row space-between same-padding">
       <div>{{ 'widget-config.text-color' | translate }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
@@ -71,7 +80,7 @@
       </div>
     </div>
     <div class="tb-widget-config-row space-between same-padding">
-      <div>{{ 'widget-config.background' | translate }}</div>
+      <div>{{ 'widget-config.background-color' | translate }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
         <mat-divider vertical></mat-divider>
         <tb-color-input asBoxInput

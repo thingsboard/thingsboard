@@ -18,10 +18,12 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  EventEmitter,
   forwardRef,
   Input,
   OnChanges,
   OnInit,
+  Output,
   SimpleChanges,
   ViewChild,
   ViewEncapsulation
@@ -37,7 +39,14 @@ import {
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKey, DatasourceType, JsonSettingsSchema, Widget, widgetType } from '@shared/models/widget.models';
+import {
+  DataKey,
+  DataKeyConfigMode,
+  DatasourceType,
+  JsonSettingsSchema,
+  Widget,
+  widgetType
+} from '@shared/models/widget.models';
 import { DataKeysPanelComponent } from '@home/components/widget/config/basic/common/data-keys-panel.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AggregationType } from '@shared/models/time/time.models';
@@ -104,6 +113,9 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
   @Input()
   deviceId: string;
 
+  @Output()
+  keyRemoved = new EventEmitter();
+
   keyFormControl: UntypedFormControl;
 
   keyRowFormGroup: UntypedFormGroup;
@@ -167,6 +179,18 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
 
   get displayUnitsOrDigits() {
     return this.modelValue.type && ![ DataKeyType.alarm, DataKeyType.entityField, DataKeyType.count ].includes(this.modelValue.type);
+  }
+
+  get keySettingsTitle(): string {
+    return this.dataKeysPanelComponent.keySettingsTitle;
+  }
+
+  get removeKeyTitle(): string {
+    return this.dataKeysPanelComponent.removeKeyTitle;
+  }
+
+  get dragEnabled(): boolean {
+    return this.dataKeysPanelComponent.dragEnabled;
   }
 
   private propagateChange = (_val: any) => {};
@@ -291,13 +315,14 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     }
   }
 
-  editKey() {
+  editKey(advanced = false) {
     this.dialog.open<DataKeyConfigDialogComponent, DataKeyConfigDialogData, DataKey>(DataKeyConfigDialogComponent,
       {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           dataKey: deepClone(this.modelValue),
+          dataKeyConfigMode: advanced ? DataKeyConfigMode.advanced : DataKeyConfigMode.general,
           dataKeySettingsSchema: this.datakeySettingsSchema,
           dataKeySettingsDirective: this.dataKeySettingsDirective,
           dashboard: this.dashboard,

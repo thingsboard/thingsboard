@@ -39,7 +39,7 @@
         width: 60px;
       }
       &.tb-actions-header {
-        width: 76px;
+        width: 114px;
       }
     }
   }
@@ -57,20 +57,5 @@
   height: 38px;
   display: flex;
   flex-direction: row;
-  gap: 12px;
   background: #fff;
-
-  .tb-data-keys-table-row-buttons {
-    display: flex;
-    flex-direction: row;
-    button.mat-mdc-icon-button.mat-mdc-button-base {
-      padding: 7px;
-      width: 38px;
-      height: 38px;
-      .mat-icon {
-        color: rgba(0, 0, 0, 0.38);
-      }
-    }
-  }
-
 }

@@ -26,27 +26,25 @@
       <div class="tb-data-keys-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
       <div class="tb-data-keys-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-data-keys-body tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+    <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-data-keys-body tb-drop-list"
+         cdkDropList cdkDropListOrientation="vertical"
+         [cdkDropListDisabled]="!dragEnabled"
          (cdkDropListDropped)="keyDrop($event)">
-      <div cdkDrag class="tb-data-keys-table-row tb-draggable" *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey;
-                 let $index = index;">
+      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+           class="tb-data-keys-table-row tb-draggable"
+           *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
         <tb-data-key-row fxFlex
                          [formControl]="keyControl"
                          [datasourceType]="datasourceType"
                          [deviceId]="deviceId"
-                         [entityAliasId]="entityAliasId">
+                         [entityAliasId]="entityAliasId"
+                         (keyRemoved)="removeKey($index)">
         </tb-data-key-row>
         <div class="tb-data-keys-table-row-buttons">
-          <button type="button"
-                  mat-icon-button
-                  (click)="removeKey($index)"
-                  [matTooltip]="removeKeyTitle"
-                  matTooltipPosition="above">
-            <mat-icon>delete</mat-icon>
-          </button>
           <button mat-icon-button
                   type="button"
                   cdkDragHandle
+                  [ngClass]="{'tb-hidden': !dragEnabled}"
                   matTooltip="{{ 'action.drag' | translate }}"
                   matTooltipPosition="above">
             <mat-icon>drag_indicator</mat-icon>

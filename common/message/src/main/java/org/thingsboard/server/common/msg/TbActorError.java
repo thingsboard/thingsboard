@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.aware;
+package org.thingsboard.server.common.msg;
 
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.TbMsg;
+public interface TbActorError {
 
-public interface RuleChainAwareMsg extends TbActorMsg {
+    boolean isUnrecoverable();
 
-	RuleChainId getRuleChainId();
-
-	TbMsg getMsg();
-	
 }
