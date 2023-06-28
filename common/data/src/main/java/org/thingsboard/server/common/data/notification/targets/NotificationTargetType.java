@@ -26,7 +26,8 @@ import java.util.Set;
 public enum NotificationTargetType {
 
     PLATFORM_USERS(Set.of(NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.EMAIL, NotificationDeliveryMethod.SMS)),
-    SLACK(Set.of(NotificationDeliveryMethod.SLACK));
+    SLACK(Set.of(NotificationDeliveryMethod.SLACK)),
+    MICROSOFT_TEAMS(Set.of(NotificationDeliveryMethod.MICROSOFT_TEAMS));
 
     @Getter
     private final Set<NotificationDeliveryMethod> supportedDeliveryMethods;

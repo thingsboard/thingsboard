@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
@@ -208,6 +209,11 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             case SLACK: {
                 SlackNotificationTargetConfig targetConfig = (SlackNotificationTargetConfig) target.getConfiguration();
                 recipients = List.of(targetConfig.getConversation());
+                break;
+            }
+            case MICROSOFT_TEAMS: {
+                MicrosoftTeamsNotificationTargetConfig targetConfig = (MicrosoftTeamsNotificationTargetConfig) target.getConfiguration();
+                recipients = List.of(targetConfig);
                 break;
             }
             default: {

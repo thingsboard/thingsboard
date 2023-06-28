@@ -24,7 +24,8 @@ public enum NotificationDeliveryMethod {
     WEB("web"),
     EMAIL("email"),
     SMS("SMS"),
-    SLACK("Slack");
+    SLACK("Slack"),
+    MICROSOFT_TEAMS("Microsoft Teams");
 
     @Getter
     private final String name;

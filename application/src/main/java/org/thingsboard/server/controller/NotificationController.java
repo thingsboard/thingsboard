@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
@@ -294,15 +295,27 @@ public class NotificationController extends BaseController {
             int recipientsCount;
             List<NotificationRecipient> recipientsPart;
             NotificationTargetType targetType = target.getConfiguration().getType();
-            if (targetType == NotificationTargetType.PLATFORM_USERS) {
-                PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(),
-                        (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize, 0, null,
-                                new SortOrder("createdTime", SortOrder.Direction.DESC)));
-                recipientsCount = (int) recipients.getTotalElements();
-                recipientsPart = recipients.getData().stream().map(r -> (NotificationRecipient) r).collect(Collectors.toList());
-            } else {
-                recipientsCount = 1;
-                recipientsPart = List.of(((SlackNotificationTargetConfig) target.getConfiguration()).getConversation());
+            switch (targetType) {
+                case PLATFORM_USERS: {
+                    PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(),
+                            (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize, 0, null,
+                                    new SortOrder("createdTime", SortOrder.Direction.DESC)));
+                    recipientsCount = (int) recipients.getTotalElements();
+                    recipientsPart = recipients.getData().stream().map(r -> (NotificationRecipient) r).collect(Collectors.toList());
+                    break;
+                }
+                case SLACK: {
+                    recipientsCount = 1;
+                    recipientsPart = List.of(((SlackNotificationTargetConfig) target.getConfiguration()).getConversation());
+                    break;
+                }
+                case MICROSOFT_TEAMS: {
+                    recipientsCount = 1;
+                    recipientsPart = List.of(((MicrosoftTeamsNotificationTargetConfig) target.getConfiguration()));
+                    break;
+                }
+                default:
+                    throw new IllegalArgumentException("Target type " + targetType + " not supported");
             }
             firstRecipient.putIfAbsent(targetType, !recipientsPart.isEmpty() ? recipientsPart.get(0) : null);
             for (NotificationRecipient recipient : recipientsPart) {
