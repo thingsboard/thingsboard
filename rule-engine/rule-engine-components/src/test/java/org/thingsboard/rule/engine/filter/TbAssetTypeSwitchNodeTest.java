@@ -124,4 +124,5 @@ class TbAssetTypeSwitchNodeTest {
     private TbMsg getTbMsg(EntityId entityId) {
         return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, new TbMsgMetaData(), "{}", callback);
     }
+
 }

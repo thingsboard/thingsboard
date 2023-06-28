@@ -65,6 +65,7 @@ public class DataConstants {
     public static final String PROVISION_KEY = "provisionDeviceKey";
     public static final String PROVISION_SECRET = "provisionDeviceSecret";
 
+    public static final String DEFAULT_DEVICE_TYPE = "default";
     public static final String DEVICE_NAME = "deviceName";
     public static final String DEVICE_TYPE = "deviceType";
     public static final String CERT_PUB_KEY = "x509CertPubKey";

@@ -38,17 +38,9 @@ public abstract class TbAbstractExternalNode implements TbNode {
 
     protected void tellFailure(TbContext ctx, TbMsg tbMsg, Throwable t) {
         if (forceAck) {
-            if (t == null) {
-                ctx.enqueueForTellNext(tbMsg.copyWithNewCtx(), TbNodeConnectionType.FAILURE);
-            } else {
-                ctx.enqueueForTellFailure(tbMsg.copyWithNewCtx(), t);
-            }
+            ctx.enqueueForTellFailure(tbMsg.copyWithNewCtx(), t);
         } else {
-            if (t == null) {
-                ctx.tellNext(tbMsg, TbNodeConnectionType.FAILURE);
-            } else {
-                ctx.tellFailure(tbMsg, t);
-            }
+            ctx.tellFailure(tbMsg, t);
         }
     }
 

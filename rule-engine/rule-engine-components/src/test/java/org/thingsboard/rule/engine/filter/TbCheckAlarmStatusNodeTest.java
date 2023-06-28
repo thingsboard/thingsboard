@@ -163,5 +163,4 @@ class TbCheckAlarmStatusNodeTest {
         return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, new TbMsgMetaData(), msgData);
     }
 
-
 }

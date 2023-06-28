@@ -42,7 +42,7 @@ public class StringUtils {
     }
 
     public static boolean isNotEmpty(String source) {
-        return source != null && !source.isEmpty();
+        return !isEmpty(source);
     }
 
     public static boolean isNotBlank(String source) {

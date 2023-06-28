@@ -852,17 +852,10 @@ class DefaultTbContext implements TbContext {
     }
 
     private static String getFailureMessage(Throwable th) {
-        String failureMessage;
-        if (th != null) {
-            if (!StringUtils.isEmpty(th.getMessage())) {
-                failureMessage = th.getMessage();
-            } else {
-                failureMessage = th.getClass().getSimpleName();
-            }
-        } else {
-            failureMessage = null;
+        if (th == null) {
+            return null;
         }
-        return failureMessage;
+        return StringUtils.isNotEmpty(th.getMessage()) ? th.getMessage() : th.getClass().getSimpleName();
     }
 
     private class SimpleTbQueueCallback implements TbQueueCallback {
