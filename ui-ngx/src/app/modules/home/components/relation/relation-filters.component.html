@@ -24,6 +24,8 @@
         <div fxFlex fxLayout="row" fxLayoutAlign="start center">
           <div class="input-block" fxFlex fxLayout="row" fxLayoutGap="28px" fxLayoutAlign="start center" style="margin-right: 8px">
             <tb-relation-type-autocomplete fxFlex="50"
+              [label] = "'relation.type' | translate"
+              floatLabel = 'always'
               subscriptSizing="dynamic"
               style="min-width: 200px;"
               [formControl]="relationFilterControl.get('relationType')">
@@ -31,6 +33,7 @@
             <tb-entity-type-list fxFlex="50"
               subscriptSizing="dynamic"
               [label]="'entity.entity-types' | translate"
+              floatLabel="always"
               [allowedEntityTypes]="allowedEntityTypes"
               [formControl]="relationFilterControl.get('entityTypes')">
             </tb-entity-type-list>
