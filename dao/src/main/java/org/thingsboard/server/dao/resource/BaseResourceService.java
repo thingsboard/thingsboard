@@ -21,9 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.thingsboard.server.cache.resourceinfo.ResourceInfoEvictEvent;
+import org.thingsboard.server.cache.device.DeviceCacheKey;
+import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.cache.resourceinfo.ResourceInfoCacheKey;
+import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -61,10 +62,10 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         resourceValidator.validate(resource, TbResourceInfo::getTenantId);
         try {
             TbResource saved = resourceDao.save(resource.getTenantId(), resource);
-            publishEvictEvent(new ResourceInfoEvictEvent(new ResourceInfoCacheKey(resource.getTenantId(), resource.getId())));
+            publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));
             return saved;
         } catch (Exception t) {
-            publishEvictEvent(new ResourceInfoEvictEvent(new ResourceInfoCacheKey(resource.getTenantId(), resource.getId())));
+            publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("resource_unq_key")) {
                 String field = ResourceType.LWM2M_MODEL.equals(resource.getResourceType()) ? "resourceKey" : "fileName";
@@ -177,9 +178,11 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 }
             };
 
-    @TransactionalEventListener(classes = ResourceInfoCacheKey.class)
+    @TransactionalEventListener(classes = ResourceInfoEvictEvent.class)
     @Override
     public void handleEvictEvent(ResourceInfoEvictEvent event) {
-        cache.evict(event.getKey());
+        if (event.getResourceId() != null) {
+            cache.evict(new ResourceInfoCacheKey(event.getTenantId(), event.getResourceId()));
+        }
     }
 }
