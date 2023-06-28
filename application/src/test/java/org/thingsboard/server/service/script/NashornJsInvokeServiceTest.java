@@ -122,7 +122,7 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
     }
 
     private String invokeScript(UUID scriptId, String msg) throws ExecutionException, InterruptedException {
-        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.getRuleNodeConnection()).get().toString();
+        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.name()).get().toString();
     }
 
 }
