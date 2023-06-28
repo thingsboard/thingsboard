@@ -18,7 +18,7 @@ package org.thingsboard.server.service.notification;
 import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
-import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -27,18 +27,14 @@ import org.thingsboard.server.common.data.notification.settings.NotificationDeli
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
-import org.thingsboard.server.common.data.notification.template.HasSubject;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
-import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.util.TemplateUtils;
 
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @SuppressWarnings("unchecked")
 public class NotificationProcessingContext {
@@ -86,12 +82,11 @@ public class NotificationProcessingContext {
 
     public <T extends DeliveryMethodNotificationTemplate> T getProcessedTemplate(NotificationDeliveryMethod deliveryMethod, NotificationRecipient recipient) {
         T template = (T) templates.get(deliveryMethod);
-        Map<String, String> additionalTemplateContext = null;
         if (recipient != null) {
-            additionalTemplateContext = createTemplateContextForRecipient(recipient);
-        }
-        if (MapUtils.isNotEmpty(additionalTemplateContext) && template.containsAny(additionalTemplateContext.keySet().toArray(String[]::new))) {
-            template = processTemplate(template, additionalTemplateContext);
+            Map<String, String> additionalTemplateContext = createTemplateContextForRecipient(recipient);
+            if (template.getTemplatableValues().stream().anyMatch(value -> value.containsParams(additionalTemplateContext.keySet()))) {
+                template = processTemplate(template, additionalTemplateContext);
+            }
         }
         return template;
     }
@@ -107,22 +102,13 @@ public class NotificationProcessingContext {
         if (templateContext.isEmpty()) return template;
 
         template = (T) template.copy();
-        template.setBody(TemplateUtils.processTemplate(template.getBody(), templateContext));
-        if (template instanceof HasSubject) {
-            String subject = ((HasSubject) template).getSubject();
-            ((HasSubject) template).setSubject(TemplateUtils.processTemplate(subject, templateContext));
-        }
-        if (template instanceof WebDeliveryMethodNotificationTemplate) {
-            WebDeliveryMethodNotificationTemplate webNotificationTemplate = (WebDeliveryMethodNotificationTemplate) template;
-            String buttonText = webNotificationTemplate.getButtonText();
-            if (isNotEmpty(buttonText)) {
-                webNotificationTemplate.setButtonText(TemplateUtils.processTemplate(buttonText, templateContext));
+        template.getTemplatableValues().forEach(templatableValue -> {
+            String value = templatableValue.get();
+            if (StringUtils.isNotEmpty(value)) {
+                value = TemplateUtils.processTemplate(value, templateContext);
+                templatableValue.set(value);
             }
-            String buttonLink = webNotificationTemplate.getButtonLink();
-            if (isNotEmpty(buttonLink)) {
-                webNotificationTemplate.setButtonLink(TemplateUtils.processTemplate(buttonLink, templateContext));
-            }
-        }
+        });
         return template;
     }
 

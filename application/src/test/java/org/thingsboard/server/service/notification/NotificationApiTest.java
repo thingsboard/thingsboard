@@ -23,9 +23,10 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestTemplate;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
@@ -36,7 +37,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestPrevie
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationType;
-import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
@@ -66,20 +67,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @DaoSqlTest
 @Slf4j
@@ -554,12 +553,13 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         var template = new MicrosoftTeamsDeliveryMethodNotificationTemplate();
         template.setEnabled(true);
-        template.setSubject("This is subject");
-        template.setBody("This is text");
+        String templateParams = "${recipientTitle} - ${entityType}";
+        template.setSubject("Subject: " + templateParams);
+        template.setBody("Body: " + templateParams);
         template.setThemeColor("ff0000");
         var button = new MicrosoftTeamsDeliveryMethodNotificationTemplate.Button();
-        button.setName("Go to ThingsBoard Cloud");
-        button.setUri("https://thingsboard.cloud");
+        button.setName("Button: " + templateParams);
+        button.setUri("https://" + templateParams);
         template.setButton(button);
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setName("Notification to Teams");
@@ -576,23 +576,28 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                 .originatorEntityId(tenantAdminUserId)
                 .templateId(notificationTemplate.getId())
                 .targets(List.of(target.getUuidId()))
+                .info(EntityActionNotificationInfo.builder()
+                        .entityId(new DeviceId(UUID.randomUUID())) // to test templatization
+                        .actionType(ActionType.ADDED)
+                        .userId(tenantAdminUserId.getId())
+                        .build())
                 .build();
 
         NotificationRequestPreview preview = doPost("/api/notification/request/preview", notificationRequest, NotificationRequestPreview.class);
-        System.err.println(preview);
         assertThat(preview.getRecipientsCountByTarget().get(target.getName())).isEqualTo(1);
         assertThat(preview.getRecipientsPreview()).containsOnly(targetConfig.getChannelName());
 
         var messageCaptor = ArgumentCaptor.forClass(MicrosoftTeamsNotificationChannel.Message.class);
-        doPost("/api/notification/request", notificationRequest, NotificationRequest.class);
+        notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
         verify(restTemplate, timeout(20000)).postForEntity(eq(webhookUrl), messageCaptor.capture(), any());
 
         var message = messageCaptor.getValue();
+        String expectedParams = "My channel - Device";
         assertThat(message.getThemeColor()).isEqualTo(template.getThemeColor());
-        assertThat(message.getSections().get(0).getActivityTitle()).isEqualTo(template.getSubject());
-        assertThat(message.getSections().get(0).getActivitySubtitle()).isEqualTo(template.getBody());
-        assertThat(message.getPotentialAction().get(0).getName()).isEqualTo(button.getName());
-        assertThat(message.getPotentialAction().get(0).getTargets().get(0).getUri()).isEqualTo(button.getUri());
+        assertThat(message.getSections().get(0).getActivityTitle()).isEqualTo("Subject: " + expectedParams);
+        assertThat(message.getSections().get(0).getActivitySubtitle()).isEqualTo("Body: " + expectedParams);
+        assertThat(message.getPotentialAction().get(0).getName()).isEqualTo("Button: " + expectedParams);
+        assertThat(message.getPotentialAction().get(0).getTargets().get(0).getUri()).isEqualTo("https://" + expectedParams);
     }
 
     private void checkFullNotificationsUpdate(UnreadNotificationsUpdate notificationsUpdate, String... expectedNotifications) {

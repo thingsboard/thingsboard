@@ -22,11 +22,17 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class SlackDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
+
+    private final List<TemplatableValue> templatableValues = List.of(
+            TemplatableValue.of(this::getBody, this::setBody)
+    );
 
     public SlackDeliveryMethodNotificationTemplate(DeliveryMethodNotificationTemplate other) {
         super(other);

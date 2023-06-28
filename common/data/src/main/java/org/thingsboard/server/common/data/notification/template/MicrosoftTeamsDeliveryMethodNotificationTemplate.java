@@ -1,15 +1,27 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.common.data.notification.template;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -23,8 +35,22 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
 
     private String customMessageCardJson;
 
-    public MicrosoftTeamsDeliveryMethodNotificationTemplate(DeliveryMethodNotificationTemplate other) {
+    private final List<TemplatableValue> templatableValues = List.of(
+            TemplatableValue.of(this::getBody, this::setBody),
+            TemplatableValue.of(this::getSubject, this::setSubject),
+            TemplatableValue.of(() -> button != null ? button.getName() : null,
+                    processed -> {if (button != null) button.setName(processed);}),
+            TemplatableValue.of(() -> button != null ? button.getUri() : null,
+                    processed -> {if (button != null) button.setUri(processed);}),
+            TemplatableValue.of(this::getCustomMessageCardJson, this::setCustomMessageCardJson)
+    );
+
+    public MicrosoftTeamsDeliveryMethodNotificationTemplate(MicrosoftTeamsDeliveryMethodNotificationTemplate other) {
         super(other);
+        this.subject = other.subject;
+        this.themeColor = other.themeColor;
+        this.button = other.button != null ? new Button(other.button) : null;
+        this.customMessageCardJson = other.customMessageCardJson;
     }
 
     @Override
@@ -37,21 +63,16 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
         return new MicrosoftTeamsDeliveryMethodNotificationTemplate(this);
     }
 
-    @Override
-    public List<TemplatableValue> getTemplatableValues() {
-        return List.of(
-                TemplatableValue.of(body, this::setBody),
-                TemplatableValue.of(subject, this::setSubject),
-                TemplatableValue.of(button, Button::getName, Button::setName),
-                TemplatableValue.of(button, Button::getUri, Button::setUri),
-                TemplatableValue.of(customMessageCardJson, this::setCustomMessageCardJson)
-        );
-    }
-
     @Data
+    @NoArgsConstructor
     public static class Button {
         private String name;
         private String uri;
+
+        public Button(Button other) {
+            this.name = other.name;
+            this.uri = other.uri;
+        }
     }
 
 }
