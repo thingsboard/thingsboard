@@ -231,7 +231,6 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         save(deviceId, LAST_CONNECT_TIME, ts);
         pushRuleEngineMessage(stateData, CONNECT_EVENT);
         checkAndUpdateState(deviceId, stateData);
-
     }
 
     @Override
@@ -285,7 +284,6 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         log.trace("on Device Activity Timeout Update device id {} inactivityTimeout {}", deviceId, inactivityTimeout);
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         stateData.getState().setInactivityTimeout(inactivityTimeout);
-        checkAndUpdateState(deviceId, stateData);
     }
 
     @Override
