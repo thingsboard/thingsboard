@@ -217,7 +217,7 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
 
     private String invokeScript(UUID scriptId, String str) throws ExecutionException, InterruptedException {
         var msg = JacksonUtil.fromString(str, Map.class);
-        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.getRuleNodeConnection()).get().toString();
+        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.name()).get().toString();
     }
 
 }
