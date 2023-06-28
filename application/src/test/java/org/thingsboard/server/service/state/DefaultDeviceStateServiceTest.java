@@ -22,20 +22,33 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.sql.query.EntityQueryRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -62,6 +75,8 @@ public class DefaultDeviceStateServiceTest {
     PartitionService partitionService;
     @Mock
     DeviceStateData deviceStateDataMock;
+    @Mock
+    EntityQueryRepository entityQueryRepository;
 
     DeviceId deviceId = DeviceId.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112");
 
@@ -69,7 +84,7 @@ public class DefaultDeviceStateServiceTest {
 
     @Before
     public void setUp() {
-        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, null, null, null, mock(NotificationRuleProcessor.class)));
+        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, null, mock(NotificationRuleProcessor.class)));
     }
 
     @Test
@@ -123,6 +138,58 @@ public class DefaultDeviceStateServiceTest {
         DeviceStateData deviceStateData = service.toDeviceStateData(new EntityData(deviceId, latest, Map.of()), new DeviceIdInfo(TenantId.SYS_TENANT_ID.getId(), UUID.randomUUID(), deviceUuid));
 
         Assert.assertEquals(5000L, deviceStateData.getState().getInactivityTimeout());
+    }
+
+    @Test
+    public void givenUpdateInactivityTimeoutAndThenNoStateChange() throws Exception {
+        TelemetrySubscriptionService telemetrySubscriptionService = Mockito.mock(TelemetrySubscriptionService.class);
+        ReflectionTestUtils.setField(service, "tsSubService", telemetrySubscriptionService);
+        ReflectionTestUtils.setField(service, "defaultStateCheckIntervalInSec", 60);
+        ReflectionTestUtils.setField(service, "defaultActivityStatsIntervalInSec", 60);
+        ReflectionTestUtils.setField(service, "defaultInactivityTimeoutMs", 60000);
+        ReflectionTestUtils.setField(service, "initFetchPackSize", 10);
+
+        Mockito.when(entityQueryRepository.findEntityDataByQueryInternal(Mockito.any())).thenReturn(new PageData<>());
+
+        service.init();
+        var tenantId = new TenantId(UUID.randomUUID());
+        var tpi = TopicPartitionInfo.builder().myPartition(true).build();
+        Mockito.when(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).thenReturn(tpi);
+
+        var deviceIdInfo = new DeviceIdInfo(tenantId.getId(), null, deviceId.getId());
+
+        Mockito.when(deviceService.findDeviceIdInfos(Mockito.any()))
+                .thenReturn(new PageData<>(List.of(deviceIdInfo), 0, 1, false));
+
+        Method method = AbstractPartitionBasedService.class.getDeclaredMethod("initStateFromDB", Set.class);
+        method.setAccessible(true);
+        method.invoke(service, Collections.singleton(tpi));
+
+        service.onAddedPartitions(Collections.singleton(tpi));
+
+        DeviceState deviceState = DeviceState.builder().build();
+
+        DeviceStateData deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .state(deviceState)
+                .metaData(new TbMsgMetaData())
+                .build();
+
+        service.deviceStates.put(deviceId, deviceStateData);
+
+        service.onDeviceActivity(tenantId, deviceId, System.currentTimeMillis());
+
+        Mockito.verify(telemetrySubscriptionService, Mockito.times(1)).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.eq(true), Mockito.any());
+
+        Mockito.reset(telemetrySubscriptionService);
+
+        service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, 1);
+
+        Mockito.verify(telemetrySubscriptionService, Mockito.never()).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.eq(false), Mockito.any());
+        service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, 60000);
+
+        Mockito.verify(telemetrySubscriptionService, Mockito.never()).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.eq(true), Mockito.any());
     }
 
 }
