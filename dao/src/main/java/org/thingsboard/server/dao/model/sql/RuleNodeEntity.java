@@ -49,6 +49,9 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
     @Column(name = ModelConstants.RULE_NODE_NAME_PROPERTY)
     private String name;
 
+    @Column(name = ModelConstants.RULE_NODE_VERSION_PROPERTY)
+    private int configurationVersion;
+
     @Type(type = "json")
     @Column(name = ModelConstants.RULE_NODE_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
@@ -81,6 +84,7 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
         this.name = ruleNode.getName();
         this.debugMode = ruleNode.isDebugMode();
         this.singletonMode = ruleNode.isSingletonMode();
+        this.configurationVersion = ruleNode.getConfigurationVersion();
         this.configuration = ruleNode.getConfiguration();
         this.additionalInfo = ruleNode.getAdditionalInfo();
         if (ruleNode.getExternalId() != null) {
@@ -99,6 +103,7 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
         ruleNode.setName(name);
         ruleNode.setDebugMode(debugMode);
         ruleNode.setSingletonMode(singletonMode);
+        ruleNode.setConfigurationVersion(configurationVersion);
         ruleNode.setConfiguration(configuration);
         ruleNode.setAdditionalInfo(additionalInfo);
         if (externalId != null) {

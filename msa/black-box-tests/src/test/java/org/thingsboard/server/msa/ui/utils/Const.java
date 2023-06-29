@@ -47,4 +47,5 @@ public class Const {
     public static final String DEVICE_PROFILE_IS_REQUIRED_MESSAGE = "Device profile is required";
     public static final String DEVICE_ACTIVE_STATE = "Active";
     public static final String DEVICE_INACTIVE_STATE = "Inactive";
+    public static final String PUBLIC_CUSTOMER_NAME = "Public";
 }

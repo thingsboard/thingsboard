@@ -2943,7 +2943,6 @@
         "name-required": "名称必填。",
         "name-max-length": "名称长度必须少于256个字符",
         "type": "类型",
-        "description": "说明",
         "delete": "删除规则节点",
         "select-all-objects": "选择所有节点和连接",
         "deselect-all-objects": "取消选择所有节点和连接",

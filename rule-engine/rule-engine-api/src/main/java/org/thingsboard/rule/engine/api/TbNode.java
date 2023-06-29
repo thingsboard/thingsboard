@@ -29,8 +29,10 @@ public interface TbNode {
 
     void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException;
 
-    default void destroy() {}
+    default void destroy() {
+    }
 
-    default void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {}
+    default void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
+    }
 
 }

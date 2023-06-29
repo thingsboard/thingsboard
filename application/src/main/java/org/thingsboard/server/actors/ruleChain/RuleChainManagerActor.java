@@ -23,6 +23,7 @@ import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.DefaultActorService;
+import org.thingsboard.server.actors.shared.RuleChainErrorActor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
 import java.util.function.Function;
@@ -86,7 +88,12 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
                 () -> DefaultActorService.RULE_DISPATCHER_NAME,
                 () -> {
                     RuleChain ruleChain = provider.apply(ruleChainId);
-                    return new RuleChainActor.ActorCreator(systemContext, tenantId, ruleChain);
+                    if (ruleChain == null) {
+                        return new RuleChainErrorActor.ActorCreator(systemContext, tenantId,
+                                new RuleEngineException("Rule Chain with id: " + ruleChainId + " not found!"));
+                    } else {
+                        return new RuleChainActor.ActorCreator(systemContext, tenantId, ruleChain);
+                    }
                 });
     }
 

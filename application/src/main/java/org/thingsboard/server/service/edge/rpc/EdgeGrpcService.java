@@ -380,21 +380,26 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void onEdgeDisconnect(EdgeId edgeId) {
-        log.info("[{}] edge disconnected!", edgeId);
-        EdgeGrpcSession removed = sessions.remove(edgeId);
-        final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
-        newEventLock.lock();
-        try {
-            sessionNewEvents.remove(edgeId);
-        } finally {
-            newEventLock.unlock();
+    private void onEdgeDisconnect(EdgeId edgeId, UUID sessionId) {
+        log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
+        EdgeGrpcSession toRemove = sessions.get(edgeId);
+        if (toRemove.getSessionId().equals(sessionId)) {
+            toRemove = sessions.remove(edgeId);
+            final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
+            newEventLock.lock();
+            try {
+                sessionNewEvents.remove(edgeId);
+            } finally {
+                newEventLock.unlock();
+            }
+            save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
+            long lastDisconnectTs = System.currentTimeMillis();
+            save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, lastDisconnectTs);
+            pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edgeId, lastDisconnectTs, DISCONNECT_EVENT);
+            cancelScheduleEdgeEventsCheck(edgeId);
+        } else {
+            log.debug("[{}] edge session [{}] is not available anymore, nothing to remove. most probably this session is already outdated!", edgeId, sessionId);
         }
-        save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
-        long lastDisconnectTs = System.currentTimeMillis();
-        save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, lastDisconnectTs);
-        pushRuleEngineMessage(removed.getEdge().getTenantId(), edgeId, lastDisconnectTs, DISCONNECT_EVENT);
-        cancelScheduleEdgeEventsCheck(edgeId);
     }
 
     private void save(EdgeId edgeId, String key, long value) {

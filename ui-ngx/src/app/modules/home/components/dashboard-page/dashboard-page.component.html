@@ -115,7 +115,7 @@
                     matTooltip="{{'action.save' | translate}}"
                     matTooltipPosition="below">
               <mat-icon>done</mat-icon></button>
-            <button fxHide.lt-lg mat-button (click)="saveDashboard()">
+            <button fxHide.lt-lg mat-stroked-button (click)="saveDashboard()">
               <mat-icon>done</mat-icon>{{ 'action.save' | translate }}</button>
             <button fxHide.gt-md mat-icon-button (click)="toggleDashboardEditMode()"
                     matTooltip="{{'action.cancel' | translate}}"
@@ -357,21 +357,32 @@
         <tb-details-panel *ngIf="!isEditingWidgetClosed" fxFlex
                           headerTitle="{{editingWidget?.config.title}}"
                           headerSubtitle="{{ editingWidgetSubtitle }}"
-                          [isReadOnly]="false"
-                          [isAlwaysEdit]="true"
-                          (closeDetails)="onEditWidgetClosed()"
-                          (toggleDetailsEditMode)="onRevertWidgetEdit()"
-                          (applyDetails)="saveWidget()"
-                          [theForm]="tbEditWidget.widgetFormGroup">
-          <div class="details-buttons">
+                          [isReadOnly]="true"
+                          (closeDetails)="onEditWidgetClosed()">
+          <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+            <tb-toggle-header *ngIf="tbEditWidget.hasBasicMode" (valueChange)="tbEditWidget.widgetConfigMode = $event" ignoreMdLgSize="true"
+                              appearance="fill-invert" [options]="[
+                                {
+                                   name: translate.instant('widget.basic-mode'),
+                                   value: 'basic'
+                                },
+                                {
+                                   name: translate.instant('widget.advanced-mode'),
+                                   value: 'advanced'
+                                }
+                              ]" [value]="tbEditWidget.widgetConfigMode" name="widgetConfigModeHeader" useSelectOnMdLg="false">
+            </tb-toggle-header>
             <div [tb-help]="helpLinkIdForWidgetType()"></div>
           </div>
           <tb-edit-widget #tbEditWidget
                           [dashboard]="dashboard"
                           [aliasController]="dashboardCtx.aliasController"
+                          [stateController]="dashboardCtx.stateController"
                           [widgetEditMode]="widgetEditMode"
                           [widget]="editingWidget"
-                          [widgetLayout]="editingWidgetLayout">
+                          [widgetLayout]="editingWidgetLayout"
+                          (revertWidgetConfig)="onRevertWidgetEdit()"
+                          (applyWidgetConfig)="saveWidget()">
           </tb-edit-widget>
         </tb-details-panel>
         <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex

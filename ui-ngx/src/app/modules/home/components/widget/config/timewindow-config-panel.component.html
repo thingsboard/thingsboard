@@ -1,0 +1,42 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="timewindowConfig" class="tb-widget-config-panel">
+  <div fxLayout="row" fxLayoutAlign="space-between center">
+    <div class="tb-widget-config-panel-title" translate>timewindow.timewindow</div>
+    <tb-toggle-header (valueChange)="timewindowConfig.get('useDashboardTimewindow').patchValue($event)" ignoreMdLgSize="true"
+                      [options]="[
+                                         { name: translate.instant('widget-config.use-dashboard-timewindow'), value: true},
+                                         { name: translate.instant('widget-config.use-widget-timewindow'), value: false}
+                                       ]"
+                      [value]="timewindowConfig.get('useDashboardTimewindow').value" name="useDashboardTimewindow" useSelectOnMdLg="false">
+    </tb-toggle-header>
+  </div>
+  <div class="tb-widget-config-row">
+    <tb-timewindow asButton="true"
+                   strokedButton
+                   isEdit="true"
+                   alwaysDisplayTypePrefix
+                   [historyOnly]="onlyHistoryTimewindow"
+                   quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
+                   aggregation="{{ widgetType === widgetTypes.timeseries }}"
+                   formControlName="timewindow"></tb-timewindow>
+    <mat-slide-toggle class="mat-slide" formControlName="displayTimewindow">
+      {{ 'widget-config.display-timewindow' | translate }}
+    </mat-slide-toggle>
+  </div>
+</div>

@@ -92,7 +92,7 @@ public final class EdgeGrpcSession implements Closeable {
 
     private final UUID sessionId;
     private final BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener;
-    private final Consumer<EdgeId> sessionCloseListener;
+    private final BiConsumer<EdgeId, UUID> sessionCloseListener;
 
     private final EdgeSessionState sessionState = new EdgeSessionState();
 
@@ -111,7 +111,7 @@ public final class EdgeGrpcSession implements Closeable {
     private ScheduledExecutorService sendDownlinkExecutorService;
 
     EdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream, BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener,
-                    Consumer<EdgeId> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService, int maxInboundMessageSize) {
+                    BiConsumer<EdgeId, UUID> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService, int maxInboundMessageSize) {
         this.sessionId = UUID.randomUUID();
         this.ctx = ctx;
         this.outputStream = outputStream;
@@ -180,7 +180,7 @@ public final class EdgeGrpcSession implements Closeable {
                 connected = false;
                 if (edge != null) {
                     try {
-                        sessionCloseListener.accept(edge.getId());
+                        sessionCloseListener.accept(edge.getId(), sessionId);
                     } catch (Exception ignored) {
                     }
                 }
@@ -288,7 +288,7 @@ public final class EdgeGrpcSession implements Closeable {
             } catch (Exception e) {
                 log.error("[{}] Failed to send downlink message [{}]", this.sessionId, downlinkMsg, e);
                 connected = false;
-                sessionCloseListener.accept(edge.getId());
+                sessionCloseListener.accept(edge.getId(), sessionId);
             } finally {
                 downlinkMsgLock.unlock();
             }

@@ -282,13 +282,9 @@ export class UtilsService {
 
   public validateDatasources(datasources: Array<Datasource>): Array<Datasource> {
     datasources.forEach((datasource) => {
-      // @ts-ignore
-      if (datasource.type === 'device') {
-        datasource.type = DatasourceType.entity;
-        datasource.entityType = EntityType.DEVICE;
-        if (datasource.deviceId) {
-          datasource.entityId = datasource.deviceId;
-        } else if (datasource.deviceAliasId) {
+      if (datasource.type === DatasourceType.device) {
+        if (datasource.deviceAliasId) {
+          datasource.type = DatasourceType.entity;
           datasource.entityAliasId = datasource.deviceAliasId;
         }
         if (datasource.deviceName) {
