@@ -31,6 +31,7 @@ import { DeviceService } from '@core/http/device.service';
 import { of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { DeviceCredentialsType } from '@shared/models/device.models';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 export enum StorageTypes {
   MEMORY = 'memory',
@@ -317,6 +318,7 @@ export class GatewayConfigurationComponent implements OnInit {
   }
 
   fetchConfigAttribute(entityId: EntityId) {
+    if (entityId.id === NULL_UUID) return;
     this.attributeService.getEntityAttributes(entityId, AttributeScope.CLIENT_SCOPE,
       ['general_configuration', 'grpc_configuration', 'logs_configuration', 'storage_configuration', 'RemoteLoggingLevel']).pipe(
       mergeMap(attributes => attributes.length ? of(attributes) : this.attributeService.getEntityAttributes(

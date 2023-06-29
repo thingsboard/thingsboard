@@ -39,6 +39,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 
 @Component({
@@ -124,8 +125,8 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     })
     this.init();
     if (this.ctx.defaultSubscription.datasources.length) {
-
       const gateway = this.ctx.defaultSubscription.datasources[0].entity;
+      if (gateway.id.id === NULL_UUID) return;
       if (!this.general) {
         this.attributeService.getEntityAttributes(gateway.id, AttributeScope.SHARED_SCOPE, ["general_configuration"]).subscribe((resp: AttributeData[]) => {
           if (resp && resp.length) {

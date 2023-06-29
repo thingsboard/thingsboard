@@ -39,6 +39,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { DialogService } from '@app/core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { deepClone } from '@core/utils';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 
 export interface gatewayConnector {
@@ -161,6 +162,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     this.viewsInited = true;
     if (this.device) {
+      if (this.device.id === NULL_UUID) return;
       forkJoin(this.attributeService.getEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, ['active_connectors']),
         this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, ['inactive_connectors'])).subscribe(attributes => {
         if (attributes.length) {
