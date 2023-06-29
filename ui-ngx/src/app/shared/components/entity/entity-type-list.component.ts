@@ -46,6 +46,7 @@ interface EntityTypeInfo {
     }
   ]
 })
+
 export class EntityTypeListComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
   entityTypeListFormGroup: UntypedFormGroup;
@@ -53,9 +54,6 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   modelValue: Array<EntityType> | null;
 
   private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
 
   @Input() label: string;
 
@@ -68,6 +66,9 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
       this.requiredValue = newVal;
       this.updateValidators();
     }
+  }
+  get required(): boolean {
+    return this.requiredValue;
   }
 
   @Input()
@@ -107,6 +108,14 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
       entityTypeList: [this.entityTypeList, this.required ? [Validators.required] : []],
       entityType: [null]
     });
+  }
+
+  public placeholderControl() {
+    if (!this.required && this.floatLabel === 'always' && this.entityTypeListFormGroup.get('entityTypeList').value.length === 0) {
+      return this.translate.instant('entity.any-entity');
+    } else {
+      return this.translate.instant('entity.add-entity-type');
+    }
   }
 
   updateValidators() {

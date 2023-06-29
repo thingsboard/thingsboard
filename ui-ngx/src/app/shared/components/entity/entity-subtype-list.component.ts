@@ -127,7 +127,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       case EntityType.ASSET:
         this.placeholder = this.required ? this.translate.instant('asset.add-asset-type')
           : this.translate.instant('asset.any-asset');
-        // this.secondaryPlaceholder = '+' + this.translate.instant('asset.asset-type');
         this.noSubtypesMathingText = 'asset.no-asset-types-matching';
         this.subtypeListEmptyText = 'asset.asset-type-list-empty';
         this.broadcastSubscription = this.broadcast.on('assetSaved', () => {
@@ -137,7 +136,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       case EntityType.DEVICE:
         this.placeholder = this.required ? this.translate.instant('device.add-device-type')
           : this.translate.instant('device.any-device');
-        // this.secondaryPlaceholder = '+' + this.translate.instant('device.device-type');
         this.noSubtypesMathingText = 'device.no-device-types-matching';
         this.subtypeListEmptyText = 'device.device-type-list-empty';
         this.broadcastSubscription = this.broadcast.on('deviceSaved', () => {
@@ -147,7 +145,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       case EntityType.EDGE:
         this.placeholder = this.required ? this.translate.instant('edge.add-edge-type')
           : this.translate.instant('edge.any-edge');
-        // this.secondaryPlaceholder = '+' + this.translate.instant('edge.edge-type');
         this.noSubtypesMathingText = 'edge.no-edge-types-matching';
         this.subtypeListEmptyText = 'edge.edge-type-list-empty';
         this.broadcastSubscription = this.broadcast.on('edgeSaved', () => {
@@ -157,7 +154,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       case EntityType.ENTITY_VIEW:
         this.placeholder = this.required ? this.translate.instant('entity-view.add-entity-view-type')
           : this.translate.instant('entity-view.any-entity-view');
-        // this.secondaryPlaceholder = '+' + this.translate.instant('entity-view.entity-view-type');
         this.noSubtypesMathingText = 'entity-view.no-entity-view-types-matching';
         this.subtypeListEmptyText = 'entity-view.entity-view-type-list-empty';
         this.broadcastSubscription = this.broadcast.on('entityViewSaved', () => {

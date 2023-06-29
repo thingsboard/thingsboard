@@ -25,8 +25,8 @@
       {{entityType.name}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
-    <input matInput type="text" placeholder="{{ (entityTypeListFormGroup.get('entityTypeList').value?.length > 0 ? 'entity.add-entity-type' :
-    'entity.any-entity') | translate }}"
+    <input matInput type="text"
+           [placeholder]="placeholderControl()"
            style="max-width: 200px;"
            #entityTypeInput
            (focusin)="onFocus()"

@@ -15,7 +15,7 @@
  */
 const forwardUrl = "http://localhost:8080";
 const wsForwardUrl = "ws://localhost:8080";
-const ruleNodeUiforwardUrl = "http://localhost:5000";
+const ruleNodeUiforwardUrl = forwardUrl;
 
 const PROXY_CONFIG = {
   "/api": {
