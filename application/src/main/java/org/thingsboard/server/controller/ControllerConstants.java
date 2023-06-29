@@ -223,6 +223,19 @@ public class ControllerConstants {
                     "   }\n" +
                     "}";
 
+    protected static final String DEVICE_UPDATE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION =
+                    "{\n" +
+                    "  \"id\": {\n" +
+                    "    \"id\":\"c886a090-168d-11ee-87c9-6f157dbc816a\"\n" +
+                    "   },\n" +
+                    "  \"deviceId\": {\n" +
+                    "    \"id\":\"c5fb3ac0-168d-11ee-87c9-6f157dbc816a\",\n" +
+                    "    \"entityType\":\"DEVICE\"\n" +
+                    "   },\n" +
+                    "  \"credentialsType\": \"ACCESS_TOKEN\",\n" +
+                    "  \"credentialsId\": \"6hmxew8pmmzng4e3une4\"\n" +
+                    "}";
+
     protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_DEFAULT_PARAM_DESCRIPTION =
                     "{\n" +
                     "  \"device\": {\n" +
@@ -242,40 +255,75 @@ public class ControllerConstants {
 
     protected static final String certificateId =  "\"84f5911765abba1f96bf4165604e9e90338fc6214081a8e623b6ff9669aedb27\"";
 
+    protected static final String certificateValueUpdate = "\"-----BEGIN CERTIFICATE----- " +
+        "MIICMTCCAdegAwIBAgIUUEKxS9hTz4l+oLUMF0LV6TC/gCIwCgYIKoZIzj0EAwIwbjELMAkGA1UEBhMCVVMxETAPBgNVBAgMCE5ldyBZb3JrMRowGAYDVQQKDBFUaGluZ3NCb2FyZCwgSW5jLjEwMC4GA1UEAwwnZGV2aWNlUHJvZmlsZUNlcnRAWDUwOVByb3Zpc2lvblN0cmF0ZWd5MB4XDTIzMDMyOTE0NTczNloXDTI0MDMyODE0NTczNlowbjELMAkGA1UEBhMCVVMxETAPBgNVBAgMCE5ldyBZb3JrMRowGAYDVQQKDBFUaGluZ3NCb2FyZCwgSW5jLjEwMC4GA1UEAwwnZGV2aWNlUHJvZmlsZUNlcnRAWDUwOVByb3Zpc2lvblN0cmF0ZWd5MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAECMlWO72krDoUL9FQjUmSCetkhaEGJUfQkdSfkLSNa0GyAEIMbfmzI4zITeapunu4rGet3EMyLydQzuQanBicp6NTMFEwHQYDVR0OBBYEFHpZ78tPnztNii4Da/yCw6mhEIL3MB8GA1UdIwQYMBaAFHpZ78tPnztNii4Da/yCw6mhEIL3MA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSAAwRQIgJ7qyMFqNcwSYkH6o+UlQXzLWfwZbNjVk+aR7foAZNGsCIQDsd7v3WQIGHiArfZeDs1DLEDuV/2h6L+ZNoGNhEKL+1A== " +
+        "-----END CERTIFICATE-----\"";
+
+    protected static final String certificateIdUpdate =  "\"6b8adb49015500e51a527acd332b51684ab9b49b4ade03a9582a44c455e2e9b6\"";
+
     protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_X509_CERTIFICATE_PARAM_DESCRIPTION =
             "{\n" +
-                    "  \"device\": {\n" +
-                    "    \"name\":\"Name_DeviceWithCredantial_X509_Certificate\",\n" +
-                    "    \"label\":\"Label_DeviceWithCredantial_X509_Certificate\",\n" +
-                    "    \"deviceProfileId\":{\n" +
-                    "      \"id\":\"9d9588c0-06c9-11ee-b618-19be30fdeb60\",\n" +
-                    "      \"entityType\":\"DEVICE_PROFILE\"\n" +
-                    "     }\n" +
-                    "   },\n" +
-                    "  \"credentials\": {\n" +
-                    "    \"credentialsType\": \"X509_CERTIFICATE\",\n" +
-                    "    \"credentialsId\": " + certificateId + ",\n" +
-                    "    \"credentialsValue\": " + certificateValue + "\n" +
-                    "   }\n" +
-                    "}";
+            "  \"device\": {\n" +
+            "    \"name\":\"Name_DeviceWithCredantial_X509_Certificate\",\n" +
+            "    \"label\":\"Label_DeviceWithCredantial_X509_Certificate\",\n" +
+            "    \"deviceProfileId\":{\n" +
+            "      \"id\":\"9d9588c0-06c9-11ee-b618-19be30fdeb60\",\n" +
+            "      \"entityType\":\"DEVICE_PROFILE\"\n" +
+            "     }\n" +
+            "   },\n" +
+            "  \"credentials\": {\n" +
+            "    \"credentialsType\": \"X509_CERTIFICATE\",\n" +
+            "    \"credentialsId\": " + certificateId + ",\n" +
+            "    \"credentialsValue\": " + certificateValue + "\n" +
+            "   }\n" +
+            "}";
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_X509_CERTIFICATE_PARAM_DESCRIPTION =
+            "{\n" +
+            "  \"id\": {\n" +
+            "    \"id\":\"309bd9c0-14f4-11ee-9fc9-d9b7463abb63\"\n" +
+            "   },\n" +
+            "  \"deviceId\": {\n" +
+            "    \"id\":\"3092b200-14f4-11ee-9fc9-d9b7463abb63\",\n" +
+            "    \"entityType\":\"DEVICE\"\n" +
+            "   },\n" +
+            "  \"credentialsType\": \"X509_CERTIFICATE\",\n" +
+            "  \"credentialsId\": " + certificateIdUpdate + ",\n" +
+            "  \"credentialsValue\": " + certificateValueUpdate + "\n" +
+            "}";
 
     protected static final String MQTT_BASIC_VALUE = "\"{\\\"clientId\\\":\\\"5euh5nzm34bjjh1efmlt\\\",\\\"userName\\\":\\\"onasd1lgwasmjl7v2v7h\\\",\\\"password\\\":\\\"b9xtm4ny8kt9zewaga5o\\\"}\"";
 
+    protected static final String MQTT_BASIC_VALUE_UPDATE = "\"{\\\"clientId\\\":\\\"juy03yv4owqxcmqhqtvk\\\",\\\"userName\\\":\\\"ov19fxca0cyjn7lm7w7u\\\",\\\"password\\\":\\\"twy94he114dfi9usyk1o\\\"}\"";
+
     protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_MQTT_BASIC_PARAM_DESCRIPTION =
             "{\n" +
-                    "  \"device\": {\n" +
-                    "    \"name\":\"Name_DeviceWithCredantial_MQTT_Basic\",\n" +
-                    "    \"label\":\"Label_DeviceWithCredantial_MQTT_Basic\",\n" +
-                    "    \"deviceProfileId\":{\n" +
-                    "      \"id\":\"9d9588c0-06c9-11ee-b618-19be30fdeb60\",\n" +
-                    "      \"entityType\":\"DEVICE_PROFILE\"\n" +
-                    "     }\n" +
-                    "   },\n" +
-                    "  \"credentials\": {\n" +
-                    "    \"credentialsType\": \"MQTT_BASIC\",\n" +
-                    "    \"credentialsValue\": " + MQTT_BASIC_VALUE + "\n" +
-                    "   }\n" +
-                    "}";
+            "  \"device\": {\n" +
+            "    \"name\":\"Name_DeviceWithCredantial_MQTT_Basic\",\n" +
+            "    \"label\":\"Label_DeviceWithCredantial_MQTT_Basic\",\n" +
+            "    \"deviceProfileId\":{\n" +
+            "      \"id\":\"9d9588c0-06c9-11ee-b618-19be30fdeb60\",\n" +
+            "      \"entityType\":\"DEVICE_PROFILE\"\n" +
+            "     }\n" +
+            "   },\n" +
+            "  \"credentials\": {\n" +
+            "    \"credentialsType\": \"MQTT_BASIC\",\n" +
+            "    \"credentialsValue\": " + MQTT_BASIC_VALUE + "\n" +
+            "   }\n" +
+            "}";
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_MQTT_BASIC_PARAM_DESCRIPTION =
+            "{\n" +
+            "  \"id\": {\n" +
+            "    \"id\":\"d877ffb0-14f5-11ee-9fc9-d9b7463abb63\"\n" +
+            "   },\n" +
+            "  \"deviceId\": {\n" +
+            "    \"id\":\"d875dcd0-14f5-11ee-9fc9-d9b7463abb63\",\n" +
+            "    \"entityType\":\"DEVICE\"\n" +
+            "   },\n" +
+            "  \"credentialsType\": \"MQTT_BASIC\",\n" +
+            "  \"credentialsValue\": " + MQTT_BASIC_VALUE_UPDATE + "\n" +
+            "}";
 
     protected static final String CREDENTIALS_VALUE_LVM2M_RPK_DESCRIPTION =
        "       \"{" +
@@ -283,6 +331,26 @@ public class ControllerConstants {
                        "\\\"endpoint\\\":\\\"LwRpk00000000\\\", " +
                        "\\\"securityConfigClientMode\\\":\\\"RPK\\\", " +
                        "\\\"key\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\"" +
+               "   }, " +
+                   "\\\"bootstrap\\\":{ " +
+                        "\\\"bootstrapServer\\\":{ " +
+                            "\\\"securityMode\\\":\\\"RPK\\\", " +
+                            "\\\"clientPublicKeyOrId\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\", " +
+                            "\\\"clientSecretKey\\\":\\\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\\\"" +
+                        "}, " +
+                        "\\\"lwm2mServer\\\":{ \\\"securityMode\\\":\\\"RPK\\\", " +
+                            "\\\"clientPublicKeyOrId\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\", " +
+                            "\\\"clientSecretKey\\\":\\\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\\\"" +
+                        "}" +
+                   "} " +
+               "}\"";
+
+    protected static final String CREDENTIALS_VALUE_UPDATE_LVM2M_RPK_DESCRIPTION =
+       "       \"{" +
+                   "\\\"client\\\":{ " +
+                       "\\\"endpoint\\\":\\\"LwRpk00000000\\\", " +
+                       "\\\"securityConfigClientMode\\\":\\\"RPK\\\", " +
+                       "\\\"key\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdvBZZ2vQRK9wgDhctj6B1c7bxR3Z0wYg1+YdoYFnVUKWb+rIfTTyYK9tmQJx5Vlb5fxdLnVv1RJOPiwsLIQbAA==\\\"" +
                "   }, " +
                    "\\\"bootstrap\\\":{ " +
                         "\\\"bootstrapServer\\\":{ " +
@@ -314,6 +382,20 @@ public class ControllerConstants {
            "   }\n" +
            "}";
 
+   protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION =
+           "{\n" +
+           "  \"id\": {\n" +
+           "    \"id\":\"e238d4d0-1689-11ee-98c6-1713c1be5a8e\"\n" +
+           "   },\n" +
+           "  \"deviceId\": {\n" +
+           "    \"id\":\"e232e160-1689-11ee-98c6-1713c1be5a8e\",\n" +
+           "    \"entityType\":\"DEVICE\"\n" +
+           "   },\n" +
+           "  \"credentialsType\": \"LWM2M_CREDENTIALS\",\n" +
+           "  \"credentialsId\": \"LwRpk00000000\",\n" +
+           "  \"credentialsValue\":\n" + CREDENTIALS_VALUE_UPDATE_LVM2M_RPK_DESCRIPTION + "\n" +
+           "}";
+
    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN =
             MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
 
@@ -329,8 +411,21 @@ public class ControllerConstants {
    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN =
             MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
 
+    protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_UPDATE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
 
-   protected static final String FILTER_VALUE_TYPE = NEW_LINE + "## Value Type and Operations" + NEW_LINE +
+    protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_UPDATE_CREDENTIALS_X509_CERTIFICATE_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_UPDATE_CREDENTIALS_MQTT_BASIC_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+
+
+    protected static final String FILTER_VALUE_TYPE = NEW_LINE + "## Value Type and Operations" + NEW_LINE +
             "Provides a hint about the data type of the entity field that is defined in the filter key. " +
             "The value type impacts the list of possible operations that you may use in the corresponding predicate. For example, you may use 'STARTS_WITH' or 'END_WITH', but you can't use 'GREATER_OR_EQUAL' for string values." +
             "The following filter value types and corresponding predicate operations are supported: " + NEW_LINE +
