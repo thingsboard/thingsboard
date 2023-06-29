@@ -47,6 +47,8 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     private String resourceKey;
     @Schema(description = "Resource search text.", example = "19_1.0:binaryappdatacontainer", accessMode = Schema.AccessMode.READ_ONLY)
     private String searchText;
+    @Schema(description = "Resource etag.", example = "33a64df551425fcc55e4d42a148795d9f25f89d4", accessMode = Schema.AccessMode.READ_ONLY)
+    private String etag;
 
     public TbResourceInfo() {
         super();
@@ -63,12 +65,13 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         this.resourceType = resourceInfo.getResourceType();
         this.resourceKey = resourceInfo.getResourceKey();
         this.searchText = resourceInfo.getSearchText();
+        this.etag = resourceInfo.getEtag();
     }
 
     @Schema(description = "JSON object with the Resource Id. " +
             "Specify this field to update the Resource. " +
             "Referencing non-existing Resource Id will cause error. " +
-            "Omit this field to create new Resource." )
+            "Omit this field to create new Resource.")
     @Override
     public TbResourceId getId() {
         return super.getId();
@@ -106,6 +109,8 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         builder.append(resourceType);
         builder.append(", resourceKey=");
         builder.append(resourceKey);
+        builder.append(", hashCode=");
+        builder.append(etag);
         builder.append("]");
         return builder.toString();
     }

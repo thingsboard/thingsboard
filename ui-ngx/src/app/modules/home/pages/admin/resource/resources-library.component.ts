@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import {
   Resource,
@@ -29,8 +29,9 @@ import {
   ResourceTypeMIMETypes,
   ResourceTypeTranslationMap
 } from '@shared/models/resource.models';
-import {filter, pairwise, startWith, takeUntil} from 'rxjs/operators';
+import { filter, startWith, takeUntil } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-resources-library',
@@ -39,7 +40,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 export class ResourcesLibraryComponent extends EntityComponent<Resource> implements OnInit, OnDestroy {
 
   readonly resourceType = ResourceType;
-  readonly resourceTypes = Object.values(this.resourceType);
+  readonly resourceTypes: ResourceType[] = Object.values(this.resourceType);
   readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
 
   private destroy$ = new Subject<void>();
@@ -48,7 +49,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: Resource,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Resource>,
-              public fb: UntypedFormBuilder,
+              public fb: FormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -56,7 +57,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   ngOnInit() {
     super.ngOnInit();
     this.entityForm.get('resourceType').valueChanges.pipe(
-      startWith(ResourceType.LWM2M_MODEL),
+      startWith(ResourceType.JS_MODULE),
       filter(() => this.isAdd),
       takeUntil(this.destroy$)
     ).subscribe((type) => {
@@ -87,31 +88,37 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     }
   }
 
-  buildForm(entity: Resource): UntypedFormGroup {
-    const form = this.fb.group(
-      {
-        title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
-        resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL, [Validators.required]],
-        fileName: [entity ? entity.fileName : null, [Validators.required]],
-      }
-    );
-    if (this.isAdd) {
-      form.addControl('data', this.fb.control(null, Validators.required));
-    }
-    return form;
+  buildForm(entity: Resource): FormGroup {
+    return this.fb.group({
+      title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
+      resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.JS_MODULE, Validators.required],
+      fileName: [entity ? entity.fileName : null, Validators.required],
+      data: [entity ? entity.data : null, Validators.required]
+    });
   }
 
   updateForm(entity: Resource) {
     this.entity.name = entity.title;
     if (this.isEdit) {
       this.entityForm.get('resourceType').disable({emitEvent: false});
-      this.entityForm.get('fileName').disable({emitEvent: false});
+      if (entity.resourceType !== ResourceType.JS_MODULE) {
+        this.entityForm.get('fileName').disable({emitEvent: false});
+        this.entityForm.get('data').disable({emitEvent: false});
+      }
     }
     this.entityForm.patchValue({
       resourceType: entity.resourceType,
       fileName: entity.fileName,
-      title: entity.title
+      title: entity.title,
+      data: entity.data
     });
+  }
+
+  prepareFormValue(formValue: Resource): Resource {
+    if (this.isEdit && !isDefinedAndNotNull(formValue.data)) {
+      delete formValue.data;
+    }
+    return super.prepareFormValue(formValue);
   }
 
   getAllowedExtensions() {

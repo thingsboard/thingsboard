@@ -21,9 +21,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.validation.Length;
+
+import java.util.Objects;
 
 /**
  * @author Andrew Shvayka
@@ -47,6 +48,8 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
     @Getter @Setter private String clazz;
     @Schema(description = "Complex JSON object that represents the Rule Node configuration.", accessMode = Schema.AccessMode.READ_ONLY)
     @Getter @Setter private transient JsonNode configurationDescriptor;
+    @Schema(description = "Rule node configuration version. By default, this value is 0. If the rule node is a versioned node, this value might be greater than 0.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Getter @Setter private int configurationVersion;
     @Length(fieldName = "actions")
     @Schema(description = "Rule Node Actions. Deprecated. Always null.", accessMode = Schema.AccessMode.READ_ONLY)
     @Getter @Setter private String actions;
@@ -63,9 +66,11 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
         super(plugin);
         this.type = plugin.getType();
         this.scope = plugin.getScope();
+        this.clusteringMode = plugin.getClusteringMode();
         this.name = plugin.getName();
         this.clazz = plugin.getClazz();
         this.configurationDescriptor = plugin.getConfigurationDescriptor();
+        this.configurationVersion = plugin.getConfigurationVersion();
         this.actions = plugin.getActions();
     }
 
@@ -93,10 +98,11 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
 
         if (type != that.type) return false;
         if (scope != that.scope) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (actions != null ? !actions.equals(that.actions) : that.actions != null) return false;
-        if (configurationDescriptor != null ? !configurationDescriptor.equals(that.configurationDescriptor) : that.configurationDescriptor != null) return false;
-        return clazz != null ? clazz.equals(that.clazz) : that.clazz == null;
+        if (!Objects.equals(name, that.name)) return false;
+        if (!Objects.equals(actions, that.actions)) return false;
+        if (!Objects.equals(configurationDescriptor, that.configurationDescriptor)) return false;
+        if (configurationVersion != that.configurationVersion) return false;
+        return Objects.equals(clazz, that.clazz);
     }
 
     @Override

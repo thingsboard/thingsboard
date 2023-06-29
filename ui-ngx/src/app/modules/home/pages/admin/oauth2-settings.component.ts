@@ -570,4 +570,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   trackByParams(index: number): number {
     return index;
   }
+
+  trackByItem(i, item) {
+    return item;
+  }
 }

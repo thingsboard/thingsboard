@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
@@ -34,6 +35,7 @@ public class QueueId extends UUIDBased implements EntityId {
         return new QueueId(UUID.fromString(queueId));
     }
 
+    @Schema(required = true, description = "string", example = "QUEUE", allowableValues = "QUEUE")
     @Override
     public EntityType getEntityType() {
         return EntityType.QUEUE;

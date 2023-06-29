@@ -26,8 +26,8 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
@@ -36,6 +36,8 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -82,6 +84,14 @@ public class NotificationRule extends BaseData<NotificationRuleId> implements Ha
     public boolean isValid() {
         return triggerType == triggerConfig.getTriggerType() &&
                 triggerType == recipientsConfig.getTriggerType();
+    }
+
+    @JsonIgnore
+    public String getDeduplicationKey() {
+        String targets = recipientsConfig.getTargetsTable().values().stream()
+                .flatMap(List::stream).sorted().map(Object::toString)
+                .collect(Collectors.joining(","));
+        return String.join(":", targets, triggerConfig.getDeduplicationKey());
     }
 
 }

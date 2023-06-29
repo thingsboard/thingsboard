@@ -207,7 +207,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void closeCtx(ChannelHandlerContext ctx) {
         if (!rpcAwaitingAck.isEmpty()) {
-            log.debug("[{}] Cleanup rpc awaiting ack map due to session close!", sessionId);
+            log.debug("[{}] Cleanup RPC awaiting ack map due to session close!", sessionId);
             rpcAwaitingAck.clear();
         }
         ctx.close();
@@ -1229,7 +1229,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     @Override
     public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
-        log.trace("[{}] Received RPC command to device", sessionId);
+        log.trace("[{}][{}] Received RPC command to device: {}", deviceSessionCtx.getDeviceId(), sessionId, rpcRequest);
         try {
             if (sparkplugSessionHandler != null) {
                 handleToSparkplugDeviceRpcRequest(rpcRequest);
@@ -1240,7 +1240,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         .ifPresent(payload -> sendToDeviceRpcRequest(payload, rpcRequest, deviceSessionCtx.getSessionInfo()));
             }
         } catch (Exception e) {
-            log.trace("[{}] Failed to convert device RPC command to MQTT msg", sessionId, e);
+            log.trace("[{}][{}] Failed to convert device RPC command to MQTT msg", deviceSessionCtx.getDeviceId(), sessionId, e);
             this.sendErrorRpcResponse(deviceSessionCtx.getSessionInfo(), rpcRequest.getRequestId(),
                     ThingsboardErrorCode.INVALID_ARGUMENTS,
                     "Failed to convert device RPC command to MQTT msg: " + rpcRequest.getMethodName() + rpcRequest.getParams());
@@ -1273,30 +1273,35 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     public void sendToDeviceRpcRequest(MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
         int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
+        int requestId = rpcRequest.getRequestId();
         if (isAckExpected(payload)) {
             rpcAwaitingAck.put(msgId, rpcRequest);
             context.getScheduler().schedule(() -> {
                 TransportProtos.ToDeviceRpcRequestMsg msg = rpcAwaitingAck.remove(msgId);
                 if (msg != null) {
+                    log.trace("[{}][{}][{}] Going to send to device actor RPC request TIMEOUT status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
                     transportService.process(sessionInfo, rpcRequest, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
                 }
             }, Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(), rpcRequest.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
         }
         var cf = publish(payload, deviceSessionCtx);
         cf.addListener(result -> {
-            if (result.cause() == null) {
-                if (!isAckExpected(payload)) {
-                    transportService.process(sessionInfo, rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
-                } else if (rpcRequest.getPersisted()) {
-                    transportService.process(sessionInfo, rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);
-                }
-                if (sparkplugSessionHandler != null) {
-                    this.sendSuccessRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.CONTENT, "Success: " + rpcRequest.getMethodName());
-                }
-            } else {
-                log.trace("[{}] Failed send To Device Rpc Request [{}]", sessionId, rpcRequest.getMethodName());
-                this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(),
+            Throwable throwable = result.cause();
+            if (throwable != null) {
+                log.trace("[{}][{}][{}] Failed send RPC request to device due to: ", deviceSessionCtx.getDeviceId(), sessionId, requestId, throwable);
+                this.sendErrorRpcResponse(sessionInfo, requestId,
                         ThingsboardErrorCode.INVALID_ARGUMENTS, " Failed send To Device Rpc Request: " + rpcRequest.getMethodName());
+                return;
+            }
+            if (!isAckExpected(payload)) {
+                log.trace("[{}][{}][{}] Going to send to device actor RPC request DELIVERED status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
+                transportService.process(sessionInfo, rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+            } else if (rpcRequest.getPersisted()) {
+                log.trace("[{}][{}][{}] Going to send to device actor RPC request SENT status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
+                transportService.process(sessionInfo, rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+            }
+            if (sparkplugSessionHandler != null) {
+                this.sendSuccessRpcResponse(sessionInfo, requestId, ResponseCode.CONTENT, "Success: " + rpcRequest.getMethodName());
             }
         });
     }

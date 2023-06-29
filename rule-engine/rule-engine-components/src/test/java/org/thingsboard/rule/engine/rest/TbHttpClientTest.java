@@ -16,8 +16,11 @@
 package org.thingsboard.rule.engine.rest;
 
 
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +40,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
@@ -50,11 +56,32 @@ import static org.mockserver.model.HttpResponse.response;
 
 public class TbHttpClientTest {
 
+    EventLoopGroup eventLoop;
     TbHttpClient client;
 
     @Before
     public void setUp() throws Exception {
         client = mock(TbHttpClient.class);
+        willCallRealMethod().given(client).getSharedOrCreateEventLoopGroup(any());
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (eventLoop != null) {
+            eventLoop.shutdownGracefully();
+        }
+    }
+
+    @Test
+    public void givenSharedEventLoop_whenGetEventLoop_ThenReturnShared() {
+        eventLoop = mock(EventLoopGroup.class);
+        assertThat(client.getSharedOrCreateEventLoopGroup(eventLoop), is(eventLoop));
+    }
+
+    @Test
+    public void givenNull_whenGetEventLoop_ThenReturnShared() {
+        eventLoop = client.getSharedOrCreateEventLoopGroup(null);
+        assertThat(eventLoop, instanceOf(NioEventLoopGroup.class));
     }
 
     @Test
@@ -111,7 +138,7 @@ public class TbHttpClientTest {
         config.setRestEndpointUrlPattern(endpointUrl);
         config.setUseSimpleClientHttpFactory(true);
 
-        var httpClient = new TbHttpClient(config);
+        var httpClient = new TbHttpClient(config, eventLoop);
 
         var msg = TbMsg.newMsg("GET", new DeviceId(EntityId.NULL_UUID), TbMsgMetaData.EMPTY, "{}");
         var successMsg = TbMsg.newMsg(
@@ -136,7 +163,9 @@ public class TbHttpClientTest {
                 capturedData.capture()
         )).thenReturn(successMsg);
 
-        httpClient.processMessage(ctx, msg);
+        httpClient.processMessage(ctx, msg,
+                m -> ctx.tellSuccess(msg),
+                (m, t) -> ctx.tellFailure(m, t));
 
         Awaitility.await()
                 .atMost(30, TimeUnit.SECONDS)

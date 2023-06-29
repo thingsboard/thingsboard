@@ -78,7 +78,7 @@ public class AlarmCommentController extends BaseController {
                                          @PathVariable(ALARM_ID) String strAlarmId, @Parameter(description = "A JSON value representing the comment.") @RequestBody AlarmComment alarmComment) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        Alarm alarm = checkAlarmInfoId(alarmId, Operation.WRITE);
         alarmComment.setAlarmId(alarmId);
         return tbAlarmCommentService.saveAlarmComment(alarm, alarmComment, getCurrentUser());
     }

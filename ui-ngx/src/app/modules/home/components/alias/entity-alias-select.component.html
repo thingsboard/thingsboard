@@ -31,6 +31,13 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <button *ngIf="!selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
+          style="margin-right: 8px;"
+          type="button"
+          matSuffix mat-button color="primary"
+          (click)="createEntityAlias($event, searchText, false)">
+    {{ 'entity.create-new' | translate }}
+  </button>
   <mat-autocomplete class="tb-autocomplete"
                     #entityAliasAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityAliasFn">

@@ -73,6 +73,7 @@ public abstract class AbstractComponentDescriptorInsertRepository implements Com
                 .setParameter("actions", entity.getActions())
                 .setParameter("clazz", entity.getClazz())
                 .setParameter("configuration_descriptor", entity.getConfigurationDescriptor().toString())
+                .setParameter("configuration_version", entity.getConfigurationVersion())
                 .setParameter("name", entity.getName())
                 .setParameter("scope", entity.getScope().name())
                 .setParameter("type", entity.getType().name())

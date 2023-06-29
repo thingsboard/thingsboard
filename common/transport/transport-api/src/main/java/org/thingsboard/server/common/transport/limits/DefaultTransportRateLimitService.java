@@ -78,11 +78,11 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         return null;
     }
 
-    private boolean checkEntityRateLimit(int dataPoints, EntityTransportRateLimits tenantLimits) {
+    private boolean checkEntityRateLimit(int dataPoints, EntityTransportRateLimits limits) {
         if (dataPoints > 0) {
-            return tenantLimits.getTelemetryMsgRateLimit().tryConsume() && tenantLimits.getTelemetryDataPointsRateLimit().tryConsume(dataPoints);
+            return limits.getTelemetryMsgRateLimit().tryConsume() && limits.getTelemetryDataPointsRateLimit().tryConsume(dataPoints);
         } else {
-            return tenantLimits.getRegularMsgRateLimit().tryConsume();
+            return limits.getRegularMsgRateLimit().tryConsume();
         }
     }
 
@@ -241,7 +241,7 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         } else {
             TransportRateLimit regularMsgRateLimit = newLimit(tenant ? profile.getTransportTenantMsgRateLimit() : profile.getTransportDeviceMsgRateLimit());
             TransportRateLimit telemetryMsgRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryMsgRateLimit() : profile.getTransportDeviceTelemetryMsgRateLimit());
-            TransportRateLimit telemetryDpRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryDataPointsRateLimit() : profile.getTransportTenantTelemetryDataPointsRateLimit());
+            TransportRateLimit telemetryDpRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryDataPointsRateLimit() : profile.getTransportDeviceTelemetryDataPointsRateLimit());
             return new EntityTransportRateLimits(regularMsgRateLimit, telemetryMsgRateLimit, telemetryDpRateLimit);
         }
     }
@@ -251,21 +251,16 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     }
 
     private EntityTransportRateLimits getTenantRateLimits(TenantId tenantId) {
-        EntityTransportRateLimits limits = perTenantLimits.get(tenantId);
-        if (limits == null) {
-            limits = createRateLimits(tenantProfileCache.get(tenantId), true);
-            perTenantLimits.put(tenantId, limits);
-        }
-        return limits;
+        return perTenantLimits.computeIfAbsent(tenantId, k -> {
+            return createRateLimits(tenantProfileCache.get(tenantId), true);
+        });
     }
 
     private EntityTransportRateLimits getDeviceRateLimits(TenantId tenantId, DeviceId deviceId) {
-        EntityTransportRateLimits limits = perDeviceLimits.get(deviceId);
-        if (limits == null) {
-            limits = createRateLimits(tenantProfileCache.get(tenantId), false);
-            perDeviceLimits.put(deviceId, limits);
+        return perDeviceLimits.computeIfAbsent(deviceId, k -> {
+            EntityTransportRateLimits limits = createRateLimits(tenantProfileCache.get(tenantId), false);
             tenantDevices.computeIfAbsent(tenantId, id -> ConcurrentHashMap.newKeySet()).add(deviceId);
-        }
-        return limits;
+            return limits;
+        });
     }
 }

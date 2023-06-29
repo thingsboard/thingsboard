@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.rest;
 
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -34,7 +36,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
@@ -54,6 +55,7 @@ import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 @Data
 @Slf4j
@@ -81,10 +83,11 @@ public class TbHttpClient {
 
     private final TbRestApiCallNodeConfiguration config;
 
+    private EventLoopGroup eventLoopGroup;
     private WebClient webClient;
     private Semaphore semaphore;
 
-    TbHttpClient(TbRestApiCallNodeConfiguration config) throws TbNodeException {
+    TbHttpClient(TbRestApiCallNodeConfiguration config, EventLoopGroup eventLoopGroupShared) throws TbNodeException {
         try {
             this.config = config;
             if (config.getMaxParallelRequestsCount() > 0) {
@@ -92,6 +95,7 @@ public class TbHttpClient {
             }
 
             HttpClient httpClient = HttpClient.create()
+                    .runOn(getSharedOrCreateEventLoopGroup(eventLoopGroupShared))
                     .doOnConnected(c ->
                             c.addHandlerLast(new ReadTimeoutHandler(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS)));
 
@@ -137,6 +141,13 @@ public class TbHttpClient {
         }
     }
 
+    EventLoopGroup getSharedOrCreateEventLoopGroup(EventLoopGroup eventLoopGroupShared) {
+        if (eventLoopGroupShared != null) {
+            return eventLoopGroupShared;
+        }
+        return this.eventLoopGroup = new NioEventLoopGroup();
+    }
+
     private void checkSystemProxyProperties() throws TbNodeException {
         boolean useHttpProxy = !StringUtils.isEmpty(System.getProperty("http.proxyHost")) && !StringUtils.isEmpty(System.getProperty("http.proxyPort"));
         boolean useHttpsProxy = !StringUtils.isEmpty(System.getProperty("https.proxyHost")) && !StringUtils.isEmpty(System.getProperty("https.proxyPort"));
@@ -151,7 +162,15 @@ public class TbHttpClient {
         return !StringUtils.isEmpty(proxyUser) && !StringUtils.isEmpty(proxyPassword);
     }
 
-    public void processMessage(TbContext ctx, TbMsg msg) {
+    void destroy() {
+        if (this.eventLoopGroup != null) {
+            this.eventLoopGroup.shutdownGracefully(0, 5, TimeUnit.SECONDS);
+        }
+    }
+
+    public void processMessage(TbContext ctx, TbMsg msg,
+                               Consumer<TbMsg> onSuccess,
+                               BiConsumer<TbMsg, Throwable> onFailure) {
         try {
             if (semaphore != null && !semaphore.tryAcquire(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS)) {
                 ctx.tellFailure(msg, new RuntimeException("Timeout during waiting for reply!"));
@@ -182,19 +201,16 @@ public class TbHttpClient {
                         }
 
                         if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                            TbMsg next = processResponse(ctx, msg, responseEntity);
-                            ctx.tellSuccess(next);
+                            onSuccess.accept(processResponse(ctx, msg, responseEntity));
                         } else {
-                            TbMsg next = processFailureResponse(ctx, msg, responseEntity);
-                            ctx.tellNext(next, TbRelationTypes.FAILURE);
+                            onFailure.accept(processFailureResponse(ctx, msg, responseEntity), null);
                         }
                     }, throwable -> {
                         if (semaphore != null) {
                             semaphore.release();
                         }
 
-                        TbMsg next = processException(ctx, msg, throwable);
-                        ctx.tellFailure(next, throwable);
+                        onFailure.accept(processException(ctx, msg, throwable), throwable);
                     });
         } catch (InterruptedException e) {
             log.warn("Timeout during waiting for reply!", e);

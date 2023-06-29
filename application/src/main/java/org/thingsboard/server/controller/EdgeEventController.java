@@ -86,6 +86,6 @@ public class EdgeEventController extends BaseController {
         EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
         checkEdgeId(edgeId, Operation.READ);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-        return checkNotNull(edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, false));
+        return checkNotNull(edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, pageLink));
     }
 }
