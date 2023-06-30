@@ -132,7 +132,7 @@
         "resources": [],
         "templateHtml": "<tb-gateway-statistics [ctx]=ctx></tb-gateway-statistics>",
         "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
-        "controllerScript": "self.onInit = function() {   \n};\n\nself.onDataUpdated = function() {\n};\n\nself.onLatestDataUpdated = function() {\n};\n\nself.onResize = function() {\n};\n\nself.onEditModeChanged = function() {\n};\n\nself.onDestroy = function() {\n};\n\nself.typeParameters = function() {\n    return {\n        hasAdditionalLatestDataKeys: false\n    };\n}\n",
+        "controllerScript": "self.onInit = function() {   \n};\n\nself.onDataUpdated = function() {\n};\n\nself.onLatestDataUpdated = function() {\n};\n\nself.onResize = function() {\n};\n\nself.onEditModeChanged = function() {\n};\n\nself.onDestroy = function() {\n};\n\nself.typeParameters = function() {\n    return {\n        hasAdditionalLatestDataKeys: false,\n        dataKeysOptional: true\n    };\n}\n",
         "settingsSchema": "{}",
         "dataKeySettingsSchema": "{}",
         "latestDataKeySettingsSchema": "{}",

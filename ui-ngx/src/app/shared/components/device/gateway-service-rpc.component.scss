@@ -38,6 +38,12 @@
 
   .result-block {
     padding: 0 15px;
+    display: flex;
+    flex-direction: column;
+
+    ::ng-deep.tb-json-content {
+      height: 100%;
+    }
 
     &>span {
       font-weight: 600;

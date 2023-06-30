@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-card fxLayout="row" fxLayout.lt-sm="column" class="command-form" fxLayoutGap="10px" [formGroup]="commandForm">
+<div fxLayout="row" fxLayout.lt-sm="column" class="command-form" fxLayoutGap="10px" [formGroup]="commandForm">
   <mat-form-field class="mat-block tb-value-type">
     <mat-label>{{'gateway.statistics.command' | translate}}</mat-label>
     <mat-select formControlName="command" *ngIf="!isConnector">
@@ -40,10 +40,10 @@
   </mat-form-field>
   <button mat-raised-button color="primary" (click)="sendCommand()"
   [disabled]="commandForm.invalid">{{'gateway.rpc-command-send' | translate}}</button>
-</mat-card>
-<mat-card class="result-block" [formGroup]="commandForm" >
+</div>
+<mat-card class="result-block" [formGroup]="commandForm" fxFlex>
   <span>{{'gateway.rpc-command-result' | translate}}</span>
   <mat-divider></mat-divider>
-  <tb-json-content [contentType]="contentTypes.JSON" readonly="true" formControlName="result"></tb-json-content>
+  <tb-json-content [contentType]="contentTypes.JSON" readonly="true" formControlName="result" fxFlex></tb-json-content>
 </mat-card>
 

@@ -26,7 +26,7 @@
       <mat-icon class="material-icons" style="color:#000;">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-tab-group style="max-height: calc(100% - 115px)">
+  <mat-tab-group style="max-height: calc(100% - 117px); flex-grow: 1" >
     <mat-tab label="{{'gateway.thingsboard-general' | translate}}">
       <div formGroupName="thingsboard" fxLayout="column" class="mat-content mat-padding">
         <mat-accordion multi>
@@ -769,7 +769,6 @@
       </div>
     </mat-tab>
   </mat-tab-group>
-  <div fxFlex></div>
   <div mat-dialog-actions fxLayoutAlign="start center">
     <button mat-button color="primary"
             type="button"

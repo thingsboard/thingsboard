@@ -58,7 +58,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   @Input()
   public general: boolean;
 
-  public isNumericData: boolean = true;
+  public isNumericData: boolean = false;
   public chartInited: boolean;
   private flot: TbFlot;
   private flotCtx;

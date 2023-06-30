@@ -2688,6 +2688,7 @@
         "statistics": {
             "statistic": "Statistic",
             "statistics": "Statistics",
+            "statistic-commands-empty": "No statistics available",
             "commands": "Commands",
             "send-period": "Statistic send period (in sec)",
             "send-period-required": "Statistic send period is required",

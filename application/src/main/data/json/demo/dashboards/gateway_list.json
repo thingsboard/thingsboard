@@ -175,9 +175,9 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "customPretty",
-                "customHtml": "<div class=\"container\">\n    <tb-gateway-configuration [device]=\"entityId\" [dialogRef]=\"dialogRef\"></tb-gateway-configuration>\n</div>\n",
-                "customCss": ".container {\n    width: 800px;\n    height: 80vh;\n}",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet data = {};\r\n\r\nopenEditEntityDialog();\r\n\r\nfunction openEditEntityDialog() {\r\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\r\n}\r\n\r\nfunction EditEntityDialogController(instance) {\r\n    let vm = instance;\r\n    vm.entityId = entityId;\r\n\r\n    vm.close = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n}",
+                "customHtml": "<div [ngClass]=\"ctx.isMobile ? 'container-mobile' : 'container'\">\n    <tb-gateway-configuration [device]=\"entityId\" [dialogRef]=\"dialogRef\"></tb-gateway-configuration>\n</div>\n",
+                "customCss": ".container {\n    width: 800px;\n    height: 80vh;\n}\n\n.container-mobile {\n    height: 100%;\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet data = {};\r\n\r\nopenEditEntityDialog();\r\n\r\nfunction openEditEntityDialog() {\r\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\r\n}\r\n\r\nfunction EditEntityDialogController(instance) {\r\n    let vm = instance;\r\n    vm.ctx = widgetContext;\r\n    vm.entityId = entityId;\r\n\r\n    vm.close = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n}",
                 "customResources": [],
                 "openInSeparateDialog": false,
                 "openInPopover": false,
@@ -537,9 +537,9 @@
           "padding": "8px",
           "settings": {
             "useMarkdownTextFunction": true,
-            "markdownTextFunction": "var blockData = '';\n\nfunction createDataBlock(value, label, mobile) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile? '100%': 'auto'}; min-height: ${mobile? 'auto': '57px'}\">\n        <div class=\"divider\"></div>\n        <mat-divider vertical style=\"height:100%\"></mat-divider>\n            <mat-card-header>\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Name, \"Gateway Name\", ctx.isMobile);\ncreateDataBlock(data[0].Type, \"Gateway Type\");\ncreateDataBlock(data[0].active, \"Status\");\ncreateDataBlock(data[1]?data[1].count:0, \"Active Devices\");\ncreateDataBlock(data[2]?data[2][\"count 2\"]:0, \"Inactive Devices\");\ncreateDataBlock(data[0].active_connectors?JSON.parse(data[0].active_connectors).length:0, \"Enabled Connectors\");\ncreateDataBlock(data[0].inactive_connectors?JSON.parse(data[0].inactive_connectors).length:0, \"Disabled Connectors\");\nreturn `<div fxLayout=\"row wrap\" fxLayoutGap=\"8px\" class=\"container\">${blockData}</div>`;",
+            "markdownTextFunction": "var blockData = '';\n\nfunction createDataBlock(value, label, mobile) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile? '100%': 'auto'}; min-height: ${mobile? 'auto': '57px'}\">\n        <div class=\"divider\"></div>\n        <mat-divider vertical style=\"height:100%\"></mat-divider>\n            <mat-card-header>\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Name, \"Gateway Name\", ctx.isMobile);\ncreateDataBlock(data[0].Type, \"Gateway Type\");\ncreateDataBlock(data[0].active, \"Status\");\ncreateDataBlock(data[1]?data[1].count:0, \"Active Devices\");\ncreateDataBlock(data[2]?data[2][\"count 2\"]:0, \"Inactive Devices\");\ncreateDataBlock(data[0].active_connectors?JSON.parse(data[0].active_connectors).length:0, \"Enabled Connectors\");\ncreateDataBlock(data[0].inactive_connectors?JSON.parse(data[0].inactive_connectors).length:0, \"Disabled Connectors\");\nreturn `<div fxLayout=\"row wrap\" fxLayoutGap=\"8px\" class=\"cards-container\">${blockData}</div>`;",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".divider {\n    position: absolute;\n    width: 3px;\n    top: 8px;\n    border-radius: 2px;\n    bottom: 8px;\n    border: 1px solid rgba(31, 70, 144, 1);\n    background-color: rgba(31, 70, 144, 1);\n    left: 10px;\n}\n.mdc-card {\n    position: relative;\n    padding-left: 10px;\n    margin-bottom: 1px;\n}\n\n.mat-mdc-card-subtitle {\n    font-weight: 400;\n    font-size: 12px;\n}\n\n.mat-mdc-card-header {\n    padding: 8px 16px 0;\n}\n\n.mat-mdc-card-content:last-child {\n    padding-bottom: 8px;\n    font-size: 16px;\n}\n\n.container {\n    height: calc(100% - 1px);\n    justify-content: stretch;\n    align-items: center;\n    margin-bottom: 1px;\n}"
+            "markdownCss": ".divider {\n    position: absolute;\n    width: 3px;\n    top: 8px;\n    border-radius: 2px;\n    bottom: 8px;\n    border: 1px solid rgba(31, 70, 144, 1);\n    background-color: rgba(31, 70, 144, 1);\n    left: 10px;\n}\n.mdc-card {\n    position: relative;\n    padding-left: 10px;\n    margin-bottom: 1px;\n}\n\n.mat-mdc-card-subtitle {\n    font-weight: 400;\n    font-size: 12px;\n}\n\n.mat-mdc-card-header {\n    padding: 8px 16px 0;\n}\n\n.mat-mdc-card-content:last-child {\n    padding-bottom: 8px;\n    font-size: 16px;\n}\n\n.cards-container {\n    height: calc(100% - 1px);\n    justify-content: stretch;\n    align-items: center;\n    margin-bottom: 1px;\n}"
           },
           "title": "New Markdown/HTML Card",
           "showTitleIcon": false,
@@ -871,16 +871,12 @@
               "name": null,
               "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8",
               "filterId": null,
-              "dataKeys": [
-                {
-                  "name": "eventsSent",
-                  "type": "timeseries",
-                  "label": "eventsSent",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.0976422532267398
-                }
-              ]
+              "dataKeys": null,
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
             }
           ],
           "timewindow": {
@@ -1874,7 +1870,7 @@
           "iconSize": "24px",
           "titleTooltip": "",
           "dropShadow": true,
-          "enableFullscreen": true,
+          "enableFullscreen": false,
           "widgetStyle": {
             "borderRadius": "10px"
           },
@@ -1987,7 +1983,7 @@
           "iconSize": "24px",
           "titleTooltip": "",
           "dropShadow": true,
-          "enableFullscreen": true,
+          "enableFullscreen": false,
           "widgetStyle": {
             "borderRadius": "10px"
           },
@@ -2323,7 +2319,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -2480,7 +2476,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -2637,7 +2633,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -2794,7 +2790,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -2951,7 +2947,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -3108,7 +3104,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -3265,7 +3261,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -3422,7 +3418,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -3579,7 +3575,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -3736,7 +3732,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -3893,7 +3889,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -4050,7 +4046,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -4207,7 +4203,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -4364,7 +4360,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -4521,7 +4517,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -4678,7 +4674,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -4835,7 +4831,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -4992,7 +4988,7 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetStyle": {
-            "borderRadius": "10px"
+            "borderRadius": " 0 0 10px 10px"
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
@@ -5442,9 +5438,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5465,9 +5465,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5488,9 +5492,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5511,9 +5519,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5534,9 +5546,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5557,9 +5573,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5580,9 +5600,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5603,9 +5627,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5626,9 +5654,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5649,9 +5681,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5672,9 +5708,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5695,9 +5735,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5718,9 +5762,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5741,9 +5789,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }
@@ -5764,9 +5816,13 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "outerMargin": true,
-              "backgroundSizeMode": "100%"
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
             }
           }
         }

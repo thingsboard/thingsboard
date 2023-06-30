@@ -29,6 +29,10 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
+    <mat-error
+      *ngIf="!statisticsKeys.length && !commands.length">
+      {{'gateway.statistics.statistic-commands-empty' | translate }}
+    </mat-error>
     <!--    <mat-form-field class="mat-block" *ngIf="commandObj">-->
     <!--      <mat-label>Timeout</mat-label>-->
     <!--      <input matInput [value]="commandObj.timeout" disabled>-->
