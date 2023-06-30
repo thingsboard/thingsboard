@@ -12,7 +12,7 @@ Let's assume that we have two device types in our use case:
 - `smart_door_lock`
 - `motion_detector`
 
-Let's assume that device of type `dock_lock_sensor` and name `SDL-001` publish next type of messages to the system:
+Let's assume that device of type `smart_door_lock` and name `SDL-001` publish next type of messages to the system:
 
 ```json
 {

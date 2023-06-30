@@ -15,23 +15,26 @@
  */
 package org.thingsboard.rule.engine.filter;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -54,7 +57,9 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckRelationConfig")
-public class TbCheckRelationNode implements TbNode {
+public class TbCheckRelationNode implements TbVersionedNode {
+
+    private static final String DIRECTION_PROPERTY_NAME = "direction";
 
     private TbCheckRelationNodeConfiguration config;
     private EntityId singleEntityId;
@@ -84,24 +89,45 @@ public class TbCheckRelationNode implements TbNode {
         EntityId from;
         EntityId to;
         if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-            from = singleEntityId;
-            to = msg.getOriginator();
-        } else {
             to = singleEntityId;
             from = msg.getOriginator();
+        } else {
+            from = singleEntityId;
+            to = msg.getOriginator();
         }
         return ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), from, to, config.getRelationType(), RelationTypeGroup.COMMON);
     }
 
     private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
         ListenableFuture<List<EntityRelation>> relationListFuture = EntitySearchDirection.FROM.name().equals(config.getDirection()) ?
-                ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON) :
-                ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON);
+                ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON) :
+                ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON);
         return Futures.transformAsync(relationListFuture, this::isEmptyList, ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<Boolean> isEmptyList(List<EntityRelation> entityRelations) {
         return entityRelations.isEmpty() ? Futures.immediateFuture(false) : Futures.immediateFuture(true);
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        if (fromVersion == 0) {
+            var newConfigObjectNode = (ObjectNode) oldConfiguration;
+            if (!newConfigObjectNode.has(DIRECTION_PROPERTY_NAME)) {
+                throw new TbNodeException("property to update: '" + DIRECTION_PROPERTY_NAME + "' doesn't exists in configuration!");
+            }
+            String direction = newConfigObjectNode.get(DIRECTION_PROPERTY_NAME).asText();
+            if ("TO".equals(direction)) {
+                newConfigObjectNode.put(DIRECTION_PROPERTY_NAME, EntitySearchDirection.FROM.name());
+                return new TbPair<>(true, newConfigObjectNode);
+            }
+            if ("FROM".equals(direction)) {
+                newConfigObjectNode.put(DIRECTION_PROPERTY_NAME, EntitySearchDirection.TO.name());
+                return new TbPair<>(true, newConfigObjectNode);
+            }
+            throw new TbNodeException("property to update: '" + DIRECTION_PROPERTY_NAME + "' has invalid value!");
+        }
+        return new TbPair<>(false, oldConfiguration);
     }
 
 }

@@ -34,7 +34,7 @@ public class TbCheckRelationNodeConfiguration implements NodeConfiguration<TbChe
 
     @Override
     public TbCheckRelationNodeConfiguration defaultConfiguration() {
-        TbCheckRelationNodeConfiguration configuration = new TbCheckRelationNodeConfiguration();
+        var configuration = new TbCheckRelationNodeConfiguration();
         configuration.setDirection(EntitySearchDirection.FROM.name());
         configuration.setRelationType(EntityRelation.CONTAINS_TYPE);
         configuration.setCheckForSingleEntity(true);
