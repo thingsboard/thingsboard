@@ -1,0 +1,70 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.common.data.msg;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_DELETE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_ASSIGNED_TO_EDGE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_UNASSIGNED_FROM_EDGE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.PROVISION_FAILURE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.PROVISION_SUCCESS;
+
+class TbMsgTypeTest {
+    
+    private static final List<TbMsgType> typesWithNullRuleNodeConnection = List.of(
+            ALARM,
+            ALARM_DELETE,
+            ENTITY_ASSIGNED_TO_EDGE,
+            ENTITY_UNASSIGNED_FROM_EDGE,
+            PROVISION_FAILURE,
+            PROVISION_SUCCESS
+    );
+
+
+    // backward-compatibility tests
+    
+    @Test
+    void getRuleNodeConnectionsTest() {
+        var tbMsgTypes = TbMsgType.values();
+        for (var type : tbMsgTypes) {
+            if (typesWithNullRuleNodeConnection.contains(type)) {
+                assertThat(type.getRuleNodeConnection()).isNull();
+            }
+        }
+    }
+
+    @Test
+    void getRuleNodeConnectionOrElseOtherTest() {
+        assertThat(TbMsgType.getRuleNodeConnectionOrElseOther(null))
+                .isEqualTo(TbNodeConnectionType.OTHER);
+        var tbMsgTypes = TbMsgType.values();
+        for (var type : tbMsgTypes) {
+            if (typesWithNullRuleNodeConnection.contains(type)) {
+                assertThat(TbMsgType.getRuleNodeConnectionOrElseOther(type.name()))
+                        .isEqualTo(TbNodeConnectionType.OTHER);
+            } else {
+                assertThat(TbMsgType.getRuleNodeConnectionOrElseOther(type.name())).isNotNull()
+                        .isNotEqualTo(TbNodeConnectionType.OTHER);
+            }
+        }
+    }
+    
+}

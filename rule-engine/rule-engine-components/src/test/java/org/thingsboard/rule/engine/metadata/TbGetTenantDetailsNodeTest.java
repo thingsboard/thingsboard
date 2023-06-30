@@ -287,7 +287,7 @@ public class TbGetTenantDetailsNodeTest {
 
         var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
 
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
     }
 
     private void mockFindTenant() {

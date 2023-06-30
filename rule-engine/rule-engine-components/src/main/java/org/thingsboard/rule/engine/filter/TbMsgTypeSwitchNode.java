@@ -50,7 +50,7 @@ public class TbMsgTypeSwitchNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.tellNext(msg, TbMsgType.getRuleNodeConnection(msg.getType()));
+        ctx.tellNext(msg, TbMsgType.getRuleNodeConnectionOrElseOther(msg.getType()));
     }
 
 }

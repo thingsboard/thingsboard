@@ -456,7 +456,7 @@ public class TbGetCustomerDetailsNodeTest {
 
         var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
 
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), originator, msgMetaData, msgData);
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), originator, msgMetaData, msgData);
     }
 
     private void mockFindCustomer() {

@@ -208,7 +208,7 @@ public class TbGetCustomerAttributeNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = FetchTo.DATA;
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "[]");
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "[]");
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
@@ -223,7 +223,7 @@ public class TbGetCustomerAttributeNodeTest {
         // GIVEN
         var userId = new UserId(UUID.randomUUID());
 
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), userId, new TbMsgMetaData(), "{}");
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), userId, new TbMsgMetaData(), "{}");
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -467,7 +467,7 @@ public class TbGetCustomerAttributeNodeTest {
 
         var msgData = "{\"temp\":42,\"humidity\":77,\"messageBodyPattern1\":\"targetKey2\",\"messageBodyPattern2\":\"sourceKey3\"}";
 
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), originator, msgMetaData, msgData);
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), originator, msgMetaData, msgData);
     }
 
     @RequiredArgsConstructor

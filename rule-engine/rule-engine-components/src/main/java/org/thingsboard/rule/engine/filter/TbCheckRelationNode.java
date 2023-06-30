@@ -22,6 +22,7 @@ import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -62,6 +63,9 @@ public class TbCheckRelationNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbCheckRelationNodeConfiguration.class);
         if (config.isCheckForSingleEntity()) {
+            if (StringUtils.isEmpty(config.getEntityType()) || StringUtils.isEmpty(config.getEntityId())) {
+                throw new TbNodeException("Entity should be specified!");
+            }
             this.singleEntityId = EntityIdFactory.getByTypeAndId(config.getEntityType(), config.getEntityId());
             ctx.checkTenantEntity(singleEntityId);
         }
@@ -90,9 +94,9 @@ public class TbCheckRelationNode implements TbNode {
     }
 
     private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
-        ListenableFuture<List<EntityRelation>> relationListFuture = EntitySearchDirection.FROM.name().equals(config.getDirection()) ? ctx.getRelationService()
-                .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON) : ctx.getRelationService()
-                .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON);
+        ListenableFuture<List<EntityRelation>> relationListFuture = EntitySearchDirection.FROM.name().equals(config.getDirection()) ?
+                ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON) :
+                ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON);
         return Futures.transformAsync(relationListFuture, this::isEmptyList, ctx.getDbCallbackExecutor());
     }
 

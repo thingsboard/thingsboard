@@ -45,9 +45,9 @@ class TbOriginatorTypeSwitchNodeTest {
     private static final TbMsgMetaData EMPTY_METADATA = new TbMsgMetaData();
     private static final String EMPTY_DATA = "{}";
 
-    private static TbOriginatorTypeSwitchNode node;
+    private TbOriginatorTypeSwitchNode node;
 
-    private static TbContext ctx;
+    private TbContext ctx;
 
     @BeforeEach
     void setUp() {

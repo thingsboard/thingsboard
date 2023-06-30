@@ -50,9 +50,9 @@ class TbCheckMessageNodeTest {
     private static final String EMPTY_DATA = "{}";
     private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DEVICE_ID, EMPTY_METADATA, EMPTY_DATA);
 
-    private static TbCheckMessageNode node;
+    private TbCheckMessageNode node;
 
-    private static TbContext ctx;
+    private TbContext ctx;
 
     @BeforeEach
     void setUp() {

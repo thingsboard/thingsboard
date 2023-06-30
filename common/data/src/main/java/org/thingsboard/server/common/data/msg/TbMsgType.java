@@ -42,7 +42,7 @@ public enum TbMsgType {
     ALARM(null),
     ALARM_ACK("Alarm Acknowledged"),
     ALARM_CLEAR("Alarm Cleared"),
-    ALARM_DELETE("Alarm Deleted"),
+    ALARM_DELETE(null),
     ALARM_ASSIGNED("Alarm Assigned"),
     ALARM_UNASSIGNED("Alarm Unassigned"),
     COMMENT_CREATED("Comment Created"),
@@ -78,7 +78,7 @@ public enum TbMsgType {
         this.ruleNodeConnection = ruleNodeConnection;
     }
 
-    public static String getRuleNodeConnection(String msgType) {
+    public static String getRuleNodeConnectionOrElseOther(String msgType) {
         if (msgType == null) {
             return TbNodeConnectionType.OTHER;
         } else {

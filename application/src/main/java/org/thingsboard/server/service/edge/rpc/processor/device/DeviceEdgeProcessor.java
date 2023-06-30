@@ -63,6 +63,7 @@ import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_CREATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.TO_SERVER_RPC_REQUEST;
 
 @Component
 @Slf4j
@@ -218,7 +219,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
             ObjectNode data = JacksonUtil.newObjectNode();
             data.put("method", deviceRpcCallMsg.getRequestMsg().getMethod());
             data.put("params", deviceRpcCallMsg.getRequestMsg().getParams());
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, null, metaData,
+            TbMsg tbMsg = TbMsg.newMsg(TO_SERVER_RPC_REQUEST.name(), deviceId, null, metaData,
                     TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(data));
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override

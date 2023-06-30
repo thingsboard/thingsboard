@@ -29,7 +29,6 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -53,14 +52,15 @@ class TbCheckAlarmStatusNodeTest {
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
     private static final AlarmId ALARM_ID = new AlarmId(UUID.randomUUID());
     private static final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private static final TbMsgMetaData EMPTY_METADATA = new TbMsgMetaData();
 
-    private static TbCheckAlarmStatusNode node;
+    private TbCheckAlarmStatusNode node;
 
-    private static TbContext ctx;
-    private static RuleEngineAlarmService alarmService;
+    private TbContext ctx;
+    private RuleEngineAlarmService alarmService;
 
     @BeforeEach
-    public void setUp() throws TbNodeException {
+    void setUp() throws TbNodeException {
         var config = new TbCheckAlarmStatusNodeConfig().defaultConfiguration();
 
         ctx = mock(TbContext.class);
@@ -88,7 +88,7 @@ class TbCheckAlarmStatusNodeTest {
         alarm.setType("General Alarm");
 
         String msgData = JacksonUtil.toString(alarm);
-        TbMsg msg = getTbMsg(DEVICE_ID, msgData);
+        TbMsg msg = getTbMsg(msgData);
 
         when(alarmService.findAlarmByIdAsync(TENANT_ID, ALARM_ID)).thenReturn(Futures.immediateFuture(alarm));
 
@@ -114,7 +114,7 @@ class TbCheckAlarmStatusNodeTest {
         alarm.setCleared(true);
 
         String msgData = JacksonUtil.toString(alarm);
-        TbMsg msg = getTbMsg(DEVICE_ID, msgData);
+        TbMsg msg = getTbMsg(msgData);
 
         when(alarmService.findAlarmByIdAsync(TENANT_ID, ALARM_ID)).thenReturn(Futures.immediateFuture(alarm));
 
@@ -140,7 +140,7 @@ class TbCheckAlarmStatusNodeTest {
         alarm.setCleared(true);
 
         String msgData = JacksonUtil.toString(alarm);
-        TbMsg msg = getTbMsg(DEVICE_ID, msgData);
+        TbMsg msg = getTbMsg(msgData);
 
         when(alarmService.findAlarmByIdAsync(TENANT_ID, ALARM_ID)).thenReturn(Futures.immediateFuture(null));
 
@@ -159,8 +159,8 @@ class TbCheckAlarmStatusNodeTest {
         assertThat(value).isInstanceOf(TbNodeException.class).hasMessage("No such alarm found.");
     }
 
-    private TbMsg getTbMsg(EntityId entityId, String msgData) {
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, new TbMsgMetaData(), msgData);
+    private TbMsg getTbMsg(String msgData) {
+        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DEVICE_ID, EMPTY_METADATA, msgData);
     }
 
 }

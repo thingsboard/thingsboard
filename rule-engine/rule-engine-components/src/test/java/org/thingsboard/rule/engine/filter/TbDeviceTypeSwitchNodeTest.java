@@ -50,34 +50,30 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
 
 class TbDeviceTypeSwitchNodeTest {
 
-    TenantId tenantId;
-    DeviceId deviceId;
-    DeviceId deviceIdDeleted;
-    DeviceProfile deviceProfile;
-    TbContext ctx;
-    TbDeviceTypeSwitchNode node;
-    EmptyNodeConfiguration config;
-    TbMsgCallback callback;
-    RuleEngineDeviceProfileCache deviceProfileCache;
+    private DeviceId deviceId;
+    private DeviceId deviceIdDeleted;
+    private TbContext ctx;
+    private TbDeviceTypeSwitchNode node;
+    private TbMsgCallback callback;
 
     @BeforeEach
     void setUp() throws TbNodeException {
-        tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = new TenantId(UUID.randomUUID());
         deviceId = new DeviceId(UUID.randomUUID());
         deviceIdDeleted = new DeviceId(UUID.randomUUID());
 
-        deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setTenantId(tenantId);
         deviceProfile.setName("TestDeviceProfile");
 
         //node
-        config = new EmptyNodeConfiguration();
+        EmptyNodeConfiguration config = new EmptyNodeConfiguration();
         node = new TbDeviceTypeSwitchNode();
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         //init mock
         ctx = mock(TbContext.class);
-        deviceProfileCache = mock(RuleEngineDeviceProfileCache.class);
+        RuleEngineDeviceProfileCache deviceProfileCache = mock(RuleEngineDeviceProfileCache.class);
         callback = mock(TbMsgCallback.class);
 
         when(ctx.getTenantId()).thenReturn(tenantId);

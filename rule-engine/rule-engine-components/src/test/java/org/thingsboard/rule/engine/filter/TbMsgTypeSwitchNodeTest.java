@@ -43,9 +43,9 @@ class TbMsgTypeSwitchNodeTest {
     private static final TbMsgMetaData EMPTY_METADATA = new TbMsgMetaData();
     private static final String EMPTY_DATA = "{}";
 
-    private static TbMsgTypeSwitchNode node;
+    private TbMsgTypeSwitchNode node;
 
-    private static TbContext ctx;
+    private TbContext ctx;
 
     @BeforeEach
     void setUp() {
@@ -84,9 +84,8 @@ class TbMsgTypeSwitchNodeTest {
             assertThat(msg).isNotNull();
             assertThat(msg.getType()).isNotNull();
             assertThat(msg).isSameAs(tbMsgList.get(i));
-            // todo add additional validation that types like ALARM or PROVISION returns OTHER for backward-compatibility.
             assertThat(resultNodeConnections.get(i))
-                    .isEqualTo(TbMsgType.getRuleNodeConnection(msg.getType()));
+                    .isEqualTo(TbMsgType.getRuleNodeConnectionOrElseOther(msg.getType()));
         }
     }
 

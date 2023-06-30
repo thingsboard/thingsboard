@@ -273,7 +273,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             TbMsg msg = TbMsg.newMsg(ENTITY_CREATED.name(), device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             sendToRuleEngine(device.getTenantId(), msg, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), ENTITY_CREATED, e);
+            log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), ENTITY_CREATED.name(), e);
         }
     }
 

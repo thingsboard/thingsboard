@@ -47,8 +47,8 @@ public class TbJsSwitchNodeTest {
     @Mock
     private ScriptEngine scriptEngine;
 
-    private RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
-    private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
+    private final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+    private final RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Test
     public void multipleRoutesAreAllowed() throws TbNodeException {

@@ -162,7 +162,7 @@ public class TbGetOriginatorFieldsNodeTest {
         node.fetchTo = FetchTo.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -205,7 +205,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -253,7 +253,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -311,7 +311,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), new DashboardId(UUID.randomUUID()), msgMetaData, msgData);
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), new DashboardId(UUID.randomUUID()), msgMetaData, msgData);
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 

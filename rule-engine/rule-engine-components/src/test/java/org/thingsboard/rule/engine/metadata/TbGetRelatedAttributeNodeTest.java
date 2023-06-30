@@ -222,7 +222,7 @@ public class TbGetRelatedAttributeNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = FetchTo.DATA;
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.getRuleNodeConnection(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "[]");
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "[]");
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
