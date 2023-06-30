@@ -372,6 +372,7 @@ export class DeviceWizardDialogComponent extends
         ),
         map(() => true));
     }
+    return of(true);
   }
 
   allValid(): boolean {
