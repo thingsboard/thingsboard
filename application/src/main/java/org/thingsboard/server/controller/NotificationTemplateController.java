@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,13 +42,13 @@ import org.thingsboard.server.common.data.notification.targets.slack.SlackConver
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
-import javax.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 
@@ -137,17 +137,17 @@ public class NotificationTemplateController extends BaseController {
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/templates")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public PageData<NotificationTemplate> getNotificationTemplates(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+    public PageData<NotificationTemplate> getNotificationTemplates(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                                    @RequestParam int pageSize,
-                                                                   @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                   @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                    @RequestParam int page,
-                                                                   @ApiParam(value = "Case-insensitive 'substring' filter based on template's name and notification type")
+                                                                   @Parameter(description = "Case-insensitive 'substring' filter based on template's name and notification type")
                                                                    @RequestParam(required = false) String textSearch,
-                                                                   @ApiParam(value = SORT_PROPERTY_DESCRIPTION)
+                                                                   @Parameter(description = SORT_PROPERTY_DESCRIPTION)
                                                                    @RequestParam(required = false) String sortProperty,
-                                                                   @ApiParam(value = SORT_ORDER_DESCRIPTION)
+                                                                   @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                                    @RequestParam(required = false) String sortOrder,
-                                                                   @ApiParam(value = "Comma-separated list of notification types to filter the templates")
+                                                                   @Parameter(description = "Comma-separated list of notification types to filter the templates")
                                                                    @RequestParam(required = false) NotificationType[] notificationTypes,
                                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         // generic permission
@@ -177,7 +177,7 @@ public class NotificationTemplateController extends BaseController {
     @GetMapping("/slack/conversations")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public List<SlackConversation> listSlackConversations(@RequestParam SlackConversationType type,
-                                                          @ApiParam(value = "Slack bot token. If absent - system Slack settings will be used")
+                                                          @Parameter(description = "Slack bot token. If absent - system Slack settings will be used")
                                                           @RequestParam(required = false) String token,
                                                           @AuthenticationPrincipal SecurityUser user) {
         // generic permission

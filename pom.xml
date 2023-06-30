@@ -38,27 +38,28 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <javax-annotation.version>1.3.2</javax-annotation.version>
-        <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
-        <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
-        <spring-boot.version>2.7.10</spring-boot.version>
-        <spring-data.version>2.7.10</spring-data.version>
-        <spring.version>5.3.26</spring.version>
-        <spring-redis.version>5.5.17</spring-redis.version>
-        <spring-security.version>5.7.7</spring-security.version>
-        <spring-data-redis.version>2.7.10</spring-data-redis.version>
-        <jedis.version>3.8.0</jedis.version>
-        <jjwt.version>0.7.0</jjwt.version>
-        <slf4j.version>1.7.32</slf4j.version>
-        <log4j.version>2.17.1</log4j.version>
-        <logback.version>1.2.10</logback.version>
+        <jakarta-annotation.version>2.1.1</jakarta-annotation.version>
+        <jakarta.xml.bind-api.version>4.0.0</jakarta.xml.bind-api.version>
+        <javax.xml.bind-api.version>2.3.1</javax.xml.bind-api.version>
+        <jaxb-runtime.version>4.0.2</jaxb-runtime.version>
+        <spring-boot.version>3.1.0</spring-boot.version>
+        <spring-data.version>3.1.0</spring-data.version>
+        <spring.version>6.0.9</spring.version>
+        <spring-redis.version>6.1.0</spring-redis.version>
+        <spring-security.version>6.1.0</spring-security.version>
+        <spring-data-redis.version>3.1.0</spring-data-redis.version>
+        <jedis.version>4.3.2</jedis.version>
+        <jjwt.version>0.9.1</jjwt.version>
+        <slf4j.version>2.0.7</slf4j.version>
+        <log4j.version>2.19.0</log4j.version>
+        <logback.version>1.4.7</logback.version>
         <rat.version>0.10</rat.version>
         <cassandra.version>4.15.0</cassandra.version>
         <metrics.version>4.0.5</metrics.version>
         <cassandra-all.version>3.11.14</cassandra-all.version>
         <guava.version>31.1-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
-        <commons-lang3.version>3.4</commons-lang3.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-logging.version>1.2</commons-logging.version>
@@ -75,7 +76,7 @@
         <leshan.version>2.0.0-M5</leshan.version>
         <gson.version>2.9.0</gson.version>
         <freemarker.version>2.3.30</freemarker.version>
-        <mail.version>1.6.2</mail.version>
+        <mail.version>2.0.1</mail.version>
         <curator.version>5.5.0</curator.version>
         <zookeeper.version>3.8.1</zookeeper.version>
         <protobuf.version>3.21.9</protobuf.version>
@@ -84,14 +85,15 @@
         <lombok.version>1.18.26</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
-        <netty.version>4.1.91.Final</netty.version>
-        <netty-tcnative.version>2.0.51.Final</netty-tcnative.version>
+        <netty.version>4.1.93.Final</netty.version>
+        <netty-tcnative.version>2.0.61.Final</netty-tcnative.version>
+        <reactor-netty.version>1.1.7</reactor-netty.version>
         <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surefire.version>3.0.0-M9</surefire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
-        <springfox-swagger.version>3.0.4</springfox-swagger.version>
-        <swagger-annotations.version>1.6.3</swagger-annotations.version>
+        <springdoc-swagger.version>2.1.0</springdoc-swagger.version>
+        <swagger-annotations.version>2.2.9</swagger-annotations.version>
         <spatial4j.version>0.7</spatial4j.version>
         <jts.version>1.18.2</jts.version>
         <bouncycastle.version>1.69</bouncycastle.version>
@@ -118,22 +120,22 @@
         <ua-parser.version>1.5.4</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-collections.version>3.2.2</commons-collections.version>
-        <micrometer.version>1.9.0</micrometer.version>
+        <micrometer.version>1.11.0</micrometer.version>
         <protobuf-dynamic.version>1.0.4TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
-        <twilio.version>8.17.0</twilio.version>
-        <hibernate-validator.version>6.0.20.Final</hibernate-validator.version>
-        <javax.el.version>3.0.0</javax.el.version>
-        <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
-        <antisamy.version>1.7.2</antisamy.version>
+        <twilio.version>9.6.1</twilio.version>
+        <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
+        <jakarta.el.version>4.0.2</jakarta.el.version>
+        <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
+        <antisamy.version>1.7.3</antisamy.version>
         <snmp4j.version>2.8.5</snmp4j.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.1.0</awaitility.version>
         <dbunit.version>2.7.2</dbunit.version>
         <java-websocket.version>1.5.2</java-websocket.version>
-        <jupiter.version>5.8.2</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->
+        <jupiter.version>5.9.3</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->
         <json-path.version>2.6.0</json-path.version>
-        <mock-server.version>5.13.1</mock-server.version>
+        <mock-server.version>5.15.0</mock-server.version>
         <spring-test-dbunit.version>1.3.0</spring-test-dbunit.version> <!-- 2016 -->
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version> <!-- 2015 -->
         <!--      BLACKBOX TEST SCOPE     -->
@@ -141,7 +143,7 @@
         <assertj.version>3.23.1</assertj.version>
         <rest-assured.version>5.2.0</rest-assured.version>
         <hamcrest.version>1.3</hamcrest.version>
-        <testcontainers.version>1.17.3</testcontainers.version>
+        <testcontainers.version>1.18.3</testcontainers.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <opensmpp.version>3.0.0</opensmpp.version>
         <jgit.version>6.1.0.202203080745-r</jgit.version>
@@ -615,6 +617,7 @@
                             <arg>-Xlint:deprecation</arg>
                             <arg>-Xlint:removal</arg>
                             <arg>-Xlint:unchecked</arg>
+                            <arg>-parameters</arg>
                         </compilerArgs>
                         <annotationProcessorPaths>
                             <path>
@@ -666,7 +669,7 @@
                     <version>${surefire.version}</version>
                     <configuration>
                         <argLine>
-                            --illegal-access=permit -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
+                            -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
                             --add-opens java.base/java.lang.reflect=ALL-UNNAMED
                         </argLine>
                     </configuration>
@@ -1081,14 +1084,19 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>javax.annotation</groupId>
-                <artifactId>javax.annotation-api</artifactId>
-                <version>${javax-annotation.version}</version>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>${jakarta-annotation.version}</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>
                 <artifactId>jakarta.xml.bind-api</artifactId>
                 <version>${jakarta.xml.bind-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>${javax.xml.bind-api.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish.jaxb</groupId>
@@ -1156,6 +1164,16 @@
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-commons</artifactId>
                 <version>${spring-data.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-webflux</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.projectreactor.netty</groupId>
+                <artifactId>reactor-netty-http</artifactId>
+                <version>${reactor-netty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.kafka</groupId>
@@ -1226,7 +1244,7 @@
             </dependency>
             <dependency>
                 <groupId>com.sun.mail</groupId>
-                <artifactId>javax.mail</artifactId>
+                <artifactId>jakarta.mail</artifactId>
                 <version>${mail.version}</version>
             </dependency>
             <dependency>
@@ -1332,11 +1350,31 @@
                 <artifactId>netty-transport</artifactId>
                 <version>${netty.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-classes-epoll</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-classes-kqueue</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native-epoll</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
             <dependency> <!-- brought by com.microsoft.azure:azure-servicebus -->
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-epoll</artifactId>
                 <version>${netty.version}</version>
                 <classifier>linux-x86_64</classifier>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native-kqueue</artifactId>
+                <version>${netty.version}</version>
             </dependency>
             <dependency> <!-- brought by com.microsoft.azure:azure-servicebus -->
                 <groupId>io.netty</groupId>
@@ -1731,13 +1769,13 @@
                 <version>${curator.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.thingsboard</groupId>
-                <artifactId>springfox-boot-starter</artifactId>
-                <version>${springfox-swagger.version}</version>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc-swagger.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-annotations</artifactId>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
                 <version>${swagger-annotations.version}</version>
             </dependency>
             <dependency>
@@ -1919,6 +1957,10 @@
                         <groupId>io.jsonwebtoken</groupId>
                         <artifactId>jjwt-impl</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.dataformat</groupId>
+                        <artifactId>jackson-dataformat-xml</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
@@ -1928,13 +1970,13 @@
             </dependency>
             <dependency>
                 <groupId>org.glassfish</groupId>
-                <artifactId>javax.el</artifactId>
-                <version>${javax.el.version}</version>
+                <artifactId>jakarta.el</artifactId>
+                <version>${jakarta.el.version}</version>
             </dependency>
             <dependency>
-                <groupId>javax.validation</groupId>
-                <artifactId>validation-api</artifactId>
-                <version>${javax.validation-api.version}</version>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>${jakarta.validation-api.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.owasp.antisamy</groupId>

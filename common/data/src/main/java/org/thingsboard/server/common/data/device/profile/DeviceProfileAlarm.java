@@ -15,46 +15,45 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.io.Serializable;
 import java.util.List;
 import java.util.TreeMap;
 
-@ApiModel
+@Schema
 @Data
 public class DeviceProfileAlarm implements Serializable {
 
-    @ApiModelProperty(position = 1, value = "String value representing the alarm rule id", example = "highTemperatureAlarmID")
+    @Schema(description = "String value representing the alarm rule id", example = "highTemperatureAlarmID")
     private String id;
     @Length(fieldName = "alarm type")
     @NoXss
-    @ApiModelProperty(position = 2, value = "String value representing type of the alarm", example = "High Temperature Alarm")
+    @Schema(description = "String value representing type of the alarm", example = "High Temperature Alarm")
     private String alarmType;
 
     @Valid
-    @ApiModelProperty(position = 3, value = "Complex JSON object representing create alarm rules. The unique create alarm rule can be created for each alarm severity type. " +
+    @Schema(description = "Complex JSON object representing create alarm rules. The unique create alarm rule can be created for each alarm severity type. " +
             "There can be 5 create alarm rules configured per a single alarm type. See method implementation notes and AlarmRule model for more details")
     private TreeMap<AlarmSeverity, AlarmRule> createRules;
     @Valid
-    @ApiModelProperty(position = 4, value = "JSON object representing clear alarm rule")
+    @Schema(description = "JSON object representing clear alarm rule")
     private AlarmRule clearRule;
 
     // Hidden in advanced settings
-    @ApiModelProperty(position = 5, value = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
+    @Schema(description = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
     private boolean propagate;
-    @ApiModelProperty(position = 6, value = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
+    @Schema(description = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
     private boolean propagateToOwner;
-    @ApiModelProperty(position = 7, value = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
+    @Schema(description = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
     private boolean propagateToTenant;
 
-    @ApiModelProperty(position = 8, value = "JSON array of relation types that should be used for propagation. " +
+    @Schema(description = "JSON array of relation types that should be used for propagation. " +
             "By default, 'propagateRelationTypes' array is empty which means that the alarm will be propagated based on any relation type to parent entities. " +
             "This parameter should be used only in case when 'propagate' parameter is set to true, otherwise, 'propagateRelationTypes' array will be ignored.")
     private List<String> propagateRelationTypes;

@@ -24,8 +24,8 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 

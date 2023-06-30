@@ -615,7 +615,7 @@ spring:
         enabled: "true"
   jpa:
     properties:
-      javax.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}"
+      jakarta.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}"
     open-in-view: "false"
     hibernate:
       ddl-auto: "none"
@@ -1006,10 +1006,12 @@ edges:
   state:
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
+springdoc:
+  api-docs.enabled: "${SWAGGER_ENABLED:true}"
+  default-produces-media-type: "${SWAGGER_DEFAULT_PRODUCES_MEDIA_TYPE:application/json}"
+
 swagger:
-  enabled: "${SWAGGER_ENABLED:true}"
-  api_path_regex: "${SWAGGER_API_PATH_REGEX:/api/.*}"
-  security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api/.*}"
+  api_path: "${SWAGGER_API_PATH:/api/**}"
   non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/(?:noauth|v1)/.*}"
   title: "${SWAGGER_TITLE:ThingsBoard REST API}"
   description: "${SWAGGER_DESCRIPTION: ThingsBoard open-source IoT platform REST API documentation.}"

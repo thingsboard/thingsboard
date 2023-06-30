@@ -32,8 +32,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
+import jakarta.annotation.Nullable;
 
 @Slf4j
 @RuleNode(

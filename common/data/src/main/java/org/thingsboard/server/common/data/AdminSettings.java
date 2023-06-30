@@ -16,14 +16,13 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-@ApiModel
+@Schema
 public class AdminSettings extends BaseData<AdminSettingsId> implements HasTenantId {
 
     private static final long serialVersionUID = -7670322981725511892L;
@@ -50,19 +49,19 @@ public class AdminSettings extends BaseData<AdminSettingsId> implements HasTenan
         this.jsonValue = adminSettings.getJsonValue();
     }
 
-    @ApiModelProperty(position = 1, value = "The Id of the Administration Settings, auto-generated, UUID")
+    @Schema(description = "The Id of the Administration Settings, auto-generated, UUID")
     @Override
     public AdminSettingsId getId() {
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the settings creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the settings creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -71,7 +70,7 @@ public class AdminSettings extends BaseData<AdminSettingsId> implements HasTenan
         this.tenantId = tenantId;
     }
 
-    @ApiModelProperty(position = 4, value = "The Administration Settings key, (e.g. 'general' or 'mail')", example = "mail")
+    @Schema(description = "The Administration Settings key, (e.g. 'general' or 'mail')", example = "mail")
     public String getKey() {
         return key;
     }
@@ -80,7 +79,7 @@ public class AdminSettings extends BaseData<AdminSettingsId> implements HasTenan
         this.key = key;
     }
 
-    @ApiModelProperty(position = 5, value = "JSON representation of the Administration Settings value")
+    @Schema(description = "JSON representation of the Administration Settings value")
     public JsonNode getJsonValue() {
         return jsonValue;
     }

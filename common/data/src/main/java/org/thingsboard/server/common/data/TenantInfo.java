@@ -15,15 +15,14 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@ApiModel
+@Schema
 @Data
 public class TenantInfo extends Tenant {
-    @ApiModelProperty(position = 15, value = "Tenant Profile name", example = "Default")
+    @Schema(description = "Tenant Profile name", example = "Default")
     private String tenantProfileName;
 
     public TenantInfo() {

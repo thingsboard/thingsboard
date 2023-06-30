@@ -15,14 +15,13 @@
  */
 package org.thingsboard.server.common.data.security;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 
-@ApiModel
+@Schema
 @EqualsAndHashCode(callSuper = true)
 public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements DeviceCredentialsFilter {
 
@@ -48,7 +47,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.credentialsValue = deviceCredentials.getCredentialsValue();
     }
 
-    @ApiModelProperty(position = 1, required = true, accessMode = ApiModelProperty.AccessMode.READ_ONLY, value = "The Id is automatically generated during device creation. " +
+    @Schema(required = true, accessMode = Schema.AccessMode.READ_ONLY, description = "The Id is automatically generated during device creation. " +
             "Use 'getDeviceCredentialsByDeviceId' to obtain the id based on device id. " +
             "Use 'updateDeviceCredentials' to update device credentials. ", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     @Override
@@ -56,13 +55,13 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the device credentials creation, in milliseconds", example = "1609459200000")
+    @Schema(description = "Timestamp of the device credentials creation, in milliseconds", example = "1609459200000")
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 3, required = true, value = "JSON object with the device Id.")
+    @Schema(required = true, description = "JSON object with the device Id.")
     public DeviceId getDeviceId() {
         return deviceId;
     }
@@ -71,7 +70,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.deviceId = deviceId;
     }
 
-    @ApiModelProperty(position = 4, value = "Type of the credentials", allowableValues="ACCESS_TOKEN, X509_CERTIFICATE, MQTT_BASIC, LWM2M_CREDENTIALS")
+    @Schema(description = "Type of the credentials", allowableValues ="ACCESS_TOKEN, X509_CERTIFICATE, MQTT_BASIC, LWM2M_CREDENTIALS")
     @Override
     public DeviceCredentialsType getCredentialsType() {
         return credentialsType;
@@ -81,7 +80,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.credentialsType = credentialsType;
     }
 
-    @ApiModelProperty(position = 5, required = true, value = "Unique Credentials Id per platform instance. " +
+    @Schema(required = true, description = "Unique Credentials Id per platform instance. " +
             "Used to lookup credentials from the database. " +
             "By default, new access token for your device. " +
             "Depends on the type of the credentials."
@@ -95,7 +94,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.credentialsId = credentialsId;
     }
 
-    @ApiModelProperty(position = 6, value = "Value of the credentials. " +
+    @Schema(description = "Value of the credentials. " +
             "Null in case of ACCESS_TOKEN credentials type. Base64 value in case of X509_CERTIFICATE. " +
             "Complex object in case of MQTT_BASIC and LWM2M_CREDENTIALS", example = "Null in case of ACCESS_TOKEN. See model definition.")
     public String getCredentialsValue() {

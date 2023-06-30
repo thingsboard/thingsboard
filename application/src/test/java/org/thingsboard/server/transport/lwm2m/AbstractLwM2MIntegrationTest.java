@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.util.SocketUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
@@ -304,9 +303,12 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap, Security securityBs) throws Exception {
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
-        int clientPort = SocketUtils.findAvailableUdpPort();
-        lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
-                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
+
+        try (ServerSocket socket = new ServerSocket(0)) {
+            int clientPort = socket.getLocalPort();
+            lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
+                    securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
+        }
     }
 
     private void clientDestroy() {

@@ -15,23 +15,22 @@
  */
 package org.thingsboard.server.common.data.lwm2m;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-@ApiModel
+@Schema
 @Data
 public class LwM2mObject {
-    @ApiModelProperty(position = 1, value = "LwM2M Object id.", example = "19")
+    @Schema(description = "LwM2M Object id.", example = "19")
     int id;
-    @ApiModelProperty(position = 2, value = "LwM2M Object key id.", example = "19_1.0")
+    @Schema(description = "LwM2M Object key id.", example = "19_1.0")
     String keyId;
-    @ApiModelProperty(position = 3, value = "LwM2M Object name.", example = "BinaryAppDataContainer")
+    @Schema(description = "LwM2M Object name.", example = "BinaryAppDataContainer")
     String name;
-    @ApiModelProperty(position = 4, value = "LwM2M Object multiple.", example = "true")
+    @Schema(description = "LwM2M Object multiple.", example = "true")
     boolean multiple;
-    @ApiModelProperty(position = 5, value = "LwM2M Object mandatory.", example = "false")
+    @Schema(description = "LwM2M Object mandatory.", example = "false")
     boolean mandatory;
-    @ApiModelProperty(position = 6, value = "LwM2M Object instances.")
+    @Schema(description = "LwM2M Object instances.")
     LwM2mInstance [] instances;
 }

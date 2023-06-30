@@ -40,7 +40,7 @@ import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;

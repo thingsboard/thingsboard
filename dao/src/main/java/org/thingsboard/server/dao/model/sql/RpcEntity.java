@@ -16,10 +16,14 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,13 +31,8 @@ import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Table;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.RPC_ADDITIONAL_INFO;
@@ -48,7 +47,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.RPC_TENANT_ID_COLU
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = RPC_TABLE_NAME)
 public class RpcEntity extends BaseSqlEntity<Rpc> implements BaseEntity<Rpc> {
 
@@ -61,11 +59,11 @@ public class RpcEntity extends BaseSqlEntity<Rpc> implements BaseEntity<Rpc> {
     @Column(name = RPC_EXPIRATION_TIME)
     private long expirationTime;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = RPC_REQUEST)
     private JsonNode request;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = RPC_RESPONSE)
     private JsonNode response;
 
@@ -73,7 +71,7 @@ public class RpcEntity extends BaseSqlEntity<Rpc> implements BaseEntity<Rpc> {
     @Column(name = RPC_STATUS)
     private RpcStatus status;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = RPC_ADDITIONAL_INFO)
     private JsonNode additionalInfo;
 

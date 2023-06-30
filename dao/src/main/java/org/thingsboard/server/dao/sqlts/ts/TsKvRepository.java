@@ -30,12 +30,12 @@ import java.util.UUID;
 public interface TsKvRepository extends JpaRepository<TsKvEntity, TsKvCompositeKey> {
 
     /*
-    * Using native query to avoid adding 'nulls first' or 'nulls last' (ignoring spring.jpa.properties.hibernate.order_by.default_null_ordering)
-    * to the order so that index scan is done instead of full scan.
-    *
-    * Note: even when setting custom NullHandling for the Sort.Order for non-native queries,
-    * it will be ignored and default_null_ordering will be used
-    * */
+     * Using native query to avoid adding 'nulls first' or 'nulls last' (ignoring spring.jpa.properties.hibernate.order_by.default_null_ordering)
+     * to the order so that index scan is done instead of full scan.
+     *
+     * Note: even when setting custom NullHandling for the Sort.Order for non-native queries,
+     * it will be ignored and default_null_ordering will be used
+     * */
     @Query(value = "SELECT * FROM ts_kv WHERE entity_id = :entityId " +
             "AND key = :entityKey AND ts >= :startTs AND ts < :endTs ", nativeQuery = true)
     List<TsKvEntity> findAllWithLimit(@Param("entityId") UUID entityId,
@@ -57,41 +57,41 @@ public interface TsKvRepository extends JpaRepository<TsKvEntity, TsKvCompositeK
             "WHERE tskv.strValue IS NOT NULL " +
             "AND tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     TsKvEntity findStringMax(@Param("entityId") UUID entityId,
-                                                @Param("entityKey") int entityKey,
-                                                @Param("startTs") long startTs,
-                                                @Param("endTs") long endTs);
+                             @Param("entityKey") int entityKey,
+                             @Param("startTs") long startTs,
+                             @Param("endTs") long endTs);
 
     @Query("SELECT new TsKvEntity(MAX(COALESCE(tskv.longValue, -9223372036854775807)), " +
-            "MAX(COALESCE(tskv.doubleValue, -1.79769E+308)), " +
+            "MAX(COALESCE(tskv.doubleValue, java.lang.Double.MIN_VALUE)), " +
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
             "'MAX', MAX(tskv.ts)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     TsKvEntity findNumericMax(@Param("entityId") UUID entityId,
-                                          @Param("entityKey") int entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+                              @Param("entityKey") int entityKey,
+                              @Param("startTs") long startTs,
+                              @Param("endTs") long endTs);
 
 
     @Query("SELECT new TsKvEntity(MIN(tskv.strValue), MAX(tskv.ts)) FROM TsKvEntity tskv " +
             "WHERE tskv.strValue IS NOT NULL " +
             "AND tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     TsKvEntity findStringMin(@Param("entityId") UUID entityId,
-                                          @Param("entityKey") int entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+                             @Param("entityKey") int entityKey,
+                             @Param("startTs") long startTs,
+                             @Param("endTs") long endTs);
 
     @Query("SELECT new TsKvEntity(MIN(COALESCE(tskv.longValue, 9223372036854775807)), " +
-            "MIN(COALESCE(tskv.doubleValue, 1.79769E+308)), " +
+            "MIN(COALESCE(tskv.doubleValue, java.lang.Double.MAX_VALUE)), " +
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
             "'MIN', MAX(tskv.ts)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     TsKvEntity findNumericMin(
-                                          @Param("entityId") UUID entityId,
-                                          @Param("entityKey") int entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+            @Param("entityId") UUID entityId,
+            @Param("entityKey") int entityKey,
+            @Param("startTs") long startTs,
+            @Param("endTs") long endTs);
 
     @Query("SELECT new TsKvEntity(SUM(CASE WHEN tskv.booleanValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.strValue IS NULL THEN 0 ELSE 1 END), " +
@@ -100,9 +100,9 @@ public interface TsKvRepository extends JpaRepository<TsKvEntity, TsKvCompositeK
             "SUM(CASE WHEN tskv.jsonValue IS NULL THEN 0 ELSE 1 END), MAX(tskv.ts)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     TsKvEntity findCount(@Param("entityId") UUID entityId,
-                                            @Param("entityKey") int entityKey,
-                                            @Param("startTs") long startTs,
-                                            @Param("endTs") long endTs);
+                         @Param("entityKey") int entityKey,
+                         @Param("startTs") long startTs,
+                         @Param("endTs") long endTs);
 
     @Query("SELECT new TsKvEntity(SUM(COALESCE(tskv.longValue, 0)), " +
             "SUM(COALESCE(tskv.doubleValue, 0.0)), " +
@@ -111,9 +111,9 @@ public interface TsKvRepository extends JpaRepository<TsKvEntity, TsKvCompositeK
             "'AVG', MAX(tskv.ts)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     TsKvEntity findAvg(@Param("entityId") UUID entityId,
-                                          @Param("entityKey") int entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+                       @Param("entityKey") int entityKey,
+                       @Param("startTs") long startTs,
+                       @Param("endTs") long endTs);
 
     @Query("SELECT new TsKvEntity(SUM(COALESCE(tskv.longValue, 0)), " +
             "SUM(COALESCE(tskv.doubleValue, 0.0)), " +
@@ -122,8 +122,8 @@ public interface TsKvRepository extends JpaRepository<TsKvEntity, TsKvCompositeK
             "'SUM', MAX(tskv.ts)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     TsKvEntity findSum(@Param("entityId") UUID entityId,
-                                          @Param("entityKey") int entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+                       @Param("entityKey") int entityKey,
+                       @Param("startTs") long startTs,
+                       @Param("endTs") long endTs);
 
 }

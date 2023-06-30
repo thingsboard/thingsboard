@@ -49,7 +49,6 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <version>${netty.version}</version>
             <!-- Explicitly bring in the linux classifier, test may fail on 32-bit linux -->
             <classifier>linux-x86_64</classifier>
         </dependency>
@@ -212,7 +211,15 @@
         </dependency>
         <dependency>
             <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
+            <artifactId>jakarta.mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.twilio.sdk</groupId>
@@ -255,8 +262,8 @@
             <artifactId>opensmpp-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard</groupId>
-            <artifactId>springfox-boot-starter</artifactId>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
         <dependency>
             <groupId>com.sun.winsw</groupId>

@@ -18,8 +18,8 @@ package org.thingsboard.server.controller;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -67,7 +68,6 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -189,7 +189,7 @@ public class EntitiesVersionControlController extends BaseController {
             MARKDOWN_CODE_BLOCK_END +
             TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping(value = "/version/{requestId}/status")
-    public VersionCreationResult getVersionCreateRequestStatus(@ApiParam(value = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
+    public VersionCreationResult getVersionCreateRequestStatus(@Parameter(description = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
                                                                @PathVariable UUID requestId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
         return versionControlService.getVersionCreateStatus(getCurrentUser(), requestId);
@@ -232,21 +232,21 @@ public class EntitiesVersionControlController extends BaseController {
             MARKDOWN_CODE_BLOCK_END +
             TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping(value = "/version/{entityType}/{externalEntityUuid}", params = {"branch", "pageSize", "page"})
-    public DeferredResult<PageData<EntityVersion>> listEntityVersions(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+    public DeferredResult<PageData<EntityVersion>> listEntityVersions(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                       @PathVariable EntityType entityType,
-                                                                      @ApiParam(value = "A string value representing external entity id. This is `externalId` property of an entity, or otherwise if not set - simply id of this entity.")
+                                                                      @Parameter(description = "A string value representing external entity id. This is `externalId` property of an entity, or otherwise if not set - simply id of this entity.")
                                                                       @PathVariable UUID externalEntityUuid,
-                                                                      @ApiParam(value = BRANCH_PARAM_DESCRIPTION)
+                                                                      @Parameter(description = BRANCH_PARAM_DESCRIPTION)
                                                                       @RequestParam String branch,
-                                                                      @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                      @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                                       @RequestParam int pageSize,
-                                                                      @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                      @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                       @RequestParam int page,
-                                                                      @ApiParam(value = ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION)
+                                                                      @Parameter(description = ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION)
                                                                       @RequestParam(required = false) String textSearch,
-                                                                      @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = "timestamp")
+                                                                      @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = "timestamp"))
                                                                       @RequestParam(required = false) String sortProperty,
-                                                                      @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+                                                                      @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
                                                                       @RequestParam(required = false) String sortOrder) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         EntityId externalEntityId = EntityIdFactory.getByTypeAndUuid(entityType, externalEntityUuid);
@@ -261,19 +261,19 @@ public class EntitiesVersionControlController extends BaseController {
             "The response structure is the same as for `listEntityVersions` API method." +
             TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping(value = "/version/{entityType}", params = {"branch", "pageSize", "page"})
-    public DeferredResult<PageData<EntityVersion>> listEntityTypeVersions(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+    public DeferredResult<PageData<EntityVersion>> listEntityTypeVersions(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                           @PathVariable EntityType entityType,
-                                                                          @ApiParam(value = BRANCH_PARAM_DESCRIPTION, required = true)
+                                                                          @Parameter(description = BRANCH_PARAM_DESCRIPTION, required = true)
                                                                           @RequestParam String branch,
-                                                                          @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                          @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                                           @RequestParam int pageSize,
-                                                                          @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                          @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                           @RequestParam int page,
-                                                                          @ApiParam(value = ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION)
+                                                                          @Parameter(description = ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION)
                                                                           @RequestParam(required = false) String textSearch,
-                                                                          @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = "timestamp")
+                                                                          @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = "timestamp"))
                                                                           @RequestParam(required = false) String sortProperty,
-                                                                          @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+                                                                          @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
                                                                           @RequestParam(required = false) String sortOrder) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
@@ -286,17 +286,17 @@ public class EntitiesVersionControlController extends BaseController {
             "The response format is the same as for `listEntityVersions` API method." +
             TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping(value = "/version", params = {"branch", "pageSize", "page"})
-    public DeferredResult<PageData<EntityVersion>> listVersions(@ApiParam(value = BRANCH_PARAM_DESCRIPTION, required = true)
+    public DeferredResult<PageData<EntityVersion>> listVersions(@Parameter(description = BRANCH_PARAM_DESCRIPTION, required = true)
                                                                 @RequestParam String branch,
-                                                                @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                                 @RequestParam int pageSize,
-                                                                @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                 @RequestParam int page,
-                                                                @ApiParam(value = ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION)
+                                                                @Parameter(description = ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION)
                                                                 @RequestParam(required = false) String textSearch,
-                                                                @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = "timestamp")
+                                                                @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = "timestamp"))
                                                                 @RequestParam(required = false) String sortProperty,
-                                                                @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+                                                                @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
                                                                 @RequestParam(required = false) String sortOrder) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
@@ -310,9 +310,9 @@ public class EntitiesVersionControlController extends BaseController {
             "Entities order will be the same as in the repository." +
             TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping(value = "/entity/{entityType}/{versionId}")
-    public DeferredResult<List<VersionedEntityInfo>> listEntitiesAtVersion(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+    public DeferredResult<List<VersionedEntityInfo>> listEntitiesAtVersion(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                            @PathVariable EntityType entityType,
-                                                                           @ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
+                                                                           @Parameter(description = VERSION_ID_PARAM_DESCRIPTION, required = true)
                                                                            @PathVariable String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         return wrapFuture(versionControlService.listEntitiesAtVersion(getTenantId(), versionId, entityType));
@@ -324,7 +324,7 @@ public class EntitiesVersionControlController extends BaseController {
             "Returned entities order will be the same as in the repository." +
             TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping(value = "/entity/{versionId}")
-    public DeferredResult<List<VersionedEntityInfo>> listAllEntitiesAtVersion(@ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
+    public DeferredResult<List<VersionedEntityInfo>> listAllEntitiesAtVersion(@Parameter(description = VERSION_ID_PARAM_DESCRIPTION, required = true)
                                                                               @PathVariable String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         return wrapFuture(versionControlService.listAllEntitiesAtVersion(getTenantId(), versionId));
@@ -337,11 +337,11 @@ public class EntitiesVersionControlController extends BaseController {
             "`hasCredentials` (whether stored device data has credentials)." +
             TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/info/{versionId}/{entityType}/{externalEntityUuid}")
-    public DeferredResult<EntityDataInfo> getEntityDataInfo(@ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
+    public DeferredResult<EntityDataInfo> getEntityDataInfo(@Parameter(description = VERSION_ID_PARAM_DESCRIPTION, required = true)
                                                             @PathVariable String versionId,
-                                                            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+                                                            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                             @PathVariable EntityType entityType,
-                                                            @ApiParam(value = "A string value representing external entity id", required = true)
+                                                            @Parameter(description = "A string value representing external entity id", required = true)
                                                             @PathVariable UUID externalEntityUuid) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, externalEntityUuid);
@@ -353,11 +353,11 @@ public class EntitiesVersionControlController extends BaseController {
             "Entity data structure is the same as stored in a repository. " +
             TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping(value = "/diff/{entityType}/{internalEntityUuid}", params = {"versionId"})
-    public DeferredResult<EntityDataDiff> compareEntityDataToVersion(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+    public DeferredResult<EntityDataDiff> compareEntityDataToVersion(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                      @PathVariable EntityType entityType,
-                                                                     @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+                                                                     @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
                                                                      @PathVariable UUID internalEntityUuid,
-                                                                     @ApiParam(value = VERSION_ID_PARAM_DESCRIPTION, required = true)
+                                                                     @Parameter(description = VERSION_ID_PARAM_DESCRIPTION, required = true)
                                                                      @RequestParam String versionId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, internalEntityUuid);
@@ -466,7 +466,7 @@ public class EntitiesVersionControlController extends BaseController {
             TENANT_AUTHORITY_PARAGRAPH
     )
     @GetMapping(value = "/entity/{requestId}/status")
-    public VersionLoadResult getVersionLoadRequestStatus(@ApiParam(value = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
+    public VersionLoadResult getVersionLoadRequestStatus(@Parameter(description = VC_REQUEST_ID_PARAM_DESCRIPTION, required = true)
                                                          @PathVariable UUID requestId) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
         return versionControlService.getVersionLoadStatus(getCurrentUser(), requestId);

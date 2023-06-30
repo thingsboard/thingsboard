@@ -16,20 +16,19 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@ApiModel
+@Schema
 public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle {
 
     private TenantId tenantId;
@@ -61,7 +60,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.mobileOrder = dashboardInfo.getMobileOrder();
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the dashboard Id. " +
+    @Schema(description = "JSON object with the dashboard Id. " +
             "Specify existing dashboard Id to update the dashboard. " +
             "Referencing non-existing dashboard id will cause error. " +
             "Omit this field to create new dashboard.")
@@ -70,13 +69,13 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the dashboard creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the dashboard creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id. Tenant Id of the dashboard can't be changed.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id. Tenant Id of the dashboard can't be changed.", accessMode = Schema.AccessMode.READ_ONLY)
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -85,7 +84,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.tenantId = tenantId;
     }
 
-    @ApiModelProperty(position = 4, value = "Title of the dashboard.")
+    @Schema(description = "Title of the dashboard.")
     public String getTitle() {
         return title;
     }
@@ -94,7 +93,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.title = title;
     }
 
-    @ApiModelProperty(position = 8, value = "Thumbnail picture for rendering of the dashboards in a grid view on mobile devices.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Thumbnail picture for rendering of the dashboards in a grid view on mobile devices.", accessMode = Schema.AccessMode.READ_ONLY)
     public String getImage() {
         return image;
     }
@@ -103,7 +102,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.image = image;
     }
 
-    @ApiModelProperty(position = 5, value = "List of assigned customers with their info.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "List of assigned customers with their info.", accessMode = Schema.AccessMode.READ_ONLY)
     public Set<ShortCustomerInfo> getAssignedCustomers() {
         return assignedCustomers;
     }
@@ -112,7 +111,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.assignedCustomers = assignedCustomers;
     }
 
-    @ApiModelProperty(position = 6, value = "Hide dashboard from mobile devices. Useful if the dashboard is not designed for small screens.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Hide dashboard from mobile devices. Useful if the dashboard is not designed for small screens.", accessMode = Schema.AccessMode.READ_ONLY)
     public boolean isMobileHide() {
         return mobileHide;
     }
@@ -121,7 +120,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.mobileHide = mobileHide;
     }
 
-    @ApiModelProperty(position = 7, value = "Order on mobile devices. Useful to adjust sorting of the dashboards for mobile applications", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Order on mobile devices. Useful to adjust sorting of the dashboards for mobile applications", accessMode = Schema.AccessMode.READ_ONLY)
     public Integer getMobileOrder() {
         return mobileOrder;
     }
@@ -179,7 +178,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         }
     }
 
-    @ApiModelProperty(position = 4, value = "Same as title of the dashboard. Read-only field. Update the 'title' to change the 'name' of the dashboard.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Same as title of the dashboard. Read-only field. Update the 'title' to change the 'name' of the dashboard.", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {

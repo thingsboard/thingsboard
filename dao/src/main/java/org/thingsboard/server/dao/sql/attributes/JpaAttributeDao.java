@@ -19,6 +19,8 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,8 +41,6 @@ import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -132,10 +132,10 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Override
     public List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, String attributeType) {
         return DaoUtil.convertDataList(Lists.newArrayList(
-                        attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
-                                entityId.getEntityType(),
-                                entityId.getId(),
-                                attributeType)));
+                attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
+                        entityId.getEntityType(),
+                        entityId.getId(),
+                        attributeType)));
     }
 
     @Override

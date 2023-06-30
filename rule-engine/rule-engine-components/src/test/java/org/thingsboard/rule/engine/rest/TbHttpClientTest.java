@@ -28,7 +28,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.web.client.AsyncRestTemplate;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -139,10 +138,7 @@ public class TbHttpClientTest {
         config.setRestEndpointUrlPattern(endpointUrl);
         config.setUseSimpleClientHttpFactory(true);
 
-        var asyncRestTemplate = new AsyncRestTemplate();
-
         var httpClient = new TbHttpClient(config, eventLoop);
-        httpClient.setHttpClient(asyncRestTemplate);
 
         var msg = TbMsg.newMsg("GET", new DeviceId(EntityId.NULL_UUID), TbMsgMetaData.EMPTY, "{}");
         var successMsg = TbMsg.newMsg(
