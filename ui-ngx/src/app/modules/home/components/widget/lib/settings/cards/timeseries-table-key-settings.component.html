@@ -20,7 +20,7 @@
     <div class="tb-widget-config-panel-title" translate>widgets.table.column-settings</div>
     <div class="tb-widget-config-row space-between">
       <div>{{ 'widgets.table.default-column-visibility' | translate }}</div>
-      <mat-form-field style="width: 220px;" appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="defaultColumnVisibility">
           <mat-option [value]="'visible'">
             {{ 'widgets.table.column-visibility-visible' | translate }}
@@ -36,7 +36,7 @@
     </div>
     <div class="tb-widget-config-row space-between">
       <div>{{ 'widgets.table.column-selection-to-display' | translate }}</div>
-      <mat-form-field style="width: 220px;" appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="columnSelectionToDisplay">
           <mat-option [value]="'enabled'">
             {{ 'widgets.table.column-selection-to-display-enabled' | translate }}

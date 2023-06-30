@@ -13,28 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  display: block;
+
+.tb-flot-threshold {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  gap: 4px;
   .mat-expansion-panel {
     box-shadow: none;
-    &.flot-threshold {
-      border: 1px groove rgba(0, 0, 0, .25);
-      .mat-expansion-panel-header {
-        padding: 0 24px 0 8px;
-        &.mat-expanded {
-          height: 48px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    .mat-expansion-panel-header {
+      height: 56px;
+      border-radius: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      .tb-threshold-header {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+        align-items: center;
+        padding-left: 16px;
+        .mat-divider-vertical {
+          height: 100%;
         }
+      }
+      .tb-threshold-text {
+        flex: 1;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 16px;
+        letter-spacing: 0.15px;
+      }
+      .mat-expansion-indicator {
+        margin-right: 22px;
+        margin-left: 22px;
+        margin-top: 12px;
+      }
+    }
+    .mat-expansion-panel-body {
+      padding: 0 8px 8px;
+    }
+    &.mat-expanded {
+      .mat-expansion-panel-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.12);
       }
     }
   }
-}
-
-:host ::ng-deep {
-  .mat-expansion-panel {
-    &.flot-threshold {
-      .mat-expansion-panel-body {
-        padding: 0 8px 8px;
-      }
-    }
+  .mdc-icon-button {
+    margin-top: 4px;
+    color: rgba(0, 0, 0, 0.54);
   }
 }

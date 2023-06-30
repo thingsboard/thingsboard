@@ -20,15 +20,11 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import {
-  DataKey,
-  Datasource,
-  datasourcesHasAggregation,
-  datasourcesHasOnlyComparisonAggregation, WidgetConfig
-} from '@shared/models/widget.models';
+import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { deepClone, isUndefined } from '@core/utils';
+import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
   selector: 'tb-timeseries-table-basic-config',
@@ -65,11 +61,7 @@ export class TimeseriesTableBasicConfigComponent extends BasicWidgetConfigCompon
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     this.timeseriesTableWidgetConfigForm = this.fb.group({
-      timewindowConfig: [{
-        useDashboardTimewindow: configData.config.useDashboardTimewindow,
-        displayTimewindow: configData.config.displayTimewindow,
-        timewindow: configData.config.timewindow
-      }, []],
+      timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
       columns: [this.getColumns(configData.config.datasources), []],
       showTitle: [configData.config.showTitle, []],
@@ -92,11 +84,11 @@ export class TimeseriesTableBasicConfigComponent extends BasicWidgetConfigCompon
     this.setColumns(config.columns, this.widgetConfig.config.datasources);
     this.widgetConfig.config.actions = config.actions;
     this.widgetConfig.config.showTitle = config.showTitle;
-    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
-    this.widgetConfig.config.settings.entitiesTitle = config.title;
+    this.widgetConfig.config.title = config.title;
     this.widgetConfig.config.showTitleIcon = config.showTitleIcon;
     this.widgetConfig.config.titleIcon = config.titleIcon;
     this.widgetConfig.config.iconColor = config.iconColor;
+    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.color = config.color;
     this.widgetConfig.config.backgroundColor = config.backgroundColor;

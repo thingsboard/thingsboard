@@ -20,36 +20,21 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import {
-  DataKey,
-  Datasource,
-  datasourcesHasAggregation,
-  datasourcesHasOnlyComparisonAggregation, WidgetConfig
-} from '@shared/models/widget.models';
+import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isUndefined } from '@core/utils';
 import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
-  selector: 'tb-entities-table-basic-config',
-  templateUrl: './entities-table-basic-config.component.html',
+  selector: 'tb-flot-basic-config',
+  templateUrl: './flot-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
-export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponent {
-
-  public get displayTimewindowConfig(): boolean {
-    const datasources = this.entitiesTableWidgetConfigForm.get('datasources').value;
-    return datasourcesHasAggregation(datasources);
-  }
-
-  public onlyHistoryTimewindow(): boolean {
-    const datasources = this.entitiesTableWidgetConfigForm.get('datasources').value;
-    return datasourcesHasOnlyComparisonAggregation(datasources);
-  }
+export class FlotBasicConfigComponent extends BasicWidgetConfigComponent {
 
   public get datasource(): Datasource {
-    const datasources: Datasource[] = this.entitiesTableWidgetConfigForm.get('datasources').value;
+    const datasources: Datasource[] = this.flotWidgetConfigForm.get('datasources').value;
     if (datasources && datasources.length) {
       return datasources[0];
     } else {
@@ -57,7 +42,7 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
     }
   }
 
-  entitiesTableWidgetConfigForm: UntypedFormGroup;
+  flotWidgetConfigForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -66,26 +51,31 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
   }
 
   protected configForm(): UntypedFormGroup {
-    return this.entitiesTableWidgetConfigForm;
+    return this.flotWidgetConfigForm;
   }
 
   protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'name', type: DataKeyType.entityField }]);
+    this.setupDefaultDatasource(configData,
+      [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, units: '°C', decimals: 0 }]);
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    this.entitiesTableWidgetConfigForm = this.fb.group({
+    this.flotWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
-      columns: [this.getColumns(configData.config.datasources), []],
+      series: [this.getSeries(configData.config.datasources), []],
       showTitle: [configData.config.showTitle, []],
-      title: [configData.config.settings?.entitiesTitle, []],
+      title: [configData.config.title, []],
       showTitleIcon: [configData.config.showTitleIcon, []],
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
       cardButtons: [this.getCardButtons(configData.config), []],
       color: [configData.config.color, []],
       backgroundColor: [configData.config.backgroundColor, []],
+      verticalLines: [configData.config.settings?.grid?.verticalLines, []],
+      horizontalLines: [configData.config.settings?.grid?.horizontalLines, []],
+      showLegend: [configData.config.settings?.showLegend, []],
+      legendConfig: [configData.config.settings?.legendConfig, []],
       actions: [configData.config.actions || {}, []]
     });
   }
@@ -95,70 +85,75 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
     this.widgetConfig.config.displayTimewindow = config.timewindowConfig.displayTimewindow;
     this.widgetConfig.config.timewindow = config.timewindowConfig.timewindow;
     this.widgetConfig.config.datasources = config.datasources;
-    this.setColumns(config.columns, this.widgetConfig.config.datasources);
+    this.setSeries(config.series, this.widgetConfig.config.datasources);
     this.widgetConfig.config.actions = config.actions;
     this.widgetConfig.config.showTitle = config.showTitle;
-    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
-    this.widgetConfig.config.settings.entitiesTitle = config.title;
+    this.widgetConfig.config.title = config.title;
     this.widgetConfig.config.showTitleIcon = config.showTitleIcon;
     this.widgetConfig.config.titleIcon = config.titleIcon;
     this.widgetConfig.config.iconColor = config.iconColor;
+    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
-    this.widgetConfig.config.color = config.color;
     this.widgetConfig.config.backgroundColor = config.backgroundColor;
+    this.widgetConfig.config.settings.grid = this.widgetConfig.config.settings.grid || {};
+    this.widgetConfig.config.settings.grid.verticalLines = config.verticalLines;
+    this.widgetConfig.config.settings.grid.horizontalLines = config.horizontalLines;
+    this.widgetConfig.config.settings.showLegend = config.showLegend;
+    this.widgetConfig.config.settings.legendConfig = config.legendConfig;
     return this.widgetConfig;
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showTitleIcon'];
+    return ['showTitle', 'showTitleIcon', 'showLegend'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
-    const showTitle: boolean = this.entitiesTableWidgetConfigForm.get('showTitle').value;
-    const showTitleIcon: boolean = this.entitiesTableWidgetConfigForm.get('showTitleIcon').value;
+    const showTitle: boolean = this.flotWidgetConfigForm.get('showTitle').value;
+    const showTitleIcon: boolean = this.flotWidgetConfigForm.get('showTitleIcon').value;
+    const showLegend: boolean = this.flotWidgetConfigForm.get('showLegend').value;
     if (showTitle) {
-      this.entitiesTableWidgetConfigForm.get('title').enable();
-      this.entitiesTableWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
+      this.flotWidgetConfigForm.get('title').enable();
+      this.flotWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
       if (showTitleIcon) {
-        this.entitiesTableWidgetConfigForm.get('titleIcon').enable();
-        this.entitiesTableWidgetConfigForm.get('iconColor').enable();
+        this.flotWidgetConfigForm.get('titleIcon').enable();
+        this.flotWidgetConfigForm.get('iconColor').enable();
       } else {
-        this.entitiesTableWidgetConfigForm.get('titleIcon').disable();
-        this.entitiesTableWidgetConfigForm.get('iconColor').disable();
+        this.flotWidgetConfigForm.get('titleIcon').disable();
+        this.flotWidgetConfigForm.get('iconColor').disable();
       }
     } else {
-      this.entitiesTableWidgetConfigForm.get('title').disable();
-      this.entitiesTableWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
-      this.entitiesTableWidgetConfigForm.get('titleIcon').disable();
-      this.entitiesTableWidgetConfigForm.get('iconColor').disable();
+      this.flotWidgetConfigForm.get('title').disable();
+      this.flotWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
+      this.flotWidgetConfigForm.get('titleIcon').disable();
+      this.flotWidgetConfigForm.get('iconColor').disable();
     }
-    this.entitiesTableWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
-    this.entitiesTableWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
-    this.entitiesTableWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
-    this.entitiesTableWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});
+    if (showLegend) {
+      this.flotWidgetConfigForm.get('legendConfig').enable();
+    } else {
+      this.flotWidgetConfigForm.get('legendConfig').disable();
+    }
+    this.flotWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
+    this.flotWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
+    this.flotWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
+    this.flotWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});
+    this.flotWidgetConfigForm.get('legendConfig').updateValueAndValidity({emitEvent});
   }
 
-  private getColumns(datasources?: Datasource[]): DataKey[] {
+  private getSeries(datasources?: Datasource[]): DataKey[] {
     if (datasources && datasources.length) {
       return datasources[0].dataKeys || [];
     }
     return [];
   }
 
-  private setColumns(columns: DataKey[], datasources?: Datasource[]) {
+  private setSeries(series: DataKey[], datasources?: Datasource[]) {
     if (datasources && datasources.length) {
-      datasources[0].dataKeys = columns;
+      datasources[0].dataKeys = series;
     }
   }
 
   private getCardButtons(config: WidgetConfig): string[] {
     const buttons: string[] = [];
-    if (isUndefined(config.settings?.enableSearch) || config.settings?.enableSearch) {
-      buttons.push('search');
-    }
-    if (isUndefined(config.settings?.enableSelectColumnDisplay) || config.settings?.enableSelectColumnDisplay) {
-      buttons.push('columnsToDisplay');
-    }
     if (isUndefined(config.enableFullscreen) || config.enableFullscreen) {
       buttons.push('fullscreen');
     }
@@ -166,8 +161,6 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
   }
 
   private setCardButtons(buttons: string[], config: WidgetConfig) {
-    config.settings.enableSearch = buttons.includes('search');
-    config.settings.enableSelectColumnDisplay = buttons.includes('columnsToDisplay');
     config.enableFullscreen = buttons.includes('fullscreen');
   }
 

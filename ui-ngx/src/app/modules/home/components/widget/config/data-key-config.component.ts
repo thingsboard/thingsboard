@@ -57,7 +57,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 @Component({
   selector: 'tb-data-key-config',
   templateUrl: './data-key-config.component.html',
-  styleUrls: ['./data-key-config.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

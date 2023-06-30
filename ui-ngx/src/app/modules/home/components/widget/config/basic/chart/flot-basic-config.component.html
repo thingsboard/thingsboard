@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<ng-container [formGroup]="timeseriesTableWidgetConfigForm">
+<ng-container [formGroup]="flotWidgetConfigForm">
   <tb-timewindow-config-panel formControlName="timewindowConfig">
   </tb-timewindow-config-panel>
   <tb-datasources
@@ -25,20 +25,20 @@
     formControlName="datasources">
   </tb-datasources>
   <tb-data-keys-panel
-    panelTitle="{{ 'widgets.table.columns' | translate }}"
-    addKeyTitle="{{ 'widgets.table.add-column' | translate }}"
-    keySettingsTitle="{{ 'widgets.table.column-settings' | translate }}"
-    removeKeyTitle="{{ 'widgets.table.remove-column' | translate }}"
-    noKeysText="{{ 'widgets.table.no-columns' | translate }}"
-    requiredKeysText="{{ 'widgets.table.timeseries-column-error' | translate }}"
-    hideDataKeyColor
+    panelTitle="{{ 'widgets.chart.series' | translate }}"
+    addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
+    keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
+    removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
+    noKeysText="{{ 'widgets.chart.no-series' | translate }}"
+    requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+    hideSourceSelection
     [datasourceType]="datasource?.type"
     [deviceId]="datasource?.deviceId"
     [entityAliasId]="datasource?.entityAliasId"
-    formControlName="columns">
+    formControlName="series">
   </tb-data-keys-panel>
   <div class="tb-widget-config-panel">
-    <div class="tb-widget-config-panel-title" translate>widget-config.appearance</div>
+    <div class="tb-widget-config-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-widget-config-row">
       <mat-slide-toggle class="mat-slide fixed-title-width"  formControlName="showTitle">
         {{ 'widget-config.card-title' | translate }}
@@ -53,7 +53,7 @@
       </mat-slide-toggle>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
         <tb-material-icon-select asBoxInput
-                                 [color]="timeseriesTableWidgetConfigForm.get('iconColor').value"
+                                 [color]="flotWidgetConfigForm.get('iconColor').value"
                                  formControlName="titleIcon">
         </tb-material-icon-select>
         <mat-divider vertical></mat-divider>
@@ -65,19 +65,8 @@
     <div class="tb-widget-config-row space-between">
       <div translate>widget-config.show-card-buttons</div>
       <mat-chip-listbox multiple formControlName="cardButtons">
-        <mat-chip-option value="search">{{ 'action.search' | translate }}</mat-chip-option>
-        <mat-chip-option value="columnsToDisplay">{{ 'widgets.table.columns-to-display' | translate }}</mat-chip-option>
         <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
       </mat-chip-listbox>
-    </div>
-    <div class="tb-widget-config-row space-between same-padding">
-      <div>{{ 'widget-config.text-color' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-        <mat-divider vertical></mat-divider>
-        <tb-color-input asBoxInput
-                        formControlName="color">
-        </tb-color-input>
-      </div>
     </div>
     <div class="tb-widget-config-row space-between same-padding">
       <div>{{ 'widget-config.background-color' | translate }}</div>
@@ -87,6 +76,35 @@
                         formControlName="backgroundColor">
         </tb-color-input>
       </div>
+    </div>
+  </div>
+  <div class="tb-widget-config-panel">
+    <div class="tb-widget-config-panel-title" translate>widgets.chart.chart-appearance</div>
+    <div class="tb-widget-config-row">
+      <mat-slide-toggle class="mat-slide" formControlName="verticalLines">
+        {{ 'widgets.chart.vertical-grid-lines' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-widget-config-row">
+      <mat-slide-toggle class="mat-slide" formControlName="horizontalLines">
+        {{ 'widgets.chart.horizontal-grid-lines' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-widget-config-panel tb-slide-toggle">
+      <mat-expansion-panel class="tb-settings" [expanded]="flotWidgetConfigForm.get('showLegend').value" [disabled]="!flotWidgetConfigForm.get('showLegend').value">
+        <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
+                              fxLayoutAlign="center">
+              {{ 'widget-config.legend' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-legend-config formControlName="legendConfig">
+          </tb-legend-config>
+        </ng-template>
+      </mat-expansion-panel>
     </div>
   </div>
   <tb-widget-actions-panel

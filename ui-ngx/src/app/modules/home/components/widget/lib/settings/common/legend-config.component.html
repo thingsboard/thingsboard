@@ -15,20 +15,21 @@
     limitations under the License.
 
 -->
-<form [formGroup]="legendConfigForm">
-  <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-       fxLayoutGap="8px">
-    <mat-form-field fxFlex>
-      <mat-label translate>legend.direction</mat-label>
-      <mat-select matInput formControlName="direction">
+<ng-container [formGroup]="legendConfigForm">
+  <div class="tb-widget-config-row space-between">
+    <div>{{ 'legend.direction' | translate }}</div>
+    <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="direction">
         <mat-option *ngFor="let direction of legendDirections" [value]="direction">
           {{ legendDirectionTranslations.get(legendDirection[direction]) | translate }}
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field fxFlex>
-      <mat-label translate>legend.position</mat-label>
-      <mat-select matInput formControlName="position">
+  </div>
+  <div class="tb-widget-config-row space-between">
+    <div>{{ 'legend.position' | translate }}</div>
+    <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="position">
         <mat-option *ngFor="let pos of legendPositions" [value]="pos"
                     [disabled]="legendConfigForm.get('direction').value === legendDirection.row &&
                                 (pos === legendPosition.left || pos === legendPosition.right)">
@@ -37,28 +38,17 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-    <mat-checkbox formControlName="showMin" fxFlex>
-      {{ 'legend.show-min' | translate }}
-    </mat-checkbox>
-    <mat-checkbox formControlName="showMax" fxFlex>
-      {{ 'legend.show-max' | translate }}
-    </mat-checkbox>
+  <div class="tb-widget-config-row space-between">
+    <div translate>legend.show-values</div>
+    <mat-chip-listbox multiple formControlName="showValues">
+      <mat-chip-option value="min">{{ 'legend.min-option' | translate }}</mat-chip-option>
+      <mat-chip-option value="max">{{ 'legend.max-option' | translate }}</mat-chip-option>
+      <mat-chip-option value="average">{{ 'legend.average-option' | translate }}</mat-chip-option>
+      <mat-chip-option value="total">{{ 'legend.total-option' | translate }}</mat-chip-option>
+      <mat-chip-option value="latest">{{ 'legend.latest-option' | translate }}</mat-chip-option>
+    </mat-chip-listbox>
   </div>
-  <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-    <mat-checkbox formControlName="showAvg" fxFlex>
-      {{ 'legend.show-avg' | translate }}
-    </mat-checkbox>
-    <mat-checkbox formControlName="showTotal" fxFlex>
-      {{ 'legend.show-total' | translate }}
-    </mat-checkbox>
-  </div>
-  <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-    <mat-checkbox formControlName="showLatest" fxFlex>
-      {{ 'legend.show-latest' | translate }}
-    </mat-checkbox>
-    <mat-checkbox formControlName="sortDataKeys" fxFlex>
-      {{ 'legend.sort-legend' | translate }}
-    </mat-checkbox>
-  </div>
-</form>
+  <mat-slide-toggle class="mat-slide" formControlName="sortDataKeys">
+    {{ 'legend.sort-legend' | translate }}
+  </mat-slide-toggle>
+</ng-container>

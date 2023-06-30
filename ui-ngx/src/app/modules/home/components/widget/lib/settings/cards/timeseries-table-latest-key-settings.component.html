@@ -18,18 +18,18 @@
 <ng-container [formGroup]="timeseriesTableLatestKeySettingsForm">
   <div class="tb-widget-config-panel">
     <div class="tb-widget-config-panel-title" translate>widgets.table.column-settings</div>
-    <mat-slide-toggle class="mat-slide no-margin" formControlName="show">
+    <mat-slide-toggle class="mat-slide" formControlName="show">
       {{ 'widgets.table.show-latest-data-column' | translate }}
     </mat-slide-toggle>
     <div [fxShow]="timeseriesTableLatestKeySettingsForm.get('show').value" class="tb-widget-config-row space-between">
       <div translate>widgets.table.latest-data-column-order</div>
-      <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput formControlName="order" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
     <div [fxShow]="timeseriesTableLatestKeySettingsForm.get('show').value" class="tb-widget-config-row space-between">
       <div>{{ 'widgets.table.default-column-visibility' | translate }}</div>
-      <mat-form-field style="width: 220px;" appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="defaultColumnVisibility">
           <mat-option [value]="'visible'">
             {{ 'widgets.table.column-visibility-visible' | translate }}
@@ -45,7 +45,7 @@
     </div>
     <div [fxShow]="timeseriesTableLatestKeySettingsForm.get('show').value" class="tb-widget-config-row space-between">
       <div>{{ 'widgets.table.column-selection-to-display' | translate }}</div>
-      <mat-form-field style="width: 220px;" appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="columnSelectionToDisplay">
           <mat-option [value]="'enabled'">
             {{ 'widgets.table.column-selection-to-display-enabled' | translate }}

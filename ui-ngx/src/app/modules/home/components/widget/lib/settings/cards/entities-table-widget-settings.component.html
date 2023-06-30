@@ -19,7 +19,7 @@
   <div class="tb-widget-config-panel">
     <div class="tb-widget-config-panel-title" translate>widgets.table.table-header</div>
     <div class="tb-widget-config-row">
-      <div>{{ 'widgets.table.entities-table-title' | translate }}</div>
+      <div class="fixed-title-width">{{ 'widgets.table.entities-table-title' | translate }}</div>
       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="entitiesTitle" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
@@ -31,10 +31,10 @@
     </div>
     <div class="tb-widget-config-panel stroked">
       <div class="tb-widget-config-panel-title" translate>widgets.table.header-buttons</div>
-      <mat-slide-toggle class="mat-slide no-margin"  formControlName="enableSearch">
+      <mat-slide-toggle class="mat-slide"  formControlName="enableSearch">
         {{ 'widgets.table.enable-search' | translate }}
       </mat-slide-toggle>
-      <mat-slide-toggle class="mat-slide no-margin"  formControlName="enableSelectColumnDisplay">
+      <mat-slide-toggle class="mat-slide"  formControlName="enableSelectColumnDisplay">
         {{ 'widgets.table.enable-select-column-display' | translate }}
       </mat-slide-toggle>
     </div>
@@ -42,7 +42,7 @@
   <div class="tb-widget-config-panel">
     <div class="tb-widget-config-panel-title" translate>widgets.table.columns</div>
     <div class="tb-widget-config-row">
-      <mat-slide-toggle class="mat-slide"  formControlName="displayEntityName">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="displayEntityName">
         {{ 'widgets.table.display-entity-name' | translate }}
       </mat-slide-toggle>
       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
@@ -50,7 +50,7 @@
       </mat-form-field>
     </div>
     <div class="tb-widget-config-row">
-      <mat-slide-toggle class="mat-slide"  formControlName="displayEntityName">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="displayEntityName">
         {{ 'widgets.table.display-entity-label' | translate }}
       </mat-slide-toggle>
       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
@@ -85,12 +85,12 @@
   </div>
   <div class="tb-widget-config-panel">
     <div class="tb-widget-config-panel-title" translate>widgets.table.pagination</div>
-    <mat-slide-toggle class="mat-slide no-margin"  formControlName="displayPagination">
+    <mat-slide-toggle class="mat-slide"  formControlName="displayPagination">
       {{ 'widgets.table.display-pagination' | translate }}
     </mat-slide-toggle>
     <div class="tb-widget-config-row space-between">
       <div translate>widgets.table.default-page-size</div>
-      <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput formControlName="defaultPageSize" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>

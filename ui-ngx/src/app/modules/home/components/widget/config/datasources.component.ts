@@ -69,7 +69,7 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   public get maxDatasources(): number {
-    return this.widgetConfigComponent.modelValue?.typeParameters?.maxDatasources;
+    return this.forceSingleDatasource ? 1 : this.widgetConfigComponent.modelValue?.typeParameters?.maxDatasources;
   }
 
   public get singleDatasource(): boolean {
@@ -107,6 +107,10 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   @Input()
   @coerceBoolean()
   hideDataKeys = false;
+
+  @Input()
+  @coerceBoolean()
+  forceSingleDatasource = false;
 
   @Input()
   configMode: WidgetConfigMode;
@@ -175,13 +179,20 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
     this.datasourcesMode = this.detectDatasourcesMode(datasources);
     let changed = false;
     if (datasources) {
-      datasources.forEach((datasource) => {
+      let length;
+      if (this.maxDatasources === -1) {
+        length = datasources.length;
+      } else {
+        length = Math.min(this.maxDatasources, datasources.length);
+      }
+      for (let i = 0; i < length; i++) {
+        const datasource = datasources[i];
         if (this.basicMode && datasource.type !== this.datasourcesMode) {
           datasource.type = this.datasourcesMode;
           changed = true;
         }
         this.datasourcesFormArray.push(this.fb.control(datasource, []), {emitEvent: false});
-      });
+      }
     }
     if (this.singleDatasource && !this.datasourcesFormArray.length) {
       this.addDatasource(false);
