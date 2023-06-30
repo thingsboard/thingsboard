@@ -1398,7 +1398,7 @@
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-debug {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-warning {\r\n    color: orange;\r\n    background: rgba(255, 165, 0, 0.1);\r\n  }\r\n\r\n  .status-error {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n\r\n  .status-info {\r\n    color: blue;\r\n    background: rgba(0, 0, 128, 0.1);\r\n  }\r\n  \r\n  .msg-status-exception {\r\n    color: red;\r\n  }",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
-          "enableDataExport": true
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -1725,7 +1725,7 @@
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-debug {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-warning {\r\n    color: orange;\r\n    background: rgba(255, 165, 0, 0.1);\r\n  }\r\n\r\n  .status-error {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n\r\n  .status-info {\r\n    color: blue;\r\n    background: rgba(0, 0, 128, 0.1);\r\n  }\r\n  \r\n  .msg-status-exception {\r\n    color: red;\r\n  }",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
-          "enableDataExport": true
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
