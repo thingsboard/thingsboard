@@ -318,6 +318,11 @@ export interface DataKey extends KeyInfo {
   _hash?: number;
 }
 
+export enum DataKeyConfigMode {
+  general = 'general',
+  advanced = 'advanced'
+}
+
 export enum DatasourceType {
   function = 'function',
   device = 'device',

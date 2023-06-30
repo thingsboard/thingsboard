@@ -251,6 +251,7 @@ const routes: Routes = [
           {
             path: ':dashboardId',
             component: DashboardPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
             data: {
               breadcrumb: {
                 labelFunction: dashboardBreadcumbLabelFunction,

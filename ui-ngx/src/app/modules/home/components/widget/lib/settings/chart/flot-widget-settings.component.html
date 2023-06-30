@@ -18,9 +18,14 @@
 <section class="tb-widget-settings" [formGroup]="flotSettingsFormGroup" fxLayout="column">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.chart.common-settings</legend>
-    <mat-checkbox formControlName="stack">
-      {{ 'widgets.chart.enable-stacking-mode' | translate }}
-    </mat-checkbox>
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" style="margin-bottom: 16px;">
+      <mat-checkbox fxFlex formControlName="stack">
+        {{ 'widgets.chart.enable-stacking-mode' | translate }}
+      </mat-checkbox>
+      <mat-checkbox fxFlex formControlName="enableSelection">
+        {{ 'widgets.chart.enable-selection-mode' | translate }}
+      </mat-checkbox>
+    </section>
     <section *ngIf="chartType === 'graph'" fxLayout="column" fxLayout.gt-xs="row"
              fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">

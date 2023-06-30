@@ -35,11 +35,14 @@
       line-height: 20px;
       letter-spacing: 0.2px;
       color: rgba(0, 0, 0, 0.54);
+      &.tb-source-header {
+        width: 140px;
+      }
       &.tb-color-header, &.tb-units-header, &.tb-decimals-header {
         width: 60px;
       }
       &.tb-actions-header {
-        width: 76px;
+        width: 114px;
       }
     }
   }
@@ -57,20 +60,5 @@
   height: 38px;
   display: flex;
   flex-direction: row;
-  gap: 12px;
   background: #fff;
-
-  .tb-data-keys-table-row-buttons {
-    display: flex;
-    flex-direction: row;
-    button.mat-mdc-icon-button.mat-mdc-button-base {
-      padding: 7px;
-      width: 38px;
-      height: 38px;
-      .mat-icon {
-        color: rgba(0, 0, 0, 0.38);
-      }
-    }
-  }
-
 }
