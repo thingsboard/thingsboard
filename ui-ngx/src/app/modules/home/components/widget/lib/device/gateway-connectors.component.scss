@@ -24,7 +24,7 @@
     width: 100%;
 
     &>mat-card, &>div {
-      min-width: 50%;
+      min-width: calc(50% - 15px);
     }
 
     mat-card {

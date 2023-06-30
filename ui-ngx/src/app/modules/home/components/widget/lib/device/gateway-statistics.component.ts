@@ -25,7 +25,7 @@ import { DeviceService } from '@core/http/device.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { PageComponent } from '@shared/components/page.component';
-import { DialogService } from '@app/core/services/dialog.service';
+import { DialogService } from '@core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TbFlot } from '@home/components/widget/lib/flot-widget';
 import { ResizeObserver } from '@juggle/resize-observer';

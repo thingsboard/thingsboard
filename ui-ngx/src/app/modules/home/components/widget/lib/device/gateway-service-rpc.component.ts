@@ -24,7 +24,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import { DeviceService } from '@core/http/device.service';
 import { TranslateService } from '@ngx-translate/core';
 import { PageComponent } from "@shared/components/page.component";
-import { DialogService } from '@app/core/services/dialog.service';
+import { DialogService } from '@core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ContentType } from '@shared/models/constants';
 import {
