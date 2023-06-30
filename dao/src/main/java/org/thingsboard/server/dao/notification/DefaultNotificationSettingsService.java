@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +30,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationType;
-import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings.NotificationPref;
@@ -46,17 +44,14 @@ import org.thingsboard.server.common.data.notification.targets.platform.TenantAd
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import static java.util.function.Predicate.not;
 
@@ -67,11 +62,11 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
     private final AdminSettingsService adminSettingsService;
     private final NotificationTargetService notificationTargetService;
     private final NotificationTemplateService notificationTemplateService;
-    private final NotificationRuleService notificationRuleService;
     private final DefaultNotifications defaultNotifications;
     private final UserService userService;
 
     private static final String SETTINGS_KEY = "notifications";
+    private static final String USER_SETTINGS_KEY = "notificationSettings";
 
     @CacheEvict(cacheNames = CacheConstants.NOTIFICATION_SETTINGS_CACHE, key = "#tenantId")
     @Override
@@ -103,47 +98,30 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
     public void saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings) {
         User user = userService.findUserById(tenantId, userId);
         ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(user.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
-        additionalInfo.set("notificationSettings", JacksonUtil.valueToTree(settings));
+        additionalInfo.set(USER_SETTINGS_KEY, JacksonUtil.valueToTree(settings));
         user.setAdditionalInfo(additionalInfo);
         userService.saveUser(user);
     }
 
     @Override
     public UserNotificationSettings getUserNotificationSettings(TenantId tenantId, User user, boolean format) {
-        UserNotificationSettings settings = Optional.ofNullable(user.getAdditionalInfo().get("notificationSettings"))
+        UserNotificationSettings settings = Optional.ofNullable(user.getAdditionalInfo().get(USER_SETTINGS_KEY))
                 .filter(not(JsonNode::isNull))
                 .map(json -> JacksonUtil.treeToValue(json, UserNotificationSettings.class))
                 .orElse(null);
         if (!format) {
-            if (settings != null) {
-                return settings;
-            } else {
-                return UserNotificationSettings.DEFAULT;
-            }
+            return Optional.ofNullable(settings).orElse(UserNotificationSettings.DEFAULT);
         }
 
-        Map<UUID, NotificationRule> rules = new HashMap<>();
-        notificationRuleService.findNotificationRulesByTenantId(tenantId, new PageLink(Integer.MAX_VALUE, 0,null, SortOrder.byCreatedTimeDesc))
-                .getData().forEach(rule -> rules.put(rule.getUuidId(), rule));
-
-        List<NotificationPref> prefs = new ArrayList<>();
-        if (settings == null) {
-            rules.values().forEach(rule -> {
-                prefs.add(NotificationPref.createDefault(rule));
-            });
-        } else {
-            settings.getPrefs().forEach(pref -> {
-                NotificationRule rule = rules.remove(pref.getRuleId());
-                if (rule == null) {
-                    return;
-                }
-                pref.setRuleName(rule.getName());
-                prefs.add(pref);
-            });
-            rules.values().forEach(rule -> {
-                prefs.add(NotificationPref.createDefault(rule));
-            });
+        Map<NotificationType, NotificationPref> prefs = new EnumMap<>(NotificationType.class);
+        if (settings != null) {
+            prefs.putAll(settings.getPrefs());
         }
+        NotificationPref defaultPref = NotificationPref.createDefault();
+        for (NotificationType notificationType : NotificationType.values()) {
+            prefs.putIfAbsent(notificationType, defaultPref);
+        }
+        prefs.remove(NotificationType.GENERAL);
         return new UserNotificationSettings(prefs);
     }
 

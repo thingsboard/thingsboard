@@ -16,56 +16,60 @@
 package org.thingsboard.server.common.data.notification.settings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.NotificationType;
+import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 
 import javax.validation.Valid;
+import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotNull;
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Data
 public class UserNotificationSettings {
 
     @NotNull
     @Valid
-    private final List<NotificationPref> prefs;
+    private final Map<NotificationType, NotificationPref> prefs;
 
-    public static final UserNotificationSettings DEFAULT = new UserNotificationSettings(Collections.emptyList());
+    public static final UserNotificationSettings DEFAULT = new UserNotificationSettings(Collections.emptyMap());
 
     @JsonCreator
-    public UserNotificationSettings(@JsonProperty("prefs") List<NotificationPref> prefs) {
+    public UserNotificationSettings(@JsonProperty("prefs") Map<NotificationType, NotificationPref> prefs) {
         this.prefs = prefs;
     }
 
-    public Set<NotificationDeliveryMethod> getEnabledDeliveryMethods(NotificationRuleId ruleId) {
-        return prefs.stream()
-                .filter(pref -> pref.getRuleId().equals(ruleId.getId())).findFirst()
-                .map(pref -> pref.isEnabled() ? pref.getEnabledDeliveryMethods() : Collections.<NotificationDeliveryMethod>emptySet())
-                .orElse(NotificationDeliveryMethod.values);
+    public Set<NotificationDeliveryMethod> getEnabledDeliveryMethods(NotificationType notificationType) {
+        NotificationPref pref = prefs.get(notificationType);
+        if (pref != null) {
+            return pref.isEnabled() ? pref.getEnabledDeliveryMethods() : Collections.emptySet();
+        } else {
+            return NotificationDeliveryMethod.values;
+        }
     }
 
     @Data
     public static class NotificationPref {
-        @NotNull
-        private UUID ruleId;
-        private String ruleName;
         private boolean enabled;
         @NotNull
         private Set<NotificationDeliveryMethod> enabledDeliveryMethods;
 
-        public static NotificationPref createDefault(NotificationRule rule) {
+        public static NotificationPref createDefault() {
             NotificationPref pref = new NotificationPref();
-            pref.setRuleId(rule.getUuidId());
-            pref.setRuleName(rule.getName());
             pref.setEnabled(true);
             pref.setEnabledDeliveryMethods(NotificationDeliveryMethod.values);
             return pref;
+        }
+
+        @JsonIgnore
+        @AssertTrue(message = "Only email, Web and SMS delivery methods are allowed")
+        public boolean isValid() {
+            return NotificationTargetType.PLATFORM_USERS.getSupportedDeliveryMethods().containsAll(enabledDeliveryMethods);
         }
     }
 

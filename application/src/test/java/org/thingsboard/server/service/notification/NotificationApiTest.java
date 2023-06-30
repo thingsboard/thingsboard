@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification;
 
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
 import org.java_websocket.client.WebSocketClient;
@@ -23,6 +24,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
@@ -35,6 +37,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
@@ -59,6 +62,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -471,6 +476,54 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
+    public void testUserNotificationSettings() throws Exception {
+        var entityActionNotificationPref = new UserNotificationSettings.NotificationPref();
+        entityActionNotificationPref.setEnabled(true);
+        entityActionNotificationPref.setEnabledDeliveryMethods(Set.of(NotificationDeliveryMethod.WEB));
+
+        var entitiesLimitNotificationPref = new UserNotificationSettings.NotificationPref();
+        entitiesLimitNotificationPref.setEnabled(true);
+        entitiesLimitNotificationPref.setEnabledDeliveryMethods(Set.of(NotificationDeliveryMethod.SMS));
+
+        var apiUsageLimitNotificationPref = new UserNotificationSettings.NotificationPref();
+        apiUsageLimitNotificationPref.setEnabled(false);
+        apiUsageLimitNotificationPref.setEnabledDeliveryMethods(Set.of(NotificationDeliveryMethod.WEB));
+
+        UserNotificationSettings settings = new UserNotificationSettings(Map.of(
+                NotificationType.ENTITY_ACTION, entityActionNotificationPref,
+                NotificationType.ENTITIES_LIMIT, entitiesLimitNotificationPref,
+                NotificationType.API_USAGE_LIMIT, apiUsageLimitNotificationPref
+        ));
+        doPost("/api/notification/settings/user", settings, UserNotificationSettings.class);
+
+        var entityActionNotificationTemplate = createNotificationTemplate(NotificationType.ENTITY_ACTION, "Entity action", "Entity action", NotificationDeliveryMethod.WEB);
+        var entitiesLimitNotificationTemplate = createNotificationTemplate(NotificationType.ENTITIES_LIMIT, "Entities limit", "Entities limit", NotificationDeliveryMethod.WEB);
+        var apiUsageLimitNotificationTemplate = createNotificationTemplate(NotificationType.API_USAGE_LIMIT, "API usage limit", "API usage limit", NotificationDeliveryMethod.WEB);
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .tenantId(tenantId)
+                .templateId(entityActionNotificationTemplate.getId())
+                .originatorEntityId(tenantAdminUserId)
+                .targets(List.of(target.getUuidId()))
+                .ruleId(new NotificationRuleId(UUID.randomUUID())) // to trigger user settings check
+                .build();
+        NotificationRequestStats stats = submitNotificationRequestAndWait(notificationRequest);
+        assertThat(stats.getErrors()).isEmpty();
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEB).get()).isOne();
+
+        notificationRequest.setTemplateId(entitiesLimitNotificationTemplate.getId());
+        stats = submitNotificationRequestAndWait(notificationRequest);
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEB)).matches(n -> n == null || n.get() == 0);
+        assertThat(stats.getErrors().get(NotificationDeliveryMethod.WEB).values()).first().asString().contains("disabled");
+
+        notificationRequest.setTemplateId(apiUsageLimitNotificationTemplate.getId());
+        stats = submitNotificationRequestAndWait(notificationRequest);
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEB)).matches(n -> n == null || n.get() == 0);
+        assertThat(stats.getErrors().get(NotificationDeliveryMethod.WEB).values()).first().asString().contains("disabled");
+    }
+
+    @Test
     public void testSlackNotifications() throws Exception {
         NotificationSettings settings = new NotificationSettings();
         SlackNotificationDeliveryMethodConfig slackConfig = new SlackNotificationDeliveryMethodConfig();
@@ -522,6 +575,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                 .until(() -> findNotificationRequest(failedNotificationRequest.getId()).isSent());
         stats = getStats(failedNotificationRequest.getId());
         assertThat(stats.getErrors().get(NotificationDeliveryMethod.SLACK).values()).containsExactly(errorMessage);
+    }
+
+    private NotificationRequestStats submitNotificationRequestAndWait(NotificationRequest notificationRequest) throws Exception {
+        SettableFuture<NotificationRequestStats> future = SettableFuture.create();
+        notificationCenter.processNotificationRequest(notificationRequest.getTenantId(), notificationRequest, future::set);
+        return future.get(30, TimeUnit.SECONDS);
     }
 
     private void checkFullNotificationsUpdate(UnreadNotificationsUpdate notificationsUpdate, String... expectedNotifications) {
