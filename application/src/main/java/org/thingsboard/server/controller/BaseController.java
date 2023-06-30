@@ -60,8 +60,6 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -300,12 +298,6 @@ public abstract class BaseController {
 
     @Autowired(required = false)
     protected EdgeService edgeService;
-
-    @Autowired(required = false)
-    protected EdgeRpcService edgeRpcService;
-
-    @Autowired(required = false)
-    protected EdgeInstallService edgeInstallService;
 
     @Autowired
     protected TbNotificationEntityService notificationEntityService;
@@ -822,18 +814,6 @@ public abstract class BaseController {
             logEntityAction(user, entityType, entity, entity, ActionType.DELETED, e);
             throw e;
         }
-    }
-
-    protected void sendEntityNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
-        sendNotificationMsgToEdge(tenantId, null, entityId, null, null, action);
-    }
-
-    protected void sendEntityAssignToEdgeNotificationMsg(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
-        sendNotificationMsgToEdge(tenantId, edgeId, entityId, null, null, action);
-    }
-
-    private void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action) {
-        tbClusterService.sendNotificationMsgToEdge(tenantId, edgeId, entityId, body, type, action);
     }
 
     protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {

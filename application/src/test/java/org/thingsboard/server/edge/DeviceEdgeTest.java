@@ -265,7 +265,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
     public void testDeviceReachedMaximumAllowedOnCloud() throws Exception {
         // update tenant profile configuration
         loginSysAdmin();
-        TenantProfile tenantProfile = doGet("/api/tenantProfile/" + savedTenant.getTenantProfileId().getId(), TenantProfile.class);
+        TenantProfile tenantProfile = doGet("/api/tenantProfile/" + tenantProfileId.getId(), TenantProfile.class);
         DefaultTenantProfileConfiguration profileConfiguration =
                 (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
         profileConfiguration.setMaxDevices(1);

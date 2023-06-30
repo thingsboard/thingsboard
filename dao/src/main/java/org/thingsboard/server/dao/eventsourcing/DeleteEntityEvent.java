@@ -15,17 +15,16 @@
  */
 package org.thingsboard.server.dao.eventsourcing;
 
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+@Builder
 @Data
-public class EntityEdgeEventAction {
-    private final TenantId tenantId;
-    private final EdgeId edgeId;
-    private final EntityId entityId;
-    private final String body;
-    private final EdgeEventActionType actionType;
+public class DeleteEntityEvent {
+    final TenantId tenantId;
+    final EntityId entityId;
+    final EdgeId edgeId;
 }

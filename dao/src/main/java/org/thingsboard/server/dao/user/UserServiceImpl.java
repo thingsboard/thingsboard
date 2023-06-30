@@ -30,8 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -45,8 +45,9 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
-import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
-import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -138,7 +139,10 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
             userCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
             userCredentialsDao.save(user.getTenantId(), userCredentials);
         }
-        eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedUser.getTenantId()).entityId(savedUser.getId()).build());
+        if (!Authority.SYS_ADMIN.equals(user.getAuthority())) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedUser.getTenantId())
+                    .entityId(savedUser.getId()).added(user.getId() == null).build());
+        }
         return savedUser;
     }
 
@@ -167,7 +171,10 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     public UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
         log.trace("Executing saveUserCredentials [{}]", userCredentials);
         userCredentialsValidator.validate(userCredentials, data -> tenantId);
-        return userCredentialsDao.save(tenantId, userCredentials);
+        UserCredentials result = userCredentialsDao.save(tenantId, userCredentials);
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId)
+                .entityId(userCredentials.getUserId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
+        return result;
     }
 
     @Override
@@ -226,7 +233,12 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         if (userCredentials.getPassword() != null) {
             updatePasswordHistory(userCredentials);
         }
-        return userCredentialsDao.save(tenantId, userCredentials);
+        UserCredentials result = userCredentialsDao.save(tenantId, userCredentials);
+        eventPublisher.publishEvent(ActionEntityEvent.builder()
+                .tenantId(tenantId)
+                .entityId(userCredentials.getUserId())
+                .actionType(ActionType.CREDENTIALS_UPDATED).build());
+        return result;
     }
 
     @Override
@@ -241,7 +253,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.USER);
-        eventPublisher.publishEvent(DeleteDaoEvent.builder().tenantId(tenantId).entityId(userId).build());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(userId).build());
     }
 
     @Override

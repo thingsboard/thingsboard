@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -23,22 +22,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessor;
@@ -73,12 +68,6 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Autowired
     private EdgeService edgeService;
-
-    @Autowired
-    private EdgeEventService edgeEventService;
-
-    @Autowired
-    private TbClusterService clusterService;
 
     @Autowired
     private EdgeProcessor edgeProcessor;
@@ -128,6 +117,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     @Autowired
     private RelationEdgeProcessor relationProcessor;
 
+    @Autowired
+    protected ApplicationEventPublisher eventPublisher;
+
     private ExecutorService dbCallBackExecutor;
 
     @PostConstruct
@@ -143,30 +135,14 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     }
 
     @Override
-    public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws Exception {
+    public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) {
         edge.setRootRuleChainId(ruleChainId);
         Edge savedEdge = edgeService.saveEdge(edge);
         ObjectNode isRootBody = JacksonUtil.newObjectNode();
         isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
-        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, isRootBody).get();
+        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edge.getId(), ruleChainId,
+                JacksonUtil.toString(isRootBody), ActionType.UPDATED));
         return savedEdge;
-    }
-
-    private ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
-                               EdgeId edgeId,
-                               EdgeEventType type,
-                               EdgeEventActionType action,
-                               EntityId entityId,
-                               JsonNode body) {
-        log.debug("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
-                tenantId, edgeId, type, action, entityId, body);
-
-        EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body);
-
-        return Futures.transform(edgeEventService.saveAsync(edgeEvent), unused -> {
-            clusterService.onEdgeEventUpdate(tenantId, edgeId);
-            return null;
-        }, dbCallBackExecutor);
     }
 
     @Override

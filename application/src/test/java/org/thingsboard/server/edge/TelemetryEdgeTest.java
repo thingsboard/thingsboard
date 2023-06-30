@@ -215,7 +215,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testAttributesUpdatedMsg_userEntity() throws Exception {
-        testAttributesUpdatedMsg(tenantAdmin.getId());
+        testAttributesUpdatedMsg(tenantAdminUserId);
     }
 
     private void testAttributesUpdatedMsg(EntityId entityId) throws Exception {

@@ -123,8 +123,6 @@ public class AuthController extends BaseController {
         userCredentials.setPassword(passwordEncoder.encode(newPassword));
         userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
 
-        sendEntityNotificationMsg(getTenantId(), userCredentials.getUserId(), EdgeEventActionType.CREDENTIALS_UPDATED);
-
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
         ObjectNode response = JacksonUtil.newObjectNode();
         response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
@@ -258,8 +256,6 @@ public class AuthController extends BaseController {
                 log.info("Unable to send account activation email [{}]", e.getMessage());
             }
         }
-
-        sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
         return tokenFactory.createTokenPair(securityUser);
     }

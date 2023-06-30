@@ -17,20 +17,13 @@ package org.thingsboard.server.dao.eventsourcing;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.NonNull;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import javax.annotation.Nullable;
-
 @Builder
 @Data
-public class SaveDaoEvent {
-    @NonNull
+public class SaveEntityEvent {
     final TenantId tenantId;
-    @NonNull
     final EntityId entityId;
-    @Nullable
-    final EdgeEventActionType actionType;
+    final Boolean added;
 }

@@ -36,8 +36,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
-import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
-import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -114,7 +113,8 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             if (customer.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedCustomer.getTenantId(), EntityType.CUSTOMER);
             }
-            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedCustomer.getTenantId()).entityId(savedCustomer.getId()).build());
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCustomer.getTenantId())
+                    .entityId(savedCustomer.getId()).added(customer.getId() == null).build());
             return savedCustomer;
         } catch (Exception e) {
             checkConstraintViolation(e, "customer_external_id_unq_key", "Customer with such external id already exists!");
@@ -132,7 +132,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         if (customer == null) {
             throw new IncorrectParameterException("Unable to delete non-existent customer.");
         }
-        publishDeleteCustomer(tenantId, customer.getId());
         dashboardService.unassignCustomerDashboards(tenantId, customerId);
         entityViewService.unassignCustomerEntityViews(customer.getTenantId(), customerId);
         assetService.unassignCustomerAssets(customer.getTenantId(), customerId);
@@ -180,13 +179,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         log.trace("Executing deleteCustomersByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         customersByTenantRemover.removeEntities(tenantId, tenantId);
-    }
-
-    private void publishDeleteCustomer(TenantId tenantId, CustomerId customerId) {
-        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, customerId);
-        if (relatedEdgeIds != null && !relatedEdgeIds.isEmpty()) {
-            eventPublisher.publishEvent(DeleteDaoEventByRelatedEdges.builder().tenantId(tenantId).entityId(customerId).relatedEdgeIds(relatedEdgeIds).build());
-        }
     }
 
     private PaginatedRemover<TenantId, Customer> customersByTenantRemover =

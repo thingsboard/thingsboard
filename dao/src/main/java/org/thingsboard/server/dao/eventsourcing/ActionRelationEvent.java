@@ -16,12 +16,12 @@
 package org.thingsboard.server.dao.eventsourcing;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-public class EntityRelationEdgeEvent {
+public class ActionRelationEvent {
     private final TenantId tenantId;
     private final String body;
-    private final EdgeEventActionType actionType;
+    private final ActionType actionType;
 }

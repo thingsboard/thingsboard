@@ -181,14 +181,14 @@ public class EdgeImitator {
                 result.add(saveDownlinkMsg(adminSettingsUpdateMsg));
             }
         }
-        if (downlinkMsg.getDeviceUpdateMsgCount() > 0) {
-            for (DeviceUpdateMsg deviceUpdateMsg : downlinkMsg.getDeviceUpdateMsgList()) {
-                result.add(saveDownlinkMsg(deviceUpdateMsg));
-            }
-        }
         if (downlinkMsg.getDeviceProfileUpdateMsgCount() > 0) {
             for (DeviceProfileUpdateMsg deviceProfileUpdateMsg : downlinkMsg.getDeviceProfileUpdateMsgList()) {
                 result.add(saveDownlinkMsg(deviceProfileUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getDeviceUpdateMsgCount() > 0) {
+            for (DeviceUpdateMsg deviceUpdateMsg : downlinkMsg.getDeviceUpdateMsgList()) {
+                result.add(saveDownlinkMsg(deviceUpdateMsg));
             }
         }
         if (downlinkMsg.getDeviceCredentialsUpdateMsgCount() > 0) {

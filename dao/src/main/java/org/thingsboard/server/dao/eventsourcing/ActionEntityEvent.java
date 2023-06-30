@@ -15,17 +15,21 @@
  */
 package org.thingsboard.server.dao.eventsourcing;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NonNull;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@Builder
 @Data
-public class DeleteDaoEvent {
-    @NonNull
-    final TenantId tenantId;
-    @NonNull
-    final EntityId entityId;
+@Builder
+@AllArgsConstructor
+public class ActionEntityEvent {
+    private final TenantId tenantId;
+    private final EdgeId edgeId;
+    private final EntityId entityId;
+    private final String body;
+    private final ActionType actionType;
 }

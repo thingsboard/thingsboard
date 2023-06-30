@@ -59,6 +59,8 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeBulkImportService;
+import org.thingsboard.server.service.edge.instructions.EdgeInstallService;
+import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.edge.TbEdgeService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -67,6 +69,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -94,8 +97,11 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class EdgeController extends BaseController {
+
     private final EdgeBulkImportService edgeBulkImportService;
     private final TbEdgeService tbEdgeService;
+    private final Optional<EdgeRpcService> edgeRpcServiceOpt;
+    private final Optional<EdgeInstallService> edgeInstallServiceOpt;
 
     public static final String EDGE_ID = "edgeId";
     public static final String EDGE_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the edge is owned by the same tenant. " +
@@ -497,13 +503,13 @@ public class EdgeController extends BaseController {
                          @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
         final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-        if (isEdgesEnabled()) {
+        if (isEdgesEnabled() && edgeRpcServiceOpt.isPresent()) {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             edgeId = checkNotNull(edgeId);
             SecurityUser user = getCurrentUser();
             TenantId tenantId = user.getTenantId();
             ToEdgeSyncRequest request = new ToEdgeSyncRequest(UUID.randomUUID(), tenantId, edgeId);
-            edgeRpcService.processSyncRequest(request, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
+            edgeRpcServiceOpt.get().processSyncRequest(request, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
         } else {
             throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
         }
@@ -557,9 +563,13 @@ public class EdgeController extends BaseController {
             @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("edgeId") String strEdgeId,
             HttpServletRequest request) throws ThingsboardException {
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        edgeId = checkNotNull(edgeId);
-        Edge edge = checkEdgeId(edgeId, Operation.READ);
-        return checkNotNull(edgeInstallService.getDockerInstallInstructions(getTenantId(), edge, request));
+        if (isEdgesEnabled() && edgeInstallServiceOpt.isPresent()) {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            edgeId = checkNotNull(edgeId);
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+            return checkNotNull(edgeInstallServiceOpt.get().getDockerInstallInstructions(getTenantId(), edge, request));
+        } else {
+            throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
+        }
     }
 }

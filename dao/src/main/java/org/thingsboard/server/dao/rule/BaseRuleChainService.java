@@ -27,12 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -55,19 +53,17 @@ import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
 import org.thingsboard.server.common.data.util.ReflectionUtils;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
-import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
-import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
-import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -119,7 +115,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
             }
             if (RuleChainType.EDGE.equals(savedRuleChain.getType())) {
-                eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(savedRuleChain.getTenantId()).entityId(savedRuleChain.getId()).build());
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
+                        .entityId(savedRuleChain.getId()).added(ruleChain.getId() == null).build());
             }
             return savedRuleChain;
         } catch (Exception e) {
@@ -267,7 +264,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             relationService.saveRelations(tenantId, relations);
         }
         if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-            eventPublisher.publishEvent(SaveDaoEvent.builder().tenantId(tenantId).entityId(ruleChain.getId()).build());
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(ruleChain.getId()).build());
         }
 
         return RuleChainUpdateResult.successful(updatedRuleNodes);
@@ -431,7 +428,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                             if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
                                 throw new DataValidationException("Can't delete rule chain that is root for edge [" + edge.getName() + "]. Please assign another root rule chain first to the edge!");
                             }
-                            eventPublisher.publishEvent(DeleteDaoEventByRelatedEdges.builder().tenantId(tenantId).entityId(ruleChainId).relatedEdgeIds(List.of(edge.getId())).build());
+                            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(ruleChainId).edgeId(edge.getId()).build());
                         }
                         if (pageData.hasNext()) {
                             pageLink = pageLink.nextPageLink();
@@ -605,8 +602,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, ruleChainId,
-                null, EdgeEventActionType.ASSIGNED_TO_EDGE));
+        if (!ruleChainId.equals(edge.getRootRuleChainId())) {
+            eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, ruleChainId,
+                    null, ActionType.ASSIGNED_TO_EDGE));
+        }
         return ruleChain;
     }
 
@@ -626,8 +625,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             log.warn("[{}] Failed to delete rule chain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new EntityEdgeEventAction(tenantId, edgeId, ruleChainId,
-                null, EdgeEventActionType.UNASSIGNED_FROM_EDGE));
+        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, ruleChainId,
+                null, ActionType.UNASSIGNED_FROM_EDGE));
         return ruleChain;
     }
 

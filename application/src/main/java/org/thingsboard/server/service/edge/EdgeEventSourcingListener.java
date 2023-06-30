@@ -17,21 +17,20 @@ package org.thingsboard.server.service.edge;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
-import org.thingsboard.server.dao.eventsourcing.DeleteDaoEvent;
-import org.thingsboard.server.dao.eventsourcing.DeleteDaoEventByRelatedEdges;
-import org.thingsboard.server.dao.eventsourcing.EntityEdgeEventAction;
-import org.thingsboard.server.dao.eventsourcing.EntityRelationEdgeEvent;
-import org.thingsboard.server.dao.eventsourcing.SaveDaoEvent;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.ActionRelationEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 
 import javax.annotation.PostConstruct;
+
+import static org.thingsboard.server.service.entitiy.DefaultTbNotificationEntityService.edgeTypeByActionType;
 
 /**
  * This event listener does not support async event processing because relay on ThreadLocal
@@ -60,79 +59,44 @@ public class EdgeEventSourcingListener {
         log.info("EdgeEventSourcingListener initiated");
     }
 
-    @EventListener
-    public void failEvent(SaveDaoEvent.SaveDaoEventBuilder event) {
-        String message = "SaveDaoEvent.SaveDaoEventBuilder event is not allowed " + event;
-        RuntimeException exception = new RuntimeException(message);
-        log.error(message, exception);
-        throw exception;
-    }
-
-    @EventListener
-    public void failEvent(DeleteDaoEvent.DeleteDaoEventBuilder event) {
-        String message = "DeleteDaoEvent.DeleteDaoEventBuilder event is not allowed" + event;
-        RuntimeException exception = new RuntimeException(message);
-        log.error(message, exception);
-        throw exception;
-    }
-
-    @EventListener
-    public void failEvent(DeleteDaoEventByRelatedEdges.DeleteDaoEventByRelatedEdgesBuilder event) {
-        String message = "DeleteDaoEventByRelatedEdges.DeleteDaoEventByRelatedEdgesBuilder event is not allowed" + event;
-        RuntimeException exception = new RuntimeException(message);
-        log.error(message, exception);
-        throw exception;
-    }
-
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(SaveDaoEvent event) {
+    public void handleEvent(SaveEntityEvent event) {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("SaveDaoEvent called: {}", event);
+        log.trace("[{}] EntitySaveEvent called: {}", event.getEntityId().getEntityType(), event);
+        EdgeEventActionType action = Boolean.TRUE.equals(event.getAdded()) ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
-                null, null, event.getActionType() != null ? event.getActionType() : EdgeEventActionType.UPDATED);
+                null, null, action);
     }
 
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(DeleteDaoEventByRelatedEdges event) {
+    public void handleEvent(DeleteEntityEvent event) {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("DeleteDaoEvent called: {}", event);
-        for (EdgeId edgeId : event.getRelatedEdgeIds()) {
-            tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), edgeId, event.getEntityId(),
-                    null, null, EdgeEventActionType.DELETED);
-        }
-    }
-
-    @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(DeleteDaoEvent event) {
-        if (edgeSynchronizationManager.isSync()) {
-            return;
-        }
-        log.trace("DeleteDaoEdgeEvent called: {}", event);
-        tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
+        log.trace("[{}] EntityDeleteEvent called: {}", event.getEntityId().getEntityType(), event);
+        tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                 null, null, EdgeEventActionType.DELETED);
     }
 
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(EntityEdgeEventAction event) {
+    public void handleEvent(ActionEntityEvent event) {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("EntityRelationUpdateEvent called: {}", event);
+        log.trace("[{}] EntityActionEvent called: {}", event.getEntityId().getEntityType(), event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
-                event.getBody(), null, event.getActionType());
+                event.getBody(), null, edgeTypeByActionType(event.getActionType()));
     }
 
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(EntityRelationEdgeEvent event) {
+    public void handleEvent(ActionRelationEvent event) {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("EntityRelationUpdateEvent called: {}", event);
+        log.trace("EntityRelationActionEvent called: {}", event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
-                event.getBody(), EdgeEventType.RELATION, event.getActionType());
+                event.getBody(), EdgeEventType.RELATION, edgeTypeByActionType(event.getActionType()));
     }
 }
