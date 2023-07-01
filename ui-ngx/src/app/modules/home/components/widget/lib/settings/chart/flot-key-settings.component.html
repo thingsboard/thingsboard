@@ -216,35 +216,35 @@
       </div>
     </div>
   </div>
-</ng-container>
-<section class="tb-widget-settings" [formGroup]="flotKeySettingsFormGroup" fxLayout="column">
-  <fieldset class="fields-group fields-group-slider" formGroupName="comparisonSettings" >
-    <legend class="group-title" translate>widgets.chart.comparison-settings</legend>
-    <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value">
+  <div class="tb-widget-config-panel tb-slide-toggle" formGroupName="comparisonSettings">
+    <div class="tb-widget-config-panel-title" translate>widgets.chart.comparison-settings</div>
+    <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value"
+                         [disabled]="!flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value">
       <mat-expansion-panel-header fxLayout="row wrap">
-        <mat-panel-title fxFlex="60">
-          <mat-slide-toggle formControlName="showValuesForComparison" (click)="$event.stopPropagation()"
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="showValuesForComparison" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.chart.show-values-for-comparison' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
-          widget-config.advanced-settings
-        </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <section fxFlex fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>widgets.chart.comparison-values-label</mat-label>
-            <input matInput formControlName="comparisonValuesLabel">
+        <div class="tb-widget-config-row">
+          <div class="fixed-title-width" translate>widgets.chart.comparison-values-label</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="comparisonValuesLabel" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
-          <tb-color-input fxFlex
-            formControlName="color"
-            icon="format_color_fill"
-            label="{{ 'widgets.chart.color' | translate }}" openOnInput colorClearButton>
-          </tb-color-input>
-        </section>
+        </div>
+        <div class="tb-widget-config-row space-between same-padding">
+          <div>{{ 'widgets.chart.comparison-line-color' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+            <mat-divider vertical></mat-divider>
+            <tb-color-input asBoxInput
+                            formControlName="color">
+            </tb-color-input>
+          </div>
+        </div>
       </ng-template>
     </mat-expansion-panel>
-  </fieldset>
-</section>
+  </div>
+</ng-container>

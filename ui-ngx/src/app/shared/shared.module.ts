@@ -193,6 +193,7 @@ import { ResourceAutocompleteComponent } from '@shared/components/resource/resou
 import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
 import { ToggleHeaderComponent } from '@shared/components/toggle-header.component';
 import { RuleChainSelectComponent } from '@shared/components/rule-chain/rule-chain-select.component';
+import { ToggleSelectComponent, ToggleSelectOption } from '@shared/components/toggle-select.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -364,6 +365,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ColorPickerComponent,
     ResourceAutocompleteComponent,
     ToggleHeaderComponent,
+    ToggleSelectOption,
+    ToggleSelectComponent,
     RuleChainSelectComponent
   ],
   imports: [
@@ -592,6 +595,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ColorPickerComponent,
     ResourceAutocompleteComponent,
     ToggleHeaderComponent,
+    ToggleSelectOption,
+    ToggleSelectComponent,
     RuleChainSelectComponent
   ]
 })

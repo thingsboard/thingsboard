@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-flot-threshold">
-  <mat-expansion-panel class="tb-settings" fxFlex [formGroup]="thresholdFormGroup" [(expanded)]="expanded">
+  <mat-expansion-panel class="tb-settings tb-flot-threshold-settings" fxFlex [formGroup]="thresholdFormGroup" [(expanded)]="expanded">
     <mat-expansion-panel-header class="fill-width">
       <div class="tb-threshold-header">
         <div class="tb-threshold-text">{{ thresholdText() }}</div>
@@ -29,17 +29,13 @@
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
       <tb-value-source [aliasController]="aliasController" formControlName="valueSource"></tb-value-source>
-      <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
-        <mat-form-field fxFlex class="mat-block">
-          <mat-label translate>widgets.chart.line-width</mat-label>
-          <input type="number" min="0" matInput formControlName="lineWidth">
+      <div class="tb-widget-config-row space-between">
+        <div translate>widgets.chart.line-width</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="lineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+          <span matSuffix>px</span>
         </mat-form-field>
-        <tb-color-input fxFlex
-                        formControlName="color"
-                        icon="format_color_fill"
-                        label="{{ 'widgets.chart.color' | translate }}" openOnInput colorClearButton>
-        </tb-color-input>
-      </section>
+      </div>
     </ng-template>
   </mat-expansion-panel>
   <button *ngIf="!disabled" mat-icon-button

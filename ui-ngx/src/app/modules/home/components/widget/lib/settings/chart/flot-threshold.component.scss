@@ -19,7 +19,7 @@
   flex-direction: row;
   align-items: start;
   gap: 4px;
-  .mat-expansion-panel {
+  .mat-expansion-panel.tb-settings.tb-flot-threshold-settings {
     box-shadow: none;
     border-radius: 6px;
     border: 1px solid rgba(0, 0, 0, 0.12);
@@ -54,8 +54,10 @@
         margin-top: 12px;
       }
     }
-    .mat-expansion-panel-body {
-      padding: 0 8px 8px;
+    > .mat-expansion-panel-content {
+      > .mat-expansion-panel-body {
+        padding: 16px !important;
+      }
     }
     &.mat-expanded {
       .mat-expansion-panel-header {
@@ -63,7 +65,7 @@
       }
     }
   }
-  .mdc-icon-button {
+  > .mdc-icon-button {
     margin-top: 4px;
     color: rgba(0, 0, 0, 0.54);
   }

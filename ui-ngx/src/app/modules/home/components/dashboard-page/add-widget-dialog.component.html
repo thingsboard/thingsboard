@@ -57,6 +57,7 @@
       <tb-widget-preview *ngIf="previewMode" class="tb-absolute-fill"
         [aliasController]="aliasController"
         [stateController]="stateController"
+        [dashboardTimewindow]="dashboard.configuration.timewindow"
         [widget]="widget"
         [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config">
         <div class="tb-preview-panel-content">

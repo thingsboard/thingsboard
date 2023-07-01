@@ -4365,6 +4365,7 @@
             "add-threshold": "Add threshold",
             "show-values-for-comparison": "Show historical values for comparison",
             "comparison-values-label": "Historical values label",
+            "comparison-line-color": "Comparison line color",
             "threshold-settings": "Threshold settings",
             "use-as-threshold": "Use key value as threshold",
             "threshold-line-width": "Threshold line width",
@@ -5277,7 +5278,7 @@
         "value-source": {
             "value-source": "Value source",
             "predefined-value": "Predefined value",
-            "entity-attribute": "Value taken from entity attribute",
+            "entity-attribute": "Entity attribute",
             "value": "Value",
             "source-entity-alias": "Source entity alias",
             "source-entity-attribute": "Source entity attribute"

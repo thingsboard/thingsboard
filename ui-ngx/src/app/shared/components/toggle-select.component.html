@@ -15,18 +15,10 @@
     limitations under the License.
 
 -->
-<tb-dashboard class="tb-preview-dashboard"
-              [aliasController]="aliasController"
-              [stateController]="stateController"
-              [dashboardTimewindow]="dashboardTimewindow"
-              [widgets]="widgets"
-              [autofillHeight]="true"
-              [columns]="24"
-              [isEdit]="false"
-              [isMobileDisabled]="true"
-              [isEditActionEnabled]="false"
-              [isRemoveActionEnabled]="false">
-</tb-dashboard>
-<div class="tb-preview-panel">
-  <ng-content select=".tb-preview-panel-content"></ng-content>
-</div>
+<tb-toggle-header
+  ignoreMdLgSize="true"
+  useSelectOnMdLg="false"
+  [options]="options"
+  [value]="modelValue"
+  (valueChange)="updateModel($event)">
+</tb-toggle-header>
