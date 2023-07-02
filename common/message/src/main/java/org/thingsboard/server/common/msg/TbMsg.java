@@ -277,6 +277,11 @@ public final class TbMsg implements Serializable {
                 this.metaData, this.dataType, this.data, ruleChainId, ruleNodeId, this.ctx, callback);
     }
 
+    public TbMsg copyWithNewCtx() {
+        return new TbMsg(this.queueName, this.id, this.ts, this.type, this.originator, this.customerId,
+                this.metaData, this.dataType, this.data, ruleChainId, ruleNodeId, this.ctx.copy(), TbMsgCallback.EMPTY);
+    }
+
     public TbMsgCallback getCallback() {
         // May be null in case of deserialization;
         if (callback != null) {

@@ -71,7 +71,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         EdgeEvent edgeEvent = generateEdgeEvent(tenantId, edgeId, deviceId, EdgeEventActionType.ADDED);
         edgeEventService.saveAsync(edgeEvent).get();
 
-        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, new TimePageLink(1), false);
+        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, new TimePageLink(1));
         Assert.assertFalse(edgeEvents.getData().isEmpty());
 
         EdgeEvent saved = edgeEvents.getData().get(0);
@@ -113,7 +113,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Futures.allAsList(futures).get();
 
         TimePageLink pageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
-        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, true);
+        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, pageLink);
 
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertEquals(2, edgeEvents.getData().size());
@@ -122,7 +122,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertTrue(edgeEvents.hasNext());
         Assert.assertNotNull(pageLink.nextPageLink());
 
-        edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink.nextPageLink(), true);
+        edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, pageLink.nextPageLink());
 
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertEquals(1, edgeEvents.getData().size());
@@ -130,26 +130,6 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertFalse(edgeEvents.hasNext());
 
         edgeEventService.cleanupEvents(1);
-    }
-
-    @Test
-    public void findEdgeEventsWithTsUpdateAndWithout() throws Exception {
-        EdgeId edgeId = new EdgeId(Uuids.timeBased());
-        DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
-        TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("createdTime", SortOrder.Direction.ASC));
-
-        EdgeEvent edgeEventWithTsUpdate = generateEdgeEvent(tenantId, edgeId, deviceId, EdgeEventActionType.TIMESERIES_UPDATED);
-        edgeEventService.saveAsync(edgeEventWithTsUpdate).get();
-
-        PageData<EdgeEvent> allEdgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, true);
-        PageData<EdgeEvent> edgeEventsWithoutTsUpdate = edgeEventService.findEdgeEvents(tenantId, edgeId, pageLink, false);
-
-        Assert.assertNotNull(allEdgeEvents.getData());
-        Assert.assertNotNull(edgeEventsWithoutTsUpdate.getData());
-        Assert.assertEquals(1, allEdgeEvents.getData().size());
-        Assert.assertEquals(allEdgeEvents.getData().get(0).getUuidId(), edgeEventWithTsUpdate.getUuidId());
-        Assert.assertTrue(edgeEventsWithoutTsUpdate.getData().isEmpty());
     }
 
     private ListenableFuture<Void> saveEdgeEventWithProvidedTime(long time, EdgeId edgeId, EntityId entityId, TenantId tenantId) throws Exception {
