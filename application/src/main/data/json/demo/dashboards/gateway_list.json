@@ -560,7 +560,8 @@
           "margin": "0",
           "widgetCss": "",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -709,7 +710,8 @@
             "severityList": [],
             "typeList": [],
             "searchPropagatedAlarms": false
-          }
+          },
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -770,6 +772,7 @@
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
+          "enableDataExport": false,
           "showLegend": false,
           "useDashboardTimewindow": false,
           "displayTimewindow": true,
@@ -841,6 +844,7 @@
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
+          "enableDataExport": false,
           "showLegend": false,
           "useDashboardTimewindow": false,
           "displayTimewindow": true,
@@ -964,6 +968,7 @@
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
+          "enableDataExport": false,
           "showLegend": false,
           "legendConfig": {
             "direction": "column",
@@ -1262,6 +1267,7 @@
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
+          "enableDataExport": false,
           "showLegend": false,
           "legendConfig": {
             "direction": "row",
@@ -1554,6 +1560,7 @@
           },
           "pageSize": 1024,
           "noDataDisplayMessage": "",
+          "enableDataExport": false,
           "showLegend": false
         },
         "row": 0,
@@ -1598,6 +1605,7 @@
           },
           "pageSize": 1024,
           "noDataDisplayMessage": "",
+          "enableDataExport": false,
           "showLegend": false
         },
         "row": 0,
@@ -1900,7 +1908,8 @@
           },
           "widgetCss": "",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -2083,7 +2092,8 @@
           },
           "widgetCss": "",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -2166,7 +2176,8 @@
           "displayTimewindow": true,
           "widgetCss": "",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -2323,7 +2334,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -2480,7 +2492,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -2637,7 +2650,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -2794,7 +2808,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -2951,7 +2966,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -3108,7 +3124,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -3265,7 +3282,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -3422,7 +3440,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -3579,7 +3598,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -3736,7 +3756,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -3893,7 +3914,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -4050,7 +4072,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -4207,7 +4230,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -4364,7 +4388,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -4521,7 +4546,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -4678,7 +4704,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -4835,7 +4862,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
@@ -4992,7 +5020,8 @@
           },
           "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
         },
         "row": 0,
         "col": 0,
