@@ -27,6 +27,7 @@ import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
@@ -76,7 +77,9 @@ export interface IRuleNodeConfigurationComponent {
   configuration: RuleNodeConfiguration;
   configurationChanged: Observable<RuleNodeConfiguration>;
   validate();
-  testScript? (debugEventBody: DebugRuleNodeEventBody);
+  getSupportTestFunction(): boolean;
+  getTestButtonLabel? (): string;
+  testScript$? (debugEventBody?: DebugRuleNodeEventBody): Observable<string>;
   [key: string]: any;
 }
 
@@ -112,7 +115,8 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
   configurationChangedEmiter = new EventEmitter<RuleNodeConfiguration>();
   configurationChanged = this.configurationChangedEmiter.asObservable();
 
-  protected constructor(@Inject(Store) protected store: Store<AppState>) {
+  protected constructor(@Inject(Store) protected store: Store<AppState>,
+                        @Inject(TranslateService) protected translate: TranslateService) {
     super(store);
   }
 
@@ -128,6 +132,14 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
 
   validate() {
     this.onValidate();
+  }
+
+  getSupportTestFunction(): boolean {
+    return false;
+  }
+
+  getTestButtonLabel(): string {
+    return this.translate.instant('rulenode.test-script-function');
   }
 
   protected setupConfiguration(configuration: RuleNodeConfiguration) {
@@ -429,22 +441,13 @@ export const messageTypeNames = new Map<MessageType, string>(
 
 export const ruleChainNodeClazz = 'org.thingsboard.rule.engine.flow.TbRuleChainInputNode';
 export const outputNodeClazz = 'org.thingsboard.rule.engine.flow.TbRuleChainOutputNode';
-export enum RuleNodeClazz {
-  TbJsFilterNode = 'org.thingsboard.rule.engine.filter.TbJsFilterNode',
-  TbLogNode = 'org.thingsboard.rule.engine.action.TbLogNode',
-  TbJsSwitchNode = 'org.thingsboard.rule.engine.filter.TbJsSwitchNode',
-  TbClearAlarmNode = 'org.thingsboard.rule.engine.action.TbClearAlarmNode',
-  TbCreateAlarmNode = 'org.thingsboard.rule.engine.action.TbCreateAlarmNode',
-  TbTransformMsgNode = 'org.thingsboard.rule.engine.transform.TbTransformMsgNode',
-  TbMsgGeneratorNode = 'org.thingsboard.rule.engine.debug.TbMsgGeneratorNode'
-}
 
 const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.filter.TbCheckRelationNode': 'ruleNodeCheckRelation',
   'org.thingsboard.rule.engine.filter.TbCheckMessageNode': 'ruleNodeCheckExistenceFields',
   'org.thingsboard.rule.engine.geo.TbGpsGeofencingFilterNode': 'ruleNodeGpsGeofencingFilter',
-  [RuleNodeClazz.TbJsFilterNode]: 'ruleNodeJsFilter',
-  [RuleNodeClazz.TbJsSwitchNode]: 'ruleNodeJsSwitch',
+  'org.thingsboard.rule.engine.filter.TbJsFilterNode': 'ruleNodeJsFilter',
+  'org.thingsboard.rule.engine.filter.TbJsSwitchNode': 'ruleNodeJsSwitch',
   'org.thingsboard.rule.engine.filter.TbAssetTypeSwitchNode': 'ruleNodeAssetProfileSwitch',
   'org.thingsboard.rule.engine.filter.TbDeviceTypeSwitchNode': 'ruleNodeDeviceProfileSwitch',
   'org.thingsboard.rule.engine.filter.TbCheckAlarmStatusNode': 'ruleNodeCheckAlarmStatus',
@@ -463,18 +466,18 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode': 'ruleNodeTenantDetails',
   'org.thingsboard.rule.engine.metadata.CalculateDeltaNode': 'ruleNodeCalculateDelta',
   'org.thingsboard.rule.engine.transform.TbChangeOriginatorNode': 'ruleNodeChangeOriginator',
-  [RuleNodeClazz.TbTransformMsgNode]: 'ruleNodeTransformMsg',
+  'org.thingsboard.rule.engine.transform.TbTransformMsgNode': 'ruleNodeTransformMsg',
   'org.thingsboard.rule.engine.mail.TbMsgToEmailNode': 'ruleNodeMsgToEmail',
   'org.thingsboard.rule.engine.action.TbAssignToCustomerNode': 'ruleNodeAssignToCustomer',
   'org.thingsboard.rule.engine.action.TbUnassignFromCustomerNode': 'ruleNodeUnassignFromCustomer',
-  [RuleNodeClazz.TbClearAlarmNode]: 'ruleNodeClearAlarm',
-  [RuleNodeClazz.TbCreateAlarmNode]: 'ruleNodeCreateAlarm',
+  'org.thingsboard.rule.engine.action.TbClearAlarmNode': 'ruleNodeClearAlarm',
+  'org.thingsboard.rule.engine.action.TbCreateAlarmNode': 'ruleNodeCreateAlarm',
   'org.thingsboard.rule.engine.action.TbCreateRelationNode': 'ruleNodeCreateRelation',
   'org.thingsboard.rule.engine.action.TbDeleteRelationNode': 'ruleNodeDeleteRelation',
   'org.thingsboard.rule.engine.delay.TbMsgDelayNode': 'ruleNodeMsgDelay',
-  [RuleNodeClazz.TbMsgGeneratorNode]: 'ruleNodeMsgGenerator',
+  'org.thingsboard.rule.engine.debug.TbMsgGeneratorNode': 'ruleNodeMsgGenerator',
   'org.thingsboard.rule.engine.geo.TbGpsGeofencingActionNode': 'ruleNodeGpsGeofencingEvents',
-  [RuleNodeClazz.TbLogNode]: 'ruleNodeLog',
+  'org.thingsboard.rule.engine.action.TbLogNode': 'ruleNodeLog',
   'org.thingsboard.rule.engine.rpc.TbSendRPCReplyNode': 'ruleNodeRpcCallReply',
   'org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode': 'ruleNodeRpcCallRequest',
   'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode': 'ruleNodeSaveAttributes',
@@ -511,12 +514,3 @@ export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): str
   return 'ruleEngine';
 }
 
-export const ruleNodeClazzFunctionNameTranslations = {
-  [RuleNodeClazz.TbJsFilterNode]: 'rulenode.function-name.filter',
-  [RuleNodeClazz.TbLogNode]: 'rulenode.function-name.to-string',
-  [RuleNodeClazz.TbJsSwitchNode]: 'rulenode.function-name.switch',
-  [RuleNodeClazz.TbClearAlarmNode]: 'rulenode.function-name.details',
-  [RuleNodeClazz.TbCreateAlarmNode]: 'rulenode.function-name.details',
-  [RuleNodeClazz.TbTransformMsgNode]: 'rulenode.function-name.transform',
-  [RuleNodeClazz.TbMsgGeneratorNode]: 'rulenode.function-name.generate'
-}

@@ -18,14 +18,22 @@ import {
   AfterViewInit,
   Component,
   ComponentRef,
+  EventEmitter,
   forwardRef,
   Input,
   OnDestroy,
   OnInit,
+  Output,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import {
   IRuleNodeConfigurationComponent,
   RuleNodeConfiguration,
@@ -38,7 +46,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { deepClone } from '@core/utils';
 import { RuleChainType } from '@shared/models/rule-chain.models';
-import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 
 @Component({
   selector: 'tb-rule-node-config',
@@ -77,6 +84,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
   @Input()
   ruleChainType: RuleChainType;
 
+  @Output()
+  initRuleNode = new EventEmitter<void>();
+
   nodeDefinitionValue: RuleNodeDefinition;
 
   @Input()
@@ -86,18 +96,12 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       if (this.nodeDefinitionValue) {
         this.validateDefinedDirective();
       }
+      setTimeout(() => this.initRuleNode.emit());
     }
   }
 
   get nodeDefinition(): RuleNodeDefinition {
     return this.nodeDefinitionValue;
-  }
-
-  @Input()
-  set debugEventBody(debugEventBody: DebugRuleNodeEventBody) {
-    if (debugEventBody) {
-      this.definedConfigComponent?.testScript(debugEventBody);
-    }
   }
 
   definedDirectiveError: string;
@@ -106,8 +110,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
 
   changeSubscription: Subscription;
 
+  definedConfigComponent: IRuleNodeConfigurationComponent;
+
   private definedConfigComponentRef: ComponentRef<IRuleNodeConfigurationComponent>;
-  private definedConfigComponent: IRuleNodeConfigurationComponent;
 
   private configuration: RuleNodeConfiguration;
 

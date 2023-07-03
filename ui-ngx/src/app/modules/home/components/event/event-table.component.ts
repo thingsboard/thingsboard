@@ -36,6 +36,7 @@ import { DebugEventType, DebugRuleNodeEventBody, EventType } from '@shared/model
 import { Overlay } from '@angular/cdk/overlay';
 import { Subscription } from 'rxjs';
 import { NodeScriptTestService } from '@core/services/script/node-script-test.service';
+import { isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-event-table',
@@ -59,6 +60,10 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
   activeValue = false;
   dirtyValue = false;
   entityIdValue: EntityId;
+
+  get active(): boolean {
+    return this.activeValue;
+  }
 
   @Input()
   set active(active: boolean) {
@@ -84,14 +89,24 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  @Input()
-  isRuleNodeDebugModeEnabled: boolean;
+  private ruleNodeTestButtonLabelValue: string;
+
+  get ruleNodeTestButtonLabel(): string {
+    return this.ruleNodeTestButtonLabelValue;
+  }
 
   @Input()
-  editingRuleNodeHasScript: boolean;
-
-  @Input()
-  rulenodeClazz: string;
+  set ruleNodeTestButtonLabel(value: string) {
+    if (isNotEmptyStr(value)) {
+      this.ruleNodeTestButtonLabelValue = value;
+    } else {
+      this.ruleNodeTestButtonLabelValue = '';
+    }
+    if (this.eventTableConfig) {
+      this.eventTableConfig.testButtonLabel = this.ruleNodeTestButtonLabel;
+      this.eventTableConfig.updateCellAction();
+    }
+  }
 
   @Output()
   debugEventSelected = new EventEmitter<DebugRuleNodeEventBody>(null);
@@ -130,16 +145,9 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.viewContainerRef,
       this.cd,
       this.nodeScriptTestService,
-      this.isRuleNodeDebugModeEnabled,
-      this.editingRuleNodeHasScript,
-      this.rulenodeClazz
+      this.ruleNodeTestButtonLabel,
+      this.debugEventSelected
     );
-
-    this.eventTableConfig.debugEventSelectedSubject.subscribe((debugEventBody: DebugRuleNodeEventBody) => {
-      if (debugEventBody) {
-        this.debugEventSelected.emit(debugEventBody);
-      }
-    })
   }
 
   ngAfterViewInit() {

@@ -3467,15 +3467,7 @@
         "test": "Test",
         "help": "Help",
         "reset-debug-mode": "Reset debug mode in all nodes",
-        "test-function": "Test '{{function}}' function with this message",
-        "function-name": {
-            "filter": "Filter",
-            "to-string": "ToString",
-            "details": "Details",
-            "generate": "Generate",
-            "switch": "Switch",
-            "transform": "Transform"
-        }
+        "test-with-this-message": "{{test}} with this message"
     },
     "timezone": {
       "timezone": "Timezone",

@@ -30,7 +30,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EventService } from '@app/core/http/event.service';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EntityTypeResource } from '@shared/models/entity-type.models';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { Direction } from '@shared/models/page/sort-order';
 import { DialogService } from '@core/services/dialog.service';
@@ -41,7 +41,7 @@ import {
 } from '@home/components/event/event-content-dialog.component';
 import { isEqual, sortObjectKeys } from '@core/utils';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ChangeDetectorRef, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, EventEmitter, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
   EVENT_FILTER_PANEL_DATA,
@@ -50,7 +50,6 @@ import {
   FilterEntityColumn
 } from '@home/components/event/event-filter-panel.component';
 import { NodeScriptTestService } from '@core/services/script/node-script-test.service';
-import { ruleNodeClazzFunctionNameTranslations } from '@shared/models/rule-node.models';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -63,6 +62,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   set eventType(eventType: EventType | DebugEventType) {
     if (this.eventTypeValue !== eventType) {
       this.eventTypeValue = eventType;
+      this.updateCellAction();
       this.updateColumns(true);
       this.updateFilterColumns();
     }
@@ -73,8 +73,6 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   }
 
   eventTypes: Array<EventType | DebugEventType>;
-
-  debugEventSelectedSubject = new BehaviorSubject<DebugRuleNodeEventBody>(null);
 
   constructor(private eventService: EventService,
               private dialogService: DialogService,
@@ -90,9 +88,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               private nodeScriptTestService: NodeScriptTestService,
-              private isRuleNodeDebugModeEnabled: boolean,
-              private editingRuleNodeHasScript: boolean,
-              private rulenodeClazz: string) {
+              public testButtonLabel?: string,
+              private debugEventSelected?: EventEmitter<DebugRuleNodeEventBody>) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
@@ -128,6 +125,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.updateColumns();
+    this.updateCellAction();
     this.updateFilterColumns();
 
     this.headerActionDescriptors.push({
@@ -325,18 +323,6 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               onAction: ($event, entity) => this.showContent($event, entity.body.error,
                 'event.error')
             },
-            '48px'),
-          new EntityActionTableColumn<Event>('test', '',
-            {
-              name: this.translate.instant('rulenode.test-function',
-                {function: this.translate.instant(ruleNodeClazzFunctionNameTranslations[this.rulenodeClazz])}),
-              icon: 'bug_report',
-              isEnabled: (entity) =>  this.isRuleNodeDebugModeEnabled && entity.body.type === 'IN' &&
-                  this.editingRuleNodeHasScript,
-              onAction: ($event, entity) => {
-                this.debugEventSelectedSubject.next(entity.body);
-              }
-            },
             '48px')
         );
         break;
@@ -367,6 +353,25 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     if (updateTableColumns) {
       this.getTable().columnsUpdated(true);
     }
+  }
+
+  updateCellAction() {
+    this.cellActionDescriptors = [];
+    switch (this.eventType) {
+      case DebugEventType.DEBUG_RULE_NODE:
+        if (this.testButtonLabel) {
+          this.cellActionDescriptors.push({
+            name: this.translate.instant('rulenode.test-with-this-message', {test: this.testButtonLabel}),
+            icon: 'bug_report',
+            isEnabled: (entity) => entity.body.type === 'IN',
+            onAction: ($event, entity) => {
+              this.debugEventSelected.next(entity.body);
+            }
+          });
+        }
+        break;
+    }
+    this.getTable()?.cellActionDescriptorsUpdated();
   }
 
   showContent($event: MouseEvent, content: string, title: string, contentType: ContentType = null, sortKeys = false): void {

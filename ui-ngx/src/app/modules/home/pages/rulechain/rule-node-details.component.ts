@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,7 +27,6 @@ import { RuleNodeConfigComponent } from './rule-node-config.component';
 import { Router } from '@angular/router';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
 import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
-import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 
 @Component({
   selector: 'tb-rule-node',
@@ -56,8 +55,8 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   @Input()
   isAdd = false;
 
-  @Input()
-  debugEventBody: DebugRuleNodeEventBody;
+  @Output()
+  initRuleNode = new EventEmitter<void>();
 
   ruleNodeType = RuleNodeType;
   entityType = EntityType;

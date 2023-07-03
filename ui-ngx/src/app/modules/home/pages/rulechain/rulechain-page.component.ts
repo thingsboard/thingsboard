@@ -153,8 +153,7 @@ export class RuleChainPageComponent extends PageComponent
   editingRuleNodeAllowCustomLabels = false;
   editingRuleNodeLinkLabels: {[label: string]: LinkLabel};
   editingRuleNodeSourceRuleChainId: string;
-  debugEventBody: DebugRuleNodeEventBody;
-  editingRuleNodeHasScript: boolean = false;
+  ruleNodeTestButtonLabel: string;
 
   @ViewChild('tbRuleNode') ruleNodeComponent: RuleNodeDetailsComponent;
   @ViewChild('tbRuleNodeLink') ruleNodeLinkComponent: RuleNodeLinkComponent;
@@ -1112,7 +1111,6 @@ export class RuleChainPageComponent extends PageComponent
       this.isEditingRuleNode = true;
       this.editingRuleNodeIndex = this.ruleChainModel.nodes.indexOf(node);
       this.editingRuleNode = deepClone(node, ['component']);
-      this.editingRuleNodeHasScript = this.editingRuleNode.configuration.hasOwnProperty('scriptLang');
       setTimeout(() => {
         this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
       }, 0);
@@ -1261,7 +1259,6 @@ export class RuleChainPageComponent extends PageComponent
   onEditRuleNodeClosed() {
     this.editingRuleNode = null;
     this.isEditingRuleNode = false;
-    this.debugEventBody = null;
   }
 
   onEditRuleNodeLinkClosed() {
@@ -1282,13 +1279,25 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   onDebugEventSelected(debugEventBody: DebugRuleNodeEventBody) {
-    if (debugEventBody) {
-      this.debugEventBody = debugEventBody;
-    }
+    if (this.ruleNodeComponent.ruleNodeConfigComponent.useDefinedDirective() &&
+      this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.getSupportTestFunction() &&
+      this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.testScript$) {
+        this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.testScript$(debugEventBody)
+          .subscribe((value) => {
+            if (value) {
+              this.selectedRuleNodeTabIndex = 0;
+            }
+          })
+      }
   }
 
-  onSwitchToFirstTab() {
-    this.selectedRuleNodeTabIndex = 0;
+  onRuleNodeInit() {
+      if (this.ruleNodeComponent.ruleNodeConfigComponent.useDefinedDirective() &&
+        this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.getSupportTestFunction()) {
+        this.ruleNodeTestButtonLabel = this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.getTestButtonLabel();
+      } else {
+        this.ruleNodeTestButtonLabel = '';
+      }
   }
 
   saveRuleNode() {
