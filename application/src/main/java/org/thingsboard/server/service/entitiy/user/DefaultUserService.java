@@ -52,7 +52,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
         ActionType actionType = tbUser.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             boolean sendEmail = tbUser.getId() == null && sendActivationMail;
-            User savedUser = checkNotNull(userService.saveUser(tbUser));
+            User savedUser = checkNotNull(userService.saveUser(tenantId, tbUser));
             if (sendEmail) {
                 UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
                 String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);

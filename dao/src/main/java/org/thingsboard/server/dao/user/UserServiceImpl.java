@@ -123,7 +123,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    public User saveUser(User user) {
+    public User saveUser(TenantId tenantId, User user) {
         log.trace("Executing saveUser [{}]", user);
         userValidator.validate(user, User::getTenantId);
         if (!userLoginCaseSensitive) {
@@ -140,7 +140,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
             userCredentialsDao.save(user.getTenantId(), userCredentials);
         }
         if (!Authority.SYS_ADMIN.equals(user.getAuthority())) {
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedUser.getTenantId())
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId == null ? TenantId.SYS_TENANT_ID : tenantId)
                     .entityId(savedUser.getId()).added(user.getId() == null).build());
         }
         return savedUser;
@@ -357,7 +357,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         log.trace("Executing onUserLoginSuccessful [{}]", userId);
         User user = findUserById(tenantId, userId);
         resetFailedLoginAttempts(user);
-        saveUser(user);
+        saveUser(tenantId, user);
     }
 
     private void resetFailedLoginAttempts(User user) {
@@ -378,7 +378,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
         ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
         user.setAdditionalInfo(additionalInfo);
-        saveUser(user);
+        saveUser(tenantId, user);
     }
 
     @Override
@@ -386,7 +386,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         log.trace("Executing onUserLoginIncorrectCredentials [{}]", userId);
         User user = findUserById(tenantId, userId);
         int failedLoginAttempts = increaseFailedLoginAttempts(user);
-        saveUser(user);
+        saveUser(tenantId, user);
         return failedLoginAttempts;
     }
 

@@ -524,7 +524,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         user.setEmail(email);
         user.setTenantId(tenantId);
         user.setCustomerId(customerId);
-        user = userService.saveUser(user);
+        user = userService.saveUser(tenantId, user);
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, user.getId());
         userCredentials.setPassword(passwordEncoder.encode(password));
         userCredentials.setEnabled(true);

@@ -58,7 +58,7 @@ public class UserServiceTest extends AbstractServiceTest {
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(tenantId);
         tenantAdmin.setEmail("tenant@thingsboard.org");
-        userService.saveUser(tenantAdmin);
+        userService.saveUser(TenantId.SYS_TENANT_ID, tenantAdmin);
 
         Customer customer = new Customer();
         customer.setTenantId(tenantId);
@@ -70,7 +70,7 @@ public class UserServiceTest extends AbstractServiceTest {
         customerUser.setTenantId(tenantId);
         customerUser.setCustomerId(savedCustomer.getId());
         customerUser.setEmail("customer@thingsboard.org");
-        customerUser = userService.saveUser(customerUser);
+        customerUser = userService.saveUser(tenantId, customerUser);
 
         userSettings = createUserSettings(customerUser.getId());
     }
@@ -114,7 +114,7 @@ public class UserServiceTest extends AbstractServiceTest {
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setTenantId(tenantAdminUser.getTenantId());
         user.setEmail("tenant2@thingsboard.org");
-        User savedUser = userService.saveUser(user);
+        User savedUser = userService.saveUser(TenantId.SYS_TENANT_ID, user);
         Assert.assertNotNull(savedUser);
         Assert.assertNotNull(savedUser.getId());
         Assert.assertTrue(savedUser.getCreatedTime() > 0);
@@ -130,7 +130,7 @@ public class UserServiceTest extends AbstractServiceTest {
         savedUser.setFirstName("Joe");
         savedUser.setLastName("Downs");
 
-        userService.saveUser(savedUser);
+        userService.saveUser(TenantId.SYS_TENANT_ID, savedUser);
         savedUser = userService.findUserById(tenantId, savedUser.getId());
         Assert.assertEquals("Joe", savedUser.getFirstName());
         Assert.assertEquals("Downs", savedUser.getLastName());
@@ -143,7 +143,7 @@ public class UserServiceTest extends AbstractServiceTest {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("sysadmin@thingsboard.org");
         Assertions.assertThrows(DataValidationException.class, () -> {
-            userService.saveUser(tenantAdminUser);
+            userService.saveUser(tenantId, tenantAdminUser);
         });
     }
 
@@ -152,7 +152,7 @@ public class UserServiceTest extends AbstractServiceTest {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("tenant_thingsboard.org");
         Assertions.assertThrows(DataValidationException.class, () -> {
-            userService.saveUser(tenantAdminUser);
+            userService.saveUser(tenantId, tenantAdminUser);
         });
     }
 
@@ -161,7 +161,7 @@ public class UserServiceTest extends AbstractServiceTest {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail(null);
         Assertions.assertThrows(DataValidationException.class, () -> {
-            userService.saveUser(tenantAdminUser);
+            userService.saveUser(tenantId, tenantAdminUser);
         });
     }
 
@@ -170,7 +170,7 @@ public class UserServiceTest extends AbstractServiceTest {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setTenantId(null);
         Assertions.assertThrows(DataValidationException.class, () -> {
-            userService.saveUser(tenantAdminUser);
+            userService.saveUser(tenantId, tenantAdminUser);
         });
     }
 
@@ -181,7 +181,7 @@ public class UserServiceTest extends AbstractServiceTest {
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setTenantId(tenantAdminUser.getTenantId());
         user.setEmail("tenant2@thingsboard.org");
-        User savedUser = userService.saveUser(user);
+        User savedUser = userService.saveUser(TenantId.SYS_TENANT_ID, user);
         Assert.assertNotNull(savedUser);
         Assert.assertNotNull(savedUser.getId());
         User foundUser = userService.findUserById(tenantId, savedUser.getId());
@@ -212,7 +212,7 @@ public class UserServiceTest extends AbstractServiceTest {
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setTenantId(secondTenantId);
             user.setEmail("testTenant" + i + "@thingsboard.org");
-            tenantAdmins.add(userService.saveUser(user));
+            tenantAdmins.add(userService.saveUser(TenantId.SYS_TENANT_ID, user));
         }
 
         List<User> loadedTenantAdmins = new ArrayList<>();
@@ -252,7 +252,7 @@ public class UserServiceTest extends AbstractServiceTest {
             String email = email1 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
-            tenantAdminsEmail1.add(userService.saveUser(user));
+            tenantAdminsEmail1.add(userService.saveUser(TenantId.SYS_TENANT_ID, user));
         }
 
         String email2 = "testEmail2";
@@ -266,7 +266,7 @@ public class UserServiceTest extends AbstractServiceTest {
             String email = email2 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
-            tenantAdminsEmail2.add(userService.saveUser(user));
+            tenantAdminsEmail2.add(userService.saveUser(TenantId.SYS_TENANT_ID, user));
         }
 
         List<User> loadedTenantAdminsEmail1 = new ArrayList<>();
@@ -343,7 +343,7 @@ public class UserServiceTest extends AbstractServiceTest {
             user.setTenantId(tenantId);
             user.setCustomerId(customerId);
             user.setEmail("testCustomer" + i + "@thingsboard.org");
-            customerUsers.add(userService.saveUser(user));
+            customerUsers.add(userService.saveUser(tenantId, user));
         }
 
         List<User> loadedCustomerUsers = new ArrayList<>();
@@ -390,7 +390,7 @@ public class UserServiceTest extends AbstractServiceTest {
             String email = email1 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
-            customerUsersEmail1.add(userService.saveUser(user));
+            customerUsersEmail1.add(userService.saveUser(tenantId, user));
         }
 
         String email2 = "testEmail2";
@@ -405,7 +405,7 @@ public class UserServiceTest extends AbstractServiceTest {
             String email = email2 + suffix + "@thingsboard.org";
             email = i % 2 == 0 ? email.toLowerCase() : email.toUpperCase();
             user.setEmail(email);
-            customerUsersEmail2.add(userService.saveUser(user));
+            customerUsersEmail2.add(userService.saveUser(tenantId, user));
         }
 
         List<User> loadedCustomerUsersEmail1 = new ArrayList<>();
