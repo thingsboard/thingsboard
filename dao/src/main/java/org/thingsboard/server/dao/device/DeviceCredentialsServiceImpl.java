@@ -113,7 +113,9 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         try {
             var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
             publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
-            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(value.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
+            if (oldDeviceCredentials != null) {
+                eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(value.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
+            }
             return value;
         } catch (Exception t) {
             handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
