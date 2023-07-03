@@ -4273,6 +4273,8 @@
         "chart": {
             "common-settings": "Common settings",
             "enable-stacking-mode": "Enable stacking mode",
+            "selection": "Time range selection",
+            "enable-selection-mode": "Enable selection mode",
             "line-shadow-size": "Line shadow size",
             "display-smooth-lines": "Display smooth (curved) lines",
             "default-bar-width": "Default bar width for non-aggregated data (milliseconds)",

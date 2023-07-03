@@ -93,7 +93,15 @@ import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFI
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_TYPE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_UPDATE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_UPDATE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_UPDATE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
@@ -182,9 +190,20 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
             notes = "Create or update the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
-                    "Requires to provide the Device Credentials object as well. Useful to create device and credentials in one request. " +
-                    "You may find the example of LwM2M device and RPK credentials below: \n\n" +
-                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN +
+                    "Requires to provide the Device Credentials object as well as an existing device profile ID or use \"default\".\n" +
+                    "You may find the example of device with different type of credentials below: \n\n" +
+                    "- Credentials type: <b>\"Access token\"</b> with <b>device profile ID</b> below: \n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    "- Credentials type: <b>\"Access token\"</b> with  <b>device profile default</b> below: \n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    "- Credentials type: <b>\"X509\"</b> with <b>device profile ID</b> below: \n\n" +
+                    "Note: <b>credentialsId</b> -  format <b>Sha3Hash</b>, <b>certificateValue</b> - format <b>PEM</b> (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    "- Credentials type: <b>\"MQTT_BASIC\"</b> with <b>device profile ID</b> below: \n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    "- You may find the example of <b>LwM2M</b> device and <b>RPK</b> credentials below: \n\n" +
+                    "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -277,10 +296,27 @@ public class DeviceController extends BaseController {
         return tbDeviceService.getDeviceCredentialsByDeviceId(device, getCurrentUser());
     }
 
-    @ApiOperation(value = "Update device credentials (updateDeviceCredentials)", notes = "During device creation, platform generates random 'ACCESS_TOKEN' credentials. " +
-            "Use this method to update the device credentials. First use 'getDeviceCredentialsByDeviceId' to get the credentials id and value. " +
-            "Then use current method to update the credentials type and value. It is not possible to create multiple device credentials for the same device. " +
-            "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'." + TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Update device credentials (updateDeviceCredentials)",
+            notes = "During device creation, platform generates random 'ACCESS_TOKEN' credentials. \" +\n" +
+                    "Use this method to update the device credentials. First use 'getDeviceCredentialsByDeviceId' to get the credentials id and value.\n" +
+                    "Then use current method to update the credentials type and value. It is not possible to create multiple device credentials for the same device.\n" +
+                    "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'.\n" +
+                    "You may find the example of device with different type of credentials below: \n\n" +
+                    "- Credentials type: <b>\"Access token\"</b> with <b>device ID</b> and with <b>device ID</b> below: \n\n" +
+                    DEVICE_UPDATE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    "- Credentials type: <b>\"X509\"</b> with <b>device profile ID</b> below: \n\n" +
+                    "Note: <b>credentialsId</b> -  format <b>Sha3Hash</b>, <b>certificateValue</b> - format <b>PEM</b> (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
+                    DEVICE_UPDATE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    "- Credentials type: <b>\"MQTT_BASIC\"</b> with <b>device profile ID</b> below: \n\n" +
+                    DEVICE_UPDATE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    "- You may find the example of <b>LwM2M</b> device and <b>RPK</b> credentials below: \n\n" +
+                    "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
+                    DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
+                    "Update to real value:\n" +
+                    " - 'id' (this is id of Device Credentials ->  \"Get Device Credentials (getDeviceCredentialsByDeviceId)\",\n" +
+                    " - 'deviceId.id' (this is id of Device).\n" +
+                    "Remove 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity." +
+                    TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/credentials", method = RequestMethod.POST)
     @ResponseBody
