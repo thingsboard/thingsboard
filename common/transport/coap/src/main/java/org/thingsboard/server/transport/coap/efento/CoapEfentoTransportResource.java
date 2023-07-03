@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.transport.coap.efento;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.network.Exchange;
@@ -31,6 +34,7 @@ import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransp
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.EfentoCoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.coap.ConfigProtos;
@@ -46,15 +50,15 @@ import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
+import static com.google.gson.JsonParser.parseString;
 import static org.thingsboard.server.transport.coap.CoapTransportService.CONFIGURATION;
 import static org.thingsboard.server.transport.coap.CoapTransportService.CURRENT_TIMESTAMP;
 import static org.thingsboard.server.transport.coap.CoapTransportService.DEVICE_INFO;
@@ -118,23 +122,17 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         try {
             MeasurementsProtos.ProtoMeasurements protoMeasurements = MeasurementsProtos.ProtoMeasurements.parseFrom(bytes);
             log.trace("Successfully parsed Efento ProtoMeasurements: [{}]", protoMeasurements.getCloudToken());
-            String token = protoMeasurements.getCloudToken();
-            transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
-                    new CoapDeviceAuthCallback(exchange, (msg, deviceProfile) -> {
-                        TransportProtos.SessionInfoProto sessionInfo = SessionInfoCreator.create(msg, transportContext, UUID.randomUUID());
-                        UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-                        try {
-                            validateEfentoTransportConfiguration(deviceProfile);
-                            List<EfentoTelemetry> efentoMeasurements = getEfentoMeasurements(protoMeasurements, sessionId);
-                            transportService.process(sessionInfo,
-                                    transportContext.getEfentoCoapAdaptor().convertToPostTelemetry(sessionId, efentoMeasurements),
-                                    new CoapEfentoCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
-                            reportSubscriptionInfo(sessionInfo, false, false);
-                        } catch (AdaptorException e) {
-                            log.error("[{}] Failed to decode Efento ProtoMeasurements: ", sessionId, e);
-                            exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
-                        }
-                    }));
+            validateAndProcessEffentoMessage(protoMeasurements.getCloudToken(), exchange, (deviceProfile, sessionInfo, sessionId) -> {
+                try {
+                    List<EfentoTelemetry> measurements = getEfentoMeasurements(protoMeasurements, sessionId);
+                    transportService.process(sessionInfo,
+                            transportContext.getEfentoCoapAdaptor().convertToPostTelemetry(sessionId, measurements),
+                            new CoapEfentoCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                } catch (AdaptorException e) {
+                    log.error("[{}] Failed to decode Efento ProtoMeasurements: ", sessionId, e);
+                    exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+                }
+            });
         } catch (Exception e) {
             log.error("Failed to decode Efento ProtoMeasurements: ", e);
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -147,22 +145,17 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
             DeviceInfoProtos.ProtoDeviceInfo protoDeviceInfo = DeviceInfoProtos.ProtoDeviceInfo.parseFrom(bytes);
             String token = protoDeviceInfo.getCloudToken();
             log.trace("Successfully parsed Efento ProtoDeviceInfo: [{}]", token);
-            transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
-                    new CoapDeviceAuthCallback(exchange, (msg, deviceProfile) -> {
-                        TransportProtos.SessionInfoProto sessionInfo = SessionInfoCreator.create(msg, transportContext, UUID.randomUUID());
-                        UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-                        try {
-                            validateEfentoTransportConfiguration(deviceProfile);
-                            EfentoTelemetry deviceInfo = getEfentoDeviceInfo(protoDeviceInfo);
-                            transportService.process(sessionInfo,
-                                    transportContext.getEfentoCoapAdaptor().convertToPostTelemetry(sessionId, List.of(deviceInfo)),
-                                    new CoapEfentoCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
-                            reportSubscriptionInfo(sessionInfo, false, false);
-                        } catch (AdaptorException e) {
-                            log.error("[{}] Failed to decode Efento ProtoDeviceInfo: ", sessionId, e);
-                            exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
-                        }
-                    }));
+            validateAndProcessEffentoMessage(token, exchange, (deviceProfile, sessionInfo, sessionId) -> {
+                try {
+                    EfentoTelemetry deviceInfo = getEfentoDeviceInfo(protoDeviceInfo);
+                    transportService.process(sessionInfo,
+                            transportContext.getEfentoCoapAdaptor().convertToPostTelemetry(sessionId, List.of(deviceInfo)),
+                            new CoapEfentoCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                } catch (AdaptorException e) {
+                    log.error("[{}] Failed to decode Efento ProtoDeviceInfo: ", sessionId, e);
+                    exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+                }
+            });
         } catch (Exception e) {
             log.error("Failed to decode Efento ProtoDeviceInfo: ", e);
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -172,30 +165,42 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
     private void processConfigurationRequest(CoapExchange exchange) {
         byte[] bytes = exchange.advanced().getRequest().getPayload();
         try {
-
             ConfigProtos.ProtoConfig protoConfig = ConfigProtos.ProtoConfig.parseFrom(bytes);
             String token = protoConfig.getCloudToken();
             log.trace("Successfully parsed Efento ProtoConfig: [{}]", token);
-            transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
-                    new CoapDeviceAuthCallback(exchange, (msg, deviceProfile) -> {
-                        TransportProtos.SessionInfoProto sessionInfo = SessionInfoCreator.create(msg, transportContext, UUID.randomUUID());
-                        UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-                        try {
-                            validateEfentoTransportConfiguration(deviceProfile);
-                            JsonObject config = getEfentoConfiguration(protoConfig);
-                            transportService.process(sessionInfo,
-                                    transportContext.getEfentoCoapAdaptor().convertToPostAttributes(sessionId, config),
-                                    new CoapEfentoCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
-                            reportSubscriptionInfo(sessionInfo, false, false);
-                        } catch (AdaptorException e) {
-                            log.error("[{}] Failed to decode Efento ProtoConfig: ", sessionId, e);
-                            exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
-                        }
-                    }));
+            validateAndProcessEffentoMessage(token, exchange, (deviceProfile, sessionInfo, sessionId) -> {
+                try {
+                    JsonElement configuration = getEfentoConfiguration(bytes);
+                    transportService.process(sessionInfo,
+                            transportContext.getEfentoCoapAdaptor().convertToPostAttributes(sessionId, configuration),
+                            new CoapEfentoCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                } catch (AdaptorException e) {
+                    log.error("[{}] Failed to decode Efento ProtoConfig: ", sessionId, e);
+                    exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+                } catch (InvalidProtocolBufferException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         } catch (Exception e) {
             log.error("Failed to decode Efento ProtoConfig: ", e);
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private void validateAndProcessEffentoMessage(String token, CoapExchange exchange, TriConsumer<DeviceProfile, TransportProtos.SessionInfoProto, UUID> requestProcessor) {
+        transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
+                new CoapDeviceAuthCallback(exchange, (msg, deviceProfile) -> {
+                    TransportProtos.SessionInfoProto sessionInfo = SessionInfoCreator.create(msg, transportContext, UUID.randomUUID());
+                    UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
+                    try {
+                        validateEfentoTransportConfiguration(deviceProfile);
+                        requestProcessor.accept(deviceProfile, sessionInfo, sessionId);
+                        reportSubscriptionInfo(sessionInfo, false, false);
+                    } catch (AdaptorException e) {
+                        log.error("[{}] Failed to decode Efento request: ", sessionId, e);
+                        exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+                    }
+                }));
     }
 
     @Override
@@ -338,7 +343,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         values.addProperty("sw_version", protoDeviceInfo.getSwVersion());
 
         //memory statistics
-        values.addProperty("nv_storage_status", getStorageStatus(protoDeviceInfo.getMemoryStatistics(0)));
+        values.addProperty("nv_storage_status", protoDeviceInfo.getMemoryStatistics(0));
         values.addProperty("timestamp_of_the_end_of_collecting_statistics", getDate(protoDeviceInfo.getMemoryStatistics(1)));
         values.addProperty("capacity_of_memory_in_bytes", protoDeviceInfo.getMemoryStatistics(2));
         values.addProperty("used_space_in_bytes", protoDeviceInfo.getMemoryStatistics(3));
@@ -362,41 +367,42 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         values.addProperty("nvm_write_counter", protoDeviceInfo.getMemoryStatistics(21));
 
         //modem info
-        values.addProperty("modem_types", protoDeviceInfo.getModem().getType().toString());
-        values.addProperty("sc_EARNFCN_offset", protoDeviceInfo.getModem().getParameters(0));
-        values.addProperty("sc_EARFCN", protoDeviceInfo.getModem().getParameters(1));
-        values.addProperty("sc_PCI", protoDeviceInfo.getModem().getParameters(2));
-        values.addProperty("sc_Cell_id", protoDeviceInfo.getModem().getParameters(3));
-        values.addProperty("sc_RSRP", protoDeviceInfo.getModem().getParameters(4));
-        values.addProperty("sc_RSRQ", protoDeviceInfo.getModem().getParameters(5));
-        values.addProperty("sc_RSSI", protoDeviceInfo.getModem().getParameters(6));
-        values.addProperty("sc_SINR", protoDeviceInfo.getModem().getParameters(7));
-        values.addProperty("sc_Band", protoDeviceInfo.getModem().getParameters(8));
-        values.addProperty("sc_TAC", protoDeviceInfo.getModem().getParameters(9));
-        values.addProperty("sc_ECL", protoDeviceInfo.getModem().getParameters(10));
-        values.addProperty("sc_TX_PWR", protoDeviceInfo.getModem().getParameters(11));
-        values.addProperty("op_mode", protoDeviceInfo.getModem().getParameters(12));
-        values.addProperty("nc_EARFCN", protoDeviceInfo.getModem().getParameters(13));
-        values.addProperty("nc_EARNFCN_offset", protoDeviceInfo.getModem().getParameters(14));
-        values.addProperty("nc_PCI", protoDeviceInfo.getModem().getParameters(15));
-        values.addProperty("nc_RSRP", protoDeviceInfo.getModem().getParameters(16));
-        values.addProperty("RLC_UL_BLER", protoDeviceInfo.getModem().getParameters(17));
-        values.addProperty("RLC_DL_BLER", protoDeviceInfo.getModem().getParameters(18));
-        values.addProperty("MAC_UL_BLER", protoDeviceInfo.getModem().getParameters(19));
-        values.addProperty("MAC_DL_BLER", protoDeviceInfo.getModem().getParameters(20));
-        values.addProperty("MAC_UL_TOTAL_BYTES", protoDeviceInfo.getModem().getParameters(21));
-        values.addProperty("MAC_DL_TOTAL_BYTES", protoDeviceInfo.getModem().getParameters(22));
-        values.addProperty("MAC_UL_total_HARQ_Tx", protoDeviceInfo.getModem().getParameters(23));
-        values.addProperty("MAC_DL_total_HARQ_Tx", protoDeviceInfo.getModem().getParameters(24));
-        values.addProperty("MAC_UL_HARQ_re_Tx", protoDeviceInfo.getModem().getParameters(25));
-        values.addProperty("MAC_DL_HARQ_re_Tx", protoDeviceInfo.getModem().getParameters(26));
-        values.addProperty("RLC_UL_tput", protoDeviceInfo.getModem().getParameters(27));
-        values.addProperty("RLC_DL_tput", protoDeviceInfo.getModem().getParameters(28));
-        values.addProperty("MAC_UL_tput", protoDeviceInfo.getModem().getParameters(29));
-        values.addProperty("MAC_DL_tput", protoDeviceInfo.getModem().getParameters(30));
-        values.addProperty("sleep_duration", protoDeviceInfo.getModem().getParameters(31));
-        values.addProperty("rx_time", protoDeviceInfo.getModem().getParameters(32));
-        values.addProperty("tx_time", protoDeviceInfo.getModem().getParameters(33));
+        DeviceInfoProtos.ProtoModem modem = protoDeviceInfo.getModem();
+        values.addProperty("modem_types", modem.getType().toString());
+        values.addProperty("sc_EARNFCN_offset", modem.getParameters(0));
+        values.addProperty("sc_EARFCN", modem.getParameters(1));
+        values.addProperty("sc_PCI", modem.getParameters(2));
+        values.addProperty("sc_Cell_id", modem.getParameters(3));
+        values.addProperty("sc_RSRP", modem.getParameters(4));
+        values.addProperty("sc_RSRQ", modem.getParameters(5));
+        values.addProperty("sc_RSSI", modem.getParameters(6));
+        values.addProperty("sc_SINR", modem.getParameters(7));
+        values.addProperty("sc_Band", modem.getParameters(8));
+        values.addProperty("sc_TAC", modem.getParameters(9));
+        values.addProperty("sc_ECL", modem.getParameters(10));
+        values.addProperty("sc_TX_PWR", modem.getParameters(11));
+        values.addProperty("op_mode", modem.getParameters(12));
+        values.addProperty("nc_EARFCN", modem.getParameters(13));
+        values.addProperty("nc_EARNFCN_offset", modem.getParameters(14));
+        values.addProperty("nc_PCI", modem.getParameters(15));
+        values.addProperty("nc_RSRP", modem.getParameters(16));
+        values.addProperty("RLC_UL_BLER", modem.getParameters(17));
+        values.addProperty("RLC_DL_BLER", modem.getParameters(18));
+        values.addProperty("MAC_UL_BLER", modem.getParameters(19));
+        values.addProperty("MAC_DL_BLER", modem.getParameters(20));
+        values.addProperty("MAC_UL_TOTAL_BYTES", modem.getParameters(21));
+        values.addProperty("MAC_DL_TOTAL_BYTES", modem.getParameters(22));
+        values.addProperty("MAC_UL_total_HARQ_Tx", modem.getParameters(23));
+        values.addProperty("MAC_DL_total_HARQ_Tx", modem.getParameters(24));
+        values.addProperty("MAC_UL_HARQ_re_Tx", modem.getParameters(25));
+        values.addProperty("MAC_DL_HARQ_re_Tx", modem.getParameters(26));
+        values.addProperty("RLC_UL_tput", modem.getParameters(27));
+        values.addProperty("RLC_DL_tput", modem.getParameters(28));
+        values.addProperty("MAC_UL_tput", modem.getParameters(29));
+        values.addProperty("MAC_DL_tput", modem.getParameters(30));
+        values.addProperty("sleep_duration", modem.getParameters(31));
+        values.addProperty("rx_time", modem.getParameters(32));
+        values.addProperty("tx_time", modem.getParameters(33));
 
         //Runtime info
         DeviceInfoProtos.ProtoRuntime runtimeInfo = protoDeviceInfo.getRuntimeInfo();
@@ -415,156 +421,8 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         return new EfentoTelemetry(System.currentTimeMillis(), values);
     }
 
-    private JsonObject getEfentoConfiguration(ConfigProtos.ProtoConfig config) {
-        JsonObject values = new JsonObject();
-
-        values.addProperty("hash", config.getHash());
-        values.addProperty("serial", CoapEfentoUtils.convertByteArrayToString(config.getSerialNumber().toByteArray()));
-        values.addProperty("timestamp", getDate(config.getHashTimestamp()));
-        values.addProperty("current_time", getDate(config.getCurrentTime()));
-        values.addProperty("apn", getString(config.getApn(), "\u007F", "Automatic"));
-        values.addProperty("token_config", getTokenConfigString(config.getCloudTokenConfig()));
-        values.addProperty("data_server", config.getDataServerIp() + ":" + config.getDataServerPort() +
-                "/" + config.getDataEndpoint());
-        values.addProperty("update_server", config.getUpdateServerIp() + " Coap port " +
-                config.getUpdateServerPortCoap() + " Udp port " + config.getUpdateServerPortUdp());
-        values.addProperty("device_info_endpoint", config.getDeviceInfoEndpoint());
-        values.addProperty("configuration_endpoint", config.getConfigurationEndpoint());
-        values.addProperty("time_endpoint", config.getTimeEndpoint());
-        values.addProperty("transfer_limit", getStringValue(config.getTransferLimit(), 65535, "Disable"));
-        values.addProperty("plmn_selection", getPlmnSelection(config.getPlmnSelection()));
-        values.addProperty("supervision_period", getStringValue(config.getSupervisionPeriod(), 0xFFFFFFFF, "Functionality disabled"));
-        values.addProperty("modem_bands_mask", config.getModemBandsMask());
-        values.addProperty("ACK", getStringValue(config.getAckInterval(), 0xFFFFFFFF, "Always request ACK"));
-        values.addProperty("ble_tx_power_level", config.getBleTxPowerLevel());
-        values.addProperty("channel_types", config.getChannelTypesList().stream().map(Enum::toString).collect(Collectors.joining(",")));
-        values.addProperty("rules", config.getRulesList().stream().map(protoRule -> protoRule.getCondition().toString()).collect(Collectors.joining(",")));
-        values.addProperty("calendars", config.getCalendarsList().stream().map(protoCalendar -> protoCalendar.getType().toString()).collect(Collectors.joining(",")));
-        values.addProperty("cellular_config_params", config.getCellularConfigParamsList().stream().map(String::valueOf).collect(Collectors.joining(",")));
-        values.addProperty("dns_server_ip", config.getDnsServerIpList().stream().map(Object::toString).collect(Collectors.joining(",")));
-        values.addProperty("dns_ttl_config", getDnsTtlConfigString(config.getDnsTtlConfig()));
-        values.addProperty("token_coap_option", getStringValue(config.getCloudTokenCoapOption(), 65000, "Cloud token sent in the payload"));
-        values.addProperty("payload_signature_CoAP_option", getStringValue(config.getPayloadSignatureCoapOption(), 65000, "No payload signature in CoAP option"));
-        values.addProperty("payload_split_info", getPayloadSplitInfo(config.getPayloadSplitInfo()));
-        values.addProperty("led_config", config.getLedConfigList().stream().map(Object::toString).collect(Collectors.joining(",")));
-        values.addProperty("network_troubleshooting", getNetworkTroubleShooting(config.getNetworkTroubleshooting()));
-        values.addProperty("encryption_key", getEncryptionKey(config.getEncryptionKey().toByteArray()));
-        values.addProperty("apn_username", getString(config.getApnUserName(),"\u007F", "Automatic"));
-        values.addProperty("apn_password", getString(config.getApnPassword(),"\u007F", "Automatic"));
-
-        return values;
-    }
-
-    private String getStorageStatus(int status) {
-        String storageStatusString;
-        switch (status) {
-            case 0:
-                storageStatusString = "No errors";
-                break;
-            case 1:
-                storageStatusString = "Nv storage has some corrupted packet. Memory is read-only";
-                break;
-            case 2:
-                storageStatusString = "Nv storage is corrupted. Memory is unavailable";
-                break;
-            default:
-                storageStatusString = String.valueOf(status);
-        }
-        return storageStatusString;
-    }
-
-    private String getTokenConfigString(int tokenConfig) {
-        String tokenConfigString;
-        switch (tokenConfig) {
-            case 1:
-                tokenConfigString = "Cloud_token field value";
-                break;
-            case 2:
-                tokenConfigString = "IMEI of the cellular module";
-                break;
-            case 255:
-                tokenConfigString = "Do not send cloud_token field";
-                break;
-            default:
-                tokenConfigString = String.valueOf(tokenConfig);
-        }
-        return tokenConfigString;
-    }
-
-    private static String getString(String string, String marginalValue, String marginalDescription) {
-        String formatedString;
-        if (string.equals(marginalValue)) {
-            formatedString = marginalDescription;
-        } else {
-            formatedString =  string;
-        }
-        return formatedString;
-    }
-
-    private static String getEncryptionKey(byte[] bytes) {
-      String keyString;
-      if (Arrays.equals(bytes, new byte[] {0x7F})) {
-          keyString = "Encryption key disabled";
-      } else {
-          keyString =  CoapEfentoUtils.convertByteArrayToString(bytes);
-      }
-      return keyString;
-    }
-
-    private static String getNetworkTroubleShooting(int networkTroubleShooting) {
-        String networkTroubleShootingString;
-        if (networkTroubleShooting == 1) {
-            networkTroubleShootingString = "Network troubleshooting disabled";
-        } else if (networkTroubleShooting == 2) {
-            networkTroubleShootingString = "Network troubleshooting enabled";
-        } else {
-            networkTroubleShootingString = String.valueOf(networkTroubleShooting);
-        }
-        return networkTroubleShootingString;
-    }
-
-    private static String getPayloadSplitInfo(int info) {
-        String infoString;
-        if (info < 0) {
-            infoString = "Payload has been split, expect another part of the payload in the next message. The absolute value indicates an index of the current message.";
-        } else if (info == 0) {
-            infoString = "Payload has not been splitted";
-        } else {
-            infoString = "Last part of the split payload, the value indicates the total number of the messages sent";
-        }
-        return infoString;
-    }
-
-    private static String getStringValue(int option, int marginalValue, String marginalDescription) {
-        String optionString;
-        if (option == marginalValue) {
-            optionString = marginalDescription;
-        } else {
-            optionString = String.valueOf(option);
-        }
-        return optionString;
-    }
-
-    private static String getDnsTtlConfigString(int config) {
-        String configString;
-        if (config == 864001) {
-            configString = "Accept TTL from the DNS server (additionally, the DNS request when communication has failed)";
-        } else if (config == 864002) {
-            configString = "DNS request is only after communication failed";
-        } else {
-            configString = String.valueOf(config);
-        }
-        return configString;
-    }
-
-    private static String getPlmnSelection(int selection) {
-        String selectionString;
-        if (selection == 1000000 || selection == 0xFFFFFFFF) {
-            selectionString = "automatic selection";
-        } else {
-            selectionString = String.valueOf(selection);
-        }
-        return selectionString;
+    private JsonElement getEfentoConfiguration(byte[] bytes) throws InvalidProtocolBufferException {
+        return parseString(ProtoConverter.dynamicMsgToJson(bytes, ConfigProtos.getDescriptor().getMessageTypes().get(2)));
     }
 
     private static String getDate(long seconds) {
@@ -580,7 +438,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
     public static class EfentoTelemetry {
 
         private long ts;
-        private JsonObject values;
+        private JsonElement values;
 
     }
 }

@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.coap.efento.adaptor;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -33,16 +33,16 @@ public class EfentoCoapAdaptor {
 
     private static final Gson gson = new Gson();
 
-    public TransportProtos.PostTelemetryMsg convertToPostTelemetry(UUID sessionId, List<CoapEfentoTransportResource.EfentoTelemetry> measurements) throws AdaptorException {
+    public TransportProtos.PostTelemetryMsg convertToPostTelemetry(UUID sessionId, List<CoapEfentoTransportResource.EfentoTelemetry> telemetryList) throws AdaptorException {
         try {
-            return JsonConverter.convertToTelemetryProto(gson.toJsonTree(measurements));
+            return JsonConverter.convertToTelemetryProto(gson.toJsonTree(telemetryList));
         } catch (Exception ex) {
             log.warn("[{}] Failed to convert EfentoMeasurements to PostTelemetry request!", sessionId);
             throw new AdaptorException(ex);
         }
     }
 
-    public TransportProtos.PostAttributeMsg convertToPostAttributes(UUID sessionId, JsonObject deviceInfo) throws AdaptorException {
+    public TransportProtos.PostAttributeMsg convertToPostAttributes(UUID sessionId, JsonElement deviceInfo) throws AdaptorException {
         try {
             return JsonConverter.convertToAttributesProto(deviceInfo);
         } catch (Exception ex) {
