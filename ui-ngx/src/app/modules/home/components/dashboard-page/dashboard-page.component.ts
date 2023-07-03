@@ -150,6 +150,7 @@ import { tap } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 
 // @dynamic
 @Component({
@@ -159,7 +160,15 @@ import { ResizeObserver } from '@juggle/resize-observer';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardPageComponent extends PageComponent implements IDashboardController, OnInit, AfterViewInit, OnDestroy {
+export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
+
+  get isDirty(): boolean {
+    return this.isEdit;
+  }
+
+  set isDirty(value: boolean) {
+
+  }
 
   authState: AuthState = getCurrentAuthState(this.store);
 
@@ -1143,7 +1152,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
       (widgetTypeInfo) => {
         const config: WidgetConfig = this.dashboardUtils.widgetConfigFromWidgetType(widgetTypeInfo);
-        config.title = 'New ' + widgetTypeInfo.widgetName;
+        if (!config.title) {
+          config.title = 'New ' + widgetTypeInfo.widgetName;
+        }
         let newWidget: Widget = {
           isSystemType: widget.isSystemType,
           bundleAlias: widget.bundleAlias,
