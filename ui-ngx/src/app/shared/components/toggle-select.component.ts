@@ -14,45 +14,11 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterContentInit,
-  ChangeDetectorRef,
-  Component,
-  ContentChildren,
-  Directive,
-  ElementRef,
-  forwardRef,
-  Input,
-  OnDestroy,
-  QueryList
-} from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
+import { Component, forwardRef, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { startWith, takeUntil } from 'rxjs/operators';
-import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
-
-@Directive(
-  {
-    // eslint-disable-next-line @angular-eslint/directive-selector
-    selector: 'tb-toggle-option',
-  }
-)
-// eslint-disable-next-line @angular-eslint/directive-class-suffix
-export class ToggleSelectOption {
-
-  @Input() value: any;
-
-  get viewValue(): string {
-    return (this._element?.nativeElement.textContent || '').trim();
-  }
-
-  constructor(
-    private _element: ElementRef<HTMLElement>
-  ) {}
-}
+import { _ToggleBase, ToggleHeaderAppearance } from '@shared/components/toggle-header.component';
 
 @Component({
   selector: 'tb-toggle-select',
@@ -66,35 +32,20 @@ export class ToggleSelectOption {
     }
   ]
 })
-export class ToggleSelectComponent extends PageComponent implements AfterContentInit, OnDestroy, ControlValueAccessor {
-
-  @ContentChildren(ToggleSelectOption) toggleSelectOptions: QueryList<ToggleSelectOption>;
+export class ToggleSelectComponent extends _ToggleBase implements ControlValueAccessor {
 
   @Input()
   disabled: boolean;
 
-  options: ToggleHeaderOption[] = [];
-
-  private _destroyed = new Subject<void>();
+  @Input()
+  appearance: ToggleHeaderAppearance = 'stroked';
 
   modelValue: any;
 
   private propagateChange = null;
 
-  constructor(protected store: Store<AppState>,
-              private cd: ChangeDetectorRef) {
+  constructor(protected store: Store<AppState>) {
     super(store);
-  }
-
-  ngAfterContentInit(): void {
-    this.toggleSelectOptions.changes.pipe(startWith(null), takeUntil(this._destroyed)).subscribe(() => {
-      this.syncToggleHeaderOptions();
-    });
-  }
-
-  ngOnDestroy() {
-    this._destroyed.next();
-    this._destroyed.complete();
   }
 
   registerOnChange(fn: any): void {
@@ -110,19 +61,6 @@ export class ToggleSelectComponent extends PageComponent implements AfterContent
 
   writeValue(value: any): void {
     this.modelValue = value;
-  }
-
-  private syncToggleHeaderOptions() {
-    this.options.length = 0;
-    if (this.toggleSelectOptions) {
-      this.toggleSelectOptions.forEach(selectOption => {
-        this.options.push(
-          { name: selectOption.viewValue,
-            value: selectOption.value
-          }
-        );
-      });
-    }
   }
 
   updateModel(value: any) {

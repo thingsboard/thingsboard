@@ -22,18 +22,11 @@
       <div fxFlex fxLayout="row" fxLayoutAlign="center center" *ngIf="timeseriesKeyError">
         <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
       </div>
-      <tb-toggle-header *ngIf="basicMode" (valueChange)="datasourcesModeChange($event)" ignoreMdLgSize="true"
-                            [options]="[
-                                {
-                                   name: translate.instant('device.device'),
-                                   value: datasourceType.device
-                                },
-                                {
-                                   name: translate.instant('entity.entity-alias'),
-                                   value: datasourceType.entity
-                                }
-                              ]" [value]="datasourcesMode" name="widgetConfigModeHeader" useSelectOnMdLg="false">
-      </tb-toggle-header>
+      <tb-toggle-select *ngIf="basicMode" [ngModel]="datasourcesMode" (ngModelChange)="datasourcesModeChange($event)"
+                        [ngModelOptions]="{ standalone: true }">
+        <tb-toggle-option [value]="datasourceType.device">{{ 'device.device' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="datasourceType.entity">{{ 'entity.entity-alias' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
     </div>
     <div *ngIf="maxDatasources > 1"
          class="tb-widget-config-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: maxDatasources} }}</div>

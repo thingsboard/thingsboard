@@ -16,29 +16,26 @@
 
 import {
   AfterContentInit,
-  AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ContentChildren, EventEmitter,
+  ContentChildren,
+  Directive,
+  ElementRef,
+  EventEmitter,
   Input,
-  OnInit, Output,
-  QueryList,
-  ViewChild
+  OnDestroy,
+  OnInit,
+  Output,
+  QueryList
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { AdminService } from '@core/http/admin.service';
-import { UpdateMessage } from '@shared/models/settings.models';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Authority } from '@shared/models/authority.enum';
-import { of, Subscription } from 'rxjs';
-import { MatStepper } from '@angular/material/stepper';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
+import { Subject, Subscription } from 'rxjs';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { BreadCrumb } from '@shared/components/breadcrumb';
+import { startWith, takeUntil } from 'rxjs/operators';
 
 export interface ToggleHeaderOption {
   name: string;
@@ -47,21 +44,78 @@ export interface ToggleHeaderOption {
 
 export type ToggleHeaderAppearance = 'fill' | 'fill-invert' | 'stroked';
 
+@Directive(
+  {
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: 'tb-toggle-option',
+  }
+)
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
+export class ToggleOption {
+
+  @Input() value: any;
+
+  get viewValue(): string {
+    return (this._element?.nativeElement.textContent || '').trim();
+  }
+
+  constructor(
+    private _element: ElementRef<HTMLElement>
+  ) {}
+}
+
+@Directive()
+export abstract class _ToggleBase extends PageComponent implements AfterContentInit, OnDestroy {
+
+  @ContentChildren(ToggleOption) toggleOptions: QueryList<ToggleOption>;
+
+  @Input()
+  options: ToggleHeaderOption[] = [];
+
+  private _destroyed = new Subject<void>();
+
+  protected constructor(protected store: Store<AppState>) {
+    super(store);
+  }
+
+  ngAfterContentInit(): void {
+    this.toggleOptions.changes.pipe(startWith(null), takeUntil(this._destroyed)).subscribe(() => {
+      this.syncToggleHeaderOptions();
+    });
+  }
+
+  ngOnDestroy() {
+    this._destroyed.next();
+    this._destroyed.complete();
+  }
+
+  private syncToggleHeaderOptions() {
+    if (this.toggleOptions?.length) {
+      this.options.length = 0;
+      this.toggleOptions.forEach(option => {
+        this.options.push(
+          { name: option.viewValue,
+            value: option.value
+          }
+        );
+      });
+    }
+  }
+
+}
+
 @Component({
   selector: 'tb-toggle-header',
   templateUrl: './toggle-header.component.html',
   styleUrls: ['./toggle-header.component.scss']
 })
-export class ToggleHeaderComponent extends PageComponent implements OnInit {
+export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterContentInit, OnDestroy {
 
   @Input()
   value: any;
 
   @Output()
   valueChange = new EventEmitter<any>();
-
-  @Input()
-  options: ToggleHeaderOption[];
 
   @Input()
   name: string;

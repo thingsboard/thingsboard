@@ -17,9 +17,9 @@
 -->
 <div class="tb-widget-config tb-absolute-fill">
   <div class="tb-widget-config-header" *ngIf="!hideHeader">
-    <tb-toggle-header *ngIf="!hideToggleHeader && widgetConfigMode === widgetConfigModes.advanced" (valueChange)="selectedOption = $event" ignoreMdLgSize="true"
-                      appearance="fill" [options]="headerOptions" [value]="selectedOption" name="widgetConfigHeader" useSelectOnMdLg="false">
-    </tb-toggle-header>
+    <tb-toggle-select *ngIf="!hideToggleHeader && widgetConfigMode === widgetConfigModes.advanced"
+                      appearance="fill" [options]="headerOptions" [(ngModel)]="selectedOption">
+    </tb-toggle-select>
     <ng-content select=".tb-widget-config-header-prefix"></ng-content>
     <ng-content select=".tb-widget-config-header-suffix"></ng-content>
   </div>
