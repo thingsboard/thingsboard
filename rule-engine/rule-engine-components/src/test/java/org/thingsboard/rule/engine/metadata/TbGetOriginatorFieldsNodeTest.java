@@ -185,6 +185,48 @@ public class TbGetOriginatorFieldsNodeTest {
     }
 
     @Test
+    public void givenDeviceWithEmptyLabel_whenOnMsg_thenShouldTellSuccessAndFetchToData() throws TbNodeException, ExecutionException, InterruptedException {
+        // GIVEN
+        var device = new Device();
+        device.setId(DUMMY_DEVICE_ORIGINATOR);
+        device.setName("Test device");
+        device.setType("Test device type");
+        device.setLabel("");
+
+        config.setDataMapping(Map.of(
+                "name", "originatorName",
+                "type", "originatorType",
+                "label", "originatorLabel"));
+        config.setIgnoreNullStrings(true);
+        config.setFetchTo(FetchTo.DATA);
+
+        node.config = config;
+        node.fetchTo = FetchTo.DATA;
+        var msgMetaData = new TbMsgMetaData();
+        var msgData = "{\"temp\":42,\"humidity\":77}";
+        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+
+        when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
+        when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
+        when(deviceServiceMock.findDeviceById(eq(DUMMY_TENANT_ID), eq(device.getId()))).thenReturn(device);
+
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
+        verify(ctxMock, never()).tellFailure(any(), any());
+
+        var expectedMsgData = "{\"temp\":42,\"humidity\":77,\"originatorName\":\"Test device\",\"originatorType\":\"Test device type\"}";
+
+        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(expectedMsgData);
+        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msgMetaData);
+    }
+
+    @Test
     public void givenValidMsgAndFetchToMetaData_whenOnMsg_thenShouldTellSuccessAndFetchToMetaData() throws TbNodeException, ExecutionException, InterruptedException {
         // GIVEN
         var device = new Device();

@@ -38,7 +38,7 @@ public class StringUtils {
     }
 
     public static boolean isBlank(String source) {
-        return source == null || source.isEmpty() || source.trim().isEmpty();
+        return isEmpty(source) || source.trim().isEmpty();
     }
 
     public static boolean isNotEmpty(String source) {
@@ -46,7 +46,7 @@ public class StringUtils {
     }
 
     public static boolean isNotBlank(String source) {
-        return source != null && !source.isEmpty() && !source.trim().isEmpty();
+        return !isBlank(source);
     }
 
     public static String notBlankOrDefault(String src, String def) {

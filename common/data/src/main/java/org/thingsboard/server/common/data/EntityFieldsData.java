@@ -68,20 +68,22 @@ public class EntityFieldsData {
                 break;
             }
         }
-        if (current != null) {
-            if(current.isNull() && ignoreNullStrings){
+        if (current == null) {
+            return null;
+        }
+        if (current.isNull() && ignoreNullStrings) {
+            return null;
+        }
+        if (current.isValueNode()) {
+            String textValue = current.asText();
+            if (StringUtils.isEmpty(textValue) && ignoreNullStrings) {
                 return null;
             }
-            if (current.isValueNode()) {
-                return current.asText();
-            } else {
-                try {
-                    return mapper.writeValueAsString(current);
-                } catch (JsonProcessingException e) {
-                    return null;
-                }
-            }
-        } else {
+            return textValue;
+        }
+        try {
+            return mapper.writeValueAsString(current);
+        } catch (JsonProcessingException e) {
             return null;
         }
     }
