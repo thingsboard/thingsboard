@@ -26,7 +26,7 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import {
   GatewayRemoteConfigurationDialogComponent,
   GatewayRemoteConfigurationDialogData
-} from '@shared/components/dialog/gateway-remote-configuration-dialog';
+} from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
 import { DeviceService } from '@core/http/device.service';
 import { of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';

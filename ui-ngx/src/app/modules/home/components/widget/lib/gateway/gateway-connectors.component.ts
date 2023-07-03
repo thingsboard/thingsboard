@@ -34,7 +34,7 @@ import { MatSort } from '@angular/material/sort';
 import { tap } from 'rxjs/operators';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { MatTableDataSource } from '@angular/material/table';
-import { GatewayLogLevel } from '@home/components/widget/lib/device/gateway-configuration.component';
+import { GatewayLogLevel } from '@home/components/widget/lib/gateway/gateway-configuration.component';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';

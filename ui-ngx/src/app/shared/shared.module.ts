@@ -177,7 +177,6 @@ import { NotificationComponent } from '@shared/components/notification/notificat
 import { TemplateAutocompleteComponent } from '@shared/components/notification/template-autocomplete.component';
 import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
-import { GatewayRemoteConfigurationDialogComponent } from '@shared/components/dialog/gateway-remote-configuration-dialog';
 import {
   TbBreakPointsProvider,
   MdLgLayoutDirective,
@@ -264,7 +263,6 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     HelpComponent,
     HelpMarkdownComponent,
     HelpPopupComponent,
-    GatewayRemoteConfigurationDialogComponent,
     TbCheckboxComponent,
     TbSnackBarComponent,
     TbErrorComponent,
@@ -443,7 +441,6 @@ export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService)
     HelpComponent,
     HelpMarkdownComponent,
     HelpPopupComponent,
-    GatewayRemoteConfigurationDialogComponent,
     TbCheckboxComponent,
     TbErrorComponent,
     TbCheatSheetComponent,

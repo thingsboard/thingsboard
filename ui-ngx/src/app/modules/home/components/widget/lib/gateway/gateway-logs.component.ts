@@ -30,7 +30,7 @@ import { AttributeDatasource } from "@home/models/datasource/attribute-datasourc
 import { Direction, SortOrder } from "@shared/models/page/sort-order";
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
-import { GatewayLogLevel } from '@home/components/widget/lib/device/gateway-configuration.component';
+import { GatewayLogLevel } from '@home/components/widget/lib/gateway/gateway-configuration.component';
 import { DialogService } from '@core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 
