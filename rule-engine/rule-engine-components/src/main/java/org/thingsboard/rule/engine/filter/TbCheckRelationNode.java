@@ -49,6 +49,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         type = ComponentType.FILTER,
         name = "check relation presence",
         configClazz = TbCheckRelationNodeConfiguration.class,
+        version = 1,
         relationTypes = {TbNodeConnectionType.TRUE, TbNodeConnectionType.FALSE},
         nodeDescription = "Checks the presence of the relation between the originator of the message and other entities.",
         nodeDetails = "If 'check relation to specific entity' is selected, you should specify a related entity. " +

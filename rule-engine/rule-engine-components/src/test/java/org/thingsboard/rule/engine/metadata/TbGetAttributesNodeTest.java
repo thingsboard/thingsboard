@@ -267,6 +267,22 @@ public class TbGetAttributesNodeTest {
         Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
     }
 
+    @Test
+    public void givenOldConfigWithNoFetchToDataProperty_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
+        var defaultConfig = new TbGetAttributesNodeConfiguration().defaultConfiguration();
+        var node = new TbGetAttributesNode();
+        String oldConfig = "{\"clientAttributeNames\":[]," +
+                "\"sharedAttributeNames\":[]," +
+                "\"serverAttributeNames\":[]," +
+                "\"latestTsKeyNames\":[]," +
+                "\"tellFailureIfAbsent\":true," +
+                "\"getLatestValueWithTs\":false}";
+        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
+        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
+        Assertions.assertTrue(upgrade.getFirst());
+        Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
+    }
+
     private TbMsg checkMsg(boolean checkSuccess) {
         var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         if (checkSuccess) {

@@ -64,9 +64,7 @@ public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<Cust
 
     @Override
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
-        return fromVersion == 0 ?
-                upgradeToUseFetchToAndDataToFetch(oldConfiguration) :
-                new TbPair<>(false, oldConfiguration);
+        return fromVersion == 0 ? upgradeToUseFetchToAndDataToFetch(oldConfiguration) : new TbPair<>(false, oldConfiguration);
     }
 
 }

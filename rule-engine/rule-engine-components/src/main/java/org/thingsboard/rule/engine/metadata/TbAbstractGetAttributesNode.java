@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -74,6 +75,20 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     protected abstract ListenableFuture<T> findEntityIdAsync(TbContext ctx, TbMsg msg);
+
+    protected TbPair<Boolean, JsonNode> upgradeRuleNodesWithOldPropertyToUseFetchTo(
+            JsonNode oldConfiguration,
+            String oldProperty,
+            String ifTrue,
+            String ifFalse
+    ) throws TbNodeException {
+        var newConfigObjectNode = (ObjectNode) oldConfiguration;
+        if (!newConfigObjectNode.has(oldProperty)) {
+            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, FetchTo.METADATA.name());
+            return new TbPair<>(true, newConfigObjectNode);
+        }
+        return upgradeConfigurationToUseFetchTo(oldProperty, ifTrue, ifFalse, newConfigObjectNode);
+    }
 
     private void safePutAttributes(TbContext ctx, TbMsg msg, ObjectNode msgDataNode, T entityId) {
         Set<TbPair<String, List<String>>> failuresPairSet = ConcurrentHashMap.newKeySet();

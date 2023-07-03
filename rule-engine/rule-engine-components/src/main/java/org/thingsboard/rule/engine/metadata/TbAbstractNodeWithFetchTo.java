@@ -96,21 +96,29 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
             String ifTrue,
             String ifFalse
     ) throws TbNodeException {
-        var newConfigObjectNode = (ObjectNode) oldConfiguration;
-        if (!newConfigObjectNode.has(oldProperty)) {
+        var newConfig = (ObjectNode) oldConfiguration;
+        if (!newConfig.has(oldProperty)) {
             throw new TbNodeException("property to update: '" + oldProperty + "' doesn't exists in configuration!");
         }
-        var value = newConfigObjectNode.get(oldProperty).asText();
+        return upgradeConfigurationToUseFetchTo(oldProperty, ifTrue, ifFalse, newConfig);
+    }
+
+    protected TbPair<Boolean, JsonNode> upgradeConfigurationToUseFetchTo(
+            String oldProperty, String ifTrue,
+            String ifFalse, ObjectNode newConfig
+    ) throws TbNodeException {
+        var value = newConfig.get(oldProperty).asText();
         if ("true".equals(value)) {
-            newConfigObjectNode.remove(oldProperty);
-            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, ifTrue);
-            return new TbPair<>(true, newConfigObjectNode);
+            newConfig.remove(oldProperty);
+            newConfig.put(FETCH_TO_PROPERTY_NAME, ifTrue);
+            return new TbPair<>(true, newConfig);
         } else if ("false".equals(value)) {
-            newConfigObjectNode.remove(oldProperty);
-            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, ifFalse);
-            return new TbPair<>(true, newConfigObjectNode);
+            newConfig.remove(oldProperty);
+            newConfig.put(FETCH_TO_PROPERTY_NAME, ifFalse);
+            return new TbPair<>(true, newConfig);
         } else {
-            throw new TbNodeException("property to update: '" + oldProperty + "' has unexpected value: " + value + ". Allowed values: true or false!");
+            throw new TbNodeException("property to update: '" + oldProperty + "' has unexpected value: "
+                    + value + ". Allowed values: true or false!");
         }
     }
 
