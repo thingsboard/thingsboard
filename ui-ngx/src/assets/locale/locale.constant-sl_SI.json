@@ -913,13 +913,8 @@
     "device-configuration": "Device configuration",
     "transport-configuration": "Transport configuration",
     "wizard": {
-      "device-wizard": "Device Wizard",
       "device-details": "Device details",
-      "new-device-profile": "Create new device profile",
-      "existing-device-profile": "Select existing device profile",
-      "specific-configuration": "Specific configuration",
-      "customer-to-assign-device": "Customer to assign the device",
-      "add-credentials": "Add credentials"
+      "customer-to-assign-device": "Customer to assign the device"
     }
   },
   "device-profile": {
@@ -938,8 +933,6 @@
     "set-default": "Make device profile default",
     "delete": "Delete device profile",
     "copyId": "Copy device profile Id",
-    "new-device-profile-name": "Device profile name",
-    "new-device-profile-name-required": "Device profile name is required.",
     "name": "Name",
     "name-required": "Name is required.",
     "type": "Profile type",

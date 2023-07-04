@@ -19,6 +19,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { _ToggleBase, ToggleHeaderAppearance } from '@shared/components/toggle-header.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-toggle-select',
@@ -35,6 +36,7 @@ import { _ToggleBase, ToggleHeaderAppearance } from '@shared/components/toggle-h
 export class ToggleSelectComponent extends _ToggleBase implements ControlValueAccessor {
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
   @Input()

@@ -913,13 +913,8 @@
         "device-configuration": "장치 설정",
         "transport-configuration": "전송 설정",
         "wizard": {
-            "device-wizard": "장치 마법사",
             "device-details": "장치 상세 정보",
-            "new-device-profile": "새로운 장치 프로파일 생성",
-            "existing-device-profile": "기존 장치 프로파일 선택",
-            "specific-configuration": "특수 설정",
-            "customer-to-assign-device": "장치에 할당할 커스터머",
-            "add-credentials": "크리덴셜 추가"
+            "customer-to-assign-device": "장치에 할당할 커스터머"
         }
     },
     "device-profile": {
@@ -938,8 +933,6 @@
         "set-default": "Make device profile default",
         "delete": "Delete device profile",
         "copyId": "Copy device profile Id",
-        "new-device-profile-name": "장치 프로파일 이름",
-        "new-device-profile-name-required": "Device profile name is required.",
         "name": "이름",
         "name-required": "이름을 입력하세요.",
         "type": "프로파일 유형",

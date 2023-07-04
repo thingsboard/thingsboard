@@ -87,6 +87,13 @@ export class DeviceService {
     return this.http.post<Device>('/api/device', device, defaultHttpOptionsFromConfig(config));
   }
 
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>('/api/device-with-credentials', {
+      device,
+      credentials
+    }, defaultHttpOptionsFromConfig(config));
+  }
+
   public deleteDevice(deviceId: string, config?: RequestConfig) {
     return this.http.delete(`/api/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
