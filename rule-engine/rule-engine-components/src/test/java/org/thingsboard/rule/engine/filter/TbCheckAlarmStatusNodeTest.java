@@ -52,7 +52,6 @@ class TbCheckAlarmStatusNodeTest {
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
     private static final AlarmId ALARM_ID = new AlarmId(UUID.randomUUID());
     private static final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
-    private static final TbMsgMetaData EMPTY_METADATA = new TbMsgMetaData();
 
     private TbCheckAlarmStatusNode node;
 
@@ -160,7 +159,7 @@ class TbCheckAlarmStatusNodeTest {
     }
 
     private TbMsg getTbMsg(String msgData) {
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DEVICE_ID, EMPTY_METADATA, msgData);
+        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DEVICE_ID, TbMsgMetaData.EMPTY, msgData);
     }
 
 }

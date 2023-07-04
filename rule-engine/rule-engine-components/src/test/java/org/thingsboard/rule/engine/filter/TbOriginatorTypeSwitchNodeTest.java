@@ -42,8 +42,6 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
 class TbOriginatorTypeSwitchNodeTest {
 
     private static final UUID RANDOM_UUID = UUID.randomUUID();
-    private static final TbMsgMetaData EMPTY_METADATA = new TbMsgMetaData();
-    private static final String EMPTY_DATA = "{}";
 
     private TbOriginatorTypeSwitchNode node;
 
@@ -92,7 +90,7 @@ class TbOriginatorTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId) {
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, EMPTY_METADATA, EMPTY_DATA);
+        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY);
     }
 
 }

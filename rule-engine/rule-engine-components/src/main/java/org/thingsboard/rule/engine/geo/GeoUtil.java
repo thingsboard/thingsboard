@@ -45,8 +45,6 @@ public class GeoUtil {
     private static final SpatialContext distCtx = SpatialContext.GEO;
     private static final JtsSpatialContext jtsCtx;
 
-    private static final JsonParser JSON_PARSER = new JsonParser();
-
     static {
         JtsSpatialContextFactory factory = new JtsSpatialContextFactory();
         factory.normWrapLongitude = true;
@@ -64,7 +62,7 @@ public class GeoUtil {
             throw new RuntimeException("Polygon string can't be empty or null!");
         }
 
-        JsonArray polygonsJson = normalizePolygonsJson(JSON_PARSER.parse(polygonInString).getAsJsonArray());
+        JsonArray polygonsJson = normalizePolygonsJson(JsonParser.parseString(polygonInString).getAsJsonArray());
         List<Geometry> polygons = buildPolygonsFromJson(polygonsJson);
         Set<Geometry> holes = extractHolesFrom(polygons);
         polygons.removeIf(holes::contains);

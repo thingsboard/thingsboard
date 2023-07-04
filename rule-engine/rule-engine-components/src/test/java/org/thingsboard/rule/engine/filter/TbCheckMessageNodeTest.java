@@ -46,9 +46,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
 class TbCheckMessageNodeTest {
 
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
-    private static final TbMsgMetaData EMPTY_METADATA = new TbMsgMetaData();
-    private static final String EMPTY_DATA = "{}";
-    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DEVICE_ID, EMPTY_METADATA, EMPTY_DATA);
+    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY);
 
     private TbCheckMessageNode node;
 
@@ -195,7 +193,7 @@ class TbCheckMessageNodeTest {
     }
 
     private TbMsg getTbMsg(boolean emptyData) {
-        String data = emptyData ? EMPTY_DATA : "{\"temperature-0\": 25}";
+        String data = emptyData ? TbMsg.EMPTY : "{\"temperature-0\": 25}";
         var metadata = new TbMsgMetaData();
         metadata.putValue(DEVICE_NAME, "Test Device");
         metadata.putValue(DEVICE_TYPE, DEFAULT_DEVICE_TYPE);

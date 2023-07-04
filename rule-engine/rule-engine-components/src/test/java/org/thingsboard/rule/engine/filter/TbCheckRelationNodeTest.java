@@ -26,7 +26,6 @@ import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -62,9 +61,7 @@ class TbCheckRelationNodeTest {
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
     private static final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
     private static final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
-    private static final TbMsgMetaData EMPTY_METADATA = new TbMsgMetaData();
-    private static final String EMPTY_DATA = "{}";
-    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), ORIGINATOR_ID, EMPTY_METADATA, EMPTY_DATA);
+    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), ORIGINATOR_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY);
 
     private TbCheckRelationNode node;
 

@@ -40,8 +40,6 @@ import static org.mockito.Mockito.verify;
 class TbMsgTypeSwitchNodeTest {
 
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
-    private static final TbMsgMetaData EMPTY_METADATA = new TbMsgMetaData();
-    private static final String EMPTY_DATA = "{}";
 
     private TbMsgTypeSwitchNode node;
 
@@ -90,7 +88,7 @@ class TbMsgTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(TbMsgType msgType) {
-        return TbMsg.newMsg(msgType.name(), DEVICE_ID, EMPTY_METADATA, EMPTY_DATA);
+        return TbMsg.newMsg(msgType.name(), DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY);
     }
 
 }

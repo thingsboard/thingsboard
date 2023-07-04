@@ -118,6 +118,6 @@ class TbDeviceTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId) {
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, new TbMsgMetaData(), "{}", callback);
+        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY, callback);
     }
 }

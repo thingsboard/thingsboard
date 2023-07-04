@@ -42,6 +42,8 @@ import java.util.UUID;
 @Slf4j
 public final class TbMsg implements Serializable {
 
+    public static final String EMPTY = "{}";
+
     private final String queueName;
     private final UUID id;
     private final long ts;
