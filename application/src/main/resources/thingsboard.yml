@@ -775,6 +775,10 @@ transport:
       worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
       max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
       so_keep_alive: "${NETTY_SO_KEEPALIVE:false}"
+    # Mqtt device connectivity host to publish telemetry
+    device_connectivity_host: "${MQTT_DEVICE_CONNECTIVITY_HOST:localhost}"
+    # Mqtt device connectivity port to publish telemetry
+    device_connectivity_port: "${MQTT_DEVICE_CONNECTIVITY_PORT:1883}"
     # MQTT SSL configuration
     ssl:
       # Enable/disable SSL support
@@ -785,6 +789,10 @@ transport:
       bind_port: "${MQTT_SSL_BIND_PORT:8883}"
       # SSL protocol: See https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#sslcontext-algorithms
       protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
+      # Mqtt ssl device connectivity host to publish telemetry
+      device_connectivity_host: "${MQTT_DEVICE_CONNECTIVITY_HOST:localhost}"
+      # Mqtt ssl device connectivity port to publish telemetry
+      device_connectivity_port: "${MQTT_DEVICE_CONNECTIVITY_PORT:8883}"
       # Server SSL credentials
       credentials:
         # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
@@ -821,6 +829,10 @@ transport:
     piggyback_timeout: "${COAP_PIGGYBACK_TIMEOUT:500}"
     psm_activity_timer: "${COAP_PSM_ACTIVITY_TIMER:10000}"
     paging_transmission_window: "${COAP_PAGING_TRANSMISSION_WINDOW:10000}"
+    # Coap device connectivity host to publish telemetry
+    device_connectivity_host: "${COAP_DEVICE_CONNECTIVITY_HOST:localhost}"
+    # Coap device connectivity port to publish telemetry
+    device_connectivity_port: "${COAP_DEVICE_CONNECTIVITY_PORT:5683}"
     dtls:
       # Enable/disable DTLS 1.2 support
       enabled: "${COAP_DTLS_ENABLED:false}"
@@ -830,6 +842,10 @@ transport:
       bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
       # CoAP DTLS bind port
       bind_port: "${COAP_DTLS_BIND_PORT:5684}"
+      # Coap DTLS device connectivity host to publish telemetry
+      device_connectivity_host: "${COAP_DEVICE_CONNECTIVITY_HOST:localhost}"
+      # Coap DTLS device connectivity port to publish telemetry
+      device_connectivity_port: "${COAP_DEVICE_CONNECTIVITY_PORT:5684}"
       # Server DTLS credentials
       credentials:
         # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)

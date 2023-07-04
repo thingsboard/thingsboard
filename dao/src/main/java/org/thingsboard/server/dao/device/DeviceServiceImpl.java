@@ -20,6 +20,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -51,6 +54,7 @@ import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
+import org.thingsboard.server.common.data.device.profile.EfentoCoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -79,11 +83,11 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -124,6 +128,46 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Autowired
     private EntityCountService countService;
 
+    @Bean
+    @ConfigurationProperties(prefix = "transport.mqtt")
+    public DeviceConnectivityConfiguration  mqttDeviceConnectivityProperties() {
+        return new DeviceConnectivityConfiguration ();
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "transport.mqtt.ssl")
+    public DeviceConnectivityConfiguration  mqttsDeviceConnectivityProperties() {
+        return new DeviceConnectivityConfiguration ();
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "transport.coap")
+    public DeviceConnectivityConfiguration  coapDeviceConnectivityProperties() {
+        return new DeviceConnectivityConfiguration ();
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "transport.coap.dtls")
+    public DeviceConnectivityConfiguration  coapsDeviceConnectivityProperties() {
+        return new DeviceConnectivityConfiguration ();
+    }
+
+    @Autowired
+    @Qualifier("mqttDeviceConnectivityProperties")
+    private DeviceConnectivityConfiguration mqttProperties;
+
+    @Autowired
+    @Qualifier("mqttsDeviceConnectivityProperties")
+    private DeviceConnectivityConfiguration mqttsProperties;
+
+    @Autowired
+    @Qualifier("coapDeviceConnectivityProperties")
+    private DeviceConnectivityConfiguration coapProperties;
+
+    @Autowired
+    @Qualifier("coapsDeviceConnectivityProperties")
+    private DeviceConnectivityConfiguration coapsProperties;
+
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceInfoById [{}]", deviceId);
@@ -132,63 +176,66 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     @Override
-    public List<String> findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
+    public Map<String, String> findDevicePublishTelemetryCommands(String baseUrl, Device device) {
         DeviceId deviceId = device.getId();
         log.trace("Executing findDevicePublishTelemetryCommands [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
 
-        String hostname = new URI(baseUrl).getHost();
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
-        DeviceCredentialsType credentialsType = deviceCredentials.getCredentialsType();
+        DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
+        DeviceCredentialsType credentialsType = creds.getCredentialsType();
 
         DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
+        DeviceTransportType transportType = deviceProfile.getTransportType();
 
-        ArrayList<String> commands = new ArrayList<>();
-        switch (deviceProfile.getTransportType()) {
+        Map<String, String> commands = new HashMap<>();
+
+        switch (transportType) {
             case DEFAULT:
-                switch (credentialsType) {
+               switch (credentialsType) {
                     case ACCESS_TOKEN:
-                        commands.add(getMqttAccessTokenCommand(hostname, deviceCredentials) + " -m " + PAYLOAD);
-                        commands.add(getHttpAccessTokenCommand(baseUrl, deviceCredentials));
-                        commands.add("echo -n " + PAYLOAD + " | " + getCoapAccessTokenCommand(hostname, deviceCredentials) + " -f-");
-                        break;
+                        commands.put("http", getHttpPublishCommand(baseUrl, creds));
+                        commands.put("mqtt", getMqttPublishCommand(mqttProperties.getDeviceConnectivityHost(), mqttProperties.getDeviceConnectivityPort(), creds));
+                        commands.put("mqtts", getMqttPublishCommand(mqttsProperties.getDeviceConnectivityHost(), mqttsProperties.getDeviceConnectivityPort(), creds));
+                        commands.put("coap", getCoapPublishCommand(coapProperties.getDeviceConnectivityHost(), coapProperties.getDeviceConnectivityPort(), creds));
+                        commands.put("coaps", getCoapPublishCommand(coapsProperties.getDeviceConnectivityHost(), coapsProperties.getDeviceConnectivityPort(), creds));                        break;
                     case MQTT_BASIC:
-                        commands.add(getMqttBasicPublishCommand(hostname, deviceCredentials) + " -m " + PAYLOAD);
+                        commands.put("mqtt", getMqttPublishCommand(mqttProperties.getDeviceConnectivityHost(), mqttProperties.getDeviceConnectivityPort(), creds));
+                        commands.put("mqtts", getMqttPublishCommand(mqttsProperties.getDeviceConnectivityHost(), mqttsProperties.getDeviceConnectivityPort(), creds));
                         break;
                     case X509_CERTIFICATE:
-                        commands.add(getMqttX509Command(hostname) + " -m " + PAYLOAD);
+                        commands.put("mqtt", getMqttPublishCommand(mqttProperties.getDeviceConnectivityHost(), mqttProperties.getDeviceConnectivityPort(), creds));
+                        commands.put("mqtts", getMqttPublishCommand(mqttsProperties.getDeviceConnectivityHost(), mqttsProperties.getDeviceConnectivityPort(), creds));
+                        commands.put("coap", getCoapPublishCommand(coapProperties.getDeviceConnectivityHost(), coapProperties.getDeviceConnectivityPort(), creds));
+                        commands.put("coaps", getCoapPublishCommand(coapsProperties.getDeviceConnectivityHost(), coapsProperties.getDeviceConnectivityPort(), creds));
                         break;
                 }
                 break;
             case MQTT:
                 MqttDeviceProfileTransportConfiguration transportConfiguration =
                         (MqttDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+                String topicName = transportConfiguration.getDeviceTelemetryTopic();
                 TransportPayloadType payloadType = transportConfiguration.getTransportPayloadTypeConfiguration().getTransportPayloadType();
                 String payload = (payloadType == TransportPayloadType.PROTOBUF) ? " -f protobufFileName" : " -m " + PAYLOAD;
-                switch (credentialsType) {
-                    case ACCESS_TOKEN:
-                        commands.add(getMqttAccessTokenCommand(hostname, deviceCredentials) + payload);
-                        break;
-                    case MQTT_BASIC:
-                        commands.add(getMqttBasicPublishCommand(hostname, deviceCredentials) + payload);
-                        break;
-                    case X509_CERTIFICATE:
-                        commands.add(getMqttX509Command(hostname) + payload);
-                        break;
-                }
+
+                commands.put("mqtt", getMqttPublishCommand(mqttProperties.getDeviceConnectivityHost(), mqttProperties.getDeviceConnectivityPort(),
+                        topicName, creds, payload));
+                commands.put("mqtts", getMqttPublishCommand(mqttProperties.getDeviceConnectivityHost(), mqttProperties.getDeviceConnectivityPort(),
+                        topicName, creds, payload));
                 break;
             case COAP:
                 CoapDeviceProfileTransportConfiguration coapTransportConfiguration =
                             (CoapDeviceProfileTransportConfiguration)  deviceProfile.getProfileData().getTransportConfiguration();
                 CoapDeviceTypeConfiguration coapConfiguration = coapTransportConfiguration.getCoapDeviceTypeConfiguration();
                 if (coapConfiguration instanceof DefaultCoapDeviceTypeConfiguration) {
-                    DefaultCoapDeviceTypeConfiguration configuration =
-                            (DefaultCoapDeviceTypeConfiguration) coapTransportConfiguration.getCoapDeviceTypeConfiguration();
-                    TransportPayloadType transportPayloadType = configuration.getTransportPayloadTypeConfiguration().getTransportPayloadType();
-                    String payloadExample = (transportPayloadType == TransportPayloadType.PROTOBUF) ? " -t binary -f protobufFileName" : " -t json -f jsonFileName";
-                    commands.add(getCoapAccessTokenCommand(hostname, deviceCredentials) + payloadExample);
+                    commands.put("coap", getCoapPublishCommand(coapProperties.getDeviceConnectivityHost(), coapProperties.getDeviceConnectivityPort(), creds));
+                    commands.put("coaps", getCoapPublishCommand(coapsProperties.getDeviceConnectivityHost(), coapsProperties.getDeviceConnectivityPort(), creds));
+                } else if (coapConfiguration instanceof EfentoCoapDeviceTypeConfiguration) {
+                    commands.put("coap", "Not supported");
+                    commands.put("coaps", "Not supported");
                 }
                 break;
+            default:
+                commands.put(transportType.name(), "Not supported");
         }
         return commands;
     }
@@ -752,36 +799,57 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return EntityType.DEVICE;
     }
 
-    private String getHttpAccessTokenCommand(String baseurl, DeviceCredentials deviceCredentials) {
-        return String.format("curl -v -X POST %s/api/v1/%s/telemetry --header Content-Type:application/json --data " + PAYLOAD, baseurl, deviceCredentials.getCredentialsId());
+    private String getHttpPublishCommand(String baseurl, DeviceCredentials deviceCredentials) {
+        return String.format("curl -v -X POST %s/api/v1/%s/telemetry --header Content-Type:application/json --data " + PAYLOAD,
+                baseurl, deviceCredentials.getCredentialsId());
     }
 
-    private String getMqttAccessTokenCommand(String hostname, DeviceCredentials deviceCredentials) {
-        return String.format("mosquitto_pub -d -q 1 -h %s -t v1/devices/me/telemetry -u %s", hostname, deviceCredentials.getCredentialsId());
+    private String getMqttPublishCommand(String host, Integer port, DeviceCredentials deviceCredentials) {
+        return getMqttPublishCommand(host, port, "v1/devices/me/telemetry", deviceCredentials, " -m " + PAYLOAD);
     }
 
-    private String getMqttBasicPublishCommand(String hostname, DeviceCredentials deviceCredentials) {
-        BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), BasicMqttCredentials.class);
-        StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1 -h " + hostname + " -p 1883 -t v1/devices/me/telemetry");
-        if (credentials != null) {
-            if (credentials.getClientId() != null) {
-                command.append(" -i ").append(credentials.getClientId());
-            }
-            if (credentials.getUserName() != null) {
-                command.append(" -u ").append(credentials.getUserName());
-            }
-            if (credentials.getPassword() != null) {
-                command.append(" -P ").append(credentials.getPassword());
-            }
+    private String getMqttPublishCommand(String host, Integer port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
+        StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1");
+        command.append(" -h ").append(host);
+        command.append(" -p ").append(port);
+        command.append(" -t ").append(deviceTelemetryTopic);
+
+        switch (deviceCredentials.getCredentialsType()) {
+            case ACCESS_TOKEN:
+                command.append(" -u ").append(deviceCredentials.getCredentialsId());
+                break;
+            case MQTT_BASIC:
+                BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
+                        BasicMqttCredentials.class);
+                if (credentials != null) {
+                    if (credentials.getClientId() != null) {
+                        command.append(" -i ").append(credentials.getClientId());
+                    }
+                    if (credentials.getUserName() != null) {
+                        command.append(" -u ").append(credentials.getUserName());
+                    }
+                    if (credentials.getPassword() != null) {
+                        command.append(" -P ").append(credentials.getPassword());
+                    }
+                }
+                break;
+            case X509_CERTIFICATE:
+                command.append(" --cafile server.pem --key key.pem --cert cert.pem");
         }
+        command.append(payload);
         return command.toString();
     }
 
-    private String getMqttX509Command(String hostname) {
-        return String.format("mosquitto_pub --cafile server.pem -d -q 1 -h %s -p 8883 -t v1/devices/me/telemetry --key key.pem --cert cert.pem", hostname);
-    }
-
-    private String getCoapAccessTokenCommand(String hostname, DeviceCredentials deviceCredentials) {
-        return String.format("coap-client -m post coap://%s:5683/api/v1/%s/telemetry", hostname, deviceCredentials.getCredentialsId());
+    private String getCoapPublishCommand(String host, Integer port, DeviceCredentials deviceCredentials) {
+        switch (deviceCredentials.getCredentialsType()) {
+            case ACCESS_TOKEN:
+                return String.format("coap-client -m post coap://%s:%s/api/v1/%s/telemetry -t json -e %s",
+                        host, port, deviceCredentials.getCredentialsId(), PAYLOAD);
+            case X509_CERTIFICATE:
+                return String.format("coap-client-openssl -v 9 -c cert.pem  -j key.pem -m POST -t json -e %s " +
+                                "coaps://%s:%s/api/v1/telemetry", PAYLOAD, host, port);
+            default:
+                return "Not supported";
+        }
     }
 }
