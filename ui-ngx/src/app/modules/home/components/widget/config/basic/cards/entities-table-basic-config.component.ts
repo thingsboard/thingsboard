@@ -28,6 +28,8 @@ import {
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { isUndefined } from '@core/utils';
+import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
   selector: 'tb-entities-table-basic-config',
@@ -73,11 +75,7 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     this.entitiesTableWidgetConfigForm = this.fb.group({
-      timewindowConfig: [{
-        useDashboardTimewindow: configData.config.useDashboardTimewindow,
-        displayTimewindow: configData.config.useDashboardTimewindow,
-        timewindow: configData.config.timewindow
-      }, []],
+      timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
       columns: [this.getColumns(configData.config.datasources), []],
       showTitle: [configData.config.showTitle, []],
@@ -155,13 +153,13 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
 
   private getCardButtons(config: WidgetConfig): string[] {
     const buttons: string[] = [];
-    if (config.settings?.enableSearch) {
+    if (isUndefined(config.settings?.enableSearch) || config.settings?.enableSearch) {
       buttons.push('search');
     }
-    if (config.settings?.enableSelectColumnDisplay) {
+    if (isUndefined(config.settings?.enableSelectColumnDisplay) || config.settings?.enableSelectColumnDisplay) {
       buttons.push('columnsToDisplay');
     }
-    if (config.enableFullscreen) {
+    if (isUndefined(config.enableFullscreen) || config.enableFullscreen) {
       buttons.push('fullscreen');
     }
     return buttons;

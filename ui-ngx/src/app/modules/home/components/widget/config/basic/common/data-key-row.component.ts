@@ -153,6 +153,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
 
+  get hasAdditionalLatestDataKeys(): boolean {
+    return this.dataKeysPanelComponent.hasAdditionalLatestDataKeys;
+  }
+
   get widget(): Widget {
     return this.widgetConfigComponent.widget;
   }
@@ -165,12 +169,20 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.widgetConfigComponent.aliasController;
   }
 
-  get datakeySettingsSchema(): JsonSettingsSchema {
+  get dataKeySettingsSchema(): JsonSettingsSchema {
     return this.widgetConfigComponent.modelValue?.dataKeySettingsSchema;
   }
 
   get dataKeySettingsDirective(): string {
     return this.widgetConfigComponent.modelValue?.dataKeySettingsDirective;
+  }
+
+  get latestDataKeySettingsSchema(): JsonSettingsSchema {
+    return this.widgetConfigComponent.modelValue?.latestDataKeySettingsSchema;
+  }
+
+  get latestDataKeySettingsDirective(): string {
+    return this.widgetConfigComponent.modelValue?.latestDataKeySettingsDirective;
   }
 
   get isEntityDatasource(): boolean {
@@ -193,6 +205,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.dataKeysPanelComponent.dragEnabled;
   }
 
+  get isLatestDataKeys(): boolean {
+    return this.hasAdditionalLatestDataKeys && this.keyRowFormGroup.get('latest').value === true;
+  }
+
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
@@ -212,6 +228,12 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
       units: [null, []],
       decimals: [null, []],
     });
+    if (this.hasAdditionalLatestDataKeys) {
+      this.keyRowFormGroup.addControl('latest', this.fb.control(false));
+      this.keyRowFormGroup.valueChanges.subscribe(
+        () => this.clearKeySearchCache()
+      );
+    }
     this.keyRowFormGroup.valueChanges.subscribe(
       () => this.updateModel()
     );
@@ -286,6 +308,11 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
         decimals: value?.decimals
       }, {emitEvent: false}
     );
+    if (this.hasAdditionalLatestDataKeys) {
+      this.keyRowFormGroup.patchValue({
+        latest: (value as any)?.latest
+      }, {emitEvent: false});
+    }
     this.cd.markForCheck();
   }
 
@@ -323,8 +350,8 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
         data: {
           dataKey: deepClone(this.modelValue),
           dataKeyConfigMode: advanced ? DataKeyConfigMode.advanced : DataKeyConfigMode.general,
-          dataKeySettingsSchema: this.datakeySettingsSchema,
-          dataKeySettingsDirective: this.dataKeySettingsDirective,
+          dataKeySettingsSchema: this.isLatestDataKeys ? this.latestDataKeySettingsSchema : this.dataKeySettingsSchema,
+          dataKeySettingsDirective: this.isLatestDataKeys ? this.latestDataKeySettingsDirective : this.dataKeySettingsDirective,
           dashboard: this.dashboard,
           aliasController: this.aliasController,
           widget: this.widget,
@@ -399,7 +426,7 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
       } else if (this.datasourceType === DatasourceType.entity && this.entityAliasId ||
         this.datasourceType === DatasourceType.device && this.deviceId) {
         const dataKeyTypes = [DataKeyType.timeseries];
-        if (this.widgetType === widgetType.latest || this.widgetType === widgetType.alarm) {
+        if (this.isLatestDataKeys || this.widgetType === widgetType.latest || this.widgetType === widgetType.alarm) {
           dataKeyTypes.push(DataKeyType.attribute);
           dataKeyTypes.push(DataKeyType.entityField);
           if (this.widgetType === widgetType.alarm) {
@@ -428,7 +455,7 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   private addKeyFromChipValue(chip: DataKey) {
-    this.modelValue = this.callbacks.generateDataKey(chip.name, chip.type, this.datakeySettingsSchema);
+    this.modelValue = this.callbacks.generateDataKey(chip.name, chip.type, this.dataKeySettingsSchema);
     if (!this.keyRowFormGroup.get('label').value) {
       this.keyRowFormGroup.get('label').patchValue(this.modelValue.label, {emitEvent: false});
     }

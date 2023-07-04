@@ -1,0 +1,113 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="flotWidgetConfigForm">
+  <tb-timewindow-config-panel formControlName="timewindowConfig">
+  </tb-timewindow-config-panel>
+  <tb-datasources
+    [configMode]="basicMode"
+    hideDataKeys
+    forceSingleDatasource
+    formControlName="datasources">
+  </tb-datasources>
+  <tb-data-keys-panel
+    panelTitle="{{ 'widgets.chart.series' | translate }}"
+    addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
+    keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
+    removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
+    noKeysText="{{ 'widgets.chart.no-series' | translate }}"
+    requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+    hideSourceSelection
+    [datasourceType]="datasource?.type"
+    [deviceId]="datasource?.deviceId"
+    [entityAliasId]="datasource?.entityAliasId"
+    formControlName="series">
+  </tb-data-keys-panel>
+  <div class="tb-widget-config-panel">
+    <div class="tb-widget-config-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-widget-config-row">
+      <mat-slide-toggle class="mat-slide fixed-title-width"  formControlName="showTitle">
+        {{ 'widget-config.card-title' | translate }}
+      </mat-slide-toggle>
+      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-widget-config-row space-between same-padding">
+      <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
+        {{ 'widget-config.card-icon' | translate }}
+      </mat-slide-toggle>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+        <tb-material-icon-select asBoxInput
+                                 [color]="flotWidgetConfigForm.get('iconColor').value"
+                                 formControlName="titleIcon">
+        </tb-material-icon-select>
+        <mat-divider vertical></mat-divider>
+        <tb-color-input asBoxInput
+                        formControlName="iconColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-widget-config-row space-between">
+      <div translate>widget-config.show-card-buttons</div>
+      <mat-chip-listbox multiple formControlName="cardButtons">
+        <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-widget-config-row space-between same-padding">
+      <div>{{ 'widget-config.background-color' | translate }}</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+        <mat-divider vertical></mat-divider>
+        <tb-color-input asBoxInput
+                        formControlName="backgroundColor">
+        </tb-color-input>
+      </div>
+    </div>
+  </div>
+  <div class="tb-widget-config-panel">
+    <div class="tb-widget-config-panel-title" translate>widgets.chart.chart-appearance</div>
+    <div class="tb-widget-config-row">
+      <mat-slide-toggle class="mat-slide" formControlName="verticalLines">
+        {{ 'widgets.chart.vertical-grid-lines' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-widget-config-row">
+      <mat-slide-toggle class="mat-slide" formControlName="horizontalLines">
+        {{ 'widgets.chart.horizontal-grid-lines' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-widget-config-panel tb-slide-toggle">
+      <mat-expansion-panel class="tb-settings" [expanded]="flotWidgetConfigForm.get('showLegend').value" [disabled]="!flotWidgetConfigForm.get('showLegend').value">
+        <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
+                              fxLayoutAlign="center">
+              {{ 'widget-config.legend' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-legend-config formControlName="legendConfig">
+          </tb-legend-config>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  </div>
+  <tb-widget-actions-panel
+    formControlName="actions">
+  </tb-widget-actions-panel>
+</ng-container>

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-datakey-config" *ngIf="dataKeyConfigMode === dataKeyConfigModes.general; else advanced"
+<div *ngIf="dataKeyConfigMode === dataKeyConfigModes.general; else advanced"
      [formGroup]="dataKeyFormGroup">
   <div class="mat-padding" fxLayout="column" style="gap: 16px;">
     <div class="tb-widget-config-panel">
@@ -54,7 +54,7 @@
         </div>
         <div class="tb-widget-config-row space-between" *ngIf="!hideDataKeyDecimals">
           <div translate>widget-config.decimals-short</div>
-          <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
@@ -182,14 +182,12 @@
   </div>
 </div>
 <ng-template #advanced>
-  <div class="tb-datakey-config" [formGroup]="dataKeySettingsFormGroup">
-    <div class="mat-padding" fxLayout="column">
-      <tb-widget-settings
-        [dashboard]="dashboard"
-        [aliasController]="aliasController"
-        [widget]="widget"
-        formControlName="settings">
-      </tb-widget-settings>
-    </div>
+  <div class="mat-padding" fxLayout="column" [formGroup]="dataKeySettingsFormGroup">
+    <tb-widget-settings
+      [dashboard]="dashboard"
+      [aliasController]="aliasController"
+      [widget]="widget"
+      formControlName="settings">
+    </tb-widget-settings>
   </div>
 </ng-template>

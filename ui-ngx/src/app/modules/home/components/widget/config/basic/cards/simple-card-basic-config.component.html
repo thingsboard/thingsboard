@@ -31,7 +31,7 @@
   <div class="tb-widget-config-panel">
     <div class="tb-widget-config-panel-title" translate>widget-config.appearance</div>
     <div class="tb-widget-config-row">
-      <div translate>widgets.simple-card.label</div>
+      <div class="fixed-title-width" translate>widgets.simple-card.label</div>
       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
@@ -57,7 +57,7 @@
     </div>
     <div class="tb-widget-config-row space-between">
       <div translate>widget-config.decimals-short</div>
-      <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>

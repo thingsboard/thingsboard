@@ -19,10 +19,10 @@
   <mat-toolbar color="primary">
     <h2>{{ 'datakey.configuration' | translate }}</h2>
     <span fxFlex></span>
-    <tb-toggle-header *ngIf="hasAdvanced" (valueChange)="dataKeyConfigMode = $event" ignoreMdLgSize="true"
+    <tb-toggle-select *ngIf="hasAdvanced"
                       appearance="fill-invert" [options]="dataKeyConfigHeaderOptions"
-                      [value]="dataKeyConfigMode" name="dataKeyConfigModeHeader" useSelectOnMdLg="false">
-    </tb-toggle-header>
+                      [(ngModel)]="dataKeyConfigMode" [ngModelOptions]="{ standalone: true }">
+    </tb-toggle-select>
     <button mat-icon-button
             (click)="cancel()"
             type="button">

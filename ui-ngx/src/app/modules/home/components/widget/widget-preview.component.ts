@@ -21,6 +21,7 @@ import { Widget, WidgetConfig } from '@shared/models/widget.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { deepClone } from '@core/utils';
+import { Timewindow } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-widget-preview',
@@ -34,6 +35,9 @@ export class WidgetPreviewComponent extends PageComponent implements OnInit, OnC
 
   @Input()
   stateController: IStateController;
+
+  @Input()
+  dashboardTimewindow: Timewindow;
 
   @Input()
   widget: Widget;

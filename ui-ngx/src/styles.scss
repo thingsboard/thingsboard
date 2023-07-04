@@ -1212,11 +1212,11 @@ mat-label {
     &.tb-slide-toggle {
       padding: 0;
       gap: 0;
-      .tb-widget-config-panel-title {
+      > .tb-widget-config-panel-title {
         padding-top: 16px;
         padding-left: 16px;
       }
-      .mat-expansion-panel {
+      > .mat-expansion-panel {
         padding: 16px;
         .mat-expansion-panel-header {
           height: 32px;
@@ -1232,7 +1232,7 @@ mat-label {
         .mat-content {
           overflow: visible;
         }
-        .mat-expansion-panel-header {
+        > .mat-expansion-panel-header {
           font-weight: 500;
           font-size: 16px;
           line-height: 24px;
@@ -1255,12 +1255,15 @@ mat-label {
             padding: 2px;
           }
         }
-        .mat-expansion-panel-header-description {
+        > .mat-expansion-panel-header-description {
           align-items: center;
         }
         > .mat-expansion-panel-content {
           > .mat-expansion-panel-body {
-            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px 0 0 !important;
           }
         }
         .tb-json-object-panel, .tb-css-content-panel {
@@ -1272,9 +1275,9 @@ mat-label {
       }
     }
     .mat-slide {
-      margin: 8px 0;
-      &.no-margin {
-        margin: 0;
+      margin: 0;
+      &.margin {
+        margin: 8px 0;
       }
       .mdc-form-field>label {
         font-weight: 400;
@@ -1313,7 +1316,13 @@ mat-label {
       height: 56px;
     }
     .mat-mdc-form-field {
-      width: 80px;
+      width: 106px;
+      &.medium-width {
+        width: 220px;
+      }
+    }
+    .fixed-title-width {
+      min-width: 200px;
     }
   }
 
@@ -1341,14 +1350,26 @@ mat-label {
           }
         }
         .mat-mdc-form-field-infix {
-          padding-top: 7px;
-          padding-bottom: 7px;
-          min-height: 38px;
+          padding-top: 8px;
+          padding-bottom: 8px;
+          min-height: 40px;
           width: auto;
           .mdc-text-field__input, .mat-mdc-select {
             font-weight: 400;
             font-size: 14px;
             line-height: 20px;
+          }
+        }
+        .mat-mdc-form-field-icon-suffix {
+          button.mat-mdc-icon-button {
+            width: 40px;
+            height: 40px;
+            padding: 8px;
+            .mat-icon {
+              width: 20px;
+              height: 20px;
+              font-size: 20px;
+            }
           }
         }
       }
@@ -1371,6 +1392,14 @@ mat-label {
             opacity: 1;
           }
         }
+      }
+    }
+    .mat-mdc-form-field-flex {
+      .mat-mdc-form-field-icon-suffix {
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.2px;
+        color: rgba(0, 0, 0, 0.38);
       }
     }
   }

@@ -35,6 +35,9 @@
       line-height: 20px;
       letter-spacing: 0.2px;
       color: rgba(0, 0, 0, 0.54);
+      &.tb-source-header {
+        width: 140px;
+      }
       &.tb-color-header, &.tb-units-header, &.tb-decimals-header {
         width: 60px;
       }

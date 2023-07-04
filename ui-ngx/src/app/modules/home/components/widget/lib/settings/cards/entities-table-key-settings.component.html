@@ -19,20 +19,20 @@
   <div class="tb-widget-config-panel">
     <div class="tb-widget-config-panel-title" translate>widgets.table.column-settings</div>
     <div class="tb-widget-config-row">
-      <div>{{ 'widgets.table.custom-title' | translate }}</div>
+      <div class="fixed-title-width">{{ 'widgets.table.custom-title' | translate }}</div>
       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="customTitle" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
     <div class="tb-widget-config-row space-between">
       <div>{{ 'widgets.table.column-width' | translate }}</div>
-      <mat-form-field appearance="outline" class="center" subscriptSizing="dynamic">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="columnWidth" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
     <div class="tb-widget-config-row space-between">
       <div>{{ 'widgets.table.default-column-visibility' | translate }}</div>
-      <mat-form-field style="width: 220px;" appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="defaultColumnVisibility">
           <mat-option [value]="'visible'">
             {{ 'widgets.table.column-visibility-visible' | translate }}
@@ -48,7 +48,7 @@
     </div>
     <div class="tb-widget-config-row space-between">
       <div>{{ 'widgets.table.column-selection-to-display' | translate }}</div>
-      <mat-form-field style="width: 220px;" appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="columnSelectionToDisplay">
           <mat-option [value]="'enabled'">
             {{ 'widgets.table.column-selection-to-display-enabled' | translate }}

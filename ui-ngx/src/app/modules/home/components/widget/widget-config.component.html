@@ -17,9 +17,9 @@
 -->
 <div class="tb-widget-config tb-absolute-fill">
   <div class="tb-widget-config-header" *ngIf="!hideHeader">
-    <tb-toggle-header *ngIf="!hideToggleHeader && widgetConfigMode === widgetConfigModes.advanced" (valueChange)="selectedOption = $event" ignoreMdLgSize="true"
-                      appearance="fill" [options]="headerOptions" [value]="selectedOption" name="widgetConfigHeader" useSelectOnMdLg="false">
-    </tb-toggle-header>
+    <tb-toggle-select *ngIf="!hideToggleHeader && widgetConfigMode === widgetConfigModes.advanced"
+                      appearance="fill" [options]="headerOptions" [(ngModel)]="selectedOption">
+    </tb-toggle-select>
     <ng-content select=".tb-widget-config-header-prefix"></ng-content>
     <ng-content select=".tb-widget-config-header-suffix"></ng-content>
   </div>
@@ -36,14 +36,16 @@
         <mat-slide-toggle class="mat-slide" formControlName="showTitle">
           {{ 'widget-config.display-title' | translate }}
         </mat-slide-toggle>
-        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px">
-          <mat-form-field fxFlex>
-            <mat-label translate>widget-config.title</mat-label>
-            <input matInput formControlName="title">
+        <div class="tb-widget-config-row">
+          <div class="fixed-title-width" translate>widget-config.title</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
-          <mat-form-field fxFlex>
-            <mat-label translate>widget-config.title-tooltip</mat-label>
-            <input matInput formControlName="titleTooltip">
+        </div>
+        <div class="tb-widget-config-row">
+          <div class="fixed-title-width" translate>widget-config.title-tooltip</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="titleTooltip" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
         <div class="tb-widget-config-row space-between same-padding">
@@ -55,7 +57,7 @@
                                      [color]="widgetSettings.get('iconColor').value"
               formControlName="titleIcon">
             </tb-material-icon-select>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic" style="width: 60px;">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <input matInput formControlName="iconSize">
             </mat-form-field>
             <mat-divider vertical></mat-divider>
@@ -102,13 +104,13 @@
         </div>
         <div class="tb-widget-config-row space-between">
           <div>{{ 'widget-config.padding' | translate }}</div>
-          <mat-form-field appearance="outline" class="center" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
         <div class="tb-widget-config-row space-between">
           <div>{{ 'widget-config.margin' | translate }}</div>
-          <mat-form-field appearance="outline" class="center" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="margin" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
@@ -166,13 +168,13 @@
       <div class="tb-widget-config-panel">
         <div class="tb-widget-config-row space-between">
           <div translate>widget-config.order</div>
-          <mat-form-field appearance="outline" class="number center" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="mobileOrder" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
         <div class="tb-widget-config-row space-between">
           <div translate>widget-config.height</div>
-          <mat-form-field appearance="outline" class="number center" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="mobileHeight" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
@@ -241,7 +243,7 @@
       <div class="tb-widget-config-panel-title" translate>widget-config.limits</div>
       <div class="tb-widget-config-row space-between">
         <div translate>widget-config.data-page-size</div>
-        <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="pageSize" type="number" min="1" step="1">
         </mat-form-field>
       </div>
@@ -258,12 +260,12 @@
       </div>
       <div *ngIf="displayUnitsConfig" class="tb-widget-config-row space-between">
         <div translate>widget-config.decimals</div>
-        <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
       </div>
       <div *ngIf="displayNoDataDisplayMessageConfig" class="tb-widget-config-row">
-        <div translate>widget-config.no-data-display-message</div>
+        <div class="fixed-title-width" translate>widget-config.no-data-display-message</div>
         <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="noDataDisplayMessage" placeholder="{{ 'widget-config.set-message' | translate }}">
         </mat-form-field>
