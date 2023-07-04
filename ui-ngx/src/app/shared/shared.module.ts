@@ -193,8 +193,9 @@ import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
 import { ToggleHeaderComponent } from '@shared/components/toggle-header.component';
 import { RuleChainSelectComponent } from '@shared/components/rule-chain/rule-chain-select.component';
 
-export const MarkedOptionsFactory = (markedOptionsService: MarkedOptionsService) => markedOptionsService;
-
+export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
+  return markedOptionsService;
+}
 
 @NgModule({
   providers: [
