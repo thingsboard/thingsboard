@@ -69,6 +69,15 @@
       </mat-chip-listbox>
     </div>
     <div class="tb-widget-config-row space-between same-padding">
+      <div>{{ 'widget-config.text-color' | translate }}</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+        <mat-divider vertical></mat-divider>
+        <tb-color-input asBoxInput
+                        formControlName="color">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-widget-config-row space-between same-padding">
       <div>{{ 'widget-config.background-color' | translate }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
         <mat-divider vertical></mat-divider>

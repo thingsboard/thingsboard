@@ -44,6 +44,7 @@ import { AlarmService } from '@core/http/alarm.service';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { UtilsService } from '@core/services/utils.service';
+import { AlarmAssigneeOption } from '@shared/models/alarm.models';
 
 export const ALARM_ASSIGNEE_PANEL_DATA = new InjectionToken<any>('AlarmAssigneePanelData');
 
@@ -59,15 +60,19 @@ export interface AlarmAssigneePanelData {
 })
 export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDestroy {
 
+  assigneeOptions = AlarmAssigneeOption;
+
   private dirty = false;
 
   alarmId: string;
 
   assigneeId?: string;
+  assigneeOption?: AlarmAssigneeOption = null;
 
   assigneeNotSetText = 'alarm.unassigned';
+  assignedToCurrentUserText = '';
 
-  reassigned: boolean = false;
+  reassigned = false;
 
   selectUserFormGroup: FormGroup;
 
@@ -76,6 +81,14 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
   filteredUsers: Observable<Array<UserEmailInfo>>;
 
   searchText = '';
+
+  get displayAssigneeNotSet(): boolean {
+    return !!this.assigneeId;
+  }
+
+  get displayAssignedToCurrentUser(): boolean {
+    return false;
+  }
 
   private destroy$ = new Subject<void>();
 
@@ -124,8 +137,8 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
 
   selected(event: MatAutocompleteSelectedEvent): void {
     this.clear();
-    const user: User  = event.option.value;
-    if (user) {
+    if (event.option.value?.id) {
+      const user: User = event.option.value;
       this.assign(user);
     } else {
       this.unassign();

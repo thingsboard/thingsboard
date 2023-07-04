@@ -102,6 +102,14 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
 
   @Input()
   @coerceBoolean()
+  hideUnits = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDecimals = false;
+
+  @Input()
+  @coerceBoolean()
   hideSourceSelection = false;
 
   dataKeyType: DataKeyType;

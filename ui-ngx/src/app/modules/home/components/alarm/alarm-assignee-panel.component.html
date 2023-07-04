@@ -26,9 +26,13 @@
                     #userAutocomplete="matAutocomplete"
                     [displayWith]="displayUserFn"
                     (optionSelected)="selected($event)">
-    <mat-option [fxHide]="!assigneeId" [value]="null">
+    <mat-option *ngIf="displayAssigneeNotSet" [value]="assigneeOptions.noAssignee">
       <mat-icon class="unassigned-icon">account_circle</mat-icon>
       <span>{{ assigneeNotSetText | translate }}</span>
+    </mat-option>
+    <mat-option *ngIf="displayAssignedToCurrentUser" [value]="assigneeOptions.currentUser">
+      <mat-icon class="unassigned-icon">account_circle</mat-icon>
+      <span>{{ assignedToCurrentUserText | translate }}</span>
     </mat-option>
     <mat-option *ngFor="let user of filteredUsers | async" [value]="user"
                 [fxHide]="assigneeId === user.id.id">

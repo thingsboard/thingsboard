@@ -30,6 +30,8 @@ import {
   AlarmAssigneeSelectPanelComponent,
   AlarmAssigneeSelectPanelData
 } from '@home/components/alarm/alarm-assignee-select-panel.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { AlarmAssigneeOption } from '@shared/models/alarm.models';
 
 @Component({
   selector: 'tb-alarm-assignee-select',
@@ -47,8 +49,17 @@ export class AlarmAssigneeSelectComponent implements OnInit, ControlValueAccesso
 
   @Input() disabled: boolean;
 
+  @coerceBoolean()
+  @Input()
+  inline = false;
+
+  @coerceBoolean()
+  @Input()
+  userMode = false;
+
   assigneeFormGroup: UntypedFormGroup;
   assignee?: User | UserEmailInfo;
+  assigneeOption?: AlarmAssigneeOption;
 
   private propagateChange = (_: any) => {};
 
@@ -82,7 +93,15 @@ export class AlarmAssigneeSelectComponent implements OnInit, ControlValueAccesso
     }
   }
 
-  writeValue(userId?: UserId): void {
+  writeValue(value?: UserId | AlarmAssigneeOption): void {
+    let userId: UserId;
+    if (value && (value as UserId).id) {
+      userId = value as UserId;
+      this.assigneeOption = null;
+    } else {
+      userId = null;
+      this.assigneeOption = value ? value as AlarmAssigneeOption : AlarmAssigneeOption.noAssignee;
+    }
     const userObservable = userId ? this.userService.getUser(userId.id, {ignoreErrors: true}).pipe(
       catchError(() => of(null))
     ) : of(null);
@@ -92,15 +111,31 @@ export class AlarmAssigneeSelectComponent implements OnInit, ControlValueAccesso
       }),
       map((user) => this.getAssignee(user))
     ).subscribe((assignee) => {
-      this.assigneeFormGroup.get('assignee').patchValue(assignee, {emitEvent: false});
+      if (assignee) {
+        this.assigneeFormGroup.get('assignee').patchValue(assignee, {emitEvent: false});
+      } else {
+        if (!this.assigneeOption) {
+          this.assigneeOption = AlarmAssigneeOption.noAssignee;
+        }
+        assignee = this.getAssigneeOption(this.assigneeOption);
+        this.assigneeFormGroup.get('assignee').patchValue(assignee, {emitEvent: false});
+      }
     });
   }
 
-  private getAssignee(user?: User| UserEmailInfo): string {
+  private getAssignee(user?: User| UserEmailInfo): string | null {
     if (user) {
       return this.getUserDisplayName(user);
     } else {
+      return null;
+    }
+  }
+
+  private getAssigneeOption(assigneeOption: AlarmAssigneeOption): string {
+    if (assigneeOption === AlarmAssigneeOption.noAssignee) {
       return this.translateService.instant('alarm.assignee-not-set');
+    } else {
+      return this.translateService.instant(this.userMode ? 'alarm.assigned-to-me' : 'alarm.assigned-to-current-user');
     }
   }
 
@@ -169,7 +204,9 @@ export class AlarmAssigneeSelectComponent implements OnInit, ControlValueAccesso
         {
           provide: ALARM_ASSIGNEE_SELECT_PANEL_DATA,
           useValue: {
-            assigneeId: this.assignee?.id?.id
+            assigneeId: this.assignee?.id?.id,
+            assigneeOption: this.assigneeOption,
+            userMode: this.userMode
           } as AlarmAssigneeSelectPanelData
         },
         {
@@ -183,8 +220,14 @@ export class AlarmAssigneeSelectComponent implements OnInit, ControlValueAccesso
       component.onDestroy(() => {
         if (component.instance.userSelected) {
           this.assignee = component.instance.result;
-          this.assigneeFormGroup.get('assignee').patchValue(this.getAssignee(this.assignee), {emitEvent: false});
-          this.propagateChange(this.assignee?.id);
+          this.assigneeOption = component.instance.optionResult;
+          if (this.assignee) {
+            this.assigneeFormGroup.get('assignee').patchValue(this.getAssignee(this.assignee), {emitEvent: false});
+            this.propagateChange(this.assignee?.id);
+          } else if (this.assigneeOption) {
+            this.assigneeFormGroup.get('assignee').patchValue(this.getAssigneeOption(this.assigneeOption), {emitEvent: false});
+            this.propagateChange(this.assigneeOption);
+          }
         }
       });
     }

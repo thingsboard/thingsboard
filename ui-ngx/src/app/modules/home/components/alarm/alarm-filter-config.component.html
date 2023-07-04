@@ -48,32 +48,26 @@
   </form>
 </ng-template>
 <ng-template #alarmFilter>
-  <div fxLayout="column" fxLayoutAlign="center" [formGroup]="alarmFilterConfigForm">
-    <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start start"
-         fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block" floatLabel="always">
-        <mat-label translate>alarm.alarm-status-list</mat-label>
-        <mat-select formControlName="statusList" multiple
-                    placeholder="{{ !alarmFilterConfigForm.get('statusList').value?.length ? ('alarm.any-status' | translate) : '' }}">
-          <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
-            {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field fxFlex class="mat-block" floatLabel="always">
-        <mat-label translate>alarm.alarm-severity-list</mat-label>
-        <mat-select formControlName="severityList" multiple
-                    placeholder="{{ !alarmFilterConfigForm.get('severityList').value?.length ? ('alarm.any-severity' | translate) : '' }}">
-          <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
-            {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+  <div class="tb-widget-config-panel no-padding no-border" [formGroup]="alarmFilterConfigForm">
+    <div class="tb-widget-config-row space-between">
+      <div class="fixed-title-width" translate>alarm.alarm-status-list</div>
+      <mat-chip-listbox multiple formControlName="statusList">
+        <mat-chip-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+          {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+        </mat-chip-option>
+      </mat-chip-listbox>
     </div>
-    <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start start"
-         fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block" floatLabel="always">
-        <mat-label translate>alarm.alarm-type-list</mat-label>
+    <div class="tb-widget-config-row space-between">
+      <div class="fixed-title-width" translate>alarm.alarm-severity-list</div>
+      <mat-chip-listbox multiple formControlName="severityList">
+        <mat-chip-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+          {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-widget-config-row tb-chips">
+      <div class="fixed-title-width" translate>alarm.alarm-type-list</div>
+      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
         <mat-chip-grid #alarmTypeChipList formControlName="typeList">
           <mat-chip-row *ngFor="let type of alarmTypeList()"
                         [removable]="true" (removed)="removeAlarmType(type)">
@@ -88,16 +82,15 @@
         </mat-chip-grid>
       </mat-form-field>
     </div>
-    <div fxLayout="column" fxLayoutGap="16px">
-      <mat-slide-toggle *ngIf="propagatedFilter" formControlName="searchPropagatedAlarms">
-        {{ 'alarm.search-propagated-alarms' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="assignedToCurrentUser">
-        {{ (userMode ? 'alarm.assigned-to-me' : 'alarm.assigned-to-current-user') | translate }}
-      </mat-slide-toggle>
-      <tb-alarm-assignee-select
-        *ngIf="!alarmFilterConfigForm.get('assignedToCurrentUser').value" formControlName="assigneeId">
+    <div class="tb-widget-config-row">
+      <div class="fixed-title-width" translate>alarm.assignee</div>
+      <tb-alarm-assignee-select fxFlex inline="true"
+                                [userMode]="userMode"
+        formControlName="assigneeId">
       </tb-alarm-assignee-select>
     </div>
+    <mat-slide-toggle class="mat-slide" *ngIf="propagatedFilter" formControlName="searchPropagatedAlarms">
+      {{ 'alarm.search-propagated-alarms' | translate }}
+    </mat-slide-toggle>
   </div>
 </ng-template>

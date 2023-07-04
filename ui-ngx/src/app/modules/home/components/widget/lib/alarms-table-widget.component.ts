@@ -138,6 +138,8 @@ import {
   AlarmFilterConfigComponent,
   AlarmFilterConfigData
 } from '@home/components/alarm/alarm-filter-config.component';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { UserId } from '@shared/models/id/user-id';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -606,6 +608,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     overlayRef.backdropClick().subscribe(() => {
       overlayRef.dispose();
     });
+    const authUser = getCurrentAuthUser(this.store);
+    const assignedToCurrentUser = isDefinedAndNotNull(this.pageLink.assigneeId) && this.pageLink.assigneeId.id === authUser.userId;
+    const assigneeId = assignedToCurrentUser ? null : this.pageLink.assigneeId;
     const providers: StaticProvider[] = [
       {
         provide: ALARM_FILTER_CONFIG_DATA,
@@ -617,7 +622,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
             severityList: deepClone(this.pageLink.severityList),
             typeList: deepClone(this.pageLink.typeList),
             searchPropagatedAlarms: this.pageLink.searchPropagatedAlarms,
-            assignedToCurrentUser: isDefinedAndNotNull(this.pageLink.assigneeId)
+            assignedToCurrentUser,
+            assigneeId
           }
         } as AlarmFilterConfigData
       },

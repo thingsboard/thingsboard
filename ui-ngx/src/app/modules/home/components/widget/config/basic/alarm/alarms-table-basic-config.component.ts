@@ -22,19 +22,18 @@ import { BasicWidgetConfigComponent } from '@home/components/widget/config/widge
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isUndefined } from '@core/utils';
 import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
-  selector: 'tb-flot-basic-config',
-  templateUrl: './flot-basic-config.component.html',
+  selector: 'tb-alarms-table-basic-config',
+  templateUrl: './alarms-table-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
-export class FlotBasicConfigComponent extends BasicWidgetConfigComponent {
+export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent {
 
-  public get datasource(): Datasource {
-    const datasources: Datasource[] = this.flotWidgetConfigForm.get('datasources').value;
+  public get alarmSource(): Datasource {
+    const datasources: Datasource[] = this.alarmsTableWidgetConfigForm.get('datasources').value;
     if (datasources && datasources.length) {
       return datasources[0];
     } else {
@@ -42,7 +41,7 @@ export class FlotBasicConfigComponent extends BasicWidgetConfigComponent {
     }
   }
 
-  flotWidgetConfigForm: UntypedFormGroup;
+  alarmsTableWidgetConfigForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -51,31 +50,23 @@ export class FlotBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected configForm(): UntypedFormGroup {
-    return this.flotWidgetConfigForm;
-  }
-
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData,
-      [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, units: '°C', decimals: 0 }]);
+    return this.alarmsTableWidgetConfigForm;
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    this.flotWidgetConfigForm = this.fb.group({
+    this.alarmsTableWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
-      datasources: [configData.config.datasources, []],
-      series: [this.getSeries(configData.config.datasources), []],
+      alarmFilterConfig: [configData.config.alarmFilterConfig, []],
+      datasources: [[configData.config.alarmSource], []],
+      columns: [this.getColumns(configData.config.alarmSource), []],
       showTitle: [configData.config.showTitle, []],
-      title: [configData.config.title, []],
+      title: [configData.config.settings?.entitiesTitle, []],
       showTitleIcon: [configData.config.showTitleIcon, []],
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
       cardButtons: [this.getCardButtons(configData.config), []],
       color: [configData.config.color, []],
       backgroundColor: [configData.config.backgroundColor, []],
-      verticalLines: [configData.config.settings?.grid?.verticalLines, []],
-      horizontalLines: [configData.config.settings?.grid?.horizontalLines, []],
-      showLegend: [configData.config.settings?.showLegend, []],
-      legendConfig: [configData.config.settings?.legendConfig, []],
       actions: [configData.config.actions || {}, []]
     });
   }
@@ -84,77 +75,75 @@ export class FlotBasicConfigComponent extends BasicWidgetConfigComponent {
     this.widgetConfig.config.useDashboardTimewindow = config.timewindowConfig.useDashboardTimewindow;
     this.widgetConfig.config.displayTimewindow = config.timewindowConfig.displayTimewindow;
     this.widgetConfig.config.timewindow = config.timewindowConfig.timewindow;
-    this.widgetConfig.config.datasources = config.datasources;
-    this.setSeries(config.series, this.widgetConfig.config.datasources);
+    this.widgetConfig.config.alarmFilterConfig = config.alarmFilterConfig;
+    this.widgetConfig.config.alarmSource = config.datasources[0];
+    this.setColumns(config.columns, this.widgetConfig.config.alarmSource);
     this.widgetConfig.config.actions = config.actions;
     this.widgetConfig.config.showTitle = config.showTitle;
-    this.widgetConfig.config.title = config.title;
+    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
+    this.widgetConfig.config.settings.entitiesTitle = config.title;
     this.widgetConfig.config.showTitleIcon = config.showTitleIcon;
     this.widgetConfig.config.titleIcon = config.titleIcon;
     this.widgetConfig.config.iconColor = config.iconColor;
-    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.color = config.color;
     this.widgetConfig.config.backgroundColor = config.backgroundColor;
-    this.widgetConfig.config.settings.grid = this.widgetConfig.config.settings.grid || {};
-    this.widgetConfig.config.settings.grid.verticalLines = config.verticalLines;
-    this.widgetConfig.config.settings.grid.horizontalLines = config.horizontalLines;
-    this.widgetConfig.config.settings.showLegend = config.showLegend;
-    this.widgetConfig.config.settings.legendConfig = config.legendConfig;
     return this.widgetConfig;
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showTitleIcon', 'showLegend'];
+    return ['showTitle', 'showTitleIcon'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
-    const showTitle: boolean = this.flotWidgetConfigForm.get('showTitle').value;
-    const showTitleIcon: boolean = this.flotWidgetConfigForm.get('showTitleIcon').value;
-    const showLegend: boolean = this.flotWidgetConfigForm.get('showLegend').value;
+    const showTitle: boolean = this.alarmsTableWidgetConfigForm.get('showTitle').value;
+    const showTitleIcon: boolean = this.alarmsTableWidgetConfigForm.get('showTitleIcon').value;
     if (showTitle) {
-      this.flotWidgetConfigForm.get('title').enable();
-      this.flotWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
+      this.alarmsTableWidgetConfigForm.get('title').enable();
+      this.alarmsTableWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
       if (showTitleIcon) {
-        this.flotWidgetConfigForm.get('titleIcon').enable();
-        this.flotWidgetConfigForm.get('iconColor').enable();
+        this.alarmsTableWidgetConfigForm.get('titleIcon').enable();
+        this.alarmsTableWidgetConfigForm.get('iconColor').enable();
       } else {
-        this.flotWidgetConfigForm.get('titleIcon').disable();
-        this.flotWidgetConfigForm.get('iconColor').disable();
+        this.alarmsTableWidgetConfigForm.get('titleIcon').disable();
+        this.alarmsTableWidgetConfigForm.get('iconColor').disable();
       }
     } else {
-      this.flotWidgetConfigForm.get('title').disable();
-      this.flotWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
-      this.flotWidgetConfigForm.get('titleIcon').disable();
-      this.flotWidgetConfigForm.get('iconColor').disable();
+      this.alarmsTableWidgetConfigForm.get('title').disable();
+      this.alarmsTableWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
+      this.alarmsTableWidgetConfigForm.get('titleIcon').disable();
+      this.alarmsTableWidgetConfigForm.get('iconColor').disable();
     }
-    if (showLegend) {
-      this.flotWidgetConfigForm.get('legendConfig').enable();
-    } else {
-      this.flotWidgetConfigForm.get('legendConfig').disable();
-    }
-    this.flotWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
-    this.flotWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
-    this.flotWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
-    this.flotWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});
-    this.flotWidgetConfigForm.get('legendConfig').updateValueAndValidity({emitEvent});
+    this.alarmsTableWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
+    this.alarmsTableWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
+    this.alarmsTableWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
+    this.alarmsTableWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});
   }
 
-  private getSeries(datasources?: Datasource[]): DataKey[] {
-    if (datasources && datasources.length) {
-      return datasources[0].dataKeys || [];
+  private getColumns(alarmSource?: Datasource): DataKey[] {
+    if (alarmSource) {
+      return alarmSource.dataKeys || [];
     }
     return [];
   }
 
-  private setSeries(series: DataKey[], datasources?: Datasource[]) {
-    if (datasources && datasources.length) {
-      datasources[0].dataKeys = series;
+  private setColumns(columns: DataKey[], alarmSource?: Datasource) {
+    if (alarmSource) {
+      alarmSource.dataKeys = columns;
     }
   }
 
   private getCardButtons(config: WidgetConfig): string[] {
     const buttons: string[] = [];
+    if (isUndefined(config.settings?.enableSearch) || config.settings?.enableSearch) {
+      buttons.push('search');
+    }
+    if (isUndefined(config.settings?.enableFilter) || config.settings?.enableFilter) {
+      buttons.push('filter');
+    }
+    if (isUndefined(config.settings?.enableSelectColumnDisplay) || config.settings?.enableSelectColumnDisplay) {
+      buttons.push('columnsToDisplay');
+    }
     if (isUndefined(config.enableFullscreen) || config.enableFullscreen) {
       buttons.push('fullscreen');
     }
@@ -162,6 +151,9 @@ export class FlotBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   private setCardButtons(buttons: string[], config: WidgetConfig) {
+    config.settings.enableSearch = buttons.includes('search');
+    config.settings.enableFilter = buttons.includes('filter');
+    config.settings.enableSelectColumnDisplay = buttons.includes('columnsToDisplay');
     config.enableFullscreen = buttons.includes('fullscreen');
   }
 

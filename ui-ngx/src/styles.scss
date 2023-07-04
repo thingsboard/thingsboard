@@ -1209,6 +1209,10 @@ mat-label {
       border: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 6px;
     }
+    &.no-border {
+      box-shadow: none;
+      border-radius: 0;
+    }
     &.tb-slide-toggle {
       padding: 0;
       gap: 0;
@@ -1297,7 +1301,9 @@ mat-label {
     color: #808080;
   }
   .tb-widget-config-row {
-    height: 56px;
+    height: 100%;
+    padding-top: 7px;
+    padding-bottom: 7px;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -1314,6 +1320,8 @@ mat-label {
     }
     .mat-divider-vertical {
       height: 56px;
+      margin-top: -7px;
+      margin-bottom: -7px;
     }
     .mat-mdc-form-field {
       width: 106px;
@@ -1323,6 +1331,29 @@ mat-label {
     }
     .fixed-title-width {
       min-width: 200px;
+    }
+    .mat-slide:only-child {
+      margin: 8px 0;
+    }
+    &.tb-chips {
+      .mat-mdc-form-field, .mat-mdc-form-field.tb-inline-field {
+        .mat-mdc-text-field-wrapper {
+          &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
+            .mat-mdc-form-field-infix {
+              padding-top: 4px;
+              padding-bottom: 4px;
+
+              .mdc-evolution-chip-set {
+                min-height: 32px;
+
+                .mdc-evolution-chip {
+                  height: 24px;
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -1361,7 +1392,12 @@ mat-label {
           }
         }
         .mat-mdc-form-field-icon-suffix {
-          button.mat-mdc-icon-button {
+          height: 40px;
+          font-size: 14px;
+          line-height: 40px;
+          letter-spacing: 0.2px;
+          color: rgba(0, 0, 0, 0.38);
+          > button.mat-mdc-icon-button {
             width: 40px;
             height: 40px;
             padding: 8px;
@@ -1370,6 +1406,12 @@ mat-label {
               height: 20px;
               font-size: 20px;
             }
+          }
+          > .mat-icon {
+            width: 20px;
+            height: 20px;
+            padding: 10px;
+            font-size: 20px;
           }
         }
       }
@@ -1392,14 +1434,6 @@ mat-label {
             opacity: 1;
           }
         }
-      }
-    }
-    .mat-mdc-form-field-flex {
-      .mat-mdc-form-field-icon-suffix {
-        font-size: 14px;
-        line-height: 20px;
-        letter-spacing: 0.2px;
-        color: rgba(0, 0, 0, 0.38);
       }
     }
   }

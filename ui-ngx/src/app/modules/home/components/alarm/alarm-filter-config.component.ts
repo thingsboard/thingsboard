@@ -34,6 +34,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import {
+  AlarmAssigneeOption,
   AlarmSearchStatus,
   alarmSearchStatusTranslations,
   AlarmSeverity,
@@ -133,12 +134,10 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
       severityList: [null, []],
       typeList: [null, []],
       searchPropagatedAlarms: [false, []],
-      assignedToCurrentUser: [false, []],
-      assigneeId: [null, []]
+      assigneeId: [AlarmAssigneeOption.noAssignee, []]
     });
     this.alarmFilterConfigForm.valueChanges.subscribe(
       () => {
-        this.updateValidators();
         if (!this.buttonMode) {
           this.alarmConfigUpdated(this.alarmFilterConfigForm.value);
         }
@@ -165,7 +164,6 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
       this.alarmFilterConfigForm.disable({emitEvent: false});
     } else {
       this.alarmFilterConfigForm.enable({emitEvent: false});
-      this.updateValidators();
     }
   }
 
@@ -173,16 +171,6 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
     this.alarmFilterConfig = alarmFilterConfig;
     this.updateButtonDisplayValue();
     this.updateAlarmConfigForm(alarmFilterConfig);
-  }
-
-  private updateValidators() {
-    const assignedToCurrentUser = this.alarmFilterConfigForm.get('assignedToCurrentUser').value;
-    if (assignedToCurrentUser) {
-      this.alarmFilterConfigForm.get('assigneeId').disable({emitEvent: false});
-    } else {
-      this.alarmFilterConfigForm.get('assigneeId').enable({emitEvent: false});
-    }
-    this.alarmFilterConfigForm.get('assigneeId').updateValueAndValidity({emitEvent: false});
   }
 
   toggleAlarmFilterPanel($event: Event) {
@@ -276,14 +264,20 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
       severityList: alarmFilterConfig?.severityList,
       typeList: alarmFilterConfig?.typeList,
       searchPropagatedAlarms: alarmFilterConfig?.searchPropagatedAlarms,
-      assignedToCurrentUser: alarmFilterConfig?.assignedToCurrentUser,
-      assigneeId: alarmFilterConfig?.assigneeId
+      assigneeId: alarmFilterConfig?.assignedToCurrentUser ? AlarmAssigneeOption.currentUser :
+        (alarmFilterConfig?.assigneeId ? alarmFilterConfig?.assigneeId : AlarmAssigneeOption.noAssignee)
     }, {emitEvent: false});
-    this.updateValidators();
   }
 
-  private alarmConfigUpdated(alarmFilterConfig: AlarmFilterConfig) {
-    this.alarmFilterConfig = alarmFilterConfig;
+  private alarmConfigUpdated(formValue: any) {
+    this.alarmFilterConfig = {
+      statusList: formValue.statusList,
+      severityList: formValue.severityList,
+      typeList: formValue.typeList,
+      searchPropagatedAlarms: formValue.searchPropagatedAlarms,
+      assignedToCurrentUser: formValue.assigneeId === AlarmAssigneeOption.currentUser,
+      assigneeId: formValue.assigneeId?.id ? formValue.assigneeId : null
+    };
     this.updateButtonDisplayValue();
     this.propagateChange(this.alarmFilterConfig);
   }
