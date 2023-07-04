@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -506,8 +505,7 @@ public class AlarmController extends BaseController {
     @RequestMapping(value = "/alarm/types", method = RequestMethod.GET)
     @ResponseBody
     public List<EntitySubtype> getAlarmTypes() throws ThingsboardException, ExecutionException, InterruptedException {
-        ListenableFuture<List<EntitySubtype>> alarmTypes = alarmService.findAlarmTypesByTenantId(getTenantId());
-        return checkNotNull(alarmTypes.get());
+        return checkNotNull(alarmService.findAlarmTypesByTenantId(getTenantId()));
     }
 
 }

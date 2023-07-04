@@ -124,5 +124,5 @@ public interface AlarmService extends EntityDaoService {
 
     long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
 
-    ListenableFuture<List<EntitySubtype>> findAlarmTypesByTenantId(TenantId tenantId);
+    List<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId);
 }

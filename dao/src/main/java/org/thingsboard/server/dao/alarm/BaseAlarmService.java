@@ -20,12 +20,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -56,7 +58,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
-import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
@@ -81,7 +83,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Service("AlarmDaoService")
 @Slf4j
 @RequiredArgsConstructor
-public class BaseAlarmService extends AbstractEntityService implements AlarmService {
+public class BaseAlarmService extends AbstractCachedEntityService<TenantId, ArrayList<EntitySubtype>, AlarmTypesCacheEvictEvent> implements AlarmService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
@@ -89,6 +91,17 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private final AlarmDao alarmDao;
     private final EntityService entityService;
     private final DataValidator<Alarm> alarmDataValidator;
+
+    @Autowired
+    protected TbTransactionalCache<TenantId, ArrayList<EntitySubtype>> alarmTypesCache;
+
+    @TransactionalEventListener(classes = AlarmTypesCacheEvictEvent.class)
+    @Override
+    public void handleEvictEvent(AlarmTypesCacheEvictEvent event) {
+        TenantId tenantId = event.getTenantId();
+        cache.evict(tenantId);
+        alarmTypesCache.evict(tenantId);
+    }
 
     @Override
     public AlarmApiCallResult updateAlarm(AlarmUpdateRequest request) {
@@ -115,6 +128,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (!result.isSuccessful() && !alarmCreationEnabled) {
             throw new ApiUsageLimitsExceededException("Alarms creation is disabled");
         }
+        publishEvictEvent(new AlarmTypesCacheEvictEvent(request.getTenantId()));
         return withPropagated(result);
     }
 
@@ -191,6 +205,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
+            publishEvictEvent(new AlarmTypesCacheEvictEvent(tenantId));
             return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
         }
     }
@@ -206,12 +221,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
         deleteEntityRelations(tenantId, alarm.getId());
         alarmDao.removeById(tenantId, alarm.getUuidId());
+        publishEvictEvent(new AlarmTypesCacheEvictEvent(tenantId));
         return result;
     }
 
     private AlarmOperationResult createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
+        publishEvictEvent(new AlarmTypesCacheEvictEvent(alarm.getTenantId()));
         List<EntityId> propagatedEntitiesList = createEntityAlarmRecords(saved);
         return new AlarmOperationResult(saved, true, true, propagatedEntitiesList);
     }
@@ -380,15 +397,13 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<List<EntitySubtype>> findAlarmTypesByTenantId(TenantId tenantId) {
+    public List<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findAlarmTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        ListenableFuture<List<EntitySubtype>> tenantAssetTypes = alarmDao.findTenantAlarmTypesAsync(tenantId.getId());
-        return Futures.transform(tenantAssetTypes,
-                assetTypes -> {
-                    assetTypes.sort(Comparator.comparing(EntitySubtype::getType));
-                    return assetTypes;
-                }, MoreExecutors.directExecutor());
+        return cache.getAndPutInTransaction(tenantId, () ->
+                alarmDao.findTenantAlarmTypesAsync(tenantId.getId()).stream()
+                        .sorted(Comparator.comparing(EntitySubtype::getType))
+                        .collect(Collectors.toCollection(ArrayList::new)), false);
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {

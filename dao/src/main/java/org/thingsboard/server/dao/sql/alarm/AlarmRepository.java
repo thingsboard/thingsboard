@@ -346,6 +346,6 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Query(value = "SELECT unassign_alarm(:t_id, :a_id, :a_ts)", nativeQuery = true)
     String unassignAlarm(@Param("t_id") UUID tenantId, @Param("a_id") UUID alarmId, @Param("a_ts") long unassignTime);
 
-    @Query("SELECT DISTINCT a.type FROM AlarmEntity a WHERE a.tenantId = :tenantId")
+    @Query(value = "SELECT DISTINCT a.type FROM alarm a WHERE a.tenant_id = :tenantId LIMIT 256", nativeQuery = true)
     List<String> findTenantAlarmTypes(@Param("tenantId") UUID tenantId);
 }

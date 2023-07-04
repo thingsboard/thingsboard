@@ -56,6 +56,7 @@ public interface RuleEngineAlarmService {
      * Only one active alarm may exist for the pair {originatorId, alarmType}
      */
     AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request);
+
     /**
      * Designed to update existing alarm. Accepts only part of the alarm fields.
      */
@@ -113,5 +114,5 @@ public interface RuleEngineAlarmService {
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
-    ListenableFuture<List<EntitySubtype>> findAlarmTypesByTenantId(TenantId tenantId);
+    List<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId);
 }
