@@ -73,7 +73,9 @@ public class TbDate extends Date {
     }
 
     public String toISOString() {
-        return isoDateFormat.format(this);
+        synchronized (TbDate.class) {
+            return isoDateFormat.format(this);
+        }
     }
 
     public String toLocaleString(String locale) {
