@@ -155,7 +155,7 @@ export class DeviceWizardDialogComponent extends DialogComponent<DeviceWizardDia
     if (this.addDeviceWizardStepper.steps.last.completed || this.addDeviceWizardStepper.selectedIndex > 0) {
       return this.deviceService.saveDeviceWithCredentials(deepTrim(device), deepTrim(this.credentialsFormGroup.value.credential)).pipe(
         catchError((e: HttpErrorResponse) => {
-          if (e.error.message.include('Device credentials')) {
+          if (e.error.message.includes('Device credentials')) {
             this.addDeviceWizardStepper.selectedIndex = 1;
           } else {
             this.addDeviceWizardStepper.selectedIndex = 0;

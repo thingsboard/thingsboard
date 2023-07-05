@@ -14,5 +14,11 @@
  * limitations under the License.
  */
 :host {
-
+  .toggle-group {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
 }

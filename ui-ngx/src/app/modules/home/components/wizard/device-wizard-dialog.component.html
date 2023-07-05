@@ -65,20 +65,20 @@
             formControlName="deviceProfileId"
             (deviceProfileChanged)="deviceProfileChanged($event)">
           </tb-device-profile-autocomplete>
-          <tb-entity-autocomplete
-            formControlName="customerId"
-            labelText="device.wizard.customer-to-assign-device"
-            [entityType]="entityType.CUSTOMER">
-          </tb-entity-autocomplete>
           <div class="toggle-group">
             <mat-slide-toggle formControlName="gateway" style="min-width: 165px">
               {{ 'device.is-gateway' | translate }}
             </mat-slide-toggle>
             <mat-slide-toggle *ngIf="deviceWizardFormGroup.get('gateway').value"
-                          formControlName="overwriteActivityTime">
+                              formControlName="overwriteActivityTime">
               {{ 'device.overwrite-activity-time' | translate }}
             </mat-slide-toggle>
           </div>
+          <tb-entity-autocomplete
+            formControlName="customerId"
+            labelText="device.wizard.customer-to-assign-device"
+            [entityType]="entityType.CUSTOMER">
+          </tb-entity-autocomplete>
           <mat-form-field class="mat-block" subscriptSizing="dynamic">
             <mat-label translate>device.description</mat-label>
             <textarea matInput formControlName="description" rows="1"></textarea>
