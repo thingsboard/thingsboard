@@ -22,21 +22,29 @@ import {
   coerceStringArray as coerceStringArrayAngular
 } from '@angular/cdk/coercion';
 
-export const coerceBoolean = () => (target: any, key: string): void => {
-  const getter = function() {
-    return this['__' + key];
-  };
+export const coerceBoolean = () => (target: any, key: string, propertyDescriptor?: PropertyDescriptor): void => {
+  if (!!propertyDescriptor && !!propertyDescriptor.set) {
+    const original = propertyDescriptor.set;
 
-  const setter = function(next: any) {
-    this['__' + key] = coerceBooleanProperty(next);
-  };
+    propertyDescriptor.set = function(next) {
+      original.apply(this, [coerceBooleanProperty(next)]);
+    };
+  } else {
+    const getter = function() {
+      return this['__' + key];
+    };
 
-  Object.defineProperty(target, key, {
-    get: getter,
-    set: setter,
-    enumerable: true,
-    configurable: true,
-  });
+    const setter = function(next: any) {
+      this['__' + key] = coerceBooleanProperty(next);
+    };
+
+    Object.defineProperty(target, key, {
+      get: getter,
+      set: setter,
+      enumerable: true,
+      configurable: true,
+    });
+  }
 };
 
 export const coerceNumber = () => (target: any, key: string): void => {
