@@ -40,7 +40,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
 
   notificationSettings: UntypedFormGroup;
 
-  notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
+  notificationDeliveryMethods = [NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.SMS, NotificationDeliveryMethod.EMAIL];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
 
   allowNotificationDeliveryMethods: Array<NotificationDeliveryMethod>;
@@ -72,12 +72,21 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
 
   private patchNotificationSettings(settings: NotificationUserSettings) {
     const notificationSettingsControls: Array<AbstractControl> = [];
+    let preparedSettings;
     if (settings.prefs) {
-      settings.prefs.forEach((setting) => {
+      preparedSettings = this.prepareNotificationSettings(settings.prefs);
+      preparedSettings.forEach((setting) => {
         notificationSettingsControls.push(this.fb.control(setting, [Validators.required]));
       });
     }
     this.notificationSettings.setControl('prefs', this.fb.array(notificationSettingsControls), {emitEvent: false});
+  }
+
+  private prepareNotificationSettings(prefs: any) {
+    return Object.entries(prefs).map((value: any) => {
+      value[1].name = value[0];
+      return value[1];
+    });
   }
 
   resetSettings() {
@@ -90,11 +99,11 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     ).subscribe(
       result => {
         if (result) {
-          const settings = this.route.snapshot.data.userSettings;
+          const settings = this.prepareNotificationSettings(this.route.snapshot.data.userSettings.prefs);
           const notificationSettingsControls: Array<AbstractControl> = [];
           this.notificationSettings.reset({});
-          if (settings.prefs) {
-            settings.prefs.forEach((setting) => {
+          if (settings) {
+            settings.forEach((setting) => {
               setting.enabled = true;
               setting.enabledDeliveryMethods = this.notificationDeliveryMethods;
               notificationSettingsControls.push(this.fb.control(setting, [Validators.required]));
@@ -153,7 +162,13 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
   }
 
   save(): void {
-    this.notificationService.saveNotificationUserSettings(this.notificationSettings.getRawValue()).subscribe(
+    const settings = {prefs: {}};
+    this.notificationSettings.getRawValue().prefs.forEach(value => {
+      const key = value.name;
+      delete value.name;
+      settings.prefs[key] = value;
+    });
+    this.notificationService.saveNotificationUserSettings(settings).subscribe(
       (userSettings) => {
         this.notificationSettings.get('prefs').reset({});
         this.patchNotificationSettings(userSettings);

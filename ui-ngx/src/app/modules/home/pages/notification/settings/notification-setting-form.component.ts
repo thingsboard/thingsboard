@@ -19,7 +19,11 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFor
 import { UtilsService } from '@core/services/utils.service';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subscription } from 'rxjs';
-import { NotificationDeliveryMethod, NotificationUserSetting } from '@shared/models/notification.models';
+import {
+  NotificationDeliveryMethod,
+  NotificationTemplateTypeTranslateMap,
+  NotificationUserSetting
+} from '@shared/models/notification.models';
 
 @Component({
   selector: 'tb-notification-setting-form',
@@ -44,7 +48,8 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   notificationSettingsFormGroup: UntypedFormGroup;
 
   notificationDeliveryMethod = NotificationDeliveryMethod;
-  notificationDeliveryMethodMap = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
+  notificationDeliveryMethodMap = [NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.SMS, NotificationDeliveryMethod.EMAIL];
+  notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
 
   private propagateChange = null;
 
@@ -64,8 +69,7 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   ngOnInit() {
     this.notificationSettingsFormGroup = this.fb.group(
       {
-        ruleId: [],
-        ruleName: [''],
+        name: [''],
         enabled: [true],
         enabledDeliveryMethods: []
       });

@@ -26,7 +26,7 @@
       </button>
       <span class="notification-type"
             [ngClass]="{'notification-type-disabled': !notificationSettingsFormGroup.get('enabled').value}">
-        {{notificationSettingsFormGroup.get('ruleName').value}}
+        {{notificationTemplateTypeTranslateMap.get(notificationSettingsFormGroup.get('name').value)?.name | translate}}
       </span>
     </div>
     <div fxFlex fxLayout="row" *ngFor="let deliveryMethods of notificationDeliveryMethodMap">
