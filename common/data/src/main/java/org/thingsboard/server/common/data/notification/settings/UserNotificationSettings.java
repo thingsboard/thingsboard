@@ -39,6 +39,8 @@ public class UserNotificationSettings {
 
     public static final UserNotificationSettings DEFAULT = new UserNotificationSettings(Collections.emptyMap());
 
+    private static final Set<NotificationDeliveryMethod> deliveryMethods = NotificationTargetType.PLATFORM_USERS.getSupportedDeliveryMethods();
+
     @JsonCreator
     public UserNotificationSettings(@JsonProperty("prefs") Map<NotificationType, NotificationPref> prefs) {
         this.prefs = prefs;
@@ -49,7 +51,7 @@ public class UserNotificationSettings {
         if (pref != null) {
             return pref.isEnabled() ? pref.getEnabledDeliveryMethods() : Collections.emptySet();
         } else {
-            return NotificationDeliveryMethod.values;
+            return deliveryMethods;
         }
     }
 
@@ -62,14 +64,14 @@ public class UserNotificationSettings {
         public static NotificationPref createDefault() {
             NotificationPref pref = new NotificationPref();
             pref.setEnabled(true);
-            pref.setEnabledDeliveryMethods(NotificationDeliveryMethod.values);
+            pref.setEnabledDeliveryMethods(deliveryMethods);
             return pref;
         }
 
         @JsonIgnore
         @AssertTrue(message = "Only email, Web and SMS delivery methods are allowed")
         public boolean isValid() {
-            return NotificationTargetType.PLATFORM_USERS.getSupportedDeliveryMethods().containsAll(enabledDeliveryMethods);
+            return deliveryMethods.containsAll(enabledDeliveryMethods);
         }
     }
 
