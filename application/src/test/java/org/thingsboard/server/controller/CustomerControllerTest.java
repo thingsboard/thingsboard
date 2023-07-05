@@ -51,8 +51,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.model.ModelConstants.SYSTEM_TENANT;
 
 @ContextConfiguration(classes = {CustomerControllerTest.Config.class})
 @DaoSqlTest
@@ -117,8 +119,8 @@ public class CustomerControllerTest extends AbstractControllerTest {
 
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(), savedCustomer.getId(),
-                savedCustomer.getTenantId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+        testNotifyEntityAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
+                new CustomerId(CustomerId.NULL_UUID), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
 
         Assert.assertNotNull(savedCustomer);
@@ -332,9 +334,9 @@ public class CustomerControllerTest extends AbstractControllerTest {
         }
         List<Customer> customers = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Customer(), new Customer(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Customer(), new Customer(),
                 tenantId, tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity);
+                ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity);
 
         List<Customer> loadedCustomers = new ArrayList<>(135);
         PageLink pageLink = new PageLink(23);

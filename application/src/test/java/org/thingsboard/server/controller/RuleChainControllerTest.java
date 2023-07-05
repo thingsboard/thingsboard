@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNode;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
 import org.thingsboard.rule.engine.metadata.TbGetRelatedDataNodeConfiguration;
 import org.thingsboard.server.common.data.StringUtils;
@@ -284,7 +282,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new RuleChain(), new RuleChain(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, ActionType.ADDED, cntEntity, 0, cntEntity * 2);
+                ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity * 2);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new RuleChain(), new RuleChain(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ASSIGNED_TO_EDGE, ActionType.ASSIGNED_TO_EDGE, cntEntity, cntEntity, cntEntity * 2,

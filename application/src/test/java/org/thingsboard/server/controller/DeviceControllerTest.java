@@ -156,9 +156,8 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         Device oldDevice = new Device(savedDevice);
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED);
+        testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
         testNotificationUpdateGatewayNever();
 
         Assert.assertNotNull(savedDevice);
@@ -212,7 +211,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         Device oldDevice = new Device(savedDevice);
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
+        testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
         testNotificationUpdateGatewayNever();
@@ -389,6 +388,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindDeviceTypesByTenantId() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("typeB");
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
         List<Device> devices = new ArrayList<>();
 
         int cntEntity = 3;
@@ -399,12 +401,13 @@ public class DeviceControllerTest extends AbstractControllerTest {
             Device device = new Device();
             device.setName("My device B" + i);
             device.setType("typeB");
+            device.setDeviceProfileId(deviceProfile.getId());
             devices.add(doPost("/api/device", device, Device.class));
         }
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Device(), new Device(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Device(), new Device(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity);
+                ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity);
         testNotificationUpdateGatewayNever();
 
         for (int i = 0; i < 7; i++) {
@@ -464,7 +467,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Device savedDevice = doPost("/api/device", device, Device.class);
         Assert.assertEquals("default", savedDevice.getType());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(),
+        testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
         testNotificationUpdateGatewayNever();
@@ -504,9 +507,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 + "/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(savedCustomer.getId(), assignedDevice.getCustomerId());
 
-        testNotifyEntityAllOneTime(assignedDevice, assignedDevice.getId(), assignedDevice.getId(), savedTenant.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(assignedDevice, assignedDevice.getId(), assignedDevice.getId(), savedTenant.getId(),
                 savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
-                assignedDevice.getId().getId().toString(), savedCustomer.getId().getId().toString(),
+                ActionType.UPDATED, assignedDevice.getId().getId().toString(), savedCustomer.getId().getId().toString(),
                 savedCustomer.getTitle());
         testNotificationUpdateGatewayNever();
 
@@ -519,9 +522,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, unassignedDevice.getCustomerId().getId());
 
-        testNotifyEntityAllOneTime(unassignedDevice, unassignedDevice.getId(), unassignedDevice.getId(), savedTenant.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(unassignedDevice, unassignedDevice.getId(), unassignedDevice.getId(), savedTenant.getId(),
                 savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
-                unassignedDevice.getId().getId().toString(), savedCustomer.getId().getId().toString(),
+                ActionType.UPDATED, unassignedDevice.getId().getId().toString(), savedCustomer.getId().getId().toString(),
                 savedCustomer.getTitle());
         testNotificationDeleteGatewayNever();
 
@@ -543,9 +546,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Customer publicCustomer = doGet("/api/customer/" + assignedDevice.getCustomerId(), Customer.class);
         Assert.assertTrue(publicCustomer.isPublic());
 
-        testNotifyEntityAllOneTime(assignedDevice, assignedDevice.getId(), assignedDevice.getId(), savedTenant.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(assignedDevice, assignedDevice.getId(), assignedDevice.getId(), savedTenant.getId(),
                 publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
-                assignedDevice.getId().getId().toString(), publicCustomer.getId().getId().toString(),
+                ActionType.UPDATED, assignedDevice.getId().getId().toString(), publicCustomer.getId().getId().toString(),
                 publicCustomer.getTitle());
         testNotificationUpdateGatewayNever();
 
@@ -558,9 +561,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, unassignedDevice.getCustomerId().getId());
 
-        testNotifyEntityAllOneTime(unassignedDevice, unassignedDevice.getId(), unassignedDevice.getId(), savedTenant.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(unassignedDevice, unassignedDevice.getId(), unassignedDevice.getId(), savedTenant.getId(),
                 publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
-                unassignedDevice.getId().getId().toString(), publicCustomer.getId().getId().toString(),
+                ActionType.UPDATED, unassignedDevice.getId().getId().toString(), publicCustomer.getId().getId().toString(),
                 publicCustomer.getTitle());
         testNotificationDeleteGatewayNever();
 
@@ -795,9 +798,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         List<Device> devices = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Device(), new Device(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Device(), new Device(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity);
+                ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity);
         testNotificationUpdateGatewayNever();
 
         List<Device> loadedDevices = new ArrayList<>(cntEntity);
@@ -1005,7 +1008,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Device(), new Device(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity, cntEntity * 2);
+                ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity * 2);
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
         testNotificationUpdateGatewayNever();
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
@@ -1027,7 +1030,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Device(), new Device(),
                 savedTenant.getId(), customerId, tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 3);
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED, cntEntity, cntEntity, 3);
         testNotificationUpdateGatewayNever();
     }
 

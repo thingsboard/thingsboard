@@ -147,6 +147,11 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
+    public void notifyCreateOrUpdateAlarm(AlarmInfo alarm, ActionType actionType, User user, Object... additionalInfo) {
+        logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarm, alarm.getCustomerId(), actionType, user, additionalInfo);
+    }
+
+    @Override
     public void notifyCreateOrUpdateOrDeleteEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge,
                                                  ActionType actionType, User user, Object... additionalInfo) {
         ComponentLifecycleEvent lifecycleEvent;
