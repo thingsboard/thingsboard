@@ -383,7 +383,7 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         testNotifyAssignUnassignEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.ASSIGNED_TO_CUSTOMER, assignedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
+                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED, assignedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
 
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(savedCustomer.getId(), foundAsset.getCustomerId());

@@ -317,7 +317,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedEdge, assignedEdge.getId(), assignedEdge.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
-                ActionType.UPDATED, assignedEdge.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
+                ActionType.ASSIGNED_TO_CUSTOMER, assignedEdge.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
 
         Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
         Assert.assertEquals(savedCustomer.getId(), foundEdge.getCustomerId());
@@ -328,7 +328,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(unassignedEdge, unassignedEdge.getId(), unassignedEdge.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
-                ActionType.UPDATED, unassignedEdge.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
+                ActionType.UNASSIGNED_FROM_CUSTOMER, unassignedEdge.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
 
         foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundEdge.getCustomerId().getId());
