@@ -17,13 +17,10 @@ package org.thingsboard.server.dao.device;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
-import java.util.Map;
 
-@Configuration
-@ConfigurationProperties(prefix = "device")
 @Data
-public class DeviceConnectivityConfiguration {
-    private Map<String, DeviceConnectivityInfo> connectivity;
+public class DeviceConnectivityInfo {
+    private String host;
+    private Integer port;
 }
