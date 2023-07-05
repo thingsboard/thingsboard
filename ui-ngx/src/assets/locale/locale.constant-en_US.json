@@ -67,7 +67,8 @@
         "more": "More",
         "less": "Less",
         "skip": "Skip",
-        "send": "Send"
+        "send": "Send",
+        "reset": "Reset"
     },
     "aggregation": {
         "aggregation": "Aggregation",

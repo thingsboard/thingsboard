@@ -35,6 +35,13 @@
     <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
       <button type="button"
               mat-button
+              color="primary"
+              (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span fxFlex></span>
+      <button type="button"
+              mat-button
               (click)="cancel()">
         {{ 'action.cancel' | translate }}
       </button>

@@ -20,7 +20,7 @@ import { finalize, share } from 'rxjs/operators';
 import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
+import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
@@ -124,15 +124,6 @@ export function isBoolean(value: any): boolean {
 
 export function isString(value: any): boolean {
   return typeof value === 'string';
-}
-
-export function isEmpty(obj: any): boolean {
-  for (const key of Object.keys(obj)) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 export function isLiteralObject(value: any) {
@@ -320,9 +311,29 @@ export function extractType<T extends object>(target: any, keysOfProps: (keyof T
   return _.pick(target, keysOfProps);
 }
 
-export function isEqual(a: any, b: any): boolean {
-  return _.isEqual(a, b);
-}
+export const isEqual = (a: any, b: any): boolean => _.isEqual(a, b);
+
+export const isEmpty = (a: any): boolean => _.isEmpty(a);
+
+export const isEqualIgnoreUndefined = (a: any, b: any): boolean => {
+  if (a === b) {
+    return true;
+  }
+  if (isDefinedAndNotNull(a) && isDefinedAndNotNull(b)) {
+    return isEqual(a, b);
+  } else {
+    return (isUndefinedOrNull(a) || !a) && (isUndefinedOrNull(b) || !b);
+  }
+};
+
+export const isArraysEqualIgnoreUndefined = (a: any[], b: any[]): boolean => {
+  const res = isEqualIgnoreUndefined(a, b);
+  if (!res) {
+    return (isUndefinedOrNull(a) || !a?.length) && (isUndefinedOrNull(b) || !b?.length);
+  } else {
+    return res;
+  }
+};
 
 export function mergeDeep<T>(target: T, ...sources: T[]): T {
   return _.merge(target, ...sources);

@@ -207,8 +207,16 @@
         formControlName="timewindowConfig">
       </tb-timewindow-config-panel>
     </ng-container>
-    <div *ngIf="widgetType === widgetTypes.alarm" [formGroup]="dataSettings" class="tb-widget-config-panel" fxLayout="column" fxLayoutAlign="center">
-      <tb-alarm-filter-config buttonMode="false" formControlName="alarmFilterConfig"></tb-alarm-filter-config>
+    <div *ngIf="widgetType === widgetTypes.alarm" [formGroup]="dataSettings" class="tb-widget-config-panel">
+      <div fxLayout="row" fxLayoutAlign="space-between center">
+        <div class="tb-widget-config-panel-title" translate>alarm.filter</div>
+        <button mat-button color="primary"
+                (click)="alarmFilterConfig.reset()">
+          {{ 'action.reset' | translate }}
+        </button>
+      </div>
+      <tb-alarm-filter-config #alarmFilterConfig buttonMode="false"
+                              formControlName="alarmFilterConfig" [initialAlarmFilterConfig]="{}"></tb-alarm-filter-config>
     </div>
     <div *ngIf="widgetType !== widgetTypes.rpc &&
                 widgetType !== widgetTypes.alarm &&

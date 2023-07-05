@@ -22,7 +22,15 @@ import { EntityInfo } from '@shared/models/entity.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKey, Datasource, DatasourceType } from '@shared/models/widget.models';
 import { PageData } from '@shared/models/page/page-data';
-import { isDefined, isEqual } from '@core/utils';
+import {
+  isArraysEqualIgnoreUndefined,
+  isDefined,
+  isDefinedAndNotNull,
+  isEmpty,
+  isEqual,
+  isEqualIgnoreUndefined,
+  isUndefinedOrNull
+} from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmInfo, AlarmSearchStatus, AlarmSeverity } from '../alarm.models';
 import { Filter } from '@material-ui/icons';
@@ -720,6 +728,36 @@ export interface AlarmFilter {
 export interface AlarmFilterConfig extends AlarmFilter {
   assignedToCurrentUser?: boolean;
 }
+
+export const alarmFilterConfigEquals = (filter1?: AlarmFilterConfig, filter2?: AlarmFilterConfig): boolean => {
+  if (filter1 === filter2) {
+    return true;
+  }
+  if ((isUndefinedOrNull(filter1) || isEmpty(filter1)) && (isUndefinedOrNull(filter2) || isEmpty(filter2))) {
+    return true;
+  } else if (isDefinedAndNotNull(filter1) && isDefinedAndNotNull(filter2)) {
+    if (!isArraysEqualIgnoreUndefined(filter1.typeList, filter2.typeList)) {
+      return false;
+    }
+    if (!isArraysEqualIgnoreUndefined(filter1.statusList, filter2.statusList)) {
+      return false;
+    }
+    if (!isArraysEqualIgnoreUndefined(filter1.severityList, filter2.severityList)) {
+      return false;
+    }
+    if (!isEqualIgnoreUndefined(filter1.assigneeId, filter2.assigneeId)) {
+      return false;
+    }
+    if (!isEqualIgnoreUndefined(filter1.searchPropagatedAlarms, filter2.searchPropagatedAlarms)) {
+      return false;
+    }
+    if (!isEqualIgnoreUndefined(filter1.assignedToCurrentUser, filter2.assignedToCurrentUser)) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+};
 
 export type AlarmCountQuery = EntityCountQuery & AlarmFilter;
 
