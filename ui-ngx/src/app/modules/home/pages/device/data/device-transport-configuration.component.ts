@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  UntypedFormBuilder,
-  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   ValidationErrors,
   Validator,
   Validators
@@ -30,7 +30,6 @@ import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceTransportConfiguration, DeviceTransportType } from '@shared/models/device.models';
 import { deepClone } from '@core/utils';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'tb-device-transport-configuration',
@@ -105,9 +104,7 @@ export class DeviceTransportConfigurationComponent implements ControlValueAccess
     if (configuration) {
       delete configuration.type;
     }
-    // setTimeout(() => {
-      this.deviceTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
-    // }, 0);
+    this.deviceTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
   }
 
   validate(): ValidationErrors | null {
