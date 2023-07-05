@@ -981,9 +981,6 @@ transport:
 # Device connectivity properties to publish telemetry
 device:
   connectivity:
-    http:
-      host: "${DEVICE_CONNECTIVITY_HTTP_HOST:localhost}"
-      port: "${DEVICE_CONNECTIVITY_HTTP_PORT:8080}"
     mqtt:
       host: "${DEVICE_CONNECTIVITY_MQTT_HOST:localhost}"
       port: "${DEVICE_CONNECTIVITY_MQTT_PORT:1883}"
