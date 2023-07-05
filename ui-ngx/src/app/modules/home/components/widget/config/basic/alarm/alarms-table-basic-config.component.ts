@@ -60,7 +60,7 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
       datasources: [[configData.config.alarmSource], []],
       columns: [this.getColumns(configData.config.alarmSource), []],
       showTitle: [configData.config.showTitle, []],
-      title: [configData.config.settings?.entitiesTitle, []],
+      title: [configData.config.settings?.alarmsTitle, []],
       showTitleIcon: [configData.config.showTitleIcon, []],
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
@@ -81,7 +81,7 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
     this.widgetConfig.config.actions = config.actions;
     this.widgetConfig.config.showTitle = config.showTitle;
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
-    this.widgetConfig.config.settings.entitiesTitle = config.title;
+    this.widgetConfig.config.settings.alarmsTitle = config.title;
     this.widgetConfig.config.showTitleIcon = config.showTitleIcon;
     this.widgetConfig.config.titleIcon = config.titleIcon;
     this.widgetConfig.config.iconColor = config.iconColor;

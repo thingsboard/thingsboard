@@ -5270,6 +5270,7 @@
             "columns-to-display": "Columns to display",
             "table-header": "Table header",
             "header-buttons": "Header buttons",
+            "table-buttons": "Table buttons",
             "pagination": "Pagination",
             "rows": "Rows",
             "timeseries-column-error": "At least one timeseries column should be specified",
