@@ -43,6 +43,11 @@
           (click)="editDeviceProfile($event)">
     <mat-icon class="material-icons">edit</mat-icon>
   </button>
+  <button mat-button color="primary" matSuffix
+          (click)="createDeviceProfile($event, '')"
+          *ngIf="!selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled && addNewProfile && showCreateNewButton">
+    <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+  </button>
   <mat-autocomplete
     class="tb-autocomplete"
     (closed)="onPanelClosed()"

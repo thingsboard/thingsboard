@@ -18,49 +18,62 @@
 :host {
   height: 100%;
   display: grid;
+  grid-template-rows: min-content 4px auto min-content;
 
-  .dialog-actions-row {
-    padding: 8px;
+  .toggle-group {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  @media #{$mat-sm} {
+    min-width: 470px;
+  }
+
+  @media #{$mat-gt-sm} {
+    min-width: 650px;
   }
 }
 
-:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
-  @media #{$mat-lt-sm} {
-    .mat-mdc-dialog-content {
-      max-height: 75vh;
+:host-context(.mat-mdc-dialog-container) {
+  .tb-dialog-actions {
+    padding: 0;
+    grid-row: 4;
+
+    .dialog-actions-row {
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex: 1;
     }
   }
 
-  .invisible{
-    visibility: hidden;
+  .mat-mdc-dialog-content {
+    grid-row: 3;
+    padding: 0;
   }
+
 }
 
 :host ::ng-deep {
   .mat-mdc-dialog-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 0 !important;
-
     .mat-stepper-horizontal {
       display: flex;
       height: 100%;
       overflow: hidden;
 
       .mat-horizontal-stepper-wrapper {
-        flex: 1 1 100%;
+        width: 100%;
       }
 
       .mat-horizontal-content-container {
-        height: 680px;
+        height: 500px;
         max-height: 100%;
-        width: 100%;;
         overflow-y: auto;
         scrollbar-gutter: stable;
-        @media #{$mat-gt-sm} {
-          min-width: 500px;
-        }
       }
     }
   }

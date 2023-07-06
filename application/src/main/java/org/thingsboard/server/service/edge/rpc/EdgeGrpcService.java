@@ -338,7 +338,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                             sessionNewEvents.put(edgeId, false);
                             Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
                                 @Override
-                                public void onSuccess(Void result) {
+                                public void onSuccess(Boolean newEventsAdded) {
+                                    if (Boolean.TRUE.equals(newEventsAdded)) {
+                                        sessionNewEvents.put(edgeId, true);
+                                    }
                                     scheduleEdgeEventsCheck(session);
                                 }
 

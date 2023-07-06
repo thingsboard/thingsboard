@@ -46,7 +46,7 @@ export const dataKeySelectOptionValidator = (control: AbstractControl) => {
 @Component({
   selector: 'tb-datakey-select-option',
   templateUrl: './datakey-select-option.component.html',
-  styleUrls: ['./datakey-select-option.component.scss', './../widget-settings.scss'],
+  styleUrls: ['./datakey-select-option.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

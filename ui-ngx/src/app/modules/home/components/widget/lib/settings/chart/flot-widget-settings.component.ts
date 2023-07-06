@@ -45,6 +45,7 @@ import { defaultLegendConfig, widgetType } from '@shared/models/widget.models';
 export const flotDefaultSettings = (chartType: ChartType): Partial<TbFlotSettings> => {
   const settings: Partial<TbFlotSettings> = {
     stack: false,
+    enableSelection: true,
     fontColor: '#545454',
     fontSize: 10,
     showTooltip: true,
@@ -148,6 +149,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
       // Common settings
 
       stack: [false, []],
+      enableSelection: [true, []],
       fontSize: [10, [Validators.min(0)]],
       fontColor: ['#545454', []],
 
@@ -282,6 +284,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
       this.flotSettingsFormGroup.disable({emitEvent: false});
     } else {
       this.flotSettingsFormGroup.enable({emitEvent: false});
+      this.updateValidators(false);
     }
   }
 
@@ -377,9 +380,11 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
         } else {
           this.flotSettingsFormGroup.get('comparisonCustomIntervalValue').disable({emitEvent});
         }
+        this.flotSettingsFormGroup.get('xaxisSecond').enable({emitEvent: false});
       } else {
         this.flotSettingsFormGroup.get('timeForComparison').disable({emitEvent: false});
         this.flotSettingsFormGroup.get('comparisonCustomIntervalValue').disable({emitEvent});
+        this.flotSettingsFormGroup.get('xaxisSecond').disable({emitEvent: false});
       }
       if (customLegendEnabled) {
         this.flotSettingsFormGroup.get('dataKeysListForLabels').enable({emitEvent});
@@ -390,6 +395,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
       this.flotSettingsFormGroup.get('legendConfig').updateValueAndValidity({emitEvent: false});
       this.flotSettingsFormGroup.get('timeForComparison').updateValueAndValidity({emitEvent: false});
       this.flotSettingsFormGroup.get('comparisonCustomIntervalValue').updateValueAndValidity({emitEvent: false});
+      this.flotSettingsFormGroup.get('xaxisSecond').updateValueAndValidity({emitEvent: false});
       this.flotSettingsFormGroup.get('dataKeysListForLabels').updateValueAndValidity({emitEvent: false});
     }
   }

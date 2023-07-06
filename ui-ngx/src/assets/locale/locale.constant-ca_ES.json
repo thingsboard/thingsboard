@@ -1376,13 +1376,8 @@
         "device-configuration": "Configuració del dispositiu",
         "transport-configuration": "Configuració del transport",
         "wizard": {
-            "device-wizard": "Assistent de dispositiu",
             "device-details": "Detalls del dispositiu",
-            "new-device-profile": "Crear un nou perfil de dispositiu",
-            "existing-device-profile": "Seleccionar un perfil existent",
-            "specific-configuration": "Configuració específica",
-            "customer-to-assign-device": "Client al que assignar el dispositiu",
-            "add-credentials": "Afegir credencial"
+            "customer-to-assign-device": "Client al que assignar el dispositiu"
         },
         "unassign-devices-from-edge-title": "Està segur de que desitja desassignar {count, plural, =1 {1 dispositivo} other {# dispositivos} }?",
         "unassign-devices-from-edge-text": "Després de la confirmació, tots els dispositius seleccionats quedaran sense assignar i la vora no podrà accedir a ells."
@@ -1404,8 +1399,6 @@
         "delete": "Esborrar perfil de dispositiu",
         "copyId": "Copiar ID de perfil",
         "name-max-length": "El nom ha de ser inferior a 256",
-        "new-device-profile-name": "Nom del perfil",
-        "new-device-profile-name-required": "Cal nom de perfil.",
         "name": "Nom",
         "name-required": "Cal nom.",
         "type": "Tipus de perfil",
