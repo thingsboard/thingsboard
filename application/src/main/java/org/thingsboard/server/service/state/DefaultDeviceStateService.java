@@ -284,6 +284,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         log.trace("on Device Activity Timeout Update device id {} inactivityTimeout {}", deviceId, inactivityTimeout);
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         stateData.getState().setInactivityTimeout(inactivityTimeout);
+        checkAndUpdateState(deviceId, stateData);
     }
 
     @Override
@@ -398,12 +399,17 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     }
 
     void checkAndUpdateState(@Nonnull DeviceId deviceId, @Nonnull DeviceStateData state) {
-        if (state.getState().isActive()) {
+        var deviceState = state.getState();
+        if (deviceState.isActive()) {
             updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, state);
         } else {
             //trying to fix activity state
-            if (isActive(System.currentTimeMillis(), state.getState())) {
-                updateActivityState(deviceId, state, state.getState().getLastActivityTime());
+            if (isActive(System.currentTimeMillis(), deviceState)) {
+                updateActivityState(deviceId, state, deviceState.getLastActivityTime());
+                if (deviceState.getLastInactivityAlarmTime() != 0L && deviceState.getLastInactivityAlarmTime() >= deviceState.getLastActivityTime()) {
+                    deviceState.setLastInactivityAlarmTime(0L);
+                    save(deviceId, INACTIVITY_ALARM_TIME, 0L);
+                }
             }
         }
     }
