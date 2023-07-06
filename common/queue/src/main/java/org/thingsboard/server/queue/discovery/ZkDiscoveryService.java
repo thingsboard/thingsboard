@@ -299,16 +299,16 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             case CHILD_ADDED:
                 ScheduledFuture<?> task = delayedTasks.remove(instance.getServiceId());
                 if (task != null) {
-                    if (!task.cancel(false)) {
-                        log.debug("[{}] Going to recalculate partitions due to adding new node [{}]",
+                    if (task.cancel(false)) {
+                        log.debug("[{}] Recalculate partitions ignored. Service was restarted in time [{}].",
+                                instance.getServiceId(), instance.getServiceTypesList());
+                    } else {
+                        log.debug("[{}] Going to recalculate partitions. Service was not restarted in time [{}]!",
                                 instance.getServiceId(), instance.getServiceTypesList());
                         recalculatePartitions();
-                    } else {
-                        log.debug("[{}] Recalculate partitions ignored. Service restarted in time [{}]",
-                                instance.getServiceId(), instance.getServiceTypesList());
                     }
                 } else {
-                    log.debug("[{}] Going to recalculate partitions due to adding new node [{}]",
+                    log.debug("[{}] Going to recalculate partitions due to adding new node [{}].",
                             instance.getServiceId(), instance.getServiceTypesList());
                     recalculatePartitions();
                 }
@@ -317,8 +317,10 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
                 ScheduledFuture<?> future = zkExecutorService.schedule(() -> {
                     log.debug("[{}] Going to recalculate partitions due to removed node [{}]",
                             instance.getServiceId(), instance.getServiceTypesList());
-                    delayedTasks.remove(instance.getServiceId());
-                    recalculatePartitions();
+                    ScheduledFuture<?> removedTask = delayedTasks.remove(instance.getServiceId());
+                    if (removedTask != null) {
+                        recalculatePartitions();
+                    }
                 }, recalculateDelay, TimeUnit.MILLISECONDS);
                 delayedTasks.put(instance.getServiceId(), future);
                 break;
@@ -332,6 +334,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
      * Synchronized to ensure that other servers info is up to date
      * */
     synchronized void recalculatePartitions() {
+        delayedTasks.clear();
         partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), getOtherServers());
     }
 
