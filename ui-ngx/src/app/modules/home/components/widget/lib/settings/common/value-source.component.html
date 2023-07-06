@@ -26,13 +26,13 @@
       </tb-toggle-option>
     </tb-toggle-select>
   </div>
-  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'predefinedValue'" class="tb-widget-config-row space-between">
+  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'predefinedValue'" class="tb-form-row space-between">
     <div translate>widgets.value-source.value</div>
     <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
       <input matInput formControlName="value" type="number" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
   </div>
-  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-widget-config-row space-between">
+  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-form-row space-between">
     <div translate>widgets.value-source.source-entity-alias</div>
     <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
       <input matInput type="text" placeholder="{{ 'widget-config.set' | translate }}"
@@ -54,7 +54,7 @@
       </mat-autocomplete>
     </mat-form-field>
   </div>
-  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-widget-config-row space-between">
+  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-form-row space-between">
     <div translate>widgets.value-source.source-entity-attribute</div>
     <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
       <input matInput type="text" placeholder="{{ 'widget-config.set' | translate }}"

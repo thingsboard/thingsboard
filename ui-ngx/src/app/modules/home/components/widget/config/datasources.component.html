@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div [formGroup]="datasourcesFormGroup" class="tb-widget-config-panel tb-datasources" [ngClass]="{'no-padding-bottom': !showAddDatasource}">
+<div [formGroup]="datasourcesFormGroup" class="tb-form-panel tb-datasources" [ngClass]="{'no-padding-bottom': !showAddDatasource}">
   <div fxLayout="column">
     <div fxLayout="row" fxLayoutAlign="space-between center">
-      <div class="tb-widget-config-panel-title">{{ (singleDatasource ? (isAlarmSource ? 'widget-config.alarm-source' : 'widget-config.datasource') : 'widget-config.datasources') | translate }}</div>
+      <div class="tb-form-panel-title">{{ (singleDatasource ? (isAlarmSource ? 'widget-config.alarm-source' : 'widget-config.datasource') : 'widget-config.datasources') | translate }}</div>
       <div fxFlex fxLayout="row" fxLayoutAlign="center center" *ngIf="timeseriesKeyError">
         <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
       </div>
@@ -29,7 +29,7 @@
       </tb-toggle-select>
     </div>
     <div *ngIf="maxDatasources > 1"
-         class="tb-widget-config-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: maxDatasources} }}</div>
+         class="tb-form-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: maxDatasources} }}</div>
   </div>
   <div *ngIf="datasourcesFormArray.length === 0; else datasourcesTemplate">
                 <span translate fxLayoutAlign="center center"

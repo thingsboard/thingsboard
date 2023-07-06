@@ -28,15 +28,15 @@
     hideDataKeyDecimals
     formControlName="datasources">
   </tb-datasources>
-  <div class="tb-widget-config-panel">
-    <div class="tb-widget-config-panel-title" translate>widget-config.appearance</div>
-    <div class="tb-widget-config-row">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <div class="tb-form-row">
       <div class="fixed-title-width" translate>widgets.simple-card.label</div>
       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div class="tb-widget-config-row space-between">
+    <div class="tb-form-row space-between">
       <div translate>widgets.simple-card.label-position</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="labelPosition">
@@ -49,25 +49,25 @@
         </mat-select>
       </mat-form-field>
     </div>
-    <div class="tb-widget-config-row space-between">
+    <div class="tb-form-row space-between">
       <div translate>widget-config.units-short</div>
       <tb-widget-units
         formControlName="units">
       </tb-widget-units>
     </div>
-    <div class="tb-widget-config-row space-between">
+    <div class="tb-form-row space-between">
       <div translate>widget-config.decimals-short</div>
       <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div class="tb-widget-config-row space-between">
+    <div class="tb-form-row space-between">
       <div translate>widget-config.show-card-buttons</div>
       <mat-chip-listbox multiple formControlName="cardButtons">
         <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
       </mat-chip-listbox>
     </div>
-    <div class="tb-widget-config-row space-between same-padding">
+    <div class="tb-form-row space-between same-padding">
       <div>{{ 'widget-config.text-color' | translate }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
         <mat-divider vertical></mat-divider>
@@ -76,7 +76,7 @@
         </tb-color-input>
       </div>
     </div>
-    <div class="tb-widget-config-row space-between same-padding">
+    <div class="tb-form-row space-between same-padding">
       <div>{{ 'widget-config.background' | translate }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
         <mat-divider vertical></mat-divider>

@@ -16,8 +16,8 @@
 
 -->
 <ng-container [formGroup]="flotLatestKeySettingsForm">
-  <div class="tb-widget-config-panel tb-slide-toggle">
-    <div class="tb-widget-config-panel-title" translate>widgets.chart.threshold-settings</div>
+  <div class="tb-form-panel tb-slide-toggle">
+    <div class="tb-form-panel-title" translate>widgets.chart.threshold-settings</div>
     <mat-expansion-panel class="tb-settings" [expanded]="flotLatestKeySettingsForm.get('useAsThreshold').value"
                          [disabled]="!flotLatestKeySettingsForm.get('useAsThreshold').value">
       <mat-expansion-panel-header fxLayout="row wrap">
@@ -29,14 +29,14 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <div class="tb-widget-config-row space-between">
+        <div class="tb-form-row space-between">
           <div translate>widgets.chart.threshold-line-width</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="thresholdLineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
             <span matSuffix>px</span>
           </mat-form-field>
         </div>
-        <div class="tb-widget-config-row space-between same-padding">
+        <div class="tb-form-row space-between same-padding">
           <div>{{ 'widgets.chart.threshold-color' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
             <mat-divider vertical></mat-divider>

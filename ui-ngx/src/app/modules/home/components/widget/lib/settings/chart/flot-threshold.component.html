@@ -29,7 +29,7 @@
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
       <tb-value-source [aliasController]="aliasController" formControlName="valueSource"></tb-value-source>
-      <div class="tb-widget-config-row space-between">
+      <div class="tb-form-row space-between">
         <div translate>widgets.chart.line-width</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="lineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">

@@ -16,7 +16,7 @@
 
 -->
 <ng-container [formGroup]="flotKeySettingsFormGroup">
-  <div class="tb-widget-config-panel">
+  <div class="tb-form-panel">
     <mat-slide-toggle class="mat-slide" formControlName="hideDataByDefault">
       {{ 'widgets.chart.data-is-hidden-by-default' | translate }}
     </mat-slide-toggle>
@@ -30,7 +30,7 @@
       {{ 'widgets.chart.exclude-from-stacking' | translate }}
     </mat-slide-toggle>
   </div>
-  <div class="tb-widget-config-panel tb-slide-toggle">
+  <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('showLines').value">
       <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
         <mat-panel-title fxFlex="60">
@@ -44,7 +44,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <div class="tb-widget-config-row space-between">
+        <div class="tb-form-row space-between">
           <div>{{ 'widgets.chart.line-width' | translate }}</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="lineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
@@ -54,7 +54,7 @@
         <mat-slide-toggle class="mat-slide" formControlName="fillLines">
           {{ 'widgets.chart.fill-line' | translate }}
         </mat-slide-toggle>
-        <div [fxShow]="flotKeySettingsFormGroup.get('fillLines').value" class="tb-widget-config-row space-between">
+        <div [fxShow]="flotKeySettingsFormGroup.get('fillLines').value" class="tb-form-row space-between">
           <div>{{ 'widgets.chart.fill-line-opacity' | translate }}</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="fillLinesOpacity" type="number" min="0" max="1" step="0.1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -63,7 +63,7 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
-  <div class="tb-widget-config-panel tb-slide-toggle">
+  <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('showPoints').value">
       <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
         <mat-panel-title fxFlex="60">
@@ -77,21 +77,21 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <div class="tb-widget-config-row space-between">
+        <div class="tb-form-row space-between">
           <div>{{ 'widgets.chart.points-line-width' | translate }}</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="showPointsLineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
             <span matSuffix>px</span>
           </mat-form-field>
         </div>
-        <div class="tb-widget-config-row space-between">
+        <div class="tb-form-row space-between">
           <div>{{ 'widgets.chart.points-radius' | translate }}</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="showPointsRadius" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
             <span matSuffix>px</span>
           </mat-form-field>
         </div>
-        <div class="tb-widget-config-row space-between">
+        <div class="tb-form-row space-between">
           <div>{{ 'widgets.chart.point-shape' | translate }}</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="showPointShape">
@@ -126,8 +126,8 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
-  <div class="tb-widget-config-panel">
-    <div class="tb-widget-config-panel-title" translate>widgets.chart.tooltip-settings</div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.chart.tooltip-settings</div>
     <tb-js-func
       formControlName="tooltipValueFormatter"
       [globalVariables]="functionScopeVariables"
@@ -136,30 +136,30 @@
       helpId="widget/lib/flot/tooltip_value_format_fn">
     </tb-js-func>
   </div>
-  <div class="tb-widget-config-panel">
-    <div class="tb-widget-config-panel-title" translate>widgets.chart.vertical-axis</div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.chart.vertical-axis</div>
     <mat-slide-toggle class="mat-slide" formControlName="showSeparateAxis">
       {{ 'widgets.chart.show-separate-axis' | translate }}
     </mat-slide-toggle>
-    <div class="tb-widget-config-row">
+    <div class="tb-form-row">
       <div class="fixed-title-width" translate>widgets.chart.axis-title</div>
       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="axisTitle" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div class="tb-widget-config-row space-between">
+    <div class="tb-form-row space-between">
       <div translate>widgets.chart.min-scale-value</div>
       <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput formControlName="axisMin" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div class="tb-widget-config-row space-between">
+    <div class="tb-form-row space-between">
       <div translate>widgets.chart.max-scale-value</div>
       <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput formControlName="axisMax" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div class="tb-widget-config-row space-between">
+    <div class="tb-form-row space-between">
       <div>{{ 'widgets.chart.axis-position' | translate }}</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="axisPosition">
@@ -172,15 +172,15 @@
         </mat-select>
       </mat-form-field>
     </div>
-    <div class="tb-widget-config-panel stroked">
-      <div class="tb-widget-config-panel-title" translate>widgets.chart.ticks</div>
-      <div class="tb-widget-config-row space-between">
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>widgets.chart.ticks</div>
+      <div class="tb-form-row space-between">
         <div translate>widget-config.decimals-short</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="axisTickDecimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
       </div>
-      <div class="tb-widget-config-row space-between">
+      <div class="tb-form-row space-between">
         <div translate>widgets.chart.tick-step-size</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="axisTickSize" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
@@ -195,8 +195,8 @@
       </tb-js-func>
     </div>
   </div>
-  <div class="tb-widget-config-panel">
-    <div class="tb-widget-config-panel-title" fxLayout="row" fxLayoutAlign="space-between center">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" fxLayout="row" fxLayoutAlign="space-between center">
       <div translate>widgets.chart.thresholds</div>
       <button mat-stroked-button
               color="primary"
@@ -216,8 +216,8 @@
       </div>
     </div>
   </div>
-  <div class="tb-widget-config-panel tb-slide-toggle" formGroupName="comparisonSettings">
-    <div class="tb-widget-config-panel-title" translate>widgets.chart.comparison-settings</div>
+  <div class="tb-form-panel tb-slide-toggle" formGroupName="comparisonSettings">
+    <div class="tb-form-panel-title" translate>widgets.chart.comparison-settings</div>
     <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value"
                          [disabled]="!flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value">
       <mat-expansion-panel-header fxLayout="row wrap">
@@ -229,13 +229,13 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <div class="tb-widget-config-row">
+        <div class="tb-form-row">
           <div class="fixed-title-width" translate>widgets.chart.comparison-values-label</div>
           <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="comparisonValuesLabel" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
-        <div class="tb-widget-config-row space-between same-padding">
+        <div class="tb-form-row space-between same-padding">
           <div>{{ 'widgets.chart.comparison-line-color' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
             <mat-divider vertical></mat-divider>
