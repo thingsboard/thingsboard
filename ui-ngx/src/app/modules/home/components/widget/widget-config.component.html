@@ -114,6 +114,12 @@
             <input matInput formControlName="margin" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
+        <div class="tb-widget-config-row space-between">
+          <div>{{ 'widget-config.border-radius' | translate }}</div>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
         <mat-slide-toggle class="mat-slide slide-block" formControlName="dropShadow">
           {{ 'widget-config.drop-shadow' | translate }}
         </mat-slide-toggle>
@@ -126,7 +132,6 @@
           <ng-template matExpansionPanelContent>
             <tb-json-object-edit
               [editorStyle]="{minHeight: '100px'}"
-              required
               label="{{ 'widget-config.widget-style' | translate }}"
               formControlName="widgetStyle"
             ></tb-json-object-edit>

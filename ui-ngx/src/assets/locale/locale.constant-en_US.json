@@ -4190,6 +4190,7 @@
         "enable-fullscreen": "Enable fullscreen",
         "background-color": "Background color",
         "text-color": "Text color",
+        "border-radius": "Border radius",
         "padding": "Padding",
         "margin": "Margin",
         "widget-style": "Widget style",
