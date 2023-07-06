@@ -379,7 +379,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             log.warn("[{}] Failed to create asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, assetId, null, ActionType.ASSIGNED_TO_EDGE));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(assetId)
+                .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return asset;
     }
 
@@ -399,7 +400,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             log.warn("[{}] Failed to delete asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, assetId, null, ActionType.UNASSIGNED_FROM_EDGE));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(assetId)
+                .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return asset;
     }
 

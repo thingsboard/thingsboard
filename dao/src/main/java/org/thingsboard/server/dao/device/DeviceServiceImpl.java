@@ -594,7 +594,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         }
         try {
             createRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-            eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, deviceId, null, ActionType.ASSIGNED_TO_EDGE));
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(deviceId)
+                    .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         } catch (Exception e) {
             log.warn("[{}] Failed to create device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);
@@ -614,7 +615,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-            eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, deviceId, null, ActionType.UNASSIGNED_FROM_EDGE));
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(deviceId)
+                    .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         } catch (Exception e) {
             log.warn("[{}] Failed to delete device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);

@@ -181,7 +181,8 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(customerId);
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, null, edgeId, JacksonUtil.toString(customerId), ActionType.ASSIGNED_TO_CUSTOMER));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(edgeId)
+                .body(JacksonUtil.toString(customerId)).actionType(ActionType.ASSIGNED_TO_CUSTOMER).build());
         return saveEdge(edge);
     }
 
@@ -192,7 +193,8 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         var customerId = edge.getCustomerId();
         edge.setCustomerId(null);
         Edge result = saveEdge(edge);
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, null, edgeId, JacksonUtil.toString(customerId), ActionType.UNASSIGNED_FROM_CUSTOMER));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(edgeId)
+                .body(JacksonUtil.toString(customerId)).actionType(ActionType.UNASSIGNED_FROM_CUSTOMER).build());
         return result;
     }
 

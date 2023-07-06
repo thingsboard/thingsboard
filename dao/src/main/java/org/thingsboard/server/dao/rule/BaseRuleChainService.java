@@ -603,8 +603,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             throw new RuntimeException(e);
         }
         if (!ruleChainId.equals(edge.getRootRuleChainId())) {
-            eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, ruleChainId,
-                    null, ActionType.ASSIGNED_TO_EDGE));
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(ruleChainId)
+                    .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         }
         return ruleChain;
     }
@@ -625,8 +625,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             log.warn("[{}] Failed to delete rule chain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, ruleChainId,
-                null, ActionType.UNASSIGNED_FROM_EDGE));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(ruleChainId)
+                .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return ruleChain;
     }
 

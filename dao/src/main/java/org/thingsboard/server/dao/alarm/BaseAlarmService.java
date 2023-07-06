@@ -130,14 +130,16 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
         var result = withPropagated(alarmDao.acknowledgeAlarm(tenantId, alarmId, ackTs));
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, null, result.getAlarm().getId(), null, ActionType.ALARM_ACK));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                .actionType(ActionType.ALARM_ACK).build());
         return result;
     }
 
     @Override
     public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details) {
         var result = withPropagated(alarmDao.clearAlarm(tenantId, alarmId, clearTs, details));
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, null, result.getAlarm().getId(), null, ActionType.ALARM_CLEAR));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                .actionType(ActionType.ALARM_CLEAR).build());
         return result;
     }
 
@@ -207,7 +209,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             alarmDao.removeById(tenantId, alarm.getUuidId());
             if (!CollectionUtils.isEmpty(relatedEdgeIds)) {
                 for (EdgeId relatedEdgeId : relatedEdgeIds) {
-                    eventPublisher.publishEvent(new ActionEntityEvent(tenantId, relatedEdgeId, alarmId, JacksonUtil.toString(alarm), ActionType.DELETED));
+                    eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(relatedEdgeId)
+                            .entityId(alarmId).body(JacksonUtil.toString(alarm)).actionType(ActionType.DELETED).build());
                 }
             }
             return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
@@ -323,14 +326,16 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTime) {
         var result = withPropagated(alarmDao.assignAlarm(tenantId, alarmId, assigneeId, assignTime));
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, null, result.getAlarm().getId(), null, ActionType.ALARM_ASSIGNED));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                .actionType(ActionType.ALARM_ASSIGNED).build());
         return result;
     }
 
     @Override
     public AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long unassignTime) {
         var result = withPropagated(alarmDao.unassignAlarm(tenantId, alarmId, unassignTime));
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, null, result.getAlarm().getId(), null, ActionType.ALARM_UNASSIGNED));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                .actionType(ActionType.ALARM_UNASSIGNED).build());
         return result;
     }
 

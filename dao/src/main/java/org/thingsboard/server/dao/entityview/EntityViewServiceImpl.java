@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -356,8 +357,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to create entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, entityViewId,
-                null, ActionType.ASSIGNED_TO_EDGE));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
+                .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return entityView;
     }
 
@@ -374,8 +375,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to delete entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, entityViewId,
-                null, ActionType.UNASSIGNED_FROM_EDGE));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
+                .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return entityView;
     }
 

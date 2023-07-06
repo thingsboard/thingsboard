@@ -311,7 +311,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, dashboardId, null, ActionType.ASSIGNED_TO_EDGE));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
+                .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return dashboard;
     }
 
@@ -328,7 +329,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
-        eventPublisher.publishEvent(new ActionEntityEvent(tenantId, edgeId, dashboardId, null, ActionType.UNASSIGNED_FROM_EDGE));
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
+                .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return dashboard;
     }
 
