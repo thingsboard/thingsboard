@@ -458,10 +458,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     this.dialog.open<DeviceWizardDialogComponent, AddEntityDialogData<BaseData<HasId>>,
       boolean>(DeviceWizardDialogComponent, {
       disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        entitiesTableConfig: this.config
-      }
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
     }).afterClosed().subscribe(
       (res) => {
         if (res) {

@@ -1021,13 +1021,8 @@
     "device-configuration": "Cihaz yapılandırması",
     "transport-configuration": "Aktarım yapılandırması",
     "wizard": {
-      "device-wizard": "Cihaz Sihirbazı",
       "device-details": "Cihaz ayrıntıları",
-      "new-device-profile": "Yeni cihaz profili oluştur",
-      "existing-device-profile": "Mevcut cihaz profilini seçin",
-      "specific-configuration": "Özel yapılandırma",
-      "customer-to-assign-device": "Cihazı atamak için kullanıcı grubu",
-      "add-credentials": "Kimlik bilgileri ekle"
+      "customer-to-assign-device": "Cihazı atamak için kullanıcı grubu"
     },
     "unassign-devices-from-edge-title": "{ count, plural, =1 {1 cihazın} other {# cihazın} } atamasını kaldırmak istediğinizden emin misiniz?",
     "unassign-devices-from-edge-text": "Onaydan sonra, seçilen tüm cihazların ataması kaldırılacak ve uç tarafından erişilemeyecek."
@@ -1048,8 +1043,6 @@
     "set-default": "Cihaz profilini varsayılan yap",
     "delete": "Cihaz profilini sil",
     "copyId": "Cihaz profili kimliğini kopyala",
-    "new-device-profile-name": "Cihaz profili adı",
-    "new-device-profile-name-required": "Cihaz profili adı gerekli.",
     "name": "İsim",
     "name-required": "İsim gerekli.",
     "type": "Profil türü",

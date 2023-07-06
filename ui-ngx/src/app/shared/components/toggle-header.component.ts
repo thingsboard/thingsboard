@@ -131,6 +131,10 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterC
   @Input()
   appearance: ToggleHeaderAppearance = 'stroked';
 
+  @Input()
+  @coerceBoolean()
+  disabled = false;
+
   isMdLg: boolean;
 
   private observeBreakpointSubscription: Subscription;
