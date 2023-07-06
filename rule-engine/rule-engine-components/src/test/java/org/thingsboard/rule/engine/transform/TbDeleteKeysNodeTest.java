@@ -79,8 +79,7 @@ public class TbDeleteKeysNodeTest {
 
     @Test
     void givenMsgFromMetadata_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "{}";
-        node.onMsg(ctx, getTbMsg(deviceId, data));
+        node.onMsg(ctx, getTbMsg(deviceId, TbMsg.EMPTY_JSON_OBJECT));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());

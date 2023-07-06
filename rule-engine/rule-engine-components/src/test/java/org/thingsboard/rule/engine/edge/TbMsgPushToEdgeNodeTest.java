@@ -125,7 +125,7 @@ public class TbMsgPushToEdgeNodeTest {
     @Test
     public void testMiscEventsProcessedAsTimeseriesUpdated() {
         for (var event : MISC_EVENTS) {
-            testEvent(event, new TbMsgMetaData(), EdgeEventActionType.TIMESERIES_UPDATED, "data");
+            testEvent(event, TbMsgMetaData.EMPTY, EdgeEventActionType.TIMESERIES_UPDATED, "data");
         }
     }
 

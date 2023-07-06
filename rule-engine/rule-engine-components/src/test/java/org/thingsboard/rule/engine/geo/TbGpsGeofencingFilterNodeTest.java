@@ -452,7 +452,7 @@ class TbGpsGeofencingFilterNodeTest {
     }
 
     private TbMsg getEmptyArrayTbMsg(EntityId entityId) {
-        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, TbMsgMetaData.EMPTY, "[]");
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
     }
 
 }

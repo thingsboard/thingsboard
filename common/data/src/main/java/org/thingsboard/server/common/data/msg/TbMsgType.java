@@ -71,18 +71,12 @@ public enum TbMsgType {
 
     // tellSelfOnly types
     GENERATOR_NODE_SELF_MSG(null, true),
-
     DEVICE_PROFILE_PERIODIC_SELF_MSG(null, true),
     DEVICE_PROFILE_UPDATE_SELF_MSG(null, true),
     DEVICE_UPDATE_SELF_MSG(null, true),
-
     DEDUPLICATION_TIMEOUT_SELF_MSG(null, true),
-
     DELAY_TIMEOUT_SELF_MSG(null, true),
-
     MSG_COUNT_SELF_MSG(null, true);
-
-
 
     public static final List<String> NODE_CONNECTIONS = EnumSet.allOf(TbMsgType.class).stream()
             .filter(tbMsgType -> !tbMsgType.isTellSelfOnly())

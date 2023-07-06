@@ -54,7 +54,6 @@ class TbMsgTypeTest {
             MSG_COUNT_SELF_MSG
     );
 
-
     // backward-compatibility tests
     
     @Test

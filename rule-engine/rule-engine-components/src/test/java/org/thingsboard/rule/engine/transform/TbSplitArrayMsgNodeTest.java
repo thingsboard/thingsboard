@@ -83,8 +83,7 @@ public class TbSplitArrayMsgNodeTest {
 
     @Test
     void givenZeroMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "[]";
-        VerifyOutputMsg(data);
+        VerifyOutputMsg(TbMsg.EMPTY_JSON_ARRAY);
     }
 
     @Test

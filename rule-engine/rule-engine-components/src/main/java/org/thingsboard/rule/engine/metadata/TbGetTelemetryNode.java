@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -98,8 +99,8 @@ public class TbGetTelemetryNode implements TbNode {
                 List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
                 DonAsynchron.withCallback(list, data -> {
-                    process(data, msg, keys);
-                    ctx.tellSuccess(msg);
+                    var metaData = updateMetadata(data, msg, keys);
+                    ctx.tellSuccess(TbMsg.transformMsg(msg, metaData));
                 }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
@@ -129,19 +130,20 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
+    private TbMsgMetaData updateMetadata(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
         ObjectNode resultNode = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
         if (TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
             entries.forEach(entry -> processSingle(resultNode, entry));
         }
-
+        var copy = msg.getMetaData().copy();
         for (String key : keys) {
             if (resultNode.has(key)) {
-                msg.getMetaData().putValue(key, resultNode.get(key).toString());
+                copy.putValue(key, resultNode.get(key).toString());
             }
         }
+        return copy;
     }
 
     private void processSingle(ObjectNode node, TsKvEntry entry) {

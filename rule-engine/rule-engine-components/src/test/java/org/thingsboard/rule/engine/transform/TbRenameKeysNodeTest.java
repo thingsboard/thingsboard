@@ -135,8 +135,7 @@ public class TbRenameKeysNodeTest {
 
     @Test
     void givenMsgDataNotJSONObject_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "[]";
-        TbMsg msg = getTbMsg(deviceId, data);
+        TbMsg msg = getTbMsg(deviceId, TbMsg.EMPTY_JSON_ARRAY);
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);

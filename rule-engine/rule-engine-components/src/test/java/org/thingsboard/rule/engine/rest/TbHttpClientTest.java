@@ -145,7 +145,7 @@ public class TbHttpClientTest {
         var httpClient = new TbHttpClient(config, eventLoop);
         httpClient.setHttpClient(asyncRestTemplate);
 
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, new DeviceId(EntityId.NULL_UUID), TbMsgMetaData.EMPTY, "{}");
+        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, new DeviceId(EntityId.NULL_UUID), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         var successMsg = TbMsg.newMsg(
                 TbMsgType.POST_TELEMETRY_REQUEST, msg.getOriginator(),
                 msg.getMetaData(), msg.getData()

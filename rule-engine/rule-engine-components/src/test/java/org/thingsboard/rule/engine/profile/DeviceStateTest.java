@@ -107,7 +107,7 @@ public class DeviceStateTest {
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
         TbMsg attributeUpdateMsg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST,
-                deviceId, new TbMsgMetaData(), "{ \"enabled\": false }");
+                deviceId, TbMsgMetaData.EMPTY, "{ \"enabled\": false }");
 
         deviceState.process(ctx, attributeUpdateMsg);
 
@@ -119,7 +119,7 @@ public class DeviceStateTest {
         reset(ctx);
 
         String deletedAttributes = "{ \"attributes\": [ \"other\" ] }";
-        deviceState.process(ctx, TbMsg.newMsg(TbMsgType.ATTRIBUTES_DELETED, deviceId, new TbMsgMetaData(), deletedAttributes));
+        deviceState.process(ctx, TbMsg.newMsg(TbMsgType.ATTRIBUTES_DELETED, deviceId, TbMsgMetaData.EMPTY, deletedAttributes));
         verify(ctx, never()).enqueueForTellNext(any(), anyString());
     }
 

@@ -122,7 +122,7 @@ public class TbCreateRelationNodeTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
-        msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
 
         EntityRelation relation = new EntityRelation();
         when(ctx.getRelationService().findByToAndTypeAsync(any(), eq(msg.getOriginator()), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON)))

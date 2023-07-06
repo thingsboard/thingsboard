@@ -117,8 +117,7 @@ public class CalculateDeltaNodeTest {
     @Test
     public void givenInvalidMsgDataType_whenOnMsg_thenShouldTellNextOther() {
         // GIVEN
-        var msgData = "[]";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
 
         // WHEN
         node.onMsg(ctxMock, msg);
