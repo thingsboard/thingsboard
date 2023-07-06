@@ -48,10 +48,6 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
-import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
-import org.thingsboard.server.common.data.device.profile.EfentoCoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -745,7 +741,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private String getHttpPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
-        DeviceConnectivityInfo httpProps = deviceConnectivityConfiguration.getConnectivity().get("http");
+        DeviceConnectivityInfo httpProps = deviceConnectivityConfiguration.getConnectivity().get(HTTP_PROTOCOL);
         if (httpProps != null && httpProps.getEnabled() &&
                 deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
             String hostName = httpProps.getHost().isEmpty() ? defaultHostname : httpProps.getHost();
@@ -757,7 +753,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private String getHttpsPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
-        DeviceConnectivityInfo httpsProps = deviceConnectivityConfiguration.getConnectivity().get("https");
+        DeviceConnectivityInfo httpsProps = deviceConnectivityConfiguration.getConnectivity().get(HTTPS_PROTOCOL);
         if (httpsProps != null && httpsProps.getEnabled() &&
                 deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
             String hostName = httpsProps.getHost().isEmpty() ? defaultHostname : httpsProps.getHost();
@@ -773,7 +769,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private String getMqttPublishCommand(String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
-        DeviceConnectivityInfo mqttProps = deviceConnectivityConfiguration.getConnectivity().get("mqtt");
+        DeviceConnectivityInfo mqttProps = deviceConnectivityConfiguration.getConnectivity().get(MQTT_PROTOCOL);
         if (mqttProps == null || !mqttProps.getEnabled()) {
             return null;
         }
@@ -818,7 +814,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private String getMqttsPublishCommand(String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
-        DeviceConnectivityInfo mqttsProps = deviceConnectivityConfiguration.getConnectivity().get("mqtts");
+        DeviceConnectivityInfo mqttsProps = deviceConnectivityConfiguration.getConnectivity().get(MQTTS_PROTOCOL);
         if (mqttsProps == null || !mqttsProps.getEnabled()) {
             return null;
         }
@@ -861,7 +857,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private String getCoapPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
-        DeviceConnectivityInfo coapProperties = deviceConnectivityConfiguration.getConnectivity().get("coap");
+        DeviceConnectivityInfo coapProperties = deviceConnectivityConfiguration.getConnectivity().get(COAP_PROTOCOL);
         if (coapProperties == null || !coapProperties.getEnabled()) {
             return null;
         }
@@ -876,7 +872,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private String getCoapsPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
-        DeviceConnectivityInfo coapsProperties = deviceConnectivityConfiguration.getConnectivity().get("coaps");
+        DeviceConnectivityInfo coapsProperties = deviceConnectivityConfiguration.getConnectivity().get(COAPS_PROTOCOL);
         if (coapsProperties == null || !coapsProperties.getEnabled()) {
             return null;
         }
