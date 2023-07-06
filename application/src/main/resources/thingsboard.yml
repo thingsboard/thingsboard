@@ -981,16 +981,28 @@ transport:
 # Device connectivity properties to publish telemetry
 device:
   connectivity:
+    http:
+      enabled: "${DEVICE_CONNECTIVITY_HTTP_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_HTTP_HOST:localhost}"
+      port: "${DEVICE_CONNECTIVITY_HTTP_PORT:8080}"
+    https:
+      enabled: "${DEVICE_CONNECTIVITY_HTTPS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_HTTPS_HOST:localhost}"
+      port: "${DEVICE_CONNECTIVITY_HTTPS_PORT:443}"
     mqtt:
+      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:true}"
       host: "${DEVICE_CONNECTIVITY_MQTT_HOST:localhost}"
       port: "${DEVICE_CONNECTIVITY_MQTT_PORT:1883}"
     mqtts:
+      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:false}"
       host: "${DEVICE_CONNECTIVITY_MQTTS_HOST:localhost}"
       port: "${DEVICE_CONNECTIVITY_MQTTS_PORT:8883}"
     coap:
+      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:true}"
       host: "${DEVICE_CONNECTIVITY_COAP_HOST:localhost}"
       port: "${DEVICE_CONNECTIVITY_COAP_PORT:5683}"
     coaps:
+      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:false}"
       host: "${DEVICE_CONNECTIVITY_COAPS_HOST:localhost}"
       port: "${DEVICE_CONNECTIVITY_COAPS_PORT:5684}"
 

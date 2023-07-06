@@ -16,11 +16,10 @@
 package org.thingsboard.server.dao.device;
 
 import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 
 @Data
 public class DeviceConnectivityInfo {
+    private Boolean enabled;
     private String host;
-    private Integer port;
+    private String port;
 }

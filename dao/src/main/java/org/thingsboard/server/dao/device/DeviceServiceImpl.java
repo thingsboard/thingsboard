@@ -80,6 +80,8 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -104,8 +106,15 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_DEVICE_ID = "Incorrect deviceId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+    public static final String HTTP_PROTOCOL = "http";
+    public static final String HTTPS_PROTOCOL = "https";
+    public static final String MQTT_PROTOCOL = "mqtt";
+    public static final String MQTTS_PROTOCOL = "mqtts";
+    public static final String COAP_PROTOCOL = "coap";
+    public static final String COAPS_PROTOCOL = "coaps";
     public static final String PAYLOAD = "\"{temperature:25}\"";
     public static final String NOT_SUPPORTED = "Not supported";
+    public static final String DEFAULT_DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
 
     @Autowired
     private DeviceDao deviceDao;
@@ -136,26 +145,25 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     @Override
-    public Map<String, String> findDevicePublishTelemetryCommands(String baseUrl, Device device) {
+    public Map<String, String> findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
         DeviceId deviceId = device.getId();
         log.trace("Executing findDevicePublishTelemetryCommands [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
 
+        String defaultHostname = new URI(baseUrl).getHost();
         DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
-        DeviceCredentialsType credentialsType = creds.getCredentialsType();
-
         DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
         DeviceTransportType transportType = deviceProfile.getTransportType();
 
         Map<String, String> commands = new HashMap<>();
-
         switch (transportType) {
             case DEFAULT:
-                Optional.ofNullable(getHttpPublishCommand(baseUrl, creds)).ifPresent(v -> commands.put("http", v));
-                Optional.ofNullable(getMqttPublishCommand(creds)).ifPresent(v -> commands.put("mqtt", v));
-                Optional.ofNullable(getMqttsPublishCommand(creds)).ifPresent(v -> commands.put("mqtts", v));
-                Optional.ofNullable(getCoapPublishCommand(creds)).ifPresent(v -> commands.put("coap", v));
-                Optional.ofNullable(getCoapsPublishCommand(creds)).ifPresent(v -> commands.put("coaps", v));
+                Optional.ofNullable(getHttpPublishCommand(defaultHostname, creds)).ifPresent(v -> commands.put(HTTP_PROTOCOL, v));
+                Optional.ofNullable(getHttpsPublishCommand(defaultHostname, creds)).ifPresent(v -> commands.put(HTTPS_PROTOCOL, v));
+                Optional.ofNullable(getMqttPublishCommand(defaultHostname, creds)).ifPresent(v -> commands.put(MQTT_PROTOCOL, v));
+                Optional.ofNullable(getMqttsPublishCommand(defaultHostname, creds)).ifPresent(v -> commands.put(MQTTS_PROTOCOL, v));
+                Optional.ofNullable(getCoapPublishCommand(defaultHostname, creds)).ifPresent(v -> commands.put(COAP_PROTOCOL, v));
+                Optional.ofNullable(getCoapsPublishCommand(defaultHostname, creds)).ifPresent(v -> commands.put(COAPS_PROTOCOL, v));
                 break;
             case MQTT:
                 MqttDeviceProfileTransportConfiguration transportConfiguration =
@@ -164,19 +172,12 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 TransportPayloadType payloadType = transportConfiguration.getTransportPayloadTypeConfiguration().getTransportPayloadType();
                 String payload = (payloadType == TransportPayloadType.PROTOBUF) ? " -f protobufFileName" : " -m " + PAYLOAD;
 
-                Optional.ofNullable(getMqttPublishCommand(topicName, creds, payload)).ifPresent(v -> commands.put("mqtt", v));
-                Optional.ofNullable(getMqttsPublishCommand(topicName, creds, payload)).ifPresent(v -> commands.put("mqtts", v));
+                Optional.ofNullable(getMqttPublishCommand(defaultHostname, topicName, creds, payload)).ifPresent(v -> commands.put(MQTT_PROTOCOL, v));
+                Optional.ofNullable(getMqttsPublishCommand(defaultHostname, topicName, creds, payload)).ifPresent(v -> commands.put(MQTTS_PROTOCOL, v));
                 break;
             case COAP:
-                CoapDeviceProfileTransportConfiguration coapTransportConfiguration =
-                            (CoapDeviceProfileTransportConfiguration)  deviceProfile.getProfileData().getTransportConfiguration();
-                CoapDeviceTypeConfiguration coapConfiguration = coapTransportConfiguration.getCoapDeviceTypeConfiguration();
-                if (coapConfiguration instanceof DefaultCoapDeviceTypeConfiguration) {
-                    Optional.ofNullable(getCoapPublishCommand(creds)).ifPresent(v -> commands.put("coap", v));
-                    Optional.ofNullable(getCoapsPublishCommand(creds)).ifPresent(v -> commands.put("coaps", v));
-                } else if (coapConfiguration instanceof EfentoCoapDeviceTypeConfiguration) {
-                    commands.put("coap for efento", "Not supported");
-                }
+                    Optional.ofNullable(getCoapPublishCommand(defaultHostname, creds)).ifPresent(v -> commands.put(COAP_PROTOCOL, v));
+                    Optional.ofNullable(getCoapsPublishCommand(defaultHostname, creds)).ifPresent(v -> commands.put(COAPS_PROTOCOL, v));
                 break;
             default:
                 commands.put(transportType.name(), NOT_SUPPORTED);
@@ -743,24 +744,45 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return EntityType.DEVICE;
     }
 
-    private String getHttpPublishCommand(String baseurl, DeviceCredentials deviceCredentials) {
-        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
-            return String.format("curl -v -X POST %s/api/v1/%s/telemetry --header Content-Type:application/json --data " + PAYLOAD,
-                    baseurl, deviceCredentials.getCredentialsId());
+    private String getHttpPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
+        DeviceConnectivityInfo httpProps = deviceConnectivityConfiguration.getConnectivity().get("http");
+        if (httpProps != null && httpProps.getEnabled() &&
+                deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
+            String hostName = httpProps.getHost().isEmpty() ? defaultHostname : httpProps.getHost();
+            String port = httpProps.getPort().isEmpty() ? "" : ":" + httpProps.getPort();
+            return String.format("curl -v -X POST http://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + PAYLOAD,
+                    hostName, port, deviceCredentials.getCredentialsId());
         }
         return null;
     }
 
-    private String getMqttPublishCommand(DeviceCredentials deviceCredentials) {
-        return getMqttPublishCommand("v1/devices/me/telemetry", deviceCredentials, " -m " + PAYLOAD);
+    private String getHttpsPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
+        DeviceConnectivityInfo httpsProps = deviceConnectivityConfiguration.getConnectivity().get("https");
+        if (httpsProps != null && httpsProps.getEnabled() &&
+                deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
+            String hostName = httpsProps.getHost().isEmpty() ? defaultHostname : httpsProps.getHost();
+            String port = httpsProps.getPort().isEmpty() ? "" : ":" + httpsProps.getPort();
+            return String.format("curl -v -X POST https://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + PAYLOAD,
+                    hostName, port, deviceCredentials.getCredentialsId());
+        }
+        return null;
     }
 
-    private String getMqttPublishCommand(String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
+    private String getMqttPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
+        return getMqttPublishCommand(defaultHostname,"v1/devices/me/telemetry", deviceCredentials, " -m " + PAYLOAD);
+    }
+
+    private String getMqttPublishCommand(String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
         DeviceConnectivityInfo mqttProps = deviceConnectivityConfiguration.getConnectivity().get("mqtt");
+        if (mqttProps == null || !mqttProps.getEnabled()) {
+            return null;
+        }
 
         StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1");
-        command.append(" -h ").append(mqttProps.getHost());
-        command.append(" -p ").append(mqttProps.getPort());
+        command.append(" -h ").append(mqttProps.getHost().isEmpty() ? defaultHostname : mqttProps.getHost());
+        if (!mqttProps.getPort().isEmpty()) {
+            command.append(" -p ").append(mqttProps.getPort());
+        }
         command.append(" -t ").append(deviceTelemetryTopic);
 
         switch (deviceCredentials.getCredentialsType()) {
@@ -780,6 +802,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                     if (credentials.getPassword() != null) {
                         command.append(" -P ").append(credentials.getPassword());
                     }
+                } else {
+                    return null;
                 }
                 break;
             default:
@@ -789,16 +813,21 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return command.toString();
     }
 
-    private String getMqttsPublishCommand(DeviceCredentials deviceCredentials) {
-        return getMqttsPublishCommand("v1/devices/me/telemetry", deviceCredentials, " -m " + PAYLOAD);
+    private String getMqttsPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
+        return getMqttsPublishCommand(defaultHostname, DEFAULT_DEVICE_TELEMETRY_TOPIC, deviceCredentials, " -m " + PAYLOAD);
     }
 
-    private String getMqttsPublishCommand(String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
+    private String getMqttsPublishCommand(String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
         DeviceConnectivityInfo mqttsProps = deviceConnectivityConfiguration.getConnectivity().get("mqtts");
+        if (mqttsProps == null || !mqttsProps.getEnabled()) {
+            return null;
+        }
 
         StringBuilder command = new StringBuilder("mosquitto_pub --cafile tb-server-chain.pem -d -q 1");
-        command.append(" -h ").append(mqttsProps.getHost());
-        command.append(" -p ").append(mqttsProps.getPort());
+        command.append(" -h ").append(mqttsProps.getHost().isEmpty() ? defaultHostname : mqttsProps.getHost());
+        if (!mqttsProps.getPort().isEmpty()) {
+            command.append(" -p ").append(mqttsProps.getPort());
+        }
         command.append(" -t ").append(deviceTelemetryTopic);
 
         switch (deviceCredentials.getCredentialsType()) {
@@ -823,8 +852,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 }
                 break;
             case X509_CERTIFICATE:
-                command.append(" --key key.pem --cert cert.pem");
-                break;
+                return NOT_SUPPORTED;
             default:
                 return null;
         }
@@ -832,24 +860,34 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return command.toString();
     }
 
-    private String getCoapPublishCommand(DeviceCredentials deviceCredentials) {
+    private String getCoapPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
         DeviceConnectivityInfo coapProperties = deviceConnectivityConfiguration.getConnectivity().get("coap");
+        if (coapProperties == null || !coapProperties.getEnabled()) {
+            return null;
+        }
         if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
-            return String.format("coap-client -m POST coap://%s:%s/api/v1/%s/telemetry -t json -e %s",
-                    coapProperties.getHost(), coapProperties.getPort(), deviceCredentials.getCredentialsId(), PAYLOAD);
+            String hostName = coapProperties.getHost().isEmpty() ? defaultHostname : coapProperties.getHost();
+            String port = coapProperties.getPort().isEmpty() ? "" : ":" + coapProperties.getPort();
+
+            return String.format("coap-client -m POST coap://%s%s/api/v1/%s/telemetry -t json -e %s",
+                    hostName, port, deviceCredentials.getCredentialsId(), PAYLOAD);
         }
         return null;
     }
 
-    private String getCoapsPublishCommand(DeviceCredentials deviceCredentials) {
+    private String getCoapsPublishCommand(String defaultHostname, DeviceCredentials deviceCredentials) {
         DeviceConnectivityInfo coapsProperties = deviceConnectivityConfiguration.getConnectivity().get("coaps");
+        if (coapsProperties == null || !coapsProperties.getEnabled()) {
+            return null;
+        }
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                return String.format("coap-client-openssl -v 9 -m POST coaps://%s:%s/api/v1/%s/telemetry -t json -e %s ",
-                        coapsProperties.getHost(), coapsProperties.getPort(), deviceCredentials.getCredentialsId(), PAYLOAD);
+                String hostName = coapsProperties.getHost().isEmpty() ? defaultHostname : coapsProperties.getHost();
+                String port = coapsProperties.getPort().isEmpty() ? "" : ":" + coapsProperties.getPort();
+                return String.format("coap-client-openssl -v 9 -m POST coaps://%s%s/api/v1/%s/telemetry -t json -e %s",
+                        hostName, port, deviceCredentials.getCredentialsId(), PAYLOAD);
             case X509_CERTIFICATE:
-                return String.format("coap-client-openssl -v 9 -c cert.pem  -j key.pem -m POST " +
-                        "coaps://%s:%s/api/v1/telemetry -t json -e %s ", coapsProperties.getHost(), coapsProperties.getPort(), PAYLOAD);
+                return NOT_SUPPORTED;
             default:
                 return null;
         }
