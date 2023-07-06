@@ -35,6 +35,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
@@ -53,6 +54,7 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
@@ -83,8 +85,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @ExtendWith(MockitoExtension.class)
 public class TbGetRelatedAttributeNodeTest {
@@ -222,7 +222,7 @@ public class TbGetRelatedAttributeNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = FetchTo.DATA;
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "[]");
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, "[]");
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
@@ -290,7 +290,7 @@ public class TbGetRelatedAttributeNodeTest {
         doReturn(Futures.immediateFuture(List.of(entityRelation))).when(relationServiceMock).findByQuery(eq(TENANT_ID), any());
 
         when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
-        when(attributesServiceMock.find(eq(TENANT_ID), eq(user.getId()), eq(SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
+        when(attributesServiceMock.find(eq(TENANT_ID), eq(user.getId()), eq(DataConstants.SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
                 .thenReturn(Futures.immediateFuture(attributes));
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
@@ -341,7 +341,7 @@ public class TbGetRelatedAttributeNodeTest {
         doReturn(Futures.immediateFuture(List.of(entityRelation))).when(relationServiceMock).findByQuery(eq(TENANT_ID), any());
 
         when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
-        when(attributesServiceMock.find(eq(TENANT_ID), eq(secondCustomer.getId()), eq(SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
+        when(attributesServiceMock.find(eq(TENANT_ID), eq(secondCustomer.getId()), eq(DataConstants.SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
                 .thenReturn(Futures.immediateFuture(attributes));
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
@@ -591,7 +591,7 @@ public class TbGetRelatedAttributeNodeTest {
             msgData = "{\"temp\":42,\"humidity\":77,\"messageBodyPattern1\":\"targetKey2\",\"messageBodyPattern2\":\"sourceKey3\"}";
         }
 
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), originator, msgMetaData, msgData);
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, msgMetaData, msgData);
     }
 
     @RequiredArgsConstructor

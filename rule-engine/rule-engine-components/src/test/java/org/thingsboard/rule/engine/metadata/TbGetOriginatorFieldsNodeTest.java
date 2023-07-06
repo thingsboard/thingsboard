@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -51,7 +52,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @ExtendWith(MockitoExtension.class)
 public class TbGetOriginatorFieldsNodeTest {
@@ -133,7 +133,7 @@ public class TbGetOriginatorFieldsNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = FetchTo.DATA;
-        msg = TbMsg.newMsg("SOME_MESSAGE_TYPE", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "[]");
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, "[]");
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
@@ -162,7 +162,7 @@ public class TbGetOriginatorFieldsNodeTest {
         node.fetchTo = FetchTo.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -204,7 +204,7 @@ public class TbGetOriginatorFieldsNodeTest {
         node.fetchTo = FetchTo.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -247,7 +247,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -295,7 +295,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -353,7 +353,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), new DashboardId(UUID.randomUUID()), msgMetaData, msgData);
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, new DashboardId(UUID.randomUUID()), msgMetaData, msgData);
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 

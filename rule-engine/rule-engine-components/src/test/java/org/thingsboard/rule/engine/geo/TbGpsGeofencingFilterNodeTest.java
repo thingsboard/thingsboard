@@ -26,6 +26,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -40,9 +41,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.rule.engine.geo.GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER;
-import static org.thingsboard.rule.engine.geo.GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
 class TbGpsGeofencingFilterNodeTest {
 
@@ -91,7 +89,7 @@ class TbGpsGeofencingFilterNodeTest {
 
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         TbMsg msg = getTbMsg(deviceId, TbMsgMetaData.EMPTY,
-                POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
+                GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
 
         // WHEN
         var exception = assertThrows(TbNodeException.class, () -> node.onMsg(ctx, msg));
@@ -109,7 +107,7 @@ class TbGpsGeofencingFilterNodeTest {
 
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         TbMsg msg = getTbMsg(deviceId, TbMsgMetaData.EMPTY,
-                POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
+                GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
 
         // WHEN
         var exception = assertThrows(TbNodeException.class, () -> node.onMsg(ctx, msg));
@@ -130,7 +128,7 @@ class TbGpsGeofencingFilterNodeTest {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         TbMsgMetaData metadata = getMetadataForOldVersionPolygonPerimeter();
         TbMsg msg = getTbMsg(deviceId, metadata,
-                POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
+                GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
 
         // WHEN
         node.onMsg(ctx, msg);
@@ -154,7 +152,7 @@ class TbGpsGeofencingFilterNodeTest {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         TbMsgMetaData metadata = getMetadataForOldVersionPolygonPerimeter();
         TbMsg msg = getTbMsg(deviceId, metadata,
-                POINT_OUTSIDE_SIMPLE_RECT.getLatitude(), POINT_OUTSIDE_SIMPLE_RECT.getLongitude());
+                GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLatitude(), GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLongitude());
 
         // WHEN
         node.onMsg(ctx, msg);
@@ -177,7 +175,7 @@ class TbGpsGeofencingFilterNodeTest {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         TbMsgMetaData metadata = getMetadataForNewVersionPolygonPerimeter();
         TbMsg msg = getTbMsg(deviceId, metadata,
-                POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
+                GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
 
         // WHEN
         node.onMsg(ctx, msg);
@@ -200,7 +198,7 @@ class TbGpsGeofencingFilterNodeTest {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         TbMsgMetaData metadata = getMetadataForNewVersionPolygonPerimeter();
         TbMsg msg = getTbMsg(deviceId, metadata,
-                POINT_OUTSIDE_SIMPLE_RECT.getLatitude(), POINT_OUTSIDE_SIMPLE_RECT.getLongitude());
+                GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLatitude(), GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLongitude());
 
         // WHEN
         node.onMsg(ctx, msg);
@@ -224,7 +222,7 @@ class TbGpsGeofencingFilterNodeTest {
 
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         TbMsg msg = getTbMsg(deviceId, TbMsgMetaData.EMPTY,
-                POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
+                GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
 
         // WHEN
         node.onMsg(ctx, msg);
@@ -248,7 +246,7 @@ class TbGpsGeofencingFilterNodeTest {
 
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         TbMsg msg = getTbMsg(deviceId, TbMsgMetaData.EMPTY,
-                POINT_OUTSIDE_SIMPLE_RECT.getLatitude(), POINT_OUTSIDE_SIMPLE_RECT.getLongitude());
+                GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLatitude(), GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLongitude());
 
         // WHEN
         node.onMsg(ctx, msg);
@@ -450,11 +448,11 @@ class TbGpsGeofencingFilterNodeTest {
 
     private TbMsg getTbMsg(EntityId entityId, TbMsgMetaData metadata, double latitude, double longitude) {
         String data = "{\"latitude\": " + latitude + ", \"longitude\": " + longitude + "}";
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, metadata, data);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, metadata, data);
     }
 
     private TbMsg getEmptyArrayTbMsg(EntityId entityId) {
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, TbMsgMetaData.EMPTY, "[]");
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, TbMsgMetaData.EMPTY, "[]");
     }
 
 }

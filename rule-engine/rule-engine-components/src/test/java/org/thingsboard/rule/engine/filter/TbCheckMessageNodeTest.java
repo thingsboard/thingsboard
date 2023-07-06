@@ -23,7 +23,9 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -38,15 +40,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
-import static org.thingsboard.server.common.data.DataConstants.DEVICE_NAME;
-import static org.thingsboard.server.common.data.DataConstants.DEVICE_TYPE;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
 class TbCheckMessageNodeTest {
 
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
-    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY);
+    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
     private TbCheckMessageNode node;
 
@@ -193,12 +191,12 @@ class TbCheckMessageNodeTest {
     }
 
     private TbMsg getTbMsg(boolean emptyData) {
-        String data = emptyData ? TbMsg.EMPTY : "{\"temperature-0\": 25}";
+        String data = emptyData ? TbMsg.EMPTY_JSON_OBJECT : "{\"temperature-0\": 25}";
         var metadata = new TbMsgMetaData();
-        metadata.putValue(DEVICE_NAME, "Test Device");
-        metadata.putValue(DEVICE_TYPE, DEFAULT_DEVICE_TYPE);
+        metadata.putValue(DataConstants.DEVICE_NAME, "Test Device");
+        metadata.putValue(DataConstants.DEVICE_TYPE, DataConstants.DEFAULT_DEVICE_TYPE);
         metadata.putValue("ts", String.valueOf(System.currentTimeMillis()));
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DEVICE_ID, metadata, data);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, metadata, data);
     }
 
 }

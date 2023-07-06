@@ -27,10 +27,10 @@ import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -59,7 +59,7 @@ public class TbJsFilterNodeTest {
     @Test
     public void falseEvaluationDoNotSendMsg() throws TbNodeException {
         initWithScript();
-        TbMsg msg = TbMsg.newMsg(EntityType.USER.name(), null, new TbMsgMetaData(), TbMsgDataType.JSON, TbMsg.EMPTY, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, new TbMsgMetaData(), TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(false));
 
         node.onMsg(ctx, msg);
@@ -71,7 +71,7 @@ public class TbJsFilterNodeTest {
     public void exceptionInJsThrowsException() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg(EntityType.USER.name(), null, metaData, TbMsgDataType.JSON, TbMsg.EMPTY, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFailedFuture(new ScriptException("error")));
 
 
@@ -83,7 +83,7 @@ public class TbJsFilterNodeTest {
     public void metadataConditionCanBeTrue() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg(EntityType.USER.name(), null, metaData, TbMsgDataType.JSON, TbMsg.EMPTY, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(true));
 
         node.onMsg(ctx, msg);

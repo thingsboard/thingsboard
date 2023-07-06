@@ -1151,7 +1151,7 @@ public class DefaultTransportService implements TransportService {
             queueName = deviceProfile.getDefaultQueueName();
         }
 
-        TbMsg tbMsg = TbMsg.newMsg(queueName, tbMsgType.name(), deviceId, customerId, metaData, gson.toJson(json), ruleChainId, null);
+        TbMsg tbMsg = TbMsg.newMsg(queueName, tbMsgType, deviceId, customerId, metaData, gson.toJson(json), ruleChainId, null);
         sendToRuleEngine(tenantId, tbMsg, callback);
     }
 

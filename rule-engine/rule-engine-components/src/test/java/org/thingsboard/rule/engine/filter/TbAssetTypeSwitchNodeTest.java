@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -46,7 +47,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
 class TbAssetTypeSwitchNodeTest {
 
@@ -118,7 +118,7 @@ class TbAssetTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId) {
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY, callback);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, callback);
     }
 
 }

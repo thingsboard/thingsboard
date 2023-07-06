@@ -88,7 +88,7 @@ class TbMsgTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(TbMsgType msgType) {
-        return TbMsg.newMsg(msgType.name(), DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY);
+        return TbMsg.newMsg(msgType, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
     }
 
 }

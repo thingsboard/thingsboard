@@ -28,7 +28,6 @@ import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -103,28 +102,28 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         ApiFuture<String> messageIdFuture = this.pubSubClient.publish(pubsubMessageBuilder.build());
         ApiFutures.addCallback(messageIdFuture, new ApiFutureCallback<String>() {
                     public void onSuccess(String messageId) {
-                        TbMsg next = processPublishResult(ctx, msg, messageId);
+                        TbMsg next = processPublishResult(msg, messageId);
                         tellSuccess(ctx, next);
                     }
 
                     public void onFailure(Throwable t) {
-                        TbMsg next = processException(ctx, msg, t);
+                        TbMsg next = processException(msg, t);
                         tellFailure(ctx, next, t);
                     }
                 },
                 ctx.getExternalCallExecutor());
     }
 
-    private TbMsg processPublishResult(TbContext ctx, TbMsg origMsg, String messageId) {
+    private TbMsg processPublishResult(TbMsg origMsg, String messageId) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(MESSAGE_ID, messageId);
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsg(origMsg, metaData);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
+    private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsg(origMsg, metaData);
     }
 
     private Publisher initPubSubClient() throws IOException {

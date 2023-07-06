@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -44,7 +45,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
 class TbCheckAlarmStatusNodeTest {
 
@@ -159,7 +159,7 @@ class TbCheckAlarmStatusNodeTest {
     }
 
     private TbMsg getTbMsg(String msgData) {
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), DEVICE_ID, TbMsgMetaData.EMPTY, msgData);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, msgData);
     }
 
 }

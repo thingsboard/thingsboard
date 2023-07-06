@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbEmail;
@@ -27,15 +26,15 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
-import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
 
 @Slf4j
 @RuleNode(
@@ -68,7 +67,7 @@ public class TbMsgToEmailNode implements TbNode {
         try {
             TbEmail email = convert(msg);
             TbMsg emailMsg = buildEmailMsg(ctx, msg, email);
-            ctx.tellNext(emailMsg, SUCCESS);
+            ctx.tellNext(emailMsg, TbNodeConnectionType.SUCCESS);
         } catch (Exception ex) {
             log.warn("Can not convert message to email " + ex.getMessage());
             ctx.tellFailure(msg, ex);
@@ -77,7 +76,7 @@ public class TbMsgToEmailNode implements TbNode {
 
     private TbMsg buildEmailMsg(TbContext ctx, TbMsg msg, TbEmail email) throws JsonProcessingException {
         String emailJson = JacksonUtil.toString(email);
-        return ctx.transformMsg(msg, SEND_EMAIL_TYPE, msg.getOriginator(), msg.getMetaData().copy(), emailJson);
+        return ctx.transformMsg(msg, TbMsgType.SEND_EMAIL, msg.getOriginator(), msg.getMetaData().copy(), emailJson);
     }
 
     private TbEmail convert(TbMsg msg) throws IOException {

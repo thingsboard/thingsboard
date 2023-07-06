@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -60,10 +61,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbMsgDeduplicationNode implements TbNode {
 
-    private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
     public static final int TB_MSG_DEDUPLICATION_RETRY_DELAY = 10;
-    private static final String EMPTY_DATA = "";
-    private static final TbMsgMetaData EMPTY_META_DATA = new TbMsgMetaData();
 
     private TbMsgDeduplicationNodeConfiguration config;
 
@@ -82,7 +80,7 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        if (TB_MSG_DEDUPLICATION_TIMEOUT_MSG.equals(msg.getType())) {
+        if (TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG.name().equals(msg.getType())) {
             processDeduplication(ctx, msg.getOriginator());
         } else {
             processOnRegularMsg(ctx, msg);
@@ -210,7 +208,7 @@ public class TbMsgDeduplicationNode implements TbNode {
     }
 
     private void scheduleTickMsg(TbContext ctx, EntityId deduplicationId) {
-        ctx.tellSelf(ctx.newMsg(null, TB_MSG_DEDUPLICATION_TIMEOUT_MSG, deduplicationId, EMPTY_META_DATA, EMPTY_DATA), deduplicationInterval + 1);
+        ctx.tellSelf(ctx.newMsg(null, TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG, deduplicationId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING), deduplicationInterval + 1);
     }
 
     private String getMergedData(List<TbMsg> msgs) {

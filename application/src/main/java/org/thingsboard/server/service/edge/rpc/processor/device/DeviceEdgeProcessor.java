@@ -62,9 +62,6 @@ import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_CREATED;
-import static org.thingsboard.server.common.data.msg.TbMsgType.TO_SERVER_RPC_REQUEST;
-
 @Component
 @Slf4j
 @TbCoreComponent
@@ -127,7 +124,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         try {
             Device device = deviceService.findDeviceById(tenantId, deviceId);
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(device);
-            TbMsg tbMsg = TbMsg.newMsg(ENTITY_CREATED.name(), deviceId, device.getCustomerId(),
+            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, deviceId, device.getCustomerId(),
                     getActionTbMsgMetaData(edge, device.getCustomerId()), TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
@@ -141,7 +138,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push device action to rule engine: {}", deviceId, ENTITY_CREATED.name(), e);
+            log.warn("[{}] Failed to push device action to rule engine: {}", deviceId, TbMsgType.ENTITY_CREATED.name(), e);
         }
     }
 
@@ -219,7 +216,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
             ObjectNode data = JacksonUtil.newObjectNode();
             data.put("method", deviceRpcCallMsg.getRequestMsg().getMethod());
             data.put("params", deviceRpcCallMsg.getRequestMsg().getParams());
-            TbMsg tbMsg = TbMsg.newMsg(TO_SERVER_RPC_REQUEST.name(), deviceId, null, metaData,
+            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.TO_SERVER_RPC_REQUEST, deviceId, null, metaData,
                     TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(data));
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override

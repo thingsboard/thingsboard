@@ -64,7 +64,7 @@ public class TbSplitArrayMsgNode implements TbNode {
             if (data.isEmpty()) {
                 ctx.ack(msg);
             } else if (data.size() == 1) {
-                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(data.get(0))));
+                ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(data.get(0))));
             } else {
                 TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(data.size(), new TbMsgCallback() {
                     @Override
@@ -78,7 +78,7 @@ public class TbSplitArrayMsgNode implements TbNode {
                     }
                 });
                 data.forEach(msgNode -> {
-                    TbMsg outMsg = TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode));
+                    TbMsg outMsg = TbMsg.transformMsgData(msg, JacksonUtil.toString(msgNode));
                     ctx.enqueueForTellNext(outMsg, TbNodeConnectionType.SUCCESS, wrapper::onSuccess, wrapper::onFailure);
                 });
             }

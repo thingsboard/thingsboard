@@ -32,6 +32,7 @@ import org.springframework.web.client.AsyncRestTemplate;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -144,16 +145,15 @@ public class TbHttpClientTest {
         var httpClient = new TbHttpClient(config, eventLoop);
         httpClient.setHttpClient(asyncRestTemplate);
 
-        var msg = TbMsg.newMsg("GET", new DeviceId(EntityId.NULL_UUID), TbMsgMetaData.EMPTY, "{}");
+        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, new DeviceId(EntityId.NULL_UUID), TbMsgMetaData.EMPTY, "{}");
         var successMsg = TbMsg.newMsg(
-                "SUCCESS", msg.getOriginator(),
+                TbMsgType.POST_TELEMETRY_REQUEST, msg.getOriginator(),
                 msg.getMetaData(), msg.getData()
         );
 
         var ctx = mock(TbContext.class);
         when(ctx.transformMsg(
-                eq(msg), eq(msg.getType()),
-                eq(msg.getOriginator()),
+                eq(msg),
                 eq(msg.getMetaData()),
                 eq(msg.getData())
         )).thenReturn(successMsg);
@@ -161,15 +161,14 @@ public class TbHttpClientTest {
         var capturedData = ArgumentCaptor.forClass(String.class);
 
         when(ctx.transformMsg(
-                eq(msg), eq(msg.getType()),
-                eq(msg.getOriginator()),
+                eq(msg),
                 any(),
                 capturedData.capture()
         )).thenReturn(successMsg);
 
         httpClient.processMessage(ctx, msg,
                 m -> ctx.tellSuccess(msg),
-                (m, t) -> ctx.tellFailure(m, t));
+                ctx::tellFailure);
 
         Awaitility.await()
                 .atMost(30, TimeUnit.SECONDS)

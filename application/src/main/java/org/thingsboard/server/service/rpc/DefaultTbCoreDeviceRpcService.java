@@ -26,6 +26,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -47,8 +48,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import static org.thingsboard.server.common.data.msg.TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -183,7 +182,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         entityNode.put(DataConstants.ADDITIONAL_INFO, msg.getAdditionalInfo());
 
         try {
-            TbMsg tbMsg = TbMsg.newMsg(RPC_CALL_FROM_SERVER_TO_DEVICE.name(), msg.getDeviceId(), Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null), metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
+            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null), metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
             clusterService.pushMsgToRuleEngine(msg.getTenantId(), msg.getDeviceId(), tbMsg, null);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);

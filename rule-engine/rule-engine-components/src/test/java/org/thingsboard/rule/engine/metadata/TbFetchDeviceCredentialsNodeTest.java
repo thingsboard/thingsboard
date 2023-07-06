@@ -31,7 +31,9 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -51,8 +53,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
-import static org.thingsboard.server.common.data.security.DeviceCredentialsType.ACCESS_TOKEN;
 
 @ExtendWith(MockitoExtension.class)
 public class TbFetchDeviceCredentialsNodeTest {
@@ -98,7 +98,7 @@ public class TbFetchDeviceCredentialsNodeTest {
         doReturn(deviceCredentialsServiceMock).when(ctxMock).getDeviceCredentialsService();
         doAnswer(invocation -> {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
-            deviceCredentials.setCredentialsType(ACCESS_TOKEN);
+            deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
             return deviceCredentials;
         }).when(deviceCredentialsServiceMock).findDeviceCredentialsByDeviceId(any(), any());
         doAnswer(invocation -> JacksonUtil.newObjectNode()).when(deviceCredentialsServiceMock).toCredentialsInfo(any());
@@ -172,7 +172,7 @@ public class TbFetchDeviceCredentialsNodeTest {
         final var metaData = new TbMsgMetaData(mdMap);
         final String data = "{\"TestAttribute_1\": \"humidity\", \"TestAttribute_2\": \"voltage\"}";
 
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, metaData, data, callbackMock);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, metaData, data, callbackMock);
     }
 
 }

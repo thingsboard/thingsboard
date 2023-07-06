@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -79,7 +80,7 @@ public class TbChangeOriginatorNodeTest {
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
-        TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, assetId, TbMsgMetaData.EMPTY, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(),eq( assetId))).thenReturn(Futures.immediateFuture(asset));
@@ -87,11 +88,8 @@ public class TbChangeOriginatorNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
-        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
-        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsgOriginator(msgCaptor.capture(), originatorCaptor.capture());
 
         assertEquals(customerId, originatorCaptor.getValue());
     }
@@ -107,18 +105,15 @@ public class TbChangeOriginatorNodeTest {
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
-        TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, assetId, TbMsgMetaData.EMPTY, TbMsgDataType.JSON,TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(asset));
 
         node.onMsg(ctx, msg);
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
-        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
-        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsgOriginator(msgCaptor.capture(), originatorCaptor.capture());
 
         assertEquals(customerId, originatorCaptor.getValue());
     }
@@ -134,7 +129,7 @@ public class TbChangeOriginatorNodeTest {
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
-        TbMsg msg = TbMsg.newMsg( "ASSET", assetId, new TbMsgMetaData(), TbMsgDataType.JSON,"{}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, assetId, TbMsgMetaData.EMPTY, TbMsgDataType.JSON,TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(null));

@@ -59,6 +59,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -345,8 +346,33 @@ class DefaultTbContext implements TbContext {
         return TbMsg.transformMsg(origMsg, type, originator, metaData, data);
     }
 
+    @Override
+    public TbMsg newMsg(String queueName, TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data) {
+        return newMsg(queueName, type, originator, null, metaData, data);
+    }
+
+    @Override
+    public TbMsg newMsg(String queueName, TbMsgType type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
+        return TbMsg.newMsg(queueName, type, originator, customerId, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
+    }
+
+    @Override
+    public TbMsg transformMsg(TbMsg origMsg, TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data) {
+        return TbMsg.transformMsg(origMsg, type, originator, metaData, data);
+    }
+
+    @Override
+    public TbMsg transformMsg(TbMsg origMsg, TbMsgMetaData metaData, String data) {
+        return TbMsg.transformMsg(origMsg, metaData, data);
+    }
+
+    @Override
+    public TbMsg transformMsgOriginator(TbMsg origMsg, EntityId originator) {
+        return TbMsg.transformMsgOriginator(origMsg, originator);
+    }
+
     public TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId) {
-        return entityActionMsg(customer, customer.getId(), ruleNodeId, ENTITY_CREATED.name());
+        return entityActionMsg(customer, customer.getId(), ruleNodeId, ENTITY_CREATED);
     }
 
     public TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId) {
@@ -354,7 +380,7 @@ class DefaultTbContext implements TbContext {
         if (device.getDeviceProfileId() != null) {
             deviceProfile = mainCtx.getDeviceProfileCache().find(device.getDeviceProfileId());
         }
-        return entityActionMsg(device, device.getId(), ruleNodeId, ENTITY_CREATED.name(), deviceProfile);
+        return entityActionMsg(device, device.getId(), ruleNodeId, ENTITY_CREATED, deviceProfile);
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
@@ -362,10 +388,10 @@ class DefaultTbContext implements TbContext {
         if (asset.getAssetProfileId() != null) {
             assetProfile = mainCtx.getAssetProfileCache().find(asset.getAssetProfileId());
         }
-        return entityActionMsg(asset, asset.getId(), ruleNodeId, ENTITY_CREATED.name(), assetProfile);
+        return entityActionMsg(asset, asset.getId(), ruleNodeId, ENTITY_CREATED, assetProfile);
     }
 
-    public TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action) {
+    public TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, TbMsgType actionMsgType) {
         HasRuleEngineProfile profile = null;
         if (EntityType.DEVICE.equals(alarm.getOriginator().getEntityType())) {
             DeviceId deviceId = new DeviceId(alarm.getOriginator().getId());
@@ -374,7 +400,7 @@ class DefaultTbContext implements TbContext {
             AssetId assetId = new AssetId(alarm.getOriginator().getId());
             profile = mainCtx.getAssetProfileCache().get(getTenantId(), assetId);
         }
-        return entityActionMsg(alarm, alarm.getOriginator(), ruleNodeId, action, profile);
+        return entityActionMsg(alarm, alarm.getOriginator(), ruleNodeId, actionMsgType, profile);
     }
 
     public TbMsg attributesUpdatedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes) {
@@ -382,7 +408,7 @@ class DefaultTbContext implements TbContext {
         if (attributes != null) {
             attributes.forEach(attributeKvEntry -> JacksonUtil.addKvEntry(entityNode, attributeKvEntry));
         }
-        return attributesActionMsg(originator, ruleNodeId, scope, ATTRIBUTES_UPDATED.name(), JacksonUtil.toString(entityNode));
+        return attributesActionMsg(originator, ruleNodeId, scope, ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
     }
 
     public TbMsg attributesDeletedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys) {
@@ -391,10 +417,10 @@ class DefaultTbContext implements TbContext {
         if (keys != null) {
             keys.forEach(attrsArrayNode::add);
         }
-        return attributesActionMsg(originator, ruleNodeId, scope, ATTRIBUTES_DELETED.name(), JacksonUtil.toString(entityNode));
+        return attributesActionMsg(originator, ruleNodeId, scope, ATTRIBUTES_DELETED, JacksonUtil.toString(entityNode));
     }
 
-    private TbMsg attributesActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, String action, String msgData) {
+    private TbMsg attributesActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, TbMsgType actionMsgType, String msgData) {
         TbMsgMetaData tbMsgMetaData = getActionMetaData(ruleNodeId);
         tbMsgMetaData.putValue("scope", scope);
         HasRuleEngineProfile profile = null;
@@ -405,7 +431,7 @@ class DefaultTbContext implements TbContext {
             AssetId assetId = new AssetId(originator.getId());
             profile = mainCtx.getAssetProfileCache().get(getTenantId(), assetId);
         }
-        return entityActionMsg(originator, tbMsgMetaData, msgData, action, profile);
+        return entityActionMsg(originator, tbMsgMetaData, msgData, actionMsgType, profile);
     }
 
     @Override
@@ -413,26 +439,26 @@ class DefaultTbContext implements TbContext {
         mainCtx.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
     }
 
-    public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action) {
-        return entityActionMsg(entity, id, ruleNodeId, action, null);
+    public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, TbMsgType actionMsgType) {
+        return entityActionMsg(entity, id, ruleNodeId, actionMsgType, null);
     }
 
-    public <E, I extends EntityId, K extends HasRuleEngineProfile> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action, K profile) {
+    public <E, I extends EntityId, K extends HasRuleEngineProfile> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, TbMsgType actionMsgType, K profile) {
         try {
-            return entityActionMsg(id, getActionMetaData(ruleNodeId), JacksonUtil.toString(JacksonUtil.valueToTree(entity)), action, profile);
+            return entityActionMsg(id, getActionMetaData(ruleNodeId), JacksonUtil.toString(JacksonUtil.valueToTree(entity)), actionMsgType, profile);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + action + " msg: " + e);
+            throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + actionMsgType.name() + " msg: " + e);
         }
     }
 
-    private <I extends EntityId, K extends HasRuleEngineProfile> TbMsg entityActionMsg(I id, TbMsgMetaData msgMetaData, String msgData, String action, K profile) {
+    private <I extends EntityId, K extends HasRuleEngineProfile> TbMsg entityActionMsg(I id, TbMsgMetaData msgMetaData, String msgData, TbMsgType actionMsgType, K profile) {
         String defaultQueueName = null;
         RuleChainId defaultRuleChainId = null;
         if (profile != null) {
             defaultQueueName = profile.getDefaultQueueName();
             defaultRuleChainId = profile.getDefaultRuleChainId();
         }
-        return TbMsg.newMsg(defaultQueueName, action, id, msgMetaData, msgData, defaultRuleChainId, null);
+        return TbMsg.newMsg(defaultQueueName, actionMsgType, id, msgMetaData, msgData, defaultRuleChainId, null);
     }
 
     @Override

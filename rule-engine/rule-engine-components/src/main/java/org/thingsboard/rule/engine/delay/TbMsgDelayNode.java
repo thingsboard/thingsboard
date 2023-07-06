@@ -23,6 +23,8 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -31,8 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -50,8 +50,6 @@ import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCES
 )
 public class TbMsgDelayNode implements TbNode {
 
-    private static final String TB_MSG_DELAY_NODE_MSG = "TbMsgDelayNodeMsg";
-
     private TbMsgDelayNodeConfiguration config;
     private Map<UUID, TbMsg> pendingMsgs;
 
@@ -63,7 +61,7 @@ public class TbMsgDelayNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (msg.getType().equals(TB_MSG_DELAY_NODE_MSG)) {
+        if (msg.getType().equals(TbMsgType.DELAY_TIMEOUT_SELF_MSG.name())) {
             TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
             if (pendingMsg != null) {
                 ctx.enqueueForTellNext(
@@ -75,13 +73,13 @@ public class TbMsgDelayNode implements TbNode {
                                 pendingMsg.getMetaData(),
                                 pendingMsg.getData()
                         ),
-                        SUCCESS
+                        TbNodeConnectionType.SUCCESS
                 );
             }
         } else {
             if (pendingMsgs.size() < config.getMaxPendingMsgs()) {
                 pendingMsgs.put(msg.getId(), msg);
-                TbMsg tickMsg = ctx.newMsg(null, TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), msg.getCustomerId(), new TbMsgMetaData(), msg.getId().toString());
+                TbMsg tickMsg = ctx.newMsg(null, TbMsgType.DELAY_TIMEOUT_SELF_MSG, ctx.getSelfId(), msg.getCustomerId(), TbMsgMetaData.EMPTY, msg.getId().toString());
                 ctx.tellSelf(tickMsg, getDelay(msg));
                 ctx.ack(msg);
             } else {

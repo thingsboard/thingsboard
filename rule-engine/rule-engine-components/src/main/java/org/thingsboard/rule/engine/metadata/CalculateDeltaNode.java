@@ -115,7 +115,7 @@ public class CalculateDeltaNode implements TbNode {
                         long period = previousData != null ? currentTs - previousData.ts : 0;
                         result.put(config.getPeriodValueKey(), period);
                     }
-                    ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(result)));
+                    ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(result)));
                 },
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }

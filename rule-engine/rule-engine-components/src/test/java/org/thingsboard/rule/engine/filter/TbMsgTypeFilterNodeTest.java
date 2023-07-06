@@ -97,7 +97,7 @@ class TbMsgTypeFilterNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId, TbMsgType msgType) {
-        return TbMsg.newMsg(msgType.name(), entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY);
+        return TbMsg.newMsg(msgType, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
     }
 
 }

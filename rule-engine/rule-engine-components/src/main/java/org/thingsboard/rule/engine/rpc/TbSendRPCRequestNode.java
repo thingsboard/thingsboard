@@ -57,7 +57,6 @@ public class TbSendRPCRequestNode implements TbNode {
 
     private Random random = new Random();
     private Gson gson = new Gson();
-    private JsonParser jsonParser = new JsonParser();
     private TbSendRpcRequestNodeConfiguration config;
 
     @Override
@@ -67,7 +66,7 @@ public class TbSendRPCRequestNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        JsonObject json = jsonParser.parse(msg.getData()).getAsJsonObject();
+        JsonObject json = JsonParser.parseString(msg.getData()).getAsJsonObject();
         String tmp;
         if (msg.getOriginator().getEntityType() != EntityType.DEVICE) {
             ctx.tellFailure(msg, new RuntimeException("Message originator is not a device entity!"));
@@ -117,7 +116,7 @@ public class TbSendRPCRequestNode implements TbNode {
 
             ctx.getRpcService().sendRpcRequestToDevice(request, ruleEngineDeviceRpcResponse -> {
                 if (ruleEngineDeviceRpcResponse.getError().isEmpty()) {
-                    TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getCustomerId(), msg.getMetaData(), ruleEngineDeviceRpcResponse.getResponse().orElse("{}"));
+                    TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getCustomerId(), msg.getMetaData(), ruleEngineDeviceRpcResponse.getResponse().orElse(TbMsg.EMPTY_JSON_OBJECT));
                     ctx.enqueueForTellNext(next, TbNodeConnectionType.SUCCESS);
                 } else {
                     TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getCustomerId(), msg.getMetaData(), wrap("error", ruleEngineDeviceRpcResponse.getError().get().name()));

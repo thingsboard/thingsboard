@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -37,7 +38,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
 class TbOriginatorTypeSwitchNodeTest {
 
@@ -90,7 +90,7 @@ class TbOriginatorTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId) {
-        return TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
     }
 
 }

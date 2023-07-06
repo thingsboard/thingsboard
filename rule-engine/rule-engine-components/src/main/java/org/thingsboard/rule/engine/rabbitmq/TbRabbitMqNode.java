@@ -24,7 +24,6 @@ import com.rabbitmq.client.MessageProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -86,7 +85,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(publishMessageAsync(ctx, msg),
                 m -> tellSuccess(ctx, m),
-                t -> tellFailure(ctx, processException(ctx, msg, t), t));
+                t -> tellFailure(ctx, processException(msg, t), t));
         ackIfNeeded(ctx, msg);
     }
 
@@ -115,10 +114,10 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         return msg;
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
+    private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsg(origMsg, metaData);
     }
 
     @Override

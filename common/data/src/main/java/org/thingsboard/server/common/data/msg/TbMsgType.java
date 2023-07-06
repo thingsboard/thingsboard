@@ -66,16 +66,44 @@ public enum TbMsgType {
     RELATION_DELETED("Relation Deleted"),
     RELATIONS_DELETED("All Relations Deleted"),
     PROVISION_SUCCESS(null),
-    PROVISION_FAILURE(null);
+    PROVISION_FAILURE(null),
+    SEND_EMAIL(null),
+
+    // tellSelfOnly types
+    GENERATOR_NODE_SELF_MSG(null, true),
+
+    DEVICE_PROFILE_PERIODIC_SELF_MSG(null, true),
+    DEVICE_PROFILE_UPDATE_SELF_MSG(null, true),
+    DEVICE_UPDATE_SELF_MSG(null, true),
+
+    DEDUPLICATION_TIMEOUT_SELF_MSG(null, true),
+
+    DELAY_TIMEOUT_SELF_MSG(null, true),
+
+    MSG_COUNT_SELF_MSG(null, true);
+
+
 
     public static final List<String> NODE_CONNECTIONS = EnumSet.allOf(TbMsgType.class).stream()
-            .map(TbMsgType::getRuleNodeConnection).filter(Objects::nonNull).collect(Collectors.toUnmodifiableList());
+            .filter(tbMsgType -> !tbMsgType.isTellSelfOnly())
+            .map(TbMsgType::getRuleNodeConnection)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toUnmodifiableList());
 
     @Getter
     private final String ruleNodeConnection;
 
+    @Getter
+    private final boolean tellSelfOnly;
+
+    TbMsgType(String ruleNodeConnection, boolean tellSelfOnly) {
+        this.ruleNodeConnection = ruleNodeConnection;
+        this.tellSelfOnly = tellSelfOnly;
+    }
+
     TbMsgType(String ruleNodeConnection) {
         this.ruleNodeConnection = ruleNodeConnection;
+        this.tellSelfOnly = false;
     }
 
     public static String getRuleNodeConnectionOrElseOther(String msgType) {

@@ -171,7 +171,7 @@ public class EntityActionService {
                 if (tenantId != null && !tenantId.isSysTenantId()) {
                     processNotificationRules(tenantId, entityId, entity, actionType, user, additionalInfo);
                 }
-                TbMsg tbMsg = TbMsg.newMsg(msgType.get().name(), entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
+                TbMsg tbMsg = TbMsg.newMsg(msgType.get(), entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
                 tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);

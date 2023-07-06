@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -149,7 +150,7 @@ public class TbMathNodeTest {
         metaData.putValue("key2", "argumentA");
         ObjectNode msgNode = JacksonUtil.newObjectNode()
                 .put("key3", "argumentB").put("argumentA", 2).put("argumentB", 2);
-        TbMsg msg = TbMsg.newMsg("TEST", originator, metaData, msgNode.toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, msgNode.toString());
 
         node.onMsg(ctx, msg);
 
@@ -162,7 +163,7 @@ public class TbMathNodeTest {
         metaData.putValue("key2", "argumentC");
         msgNode = JacksonUtil.newObjectNode()
                 .put("key3", "argumentD").put("argumentC", 4).put("argumentD", 3);
-        msg = TbMsg.newMsg("TEST", originator, metaData, msgNode.toString());
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, msgNode.toString());
 
         node.onMsg(ctx, msg);
 
@@ -246,7 +247,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", arg1).put("b", arg2).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", arg1).put("b", arg2).toString());
 
         node.onMsg(ctx, msg);
 
@@ -269,7 +270,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", arg1).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", arg1).toString());
 
         node.onMsg(ctx, msg);
 
@@ -292,7 +293,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString());
 
         node.onMsg(ctx, msg);
 
@@ -315,7 +316,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString());
 
         node.onMsg(ctx, msg);
 
@@ -339,7 +340,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.TIME_SERIES, "b")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().toString());
 
         Mockito.when(attributesService.find(tenantId, originator, DataConstants.SERVER_SCOPE, "a"))
                 .thenReturn(Futures.immediateFuture(Optional.of(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("a", 2.0)))));
@@ -367,7 +368,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
 
         node.onMsg(ctx, msg);
 
@@ -389,7 +390,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
 
         node.onMsg(ctx, msg);
 
@@ -411,7 +412,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
 
         Mockito.when(telemetryService.saveAttrAndNotify(any(), any(), anyString(), anyString(), anyDouble()))
                 .thenReturn(Futures.immediateFuture(null));
@@ -437,7 +438,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
         Mockito.when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
                 .thenReturn(Futures.immediateFuture(null));
 
@@ -462,7 +463,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 5).toString());
         Mockito.when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
                 .thenReturn(Futures.immediateFuture(null));
 
@@ -493,7 +494,7 @@ public class TbMathNodeTest {
                 new TbMathResult(TbMathArgumentType.MESSAGE_METADATA, "result", 3, false, false, null),
                 tbMathArgument
         );
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 10).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 10).toString());
 
         node.onMsg(ctx, msg);
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -513,7 +514,7 @@ public class TbMathNodeTest {
                 new TbMathResult(TbMathArgumentType.TIME_SERIES, "result", 3, true, false, DataConstants.SERVER_SCOPE),
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey")
         );
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 10).toString());
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 10).toString());
         Throwable thrown = assertThrows(RuntimeException.class, () -> {
             node.onMsg(ctx, msg);
         });
@@ -527,7 +528,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), "[]");
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, new TbMsgMetaData(), "[]");
         Throwable thrown = assertThrows(RuntimeException.class, () -> {
             node.onMsg(ctx, msg);
         });

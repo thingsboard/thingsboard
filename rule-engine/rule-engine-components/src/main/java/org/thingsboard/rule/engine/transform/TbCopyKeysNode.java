@@ -95,7 +95,7 @@ public class TbCopyKeysNode implements TbNode {
             }
         }
         if (msgChanged) {
-            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msgData));
+            ctx.tellSuccess(TbMsg.transformMsg(msg, metaData, msgData));
         } else {
             ctx.tellSuccess(msg);
         }

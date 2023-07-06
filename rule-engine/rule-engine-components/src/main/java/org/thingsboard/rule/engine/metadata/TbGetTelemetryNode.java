@@ -43,10 +43,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
-
 /**
  * Created by mshvayka on 04.09.18.
  */
@@ -76,7 +72,7 @@ public class TbGetTelemetryNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
-        limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
+        limit = config.getFetchMode().equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
         fetchMode = config.getFetchMode();
         orderByFetchAll = config.getOrderBy();
         if (StringUtils.isEmpty(orderByFetchAll)) {
@@ -86,7 +82,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     Aggregation parseAggregationConfig(String aggName) {
-        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(FETCH_MODE_ALL)) {
+        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL)) {
             return Aggregation.NONE;
         }
         return Aggregation.valueOf(aggName);
@@ -103,7 +99,7 @@ public class TbGetTelemetryNode implements TbNode {
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg, keys);
-                    ctx.tellSuccess(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData()));
+                    ctx.tellSuccess(msg);
                 }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
@@ -124,9 +120,9 @@ public class TbGetTelemetryNode implements TbNode {
 
     private String getOrderBy() {
         switch (fetchMode) {
-            case FETCH_MODE_ALL:
+            case TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL:
                 return orderByFetchAll;
-            case FETCH_MODE_FIRST:
+            case TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST:
                 return ASC_ORDER;
             default:
                 return DESC_ORDER;
@@ -135,7 +131,7 @@ public class TbGetTelemetryNode implements TbNode {
 
     private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
         ObjectNode resultNode = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
-        if (FETCH_MODE_ALL.equals(fetchMode)) {
+        if (TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
             entries.forEach(entry -> processSingle(resultNode, entry));
@@ -216,7 +212,7 @@ public class TbGetTelemetryNode implements TbNode {
         if (limit != 0) {
             return limit;
         } else {
-            return MAX_FETCH_SIZE;
+            return TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
         }
     }
 

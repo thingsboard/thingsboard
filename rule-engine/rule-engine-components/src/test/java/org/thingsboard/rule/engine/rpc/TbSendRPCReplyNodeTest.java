@@ -80,7 +80,7 @@ public class TbSendRPCReplyNodeTest {
         Mockito.when(ctx.getRpcService()).thenReturn(rpcService);
 
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, getDefaultMetadata(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, getDefaultMetadata(),
                 TbMsgDataType.JSON, DUMMY_DATA, null, null);
 
         node.onMsg(ctx, msg);
@@ -99,7 +99,7 @@ public class TbSendRPCReplyNodeTest {
         TbMsgMetaData defaultMetadata = getDefaultMetadata();
         defaultMetadata.putValue(DataConstants.EDGE_ID, UUID.randomUUID().toString());
         defaultMetadata.putValue(DataConstants.DEVICE_ID, UUID.randomUUID().toString());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, defaultMetadata,
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, defaultMetadata,
                 TbMsgDataType.JSON, DUMMY_DATA, null, null);
 
         node.onMsg(ctx, msg);

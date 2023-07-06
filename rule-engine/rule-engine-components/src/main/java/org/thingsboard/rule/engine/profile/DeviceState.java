@@ -224,7 +224,7 @@ class DeviceState {
     private boolean processAttributesDeleteNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         List<String> keys = new ArrayList<>();
-        new JsonParser().parse(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray().forEach(e -> keys.add(e.getAsString()));
+        JsonParser.parseString(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray().forEach(e -> keys.add(e.getAsString()));
         String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
@@ -252,7 +252,7 @@ class DeviceState {
 
     private boolean processAttributes(TbContext ctx, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
-        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
+        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
         if (!attributes.isEmpty()) {
             SnapshotUpdate update = merge(latestValues, attributes, scope);
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
@@ -267,7 +267,7 @@ class DeviceState {
 
     protected boolean processTelemetry(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
-        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(new JsonParser().parse(msg.getData()), msg.getMetaDataTs());
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(JsonParser.parseString(msg.getData()), msg.getMetaDataTs());
         // iterate over data by ts (ASC order).
         for (Map.Entry<Long, List<KvEntry>> entry : tsKvMap.entrySet()) {
             Long ts = entry.getKey();

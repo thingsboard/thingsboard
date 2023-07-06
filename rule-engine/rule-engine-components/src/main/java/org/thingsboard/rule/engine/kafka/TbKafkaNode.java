@@ -165,24 +165,24 @@ public class TbKafkaNode extends TbAbstractExternalNode {
 
     private void processRecord(TbContext ctx, TbMsg msg, RecordMetadata metadata, Exception e) {
         if (e == null) {
-            tellSuccess(ctx, processResponse(ctx, msg, metadata));
+            tellSuccess(ctx, processResponse(msg, metadata));
         } else {
-            tellFailure(ctx, processException(ctx, msg, e), e);
+            tellFailure(ctx, processException(msg, e), e);
         }
     }
 
-    private TbMsg processResponse(TbContext ctx, TbMsg origMsg, RecordMetadata recordMetadata) {
+    private TbMsg processResponse(TbMsg origMsg, RecordMetadata recordMetadata) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(OFFSET, String.valueOf(recordMetadata.offset()));
         metaData.putValue(PARTITION, String.valueOf(recordMetadata.partition()));
         metaData.putValue(TOPIC, recordMetadata.topic());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsg(origMsg, metaData);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Exception e) {
+    private TbMsg processException(TbMsg origMsg, Exception e) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsg(origMsg, metaData);
     }
 
 }

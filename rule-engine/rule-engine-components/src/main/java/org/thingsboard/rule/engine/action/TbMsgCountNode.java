@@ -24,6 +24,8 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -31,9 +33,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
-import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -47,8 +46,6 @@ import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCES
         configDirective = "tbActionNodeMsgCountConfig"
 )
 public class TbMsgCountNode implements TbNode {
-
-    private static final String TB_MSG_COUNT_NODE_MSG = "TbMsgCountNodeMsg";
 
     private AtomicLong messagesProcessed = new AtomicLong(0);
     private final Gson gson = new Gson();
@@ -68,7 +65,7 @@ public class TbMsgCountNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (msg.getType().equals(TB_MSG_COUNT_NODE_MSG) && msg.getId().equals(nextTickId)) {
+        if (msg.getType().equals(TbMsgType.MSG_COUNT_SELF_MSG.name()) && msg.getId().equals(nextTickId)) {
             JsonObject telemetryJson = new JsonObject();
             telemetryJson.addProperty(this.telemetryPrefix + "_" + ctx.getServiceId(), messagesProcessed.longValue());
 
@@ -77,8 +74,8 @@ public class TbMsgCountNode implements TbNode {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("delta", Long.toString(System.currentTimeMillis() - lastScheduledTs + delay));
 
-            TbMsg tbMsg = TbMsg.newMsg(msg.getQueueName(), POST_TELEMETRY_REQUEST.name(), ctx.getTenantId(), msg.getCustomerId(), metaData, gson.toJson(telemetryJson));
-            ctx.enqueueForTellNext(tbMsg, SUCCESS);
+            TbMsg tbMsg = TbMsg.newMsg(msg.getQueueName(), TbMsgType.POST_TELEMETRY_REQUEST, ctx.getTenantId(), msg.getCustomerId(), metaData, gson.toJson(telemetryJson));
+            ctx.enqueueForTellNext(tbMsg, TbNodeConnectionType.SUCCESS);
             scheduleTickMsg(ctx, tbMsg);
         } else {
             messagesProcessed.incrementAndGet();
@@ -93,7 +90,7 @@ public class TbMsgCountNode implements TbNode {
         }
         lastScheduledTs = lastScheduledTs + delay;
         long curDelay = Math.max(0L, (lastScheduledTs - curTs));
-        TbMsg tickMsg = ctx.newMsg(null, TB_MSG_COUNT_NODE_MSG, ctx.getSelfId(), msg != null ? msg.getCustomerId() : null, new TbMsgMetaData(), "");
+        TbMsg tickMsg = ctx.newMsg(null, TbMsgType.MSG_COUNT_SELF_MSG, ctx.getSelfId(), msg != null ? msg.getCustomerId() : null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
         nextTickId = tickMsg.getId();
         ctx.tellSelf(tickMsg, curDelay);
     }

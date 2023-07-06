@@ -75,7 +75,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
         ListenableFuture<Boolean> future = createRelationIfAbsent(ctx, msg, entity, relationType);
         return Futures.transform(future, result -> {
             if (result && config.isChangeOriginatorToRelatedEntity()) {
-                TbMsg tbMsg = ctx.transformMsg(msg, msg.getType(), entity.getEntityId(), msg.getMetaData(), msg.getData());
+                TbMsg tbMsg = ctx.transformMsgOriginator(msg, entity.getEntityId());
                 return new RelationContainer(tbMsg, result);
             }
             return new RelationContainer(msg, result);

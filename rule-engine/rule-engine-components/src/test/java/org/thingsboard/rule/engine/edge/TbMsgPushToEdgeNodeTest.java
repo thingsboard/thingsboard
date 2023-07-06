@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -48,18 +49,12 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
-import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
-import static org.thingsboard.server.common.data.msg.TbMsgType.CONNECT_EVENT;
-import static org.thingsboard.server.common.data.msg.TbMsgType.DISCONNECT_EVENT;
-import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbMsgPushToEdgeNodeTest {
 
-    private static final List<String> MISC_EVENTS = List.of(CONNECT_EVENT.name(), DISCONNECT_EVENT.name(),
-            ACTIVITY_EVENT.name(), INACTIVITY_EVENT.name());
+    private static final List<TbMsgType> MISC_EVENTS = List.of(TbMsgType.CONNECT_EVENT, TbMsgType.DISCONNECT_EVENT,
+            TbMsgType.ACTIVITY_EVENT, TbMsgType.INACTIVITY_EVENT);
 
     TbMsgPushToEdgeNode node;
 
@@ -89,8 +84,8 @@ public class TbMsgPushToEdgeNodeTest {
         Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
         Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(TbMsgPushToEdgeNode.DEFAULT_PAGE_SIZE))).thenReturn(new PageData<>());
 
-        TbMsg msg = TbMsg.newMsg(POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, "{}", null, null);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
+                TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);
 
         node.onMsg(ctx, msg);
 
@@ -110,8 +105,8 @@ public class TbMsgPushToEdgeNodeTest {
         PageData<EdgeId> edgePageData = new PageData<>(List.of(edgeId), 1, 1, false);
         Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(TbMsgPushToEdgeNode.DEFAULT_PAGE_SIZE))).thenReturn(edgePageData);
 
-        TbMsg msg = TbMsg.newMsg(ATTRIBUTES_UPDATED.name(), userId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, "{}", null, null);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.ATTRIBUTES_UPDATED, userId, TbMsgMetaData.EMPTY,
+                TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);
 
         node.onMsg(ctx, msg);
 
@@ -120,7 +115,7 @@ public class TbMsgPushToEdgeNodeTest {
 
     @Test
     public void testMiscEventsProcessedAsAttributesUpdated() {
-        for (String event : MISC_EVENTS) {
+        for (var event : MISC_EVENTS) {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue(DataConstants.SCOPE, DataConstants.SERVER_SCOPE);
             testEvent(event, metaData, EdgeEventActionType.ATTRIBUTES_UPDATED, "kv");
@@ -129,12 +124,12 @@ public class TbMsgPushToEdgeNodeTest {
 
     @Test
     public void testMiscEventsProcessedAsTimeseriesUpdated() {
-        for (String event : MISC_EVENTS) {
+        for (var event : MISC_EVENTS) {
             testEvent(event, new TbMsgMetaData(), EdgeEventActionType.TIMESERIES_UPDATED, "data");
         }
     }
 
-    private void testEvent(String event, TbMsgMetaData metaData, EdgeEventActionType expectedType, String dataKey) {
+    private void testEvent(TbMsgType event, TbMsgMetaData metaData, EdgeEventActionType expectedType, String dataKey) {
         Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
         Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
         Mockito.when(ctx.getEdgeEventService()).thenReturn(edgeEventService);

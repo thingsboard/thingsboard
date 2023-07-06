@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -54,14 +55,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
 class TbCheckRelationNodeTest {
 
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
     private static final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
     private static final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
-    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(POST_ATTRIBUTES_REQUEST.name(), ORIGINATOR_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY);
+    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, ORIGINATOR_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
     private TbCheckRelationNode node;
 

@@ -16,9 +16,8 @@
 package org.thingsboard.rule.engine.mail;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbEmail;
@@ -26,6 +25,8 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -50,7 +51,6 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 public class TbSendEmailNode extends TbAbstractExternalNode {
 
     private static final String MAIL_PROP = "mail.";
-    static final String SEND_EMAIL_TYPE = "SEND_EMAIL";
     private TbSendEmailNodeConfiguration config;
     private JavaMailSenderImpl mailSender;
 
@@ -101,7 +101,7 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
     }
 
     private void validateType(String type) {
-        if (!SEND_EMAIL_TYPE.equals(type)) {
+        if (!TbMsgType.SEND_EMAIL.name().equals(type)) {
             log.warn("Not expected msg type [{}] for SendEmail Node", type);
             throw new IllegalStateException("Not expected msg type " + type + " for SendEmail Node");
         }
