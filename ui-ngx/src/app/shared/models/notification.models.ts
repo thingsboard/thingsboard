@@ -591,12 +591,10 @@ export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
 ]);
 
 export interface NotificationUserSettings {
-  prefs: Array<NotificationUserSetting>;
+  prefs: {[key: string]: NotificationUserSetting};
 }
 
 export interface NotificationUserSetting {
-  ruleId: string;
-  ruleName: string;
   enabled: boolean;
   enabledDeliveryMethods: Array<NotificationDeliveryMethod>;
 }
