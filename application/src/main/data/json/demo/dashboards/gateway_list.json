@@ -174,12 +174,16 @@
                 "icon": "settings",
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
-                "type": "customPretty",
-                "customHtml": "<div [ngClass]=\"ctx.isMobile ? 'container-mobile' : 'container'\">\n    <tb-gateway-configuration [device]=\"entityId\" [dialogRef]=\"dialogRef\"></tb-gateway-configuration>\n</div>\n",
-                "customCss": ".container {\n    width: 800px;\n    height: 80vh;\n}\n\n.container-mobile {\n    height: 100%;\n}",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet data = {};\r\n\r\nopenEditEntityDialog();\r\n\r\nfunction openEditEntityDialog() {\r\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\r\n}\r\n\r\nfunction EditEntityDialogController(instance) {\r\n    let vm = instance;\r\n    vm.ctx = widgetContext;\r\n    vm.entityId = entityId;\r\n\r\n    vm.close = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n}",
-                "customResources": [],
-                "openInSeparateDialog": false,
+                "type": "openDashboardState",
+                "targetDashboardStateId": "configuration",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "dialogTitle": "Gateway configuration",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openInSeparateDialog": true,
                 "openInPopover": false,
                 "id": "c0c8eb55-48c6-8a4e-ad9a-427507e86916"
               },
@@ -1895,12 +1899,16 @@
                 "icon": "more_horiz",
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
-                "type": "customPretty",
-                "customHtml": "<form style=\"min-width: 400px; max-width: 1000px; position: relative;\">\r\n  <mat-toolbar color=\"primary\">\r\n    <h2 translate>gateway.command</h2>\r\n    <span fxFlex></span>\r\n    <button mat-icon-button\r\n            (click)=\"close()\"\r\n            type=\"button\">\r\n      <mat-icon class=\"material-icons\">close</mat-icon>\r\n    </button>\r\n  </mat-toolbar>\r\n  <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\r\n  </mat-progress-bar>\r\n  <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\r\n  <tb-gateway-command [token]=\"data.credentials.credentialsId\"></tb-gateway-command>\r\n  <div mat-dialog-actions fxLayoutAlign=\"end center\">\r\n    <button mat-button color=\"primary\"\r\n            type=\"button\"\r\n            cdkFocusInitial\r\n            [disabled]=\"(isLoading$ | async)\"\r\n            (click)=\"close()\">\r\n      {{ 'action.ok' | translate }}\r\n    </button>\r\n  </div>\r\n</form>",
-                "customCss": "/*=======================================================================*/\r\n/*==========  There are two examples: for edit and add entity  ==========*/\r\n/*=======================================================================*/\r\n/*========================  Edit entity example  ========================*/\r\n/*=======================================================================*/\r\n/*\r\n.edit-entity-form .boolean-value-input {\r\n    padding-left: 5px;\r\n}\r\n\r\n.edit-entity-form .boolean-value-input .checkbox-label {\r\n    margin-bottom: 8px;\r\n    color: rgba(0,0,0,0.54);\r\n    font-size: 12px;\r\n}\r\n\r\n.relations-list .header {\r\n    padding-right: 5px;\r\n    padding-bottom: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .header .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n    font-size: 12px;\r\n    font-weight: 700;\r\n    color: rgba(0, 0, 0, .54);\r\n    white-space: nowrap;\r\n}\r\n\r\n.relations-list .mat-form-field-infix {\r\n    width: auto !important;\r\n}\r\n\r\n.relations-list .body {\r\n    padding-right: 5px;\r\n    padding-bottom: 15px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .row {\r\n    padding-top: 5px;\r\n}\r\n\r\n.relations-list .body .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .md-button {\r\n    margin: 0;\r\n}\r\n*/\r\n/*========================================================================*/\r\n/*=========================  Add entity example  =========================*/\r\n/*========================================================================*/\r\n/*\r\n.add-entity-form .boolean-value-input {\r\n    padding-left: 5px;\r\n}\r\n\r\n.add-entity-form .boolean-value-input .checkbox-label {\r\n    margin-bottom: 8px;\r\n    color: rgba(0,0,0,0.54);\r\n    font-size: 12px;\r\n}\r\n\r\n.relations-list .header {\r\n    padding-right: 5px;\r\n    padding-bottom: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .header .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n    font-size: 12px;\r\n    font-weight: 700;\r\n    color: rgba(0, 0, 0, .54);\r\n    white-space: nowrap;\r\n}\r\n\r\n.relations-list .mat-form-field-infix {\r\n    width: auto !important;\r\n}\r\n\r\n.relations-list .body {\r\n    padding-right: 5px;\r\n    padding-bottom: 15px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .row {\r\n    padding-top: 5px;\r\n}\r\n\r\n.relations-list .body .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .md-button {\r\n    margin: 0;\r\n}\r\n*/\r\n",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet data = {};\r\n\r\nopenEditEntityDialog();\r\n\r\nfunction openEditEntityDialog() {\r\n    deviceService.getDeviceCredentials(entityId.id).subscribe(credentials => {\r\n        data.credentials = credentials;\r\n        customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\r\n    });\r\n}\r\n\r\nfunction EditEntityDialogController(instance) {\r\n    let vm = instance;\r\n    vm.data = data;\r\n\r\n    vm.close = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n}",
-                "customResources": [],
-                "openInSeparateDialog": false,
+                "type": "openDashboardState",
+                "targetDashboardStateId": "launch_command",
+                "setEntityId": true,
+                "stateEntityParamName": "",
+                "openRightLayout": false,
+                "dialogTitle": "Launch command",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": 35,
+                "openInSeparateDialog": true,
                 "openInPopover": false,
                 "id": "337c767b-3217-d3d3-b955-7b0bd0858a1d"
               }
@@ -5026,6 +5034,101 @@
         "row": 0,
         "col": 0,
         "id": "75b6372d-4def-42b4-8774-4edf413a8b83"
+      },
+      "dfda1a57-6c04-3482-2054-84954bbef626": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "markdown_card",
+        "type": "latest",
+        "title": "New widget",
+        "image": null,
+        "description": null,
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8",
+              "filterId": null,
+              "dataKeys": []
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1685437116892,
+                "endTimeMs": 1685523516892
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "useMarkdownTextFunction": true,
+            "markdownTextFunction": "return `<div class=\"action-container\">\n<tb-gateway-command deviceId=\"${data[0].entityId}\"></tb-gateway-command>\n </div>`;",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".action-container {\r\n    display: flex;\r\n    flex-wrap: wrap;\r\n    flex-direction: row;\r\n    height: 100%;\r\n    width: 100%;\r\n    align-content: center;\r\n}\r\n\r\nbutton {\r\n    flex-grow: 1;\r\n    margin: 10px;\r\n    min-width: 150px;\r\n    height: auto;\r\n}"
+          },
+          "title": "New Markdown/HTML Card",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "Launch command",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "customPretty",
+                "customHtml": "<form style=\"min-width: 400px; max-width: 1000px; position: relative;\">\r\n  <mat-toolbar color=\"primary\">\r\n    <h2 translate>gateway.command</h2>\r\n    <span fxFlex></span>\r\n    <button mat-icon-button\r\n            (click)=\"close()\"\r\n            type=\"button\">\r\n      <mat-icon class=\"material-icons\">close</mat-icon>\r\n    </button>\r\n  </mat-toolbar>\r\n  <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\r\n  </mat-progress-bar>\r\n  <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\r\n  <tb-gateway-command [token]=\"data.credentials.credentialsId\"></tb-gateway-command>\r\n  <div mat-dialog-actions fxLayoutAlign=\"end center\">\r\n    <button mat-button color=\"primary\"\r\n            type=\"button\"\r\n            cdkFocusInitial\r\n            [disabled]=\"(isLoading$ | async)\"\r\n            (click)=\"close()\">\r\n      {{ 'action.ok' | translate }}\r\n    </button>\r\n  </div>\r\n</form>",
+                "customCss": "/*=======================================================================*/\r\n/*==========  There are two examples: for edit and add entity  ==========*/\r\n/*=======================================================================*/\r\n/*========================  Edit entity example  ========================*/\r\n/*=======================================================================*/\r\n/*\r\n.edit-entity-form .boolean-value-input {\r\n    padding-left: 5px;\r\n}\r\n\r\n.edit-entity-form .boolean-value-input .checkbox-label {\r\n    margin-bottom: 8px;\r\n    color: rgba(0,0,0,0.54);\r\n    font-size: 12px;\r\n}\r\n\r\n.relations-list .header {\r\n    padding-right: 5px;\r\n    padding-bottom: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .header .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n    font-size: 12px;\r\n    font-weight: 700;\r\n    color: rgba(0, 0, 0, .54);\r\n    white-space: nowrap;\r\n}\r\n\r\n.relations-list .mat-form-field-infix {\r\n    width: auto !important;\r\n}\r\n\r\n.relations-list .body {\r\n    padding-right: 5px;\r\n    padding-bottom: 15px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .row {\r\n    padding-top: 5px;\r\n}\r\n\r\n.relations-list .body .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .md-button {\r\n    margin: 0;\r\n}\r\n*/\r\n/*========================================================================*/\r\n/*=========================  Add entity example  =========================*/\r\n/*========================================================================*/\r\n/*\r\n.add-entity-form .boolean-value-input {\r\n    padding-left: 5px;\r\n}\r\n\r\n.add-entity-form .boolean-value-input .checkbox-label {\r\n    margin-bottom: 8px;\r\n    color: rgba(0,0,0,0.54);\r\n    font-size: 12px;\r\n}\r\n\r\n.relations-list .header {\r\n    padding-right: 5px;\r\n    padding-bottom: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .header .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n    font-size: 12px;\r\n    font-weight: 700;\r\n    color: rgba(0, 0, 0, .54);\r\n    white-space: nowrap;\r\n}\r\n\r\n.relations-list .mat-form-field-infix {\r\n    width: auto !important;\r\n}\r\n\r\n.relations-list .body {\r\n    padding-right: 5px;\r\n    padding-bottom: 15px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .row {\r\n    padding-top: 5px;\r\n}\r\n\r\n.relations-list .body .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .md-button {\r\n    margin: 0;\r\n}\r\n*/\r\n",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet data = {};\r\n\r\nopenEditEntityDialog();\r\n\r\nfunction openEditEntityDialog() {\r\n    deviceService.getDeviceCredentials(entityId.id).subscribe(credentials => {\r\n        data.credentials = credentials;\r\n        customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\r\n    });\r\n}\r\n\r\nfunction EditEntityDialogController(instance) {\r\n    let vm = instance;\r\n    vm.data = data;\r\n\r\n    vm.close = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n}",
+                "customResources": [],
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "337c767b-3217-d3d3-b955-7b0bd0858a1d"
+              }
+            ]
+          },
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
+        },
+        "row": 0,
+        "col": 0,
+        "id": "dfda1a57-6c04-3482-2054-84954bbef626"
       }
     },
     "states": {
@@ -5073,7 +5176,7 @@
             "gridSettings": {
               "backgroundColor": "#eeeeee",
               "columns": 24,
-              "margin": 10,
+              "margin": 0,
               "backgroundSizeMode": "100%",
               "autoFillHeight": true,
               "backgroundImageUrl": null,
@@ -5855,6 +5958,33 @@
             }
           }
         }
+      },
+      "launch_command": {
+        "name": "launch command",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "dfda1a57-6c04-3482-2054-84954bbef626": {
+                "sizeX": 24,
+                "sizeY": 3,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
       }
     },
     "entityAliases": {
@@ -6582,7 +6712,7 @@
       "selectedTab": 1,
       "history": {
         "historyType": 0,
-        "timewindowMs": 43200000,
+        "timewindowMs": 300000,
         "interval": 120000,
         "fixedTimewindow": {
           "startTimeMs": 1686306375309.7058,
