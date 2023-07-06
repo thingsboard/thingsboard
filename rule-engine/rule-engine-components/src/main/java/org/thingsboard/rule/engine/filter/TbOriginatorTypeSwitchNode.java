@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         relationTypes = {}, // should always be empty. We add the relation types for this node in AnnotationComponentDiscoveryService.
         nodeDescription = "Route incoming messages by Message Originator Type",
         nodeDetails = "Routes messages to chain according to the entity type ('Device', 'Asset', etc.).<br><br>" +
-                "Output connections: <i>Message originator type<i> or <code>Failure</code>",
+                "Output connections: <i>Message originator type</i> or <code>Failure</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbOriginatorTypeSwitchNode extends TbAbstractTypeSwitchNode {

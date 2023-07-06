@@ -50,7 +50,8 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         configClazz = CalculateDeltaNodeConfiguration.class,
         nodeDescription = "Calculates delta and amount of time passed between previous timeseries key reading " +
                 "and current value for this key from the incoming message",
-        nodeDetails = "Useful for metering use cases, when you need to calculate consumption based on pulse counter reading.",
+        nodeDetails = "Useful for metering use cases, when you need to calculate consumption based on pulse counter reading.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Other</code> or <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
 public class CalculateDeltaNode implements TbNode {

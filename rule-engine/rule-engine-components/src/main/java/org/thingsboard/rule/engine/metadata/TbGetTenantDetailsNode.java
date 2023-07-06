@@ -36,7 +36,8 @@ import org.thingsboard.server.common.msg.TbMsg;
         version = 1,
         nodeDescription = "Adds message originator tenant details into message or message metadata",
         nodeDetails = "Useful when we need to retrieve contact information from your tenant " +
-                "such as email, phone, address, etc., for notifications via email, SMS, and other notification providers.",
+                "such as email, phone, address, etc., for notifications via email, SMS, and other notification providers.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration, TenantId> {

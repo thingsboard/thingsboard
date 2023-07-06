@@ -39,7 +39,8 @@ import org.thingsboard.server.common.data.util.TbPair;
         nodeDescription = "Adds message originator customer attributes or latest telemetry into message or message metadata",
         nodeDetails = "Useful in multi-customer solutions where each customer has a different configuration or threshold set " +
                 "that is stored as customer attributes or telemetry data and used for dynamic message filtering, transformation, " +
-                "or actions such as alarm creation if the threshold is exceeded.",
+                "or actions such as alarm creation if the threshold is exceeded.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
 public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<CustomerId> {

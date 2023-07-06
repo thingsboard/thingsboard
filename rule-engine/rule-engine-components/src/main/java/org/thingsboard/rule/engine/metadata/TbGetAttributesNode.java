@@ -40,7 +40,8 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Adds attributes and/or latest timeseries data for the message originator to the message or message metadata",
         nodeDetails = "Useful when you need to retrieve some attributes or the latest telemetry readings from the message originator " +
                 "that are not included in the incoming message to use them for further message processing. " +
-                "For example to filter messages based on the threshold value stored in the attributes.",
+                "For example to filter messages based on the threshold value stored in the attributes.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
 public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {

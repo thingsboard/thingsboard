@@ -40,7 +40,8 @@ import java.util.Arrays;
         nodeDescription = "Adds originators related entity attributes or latest telemetry or fields into message or message metadata",
         nodeDetails = "Related entity lookup based on the configured relation query. " +
                 "If multiple related entities are found, only first entity is used for message enrichment, other entities are discarded. " +
-                "Useful when you need to retrieve data from an entity that has a relation to the message originator and use them for further message processing.",
+                "Useful when you need to retrieve data from an entity that has a relation to the message originator and use them for further message processing.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeRelatedAttributesConfig")
 public class TbGetRelatedAttributeNode extends TbAbstractGetEntityDataNode<EntityId> {

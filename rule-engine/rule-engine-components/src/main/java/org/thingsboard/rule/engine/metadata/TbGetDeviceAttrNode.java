@@ -38,7 +38,9 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Add originators related device attributes and/or latest telemetry values into message or message metadata",
         nodeDetails = "Related device lookup based on the configured relation query. " +
                 "If multiple related devices are found, only first device is used for message enrichment, other entities are discarded. " +
-                "Useful when you need to retrieve attributes and/or latest telemetry values from device that has a relation to the message originator and use them for further message processing.",
+                "Useful when you need to retrieve attributes and/or latest telemetry values from device that has a relation " +
+                "to the message originator and use them for further message processing.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeDeviceAttributesConfig")
 public class TbGetDeviceAttrNode extends TbAbstractGetAttributesNode<TbGetDeviceAttrNodeConfiguration, DeviceId> {
