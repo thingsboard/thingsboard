@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 .tb-data-key-row {
-  height: 38px;
-  display: flex;
-  flex-direction: row;
-  gap: 12px;
-  padding-left: 12px;
-
   .mat-mdc-form-field.tb-inline-field.tb-key-field {
     .mat-mdc-text-field-wrapper:not(.mdc-text-field--outlined) {
       .mat-mdc-form-field-infix {
@@ -53,21 +47,5 @@
     flex-direction: row;
     place-content: center;
     align-items: center;
-  }
-}
-
-.tb-data-keys-table-row-buttons {
-  display: flex;
-  flex-direction: row;
-  button.mat-mdc-icon-button.mat-mdc-button-base {
-    padding: 7px;
-    width: 38px;
-    height: 38px;
-    .mat-icon {
-      color: rgba(0, 0, 0, 0.38);
-    }
-    &.tb-hidden {
-      visibility: hidden;
-    }
   }
 }
