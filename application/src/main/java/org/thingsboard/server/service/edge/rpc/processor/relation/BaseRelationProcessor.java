@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,8 +34,9 @@ import java.util.UUID;
 public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
 
     public ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
-        log.trace("[{}] processRelationFromEdge [{}]", tenantId, relationUpdateMsg);
+        log.trace("[{}] processRelationMsg [{}]", tenantId, relationUpdateMsg);
         try {
+            edgeSynchronizationManager.getSync().set(true);
             EntityRelation entityRelation = new EntityRelation();
 
             UUID fromUUID = new UUID(relationUpdateMsg.getFromIdMSB(), relationUpdateMsg.getFromIdLSB());
@@ -55,15 +56,15 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     if (isEntityExists(tenantId, entityRelation.getTo())
                             && isEntityExists(tenantId, entityRelation.getFrom())) {
-                        return Futures.transform(relationService.saveRelationAsync(tenantId, entityRelation),
-                                (result) -> null, dbCallbackExecutorService);
+                        relationService.saveRelation(tenantId, entityRelation);
+                        break;
                     } else {
                         log.warn("Skipping relating update msg because from/to entity doesn't exists on edge, {}", relationUpdateMsg);
-                        return Futures.immediateFuture(null);
+                        break;
                     }
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    return Futures.transform(relationService.deleteRelationAsync(tenantId, entityRelation),
-                            (result) -> null, dbCallbackExecutorService);
+                    relationService.deleteRelation(tenantId, entityRelation);
+                    break;
                 case UNRECOGNIZED:
                 default:
                     return handleUnsupportedMsgType(relationUpdateMsg.getMsgType());
@@ -71,6 +72,9 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
         } catch (Exception e) {
             log.error("[{}] Failed to process relation update msg [{}]", tenantId, relationUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
+        } finally {
+            edgeSynchronizationManager.getSync().remove();
         }
+        return Futures.immediateFuture(null);
     }
 }
