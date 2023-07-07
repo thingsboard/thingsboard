@@ -66,7 +66,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         if (!this.config.isDynamicSeverity()) {
             this.notDynamicAlarmSeverity = EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity());
             if (this.notDynamicAlarmSeverity == null) {
-                throw new TbNodeException("Incorrect Alarm Severity value: " + this.config.getSeverity());
+                throw new TbNodeException("Incorrect Alarm Severity value: " + this.config.getSeverity(), true);
             }
         }
     }

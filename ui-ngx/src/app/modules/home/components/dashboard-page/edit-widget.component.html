@@ -54,11 +54,14 @@
         </button>
       </div>
     </tb-widget-config>
-    <tb-widget-preview *ngIf="previewMode" class="widget-preview-section"
-                       [aliasController]="aliasController"
-                       [stateController]="stateController"
-                       [widget]="widget"
-                       [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config">
-    </tb-widget-preview>
+    <div *ngIf="previewMode" class="widget-preview-background">
+      <tb-widget-preview class="widget-preview-section"
+                         [aliasController]="aliasController"
+                         [stateController]="stateController"
+                         [dashboardTimewindow]="dashboard.configuration.timewindow"
+                         [widget]="widget"
+                         [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config">
+      </tb-widget-preview>
+    </div>
   </fieldset>
 </form>

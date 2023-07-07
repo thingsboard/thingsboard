@@ -15,18 +15,15 @@
     limitations under the License.
 
 -->
-<div [formGroup]="timewindowConfig" class="tb-widget-config-panel">
+<div [formGroup]="timewindowConfig" class="tb-form-panel">
   <div fxLayout="row" fxLayoutAlign="space-between center">
-    <div class="tb-widget-config-panel-title" translate>timewindow.timewindow</div>
-    <tb-toggle-header (valueChange)="timewindowConfig.get('useDashboardTimewindow').patchValue($event)" ignoreMdLgSize="true"
-                      [options]="[
-                                         { name: translate.instant('widget-config.use-dashboard-timewindow'), value: true},
-                                         { name: translate.instant('widget-config.use-widget-timewindow'), value: false}
-                                       ]"
-                      [value]="timewindowConfig.get('useDashboardTimewindow').value" name="useDashboardTimewindow" useSelectOnMdLg="false">
-    </tb-toggle-header>
+    <div class="tb-form-panel-title" translate>timewindow.timewindow</div>
+    <tb-toggle-select formControlName="useDashboardTimewindow">
+      <tb-toggle-option [value]="true">{{ 'widget-config.use-dashboard-timewindow' | translate }}</tb-toggle-option>
+      <tb-toggle-option [value]="false">{{ 'widget-config.use-widget-timewindow' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
   </div>
-  <div class="tb-widget-config-row">
+  <div class="tb-form-row">
     <tb-timewindow asButton="true"
                    strokedButton
                    isEdit="true"

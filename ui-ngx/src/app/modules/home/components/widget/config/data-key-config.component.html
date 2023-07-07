@@ -15,10 +15,12 @@
     limitations under the License.
 
 -->
-<mat-tab-group class="tb-datakey-config" [ngClass]="{'tb-headless': !displayAdvanced}">
-  <mat-tab [formGroup]="dataKeyFormGroup" label="{{ 'datakey.settings' | translate }}">
-    <div class="mat-padding settings" fxLayout="column">
-      <mat-form-field class="mat-block" *ngIf="modelValue.type !== dataKeyTypes.function">
+<div *ngIf="dataKeyConfigMode === dataKeyConfigModes.general; else advanced"
+     [formGroup]="dataKeyFormGroup">
+  <div class="mat-padding" fxLayout="column" style="gap: 16px;">
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>datakey.general</div>
+      <mat-form-field *ngIf="modelValue.type !== dataKeyTypes.function" subscriptSizing="dynamic">
         <mat-label>{{ 'entity.key' | translate }}</mat-label>
         <input matInput type="text" placeholder="{{ 'entity.key-name' | translate }}"
                #keyInput
@@ -39,31 +41,35 @@
           </mat-option>
         </mat-autocomplete>
       </mat-form-field>
-      <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" fxLayoutAlign.xs fxLayoutGap="8px">
-        <mat-form-field *ngIf="!hideDataKeyLabel" fxFlex class="mat-block">
-          <mat-label translate>datakey.label</mat-label>
-          <input matInput formControlName="label" required>
-        </mat-form-field>
-        <tb-color-input *ngIf="!hideDataKeyColor" fxFlex
-          required
-          label="{{'datakey.color' | translate}}"
-          icon="format_color_fill"
-          openOnInput
-          formControlName="color">
-        </tb-color-input>
+      <mat-form-field *ngIf="!hideDataKeyLabel" subscriptSizing="dynamic">
+        <mat-label translate>datakey.label</mat-label>
+        <input matInput formControlName="label" required>
+      </mat-form-field>
+      <ng-container *ngIf="modelValue.type !== dataKeyTypes.alarm">
+        <div class="tb-form-row space-between" *ngIf="!hideDataKeyUnits">
+          <div translate>widget-config.units-short</div>
+          <tb-widget-units
+            formControlName="units">
+          </tb-widget-units>
+        </div>
+        <div class="tb-form-row space-between" *ngIf="!hideDataKeyDecimals">
+          <div translate>widget-config.decimals-short</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+      </ng-container>
+      <div class="tb-form-row space-between same-padding" *ngIf="!hideDataKeyColor">
+        <div>{{ 'datakey.color' | translate }}</div>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+          <mat-divider vertical></mat-divider>
+          <tb-color-input asBoxInput
+                          formControlName="color">
+          </tb-color-input>
+        </div>
       </div>
-      <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="start center" fxLayoutAlign.xs fxLayoutGap="8px" *ngIf="modelValue.type !== dataKeyTypes.alarm">
-        <mat-form-field *ngIf="!hideDataKeyUnits" fxFlex>
-          <mat-label translate>datakey.units</mat-label>
-          <input matInput formControlName="units">
-        </mat-form-field>
-        <mat-form-field *ngIf="!hideDataKeyDecimals" fxFlex>
-          <mat-label translate>datakey.decimals</mat-label>
-          <input matInput formControlName="decimals" type="number" min="0" max="15" step="1">
-        </mat-form-field>
-      </div>
-      <section *ngIf="widgetType === widgetTypes.latest && modelValue.type === dataKeyTypes.timeseries" fxLayout="column">
-        <mat-form-field>
+      <ng-container *ngIf="widgetType === widgetTypes.latest && modelValue.type === dataKeyTypes.timeseries">
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label translate>datakey.aggregation</mat-label>
           <mat-select formControlName="aggregationType" style="min-width: 150px;">
             <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
@@ -80,7 +86,7 @@
         <fieldset *ngIf="dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE" class="fields-group fields-group-slider">
           <legend class="group-title" translate>datakey.delta-calculation</legend>
           <mat-expansion-panel class="tb-settings comparison" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
               <mat-panel-title fxLayout="column" fxLayoutAlign="center start">
                 <mat-slide-toggle formControlName="comparisonEnabled" (click)="$event.stopPropagation()">
                   {{ 'datakey.enable-delta-calculation' | translate }}
@@ -129,49 +135,59 @@
             </ng-template>
           </mat-expansion-panel>
         </fieldset>
-      </section>
+      </ng-container>
       <section fxLayout="column" *ngIf="modelValue.type === dataKeyTypes.function">
         <span translate>datakey.data-generation-func</span>
         <br/>
         <tb-js-func #funcBodyEdit
-          [functionArgs]="['time', 'prevValue']"
-          [globalVariables]="functionScopeVariables"
-          [validationArgs]="[[1, 1],[1, '1']]"
-          resultType="any"
-          helpId="widget/config/datakey_generation_fn"
-          formControlName="funcBody">
-        </tb-js-func>
-      </section>
-      <section fxLayout="column" *ngIf="(modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute || modelValue.type === dataKeyTypes.count) && showPostProcessing">
-        <mat-checkbox formControlName="usePostProcessing">
-          {{ 'datakey.use-data-post-processing-func' | translate }}
-        </mat-checkbox>
-        <tb-js-func *ngIf="dataKeyFormGroup.get('usePostProcessing').value" #postFuncBodyEdit
-                    [functionArgs]="['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue']"
+                    [functionArgs]="['time', 'prevValue']"
                     [globalVariables]="functionScopeVariables"
-                    [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
+                    [validationArgs]="[[1, 1],[1, '1']]"
                     resultType="any"
-                    helpId="widget/config/datakey_postprocess_fn"
-                    formControlName="postFuncBody">
+                    helpId="widget/config/datakey_generation_fn"
+                    formControlName="funcBody">
         </tb-js-func>
-        <label *ngIf="dataKeyFormGroup.get('usePostProcessing').value" class="tb-title" style="margin-left: 15px;">
-          time - {{ 'datakey.time-description' | translate }}<br/>
-          value - {{ 'datakey.value-description' | translate }}<br/>
-          prevValue - {{ 'datakey.prev-value-description' | translate }}<br/>
-          timePrev - {{ 'datakey.time-prev-description' | translate }}<br/>
-          prevOrigValue - {{ 'datakey.prev-orig-value-description' | translate }}
-        </label>
       </section>
     </div>
-  </mat-tab>
-  <mat-tab [formGroup]="dataKeySettingsFormGroup" label="{{ 'datakey.advanced' | translate }}" *ngIf="displayAdvanced">
-    <div class="mat-padding" fxLayout="column">
-      <tb-widget-settings
-        [dashboard]="dashboard"
-        [aliasController]="aliasController"
-        [widget]="widget"
-        formControlName="settings">
-      </tb-widget-settings>
+    <div class="tb-form-panel tb-slide-toggle"
+         *ngIf="(modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute || modelValue.type === dataKeyTypes.count) && showPostProcessing">
+      <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('usePostProcessing').value" [disabled]="!dataKeyFormGroup.get('usePostProcessing').value">
+        <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide" formControlName="usePostProcessing" (click)="$event.stopPropagation()"
+                              fxLayoutAlign="center">
+              {{ 'datakey.use-data-post-processing-func' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-js-func *ngIf="dataKeyFormGroup.get('usePostProcessing').value" #postFuncBodyEdit
+                      [functionArgs]="['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue']"
+                      [globalVariables]="functionScopeVariables"
+                      [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
+                      resultType="any"
+                      helpId="widget/config/datakey_postprocess_fn"
+                      formControlName="postFuncBody">
+          </tb-js-func>
+          <label *ngIf="dataKeyFormGroup.get('usePostProcessing').value" class="tb-title" style="margin-left: 15px;">
+            time - {{ 'datakey.time-description' | translate }}<br/>
+            value - {{ 'datakey.value-description' | translate }}<br/>
+            prevValue - {{ 'datakey.prev-value-description' | translate }}<br/>
+            timePrev - {{ 'datakey.time-prev-description' | translate }}<br/>
+            prevOrigValue - {{ 'datakey.prev-orig-value-description' | translate }}
+          </label>
+        </ng-template>
+      </mat-expansion-panel>
     </div>
-  </mat-tab>
-</mat-tab-group>
+  </div>
+</div>
+<ng-template #advanced>
+  <div class="mat-padding" fxLayout="column" [formGroup]="dataKeySettingsFormGroup">
+    <tb-widget-settings
+      [dashboard]="dashboard"
+      [aliasController]="aliasController"
+      [widget]="widget"
+      formControlName="settings">
+    </tb-widget-settings>
+  </div>
+</ng-template>

@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="tb-widget-config-panel" (click)="manageWidgetActions()" style="cursor: pointer;">
+<div class="tb-form-panel" (click)="manageWidgetActions()" style="cursor: pointer;">
   <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-    <div class="tb-widget-config-panel-title" translate style="padding-right: 48px;">widget-config.actions</div>
+    <div class="tb-form-panel-title" translate style="padding-right: 48px;">widget-config.actions</div>
     <mat-chip-listbox fxFlex>
       <ng-container *ngFor="let actionSourceId of widgetActionSourceIds">
         <mat-chip *ngFor="let widgetAction of widgetActionsByActionSourceId(actionSourceId)">

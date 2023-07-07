@@ -43,11 +43,31 @@
     }
   }
 
+  .tb-source-field {
+    width: 140px;
+  }
+
   .tb-color-field, .tb-units-field, .tb-decimals-field {
     width: 60px;
     display: flex;
     flex-direction: row;
     place-content: center;
     align-items: center;
+  }
+}
+
+.tb-data-keys-table-row-buttons {
+  display: flex;
+  flex-direction: row;
+  button.mat-mdc-icon-button.mat-mdc-button-base {
+    padding: 7px;
+    width: 38px;
+    height: 38px;
+    .mat-icon {
+      color: rgba(0, 0, 0, 0.38);
+    }
+    &.tb-hidden {
+      visibility: hidden;
+    }
   }
 }

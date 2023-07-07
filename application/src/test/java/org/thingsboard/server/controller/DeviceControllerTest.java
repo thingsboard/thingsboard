@@ -298,6 +298,53 @@ public class DeviceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveDeviceWithCredentials_CredentialsIsNull() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+
+        SaveDeviceWithCredentialsRequest saveRequest = new SaveDeviceWithCredentialsRequest(device, null);
+        doPost("/api/device-with-credentials", saveRequest).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Validation error: credentials must not be null")));
+    }
+
+    @Test
+    public void testSaveDeviceWithCredentials_DeviceIsNull() throws Exception {
+        String testToken = "TEST_TOKEN";
+
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(testToken);
+
+        SaveDeviceWithCredentialsRequest saveRequest = new SaveDeviceWithCredentialsRequest(null, deviceCredentials);
+        doPost("/api/device-with-credentials", saveRequest).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Validation error: device must not be null")));
+    }
+
+    @Test
+    public void testSaveDeviceWithCredentials_WithExistingName() throws Exception {
+        String testToken = "TEST_TOKEN";
+
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(testToken);
+
+        SaveDeviceWithCredentialsRequest saveRequest = new SaveDeviceWithCredentialsRequest(device, deviceCredentials);
+
+        Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
+
+        Device savedDevice = readResponse(doPost("/api/device-with-credentials", saveRequest).andExpect(status().isOk()), Device.class);
+        Assert.assertNotNull(savedDevice);
+
+        doPost("/api/device-with-credentials", saveRequest).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Device with such name already exists!")));
+    }
+
+    @Test
     public void saveDeviceWithViolationOfValidation() throws Exception {
         Device device = new Device();
         device.setName(StringUtils.randomAlphabetic(300));

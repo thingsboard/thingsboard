@@ -393,6 +393,10 @@ actors:
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
+    external:
+      # Force acknowledgement of the incoming message for external rule nodes to decrease processing latency.
+      # Enqueue the result of external node processing as a separate message to the rule engine.
+      force_ack: "${ACTORS_RULE_EXTERNAL_NODE_FORCE_ACK:false}"
   rpc:
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
     sequential: "${ACTORS_RPC_SEQUENTIAL:false}"
@@ -493,6 +497,9 @@ cache:
     entityCount:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
       maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+    resourceInfo:
+      timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_INFO_TTL:1440}"
+      maxSize: "${CACHE_SPECS_RESOURCE_INFO_MAX_SIZE:100000}"
 
   # deliberately placed outside 'specs' group above
   notificationRules:
