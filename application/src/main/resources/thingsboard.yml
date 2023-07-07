@@ -994,15 +994,15 @@ device:
       host: "${DEVICE_CONNECTIVITY_MQTT_HOST:localhost}"
       port: "${DEVICE_CONNECTIVITY_MQTT_PORT:1883}"
     mqtts:
-      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:false}"
+      enabled: "${DEVICE_CONNECTIVITY_MQTTS_ENABLED:false}"
       host: "${DEVICE_CONNECTIVITY_MQTTS_HOST:localhost}"
       port: "${DEVICE_CONNECTIVITY_MQTTS_PORT:8883}"
     coap:
-      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:true}"
+      enabled: "${DEVICE_CONNECTIVITY_COAP_ENABLED:true}"
       host: "${DEVICE_CONNECTIVITY_COAP_HOST:localhost}"
       port: "${DEVICE_CONNECTIVITY_COAP_PORT:5683}"
     coaps:
-      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:false}"
+      enabled: "${DEVICE_CONNECTIVITY_COAPS_ENABLED:false}"
       host: "${DEVICE_CONNECTIVITY_COAPS_HOST:localhost}"
       port: "${DEVICE_CONNECTIVITY_COAPS_PORT:5684}"
 
