@@ -353,7 +353,33 @@ public class CalculateDeltaNodeTest {
         assertEquals(msg, actualMsgCaptor.getValue());
         assertInstanceOf(IllegalArgumentException.class, actualException);
         assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
 
+    @Test
+    public void givenNegativeDeltaAndTellFailureIfNegativeDeltaFalse_whenOnMsg_thenShouldTellSuccess() throws TbNodeException {
+        // GIVEN
+        config.setTellFailureIfDeltaIsNegative(false);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        mockFindLatest(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("pulseCounter", 200L)));
+
+        var msgData = "{\"pulseCounter\":\"123\"}";
+        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
+        verify(ctxMock, times(1)).tellSuccess(actualMsgCaptor.capture());
+        verify(ctxMock, never()).tellFailure(any(), any());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+
+        String expectedMsgData = "{\"pulseCounter\":\"123\",\"delta\":-77}";
+        assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
     }
 
     @Test
