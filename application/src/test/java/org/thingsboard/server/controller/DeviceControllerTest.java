@@ -708,7 +708,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 credentials.getCredentialsId()));
         assertThat(commands.get("mqtt")).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
-        assertThat(commands.get("mqtts")).isEqualTo(String.format("mosquitto_pub --cafile tb-server-chain.pem -d -q 1 -h localhost -p 8883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
+        assertThat(commands.get("mqtts")).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
         assertThat(commands.get("coap")).isEqualTo(String.format("coap-client -m POST coap://localhost:5683/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
                 credentials.getCredentialsId()));
@@ -731,7 +731,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         assertThat(commands).hasSize(2);
         assertThat(commands.get("mqtt")).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s -u %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
-        assertThat(commands.get("mqtts")).isEqualTo(String.format("mosquitto_pub --cafile tb-server-chain.pem -d -q 1 -h localhost -p 8883 -t %s -u %s -m \"{temperature:25}\"",
+        assertThat(commands.get("mqtts")).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 -t %s -u %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
     }
 
@@ -762,7 +762,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         assertThat(commands).hasSize(2);
         assertThat(commands.get("mqtt")).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
-        assertThat(commands.get("mqtts")).isEqualTo(String.format("mosquitto_pub --cafile tb-server-chain.pem -d -q 1 -h localhost -p 8883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"",
+        assertThat(commands.get("mqtts")).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
     }
 
@@ -784,7 +784,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Map<String, String> commands =
                 doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
         assertThat(commands).hasSize(1);
-        assertThat(commands.get("mqtts")).isEqualTo("Not supported");
+        assertThat(commands.get("mqtts")).isEqualTo("Not provided");
     }
 
     @Test
@@ -824,7 +824,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Map<String, String> commands =
                 doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
         assertThat(commands).hasSize(1);
-        assertThat(commands.get("coaps")).isEqualTo("Not supported");
+        assertThat(commands.get("coaps")).isEqualTo("Not provided");
     }
 
     @Test
