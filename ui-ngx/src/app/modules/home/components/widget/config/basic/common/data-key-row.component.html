@@ -148,9 +148,9 @@
     </tb-color-input>
   </div>
   <div *ngIf="!hideUnits" class="tb-units-field">
-    <tb-widget-units *ngIf="displayUnitsOrDigits"
+    <tb-unit-input *ngIf="displayUnitsOrDigits"
       formControlName="units">
-    </tb-widget-units>
+    </tb-unit-input>
   </div>
   <div *ngIf="!hideDecimals" class="tb-decimals-field">
     <mat-form-field *ngIf="displayUnitsOrDigits" appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
