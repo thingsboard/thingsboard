@@ -27,14 +27,18 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.BaseWidgetType;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -55,9 +59,11 @@ import static org.thingsboard.server.utils.LwM2mObjectModelUtils.toLwm2mResource
 public class DefaultTbResourceService extends AbstractTbEntityService implements TbResourceService {
 
     private final ResourceService resourceService;
+    private final WidgetTypeService widgetTypeService;
 
-    public DefaultTbResourceService(ResourceService resourceService) {
+    public DefaultTbResourceService(ResourceService resourceService, WidgetTypeService widgetTypeService) {
         this.resourceService = resourceService;
+        this.widgetTypeService = widgetTypeService;
     }
 
     @Override
@@ -145,10 +151,15 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public void delete(TbResource tbResource, User user) {
+    public void delete(TbResource tbResource, User user) throws ThingsboardException {
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
         try {
+            List<WidgetTypeDetails> widgets = widgetTypeService.findWidgetTypesInfosByTenantIdAndResourceId(tenantId, resourceId);
+            if (!widgets.isEmpty()) {
+                List<String> widgetNames = widgets.stream().map(BaseWidgetType::getName).collect(Collectors.toList());
+                throw new ThingsboardException(String.format("Following widget types uses current resource: %s", widgetNames), ThingsboardErrorCode.GENERAL);
+            }
             resourceService.deleteResource(tenantId, resourceId);
             tbClusterService.onResourceDeleted(tbResource, null);
             notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
