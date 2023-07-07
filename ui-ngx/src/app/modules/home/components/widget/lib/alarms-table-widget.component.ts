@@ -181,7 +181,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public displayPagination = true;
   public enableStickyHeader = true;
   public enableStickyAction = false;
-  public hideActionCellButtons = true;
+  public collapseCellActions = true;
   public pageSizeOptions;
   public pageLink: AlarmDataPageLink;
   public sortOrderProperty: string;
@@ -366,7 +366,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
     this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : false;
-    this.hideActionCellButtons = isDefined(this.settings.hideActionCellButtons) ? this.settings.hideActionCellButtons : true;
+    this.collapseCellActions = isDefined(this.settings.collapseCellActions) ? this.settings.collapseCellActions : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
     let enableFilter;
     if (isDefined(this.settings.enableFilter)) {

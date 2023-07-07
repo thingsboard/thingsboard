@@ -142,7 +142,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public displayPagination = true;
   public enableStickyHeader = true;
   public enableStickyAction = true;
-  public hideActionCellButtons = true;
+  public collapseCellActions = true;
   public pageSizeOptions;
   public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
@@ -292,7 +292,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
     this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : true;
-    this.hideActionCellButtons = isDefined(this.settings.hideActionCellButtons) ? this.settings.hideActionCellButtons : true;
+    this.collapseCellActions = isDefined(this.settings.collapseCellActions) ? this.settings.collapseCellActions : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
 
     this.rowStylesInfo = getRowStyleInfo(this.settings, 'entity, ctx');

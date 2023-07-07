@@ -67,7 +67,7 @@
                 <mat-cell *matCellDef="let row" [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
                                                                    maxWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
                                                                    width: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px' }">
-                  <div [fxHide]="hideActionCellButtons" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+                  <div [fxHide]="collapseCellActions && source.timeseriesDatasource.countCellButtonAction !== 1" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                     <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                       <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
                       <button *ngIf="actionDescriptor.icon"
@@ -79,7 +79,7 @@
                       </button>
                     </ng-container>
                   </div>
-                  <div fxHide [fxShow.lt-lg]="hideActionCellButtons" *ngIf="row.hasActions">
+                  <div fxHide [fxShow.lt-lg]="collapseCellActions && source.timeseriesDatasource.countCellButtonAction !== 1" *ngIf="row.hasActions">
                     <button mat-icon-button
                             (click)="$event.stopPropagation(); ctx.detectChanges();"
                             [matMenuTriggerFor]="cellActionsMenu">
