@@ -48,11 +48,18 @@
   }
 
   .tb-color-field, .tb-units-field, .tb-decimals-field {
-    width: 60px;
     display: flex;
     flex-direction: row;
     place-content: center;
     align-items: center;
+  }
+
+  .tb-units-field {
+    width: 80px;
+  }
+
+  .tb-color-field, .tb-decimals-field {
+    width: 60px;
   }
 }
 

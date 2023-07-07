@@ -38,7 +38,10 @@
       &.tb-source-header {
         width: 140px;
       }
-      &.tb-color-header, &.tb-units-header, &.tb-decimals-header {
+      &.tb-units-header {
+        width: 80px;
+      }
+      &.tb-color-header, &.tb-decimals-header {
         width: 60px;
       }
       &.tb-actions-header {

@@ -42,7 +42,7 @@
                     #entityAliasAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityAliasFn">
     <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
-      <span [innerHTML]="entityAlias.alias | highlight:searchText"></span>
+      <span [innerHTML]="entityAlias.alias | highlight:searchText:true:'ig'"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredEntityAliases | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">

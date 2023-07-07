@@ -177,9 +177,15 @@
         opacity: 0;
       }
     }
+    &:not(.mat-mdc-form-field-has-icon-suffix) {
+      .mat-mdc-text-field-wrapper {
+        &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
+          padding-right: 12px;
+        }
+      }
+    }
     .mat-mdc-text-field-wrapper {
       &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
-        padding-right: 12px;
         padding-left: 12px;
         &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(:hover) {
           .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
@@ -233,7 +239,9 @@
     }
     &.number {
       .mat-mdc-text-field-wrapper {
-        padding-right: 4px;
+        &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
+          padding-right: 4px;
+        }
         .mat-mdc-form-field-infix {
           input.mdc-text-field__input[type=number]::-webkit-inner-spin-button,
           input.mdc-text-field__input[type=number]::-webkit-outer-spin-button {
