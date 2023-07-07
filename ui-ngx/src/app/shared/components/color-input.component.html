@@ -20,10 +20,10 @@
     <mat-icon *ngIf="icon">{{icon}}</mat-icon>
     <span *ngIf="label">{{label}}</span>
   </mat-label>
-  <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker()">
+  <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker($event)">
     <div class="tb-color-result" [ngStyle]="{background: colorFormGroup.get('color').value}"></div>
   </div>
-  <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker()" [required]="required">
+  <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker($event)" [required]="required">
   <button *ngIf="colorClearButton && !disabled"
           type="button"
           matSuffix mat-icon-button aria-label="Clear"
@@ -35,7 +35,7 @@
   </mat-error>
 </mat-form-field>
 <ng-template #boxInput>
-  <div class="tb-color-preview no-margin box" [ngClass]="{'disabled': disabled}" (click)="!disabled && showColorPicker()">
+  <div class="tb-color-preview no-margin box" [ngClass]="{'disabled': disabled}" (click)="!disabled && showColorPicker($event)">
     <div class="tb-color-result" [ngStyle]="!disabled ? {background: colorFormGroup.get('color').value} : {}"></div>
   </div>
 </ng-template>

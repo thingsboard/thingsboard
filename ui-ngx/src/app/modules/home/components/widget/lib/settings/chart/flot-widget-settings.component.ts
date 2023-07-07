@@ -284,6 +284,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
       this.flotSettingsFormGroup.disable({emitEvent: false});
     } else {
       this.flotSettingsFormGroup.enable({emitEvent: false});
+      this.updateValidators(false);
     }
   }
 
@@ -379,9 +380,11 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
         } else {
           this.flotSettingsFormGroup.get('comparisonCustomIntervalValue').disable({emitEvent});
         }
+        this.flotSettingsFormGroup.get('xaxisSecond').enable({emitEvent: false});
       } else {
         this.flotSettingsFormGroup.get('timeForComparison').disable({emitEvent: false});
         this.flotSettingsFormGroup.get('comparisonCustomIntervalValue').disable({emitEvent});
+        this.flotSettingsFormGroup.get('xaxisSecond').disable({emitEvent: false});
       }
       if (customLegendEnabled) {
         this.flotSettingsFormGroup.get('dataKeysListForLabels').enable({emitEvent});
@@ -392,6 +395,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
       this.flotSettingsFormGroup.get('legendConfig').updateValueAndValidity({emitEvent: false});
       this.flotSettingsFormGroup.get('timeForComparison').updateValueAndValidity({emitEvent: false});
       this.flotSettingsFormGroup.get('comparisonCustomIntervalValue').updateValueAndValidity({emitEvent: false});
+      this.flotSettingsFormGroup.get('xaxisSecond').updateValueAndValidity({emitEvent: false});
       this.flotSettingsFormGroup.get('dataKeysListForLabels').updateValueAndValidity({emitEvent: false});
     }
   }

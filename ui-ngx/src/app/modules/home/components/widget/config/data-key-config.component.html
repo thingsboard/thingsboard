@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div class="tb-datakey-config" *ngIf="dataKeyConfigMode === dataKeyConfigModes.general; else advanced"
+<div *ngIf="dataKeyConfigMode === dataKeyConfigModes.general; else advanced"
      [formGroup]="dataKeyFormGroup">
   <div class="mat-padding" fxLayout="column" style="gap: 16px;">
-    <div class="tb-widget-config-panel">
-      <div class="tb-widget-config-panel-title" translate>datakey.general</div>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>datakey.general</div>
       <mat-form-field *ngIf="modelValue.type !== dataKeyTypes.function" subscriptSizing="dynamic">
         <mat-label>{{ 'entity.key' | translate }}</mat-label>
         <input matInput type="text" placeholder="{{ 'entity.key-name' | translate }}"
@@ -46,20 +46,20 @@
         <input matInput formControlName="label" required>
       </mat-form-field>
       <ng-container *ngIf="modelValue.type !== dataKeyTypes.alarm">
-        <div class="tb-widget-config-row space-between" *ngIf="!hideDataKeyUnits">
+        <div class="tb-form-row space-between" *ngIf="!hideDataKeyUnits">
           <div translate>widget-config.units-short</div>
           <tb-widget-units
             formControlName="units">
           </tb-widget-units>
         </div>
-        <div class="tb-widget-config-row space-between" *ngIf="!hideDataKeyDecimals">
+        <div class="tb-form-row space-between" *ngIf="!hideDataKeyDecimals">
           <div translate>widget-config.decimals-short</div>
-          <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
       </ng-container>
-      <div class="tb-widget-config-row space-between same-padding" *ngIf="!hideDataKeyColor">
+      <div class="tb-form-row space-between same-padding" *ngIf="!hideDataKeyColor">
         <div>{{ 'datakey.color' | translate }}</div>
         <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
           <mat-divider vertical></mat-divider>
@@ -149,7 +149,7 @@
         </tb-js-func>
       </section>
     </div>
-    <div class="tb-widget-config-panel tb-slide-toggle"
+    <div class="tb-form-panel tb-slide-toggle"
          *ngIf="(modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute || modelValue.type === dataKeyTypes.count) && showPostProcessing">
       <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('usePostProcessing').value" [disabled]="!dataKeyFormGroup.get('usePostProcessing').value">
         <mat-expansion-panel-header fxLayout="row wrap">
@@ -182,14 +182,12 @@
   </div>
 </div>
 <ng-template #advanced>
-  <div class="tb-datakey-config" [formGroup]="dataKeySettingsFormGroup">
-    <div class="mat-padding" fxLayout="column">
-      <tb-widget-settings
-        [dashboard]="dashboard"
-        [aliasController]="aliasController"
-        [widget]="widget"
-        formControlName="settings">
-      </tb-widget-settings>
-    </div>
+  <div class="mat-padding" fxLayout="column" [formGroup]="dataKeySettingsFormGroup">
+    <tb-widget-settings
+      [dashboard]="dashboard"
+      [aliasController]="aliasController"
+      [widget]="widget"
+      formControlName="settings">
+    </tb-widget-settings>
   </div>
 </ng-template>

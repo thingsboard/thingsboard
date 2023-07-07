@@ -17,16 +17,25 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { widgetType } from '@shared/models/widget.models';
+import { WidgetConfig, widgetType } from '@shared/models/widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { isDefined } from '@core/utils';
 
 export interface TimewindowConfigData {
   useDashboardTimewindow: boolean;
   displayTimewindow: boolean;
   timewindow: Timewindow;
 }
+
+export const getTimewindowConfig = (config: WidgetConfig): TimewindowConfigData => ({
+    useDashboardTimewindow: isDefined(config.useDashboardTimewindow) ?
+      config.useDashboardTimewindow : true,
+    displayTimewindow: isDefined(config.displayTimewindow) ?
+      config.displayTimewindow : true,
+    timewindow: config.timewindow
+  });
 
 @Component({
   selector: 'tb-timewindow-config-panel',

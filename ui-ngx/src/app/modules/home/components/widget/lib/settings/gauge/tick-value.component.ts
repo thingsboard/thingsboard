@@ -27,7 +27,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 @Component({
   selector: 'tb-tick-value',
   templateUrl: './tick-value.component.html',
-  styleUrls: ['./tick-value.component.scss', './../widget-settings.scss'],
+  styleUrls: ['./tick-value.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

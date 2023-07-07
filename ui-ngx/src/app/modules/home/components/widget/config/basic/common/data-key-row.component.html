@@ -147,13 +147,13 @@
                     formControlName="color">
     </tb-color-input>
   </div>
-  <div class="tb-units-field">
+  <div *ngIf="!hideUnits" class="tb-units-field">
     <tb-widget-units *ngIf="displayUnitsOrDigits"
       formControlName="units">
     </tb-widget-units>
   </div>
-  <div class="tb-decimals-field">
-    <mat-form-field *ngIf="displayUnitsOrDigits" appearance="outline" class="tb-inline-field center number" subscriptSizing="dynamic">
+  <div *ngIf="!hideDecimals" class="tb-decimals-field">
+    <mat-form-field *ngIf="displayUnitsOrDigits" appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
       <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
   </div>

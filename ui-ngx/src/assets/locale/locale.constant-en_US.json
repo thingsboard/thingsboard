@@ -67,7 +67,8 @@
         "more": "More",
         "less": "Less",
         "skip": "Skip",
-        "send": "Send"
+        "send": "Send",
+        "reset": "Reset"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -1373,13 +1374,8 @@
         "device-configuration": "Device configuration",
         "transport-configuration": "Transport configuration",
         "wizard": {
-            "device-wizard": "Device Wizard",
             "device-details": "Device details",
-            "new-device-profile": "Create new device profile",
-            "existing-device-profile": "Select existing device profile",
-            "specific-configuration": "Specific configuration",
-            "customer-to-assign-device": "Customer to assign the device",
-            "add-credentials": "Add credentials"
+            "customer-to-assign-device": "Customer to assign the device"
         },
         "unassign-devices-from-edge-title": "Are you sure you want to unassign { count, plural, =1 {1 device} other {# devices} }?",
         "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge."
@@ -1446,8 +1442,6 @@
         "delete": "Delete device profile",
         "copyId": "Copy device profile Id",
         "name-max-length": "Name should be less than 256",
-        "new-device-profile-name": "Device profile name",
-        "new-device-profile-name-required": "Device profile name is required.",
         "name": "Name",
         "name-required": "Name is required.",
         "type": "Profile type",
@@ -2782,8 +2776,14 @@
         "left-side": "Left side layout"
     },
     "legend": {
-        "direction": "Legend direction",
-        "position": "Legend position",
+        "direction": "Direction",
+        "position": "Position",
+        "show-values": "Show values",
+        "min-option": "Min",
+        "max-option": "Max",
+        "average-option": "Average",
+        "total-option": "Total",
+        "latest-option": "Latest",
         "sort-legend": "Sort datakeys in legend",
         "show-max": "Show max value",
         "show-min": "Show min value",
@@ -4183,6 +4183,7 @@
         "enable-fullscreen": "Enable fullscreen",
         "background-color": "Background color",
         "text-color": "Text color",
+        "border-radius": "Border radius",
         "padding": "Padding",
         "margin": "Margin",
         "widget-style": "Widget style",
@@ -4250,7 +4251,10 @@
         "text": "Text",
         "background": "Background",
         "advanced-widget-style": "Advanced widget style",
-        "card-buttons": "Card buttons"
+        "card-buttons": "Card buttons",
+        "show-card-buttons": "Show card buttons",
+        "card-appearance": "Card appearance",
+        "color": "Color"
     },
     "widget-type": {
         "import": "Import widget type",
@@ -4273,10 +4277,12 @@
             "bar-alignment-left": "Left",
             "bar-alignment-right": "Right",
             "bar-alignment-center": "Center",
+            "default-font": "Default font",
             "default-font-size": "Default font size",
             "default-font-color": "Default font color",
             "thresholds-line-width": "Default line width for all thresholds",
             "tooltip-settings": "Tooltip settings",
+            "tooltip": "Tooltip",
             "show-tooltip": "Show tooltip",
             "hover-individual-points": "Hover individual points",
             "show-cumulative-values": "Show cumulative values in stacking mode",
@@ -4351,9 +4357,10 @@
             "axis-position-right": "Right",
             "thresholds": "Thresholds",
             "no-thresholds": "No thresholds configured",
-            "add-threshold": "Add new threshold",
+            "add-threshold": "Add threshold",
             "show-values-for-comparison": "Show historical values for comparison",
             "comparison-values-label": "Historical values label",
+            "comparison-line-color": "Comparison line color",
             "threshold-settings": "Threshold settings",
             "use-as-threshold": "Use key value as threshold",
             "threshold-line-width": "Threshold line width",
@@ -4372,7 +4379,23 @@
             "border-color": "Border color",
             "legend-settings": "Legend settings",
             "display-legend": "Display legend",
-            "labels-font-color": "Labels font color"
+            "labels-font-color": "Labels font color",
+            "series": "Series",
+            "add-series": "Add series",
+            "series-settings": "Series settings",
+            "remove-series": "Remove series",
+            "no-series": "No series configured",
+            "no-series-error": "At least one series should be specified",
+            "chart-appearance": "Chart appearance",
+            "vertical-grid-lines": "Vertical grid lines",
+            "horizontal-grid-lines": "Horizontal grid lines",
+            "chart-background": "Chart background",
+            "grid-lines-color": "Grid lines color",
+            "border": "Border",
+            "axis": "Axis",
+            "vertical-axis": "Vertical axis",
+            "ticks": "Ticks",
+            "horizontal-axis": "Horizontal axis"
         },
         "dashboard-state": {
             "dashboard-state-settings": "Dashboard state settings",
@@ -5239,10 +5262,10 @@
             "remove-column": "Remove column",
             "add-column": "Add column",
             "no-columns": "No columns configured",
-            "show-card-buttons": "Show card buttons",
             "columns-to-display": "Columns to display",
             "table-header": "Table header",
             "header-buttons": "Header buttons",
+            "table-buttons": "Table buttons",
             "pagination": "Pagination",
             "rows": "Rows",
             "timeseries-column-error": "At least one timeseries column should be specified",
@@ -5251,7 +5274,7 @@
         "value-source": {
             "value-source": "Value source",
             "predefined-value": "Predefined value",
-            "entity-attribute": "Value taken from entity attribute",
+            "entity-attribute": "Entity attribute",
             "value": "Value",
             "source-entity-alias": "Source entity alias",
             "source-entity-attribute": "Source entity attribute"

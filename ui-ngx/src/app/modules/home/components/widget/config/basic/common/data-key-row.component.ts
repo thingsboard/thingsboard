@@ -145,6 +145,14 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.dataKeysPanelComponent.hideDataKeyColor;
   }
 
+  get hideUnits(): boolean {
+    return this.dataKeysPanelComponent.hideUnits;
+  }
+
+  get hideDecimals(): boolean {
+    return this.dataKeysPanelComponent.hideDecimals;
+  }
+
   get widgetType(): widgetType {
     return this.widgetConfigComponent.widgetType;
   }
@@ -154,8 +162,7 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   get hasAdditionalLatestDataKeys(): boolean {
-    return this.widgetConfigComponent.widgetType === widgetType.timeseries &&
-      this.widgetConfigComponent.modelValue?.typeParameters?.hasAdditionalLatestDataKeys;
+    return this.dataKeysPanelComponent.hasAdditionalLatestDataKeys;
   }
 
   get widget(): Widget {
