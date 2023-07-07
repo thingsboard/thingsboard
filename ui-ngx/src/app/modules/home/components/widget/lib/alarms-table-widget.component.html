@@ -125,7 +125,7 @@
           <mat-cell *matCellDef="let alarm" [ngStyle.gt-md]="{ minWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
                                                                maxWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
                                                                width: (alarmsDatasource.countCellButtonAction * 48) + 'px' }">
-            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+            <div [fxHide]="hideActionCellButtons" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <ng-container *ngFor="let actionDescriptor of alarm.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                 <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
                 <button mat-icon-button [disabled]="(isLoading$ | async) || !actionEnabled(alarm, actionDescriptor)"
@@ -137,7 +137,7 @@
                 </button>
               </ng-container>
             </div>
-            <div fxHide fxShow.lt-lg *ngIf="alarm.hasActions">
+            <div fxHide [fxShow.lt-lg]="hideActionCellButtons" *ngIf="alarm.hasActions">
               <button mat-icon-button
                       (click)="$event.stopPropagation(); ctx.detectChanges();"
                       [matMenuTriggerFor]="cellActionsMenu">

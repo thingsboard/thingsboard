@@ -23,6 +23,7 @@ import {
   Injector,
   Input,
   NgZone,
+  OnDestroy,
   OnInit,
   StaticProvider,
   ViewChild,
@@ -165,7 +166,7 @@ interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
   templateUrl: './alarms-table-widget.component.html',
   styleUrls: ['./alarms-table-widget.component.scss', './table-widget.scss']
 })
-export class AlarmsTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit {
+export class AlarmsTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input()
   ctx: WidgetContext;
@@ -178,6 +179,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public displayPagination = true;
   public enableStickyHeader = true;
   public enableStickyAction = false;
+  public hideActionCellButtons = true;
   public pageSizeOptions;
   public pageLink: AlarmDataPageLink;
   public sortOrderProperty: string;
@@ -362,6 +364,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
     this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : false;
+    this.hideActionCellButtons = isDefined(this.settings.hideActionCellButtons) ? this.settings.hideActionCellButtons : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
     let enableFilter;
     if (isDefined(this.settings.enableFilter)) {

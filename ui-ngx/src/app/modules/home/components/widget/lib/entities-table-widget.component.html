@@ -55,7 +55,7 @@
           <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
                                                                 maxWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
                                                                 width: (entityDatasource.countCellButtonAction * 48) + 'px' }">
-            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+            <div [fxHide]="hideActionCellButtons" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                 <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
                 <button mat-icon-button [disabled]="isLoading$ | async"
@@ -67,7 +67,7 @@
                 </button>
               </ng-container>
             </div>
-            <div fxHide fxShow.lt-lg *ngIf="entity.hasActions">
+            <div fxHide [fxShow.lt-lg]="hideActionCellButtons" *ngIf="entity.hasActions">
               <button mat-icon-button
                       (click)="$event.stopPropagation(); ctx.detectChanges();"
                       [matMenuTriggerFor]="cellActionsMenu">

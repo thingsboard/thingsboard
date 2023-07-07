@@ -5213,7 +5213,8 @@
             "columns": "Columns",
             "remove-column": "Remove column",
             "add-column": "Add column",
-            "no-columns": "No columns configured"
+            "no-columns": "No columns configured",
+            "hide-action-cell-buttons": "Hide action cell buttons"
         },
         "value-source": {
             "value-source": "Value source",
