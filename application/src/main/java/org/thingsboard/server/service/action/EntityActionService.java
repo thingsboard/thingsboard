@@ -43,10 +43,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.common.msg.notification.trigger.AlarmAssignmentTrigger;
-import org.thingsboard.server.common.msg.notification.trigger.AlarmCommentTrigger;
-import org.thingsboard.server.common.msg.notification.trigger.EntitiesLimitTrigger;
-import org.thingsboard.server.common.msg.notification.trigger.EntityActionTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionTrigger;
 import org.thingsboard.server.dao.audit.AuditLogService;
 
 import java.util.List;

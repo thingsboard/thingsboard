@@ -182,6 +182,7 @@
     .fc-node {
       border-radius: 8px;
       &.fc-selected {
+        z-index: 2;
         &:not(.fc-edit) {
           margin: -3px;
           border: solid 3px #f00;

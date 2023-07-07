@@ -16,6 +16,12 @@
 
 -->
 <div [formGroup]="keyRowFormGroup" class="tb-data-key-row">
+  <mat-form-field *ngIf="hasAdditionalLatestDataKeys" class="tb-inline-field tb-source-field" appearance="outline" subscriptSizing="dynamic">
+    <mat-select formControlName="latest">
+      <mat-option [value]="false">{{ 'datakey.timeseries' | translate }}</mat-option>
+      <mat-option [value]="true">{{ 'datakey.latest' | translate }}</mat-option>
+    </mat-select>
+  </mat-form-field>
   <mat-form-field fxFlex class="tb-inline-field tb-key-field" subscriptSizing="dynamic">
     <mat-chip-grid #chipList>
       <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue.type"
@@ -141,15 +147,31 @@
                     formControlName="color">
     </tb-color-input>
   </div>
-  <div class="tb-units-field">
+  <div *ngIf="!hideUnits" class="tb-units-field">
     <tb-widget-units *ngIf="displayUnitsOrDigits"
       formControlName="units">
     </tb-widget-units>
   </div>
-  <div class="tb-decimals-field">
-    <mat-form-field *ngIf="displayUnitsOrDigits" appearance="outline" class="tb-inline-field center number" subscriptSizing="dynamic">
+  <div *ngIf="!hideDecimals" class="tb-decimals-field">
+    <mat-form-field *ngIf="displayUnitsOrDigits" appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
       <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
+  </div>
+  <div class="tb-data-keys-table-row-buttons">
+    <button type="button"
+            mat-icon-button
+            (click)="editKey(true)"
+            [matTooltip]="keySettingsTitle"
+            matTooltipPosition="above">
+      <mat-icon>settings</mat-icon>
+    </button>
+    <button type="button"
+            mat-icon-button
+            (click)="keyRemoved.emit()"
+            [matTooltip]="removeKeyTitle"
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
+    </button>
   </div>
 </div>
 <ng-template #keyName>

@@ -63,7 +63,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.common.msg.notification.trigger.DeviceActivityTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;

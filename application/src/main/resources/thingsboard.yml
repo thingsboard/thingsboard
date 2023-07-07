@@ -393,6 +393,10 @@ actors:
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
+    external:
+      # Force acknowledgement of the incoming message for external rule nodes to decrease processing latency.
+      # Enqueue the result of external node processing as a separate message to the rule engine.
+      force_ack: "${ACTORS_RULE_EXTERNAL_NODE_FORCE_ACK:false}"
   rpc:
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
     sequential: "${ACTORS_RPC_SEQUENTIAL:false}"
@@ -493,6 +497,9 @@ cache:
     entityCount:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
       maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+    resourceInfo:
+      timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_INFO_TTL:1440}"
+      maxSize: "${CACHE_SPECS_RESOURCE_INFO_MAX_SIZE:100000}"
 
   # deliberately placed outside 'specs' group above
   notificationRules:
@@ -1276,10 +1283,8 @@ vc:
 notification_system:
   thread_pool_size: "${TB_NOTIFICATION_SYSTEM_THREAD_POOL_SIZE:10}"
   rules:
-    trigger_types_configs:
-      NEW_PLATFORM_VERSION:
-        # In milliseconds, infinitely by default
-        deduplication_duration: "${NEW_PLATFORM_VERSION_NOTIFICATION_RULE_DEDUPLICATION_DURATION:0}"
+    # Semicolon-separated deduplication durations (in millis) for trigger types. Format: 'NotificationRuleTriggerType1:123;NotificationRuleTriggerType2:456'
+    deduplication_durations: "${TB_NOTIFICATION_RULES_DEDUPLICATION_DURATIONS:NEW_PLATFORM_VERSION:0;RATE_LIMITS:14400000;}"
 
 management:
   endpoints:

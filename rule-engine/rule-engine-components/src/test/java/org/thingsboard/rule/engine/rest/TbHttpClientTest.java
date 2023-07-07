@@ -167,7 +167,9 @@ public class TbHttpClientTest {
                 capturedData.capture()
         )).thenReturn(successMsg);
 
-        httpClient.processMessage(ctx, msg);
+        httpClient.processMessage(ctx, msg,
+                m -> ctx.tellSuccess(msg),
+                (m, t) -> ctx.tellFailure(m, t));
 
         Awaitility.await()
                 .atMost(30, TimeUnit.SECONDS)

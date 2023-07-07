@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccoun
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.dao.util.limits.LimitedApi;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;

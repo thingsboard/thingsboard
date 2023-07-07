@@ -43,29 +43,22 @@ import java.util.List;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeScriptConfig"
 )
-public class TbTransformMsgNode extends TbAbstractTransformNode {
+public class TbTransformMsgNode extends TbAbstractTransformNode<TbTransformMsgNodeConfiguration> {
 
-    private TbTransformMsgNodeConfiguration config;
     private ScriptEngine scriptEngine;
 
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
+    protected TbTransformMsgNodeConfiguration loadNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
         scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
                 ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getTbelScript() : config.getJsScript());
-        setConfig(config);
+        return config;
     }
 
     @Override
     protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
         ctx.logJsEvalRequest();
         return scriptEngine.executeUpdateAsync(msg);
-    }
-
-    @Override
-    protected void transformSuccess(TbContext ctx, TbMsg msg, TbMsg m) {
-        ctx.logJsEvalResponse();
-        super.transformSuccess(ctx, msg, m);
     }
 
     @Override

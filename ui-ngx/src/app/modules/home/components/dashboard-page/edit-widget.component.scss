@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 :host {
-  .widget-preview-section {
+  .widget-preview-background {
     position: absolute;
     top: 72px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+  }
+  .widget-preview-section {
+    position: absolute;
+    top: 0;
     left: 16px;
     right: 16px;
     bottom: 16px;

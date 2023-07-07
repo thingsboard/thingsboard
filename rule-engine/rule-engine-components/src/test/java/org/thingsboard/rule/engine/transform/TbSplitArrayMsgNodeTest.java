@@ -96,6 +96,7 @@ public class TbSplitArrayMsgNodeTest {
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
         verify(ctx, never()).tellSuccess(any());
+        verify(ctx, never()).enqueueForTellNext(any(), anyString(), any(), any());
         verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
 
         assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);

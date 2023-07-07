@@ -15,31 +15,34 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="timeseriesTableWidgetSettingsForm" fxLayout="column">
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.table.common-table-settings</legend>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
-      <section fxLayout="column" fxFlex>
-        <mat-checkbox formControlName="enableSearch">
-          {{ 'widgets.table.enable-search' | translate }}
-        </mat-checkbox>
-        <mat-checkbox formControlName="enableSelectColumnDisplay">
-          {{ 'widgets.table.enable-select-column-display' | translate }}
-        </mat-checkbox>
-      </section>
-      <section fxLayout="column" fxFlex>
-        <mat-checkbox formControlName="enableStickyHeader">
-          {{ 'widgets.table.enable-sticky-header' | translate }}
-        </mat-checkbox>
-        <mat-checkbox formControlName="enableStickyAction">
-          {{ 'widgets.table.enable-sticky-action' | translate }}
-        </mat-checkbox>
-        <mat-checkbox formControlName="hideActionCellButtons">
-          {{ 'widgets.table.hide-action-cell-buttons' | translate }}
-        </mat-checkbox>
-      </section>
-    </section>
-    <mat-form-field fxFlex class="mat-block">
+<ng-container [formGroup]="timeseriesTableWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.table-header</div>
+    <mat-slide-toggle class="mat-slide"  formControlName="enableStickyHeader">
+      {{ 'widgets.table.enable-sticky-header' | translate }}
+    </mat-slide-toggle>
+    <mat-slide-toggle class="mat-slide"  formControlName="enableSearch">
+      {{ 'widgets.table.enable-search' | translate }}
+    </mat-slide-toggle>
+    <mat-slide-toggle class="mat-slide"  formControlName="enableSelectColumnDisplay">
+      {{ 'widgets.table.enable-select-column-display' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.columns</div>
+    <mat-slide-toggle class="mat-slide"  formControlName="showTimestamp">
+      {{ 'widgets.table.display-timestamp' | translate }}
+    </mat-slide-toggle>
+    <mat-slide-toggle class="mat-slide"  formControlName="showMilliseconds">
+      {{ 'widgets.table.display-milliseconds' | translate }}
+    </mat-slide-toggle>
+    <mat-slide-toggle class="mat-slide"  formControlName="enableStickyAction">
+      {{ 'widgets.table.enable-sticky-action' | translate }}
+    </mat-slide-toggle>
+    <mat-slide-toggle class="mat-slide"  formControlName="hideActionCellButtons">
+      {{ 'widgets.table.hide-action-cell-buttons' | translate }}
+    </mat-slide-toggle>
+    <mat-form-field fxFlex subscriptSizing="dynamic">
       <mat-label translate>widgets.table.hidden-cell-button-display-mode</mat-label>
       <mat-select formControlName="reserveSpaceForHiddenAction">
         <mat-option [value]="'true'">
@@ -50,41 +53,39 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <section fxLayout="column" fxLayoutGap="8px">
-      <mat-slide-toggle formControlName="showTimestamp">
-        {{ 'widgets.table.display-timestamp' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="showMilliseconds">
-        {{ 'widgets.table.display-milliseconds' | translate }}
-      </mat-slide-toggle>
-      <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
-        <mat-slide-toggle fxFlex formControlName="displayPagination">
-          {{ 'widgets.table.display-pagination' | translate }}
-        </mat-slide-toggle>
-        <mat-form-field fxFlex class="mat-block">
-          <mat-label translate>widgets.table.default-page-size</mat-label>
-          <input matInput type="number" min="1" step="1" formControlName="defaultPageSize">
-        </mat-form-field>
-      </section>
-      <mat-slide-toggle formControlName="useEntityLabel">
-        {{ 'widgets.table.use-entity-label-tab-name' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="hideEmptyLines">
-        {{ 'widgets.table.hide-empty-lines' | translate }}
-      </mat-slide-toggle>
-    </section>
-  </fieldset>
-  <fieldset class="fields-group fields-group-slider">
-    <legend class="group-title" translate>widgets.table.row-style</legend>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.pagination</div>
+    <mat-slide-toggle class="mat-slide"  formControlName="displayPagination">
+      {{ 'widgets.table.display-pagination' | translate }}
+    </mat-slide-toggle>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.table.default-page-size</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="defaultPageSize" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.table-tabs</div>
+    <mat-slide-toggle class="mat-slide" formControlName="useEntityLabel">
+      {{ 'widgets.table.use-entity-label-tab-name' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <div class="tb-form-panel tb-slide-toggle">
+    <div class="tb-form-panel-title" style="padding-bottom: 16px;" translate>widgets.table.rows</div>
+    <mat-slide-toggle class="mat-slide" style="padding-left: 16px;" formControlName="hideEmptyLines">
+      {{ 'widgets.table.hide-empty-lines' | translate }}
+    </mat-slide-toggle>
     <mat-expansion-panel class="tb-settings" [expanded]="timeseriesTableWidgetSettingsForm.get('useRowStyleFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
-        <mat-panel-title>
-          <mat-slide-toggle formControlName="useRowStyleFunction" (click)="$event.stopPropagation()"
+      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+        <mat-panel-title fxFlex="60">
+          <mat-slide-toggle class="mat-slide" formControlName="useRowStyleFunction" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.table.use-row-style-function' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
@@ -98,5 +99,5 @@
         </tb-js-func>
       </ng-template>
     </mat-expansion-panel>
-  </fieldset>
-</section>
+  </div>
+</ng-container>

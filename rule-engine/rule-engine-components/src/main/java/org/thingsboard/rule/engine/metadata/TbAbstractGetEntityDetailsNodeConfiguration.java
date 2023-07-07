@@ -16,16 +16,15 @@
 package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
-import org.thingsboard.rule.engine.util.EntityDetails;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.rule.engine.util.ContactBasedEntityDetails;
 
 import java.util.List;
 
 @Data
-public abstract class TbAbstractGetEntityDetailsNodeConfiguration {
+@EqualsAndHashCode(callSuper = true)
+public abstract class TbAbstractGetEntityDetailsNodeConfiguration extends TbAbstractFetchToNodeConfiguration {
 
-
-    private List<EntityDetails> detailsList;
-
-    private boolean addToMetadata;
+    private List<ContactBasedEntityDetails> detailsList;
 
 }

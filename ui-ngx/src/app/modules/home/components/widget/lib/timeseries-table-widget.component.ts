@@ -390,9 +390,11 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         this.sources.push(source);
       }
     }
-    this.prepareDisplayedColumn();
-    this.sources[this.sourceIndex].displayedColumns =
-      this.displayedColumns[this.sourceIndex].filter(value => value.display).map(value => value.def);
+    if (this.sources.length) {
+      this.prepareDisplayedColumn();
+      this.sources[this.sourceIndex].displayedColumns =
+        this.displayedColumns[this.sourceIndex].filter(value => value.display).map(value => value.def);
+    }
     this.updateActiveEntityInfo();
   }
 
@@ -400,48 +402,50 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
+    if (this.sources.length) {
+      const target = $event.target || $event.currentTarget;
+      const config = new OverlayConfig();
+      config.backdropClass = 'cdk-overlay-transparent-backdrop';
+      config.hasBackdrop = true;
+      const connectedPosition: ConnectedPosition = {
+        originX: 'end',
+        originY: 'bottom',
+        overlayX: 'end',
+        overlayY: 'top'
+      };
+      config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+        .withPositions([connectedPosition]);
 
-    const overlayRef = this.overlay.create(config);
-    overlayRef.backdropClick().subscribe(() => {
-      overlayRef.dispose();
-    });
-    const source = this.sources[this.sourceIndex];
+      const overlayRef = this.overlay.create(config);
+      overlayRef.backdropClick().subscribe(() => {
+        overlayRef.dispose();
+      });
+      const source = this.sources[this.sourceIndex];
 
-    this.prepareDisplayedColumn();
+      this.prepareDisplayedColumn();
 
-    const providers: StaticProvider[] = [
-      {
-        provide: DISPLAY_COLUMNS_PANEL_DATA,
-        useValue: {
-          columns: this.displayedColumns[this.sourceIndex],
-          columnsUpdated: (newColumns) => {
-            source.displayedColumns = newColumns.filter(value => value.display).map(value => value.def);
-            this.clearCache();
+      const providers: StaticProvider[] = [
+        {
+          provide: DISPLAY_COLUMNS_PANEL_DATA,
+          useValue: {
+            columns: this.displayedColumns[this.sourceIndex],
+            columnsUpdated: (newColumns) => {
+              source.displayedColumns = newColumns.filter(value => value.display).map(value => value.def);
+              this.clearCache();
+            }
           }
+        },
+        {
+          provide: OverlayRef,
+          useValue: overlayRef
         }
-      },
-      {
-        provide: OverlayRef,
-        useValue: overlayRef
-      }
-    ];
+      ];
 
-    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
-      this.viewContainerRef, injector));
-    this.ctx.detectChanges();
+      const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+      overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
+        this.viewContainerRef, injector));
+      this.ctx.detectChanges();
+    }
   }
 
   private prepareDisplayedColumn() {

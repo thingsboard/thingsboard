@@ -297,3 +297,8 @@ management:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+
+notification_system:
+  rules:
+    # Semicolon-separated deduplication durations (in millis) for trigger types. Format: 'NotificationRuleTriggerType1:123;NotificationRuleTriggerType2:456'
+    deduplication_durations: "${TB_NOTIFICATION_RULES_DEDUPLICATION_DURATIONS:RATE_LIMITS:14400000;}"
