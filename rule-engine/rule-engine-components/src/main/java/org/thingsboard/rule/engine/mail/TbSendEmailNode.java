@@ -15,17 +15,17 @@
  */
 package org.thingsboard.rule.engine.mail;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbEmail;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -47,19 +47,18 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         configDirective = "tbExternalNodeSendEmailConfig",
         icon = "send"
 )
-public class TbSendEmailNode implements TbNode {
+public class TbSendEmailNode extends TbAbstractExternalNode {
 
     private static final String MAIL_PROP = "mail.";
     static final String SEND_EMAIL_TYPE = "SEND_EMAIL";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
     private TbSendEmailNodeConfiguration config;
     private JavaMailSenderImpl mailSender;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        super.init(ctx);
+        this.config = TbNodeUtils.convert(configuration, TbSendEmailNodeConfiguration.class);
         try {
-            this.config = TbNodeUtils.convert(configuration, TbSendEmailNodeConfiguration.class);
             if (!this.config.isUseSystemSmtpSettings()) {
                 mailSender = createMailSender();
             }
@@ -77,8 +76,9 @@ public class TbSendEmailNode implements TbNode {
                         sendEmail(ctx, msg, email);
                         return null;
                     }),
-                    ok -> ctx.tellSuccess(msg),
-                    fail -> ctx.tellFailure(msg, fail));
+                    ok -> tellSuccess(ctx, msg),
+                    fail -> tellFailure(ctx, msg, fail));
+            ackIfNeeded(ctx, msg);
         } catch (Exception ex) {
             ctx.tellFailure(msg, ex);
         }
@@ -93,7 +93,7 @@ public class TbSendEmailNode implements TbNode {
     }
 
     private TbEmail getEmail(TbMsg msg) throws IOException {
-        TbEmail email = MAPPER.readValue(msg.getData(), TbEmail.class);
+        TbEmail email = JacksonUtil.fromString(msg.getData(), TbEmail.class);
         if (StringUtils.isBlank(email.getTo())) {
             throw new IllegalStateException("Email destination can not be blank [" + email.getTo() + "]");
         }

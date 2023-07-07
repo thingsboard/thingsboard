@@ -5026,6 +5026,21 @@ var JSHINT = (function() {
       return that;
     }, 20);
   }
+  function nullSafeProperty(s) {
+    console.log("test " + s);
+    symbol(s, 20).exps = true;
+    return infix(s, function(context, left, that) {
+      if (state.option.bitwise) {
+        warning("W016", that, that.id);
+      }
+
+      checkLeftSideAssign(context, left, that);
+
+      that.right = expression(context, 10);
+
+      return that;
+    }, 20);
+  }
   function suffix(s) {
     var x = symbol(s, 150);
 
@@ -5214,6 +5229,10 @@ var JSHINT = (function() {
     var a = [], p;
 
     while (!state.tokens.next.reach && state.tokens.next.id !== "(end)") {
+      if (state.tokens.next.value === "switch") {
+        warning("E067", state.tokens.next, "switch");
+        break;
+      }
       if (state.tokens.next.id === ";") {
         p = peek();
 
@@ -5539,6 +5558,9 @@ var JSHINT = (function() {
   bitwiseassignop("<<=");
   bitwiseassignop(">>=");
   bitwiseassignop(">>>=");
+
+  nullSafeProperty(".?");
+
   infix(",", function(context, left, that) {
     if (state.option.nocomma) {
       warning("W127", that);
@@ -9197,7 +9219,7 @@ var JSHINT = (function() {
         statements(0);
       }
 
-      if (state.tokens.next.id !== "(end)") {
+      if (state.tokens.next.id !== "(end)"&& state.tokens.next.value !== "switch") {
         quit("E041", state.tokens.curr);
       }
 
@@ -9450,6 +9472,12 @@ Lexer.prototype = {
 
     switch (ch1) {
     case ".":
+      if (ch1 === "." && this.peek(1) === "?") {
+        return {
+          type: Token.Punctuator,
+          value: ".?"
+        };
+      }
       if ((/^[0-9]$/).test(this.peek(1))) {
         return null;
       }
@@ -11242,7 +11270,8 @@ var errors = {
   E064: "Super call may only be used within class method bodies.",
   E065: "Functions defined outside of strict mode with non-simple parameter lists may not " +
     "enable strict mode.",
-  E066: "Asynchronous iteration is only available with for-of loops."
+  E066: "Asynchronous iteration is only available with for-of loops.",
+  E067: "Expected an 'if/else' and instead saw 'switch'. TBEL does not support the 'switch' statement."
 };
 
 var warnings = {
@@ -11340,7 +11369,6 @@ var warnings = {
   W086: "Expected a 'break' statement before '{a}'.",
   W087: "Forgotten 'debugger' statement?",
   W088: "Creating global 'for' variable. Should be 'for (var {a} ...'.",
-  // W288: "The syntax of function '{a}' is specific to TBEL, and is not supported by JS executor.",
   W089: "The body of a for in should be wrapped in an if statement to filter " +
     "unwanted properties from the prototype.",
   W090: "'{a}' is not a statement label.",

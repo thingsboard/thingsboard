@@ -15,43 +15,42 @@
  */
 package org.thingsboard.server.common.data.alarm.rule;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-@ApiModel
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class AlarmRuleInfo extends SearchTextBased<AlarmRuleId> implements HasName, HasTenantId {
+public class AlarmRuleInfo extends BaseData<AlarmRuleId> implements HasName, HasTenantId {
 
     private static final long serialVersionUID = -8353967477463356805L;
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
 
     @NoXss
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 4, value = "Unique Alarm Rule Name in scope of Tenant", example = "High Temperature Alarm Rule")
+    @Schema(description = "Unique Alarm Rule Name in scope of Tenant", example = "High Temperature Alarm Rule")
     private String name;
 
     @NoXss
     @Length(fieldName = "alarm type")
-    @ApiModelProperty(position = 5, value = "String value representing type of the alarm", example = "High Temperature Alarm")
+    @Schema(description = "String value representing type of the alarm", example = "High Temperature Alarm")
     private String alarmType;
 
-    @ApiModelProperty(position = 6, value = "Boolean value representing is alarm rule enabled")
+    @Schema(description = "Boolean value representing is alarm rule enabled")
     private boolean enabled;
 
     @NoXss
-    @ApiModelProperty(position = 7, value = "Alarm rule description. ")
+    @Schema(description = "Alarm rule description.")
     private String description;
 
     public AlarmRuleInfo() {
@@ -72,8 +71,4 @@ public class AlarmRuleInfo extends SearchTextBased<AlarmRuleId> implements HasNa
         this.description = alarmRuleInfo.getDescription();
     }
 
-    @Override
-    public String getSearchText() {
-        return getName();
-    }
 }

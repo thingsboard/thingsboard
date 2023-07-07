@@ -23,15 +23,15 @@ import org.thingsboard.server.common.data.oauth2.OAuth2Mobile;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.OAUTH2_MOBILE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.OAUTH2_MOBILE_TABLE_NAME)
 public class OAuth2MobileEntity extends BaseSqlEntity<OAuth2Mobile> {
 
     @Column(name = ModelConstants.OAUTH2_PARAMS_ID_PROPERTY)

@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.rule;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -24,21 +23,21 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 
 import java.util.Set;
 
-@ApiModel
+@Schema
 @Data
 @Slf4j
 public class RuleChainOutputLabelsUsage {
 
-    @ApiModelProperty(position = 1, required = true, value = "Rule Chain Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(required = true, description = "Rule Chain Id", accessMode = Schema.AccessMode.READ_ONLY)
     private RuleChainId ruleChainId;
-    @ApiModelProperty(position = 2, required = true, value = "Rule Node Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(required = true, description = "Rule Node Id", accessMode = Schema.AccessMode.READ_ONLY)
     private RuleNodeId ruleNodeId;
 
-    @ApiModelProperty(position = 3, required = true, value = "Rule Chain Name", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(required = true, description = "Rule Chain Name", accessMode = Schema.AccessMode.READ_ONLY)
     private String ruleChainName;
-    @ApiModelProperty(position = 4, required = true, value = "Rule Node Name", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(required = true, description = "Rule Node Name", accessMode = Schema.AccessMode.READ_ONLY)
     private String ruleNodeName;
-    @ApiModelProperty(position = 5, required = true, value = "Output labels", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(required = true, description = "Output labels", accessMode = Schema.AccessMode.READ_ONLY)
     private Set<String> labels;
 
 }

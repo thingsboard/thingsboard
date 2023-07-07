@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.asset;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
@@ -35,12 +35,12 @@ import java.util.UUID;
 @ToString(callSuper = true, exclude = "image")
 public class AssetProfileInfo extends EntityInfo {
 
-    @ApiModelProperty(position = 3, value = "Either URL or Base64 data of the icon. Used in the mobile application to visualize set of asset profiles in the grid view. ")
+    @Schema(description = "Either URL or Base64 data of the icon. Used in the mobile application to visualize set of asset profiles in the grid view. ")
     private final String image;
-    @ApiModelProperty(position = 4, value = "Reference to the dashboard. Used in the mobile application to open the default dashboard when user navigates to asset details.")
+    @Schema(description = "Reference to the dashboard. Used in the mobile application to open the default dashboard when user navigates to asset details.")
     private final DashboardId defaultDashboardId;
 
-    @ApiModelProperty(position = 5, value = "Tenant id.")
+    @Schema(description = "Tenant id.")
     private final TenantId tenantId;
 
     @JsonCreator

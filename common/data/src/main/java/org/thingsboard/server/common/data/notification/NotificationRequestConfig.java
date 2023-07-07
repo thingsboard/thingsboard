@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.notification;
 
 import lombok.Data;
 
-import javax.validation.constraints.Max;
+import jakarta.validation.constraints.Max;
 
 @Data
 public class NotificationRequestConfig {

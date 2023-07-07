@@ -15,34 +15,34 @@
  */
 package org.thingsboard.server.common.data.sms.config;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
 public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
-    @ApiModelProperty(value = "SMPP version", allowableValues = "3.3, 3.4", required = true)
+    @Schema(description = "SMPP version", allowableValues = "3.3, 3.4", required = true)
     private String protocolVersion;
 
-    @ApiModelProperty(value = "SMPP host", required = true)
+    @Schema(description = "SMPP host", required = true)
     private String host;
-    @ApiModelProperty(value = "SMPP port", required = true)
+    @Schema(description = "SMPP port", required = true)
     private Integer port;
 
-    @ApiModelProperty(value = "System ID", required = true)
+    @Schema(description = "System ID", required = true)
     private String systemId;
-    @ApiModelProperty(value = "Password", required = true)
+    @Schema(description = "Password", required = true)
     private String password;
 
-    @ApiModelProperty(value = "System type", required = false)
+    @Schema(description = "System type", required = false)
     private String systemType;
-    @ApiModelProperty(value = "TX - Transmitter, RX - Receiver, TRX - Transciever. By default TX is used", required = false)
+    @Schema(description = "TX - Transmitter, RX - Receiver, TRX - Transciever. By default TX is used", required = false)
     private SmppBindType bindType;
-    @ApiModelProperty(value = "Service type", required = false)
+    @Schema(description = "Service type", required = false)
     private String serviceType;
 
-    @ApiModelProperty(value = "Source address", required = false)
+    @Schema(description = "Source address", required = false)
     private String sourceAddress;
-    @ApiModelProperty(value = "Source TON (Type of Number). Needed is source address is set. 5 by default.\n" +
+    @Schema(description = "Source TON (Type of Number). Needed is source address is set. 5 by default.\n" +
             "0 - Unknown\n" +
             "1 - International\n" +
             "2 - National\n" +
@@ -51,7 +51,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "5 - Alphanumeric\n" +
             "6 - Abbreviated", required = false)
     private Byte sourceTon;
-    @ApiModelProperty(value = "Source NPI (Numbering Plan Identification). Needed is source address is set. 0 by default.\n" +
+    @Schema(description = "Source NPI (Numbering Plan Identification). Needed is source address is set. 0 by default.\n" +
             "0 - Unknown\n" +
             "1 - ISDN/telephone numbering plan (E163/E164)\n" +
             "3 - Data numbering plan (X.121)\n" +
@@ -64,7 +64,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "18 - WAP Client Id (to be defined by WAP Forum)", required = false)
     private Byte sourceNpi;
 
-    @ApiModelProperty(value = "Destination TON (Type of Number). 5 by default.\n" +
+    @Schema(description = "Destination TON (Type of Number). 5 by default.\n" +
             "0 - Unknown\n" +
             "1 - International\n" +
             "2 - National\n" +
@@ -73,7 +73,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "5 - Alphanumeric\n" +
             "6 - Abbreviated", required = false)
     private Byte destinationTon;
-    @ApiModelProperty(value = "Destination NPI (Numbering Plan Identification). 0 by default.\n" +
+    @Schema(description = "Destination NPI (Numbering Plan Identification). 0 by default.\n" +
             "0 - Unknown\n" +
             "1 - ISDN/telephone numbering plan (E163/E164)\n" +
             "3 - Data numbering plan (X.121)\n" +
@@ -86,11 +86,11 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "18 - WAP Client Id (to be defined by WAP Forum)", required = false)
     private Byte destinationNpi;
 
-    @ApiModelProperty(value = "Address range", required = false)
+    @Schema(description = "Address range", required = false)
     private String addressRange;
 
-    @ApiModelProperty(allowableValues = "0-10,13-14",
-            value = "0 - SMSC Default Alphabet (ASCII for short and long code and to GSM for toll-free, used as default)\n" +
+    @Schema(allowableValues = "0-10,13-14",
+            description = "0 - SMSC Default Alphabet (ASCII for short and long code and to GSM for toll-free, used as default)\n" +
                     "1 - IA5 (ASCII for short and long code, Latin 9 for toll-free (ISO-8859-9))\n" +
                     "2 - Octet Unspecified (8-bit binary)\n" +
                     "3 - Latin 1 (ISO-8859-1)\n" +

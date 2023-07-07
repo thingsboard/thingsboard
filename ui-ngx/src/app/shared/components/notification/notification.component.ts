@@ -62,6 +62,9 @@ export class NotificationComponent implements OnInit {
 
   currentDate = Date.now();
 
+  title = '';
+  message = '';
+
   constructor(
     private utils: UtilsService,
     private router: Router
@@ -72,6 +75,8 @@ export class NotificationComponent implements OnInit {
     this.showIcon = this.notification.additionalConfig?.icon?.enabled;
     this.showButton = this.notification.additionalConfig?.actionButtonConfig?.enabled;
     this.hideMarkAsReadButton = this.notification.status === NotificationStatus.READ;
+    this.title = this.utils.customTranslation(this.notification.subject, this.notification.subject);
+    this.message = this.utils.customTranslation(this.notification.text, this.notification.text);
     if (this.showButton) {
       this.buttonLabel = this.utils.customTranslation(this.notification.additionalConfig.actionButtonConfig.text,
                                                       this.notification.additionalConfig.actionButtonConfig.text);
@@ -134,7 +139,7 @@ export class NotificationComponent implements OnInit {
   }
 
   notificationColor(): string {
-    if (this.notification.type === NotificationType.ALARM) {
+    if (this.notification.type === NotificationType.ALARM && !this.notification.info.cleared) {
       return AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity);
     }
     return 'transparent';

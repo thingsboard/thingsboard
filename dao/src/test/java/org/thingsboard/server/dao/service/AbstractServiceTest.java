@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -56,6 +55,7 @@ import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -71,8 +71,6 @@ import static org.junit.Assert.assertNotNull;
 @Configuration
 @ComponentScan("org.thingsboard.server")
 public abstract class AbstractServiceTest {
-
-    protected ObjectMapper mapper = new ObjectMapper();
 
     public static final TenantId SYSTEM_TENANT_ID = TenantId.SYS_TENANT_ID;
 
@@ -134,7 +132,9 @@ public abstract class AbstractServiceTest {
 //    }
 
     public JsonNode readFromResource(String resourceName) throws IOException {
-        return mapper.readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resourceName)){
+            return JacksonUtil.fromBytes(is.readAllBytes());
+        }
     }
 
     @Bean

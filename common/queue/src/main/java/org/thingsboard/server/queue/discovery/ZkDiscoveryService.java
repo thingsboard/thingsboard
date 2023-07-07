@@ -40,8 +40,8 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Executors;

@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.data.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -27,37 +27,37 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 @Builder
 public class AlarmCreateOrUpdateActiveRequest implements AlarmModificationRequest {
 
     @NotNull
-    @ApiModelProperty(position = 1, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
-    @ApiModelProperty(position = 2, value = "JSON object with Customer Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Customer Id", accessMode = Schema.AccessMode.READ_ONLY)
     private CustomerId customerId;
     @NotNull
-    @ApiModelProperty(position = 3, required = true, value = "representing type of the Alarm", example = "High Temperature Alarm")
+    @Schema(required = true, description = "representing type of the Alarm", example = "High Temperature Alarm")
     @Length(fieldName = "type")
     private String type;
     @NotNull
-    @ApiModelProperty(position = 4, required = true, value = "JSON object with alarm originator id")
+    @Schema(required = true, description = "JSON object with alarm originator id")
     private EntityId originator;
     @NotNull
-    @ApiModelProperty(position = 5, required = true, value = "Alarm severity", example = "CRITICAL")
+    @Schema(required = true, description = "Alarm severity", example = "CRITICAL")
     private AlarmSeverity severity;
-    @ApiModelProperty(position = 6, value = "Timestamp of the alarm start time, in milliseconds", example = "1634058704565")
+    @Schema(description = "Timestamp of the alarm start time, in milliseconds", example = "1634058704565")
     private long startTs;
-    @ApiModelProperty(position = 7, value = "Timestamp of the alarm end time(last time update), in milliseconds", example = "1634111163522")
+    @Schema(description = "Timestamp of the alarm end time(last time update), in milliseconds", example = "1634111163522")
     private long endTs;
     @NoXss
-    @ApiModelProperty(position = 8, value = "JSON object with alarm details")
+    @Schema(description = "JSON object with alarm details")
     private JsonNode details;
     @Valid
-    @ApiModelProperty(position = 9, value = "JSON object with propagation details")
+    @Schema(description = "JSON object with propagation details")
     private AlarmPropagationInfo propagation;
 
     private UserId userId;

@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.alarm.rule.TbAlarmRuleService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -42,12 +43,10 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_RULE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_RULE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ALARM_RULE_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_RULE_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -70,7 +69,7 @@ public class AlarmRuleController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/alarmRule/{alarmRuleId}", method = RequestMethod.GET)
     @ResponseBody
-    public AlarmRule getAlarmRuleById(@ApiParam(value = ALARM_RULE_ID_PARAM_DESCRIPTION)
+    public AlarmRule getAlarmRuleById(@Parameter(description = ALARM_RULE_ID_PARAM_DESCRIPTION)
                                       @PathVariable(ALARM_RULE_ID) String strAlarmRuleId) throws ThingsboardException {
         checkParameter(ALARM_RULE_ID, strAlarmRuleId);
         AlarmRuleId alarmRuleId = new AlarmRuleId(toUUID(strAlarmRuleId));
@@ -87,7 +86,7 @@ public class AlarmRuleController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/alarmRule", method = RequestMethod.POST)
     @ResponseBody
-    public AlarmRule saveAlarmRule(@ApiParam(value = "A JSON value representing the alarm rule.") @RequestBody AlarmRule alarmRule) throws Exception {
+    public AlarmRule saveAlarmRule(@Parameter(description = "A JSON value representing the alarm rule.") @RequestBody AlarmRule alarmRule) throws Exception {
         alarmRule.setTenantId(getTenantId());
         checkEntity(alarmRule.getId(), alarmRule, Resource.ALARM_RULE);
         return tbAlarmRuleService.save(alarmRule, getCurrentUser());
@@ -97,7 +96,7 @@ public class AlarmRuleController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/alarmRule/{alarmRuleId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteAlarmRule(@ApiParam(value = ALARM_RULE_ID_PARAM_DESCRIPTION)
+    public void deleteAlarmRule(@Parameter(description = ALARM_RULE_ID_PARAM_DESCRIPTION)
                                 @PathVariable(ALARM_RULE_ID) String strAlarmRuleId) throws ThingsboardException {
         checkParameter(ALARM_RULE_ID, strAlarmRuleId);
         AlarmRuleId alarmRuleId = new AlarmRuleId(toUUID(strAlarmRuleId));
@@ -112,15 +111,15 @@ public class AlarmRuleController extends BaseController {
     @RequestMapping(value = "/alarmRuleInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AlarmRuleInfo> getAlarmRuleInfos(
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = ALARM_RULE_TEXT_SEARCH_DESCRIPTION)
+            @Parameter(description = ALARM_RULE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ALARM_RULE_PROPERTY_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "alarmType"}))
             @RequestParam(required = false) String sortProperty,
-            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TenantId tenantId = getCurrentUser().getTenantId();

@@ -451,6 +451,12 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     }
 
     @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteAsset(tenantId, (AssetId) id);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.ASSET;
     }

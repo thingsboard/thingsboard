@@ -22,19 +22,9 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.JsonDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
-import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
@@ -51,7 +41,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesSubscrip
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsCountSubscription;
@@ -242,7 +231,7 @@ public class TbSubscriptionUtils {
         builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-        ts.forEach(v -> builder.addData(toKeyValueProto(v.getTs(), v).build()));
+        ts.forEach(v -> builder.addData(KvProtoUtil.toKeyValueProto(v.getTs(), v).build()));
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
         msgBuilder.setTsUpdate(builder);
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
@@ -269,7 +258,7 @@ public class TbSubscriptionUtils {
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
         builder.setScope(scope);
-        attributes.forEach(v -> builder.addData(toKeyValueProto(v.getLastUpdateTs(), v).build()));
+        attributes.forEach(v -> builder.addData(KvProtoUtil.toKeyValueProto(v.getLastUpdateTs(), v).build()));
 
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
         msgBuilder.setAttrUpdate(builder);
@@ -292,68 +281,8 @@ public class TbSubscriptionUtils {
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
     }
 
-
-    private static TsKvProto.Builder toKeyValueProto(long ts, KvEntry attr) {
-        KeyValueProto.Builder dataBuilder = KeyValueProto.newBuilder();
-        dataBuilder.setKey(attr.getKey());
-        dataBuilder.setType(KeyValueType.forNumber(attr.getDataType().ordinal()));
-        switch (attr.getDataType()) {
-            case BOOLEAN:
-                attr.getBooleanValue().ifPresent(dataBuilder::setBoolV);
-                break;
-            case LONG:
-                attr.getLongValue().ifPresent(dataBuilder::setLongV);
-                break;
-            case DOUBLE:
-                attr.getDoubleValue().ifPresent(dataBuilder::setDoubleV);
-                break;
-            case JSON:
-                attr.getJsonValue().ifPresent(dataBuilder::setJsonV);
-                break;
-            case STRING:
-                attr.getStrValue().ifPresent(dataBuilder::setStringV);
-                break;
-        }
-        return TsKvProto.newBuilder().setTs(ts).setKv(dataBuilder);
-    }
-
     public static EntityId toEntityId(String entityType, long entityIdMSB, long entityIdLSB) {
         return EntityIdFactory.getByTypeAndUuid(entityType, new UUID(entityIdMSB, entityIdLSB));
-    }
-
-    public static List<TsKvEntry> toTsKvEntityList(List<TsKvProto> dataList) {
-        List<TsKvEntry> result = new ArrayList<>(dataList.size());
-        dataList.forEach(proto -> result.add(new BasicTsKvEntry(proto.getTs(), getKvEntry(proto.getKv()))));
-        return result;
-    }
-
-    public static List<AttributeKvEntry> toAttributeKvList(List<TsKvProto> dataList) {
-        List<AttributeKvEntry> result = new ArrayList<>(dataList.size());
-        dataList.forEach(proto -> result.add(new BaseAttributeKvEntry(getKvEntry(proto.getKv()), proto.getTs())));
-        return result;
-    }
-
-    private static KvEntry getKvEntry(KeyValueProto proto) {
-        KvEntry entry = null;
-        DataType type = DataType.values()[proto.getType().getNumber()];
-        switch (type) {
-            case BOOLEAN:
-                entry = new BooleanDataEntry(proto.getKey(), proto.getBoolV());
-                break;
-            case LONG:
-                entry = new LongDataEntry(proto.getKey(), proto.getLongV());
-                break;
-            case DOUBLE:
-                entry = new DoubleDataEntry(proto.getKey(), proto.getDoubleV());
-                break;
-            case STRING:
-                entry = new StringDataEntry(proto.getKey(), proto.getStringV());
-                break;
-            case JSON:
-                entry = new JsonDataEntry(proto.getKey(), proto.getJsonV());
-                break;
-        }
-        return entry;
     }
 
     public static ToCoreMsg toAlarmUpdateProto(TenantId tenantId, EntityId entityId, AlarmInfo alarm) {

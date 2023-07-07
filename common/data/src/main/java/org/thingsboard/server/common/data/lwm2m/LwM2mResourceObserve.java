@@ -15,28 +15,27 @@
  */
 package org.thingsboard.server.common.data.lwm2m;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.stream.Stream;
 
-@ApiModel
+@Schema
 @Data
 @AllArgsConstructor
 public class LwM2mResourceObserve {
-    @ApiModelProperty(position = 1, value = "LwM2M Resource Observe id.", example = "0")
+    @Schema(description = "LwM2M Resource Observe id.", example = "0")
     int id;
-    @ApiModelProperty(position = 2, value = "LwM2M Resource Observe name.", example = "Data")
+    @Schema(description = "LwM2M Resource Observe name.", example = "Data")
     String name;
-    @ApiModelProperty(position = 3, value = "LwM2M Resource Observe observe.", example = "false")
+    @Schema(description = "LwM2M Resource Observe observe.", example = "false")
     boolean observe;
-    @ApiModelProperty(position = 4, value = "LwM2M Resource Observe attribute.", example = "false")
+    @Schema(description = "LwM2M Resource Observe attribute.", example = "false")
     boolean attribute;
-    @ApiModelProperty(position = 5, value = "LwM2M Resource Observe telemetry.", example = "false")
+    @Schema(description = "LwM2M Resource Observe telemetry.", example = "false")
     boolean telemetry;
-    @ApiModelProperty(position = 6, value = "LwM2M Resource Observe key name.", example = "data")
+    @Schema(description = "LwM2M Resource Observe key name.", example = "data")
     String keyName;
 
     public LwM2mResourceObserve(int id, String name, boolean observe, boolean attribute, boolean telemetry) {

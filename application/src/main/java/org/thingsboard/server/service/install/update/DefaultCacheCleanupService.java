@@ -84,10 +84,10 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 break;
             case "3.4.4":
                 log.info("Clearing cache to upgrade from version 3.4.4 to 3.5.0 ...");
-                clearCacheByName("deviceProfiles");
+                clearAll();
                 break;
-            case "3.5.0":
-                log.info("Clearing cache to upgrade from version 3.5.0 to 3.6.0 ...");
+            case "3.5.2":
+                log.info("Clearing cache to upgrade from version 3.5.2 to 3.6.0 ...");
                 clearCacheByName("deviceProfiles");
                 break;
             default:

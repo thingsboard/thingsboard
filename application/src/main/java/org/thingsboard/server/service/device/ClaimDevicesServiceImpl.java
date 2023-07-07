@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.device;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -52,7 +51,7 @@ import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -67,7 +66,6 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
 
     private static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";
     private static final String CLAIM_DATA_ATTRIBUTE_NAME = "claimingData";
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
     private TbClusterService clusterService;

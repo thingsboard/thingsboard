@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data.widget;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.NoXss;
@@ -23,13 +23,13 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @Data
 public class WidgetTypeInfo extends BaseWidgetType {
 
-    @ApiModelProperty(position = 7, value = "Base64 encoded widget thumbnail", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Base64 encoded widget thumbnail", accessMode = Schema.AccessMode.READ_ONLY)
     private String image;
     @NoXss
-    @ApiModelProperty(position = 7, value = "Description of the widget type", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Description of the widget type", accessMode = Schema.AccessMode.READ_ONLY)
     private String description;
     @NoXss
-    @ApiModelProperty(position = 8, value = "Type of the widget (timeseries, latest, control, alarm or static)", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Type of the widget (timeseries, latest, control, alarm or static)", accessMode = Schema.AccessMode.READ_ONLY)
     private String widgetType;
 
     public WidgetTypeInfo() {

@@ -16,39 +16,42 @@
 package org.thingsboard.server.common.data.plugin;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.thingsboard.server.common.data.SearchTextBased;
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.validation.Length;
+
+import java.util.Objects;
 
 /**
  * @author Andrew Shvayka
  */
-@ApiModel
+@Schema
 @ToString
-public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> {
+public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
 
     private static final long serialVersionUID = 1L;
 
-    @ApiModelProperty(position = 3, value = "Type of the Rule Node", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Type of the Rule Node", accessMode = Schema.AccessMode.READ_ONLY)
     @Getter @Setter private ComponentType type;
-    @ApiModelProperty(position = 4, value = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "TENANT", example = "TENANT")
+    @Schema(description = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", accessMode = Schema.AccessMode.READ_ONLY, allowableValues = "TENANT", example = "TENANT")
     @Getter @Setter private ComponentScope scope;
-    @ApiModelProperty(position = 5, value = "Clustering mode of the RuleNode. This mode represents the ability to start Rule Node in multiple microservices.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, allowableValues = "USER_PREFERENCE, ENABLED, SINGLETON", example = "ENABLED")
+    @Schema(description = "Clustering mode of the RuleNode. This mode represents the ability to start Rule Node in multiple microservices.", accessMode = Schema.AccessMode.READ_ONLY, allowableValues = "USER_PREFERENCE, ENABLED, SINGLETON", example = "ENABLED")
     @Getter @Setter private ComponentClusteringMode clusteringMode;
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 6, value = "Name of the Rule Node. Taken from the @RuleNode annotation.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "Custom Rule Node")
+    @Schema(description = "Name of the Rule Node. Taken from the @RuleNode annotation.", accessMode = Schema.AccessMode.READ_ONLY, example = "Custom Rule Node")
     @Getter @Setter private String name;
-    @ApiModelProperty(position = 7, value = "Full name of the Java class that implements the Rule Engine Node interface.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "com.mycompany.CustomRuleNode")
+    @Schema(description = "Full name of the Java class that implements the Rule Engine Node interface.", accessMode = Schema.AccessMode.READ_ONLY, example = "com.mycompany.CustomRuleNode")
     @Getter @Setter private String clazz;
-    @ApiModelProperty(position = 8, value = "Complex JSON object that represents the Rule Node configuration.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Complex JSON object that represents the Rule Node configuration.", accessMode = Schema.AccessMode.READ_ONLY)
     @Getter @Setter private transient JsonNode configurationDescriptor;
+    @Schema(description = "Rule node configuration version. By default, this value is 0. If the rule node is a versioned node, this value might be greater than 0.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Getter @Setter private int configurationVersion;
     @Length(fieldName = "actions")
-    @ApiModelProperty(position = 9, value = "Rule Node Actions. Deprecated. Always null.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Rule Node Actions. Deprecated. Always null.", accessMode = Schema.AccessMode.READ_ONLY)
     @Getter @Setter private String actions;
 
     public ComponentDescriptor() {
@@ -63,13 +66,15 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
         super(plugin);
         this.type = plugin.getType();
         this.scope = plugin.getScope();
+        this.clusteringMode = plugin.getClusteringMode();
         this.name = plugin.getName();
         this.clazz = plugin.getClazz();
         this.configurationDescriptor = plugin.getConfigurationDescriptor();
+        this.configurationVersion = plugin.getConfigurationVersion();
         this.actions = plugin.getActions();
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the descriptor Id. " +
+    @Schema(description = "JSON object with the descriptor Id. " +
             "Specify existing descriptor id to update the descriptor. " +
             "Referencing non-existing descriptor Id will cause error. " +
             "Omit this field to create new descriptor." )
@@ -78,15 +83,10 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the descriptor creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the descriptor creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
-    }
-
-    @Override
-    public String getSearchText() {
-        return name;
     }
 
     @Override
@@ -98,10 +98,11 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
 
         if (type != that.type) return false;
         if (scope != that.scope) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (actions != null ? !actions.equals(that.actions) : that.actions != null) return false;
-        if (configurationDescriptor != null ? !configurationDescriptor.equals(that.configurationDescriptor) : that.configurationDescriptor != null) return false;
-        return clazz != null ? clazz.equals(that.clazz) : that.clazz == null;
+        if (!Objects.equals(name, that.name)) return false;
+        if (!Objects.equals(actions, that.actions)) return false;
+        if (!Objects.equals(configurationDescriptor, that.configurationDescriptor)) return false;
+        if (configurationVersion != that.configurationVersion) return false;
+        return Objects.equals(clazz, that.clazz);
     }
 
     @Override

@@ -15,21 +15,56 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="entitiesTableKeySettingsForm" fxLayout="column">
-  <mat-form-field fxFlex class="mat-block">
-    <mat-label translate>widgets.table.custom-title</mat-label>
-    <input matInput formControlName="customTitle">
-  </mat-form-field>
-  <mat-form-field fxFlex class="mat-block">
-    <mat-label translate>widgets.table.column-width</mat-label>
-    <input matInput formControlName="columnWidth">
-  </mat-form-field>
-  <fieldset class="fields-group fields-group-slider">
-    <legend class="group-title" translate>widgets.table.cell-style</legend>
+<ng-container [formGroup]="entitiesTableKeySettingsForm">
+  <div class="tb-widget-config-panel">
+    <div class="tb-widget-config-panel-title" translate>widgets.table.column-settings</div>
+    <div class="tb-widget-config-row">
+      <div>{{ 'widgets.table.custom-title' | translate }}</div>
+      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="customTitle" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-widget-config-row space-between">
+      <div>{{ 'widgets.table.column-width' | translate }}</div>
+      <mat-form-field appearance="outline" class="center" subscriptSizing="dynamic">
+        <input matInput formControlName="columnWidth" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-widget-config-row space-between">
+      <div>{{ 'widgets.table.default-column-visibility' | translate }}</div>
+      <mat-form-field style="width: 220px;" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="defaultColumnVisibility">
+          <mat-option [value]="'visible'">
+            {{ 'widgets.table.column-visibility-visible' | translate }}
+          </mat-option>
+          <mat-option [value]="'hidden'">
+            {{ 'widgets.table.column-visibility-hidden' | translate }}
+          </mat-option>
+          <mat-option [value]="'hidden-mobile'">
+            {{ 'widgets.table.column-visibility-hidden-mobile' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-widget-config-row space-between">
+      <div>{{ 'widgets.table.column-selection-to-display' | translate }}</div>
+      <mat-form-field style="width: 220px;" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="columnSelectionToDisplay">
+          <mat-option [value]="'enabled'">
+            {{ 'widgets.table.column-selection-to-display-enabled' | translate }}
+          </mat-option>
+          <mat-option [value]="'disabled'">
+            {{ 'widgets.table.column-selection-to-display-disabled' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-widget-config-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="entitiesTableKeySettingsForm.get('useCellStyleFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
         <mat-panel-title fxFlex="60">
-          <mat-slide-toggle formControlName="useCellStyleFunction" (click)="$event.stopPropagation()"
+          <mat-slide-toggle class="mat-slide" formControlName="useCellStyleFunction" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.table.use-cell-style-function' | translate }}
           </mat-slide-toggle>
@@ -48,13 +83,12 @@
         </tb-js-func>
       </ng-template>
     </mat-expansion-panel>
-  </fieldset>
-  <fieldset class="fields-group fields-group-slider">
-    <legend class="group-title" translate>widgets.table.cell-content</legend>
+  </div>
+  <div class="tb-widget-config-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="entitiesTableKeySettingsForm.get('useCellContentFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
         <mat-panel-title fxFlex="60">
-          <mat-slide-toggle formControlName="useCellContentFunction" (click)="$event.stopPropagation()"
+          <mat-slide-toggle class="mat-slide" formControlName="useCellContentFunction" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.table.use-cell-content-function' | translate }}
           </mat-slide-toggle>
@@ -73,30 +107,5 @@
         </tb-js-func>
       </ng-template>
     </mat-expansion-panel>
-  </fieldset>
-  <mat-form-field fxFlex class="mat-block">
-    <mat-label translate>widgets.table.default-column-visibility</mat-label>
-    <mat-select formControlName="defaultColumnVisibility">
-      <mat-option [value]="'visible'">
-        {{ 'widgets.table.column-visibility-visible' | translate }}
-      </mat-option>
-      <mat-option [value]="'hidden'">
-        {{ 'widgets.table.column-visibility-hidden' | translate }}
-      </mat-option>
-      <mat-option [value]="'hidden-mobile'">
-        {{ 'widgets.table.column-visibility-hidden-mobile' | translate }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <mat-form-field fxFlex class="mat-block">
-    <mat-label translate>widgets.table.column-selection-to-display</mat-label>
-    <mat-select formControlName="columnSelectionToDisplay">
-      <mat-option [value]="'enabled'">
-        {{ 'widgets.table.column-selection-to-display-enabled' | translate }}
-      </mat-option>
-      <mat-option [value]="'disabled'">
-        {{ 'widgets.table.column-selection-to-display-disabled' | translate }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-</section>
+  </div>
+</ng-container>

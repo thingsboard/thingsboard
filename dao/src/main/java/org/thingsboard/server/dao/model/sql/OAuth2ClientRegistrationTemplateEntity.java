@@ -16,10 +16,14 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
@@ -28,20 +32,14 @@ import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Table;
 import java.util.Arrays;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.OAUTH2_CLIENT_REGISTRATION_TEMPLATE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.OAUTH2_CLIENT_REGISTRATION_TEMPLATE_TABLE_NAME)
 public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2ClientRegistrationTemplate> {
 
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY)
@@ -89,7 +87,7 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_HELP_LINK_PROPERTY)
     private String helpLink;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -115,7 +113,7 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
         this.helpLink = clientRegistrationTemplate.getHelpLink();
         this.additionalInfo = clientRegistrationTemplate.getAdditionalInfo();
         OAuth2MapperConfig mapperConfig = clientRegistrationTemplate.getMapperConfig();
-        if (mapperConfig != null){
+        if (mapperConfig != null) {
             this.type = mapperConfig.getType();
             OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasic();
             if (basicConfig != null) {

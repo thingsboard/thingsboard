@@ -15,27 +15,26 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serializable;
 
-@ApiModel
+@Schema
 @Data
 public class UpdateMessage implements Serializable {
 
-    @ApiModelProperty(position = 1, value = "'True' if new platform update is available.")
+    @Schema(description = "'True' if new platform update is available.")
     private final boolean updateAvailable;
-    @ApiModelProperty(position = 2, value = "Current ThingsBoard version.")
+    @Schema(description = "Current ThingsBoard version.")
     private final String currentVersion;
-    @ApiModelProperty(position = 3, value = "Latest ThingsBoard version.")
+    @Schema(description = "Latest ThingsBoard version.")
     private final String latestVersion;
-    @ApiModelProperty(position = 4, value = "Upgrade instructions URL.")
+    @Schema(description = "Upgrade instructions URL.")
     private final String upgradeInstructionsUrl;
-    @ApiModelProperty(position = 5, value = "Current ThingsBoard version release notes URL.")
+    @Schema(description = "Current ThingsBoard version release notes URL.")
     private final String currentVersionReleaseNotesUrl;
-    @ApiModelProperty(position = 6, value = "Latest ThingsBoard version release notes URL.")
+    @Schema(description = "Latest ThingsBoard version release notes URL.")
     private final String latestVersionReleaseNotesUrl;
 
 }

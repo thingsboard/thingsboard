@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.util.SocketUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
@@ -232,7 +231,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
-        getWsClient().send(mapper.writeValueAsString(wrapper));
+        getWsClient().send(JacksonUtil.toString(wrapper));
         getWsClient().waitForReply();
 
         getWsClient().registerWaitForUpdate();
@@ -240,7 +239,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         awaitObserveReadAll(0, false, device.getId().getId().toString());
         String msg = getWsClient().waitForUpdate();
 
-        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        EntityDataUpdate update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);
@@ -304,9 +303,12 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap, Security securityBs) throws Exception {
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
-        int clientPort = SocketUtils.findAvailableUdpPort();
-        lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
-                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
+
+        try (ServerSocket socket = new ServerSocket(0)) {
+            int clientPort = socket.getLocalPort();
+            lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
+                    securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
+        }
     }
 
     private void clientDestroy() {

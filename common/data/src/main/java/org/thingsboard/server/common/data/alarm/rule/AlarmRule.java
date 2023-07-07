@@ -15,16 +15,14 @@
  */
 package org.thingsboard.server.common.data.alarm.rule;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 
-import javax.validation.Valid;
-
-@ApiModel
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AlarmRule extends AlarmRuleInfo {
@@ -32,7 +30,7 @@ public class AlarmRule extends AlarmRuleInfo {
     private static final long serialVersionUID = -8491640876881610526L;
 
     @Valid
-    @ApiModelProperty(position = 8, value = "JSON object with Alarm Rule Configuration")
+    @Schema(description = "JSON object with Alarm Rule Configuration")
     private AlarmRuleConfiguration configuration;
 
     public AlarmRule() {

@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -49,7 +48,8 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public abstract class BaseAlarmRuleServiceTest extends AbstractServiceTest {
+@DaoSqlTest
+public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
 
     private IdComparator<AlarmRule> idComparator = new IdComparator<>();
     private IdComparator<AlarmRuleInfo> alarmRuleInfoIdComparator = new IdComparator<>();

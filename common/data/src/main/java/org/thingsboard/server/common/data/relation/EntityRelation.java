@@ -17,17 +17,16 @@ package org.thingsboard.server.common.data.relation;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
+import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.validation.Length;
 
 import java.io.Serializable;
 
 @Slf4j
-@ApiModel
+@Schema
 public class EntityRelation implements Serializable {
 
     private static final long serialVersionUID = 2807343040519543363L;
@@ -73,7 +72,7 @@ public class EntityRelation implements Serializable {
         this.additionalInfo = entityRelation.getAdditionalInfo();
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with [from] Entity Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with [from] Entity Id.", accessMode = Schema.AccessMode.READ_ONLY)
     public EntityId getFrom() {
         return from;
     }
@@ -82,7 +81,7 @@ public class EntityRelation implements Serializable {
         this.from = from;
     }
 
-    @ApiModelProperty(position = 2, value = "JSON object with [to] Entity Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with [to] Entity Id.", accessMode = Schema.AccessMode.READ_ONLY)
     public EntityId getTo() {
         return to;
     }
@@ -91,7 +90,7 @@ public class EntityRelation implements Serializable {
         this.to = to;
     }
 
-    @ApiModelProperty(position = 3, value = "String value of relation type.", example = "Contains")
+    @Schema(description = "String value of relation type.", example = "Contains")
     public String getType() {
         return type;
     }
@@ -100,7 +99,7 @@ public class EntityRelation implements Serializable {
         this.type = type;
     }
 
-    @ApiModelProperty(position = 4, value = "Represents the type group of the relation.", example = "COMMON")
+    @Schema(description = "Represents the type group of the relation.", example = "COMMON")
     public RelationTypeGroup getTypeGroup() {
         return typeGroup;
     }
@@ -109,13 +108,13 @@ public class EntityRelation implements Serializable {
         this.typeGroup = typeGroup;
     }
 
-    @ApiModelProperty(position = 5, value = "Additional parameters of the relation", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @Schema(description = "Additional parameters of the relation",implementation = com.fasterxml.jackson.databind.JsonNode.class)
     public JsonNode getAdditionalInfo() {
-        return SearchTextBasedWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
+        return BaseDataWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
     }
 
     public void setAdditionalInfo(JsonNode addInfo) {
-        SearchTextBasedWithAdditionalInfo.setJson(addInfo, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
+        BaseDataWithAdditionalInfo.setJson(addInfo, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
     }
 
     @Override

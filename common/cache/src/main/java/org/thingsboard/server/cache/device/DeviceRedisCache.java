@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
-import org.thingsboard.server.cache.TbFSTRedisSerializer;
+import org.thingsboard.server.cache.TbJavaRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Device;
 
@@ -30,6 +30,6 @@ import org.thingsboard.server.common.data.Device;
 public class DeviceRedisCache extends RedisTbTransactionalCache<DeviceCacheKey, Device> {
 
     public DeviceRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.DEVICE_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbFSTRedisSerializer<>());
+        super(CacheConstants.DEVICE_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJavaRedisSerializer<>());
     }
 }

@@ -100,6 +100,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
+        "queue.rule-engine.stats.enabled=false",
 })
 abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
@@ -181,14 +182,14 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     @After
     public void afterTest() throws Exception {
+        try {
+            edgeImitator.disconnect();
+        } catch (Exception ignored){}
+
         loginSysAdmin();
 
         doDelete("/api/tenant/" + savedTenant.getUuidId())
                 .andExpect(status().isOk());
-
-        try {
-            edgeImitator.disconnect();
-        } catch (Exception ignored) {}
     }
 
     private void installation() {
@@ -368,7 +369,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private void validateMailAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) throws JsonProcessingException {
-        JsonNode jsonNode = mapper.readTree(adminSettingsUpdateMsg.getJsonValue());
+        JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
         Assert.assertNotNull(jsonNode.get("mailFrom"));
         Assert.assertNotNull(jsonNode.get("smtpProtocol"));
         Assert.assertNotNull(jsonNode.get("smtpHost"));
@@ -377,7 +378,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private void validateMailTemplatesAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) throws JsonProcessingException {
-        JsonNode jsonNode = mapper.readTree(adminSettingsUpdateMsg.getJsonValue());
+        JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
         Assert.assertNotNull(jsonNode.get("accountActivated"));
         Assert.assertNotNull(jsonNode.get("accountLockout"));
         Assert.assertNotNull(jsonNode.get("activation"));

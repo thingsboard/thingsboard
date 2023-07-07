@@ -16,10 +16,14 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonbType;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
@@ -27,11 +31,8 @@ import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.mapping.JsonBinaryType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_ALARM_TYPE_PROPERTY;
@@ -43,7 +44,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_TENANT_
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ALARM_RULE_COLUMN_FAMILY_NAME)
 @Entity
 public class AlarmRuleEntity extends BaseSqlEntity<AlarmRule> {
@@ -60,7 +60,8 @@ public class AlarmRuleEntity extends BaseSqlEntity<AlarmRule> {
     @Column(name = ALARM_RULE_ENABLED_PROPERTY)
     private boolean enabled;
 
-    @Type(type = "jsonb")
+    @Convert(converter = JsonConverter.class)
+    @JdbcType(PostgreSQLJsonPGObjectJsonbType.class)
     @Column(name = ModelConstants.ALARM_RULE_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
 

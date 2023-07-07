@@ -52,7 +52,7 @@ import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -72,7 +72,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected volatile ExecutorService consumersExecutor;
     protected volatile ExecutorService notificationsConsumerExecutor;
     protected volatile boolean stopped = false;
-
+    protected volatile boolean isReady = false;
     protected final ActorSystemContext actorContext;
     protected final DataDecodingEncodingService encodingService;
     protected final TbTenantProfileCache tenantProfileCache;
@@ -94,6 +94,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("Subscribing to notifications: {}", nfConsumer.getTopic());
         this.nfConsumer.subscribe();
+        this.isReady = true;
         launchNotificationsConsumer();
         launchMainConsumers();
     }

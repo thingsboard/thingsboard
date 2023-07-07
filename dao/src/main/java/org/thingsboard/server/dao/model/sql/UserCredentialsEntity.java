@@ -16,9 +16,9 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Convert;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -26,15 +26,17 @@ import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
+
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.USER_CREDENTIALS_TABLE_NAME)
 public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> implements BaseEntity<UserCredentials> {
 
     @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY, unique = true)
@@ -52,7 +54,7 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
     @Column(name = ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY, unique = true)
     private String resetToken;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.USER_CREDENTIALS_ADDITIONAL_PROPERTY)
     private JsonNode additionalInfo;
 

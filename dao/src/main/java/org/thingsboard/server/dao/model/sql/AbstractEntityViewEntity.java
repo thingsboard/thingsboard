@@ -16,12 +16,15 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -31,14 +34,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.MappedSuperclass;
-import java.io.IOException;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
@@ -49,10 +46,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPER
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @MappedSuperclass
 @Slf4j
-public abstract class AbstractEntityViewEntity<T extends EntityView> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
+public abstract class AbstractEntityViewEntity<T extends EntityView> extends BaseSqlEntity<T> {
 
     @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
     private UUID entityId;
@@ -82,17 +78,12 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
     @Column(name = ModelConstants.ENTITY_VIEW_END_TS_PROPERTY)
     private long endTs;
 
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
-
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
     @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
     private UUID externalId;
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     public AbstractEntityViewEntity() {
         super();
@@ -116,13 +107,12 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         this.type = entityView.getType();
         this.name = entityView.getName();
         try {
-            this.keys = mapper.writeValueAsString(entityView.getKeys());
-        } catch (IOException e) {
+            this.keys = JacksonUtil.toString(entityView.getKeys());
+        } catch (IllegalArgumentException e) {
             log.error("Unable to serialize entity view keys!", e);
         }
         this.startTs = entityView.getStartTimeMs();
         this.endTs = entityView.getEndTimeMs();
-        this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
         if (entityView.getExternalId() != null) {
             this.externalId = entityView.getExternalId().getId();
@@ -141,19 +131,8 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         this.keys = entityViewEntity.getKeys();
         this.startTs = entityViewEntity.getStartTs();
         this.endTs = entityViewEntity.getEndTs();
-        this.searchText = entityViewEntity.getSearchText();
         this.additionalInfo = entityViewEntity.getAdditionalInfo();
         this.externalId = entityViewEntity.getExternalId();
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     protected EntityView toEntityView() {
@@ -172,8 +151,8 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         entityView.setType(type);
         entityView.setName(name);
         try {
-            entityView.setKeys(mapper.readValue(keys, TelemetryEntityView.class));
-        } catch (IOException e) {
+            entityView.setKeys(JacksonUtil.fromString(keys, TelemetryEntityView.class));
+        } catch (IllegalArgumentException e) {
             log.error("Unable to read entity view keys!", e);
         }
         entityView.setStartTimeMs(startTs);

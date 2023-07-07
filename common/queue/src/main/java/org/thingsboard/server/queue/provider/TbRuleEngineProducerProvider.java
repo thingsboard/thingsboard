@@ -28,7 +28,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServ
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 @Service
 @ConditionalOnExpression("'${service.type:null}'=='tb-rule-engine'")

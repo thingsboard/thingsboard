@@ -24,17 +24,17 @@ import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.OAUTH2_DOMAIN_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.OAUTH2_DOMAIN_TABLE_NAME)
 public class OAuth2DomainEntity extends BaseSqlEntity<OAuth2Domain> {
 
     @Column(name = ModelConstants.OAUTH2_PARAMS_ID_PROPERTY)

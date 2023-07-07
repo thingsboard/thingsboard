@@ -16,30 +16,27 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.RULE_NODE_COLUMN_FAMILY_NAME)
-public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTextEntity<RuleNode> {
+@Table(name = ModelConstants.RULE_NODE_TABLE_NAME)
+public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
 
     @Column(name = ModelConstants.RULE_NODE_CHAIN_ID_PROPERTY)
     private UUID ruleChainId;
@@ -50,14 +47,14 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
     @Column(name = ModelConstants.RULE_NODE_NAME_PROPERTY)
     private String name;
 
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
+    @Column(name = ModelConstants.RULE_NODE_VERSION_PROPERTY)
+    private int configurationVersion;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.RULE_NODE_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -85,22 +82,12 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
         this.name = ruleNode.getName();
         this.debugMode = ruleNode.isDebugMode();
         this.singletonMode = ruleNode.isSingletonMode();
-        this.searchText = ruleNode.getName();
+        this.configurationVersion = ruleNode.getConfigurationVersion();
         this.configuration = ruleNode.getConfiguration();
         this.additionalInfo = ruleNode.getAdditionalInfo();
         if (ruleNode.getExternalId() != null) {
             this.externalId = ruleNode.getExternalId().getId();
         }
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return searchText;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     @Override
@@ -114,6 +101,7 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
         ruleNode.setName(name);
         ruleNode.setDebugMode(debugMode);
         ruleNode.setSingletonMode(singletonMode);
+        ruleNode.setConfigurationVersion(configurationVersion);
         ruleNode.setConfiguration(configuration);
         ruleNode.setAdditionalInfo(additionalInfo);
         if (externalId != null) {

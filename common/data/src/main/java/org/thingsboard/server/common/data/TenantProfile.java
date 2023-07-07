@@ -17,8 +17,8 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -33,30 +33,30 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Optional;
 
-import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.mapper;
-
-@ApiModel
+@Schema
 @Data
 @ToString(exclude = {"profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class TenantProfile extends SearchTextBased<TenantProfileId> implements HasName {
+public class TenantProfile extends BaseData<TenantProfileId> implements HasName {
 
     private static final long serialVersionUID = 3021989561267192281L;
 
+    public static final ObjectMapper mapper = new ObjectMapper();
+
     @NoXss
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 3, value = "Name of the tenant profile", example = "High Priority Tenants")
+    @Schema(description = "Name of the tenant profile", example = "High Priority Tenants")
     private String name;
     @NoXss
-    @ApiModelProperty(position = 4, value = "Description of the tenant profile", example = "Any text")
+    @Schema(description = "Description of the tenant profile", example = "Any text")
     private String description;
-    @ApiModelProperty(position = 5, value = "Default Tenant profile to be used.", example = "true")
+    @Schema(description = "Default Tenant profile to be used.", example = "true")
     private boolean isDefault;
-    @ApiModelProperty(position = 6, value = "If enabled, will push all messages related to this tenant and processed by the rule engine into separate queue. " +
+    @Schema(description = "If enabled, will push all messages related to this tenant and processed by the rule engine into separate queue. " +
             "Useful for complex microservices deployments, to isolate processing of the data for specific tenants", example = "true")
     private boolean isolatedTbRuleEngine;
-    @ApiModelProperty(position = 7, value = "Complex JSON object that contains profile settings: queue configs, max devices, max assets, rate limits, etc.")
+    @Schema(description = "Complex JSON object that contains profile settings: queue configs, max devices, max assets, rate limits, etc.")
     private transient TenantProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;
@@ -78,7 +78,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
         this.setProfileData(tenantProfile.getProfileData());
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the tenant profile Id. " +
+    @Schema(description = "JSON object with the tenant profile Id. " +
             "Specify this field to update the tenant profile. " +
             "Referencing non-existing tenant profile Id will cause error. " +
             "Omit this field to create new tenant profile.")
@@ -87,15 +87,10 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the tenant profile creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the tenant profile creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 
     @Override

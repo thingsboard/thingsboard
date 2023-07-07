@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,16 +34,16 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
-import javax.validation.Valid;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
@@ -150,15 +150,15 @@ public class NotificationRuleController extends BaseController {
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/rules")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public PageData<NotificationRuleInfo> getNotificationRules(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+    public PageData<NotificationRuleInfo> getNotificationRules(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                                @RequestParam int pageSize,
-                                                               @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                               @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                @RequestParam int page,
-                                                               @ApiParam(value = "Case-insensitive 'substring' filter based on rule's name")
+                                                               @Parameter(description = "Case-insensitive 'substring' filter based on rule's name")
                                                                @RequestParam(required = false) String textSearch,
-                                                               @ApiParam(value = SORT_PROPERTY_DESCRIPTION)
+                                                               @Parameter(description = SORT_PROPERTY_DESCRIPTION)
                                                                @RequestParam(required = false) String sortProperty,
-                                                               @ApiParam(value = SORT_ORDER_DESCRIPTION)
+                                                               @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                                @RequestParam(required = false) String sortOrder,
                                                                @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         // generic permission

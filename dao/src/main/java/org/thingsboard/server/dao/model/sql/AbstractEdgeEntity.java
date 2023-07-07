@@ -16,10 +16,11 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -27,11 +28,8 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
@@ -42,13 +40,11 @@ import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROUTING_KEY_P
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_SECRET_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @MappedSuperclass
-public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
+public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T> {
 
     @Column(name = EDGE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;
@@ -68,16 +64,13 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
     @Column(name = EDGE_LABEL_PROPERTY)
     private String label;
 
-    @Column(name = SEARCH_TEXT_PROPERTY)
-    private String searchText;
-
     @Column(name = EDGE_ROUTING_KEY_PROPERTY)
     private String routingKey;
 
     @Column(name = EDGE_SECRET_PROPERTY)
     private String secret;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.EDGE_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -116,24 +109,9 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         this.type = edgeEntity.getType();
         this.name = edgeEntity.getName();
         this.label = edgeEntity.getLabel();
-        this.searchText = edgeEntity.getSearchText();
         this.routingKey = edgeEntity.getRoutingKey();
         this.secret = edgeEntity.getSecret();
         this.additionalInfo = edgeEntity.getAdditionalInfo();
-    }
-
-    public String getSearchText() {
-        return searchText;
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     protected Edge toEdge() {

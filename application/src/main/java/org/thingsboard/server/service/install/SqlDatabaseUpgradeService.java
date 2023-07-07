@@ -65,6 +65,7 @@ import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmState;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 import org.thingsboard.server.service.alarm.rule.store.RedisAlarmRuleEntityStateStore;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
+import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -747,10 +748,58 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.error("Failed updating schema!!!", e);
                 }
                 break;
-            case "3.5.0": {
+            case "3.5.0":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
-                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.0", SCHEMA_UPDATE_SQL);
+                    if (isOldSchema(conn, 3005000)) {
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.0", SCHEMA_UPDATE_SQL);
+                        loadSql(schemaUpdateFile, conn);
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005001;");
+                    }
+                    log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
+                break;
+            case "3.5.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    if (isOldSchema(conn, 3005001)) {
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.1", SCHEMA_UPDATE_SQL);
+                        loadSql(schemaUpdateFile, conn);
+
+                        String[] entityNames = new String[]{"device", "component_descriptor", "customer", "dashboard", "rule_chain", "rule_node", "ota_package",
+                                "asset_profile", "asset", "device_profile", "tb_user", "tenant_profile", "tenant", "widgets_bundle", "entity_view", "edge"};
+                        for (String entityName : entityNames) {
+                            try {
+                                conn.createStatement().execute("ALTER TABLE " + entityName + " DROP COLUMN " + SEARCH_TEXT + " CASCADE");
+                            } catch (Exception e) {
+                            }
+                        }
+                        try {
+                            conn.createStatement().execute("ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0;");
+                        } catch (Exception e) {
+                        }
+                        try {
+                            conn.createStatement().execute("ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0;");
+                        } catch (Exception e) {
+                        }
+                        try {
+                            conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_rule_node_type_configuration_version ON rule_node(type, configuration_version);");
+                        } catch (Exception e) {
+                        }
+
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005002;");
+                    }
+                    log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
+                break;
+            case "3.5.2": {
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.2", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
 
                     log.info("Alarm Rules migration ...");
@@ -916,6 +965,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     }
 
     protected boolean isOldSchema(Connection conn, long fromVersion) {
+        if (DefaultDataUpdateService.getEnv("SKIP_SCHEMA_VERSION_CHECK", false)) {
+            log.info("Skipped DB schema version check due to SKIP_SCHEMA_VERSION_CHECK set to true!");
+            return true;
+        }
         boolean isOldSchema = true;
         try {
             Statement statement = conn.createStatement();

@@ -15,25 +15,23 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
-import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.transport.lwm2m.secure.TbX509DtlsSessionInfo;
 
 public class TbLwM2MDtlsSessionRedisStore implements TbLwM2MDtlsSessionStore {
 
     private static final String SESSION_EP = "SESSION#EP#";
     private final RedisConnectionFactory connectionFactory;
-    private final FSTConfiguration serializer;
 
     public TbLwM2MDtlsSessionRedisStore(RedisConnectionFactory redisConnectionFactory) {
         this.connectionFactory = redisConnectionFactory;
-        this.serializer = FSTConfiguration.createDefaultConfiguration();
     }
 
     @Override
     public void put(String endpoint, TbX509DtlsSessionInfo msg) {
         try (var c = connectionFactory.getConnection()) {
-            var serializedMsg = serializer.asByteArray(msg);
+            var serializedMsg = JavaSerDesUtil.encode(msg);
             if (serializedMsg != null) {
                 c.set(getKey(endpoint), serializedMsg);
             } else {
@@ -47,7 +45,7 @@ public class TbLwM2MDtlsSessionRedisStore implements TbLwM2MDtlsSessionStore {
         try (var c = connectionFactory.getConnection()) {
             var data = c.get(getKey(endpoint));
             if (data != null) {
-                return (TbX509DtlsSessionInfo) serializer.asObject(data);
+                return JavaSerDesUtil.decode(data);
             } else {
                 return null;
             }

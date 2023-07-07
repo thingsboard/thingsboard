@@ -62,7 +62,6 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -72,7 +71,6 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
-import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
@@ -106,8 +104,6 @@ public class TenantIdLoaderTest {
     @Mock
     private RuleEngineAlarmService alarmService;
     @Mock
-    private AlarmCommentService alarmCommentService;
-    @Mock
     private RuleChainService ruleChainService;
     @Mock
     private EntityViewService entityViewService;
@@ -139,8 +135,6 @@ public class TenantIdLoaderTest {
     private NotificationTemplateService notificationTemplateService;
     @Mock
     private NotificationRequestService notificationRequestService;
-    @Mock
-    private NotificationService notificationService;
     @Mock
     private NotificationRuleService notificationRuleService;
 
@@ -370,9 +364,8 @@ public class TenantIdLoaderTest {
                 doReturn(alarmRule).when(alarmRuleService).findAlarmRuleById(eq(tenantId), any());
                 break;
             default:
-                throw new RuntimeException("Unexpected original EntityType " + entityType);
+                throw new RuntimeException("Unexpected originator EntityType " + entityType);
         }
-
     }
 
     private EntityId getEntityId(EntityType entityType) {

@@ -188,6 +188,10 @@ export class UtilsService {
 
   public processWidgetException(exception: any): ExceptionData {
     const data = this.parseException(exception, -6);
+    if (data.message?.startsWith('NG0')) {
+       data.message = `${this.translate.instant('widget.widget-template-error')}<br/>
+                       <br/><i>${this.translate.instant('dialog.error-message-title')}</i><br/><br/>${data.message}`;
+    }
     if (this.widgetEditMode) {
       const message: WindowMessage = {
         type: 'widgetException',
@@ -278,13 +282,9 @@ export class UtilsService {
 
   public validateDatasources(datasources: Array<Datasource>): Array<Datasource> {
     datasources.forEach((datasource) => {
-      // @ts-ignore
-      if (datasource.type === 'device') {
-        datasource.type = DatasourceType.entity;
-        datasource.entityType = EntityType.DEVICE;
-        if (datasource.deviceId) {
-          datasource.entityId = datasource.deviceId;
-        } else if (datasource.deviceAliasId) {
+      if (datasource.type === DatasourceType.device) {
+        if (datasource.deviceAliasId) {
+          datasource.type = DatasourceType.entity;
           datasource.entityAliasId = datasource.deviceAliasId;
         }
         if (datasource.deviceName) {

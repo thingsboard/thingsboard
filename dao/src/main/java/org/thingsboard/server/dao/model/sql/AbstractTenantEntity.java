@@ -16,33 +16,27 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @MappedSuperclass
-public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
+public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEntity<T> {
 
     @Column(name = ModelConstants.TENANT_TITLE_PROPERTY)
     private String title;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Column(name = ModelConstants.TENANT_REGION_PROPERTY)
     private String region;
@@ -71,7 +65,7 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
     @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -118,20 +112,6 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
         this.email = tenantEntity.getEmail();
         this.additionalInfo = tenantEntity.getAdditionalInfo();
         this.tenantProfileId = tenantEntity.getTenantProfileId();
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return title;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public String getSearchText() {
-        return searchText;
     }
 
     protected Tenant toTenant() {

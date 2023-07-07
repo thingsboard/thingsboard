@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettin
 import org.thingsboard.server.common.data.security.model.mfa.account.EmailTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
@@ -44,7 +45,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;

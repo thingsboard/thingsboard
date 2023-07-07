@@ -25,7 +25,10 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
+import org.thingsboard.rule.engine.metadata.FetchTo;
+import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -136,18 +139,22 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("Simple Rule Node 1");
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
+        configuration1.setFetchTo(FetchTo.METADATA);
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
-        ruleNode1.setConfiguration(mapper.valueToTree(configuration1));
+        ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
+        configuration2.setFetchTo(FetchTo.METADATA);
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
-        ruleNode2.setConfiguration(mapper.valueToTree(configuration2));
+        ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 
 
         metaData.setNodes(Arrays.asList(ruleNode1, ruleNode2));
@@ -238,10 +245,12 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("Simple Rule Node 1");
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
+        configuration1.setFetchTo(FetchTo.METADATA);
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
-        ruleNode1.setConfiguration(mapper.valueToTree(configuration1));
+        ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
         RuleNode ruleNode12 = new RuleNode();
         ruleNode12.setName("Simple Rule Node 1");
@@ -249,7 +258,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         ruleNode12.setDebugMode(true);
         TbRuleChainInputNodeConfiguration configuration12 = new TbRuleChainInputNodeConfiguration();
         configuration12.setRuleChainId(secondaryRuleChain.getId().getId().toString());
-        ruleNode12.setConfiguration(mapper.valueToTree(configuration12));
+        ruleNode12.setConfiguration(JacksonUtil.valueToTree(configuration12));
 
         rootMetaData.setNodes(Arrays.asList(ruleNode1, ruleNode12));
         rootMetaData.setFirstNodeIndex(0);
@@ -270,10 +279,12 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
+        configuration2.setFetchTo(FetchTo.METADATA);
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
-        ruleNode2.setConfiguration(mapper.valueToTree(configuration2));
+        ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 
         secondaryMetaData.setNodes(Collections.singletonList(ruleNode2));
         secondaryMetaData.setFirstNodeIndex(0);

@@ -1349,7 +1349,6 @@
         "name": "Denumire",
         "name-required": "Denumirea este obligatorie",
         "type": "Tip",
-        "description": "Descriere",
         "delete": "Şterge Regulă Nod",
         "select-all-objects": "Selectează Toate Nodurile Şi Conexiunile",
         "deselect-all-objects": "Deselectează Toate Nodurile Şi Conexiunile",

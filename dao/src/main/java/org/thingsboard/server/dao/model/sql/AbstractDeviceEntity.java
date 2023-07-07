@@ -17,11 +17,13 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
-import org.hibernate.annotations.TypeDefs;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonbType;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -32,22 +34,14 @@ import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.mapping.JsonBinaryType;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TypeDefs({
-        @TypeDef(name = "json", typeClass = JsonStringType.class),
-        @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
-})
 @MappedSuperclass
-public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
+public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEntity<T> {
 
     @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;
@@ -64,10 +58,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
     @Column(name = ModelConstants.DEVICE_LABEL_PROPERTY)
     private String label;
 
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
-
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -80,7 +71,8 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
     @Column(name = ModelConstants.DEVICE_SOFTWARE_ID_PROPERTY, columnDefinition = "uuid")
     private UUID softwareId;
 
-    @Type(type = "jsonb")
+    @Convert(converter = JsonConverter.class)
+    @JdbcType(PostgreSQLJsonPGObjectJsonbType.class)
     @Column(name = ModelConstants.DEVICE_DEVICE_DATA_PROPERTY, columnDefinition = "jsonb")
     private JsonNode deviceData;
 
@@ -131,21 +123,10 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         this.type = deviceEntity.getType();
         this.name = deviceEntity.getName();
         this.label = deviceEntity.getLabel();
-        this.searchText = deviceEntity.getSearchText();
         this.additionalInfo = deviceEntity.getAdditionalInfo();
         this.firmwareId = deviceEntity.getFirmwareId();
         this.softwareId = deviceEntity.getSoftwareId();
         this.externalId = deviceEntity.getExternalId();
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     protected Device toDevice() {

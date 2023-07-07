@@ -15,14 +15,14 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.ToString;
 
 import java.util.Collections;
 import java.util.List;
 
-@ApiModel
+@Schema
 @ToString
 public class EntityCountQuery {
 

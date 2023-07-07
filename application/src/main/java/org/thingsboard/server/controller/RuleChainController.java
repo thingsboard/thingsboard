@@ -18,11 +18,12 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
@@ -66,6 +68,7 @@ import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rule.TbRuleChainService;
@@ -93,12 +96,9 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PA
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_TEXT_SEARCH_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_TYPES_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_TYPE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_NODE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -115,7 +115,6 @@ public class RuleChainController extends BaseController {
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     public static final int TIMEOUT = 20;
 
     private static final String RULE_CHAIN_DESCRIPTION = "The rule chain object is lightweight and contains general information about the rule chain. " +
@@ -164,7 +163,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.GET)
     @ResponseBody
     public RuleChain getRuleChainById(
-            @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+            @Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
@@ -178,7 +177,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/{ruleChainId}/output/labels", method = RequestMethod.GET)
     @ResponseBody
     public Set<String> getRuleChainOutputLabels(
-            @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+            @Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
@@ -193,7 +192,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/{ruleChainId}/output/labels/usage", method = RequestMethod.GET)
     @ResponseBody
     public List<RuleChainOutputLabelsUsage> getRuleChainOutputLabelsUsage(
-            @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+            @Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
@@ -207,7 +206,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/{ruleChainId}/metadata", method = RequestMethod.GET)
     @ResponseBody
     public RuleChainMetaData getRuleChainMetaData(
-            @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+            @Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
@@ -227,7 +226,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain", method = RequestMethod.POST)
     @ResponseBody
     public RuleChain saveRuleChain(
-            @ApiParam(value = "A JSON value representing the rule chain.")
+            @Parameter(description = "A JSON value representing the rule chain.")
             @RequestBody RuleChain ruleChain) throws Exception {
         ruleChain.setTenantId(getCurrentUser().getTenantId());
         checkEntity(ruleChain.getId(), ruleChain, Resource.RULE_CHAIN);
@@ -241,7 +240,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/device/default", method = RequestMethod.POST)
     @ResponseBody
     public RuleChain saveRuleChain(
-            @ApiParam(value = "A JSON value representing the request.")
+            @Parameter(description = "A JSON value representing the request.")
             @RequestBody DefaultRuleChainCreateRequest request) throws Exception {
         checkNotNull(request);
         checkParameter(request.getName(), "name");
@@ -254,7 +253,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/{ruleChainId}/root", method = RequestMethod.POST)
     @ResponseBody
     public RuleChain setRootRuleChain(
-            @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+            @Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
@@ -268,9 +267,9 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/metadata", method = RequestMethod.POST)
     @ResponseBody
     public RuleChainMetaData saveRuleChainMetaData(
-            @ApiParam(value = "A JSON value representing the rule chain metadata.")
+            @Parameter(description = "A JSON value representing the rule chain metadata.")
             @RequestBody RuleChainMetaData ruleChainMetaData,
-            @ApiParam(value = "Update related rule nodes.")
+            @Parameter(description = "Update related rule nodes.")
             @RequestParam(value = "updateRelated", required = false, defaultValue = "true") boolean updateRelated
     ) throws Exception {
         TenantId tenantId = getTenantId();
@@ -292,17 +291,17 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChains", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<RuleChain> getRuleChains(
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = RULE_CHAIN_TYPE_DESCRIPTION, allowableValues = RULE_CHAIN_TYPES_ALLOWABLE_VALUES)
+            @Parameter(description = RULE_CHAIN_TYPE_DESCRIPTION, schema = @Schema(allowableValues = {"CORE", "EDGE"}))
             @RequestParam(value = "type", required = false) String typeStr,
-            @ApiParam(value = RULE_CHAIN_TEXT_SEARCH_DESCRIPTION)
+            @Parameter(description = RULE_CHAIN_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = RULE_CHAIN_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "root"}))
             @RequestParam(required = false) String sortProperty,
-            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
@@ -320,7 +319,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRuleChain(
-            @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+            @Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
@@ -335,7 +334,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleNode/{ruleNodeId}/debugIn", method = RequestMethod.GET)
     @ResponseBody
     public JsonNode getLatestRuleNodeDebugInput(
-            @ApiParam(value = RULE_NODE_ID_PARAM_DESCRIPTION)
+            @Parameter(description = RULE_NODE_ID_PARAM_DESCRIPTION)
             @PathVariable(RULE_NODE_ID) String strRuleNodeId) throws ThingsboardException {
         checkParameter(RULE_NODE_ID, strRuleNodeId);
         RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
@@ -370,18 +369,18 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/testScript", method = RequestMethod.POST)
     @ResponseBody
     public JsonNode testScript(
-            @ApiParam(value = "Script language: JS or TBEL")
+            @Parameter(description = "Script language: JS or TBEL")
             @RequestParam(required = false) ScriptLanguage scriptLang,
-            @ApiParam(value = "Test JS request. See API call description above.")
+            @Parameter(description = "Test JS request. See API call description above.")
             @RequestBody JsonNode inputParams) throws ThingsboardException, JsonProcessingException {
         String script = inputParams.get("script").asText();
         String scriptType = inputParams.get("scriptType").asText();
         JsonNode argNamesJson = inputParams.get("argNames");
-        String[] argNames = objectMapper.treeToValue(argNamesJson, String[].class);
+        String[] argNames = JacksonUtil.treeToValue(argNamesJson, String[].class);
 
         String data = inputParams.get("msg").asText();
         JsonNode metadataJson = inputParams.get("metadata");
-        Map<String, String> metadata = objectMapper.convertValue(metadataJson, new TypeReference<Map<String, String>>() {
+        Map<String, String> metadata = JacksonUtil.convertValue(metadataJson, new TypeReference<Map<String, String>>() {
         });
         String msgType = inputParams.get("msgType").asText();
         String output = "";
@@ -413,11 +412,11 @@ public class RuleChainController extends BaseController {
                     break;
                 case "switch":
                     Set<String> states = engine.executeSwitchAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
-                    output = objectMapper.writeValueAsString(states);
+                    output = JacksonUtil.toString(states);
                     break;
                 case "json":
                     JsonNode json = engine.executeJsonAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
-                    output = objectMapper.writeValueAsString(json);
+                    output = JacksonUtil.toString(json);
                     break;
                 case "string":
                     output = engine.executeToStringAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
@@ -433,7 +432,7 @@ public class RuleChainController extends BaseController {
                 engine.destroy();
             }
         }
-        ObjectNode result = objectMapper.createObjectNode();
+        ObjectNode result = JacksonUtil.newObjectNode();
         result.put("output", output);
         result.put("error", errorText);
         return result;
@@ -444,7 +443,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChains/export", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public RuleChainData exportRuleChains(
-            @ApiParam(value = "A limit of rule chains to export.", required = true)
+            @Parameter(description = "A limit of rule chains to export.", required = true)
             @RequestParam("limit") int limit) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = new PageLink(limit);
@@ -456,12 +455,12 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChains/import", method = RequestMethod.POST)
     @ResponseBody
     public List<RuleChainImportResult> importRuleChains(
-            @ApiParam(value = "A JSON value representing the rule chains.")
+            @Parameter(description = "A JSON value representing the rule chains.")
             @RequestBody RuleChainData ruleChainData,
-            @ApiParam(value = "Enables overwrite for existing rule chains with the same name.")
+            @Parameter(description = "Enables overwrite for existing rule chains with the same name.")
             @RequestParam(required = false, defaultValue = "false") boolean overwrite) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
-        List<RuleChainImportResult> importResults = ruleChainService.importTenantRuleChains(tenantId, ruleChainData, overwrite);
+        List<RuleChainImportResult> importResults = ruleChainService.importTenantRuleChains(tenantId, ruleChainData, overwrite, tbRuleChainService::updateRuleNodeConfiguration);
         for (RuleChainImportResult importResult : importResults) {
             if (importResult.getError() == null) {
                 tbClusterService.broadcastEntityStateChangeEvent(importResult.getTenantId(), importResult.getRuleChainId(),
@@ -473,13 +472,13 @@ public class RuleChainController extends BaseController {
 
     private String msgToOutput(TbMsg msg) throws Exception {
         JsonNode resultNode = convertMsgToOut(msg);
-        return objectMapper.writeValueAsString(resultNode);
+        return JacksonUtil.toString(resultNode);
     }
 
     private String msgToOutput(List<TbMsg> msgs) throws Exception {
         JsonNode resultNode;
         if (msgs.size() > 1) {
-            resultNode = objectMapper.createArrayNode();
+            resultNode = JacksonUtil.newArrayNode();
             for (TbMsg msg : msgs) {
                 JsonNode convertedData = convertMsgToOut(msg);
                 ((ArrayNode) resultNode).add(convertedData);
@@ -487,16 +486,16 @@ public class RuleChainController extends BaseController {
         } else {
             resultNode = convertMsgToOut(msgs.get(0));
         }
-        return objectMapper.writeValueAsString(resultNode);
+        return JacksonUtil.toString(resultNode);
     }
 
     private JsonNode convertMsgToOut(TbMsg msg) throws Exception {
-        ObjectNode msgData = objectMapper.createObjectNode();
+        ObjectNode msgData = JacksonUtil.newObjectNode();
         if (!StringUtils.isEmpty(msg.getData())) {
-            msgData.set("msg", objectMapper.readTree(msg.getData()));
+            msgData.set("msg", JacksonUtil.toJsonNode(msg.getData()));
         }
         Map<String, String> metadata = msg.getMetaData().getData();
-        msgData.set("metadata", objectMapper.valueToTree(metadata));
+        msgData.set("metadata", JacksonUtil.valueToTree(metadata));
         msgData.put("msgType", msg.getType());
         return msgData;
     }
@@ -508,7 +507,7 @@ public class RuleChainController extends BaseController {
                     EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION +
                     "Third, once rule chain will be delivered to edge service, it's going to start processing messages locally. " +
                     "\n\nOnly rule chain with type 'EDGE' can be assigned to edge." + TENANT_AUTHORITY_PARAGRAPH,
-            produces = MediaType.APPLICATION_JSON_VALUE)
+            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.POST)
     @ResponseBody
@@ -531,7 +530,7 @@ public class RuleChainController extends BaseController {
                     "Second, remote edge service will receive an 'unassign' command to remove rule chain " +
                     EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION +
                     "Third, once 'unassign' command will be delivered to edge service, it's going to remove rule chain locally." + TENANT_AUTHORITY_PARAGRAPH,
-            produces = MediaType.APPLICATION_JSON_VALUE)
+            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.DELETE)
     @ResponseBody
@@ -553,17 +552,17 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/edge/{edgeId}/ruleChains", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<RuleChain> getEdgeRuleChains(
-            @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(EDGE_ID) String strEdgeId,
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = RULE_CHAIN_TEXT_SEARCH_DESCRIPTION)
+            @Parameter(description = RULE_CHAIN_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = RULE_CHAIN_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "root"}))
             @RequestParam(required = false) String sortProperty,
-            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         TenantId tenantId = getCurrentUser().getTenantId();
@@ -579,7 +578,7 @@ public class RuleChainController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}/edgeTemplateRoot", method = RequestMethod.POST)
     @ResponseBody
-    public RuleChain setEdgeTemplateRootRuleChain(@ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+    public RuleChain setEdgeTemplateRootRuleChain(@Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
                                                   @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
@@ -593,7 +592,7 @@ public class RuleChainController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge", method = RequestMethod.POST)
     @ResponseBody
-    public RuleChain setAutoAssignToEdgeRuleChain(@ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+    public RuleChain setAutoAssignToEdgeRuleChain(@Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
                                                   @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
@@ -607,7 +606,7 @@ public class RuleChainController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge", method = RequestMethod.DELETE)
     @ResponseBody
-    public RuleChain unsetAutoAssignToEdgeRuleChain(@ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+    public RuleChain unsetAutoAssignToEdgeRuleChain(@Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
                                                     @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));

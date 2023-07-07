@@ -42,6 +42,10 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
+            <artifactId>proto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
             <artifactId>message</artifactId>
         </dependency>
         <dependency>
@@ -53,8 +57,8 @@
             <artifactId>guava</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.fge</groupId>
@@ -119,10 +123,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>

@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.exception;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 
-@ApiModel
+@Schema
 public class ThingsboardCredentialsExpiredResponse extends ThingsboardErrorResponse {
 
     private final String resetToken;
@@ -34,7 +33,7 @@ public class ThingsboardCredentialsExpiredResponse extends ThingsboardErrorRespo
         return new ThingsboardCredentialsExpiredResponse(message, resetToken);
     }
 
-    @ApiModelProperty(position = 5, value = "Password reset token", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Password reset token", accessMode = Schema.AccessMode.READ_ONLY)
     public String getResetToken() {
         return resetToken;
     }

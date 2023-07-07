@@ -15,25 +15,24 @@
  */
 package org.thingsboard.server.common.data.asset;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.AssetId;
 
-@ApiModel
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AssetInfo extends Asset {
 
     private static final long serialVersionUID = -4094528227011066194L;
 
-    @ApiModelProperty(position = 10, value = "Title of the Customer that owns the asset.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Title of the Customer that owns the asset.", accessMode = Schema.AccessMode.READ_ONLY)
     private String customerTitle;
-    @ApiModelProperty(position = 11, value = "Indicates special 'Public' Customer that is auto-generated to use the assets on public dashboards.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Indicates special 'Public' Customer that is auto-generated to use the assets on public dashboards.", accessMode = Schema.AccessMode.READ_ONLY)
     private boolean customerIsPublic;
 
-    @ApiModelProperty(position = 12, value = "Name of the corresponding Asset Profile.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Name of the corresponding Asset Profile.", accessMode = Schema.AccessMode.READ_ONLY)
     private String assetProfileName;
 
 

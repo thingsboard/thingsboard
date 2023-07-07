@@ -16,10 +16,11 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
@@ -28,10 +29,8 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COMMENT_ALARM_ID;
@@ -40,7 +39,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COMMENT_TYPE
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @MappedSuperclass
 public abstract class AbstractAlarmCommentEntity<T extends AlarmComment> extends BaseSqlEntity<T> implements BaseEntity<T> {
 
@@ -53,7 +51,7 @@ public abstract class AbstractAlarmCommentEntity<T extends AlarmComment> extends
     @Column(name = ALARM_COMMENT_TYPE)
     private AlarmCommentType type;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ALARM_COMMENT_COMMENT)
     private JsonNode comment;
 
@@ -84,6 +82,7 @@ public abstract class AbstractAlarmCommentEntity<T extends AlarmComment> extends
         this.type = alarmCommentEntity.getType();
         this.comment = alarmCommentEntity.getComment();
     }
+
     protected AlarmComment toAlarmComment() {
         AlarmComment alarmComment = new AlarmComment(new AlarmCommentId(id));
         alarmComment.setCreatedTime(createdTime);

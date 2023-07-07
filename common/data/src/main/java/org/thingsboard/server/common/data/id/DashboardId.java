@@ -17,13 +17,12 @@ package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
-@ApiModel
+@Schema
 public class DashboardId extends UUIDBased implements EntityId {
 
     @JsonCreator
@@ -35,7 +34,7 @@ public class DashboardId extends UUIDBased implements EntityId {
         return new DashboardId(UUID.fromString(dashboardId));
     }
 
-    @ApiModelProperty(position = 2, required = true, value = "string", example = "DASHBOARD", allowableValues = "DASHBOARD")
+    @Schema(required = true, description = "string", example = "DASHBOARD", allowableValues = "DASHBOARD")
     @Override
     public EntityType getEntityType() {
         return EntityType.DASHBOARD;

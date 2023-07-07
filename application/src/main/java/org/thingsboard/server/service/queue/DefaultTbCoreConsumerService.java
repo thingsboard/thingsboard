@@ -35,11 +35,12 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
@@ -63,7 +64,7 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.queue.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
@@ -89,8 +90,8 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpd
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -523,13 +524,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             subscriptionManagerService.onTimeSeriesUpdate(
                     TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
-                    TbSubscriptionUtils.toTsKvEntityList(proto.getDataList()), callback);
+                    KvProtoUtil.toTsKvEntityList(proto.getDataList()), callback);
         } else if (msg.hasAttrUpdate()) {
             TbAttributeUpdateProto proto = msg.getAttrUpdate();
             subscriptionManagerService.onAttributesUpdate(
                     TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
-                    proto.getScope(), TbSubscriptionUtils.toAttributeKvList(proto.getDataList()), callback);
+                    proto.getScope(), KvProtoUtil.toAttributeKvList(proto.getDataList()), callback);
         } else if (msg.hasAttrDelete()) {
             TbAttributeDeleteProto proto = msg.getAttrDelete();
             subscriptionManagerService.onAttributesDelete(

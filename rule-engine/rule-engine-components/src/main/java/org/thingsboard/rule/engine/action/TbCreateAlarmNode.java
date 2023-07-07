@@ -16,12 +16,12 @@
 package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -57,7 +57,6 @@ import java.util.List;
 )
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
     private List<String> relationTypes;
     private AlarmSeverity notDynamicAlarmSeverity;
 
@@ -67,7 +66,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         if (!this.config.isDynamicSeverity()) {
             this.notDynamicAlarmSeverity = EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity());
             if (this.notDynamicAlarmSeverity == null) {
-                throw new TbNodeException("Incorrect Alarm Severity value: " + this.config.getSeverity());
+                throw new TbNodeException("Incorrect Alarm Severity value: " + this.config.getSeverity(), true);
             }
         }
     }
@@ -108,7 +107,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     private Alarm getAlarmFromMessage(TbContext ctx, TbMsg msg) throws IOException {
         Alarm msgAlarm;
-        msgAlarm = mapper.readValue(msg.getData(), Alarm.class);
+        msgAlarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
         msgAlarm.setTenantId(ctx.getTenantId());
         if (msgAlarm.getOriginator() == null) {
             msgAlarm.setOriginator(msg.getOriginator());

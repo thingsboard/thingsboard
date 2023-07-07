@@ -35,8 +35,8 @@ import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 
 @Service
 @Slf4j
@@ -86,7 +86,7 @@ public class DefaultSmsService implements SmsService {
         }
     }
 
-    private int sendSms(String numberTo, String message) throws ThingsboardException {
+    protected int sendSms(String numberTo, String message) throws ThingsboardException {
         if (this.smsSender == null) {
             throw new ThingsboardException("Unable to send SMS: no SMS provider configured!", ThingsboardErrorCode.GENERAL);
         }
@@ -130,7 +130,9 @@ public class DefaultSmsService implements SmsService {
 
     private int sendSms(SmsSender smsSender, String numberTo, String message) throws ThingsboardException {
         try {
-            return smsSender.sendSms(numberTo, message);
+            int sentSms = smsSender.sendSms(numberTo, message);
+            log.trace("Successfully sent sms to number: {}", numberTo);
+            return sentSms;
         } catch (Exception e) {
             throw handleException(e);
         }

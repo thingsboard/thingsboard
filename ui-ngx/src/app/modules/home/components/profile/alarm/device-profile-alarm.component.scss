@@ -16,6 +16,7 @@
 :host {
   display: block;
   .clear-alarm-rule {
+    max-width: 100%;
     border: 2px groove rgba(0, 0, 0, .45);
     border-radius: 4px;
     padding: 8px;

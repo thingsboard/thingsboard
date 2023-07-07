@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
-import org.thingsboard.server.cache.TbFSTRedisSerializer;
+import org.thingsboard.server.cache.TbJavaRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.dao.entity.EntityCountCacheKey;
 
@@ -30,6 +30,6 @@ import org.thingsboard.server.dao.entity.EntityCountCacheKey;
 public class EntityCountRedisCache extends RedisTbTransactionalCache<EntityCountCacheKey, Long> {
 
     public EntityCountRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.ENTITY_COUNT_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbFSTRedisSerializer<>());
+        super(CacheConstants.ENTITY_COUNT_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJavaRedisSerializer<>());
     }
 }

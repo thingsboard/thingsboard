@@ -17,33 +17,25 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsAsyncClientHttpRequestFactory;
-import org.springframework.http.client.Netty4ClientHttpRequestFactory;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.web.client.AsyncRestTemplate;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
@@ -51,24 +43,22 @@ import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.transport.ProxyProvider;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.Properties;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 @Data
 @Slf4j
-@SuppressWarnings("deprecation")
 public class TbHttpClient {
 
     private static final String STATUS = "status";
@@ -78,79 +68,72 @@ public class TbHttpClient {
     private static final String ERROR_BODY = "error_body";
     private static final String ERROR_SYSTEM_PROPERTIES = "Didn't set any system proxy properties. Should be added next system proxy properties: \"http.proxyHost\" and \"http.proxyPort\" or  \"https.proxyHost\" and \"https.proxyPort\" or \"socksProxyHost\" and \"socksProxyPort\"";
 
+    private static final String HTTP_PROXY_HOST = "http.proxyHost";
+    private static final String HTTP_PROXY_PORT = "http.proxyPort";
+    private static final String HTTPS_PROXY_HOST = "https.proxyHost";
+    private static final String HTTPS_PROXY_PORT = "https.proxyPort";
+
+    private static final String SOCKS_PROXY_HOST = "socksProxyHost";
+    private static final String SOCKS_PROXY_PORT = "socksProxyPort";
+    private static final String SOCKS_VERSION = "socksProxyVersion";
+    private static final String SOCKS_VERSION_5 = "5";
+    private static final String SOCKS_VERSION_4 = "4";
+    public static final String PROXY_USER = "tb.proxy.user";
+    public static final String PROXY_PASSWORD = "tb.proxy.password";
+
     private final TbRestApiCallNodeConfiguration config;
 
     private EventLoopGroup eventLoopGroup;
-    private AsyncRestTemplate httpClient;
-    private Deque<ListenableFuture<ResponseEntity<String>>> pendingFutures;
+    private WebClient webClient;
+    private Semaphore semaphore;
 
     TbHttpClient(TbRestApiCallNodeConfiguration config, EventLoopGroup eventLoopGroupShared) throws TbNodeException {
         try {
             this.config = config;
             if (config.getMaxParallelRequestsCount() > 0) {
-                pendingFutures = new ConcurrentLinkedDeque<>();
+                semaphore = new Semaphore(config.getMaxParallelRequestsCount());
             }
 
+            HttpClient httpClient = HttpClient.create()
+                    .runOn(getSharedOrCreateEventLoopGroup(eventLoopGroupShared))
+                    .doOnConnected(c ->
+                            c.addHandlerLast(new ReadTimeoutHandler(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS)));
+
             if (config.isEnableProxy()) {
-                checkProxyHost(config.getProxyHost());
-                checkProxyPort(config.getProxyPort());
-
-                String proxyUser;
-                String proxyPassword;
-
-                CloseableHttpAsyncClient asyncClient;
-                HttpComponentsAsyncClientHttpRequestFactory requestFactory = new HttpComponentsAsyncClientHttpRequestFactory();
-
                 if (config.isUseSystemProxyProperties()) {
                     checkSystemProxyProperties();
-
-                    asyncClient = HttpAsyncClients.createSystem();
-
-                    proxyUser = System.getProperty("tb.proxy.user");
-                    proxyPassword = System.getProperty("tb.proxy.password");
-
-                    if (useAuth(proxyUser, proxyPassword)) {
-                        Authenticator.setDefault(new Authenticator() {
-                            protected PasswordAuthentication getPasswordAuthentication() {
-                                return new PasswordAuthentication(proxyUser, proxyPassword.toCharArray());
-                            }
-                        });
-                    }
+                    httpClient = httpClient.proxy(this::createSystemProxyProvider);
                 } else {
-                    HttpAsyncClientBuilder httpAsyncClientBuilder = HttpAsyncClientBuilder.create()
-                            .setSSLHostnameVerifier(new DefaultHostnameVerifier())
-                            .setSSLContext(SSLContext.getDefault())
-                            .setProxy(new HttpHost(config.getProxyHost(), config.getProxyPort(), config.getProxyScheme()));
+                    checkProxyHost(config.getProxyHost());
+                    checkProxyPort(config.getProxyPort());
+                    String proxyUser = config.getProxyUser();
+                    String proxyPassword = config.getProxyPassword();
 
-                    proxyUser = config.getProxyUser();
-                    proxyPassword = config.getProxyPassword();
+                    httpClient = httpClient.proxy(options -> {
+                        var o = options.type(ProxyProvider.Proxy.HTTP)
+                                .host(config.getProxyHost())
+                                .port(config.getProxyPort());
 
-                    if (useAuth(proxyUser, proxyPassword)) {
-                        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-                        credsProvider.setCredentials(
-                                new AuthScope(config.getProxyHost(), config.getProxyPort()),
-                                new UsernamePasswordCredentials(proxyUser, proxyPassword)
-                        );
-                        httpAsyncClientBuilder.setDefaultCredentialsProvider(credsProvider);
-                    }
-                    asyncClient = httpAsyncClientBuilder.build();
+                        if (useAuth(proxyUser, proxyPassword)) {
+                            o.username(proxyUser).password(u -> proxyPassword);
+                        }
+                    });
+                    SslContext sslContext = SslContextBuilder.forClient().build();
+                    httpClient.secure(t -> t.sslContext(sslContext));
                 }
-
-                requestFactory.setAsyncClient(asyncClient);
-                requestFactory.setReadTimeout(config.getReadTimeoutMs());
-                httpClient = new AsyncRestTemplate(requestFactory);
-            } else if (config.isUseSimpleClientHttpFactory()) {
+            } else if (!config.isUseSimpleClientHttpFactory()) {
                 if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
                     throw new TbNodeException("Simple HTTP Factory does not support CERT PEM credentials!");
                 }
-                httpClient = new AsyncRestTemplate();
             } else {
-                Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(getSharedOrCreateEventLoopGroup(eventLoopGroupShared));
-                nettyFactory.setSslContext(config.getCredentials().initSslContext());
-                nettyFactory.setReadTimeout(config.getReadTimeoutMs());
-                httpClient = new AsyncRestTemplate(nettyFactory);
+                SslContext sslContext = config.getCredentials().initSslContext();
+                httpClient = httpClient.secure(t -> t.sslContext(sslContext));
             }
-        } catch (SSLException | NoSuchAlgorithmException e) {
+
+            this.webClient = WebClient.builder()
+                    .clientConnector(new ReactorClientHttpConnector(httpClient))
+                    .build();
+        } catch (SSLException e) {
             throw new TbNodeException(e);
         }
     }
@@ -182,42 +165,52 @@ public class TbHttpClient {
         }
     }
 
-    public void processMessage(TbContext ctx, TbMsg msg) {
-        String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
-        HttpHeaders headers = prepareHeaders(msg);
-        HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
-        HttpEntity<String> entity;
-        if(HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method) ||
-            HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method) ||
-            config.isIgnoreRequestBody()) {
-            entity = new HttpEntity<>(headers);
-        } else {
-            entity = new HttpEntity<>(getData(msg), headers);
-        }
-
-        URI uri = buildEncodedUri(endpointUrl);
-        ListenableFuture<ResponseEntity<String>> future = httpClient.exchange(
-                uri, method, entity, String.class);
-        future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
-            @Override
-            public void onFailure(Throwable throwable) {
-                TbMsg next = processException(ctx, msg, throwable);
-                ctx.tellFailure(next, throwable);
+    public void processMessage(TbContext ctx, TbMsg msg,
+                               Consumer<TbMsg> onSuccess,
+                               BiConsumer<TbMsg, Throwable> onFailure) {
+        try {
+            if (semaphore != null && !semaphore.tryAcquire(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS)) {
+                ctx.tellFailure(msg, new RuntimeException("Timeout during waiting for reply!"));
+                return;
             }
 
-            @Override
-            public void onSuccess(ResponseEntity<String> responseEntity) {
-                if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                    TbMsg next = processResponse(ctx, msg, responseEntity);
-                    ctx.tellSuccess(next);
-                } else {
-                    TbMsg next = processFailureResponse(ctx, msg, responseEntity);
-                    ctx.tellNext(next, TbRelationTypes.FAILURE);
-                }
+            String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
+            HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
+            URI uri = buildEncodedUri(endpointUrl);
+
+            RequestBodySpec request = webClient
+                    .method(method)
+                    .uri(uri)
+                    .headers(headers -> prepareHeaders(headers, msg));
+
+            if (HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) ||
+                    HttpMethod.PATCH.equals(method) || HttpMethod.DELETE.equals(method) ||
+                    config.isIgnoreRequestBody()) {
+                request.body(BodyInserters.fromValue(getData(msg)));
             }
-        });
-        if (pendingFutures != null) {
-            processParallelRequests(future);
+
+            request
+                    .retrieve()
+                    .toEntity(String.class)
+                    .subscribe(responseEntity -> {
+                        if (semaphore != null) {
+                            semaphore.release();
+                        }
+
+                        if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                            onSuccess.accept(processResponse(ctx, msg, responseEntity));
+                        } else {
+                            onFailure.accept(processFailureResponse(ctx, msg, responseEntity), null);
+                        }
+                    }, throwable -> {
+                        if (semaphore != null) {
+                            semaphore.release();
+                        }
+
+                        onFailure.accept(processException(ctx, msg, throwable), throwable);
+                    });
+        } catch (InterruptedException e) {
+            log.warn("Timeout during waiting for reply!", e);
         }
     }
 
@@ -248,7 +241,7 @@ public class TbHttpClient {
 
         if (config.isTrimDoubleQuotes()) {
             final String dataBefore = data;
-            data = data.replaceAll("^\"|\"$", "");;
+            data = data.replaceAll("^\"|\"$", "");
             log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
         }
 
@@ -257,9 +250,10 @@ public class TbHttpClient {
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
         TbMsgMetaData metaData = origMsg.getMetaData();
-        metaData.putValue(STATUS, response.getStatusCode().name());
+        HttpStatus httpStatus = (HttpStatus) response.getStatusCode();
+        metaData.putValue(STATUS, httpStatus.name());
         metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
-        metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
+        metaData.putValue(STATUS_REASON, httpStatus.getReasonPhrase());
         headersToMetaData(response.getHeaders(), metaData::putValue);
         String body = response.getBody() == null ? "{}" : response.getBody();
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, body);
@@ -281,10 +275,11 @@ public class TbHttpClient {
     }
 
     private TbMsg processFailureResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
+        HttpStatus httpStatus = (HttpStatus) response.getStatusCode();
         TbMsgMetaData metaData = origMsg.getMetaData();
-        metaData.putValue(STATUS, response.getStatusCode().name());
+        metaData.putValue(STATUS, httpStatus.name());
         metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
-        metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
+        metaData.putValue(STATUS_REASON, httpStatus.getReasonPhrase());
         metaData.putValue(ERROR_BODY, response.getBody());
         headersToMetaData(response.getHeaders(), metaData::putValue);
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
@@ -302,8 +297,7 @@ public class TbHttpClient {
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
     }
 
-    private HttpHeaders prepareHeaders(TbMsg msg) {
-        HttpHeaders headers = new HttpHeaders();
+    private void prepareHeaders(HttpHeaders headers, TbMsg msg) {
         config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, msg), TbNodeUtils.processPattern(v, msg)));
         ClientCredentials credentials = config.getCredentials();
         if (CredentialsType.BASIC == credentials.getType()) {
@@ -312,37 +306,83 @@ public class TbHttpClient {
             String encodedAuthString = new String(Base64.encodeBase64(authString.getBytes(StandardCharsets.UTF_8)));
             headers.add("Authorization", "Basic " + encodedAuthString);
         }
-        return headers;
     }
 
-    private void processParallelRequests(ListenableFuture<ResponseEntity<String>> future) {
-        pendingFutures.add(future);
-        if (pendingFutures.size() > config.getMaxParallelRequestsCount()) {
-            for (int i = 0; i < config.getMaxParallelRequestsCount(); i++) {
-                try {
-                    ListenableFuture<ResponseEntity<String>> pendingFuture = pendingFutures.removeFirst();
-                    try {
-                        pendingFuture.get(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS);
-                    } catch (Exception e) {
-                        log.warn("Timeout during waiting for reply!", e);
-                        pendingFuture.cancel(true);
-                    }
-                } catch (Exception e) {
-                    log.warn("Failure during waiting for reply!", e);
-                }
-            }
-        }
-    }
-
-    private static void checkProxyHost(String proxyHost) throws TbNodeException {
+    private static void checkProxyHost(String proxyHost) {
         if (StringUtils.isEmpty(proxyHost)) {
-            throw new TbNodeException("Proxy host can't be empty");
+            throw new IllegalArgumentException("Proxy host can't be empty");
         }
     }
 
-    private static void checkProxyPort(int proxyPort) throws TbNodeException {
+    private static void checkProxyPort(int proxyPort) {
         if (proxyPort < 0 || proxyPort > 65535) {
-            throw new TbNodeException("Proxy port out of range:" + proxyPort);
+            throw new IllegalArgumentException("Proxy port out of range:" + proxyPort);
+        }
+    }
+
+    private void createSystemProxyProvider(ProxyProvider.TypeSpec option) {
+        Properties properties = System.getProperties();
+        if (properties.containsKey(HTTP_PROXY_HOST) || properties.containsKey(HTTPS_PROXY_HOST)) {
+            createHttpProxyFrom(option, properties);
+        }
+        if (properties.containsKey(SOCKS_PROXY_HOST)) {
+            createSocksProxyFrom(option, properties);
+        }
+    }
+
+    private void createHttpProxyFrom(ProxyProvider.TypeSpec option, Properties properties) {
+        String hostProperty;
+        String portProperty;
+        if (properties.containsKey(HTTPS_PROXY_HOST)) {
+            hostProperty = HTTPS_PROXY_HOST;
+            portProperty = HTTPS_PROXY_PORT;
+        } else {
+            hostProperty = HTTP_PROXY_HOST;
+            portProperty = HTTP_PROXY_PORT;
+        }
+
+        String hostname = properties.getProperty(hostProperty);
+        int port = Integer.parseInt(properties.getProperty(portProperty));
+
+        checkProxyHost(config.getProxyHost());
+        checkProxyPort(config.getProxyPort());
+
+        var proxy = option
+                .type(ProxyProvider.Proxy.HTTP)
+                .host(hostname)
+                .port(port);
+
+        var proxyUser = properties.getProperty(PROXY_USER);
+        var proxyPassword = properties.getProperty(PROXY_PASSWORD);
+
+        if (useAuth(proxyUser, proxyPassword)) {
+            proxy.username(proxyUser).password(u -> proxyPassword);
+        }
+    }
+
+    private void createSocksProxyFrom(ProxyProvider.TypeSpec option, Properties properties) {
+        String hostname = properties.getProperty(SOCKS_PROXY_HOST);
+        String version = properties.getProperty(SOCKS_VERSION, SOCKS_VERSION_5);
+        if (!SOCKS_VERSION_5.equals(version) && !SOCKS_VERSION_4.equals(version)) {
+            throw new IllegalArgumentException(String.format("Wrong socks version %s! Supported only socks versions 4 and 5.", version));
+        }
+
+        ProxyProvider.Proxy type = SOCKS_VERSION_5.equals(version) ? ProxyProvider.Proxy.SOCKS5 : ProxyProvider.Proxy.SOCKS4;
+        int port = Integer.parseInt(properties.getProperty(SOCKS_PROXY_PORT));
+
+        checkProxyHost(config.getProxyHost());
+        checkProxyPort(config.getProxyPort());
+
+        ProxyProvider.Builder proxy = option
+                .type(type)
+                .host(hostname)
+                .port(port);
+
+        var proxyUser = properties.getProperty(PROXY_USER);
+        var proxyPassword = properties.getProperty(PROXY_PASSWORD);
+
+        if (useAuth(proxyUser, proxyPassword)) {
+            proxy.username(proxyUser).password(u -> proxyPassword);
         }
     }
 

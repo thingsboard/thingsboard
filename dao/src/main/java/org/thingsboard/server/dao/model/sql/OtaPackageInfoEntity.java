@@ -16,10 +16,15 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -29,15 +34,8 @@ import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_CHECKSUM_ALGORITHM_COLUMN;
@@ -53,14 +51,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TILE_C
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_URL_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_VERSION_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = OTA_PACKAGE_TABLE_NAME)
-public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implements SearchTextEntity<OtaPackageInfo> {
+public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
 
     @Column(name = OTA_PACKAGE_TENANT_ID_COLUMN)
     private UUID tenantId;
@@ -100,12 +96,9 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
     @Column(name = OTA_PACKAGE_DATA_SIZE_COLUMN)
     private Long dataSize;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.OTA_PACKAGE_ADDITIONAL_INFO_COLUMN)
     private JsonNode additionalInfo;
-
-    @Column(name = SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Transient
     private boolean hasData;
@@ -153,16 +146,6 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
         this.dataSize = dataSize;
         this.hasData = hasData;
         this.additionalInfo = JacksonUtil.convertValue(additionalInfo, JsonNode.class);
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return title;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     @Override

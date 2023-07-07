@@ -18,9 +18,14 @@
 <section class="tb-widget-settings" [formGroup]="flotSettingsFormGroup" fxLayout="column">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.chart.common-settings</legend>
-    <mat-checkbox formControlName="stack">
-      {{ 'widgets.chart.enable-stacking-mode' | translate }}
-    </mat-checkbox>
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" style="margin-bottom: 16px;">
+      <mat-checkbox fxFlex formControlName="stack">
+        {{ 'widgets.chart.enable-stacking-mode' | translate }}
+      </mat-checkbox>
+      <mat-checkbox fxFlex formControlName="enableSelection">
+        {{ 'widgets.chart.enable-selection-mode' | translate }}
+      </mat-checkbox>
+    </section>
     <section *ngIf="chartType === 'graph'" fxLayout="column" fxLayout.gt-xs="row"
              fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
@@ -67,6 +72,25 @@
       <mat-label translate>widgets.chart.thresholds-line-width</mat-label>
       <input matInput type="number" min="0" formControlName="thresholdsLineWidth">
     </mat-form-field>
+  </fieldset>
+  <fieldset *ngIf="chartType === 'graph' || chartType === 'bar'" class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widget-config.legend</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('showLegend').value">
+      <mat-expansion-panel-header fxLayout="row" style="min-height: 48px;">
+        <mat-panel-title fxFlex="60">
+          <mat-slide-toggle formControlName="showLegend" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center" style="height: 100%;">
+            {{ 'widget-config.display-legend' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxFlex="40" style="white-space: nowrap;" fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <tb-legend-config formControlName="legendConfig"></tb-legend-config>
+      </ng-template>
+    </mat-expansion-panel>
   </fieldset>
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.chart.tooltip-settings</legend>
@@ -290,7 +314,7 @@
   <fieldset *ngIf="chartType === 'graph' || chartType === 'bar'" class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.chart.custom-legend-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('customLegendEnabled').value">
-      <mat-expansion-panel-header fxLayout="row" style="height: 100%; min-height: 48px;">
+      <mat-expansion-panel-header fxLayout="row" style="height: max-content; min-height: 48px;">
         <mat-panel-title fxFlex="60">
           <mat-slide-toggle formControlName="customLegendEnabled" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center" style="height: 100%;">

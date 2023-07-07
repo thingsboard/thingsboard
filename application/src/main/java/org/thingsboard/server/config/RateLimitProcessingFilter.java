@@ -15,64 +15,53 @@
  */
 package org.thingsboard.server.config;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.exception.TenantProfileNotFoundException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class RateLimitProcessingFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private ThingsboardErrorResponseHandler errorResponseHandler;
-
-    @Autowired
-    @Lazy
-    private TbTenantProfileCache tenantProfileCache;
-
-    private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
-    private final ConcurrentMap<CustomerId, TbRateLimits> perCustomerLimits = new ConcurrentHashMap<>();
+    private final ThingsboardErrorResponseHandler errorResponseHandler;
+    private final RateLimitService rateLimitService;
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         SecurityUser user = getCurrentUser();
         if (user != null && !user.isSystemAdmin()) {
-            var profile = tenantProfileCache.get(user.getTenantId());
-            if (profile == null) {
+            try {
+                if (!rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS_PER_TENANT, user.getTenantId())) {
+                    rateLimitExceeded(EntityType.TENANT, response);
+                    return;
+                }
+            } catch (TenantProfileNotFoundException e) {
                 log.debug("[{}] Failed to lookup tenant profile", user.getTenantId());
                 errorResponseHandler.handle(new BadCredentialsException("Failed to lookup tenant profile"), response);
                 return;
             }
-            var profileConfiguration = profile.getDefaultProfileConfiguration();
-            if (!checkRateLimits(user.getTenantId(), profileConfiguration.getTenantServerRestLimitsConfiguration(), perTenantLimits, response)) {
-                return;
-            }
+
             if (user.isCustomerUser()) {
-                if (!checkRateLimits(user.getCustomerId(), profileConfiguration.getCustomerServerRestLimitsConfiguration(), perCustomerLimits, response)) {
+                if (!rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS_PER_CUSTOMER, user.getTenantId(), user.getCustomerId())) {
+                    rateLimitExceeded(EntityType.CUSTOMER, response);
                     return;
                 }
             }
@@ -90,23 +79,8 @@ public class RateLimitProcessingFilter extends OncePerRequestFilter {
         return false;
     }
 
-    private <I extends EntityId> boolean checkRateLimits(I ownerId, String rateLimitConfig, Map<I, TbRateLimits> rateLimitsMap, ServletResponse response) {
-        if (StringUtils.isNotEmpty(rateLimitConfig)) {
-            TbRateLimits rateLimits = rateLimitsMap.get(ownerId);
-            if (rateLimits == null || !rateLimits.getConfiguration().equals(rateLimitConfig)) {
-                rateLimits = new TbRateLimits(rateLimitConfig);
-                rateLimitsMap.put(ownerId, rateLimits);
-            }
-
-            if (!rateLimits.tryConsume()) {
-                errorResponseHandler.handle(new TbRateLimitsException(ownerId.getEntityType()), (HttpServletResponse) response);
-                return false;
-            }
-        } else {
-            rateLimitsMap.remove(ownerId);
-        }
-
-        return true;
+    private void rateLimitExceeded(EntityType type, HttpServletResponse response) {
+        errorResponseHandler.handle(new TbRateLimitsException(type), response);
     }
 
     protected SecurityUser getCurrentUser() {

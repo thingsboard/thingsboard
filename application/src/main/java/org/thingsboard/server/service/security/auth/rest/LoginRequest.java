@@ -17,10 +17,9 @@ package org.thingsboard.server.service.security.auth.rest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@ApiModel
+@Schema
 public class LoginRequest {
 
     private String username;
@@ -33,12 +32,12 @@ public class LoginRequest {
         this.password = password;
     }
 
-    @ApiModelProperty(position = 1, required = true, value = "User email", example = "tenant@thingsboard.org")
+    @Schema(required = true, description = "User email", example = "tenant@thingsboard.org")
     public String getUsername() {
         return username;
     }
 
-    @ApiModelProperty(position = 2, required = true, value = "User password", example = "tenant")
+    @Schema(required = true, description = "User password", example = "tenant")
     public String getPassword() {
         return password;
     }

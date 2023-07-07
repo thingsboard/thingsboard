@@ -89,33 +89,8 @@ public class ControllerConstants {
     protected static final String EVENT_TEXT_SEARCH_DESCRIPTION = "The value is not used in searching.";
     protected static final String AUDIT_LOG_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on one of the next properties: entityType, entityName, userName, actionType, actionStatus.";
     protected static final String SORT_PROPERTY_DESCRIPTION = "Property of entity to sort by";
-    protected static final String DASHBOARD_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title";
-    protected static final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
-    protected static final String RPC_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, expirationTime, request, response";
-    protected static final String DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deviceProfileName, label, customerTitle";
-    protected static final String ENTITY_VIEW_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type";
-    protected static final String ENTITY_VIEW_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, customerTitle";
-    protected static final String USER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, firstName, lastName, email";
-    protected static final String TENANT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, state, city, address, address2, zip, phone, email";
-    protected static final String TENANT_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, description, isDefault";
-    protected static final String TENANT_PROFILE_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "id, name";
-    protected static final String TENANT_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, tenantProfileName, title, email, country, state, city, address, address2, zip, phone, email";
-    protected static final String DEVICE_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, transportType, description, isDefault";
 
-    protected static final String ASSET_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, description, isDefault";
-    protected static final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
-    protected static final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
-    protected static final String ALARM_COMMENT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, id";
-    protected static final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "ts, id";
-    protected static final String EDGE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
-    protected static final String RULE_CHAIN_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, root";
-    protected static final String WIDGET_BUNDLE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, tenantId";
-    protected static final String AUDIT_LOG_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, entityType, entityName, userName, actionType, actionStatus";
     protected static final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESC (DESCENDING)";
-    protected static final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
-    protected static final String RPC_STATUS_ALLOWABLE_VALUES = "QUEUED, SENT, DELIVERED, SUCCESSFUL, TIMEOUT, EXPIRED, FAILED";
-    protected static final String RULE_CHAIN_TYPES_ALLOWABLE_VALUES = "CORE, EDGE";
-    protected static final String TRANSPORT_TYPE_ALLOWABLE_VALUES = "DEFAULT, MQTT, COAP, LWM2M, SNMP";
     protected static final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
     protected static final String ASSET_INFO_DESCRIPTION = "Asset Info is an extension of the default Asset object that contains information about the assigned customer name. ";
     protected static final String ALARM_INFO_DESCRIPTION = "Alarm Info is an extension of the default Alarm object that also contains name of the alarm originator.";
@@ -125,23 +100,19 @@ public class ControllerConstants {
 
     protected static final String ASSET_PROFILE_INFO_DESCRIPTION = "Asset Profile Info is a lightweight object that includes main information about Asset Profile. ";
     protected static final String QUEUE_SERVICE_TYPE_DESCRIPTION = "Service type (implemented only for the TB-RULE-ENGINE)";
-    protected static final String QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES = "TB-RULE-ENGINE, TB-CORE, TB-TRANSPORT, JS-EXECUTOR";
     protected static final String QUEUE_QUEUE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the queue name.";
-    protected static final String QUEUE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, topic";
     protected static final String QUEUE_ID_PARAM_DESCRIPTION = "A string value representing the queue id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String QUEUE_NAME_PARAM_DESCRIPTION = "A string value representing the queue id. For example, 'Main'";
     protected static final String OTA_PACKAGE_INFO_DESCRIPTION = "OTA Package Info is a lightweight object that includes main information about the OTA Package excluding the heavyweight data. ";
     protected static final String OTA_PACKAGE_DESCRIPTION = "OTA Package is a heavyweight object that includes main information about the OTA Package and also data. ";
-    protected static final String OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES = "MD5, SHA256, SHA384, SHA512, CRC32, MURMUR3_32, MURMUR3_128";
     protected static final String OTA_PACKAGE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the ota package title.";
-    protected static final String OTA_PACKAGE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, type, title, version, tag, url, fileName, dataSize, checksum";
     protected static final String RESOURCE_INFO_DESCRIPTION = "Resource Info is a lightweight object that includes main information about the Resource excluding the heavyweight data. ";
     protected static final String RESOURCE_DESCRIPTION = "Resource is a heavyweight object that includes main information about the Resource and also data. ";
 
     protected static final String RESOURCE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the resource title.";
-    protected static final String RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, resourceType, tenantId";
+    protected static final String RESOURCE_TYPE = "A string value representing the resource type.";
+
     protected static final String LWM2M_OBJECT_DESCRIPTION = "LwM2M Object is a object that includes information about the LwM2M model which can be used in transport configuration for the LwM2M device profile. ";
-    protected static final String LWM2M_OBJECT_SORT_PROPERTY_ALLOWABLE_VALUES = "id, name";
 
     protected static final String DEVICE_NAME_DESCRIPTION = "A string value representing the Device name.";
     protected static final String ASSET_NAME_DESCRIPTION = "A string value representing the Asset name.";
@@ -161,7 +132,6 @@ public class ControllerConstants {
     protected static final String ALARM_RULE_ID = "alarmRuleId";
     protected static final String ALARM_RULE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the alarm rule name.";
     protected static final String ALARM_RULE_ID_PARAM_DESCRIPTION = "A string value representing the alarm rule id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
-    protected static final String ALARM_RULE_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, alarmType";
 
     protected static final String MARKDOWN_CODE_BLOCK_START = "```json\n";
     protected static final String MARKDOWN_CODE_BLOCK_END = "\n```";
@@ -209,42 +179,222 @@ public class ControllerConstants {
 
     protected static final String IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION = "A Boolean value representing the Server SecurityInfo for future Bootstrap client mode settings. Values: 'true' for Bootstrap Server; 'false' for Lwm2m Server. ";
 
-    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION =
+    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION =
                     "{\n" +
                     "  \"device\": {\n" +
-                    "    \"name\": \"LwRpk00000000\",\n" +
-                    "    \"type\": \"lwm2mProfileRpk\"\n" +
-                    "  },\n" +
+                    "    \"name\":\"Name_DeviceWithCredantial_AccessToken\",\n" +
+                    "    \"label\":\"Label_DeviceWithCredantial_AccessToken\",\n" +
+                    "    \"deviceProfileId\":{\n" +
+                    "      \"id\":\"9d9588c0-06c9-11ee-b618-19be30fdeb60\",\n" +
+                    "      \"entityType\":\"DEVICE_PROFILE\"\n" +
+                    "     }\n" +
+                    "   },\n" +
                     "  \"credentials\": {\n" +
-                    "    \"id\": \"null\",\n" +
-                    "    \"createdTime\": 0,\n" +
-                    "    \"deviceId\": \"null\",\n" +
-                    "    \"credentialsType\": \"LWM2M_CREDENTIALS\",\n" +
-                    "    \"credentialsId\": \"LwRpk00000000\",\n" +
-                    "    \"credentialsValue\": {\n" +
-                    "      \"client\": {\n" +
-                    "        \"endpoint\": \"LwRpk00000000\",\n" +
-                    "        \"securityConfigClientMode\": \"RPK\",\n" +
-                    "        \"key\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\"\n" +
-                    "      },\n" +
-                    "      \"bootstrap\": {\n" +
-                    "        \"bootstrapServer\": {\n" +
-                    "          \"securityMode\": \"RPK\",\n" +
-                    "          \"clientPublicKeyOrId\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
-                    "          \"clientSecretKey\": \"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"\n" +
-                    "        },\n" +
-                    "        \"lwm2mServer\": {\n" +
-                    "          \"securityMode\": \"RPK\",\n" +
-                    "          \"clientPublicKeyOrId\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
-                    "          \"clientSecretKey\": \"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"\n" +
-                    "        }\n" +
-                    "      }\n" +
-                    "    }\n" +
-                    "  }\n" +
+                    "    \"credentialsType\": \"ACCESS_TOKEN\",\n" +
+                    "    \"credentialsId\": \"6hmxew8pmmzng4e3une2\"\n" +
+                    "   }\n" +
                     "}";
 
-    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN =
-            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+    protected static final String DEVICE_UPDATE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION =
+                    "{\n" +
+                    "  \"id\": {\n" +
+                    "    \"id\":\"c886a090-168d-11ee-87c9-6f157dbc816a\"\n" +
+                    "   },\n" +
+                    "  \"deviceId\": {\n" +
+                    "    \"id\":\"c5fb3ac0-168d-11ee-87c9-6f157dbc816a\",\n" +
+                    "    \"entityType\":\"DEVICE\"\n" +
+                    "   },\n" +
+                    "  \"credentialsType\": \"ACCESS_TOKEN\",\n" +
+                    "  \"credentialsId\": \"6hmxew8pmmzng4e3une4\"\n" +
+                    "}";
+
+    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_DEFAULT_PARAM_DESCRIPTION =
+                    "{\n" +
+                    "  \"device\": {\n" +
+                    "    \"name\":\"Name_DeviceWithCredantial_AccessToken_Default\",\n" +
+                    "    \"label\":\"Label_DeviceWithCredantial_AccessToken_Default\",\n" +
+                    "    \"type\": \"default\"\n" +
+                    "   },\n" +
+                    "  \"credentials\": {\n" +
+                    "    \"credentialsType\": \"ACCESS_TOKEN\",\n" +
+                    "    \"credentialsId\": \"6hmxew8pmmzng4e3une3\"\n" +
+                    "   }\n" +
+                    "}";
+
+    protected static final String certificateValue = "\"-----BEGIN CERTIFICATE----- " +
+        "MIICMTCCAdegAwIBAgIUI9dBuwN6pTtK6uZ03rkiCwV4wEYwCgYIKoZIzj0EAwIwbjELMAkGA1UEBhMCVVMxETAPBgNVBAgMCE5ldyBZb3JrMRowGAYDVQQKDBFUaGluZ3NCb2FyZCwgSW5jLjEwMC4GA1UEAwwnZGV2aWNlQ2VydGlmaWNhdGVAWDUwOVByb3Zpc2lvblN0cmF0ZWd5MB4XDTIzMDMyOTE0NTYxN1oXDTI0MDMyODE0NTYxN1owbjELMAkGA1UEBhMCVVMxETAPBgNVBAgMCE5ldyBZb3JrMRowGAYDVQQKDBFUaGluZ3NCb2FyZCwgSW5jLjEwMC4GA1UEAwwnZGV2aWNlQ2VydGlmaWNhdGVAWDUwOVByb3Zpc2lvblN0cmF0ZWd5MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE9Zo791qKQiGNBm11r4ZGxh+w+ossZL3xc46ufq5QckQHP7zkD2XDAcmP5GvdkM1sBFN9AWaCkQfNnWmfERsOOKNTMFEwHQYDVR0OBBYEFFFc5uyCyglQoZiKhzXzMcQ3BKORMB8GA1UdIwQYMBaAFFFc5uyCyglQoZiKhzXzMcQ3BKORMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSAAwRQIhANbA9CuhoOifZMMmqkpuld+65CR+ItKdXeRAhLMZuccuAiB0FSQB34zMutXrZj1g8Gl5OkE7YryFHbei1z0SveHR8g== " +
+        "-----END CERTIFICATE-----\"";
+
+    protected static final String certificateId =  "\"84f5911765abba1f96bf4165604e9e90338fc6214081a8e623b6ff9669aedb27\"";
+
+    protected static final String certificateValueUpdate = "\"-----BEGIN CERTIFICATE----- " +
+        "MIICMTCCAdegAwIBAgIUUEKxS9hTz4l+oLUMF0LV6TC/gCIwCgYIKoZIzj0EAwIwbjELMAkGA1UEBhMCVVMxETAPBgNVBAgMCE5ldyBZb3JrMRowGAYDVQQKDBFUaGluZ3NCb2FyZCwgSW5jLjEwMC4GA1UEAwwnZGV2aWNlUHJvZmlsZUNlcnRAWDUwOVByb3Zpc2lvblN0cmF0ZWd5MB4XDTIzMDMyOTE0NTczNloXDTI0MDMyODE0NTczNlowbjELMAkGA1UEBhMCVVMxETAPBgNVBAgMCE5ldyBZb3JrMRowGAYDVQQKDBFUaGluZ3NCb2FyZCwgSW5jLjEwMC4GA1UEAwwnZGV2aWNlUHJvZmlsZUNlcnRAWDUwOVByb3Zpc2lvblN0cmF0ZWd5MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAECMlWO72krDoUL9FQjUmSCetkhaEGJUfQkdSfkLSNa0GyAEIMbfmzI4zITeapunu4rGet3EMyLydQzuQanBicp6NTMFEwHQYDVR0OBBYEFHpZ78tPnztNii4Da/yCw6mhEIL3MB8GA1UdIwQYMBaAFHpZ78tPnztNii4Da/yCw6mhEIL3MA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSAAwRQIgJ7qyMFqNcwSYkH6o+UlQXzLWfwZbNjVk+aR7foAZNGsCIQDsd7v3WQIGHiArfZeDs1DLEDuV/2h6L+ZNoGNhEKL+1A== " +
+        "-----END CERTIFICATE-----\"";
+
+    protected static final String certificateIdUpdate =  "\"6b8adb49015500e51a527acd332b51684ab9b49b4ade03a9582a44c455e2e9b6\"";
+
+    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_X509_CERTIFICATE_PARAM_DESCRIPTION =
+            "{\n" +
+            "  \"device\": {\n" +
+            "    \"name\":\"Name_DeviceWithCredantial_X509_Certificate\",\n" +
+            "    \"label\":\"Label_DeviceWithCredantial_X509_Certificate\",\n" +
+            "    \"deviceProfileId\":{\n" +
+            "      \"id\":\"9d9588c0-06c9-11ee-b618-19be30fdeb60\",\n" +
+            "      \"entityType\":\"DEVICE_PROFILE\"\n" +
+            "     }\n" +
+            "   },\n" +
+            "  \"credentials\": {\n" +
+            "    \"credentialsType\": \"X509_CERTIFICATE\",\n" +
+            "    \"credentialsId\": " + certificateId + ",\n" +
+            "    \"credentialsValue\": " + certificateValue + "\n" +
+            "   }\n" +
+            "}";
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_X509_CERTIFICATE_PARAM_DESCRIPTION =
+            "{\n" +
+            "  \"id\": {\n" +
+            "    \"id\":\"309bd9c0-14f4-11ee-9fc9-d9b7463abb63\"\n" +
+            "   },\n" +
+            "  \"deviceId\": {\n" +
+            "    \"id\":\"3092b200-14f4-11ee-9fc9-d9b7463abb63\",\n" +
+            "    \"entityType\":\"DEVICE\"\n" +
+            "   },\n" +
+            "  \"credentialsType\": \"X509_CERTIFICATE\",\n" +
+            "  \"credentialsId\": " + certificateIdUpdate + ",\n" +
+            "  \"credentialsValue\": " + certificateValueUpdate + "\n" +
+            "}";
+
+    protected static final String MQTT_BASIC_VALUE = "\"{\\\"clientId\\\":\\\"5euh5nzm34bjjh1efmlt\\\",\\\"userName\\\":\\\"onasd1lgwasmjl7v2v7h\\\",\\\"password\\\":\\\"b9xtm4ny8kt9zewaga5o\\\"}\"";
+
+    protected static final String MQTT_BASIC_VALUE_UPDATE = "\"{\\\"clientId\\\":\\\"juy03yv4owqxcmqhqtvk\\\",\\\"userName\\\":\\\"ov19fxca0cyjn7lm7w7u\\\",\\\"password\\\":\\\"twy94he114dfi9usyk1o\\\"}\"";
+
+    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_MQTT_BASIC_PARAM_DESCRIPTION =
+            "{\n" +
+            "  \"device\": {\n" +
+            "    \"name\":\"Name_DeviceWithCredantial_MQTT_Basic\",\n" +
+            "    \"label\":\"Label_DeviceWithCredantial_MQTT_Basic\",\n" +
+            "    \"deviceProfileId\":{\n" +
+            "      \"id\":\"9d9588c0-06c9-11ee-b618-19be30fdeb60\",\n" +
+            "      \"entityType\":\"DEVICE_PROFILE\"\n" +
+            "     }\n" +
+            "   },\n" +
+            "  \"credentials\": {\n" +
+            "    \"credentialsType\": \"MQTT_BASIC\",\n" +
+            "    \"credentialsValue\": " + MQTT_BASIC_VALUE + "\n" +
+            "   }\n" +
+            "}";
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_MQTT_BASIC_PARAM_DESCRIPTION =
+            "{\n" +
+            "  \"id\": {\n" +
+            "    \"id\":\"d877ffb0-14f5-11ee-9fc9-d9b7463abb63\"\n" +
+            "   },\n" +
+            "  \"deviceId\": {\n" +
+            "    \"id\":\"d875dcd0-14f5-11ee-9fc9-d9b7463abb63\",\n" +
+            "    \"entityType\":\"DEVICE\"\n" +
+            "   },\n" +
+            "  \"credentialsType\": \"MQTT_BASIC\",\n" +
+            "  \"credentialsValue\": " + MQTT_BASIC_VALUE_UPDATE + "\n" +
+            "}";
+
+    protected static final String CREDENTIALS_VALUE_LVM2M_RPK_DESCRIPTION =
+       "       \"{" +
+                   "\\\"client\\\":{ " +
+                       "\\\"endpoint\\\":\\\"LwRpk00000000\\\", " +
+                       "\\\"securityConfigClientMode\\\":\\\"RPK\\\", " +
+                       "\\\"key\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\"" +
+               "   }, " +
+                   "\\\"bootstrap\\\":{ " +
+                        "\\\"bootstrapServer\\\":{ " +
+                            "\\\"securityMode\\\":\\\"RPK\\\", " +
+                            "\\\"clientPublicKeyOrId\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\", " +
+                            "\\\"clientSecretKey\\\":\\\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\\\"" +
+                        "}, " +
+                        "\\\"lwm2mServer\\\":{ \\\"securityMode\\\":\\\"RPK\\\", " +
+                            "\\\"clientPublicKeyOrId\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\", " +
+                            "\\\"clientSecretKey\\\":\\\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\\\"" +
+                        "}" +
+                   "} " +
+               "}\"";
+
+    protected static final String CREDENTIALS_VALUE_UPDATE_LVM2M_RPK_DESCRIPTION =
+       "       \"{" +
+                   "\\\"client\\\":{ " +
+                       "\\\"endpoint\\\":\\\"LwRpk00000000\\\", " +
+                       "\\\"securityConfigClientMode\\\":\\\"RPK\\\", " +
+                       "\\\"key\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdvBZZ2vQRK9wgDhctj6B1c7bxR3Z0wYg1+YdoYFnVUKWb+rIfTTyYK9tmQJx5Vlb5fxdLnVv1RJOPiwsLIQbAA==\\\"" +
+               "   }, " +
+                   "\\\"bootstrap\\\":{ " +
+                        "\\\"bootstrapServer\\\":{ " +
+                            "\\\"securityMode\\\":\\\"RPK\\\", " +
+                            "\\\"clientPublicKeyOrId\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\", " +
+                            "\\\"clientSecretKey\\\":\\\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\\\"" +
+                        "}, " +
+                        "\\\"lwm2mServer\\\":{ \\\"securityMode\\\":\\\"RPK\\\", " +
+                            "\\\"clientPublicKeyOrId\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\\\", " +
+                            "\\\"clientSecretKey\\\":\\\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\\\"" +
+                        "}" +
+                   "} " +
+               "}\"";
+
+   protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION =
+           "{\n" +
+           "  \"device\": {\n" +
+           "    \"name\":\"Name_LwRpk00000000\",\n" +
+           "    \"label\":\"Label_LwRpk00000000\",\n" +
+           "    \"deviceProfileId\":{\n" +
+           "      \"id\":\"a660bd50-10ef-11ee-8737-b5634e73c779\",\n" +
+           "      \"entityType\":\"DEVICE_PROFILE\"\n" +
+           "     }\n" +
+           "   },\n" +
+           "  \"credentials\": {\n" +
+           "    \"credentialsType\": \"LWM2M_CREDENTIALS\",\n" +
+           "    \"credentialsId\": \"LwRpk00000000\",\n" +
+           "    \"credentialsValue\":\n" + CREDENTIALS_VALUE_LVM2M_RPK_DESCRIPTION + "\n" +
+           "   }\n" +
+           "}";
+
+   protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION =
+           "{\n" +
+           "  \"id\": {\n" +
+           "    \"id\":\"e238d4d0-1689-11ee-98c6-1713c1be5a8e\"\n" +
+           "   },\n" +
+           "  \"deviceId\": {\n" +
+           "    \"id\":\"e232e160-1689-11ee-98c6-1713c1be5a8e\",\n" +
+           "    \"entityType\":\"DEVICE\"\n" +
+           "   },\n" +
+           "  \"credentialsType\": \"LWM2M_CREDENTIALS\",\n" +
+           "  \"credentialsId\": \"LwRpk00000000\",\n" +
+           "  \"credentialsValue\":\n" + CREDENTIALS_VALUE_UPDATE_LVM2M_RPK_DESCRIPTION + "\n" +
+           "}";
+
+   protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+   protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_DEFAULT_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+  protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_X509_CERTIFICATE_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+  protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_MQTT_BASIC_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+   protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_UPDATE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_UPDATE_CREDENTIALS_X509_CERTIFICATE_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_UPDATE_CREDENTIALS_MQTT_BASIC_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
 
 
     protected static final String FILTER_VALUE_TYPE = NEW_LINE + "## Value Type and Operations" + NEW_LINE +
@@ -256,7 +406,7 @@ public class ControllerConstants {
             " * 'BOOLEAN' - used for boolean values. Operations: EQUAL, NOT_EQUAL;\n" +
             " * 'DATE_TIME' - similar to numeric, transforms value to milliseconds since epoch. Operations: EQUAL, NOT_EQUAL, GREATER, LESS, GREATER_OR_EQUAL, LESS_OR_EQUAL; \n";
 
-    protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_SPECIFIC_TIME_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+   protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_SPECIFIC_TIME_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "   \"schedule\":{\n" +
             "      \"type\":\"SPECIFIC_TIME\",\n" +
@@ -271,7 +421,7 @@ public class ControllerConstants {
             "   }\n" +
             "}" +
             MARKDOWN_CODE_BLOCK_END;
-    protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_CUSTOM_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+   protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_CUSTOM_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "   \"schedule\":{\n" +
             "      \"type\":\"CUSTOM\",\n" +
@@ -323,9 +473,9 @@ public class ControllerConstants {
             "   }\n" +
             "}" +
             MARKDOWN_CODE_BLOCK_END;
-    protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_ALWAYS_EXAMPLE = MARKDOWN_CODE_BLOCK_START + "\"schedule\": null" + MARKDOWN_CODE_BLOCK_END;
+   protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_ALWAYS_EXAMPLE = MARKDOWN_CODE_BLOCK_START + "\"schedule\": null" + MARKDOWN_CODE_BLOCK_END;
 
-    protected static final String DEVICE_PROFILE_ALARM_CONDITION_REPEATING_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+   protected static final String DEVICE_PROFILE_ALARM_CONDITION_REPEATING_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "   \"spec\":{\n" +
             "      \"type\":\"REPEATING\",\n" +
@@ -341,7 +491,8 @@ public class ControllerConstants {
             "   }\n" +
             "}" +
             MARKDOWN_CODE_BLOCK_END;
-    protected static final String DEVICE_PROFILE_ALARM_CONDITION_DURATION_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+
+   protected static final String DEVICE_PROFILE_ALARM_CONDITION_DURATION_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "   \"spec\":{\n" +
             "      \"type\":\"DURATION\",\n" +
@@ -1444,8 +1595,6 @@ public class ControllerConstants {
 
     protected static final String ATTRIBUTES_SCOPE_DESCRIPTION = "A string value representing the attributes scope. For example, 'SERVER_SCOPE'.";
     protected static final String ATTRIBUTES_KEYS_DESCRIPTION = "A string value representing the comma-separated list of attributes keys. For example, 'active,inactivityAlarmTime'.";
-    protected static final String ATTRIBUTES_SAVE_SCOPE_ALLOWED_VALUES = "SERVER_SCOPE, SHARED_SCOPE";
-    protected static final String ATTRIBUTES_SCOPE_ALLOWED_VALUES = ATTRIBUTES_SAVE_SCOPE_ALLOWED_VALUES + ", CLIENT_SCOPE";
     protected static final String ATTRIBUTES_JSON_REQUEST_DESCRIPTION = "A string value representing the json object. For example, '{\"key\":\"value\"}'. See API call description for more details.";
 
     protected static final String TELEMETRY_KEYS_BASE_DESCRIPTION = "A string value representing the comma-separated list of telemetry keys.";

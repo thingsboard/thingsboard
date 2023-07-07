@@ -16,8 +16,10 @@
 package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import jakarta.xml.bind.DatatypeConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,13 +49,12 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
-import javax.annotation.PostConstruct;
-import javax.mail.internet.MimeMessage;
+import jakarta.annotation.PostConstruct;
+import jakarta.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -61,7 +62,6 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class DefaultMailService implements MailService {
 
-    public static final String MAIL_PROP = "mail.";
     public static final String TARGET_EMAIL = "targetEmail";
     public static final String UTF_8 = "UTF-8";
 
@@ -82,7 +82,10 @@ public class DefaultMailService implements MailService {
     @Autowired
     private PasswordResetExecutorService passwordResetExecutorService;
 
-    private JavaMailSenderImpl mailSender;
+    @Autowired
+    private TbMailContextComponent tbMailContextComponent;
+
+    private TbMailSender mailSender;
 
     private String mailFrom;
 
@@ -105,70 +108,11 @@ public class DefaultMailService implements MailService {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null) {
             JsonNode jsonConfig = settings.getJsonValue();
-            mailSender = createMailSender(jsonConfig);
+            mailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
             mailFrom = jsonConfig.get("mailFrom").asText();
             timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
         } else {
             throw new IncorrectParameterException("Failed to update mail configuration. Settings not found!");
-        }
-    }
-
-    private JavaMailSenderImpl createMailSender(JsonNode jsonConfig) {
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(jsonConfig.get("smtpHost").asText());
-        mailSender.setPort(parsePort(jsonConfig.get("smtpPort").asText()));
-        mailSender.setUsername(jsonConfig.get("username").asText());
-        mailSender.setPassword(jsonConfig.get("password").asText());
-        mailSender.setJavaMailProperties(createJavaMailProperties(jsonConfig));
-        return mailSender;
-    }
-
-    private Properties createJavaMailProperties(JsonNode jsonConfig) {
-        Properties javaMailProperties = new Properties();
-        String protocol = jsonConfig.get("smtpProtocol").asText();
-        javaMailProperties.put("mail.transport.protocol", protocol);
-        javaMailProperties.put(MAIL_PROP + protocol + ".host", jsonConfig.get("smtpHost").asText());
-        javaMailProperties.put(MAIL_PROP + protocol + ".port", jsonConfig.get("smtpPort").asText());
-        javaMailProperties.put(MAIL_PROP + protocol + ".timeout", jsonConfig.get("timeout").asText());
-        javaMailProperties.put(MAIL_PROP + protocol + ".auth", String.valueOf(StringUtils.isNotEmpty(jsonConfig.get("username").asText())));
-        boolean enableTls = false;
-        if (jsonConfig.has("enableTls")) {
-            if (jsonConfig.get("enableTls").isBoolean() && jsonConfig.get("enableTls").booleanValue()) {
-                enableTls = true;
-            } else if (jsonConfig.get("enableTls").isTextual()) {
-                enableTls = "true".equalsIgnoreCase(jsonConfig.get("enableTls").asText());
-            }
-        }
-        javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", enableTls);
-        if (enableTls && jsonConfig.has("tlsVersion") && !jsonConfig.get("tlsVersion").isNull()) {
-            String tlsVersion = jsonConfig.get("tlsVersion").asText();
-            if (StringUtils.isNoneEmpty(tlsVersion)) {
-                javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", tlsVersion);
-            }
-        }
-
-        boolean enableProxy = jsonConfig.has("enableProxy") && jsonConfig.get("enableProxy").asBoolean();
-
-        if (enableProxy) {
-            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.host", jsonConfig.get("proxyHost").asText());
-            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.port", jsonConfig.get("proxyPort").asText());
-            String proxyUser = jsonConfig.get("proxyUser").asText();
-            if (StringUtils.isNoneEmpty(proxyUser)) {
-                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.user", proxyUser);
-            }
-            String proxyPassword = jsonConfig.get("proxyPassword").asText();
-            if (StringUtils.isNoneEmpty(proxyPassword)) {
-                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.password", proxyPassword);
-            }
-        }
-        return javaMailProperties;
-    }
-
-    private int parsePort(String strPort) {
-        try {
-            return Integer.valueOf(strPort);
-        } catch (NumberFormatException e) {
-            throw new IncorrectParameterException(String.format("Invalid smtp port value: %s", strPort));
         }
     }
 
@@ -179,7 +123,7 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void sendTestMail(JsonNode jsonConfig, String email) throws ThingsboardException {
-        JavaMailSenderImpl testMailSender = createMailSender(jsonConfig);
+        TbMailSender testMailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
         String mailFrom = jsonConfig.get("mailFrom").asText();
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
         long timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);

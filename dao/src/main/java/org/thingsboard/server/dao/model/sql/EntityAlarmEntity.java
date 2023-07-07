@@ -23,23 +23,23 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ToData;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.CREATED_TIME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ALARM_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ALARM_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 
 @Data
 @Entity
-@Table(name = ENTITY_ALARM_COLUMN_FAMILY_NAME)
+@Table(name = ENTITY_ALARM_TABLE_NAME)
 @IdClass(EntityAlarmCompositeKey.class)
 public final class EntityAlarmEntity implements ToData<EntityAlarm> {
 

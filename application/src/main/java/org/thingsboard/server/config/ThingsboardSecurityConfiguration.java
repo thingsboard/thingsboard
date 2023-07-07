@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -27,10 +26,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
@@ -61,7 +61,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled=true)
+@EnableMethodSecurity
 @Order(SecurityProperties.BASIC_AUTH_ORDER)
 @TbCoreComponent
 public class ThingsboardSecurityConfiguration {
@@ -75,11 +75,13 @@ public class ThingsboardSecurityConfiguration {
     public static final String FORM_BASED_LOGIN_ENTRY_POINT = "/api/auth/login";
     public static final String PUBLIC_LOGIN_ENTRY_POINT = "/api/auth/login/public";
     public static final String TOKEN_REFRESH_ENTRY_POINT = "/api/auth/token";
-    protected static final String[] NON_TOKEN_BASED_AUTH_ENTRY_POINTS = new String[] {"/index.html", "/assets/**", "/static/**", "/api/noauth/**", "/webjars/**",  "/api/license/**"};
+    protected static final String[] NON_TOKEN_BASED_AUTH_ENTRY_POINTS = new String[]{"/index.html", "/assets/**", "/static/**", "/api/noauth/**", "/webjars/**", "/api/license/**"};
     public static final String TOKEN_BASED_AUTH_ENTRY_POINT = "/api/**";
     public static final String WS_TOKEN_BASED_AUTH_ENTRY_POINT = "/api/ws/**";
+    public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/api/admin/mail/oauth2/code";
 
-    @Autowired private ThingsboardErrorResponseHandler restAccessDeniedHandler;
+    @Autowired
+    private ThingsboardErrorResponseHandler restAccessDeniedHandler;
 
     @Autowired(required = false)
     @Qualifier("oauth2AuthenticationSuccessHandler")
@@ -100,11 +102,15 @@ public class ThingsboardSecurityConfiguration {
     @Qualifier("defaultAuthenticationFailureHandler")
     private AuthenticationFailureHandler failureHandler;
 
-    @Autowired private RestAuthenticationProvider restAuthenticationProvider;
-    @Autowired private JwtAuthenticationProvider jwtAuthenticationProvider;
-    @Autowired private RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
+    @Autowired
+    private RestAuthenticationProvider restAuthenticationProvider;
+    @Autowired
+    private JwtAuthenticationProvider jwtAuthenticationProvider;
+    @Autowired
+    private RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
 
-    @Autowired(required = false) OAuth2Configuration oauth2Configuration;
+    @Autowired(required = false)
+    OAuth2Configuration oauth2Configuration;
 
     @Autowired
     @Qualifier("jwtHeaderTokenExtractor")
@@ -114,22 +120,22 @@ public class ThingsboardSecurityConfiguration {
     @Qualifier("jwtQueryTokenExtractor")
     private TokenExtractor jwtQueryTokenExtractor;
 
-    @Autowired private AuthenticationManager authenticationManager;
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
-    @Autowired private ObjectMapper objectMapper;
-
-    @Autowired private RateLimitProcessingFilter rateLimitProcessingFilter;
+    @Autowired
+    private RateLimitProcessingFilter rateLimitProcessingFilter;
 
     @Bean
     protected RestLoginProcessingFilter buildRestLoginProcessingFilter() throws Exception {
-        RestLoginProcessingFilter filter = new RestLoginProcessingFilter(FORM_BASED_LOGIN_ENTRY_POINT, successHandler, failureHandler, objectMapper);
+        RestLoginProcessingFilter filter = new RestLoginProcessingFilter(FORM_BASED_LOGIN_ENTRY_POINT, successHandler, failureHandler);
         filter.setAuthenticationManager(this.authenticationManager);
         return filter;
     }
 
     @Bean
     protected RestPublicLoginProcessingFilter buildRestPublicLoginProcessingFilter() throws Exception {
-        RestPublicLoginProcessingFilter filter = new RestPublicLoginProcessingFilter(PUBLIC_LOGIN_ENTRY_POINT, successHandler, failureHandler, objectMapper);
+        RestPublicLoginProcessingFilter filter = new RestPublicLoginProcessingFilter(PUBLIC_LOGIN_ENTRY_POINT, successHandler, failureHandler);
         filter.setAuthenticationManager(this.authenticationManager);
         return filter;
     }
@@ -137,7 +143,7 @@ public class ThingsboardSecurityConfiguration {
     protected JwtTokenAuthenticationProcessingFilter buildJwtTokenAuthenticationProcessingFilter() throws Exception {
         List<String> pathsToSkip = new ArrayList<>(Arrays.asList(NON_TOKEN_BASED_AUTH_ENTRY_POINTS));
         pathsToSkip.addAll(Arrays.asList(WS_TOKEN_BASED_AUTH_ENTRY_POINT, TOKEN_REFRESH_ENTRY_POINT, FORM_BASED_LOGIN_ENTRY_POINT,
-                PUBLIC_LOGIN_ENTRY_POINT, DEVICE_API_ENTRY_POINT, WEBJARS_ENTRY_POINT));
+                PUBLIC_LOGIN_ENTRY_POINT, DEVICE_API_ENTRY_POINT, WEBJARS_ENTRY_POINT, MAIL_OAUTH2_PROCESSING_ENTRY_POINT));
         SkipPathRequestMatcher matcher = new SkipPathRequestMatcher(pathsToSkip, TOKEN_BASED_AUTH_ENTRY_POINT);
         JwtTokenAuthenticationProcessingFilter filter
                 = new JwtTokenAuthenticationProcessingFilter(failureHandler, jwtHeaderTokenExtractor, matcher);
@@ -147,7 +153,7 @@ public class ThingsboardSecurityConfiguration {
 
     @Bean
     protected RefreshTokenProcessingFilter buildRefreshTokenProcessingFilter() throws Exception {
-        RefreshTokenProcessingFilter filter = new RefreshTokenProcessingFilter(TOKEN_REFRESH_ENTRY_POINT, successHandler, failureHandler, objectMapper);
+        RefreshTokenProcessingFilter filter = new RefreshTokenProcessingFilter(TOKEN_REFRESH_ENTRY_POINT, successHandler, failureHandler);
         filter.setAuthenticationManager(this.authenticationManager);
         return filter;
     }
@@ -183,35 +189,30 @@ public class ThingsboardSecurityConfiguration {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**");
+        return (web) -> web.ignoring().requestMatchers("/*.js", "/*.css", "/*.ico", "/assets/**", "/static/**");
     }
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.headers().cacheControl().and().frameOptions().disable()
-                .and()
-                .cors()
-                .and()
-                .csrf().disable()
-                .exceptionHandling()
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeRequests()
-                .antMatchers(WEBJARS_ENTRY_POINT).permitAll() // Webjars
-                .antMatchers(DEVICE_API_ENTRY_POINT).permitAll() // Device HTTP Transport API
-                .antMatchers(FORM_BASED_LOGIN_ENTRY_POINT).permitAll() // Login end-point
-                .antMatchers(PUBLIC_LOGIN_ENTRY_POINT).permitAll() // Public login end-point
-                .antMatchers(TOKEN_REFRESH_ENTRY_POINT).permitAll() // Token refresh end-point
-                .antMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll() // static resources, user activation and password reset end-points
-                .and()
-                .authorizeRequests()
-                .antMatchers(WS_TOKEN_BASED_AUTH_ENTRY_POINT).authenticated() // Protected WebSocket API End-points
-                .antMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated() // Protected API End-points
-                .and()
-                .exceptionHandling().accessDeniedHandler(restAccessDeniedHandler)
-                .and()
+        http.headers(headers -> headers
+                        .cacheControl(config -> {})
+                        .frameOptions(config -> {}).disable())
+                .cors(cors -> {})
+                .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(config -> {})
+                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeRequests(config -> config
+                        .requestMatchers(WEBJARS_ENTRY_POINT).permitAll() // Webjars
+                        .requestMatchers(DEVICE_API_ENTRY_POINT).permitAll() // Device HTTP Transport API
+                        .requestMatchers(FORM_BASED_LOGIN_ENTRY_POINT).permitAll() // Login end-point
+                        .requestMatchers(PUBLIC_LOGIN_ENTRY_POINT).permitAll() // Public login end-point
+                        .requestMatchers(TOKEN_REFRESH_ENTRY_POINT).permitAll() // Token refresh end-point
+                        .requestMatchers(MAIL_OAUTH2_PROCESSING_ENTRY_POINT).permitAll() // Mail oauth2 code processing url
+                        .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll()) // static resources, user activation and password reset end-points
+                .authorizeRequests(config -> config
+                        .requestMatchers(WS_TOKEN_BASED_AUTH_ENTRY_POINT).authenticated() // Protected WebSocket API End-points
+                        .requestMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated()) // Protected API End-points
+                .exceptionHandling(config -> config.accessDeniedHandler(restAccessDeniedHandler))
                 .addFilterBefore(buildRestLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -219,15 +220,14 @@ public class ThingsboardSecurityConfiguration {
                 .addFilterBefore(buildWsJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         if (oauth2Configuration != null) {
-            http.oauth2Login()
-                    .authorizationEndpoint()
-                    .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
-                    .authorizationRequestResolver(oAuth2AuthorizationRequestResolver)
-                    .and()
+            http.oauth2Login(login -> login
+                    .authorizationEndpoint(config -> config
+                            .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
+                            .authorizationRequestResolver(oAuth2AuthorizationRequestResolver))
                     .loginPage("/oauth2Login")
                     .loginProcessingUrl(oauth2Configuration.getLoginProcessingUrl())
                     .successHandler(oauth2AuthenticationSuccessHandler)
-                    .failureHandler(oauth2AuthenticationFailureHandler);
+                    .failureHandler(oauth2AuthenticationFailureHandler));
         }
         return http.build();
     }

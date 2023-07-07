@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.validation.Length;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 @Slf4j
 public class StringLengthValidator implements ConstraintValidator<Length, Object> {

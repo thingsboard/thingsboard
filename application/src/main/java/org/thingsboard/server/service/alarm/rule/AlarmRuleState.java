@@ -17,6 +17,7 @@ package org.thingsboard.server.service.alarm.rule;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
@@ -40,7 +41,6 @@ import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmRuleState;
 
 import java.time.Instant;

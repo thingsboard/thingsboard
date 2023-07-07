@@ -16,25 +16,23 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 
-import javax.validation.Valid;
 import java.io.Serializable;
-import java.util.List;
 
-@ApiModel
+@Schema
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DeviceProfileData implements Serializable {
 
-    @ApiModelProperty(position = 1, value = "JSON object of device profile configuration")
+    @Schema(description = "JSON object of device profile configuration")
     private DeviceProfileConfiguration configuration;
     @Valid
-    @ApiModelProperty(position = 2, value = "JSON object of device profile transport configuration")
+    @Schema(description = "JSON object of device profile transport configuration")
     private DeviceProfileTransportConfiguration transportConfiguration;
-    @ApiModelProperty(position = 3, value = "JSON object of provisioning strategy type per device profile")
+    @Schema(description = "JSON object of provisioning strategy type per device profile")
     private DeviceProfileProvisionConfiguration provisionConfiguration;
 
 }

@@ -1,0 +1,195 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-datakey-config" *ngIf="dataKeyConfigMode === dataKeyConfigModes.general; else advanced"
+     [formGroup]="dataKeyFormGroup">
+  <div class="mat-padding" fxLayout="column" style="gap: 16px;">
+    <div class="tb-widget-config-panel">
+      <div class="tb-widget-config-panel-title" translate>datakey.general</div>
+      <mat-form-field *ngIf="modelValue.type !== dataKeyTypes.function" subscriptSizing="dynamic">
+        <mat-label>{{ 'entity.key' | translate }}</mat-label>
+        <input matInput type="text" placeholder="{{ 'entity.key-name' | translate }}"
+               #keyInput
+               formControlName="name"
+               required
+               [matAutocomplete]="keyAutocomplete">
+        <button *ngIf="dataKeyFormGroup.get('name').value && !dataKeyFormGroup.get('name').disabled"
+                type="button"
+                matSuffix mat-icon-button aria-label="Clear"
+                (click)="clearKey()">
+          <mat-icon class="material-icons">close</mat-icon>
+        </button>
+        <mat-autocomplete
+          class="tb-autocomplete"
+          #keyAutocomplete="matAutocomplete">
+          <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
+            <span [innerHTML]="key | highlight:keySearchText"></span>
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+      <mat-form-field *ngIf="!hideDataKeyLabel" subscriptSizing="dynamic">
+        <mat-label translate>datakey.label</mat-label>
+        <input matInput formControlName="label" required>
+      </mat-form-field>
+      <ng-container *ngIf="modelValue.type !== dataKeyTypes.alarm">
+        <div class="tb-widget-config-row space-between" *ngIf="!hideDataKeyUnits">
+          <div translate>widget-config.units-short</div>
+          <tb-widget-units
+            formControlName="units">
+          </tb-widget-units>
+        </div>
+        <div class="tb-widget-config-row space-between" *ngIf="!hideDataKeyDecimals">
+          <div translate>widget-config.decimals-short</div>
+          <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+            <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+      </ng-container>
+      <div class="tb-widget-config-row space-between same-padding" *ngIf="!hideDataKeyColor">
+        <div>{{ 'datakey.color' | translate }}</div>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+          <mat-divider vertical></mat-divider>
+          <tb-color-input asBoxInput
+                          formControlName="color">
+          </tb-color-input>
+        </div>
+      </div>
+      <ng-container *ngIf="widgetType === widgetTypes.latest && modelValue.type === dataKeyTypes.timeseries">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label translate>datakey.aggregation</mat-label>
+          <mat-select formControlName="aggregationType" style="min-width: 150px;">
+            <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
+              {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <div class="tb-hint after-fields">
+          {{ dataKeyFormGroup.get('aggregationType').value ? (dataKeyAggregationTypeHintTranslations.get(aggregationTypes[dataKeyFormGroup.get('aggregationType').value]) | translate) : '' }}
+          <section *ngIf="dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE">
+            {{ 'datakey.aggregation-type-hint-common' | translate }}
+          </section>
+        </div>
+        <fieldset *ngIf="dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE" class="fields-group fields-group-slider">
+          <legend class="group-title" translate>datakey.delta-calculation</legend>
+          <mat-expansion-panel class="tb-settings comparison" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
+            <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+              <mat-panel-title fxLayout="column" fxLayoutAlign="center start">
+                <mat-slide-toggle formControlName="comparisonEnabled" (click)="$event.stopPropagation()">
+                  {{ 'datakey.enable-delta-calculation' | translate }}
+                </mat-slide-toggle>
+                <mat-hint class="tb-hint" style="line-height: 15px; padding-left: 45px;">{{ 'datakey.enable-delta-calculation-hint' | translate }}</mat-hint>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <section fxLayout="column" *ngIf="dataKeyFormGroup.get('comparisonEnabled').value">
+                <mat-form-field fxFlex class="mat-block">
+                  <mat-label translate>widgets.chart.time-for-comparison</mat-label>
+                  <mat-select formControlName="timeForComparison">
+                    <mat-option [value]="'previousInterval'">
+                      {{ 'widgets.chart.time-for-comparison-previous-interval' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'days'">
+                      {{ 'widgets.chart.time-for-comparison-days' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'weeks'">
+                      {{ 'widgets.chart.time-for-comparison-weeks' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'months'">
+                      {{ 'widgets.chart.time-for-comparison-months' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'years'">
+                      {{ 'widgets.chart.time-for-comparison-years' | translate }}
+                    </mat-option>
+                    <mat-option [value]="'customInterval'">
+                      {{ 'widgets.chart.time-for-comparison-custom-interval' | translate }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field *ngIf="dataKeyFormGroup.get('timeForComparison').value === 'customInterval'" fxFlex class="mat-block">
+                  <mat-label translate>widgets.chart.custom-interval-value</mat-label>
+                  <input required matInput type="number" min="0" formControlName="comparisonCustomIntervalValue">
+                </mat-form-field>
+                <mat-form-field style="padding-bottom: 16px;">
+                  <mat-label translate>datakey.delta-calculation-result</mat-label>
+                  <mat-select formControlName="comparisonResultType" style="min-width: 150px;">
+                    <mat-option *ngFor="let comparisonResultType of comparisonResults" [value]="comparisonResultType">
+                      {{ comparisonResultTypeTranslations.get(comparisonResultTypes[comparisonResultType]) | translate }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </section>
+            </ng-template>
+          </mat-expansion-panel>
+        </fieldset>
+      </ng-container>
+      <section fxLayout="column" *ngIf="modelValue.type === dataKeyTypes.function">
+        <span translate>datakey.data-generation-func</span>
+        <br/>
+        <tb-js-func #funcBodyEdit
+                    [functionArgs]="['time', 'prevValue']"
+                    [globalVariables]="functionScopeVariables"
+                    [validationArgs]="[[1, 1],[1, '1']]"
+                    resultType="any"
+                    helpId="widget/config/datakey_generation_fn"
+                    formControlName="funcBody">
+        </tb-js-func>
+      </section>
+    </div>
+    <div class="tb-widget-config-panel tb-slide-toggle"
+         *ngIf="(modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute || modelValue.type === dataKeyTypes.count) && showPostProcessing">
+      <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('usePostProcessing').value" [disabled]="!dataKeyFormGroup.get('usePostProcessing').value">
+        <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide" formControlName="usePostProcessing" (click)="$event.stopPropagation()"
+                              fxLayoutAlign="center">
+              {{ 'datakey.use-data-post-processing-func' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-js-func *ngIf="dataKeyFormGroup.get('usePostProcessing').value" #postFuncBodyEdit
+                      [functionArgs]="['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue']"
+                      [globalVariables]="functionScopeVariables"
+                      [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
+                      resultType="any"
+                      helpId="widget/config/datakey_postprocess_fn"
+                      formControlName="postFuncBody">
+          </tb-js-func>
+          <label *ngIf="dataKeyFormGroup.get('usePostProcessing').value" class="tb-title" style="margin-left: 15px;">
+            time - {{ 'datakey.time-description' | translate }}<br/>
+            value - {{ 'datakey.value-description' | translate }}<br/>
+            prevValue - {{ 'datakey.prev-value-description' | translate }}<br/>
+            timePrev - {{ 'datakey.time-prev-description' | translate }}<br/>
+            prevOrigValue - {{ 'datakey.prev-orig-value-description' | translate }}
+          </label>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  </div>
+</div>
+<ng-template #advanced>
+  <div class="tb-datakey-config" [formGroup]="dataKeySettingsFormGroup">
+    <div class="mat-padding" fxLayout="column">
+      <tb-widget-settings
+        [dashboard]="dashboard"
+        [aliasController]="aliasController"
+        [widget]="widget"
+        formControlName="settings">
+      </tb-widget-settings>
+    </div>
+  </div>
+</ng-template>

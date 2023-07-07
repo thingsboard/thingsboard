@@ -16,48 +16,47 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilter;
 
-import javax.validation.Valid;
 import java.io.Serializable;
 import java.util.List;
 import java.util.TreeMap;
 
-@ApiModel
+@Schema
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AlarmRuleConfiguration implements Serializable {
 
     private static final long serialVersionUID = 4050882336403853271L;
 
-    @ApiModelProperty(position = 3, value = "List of JSON objects representing source entity filters. These filters select a certain entity on which the specific Alarm Rule condition will be applied.")
+    @Schema(description = "List of JSON objects representing source entity filters. These filters select a certain entity on which the specific Alarm Rule condition will be applied.")
     private List<AlarmRuleEntityFilter> sourceEntityFilters;
 
-    @ApiModelProperty(position = 4, value = "JSON object representing target entity where the alarm will be created")
+    @Schema(description = "JSON object representing target entity where the alarm will be created")
     private AlarmRuleTargetEntity alarmTargetEntity;
 
     @Valid
-    @ApiModelProperty(position = 5, value = "Complex JSON object representing create alarm rules. The unique create alarm rule can be created for each alarm severity type. " +
+    @Schema(description = "Complex JSON object representing create alarm rules. The unique create alarm rule can be created for each alarm severity type. " +
             "There can be 5 create alarm rules configured per a single alarm type. See method implementation notes and AlarmRule model for more details")
     private TreeMap<AlarmSeverity, AlarmRuleCondition> createRules;
     @Valid
-    @ApiModelProperty(position = 6, value = "JSON object representing clear alarm rule")
+    @Schema(description = "JSON object representing clear alarm rule")
     private AlarmRuleCondition clearRule;
 
     // Hidden in advanced settings
-    @ApiModelProperty(position = 7, value = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
+    @Schema(description = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
     private boolean propagate;
-    @ApiModelProperty(position = 8, value = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
+    @Schema(description = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
     private boolean propagateToOwner;
-    @ApiModelProperty(position = 9, value = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
+    @Schema(description = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
     private boolean propagateToTenant;
 
-    @ApiModelProperty(position = 10, value = "JSON array of relation types that should be used for propagation. " +
+    @Schema(description = "JSON array of relation types that should be used for propagation. " +
             "By default, 'propagateRelationTypes' array is empty which means that the alarm will be propagated based on any relation type to parent entities. " +
             "This parameter should be used only in case when 'propagate' parameter is set to true, otherwise, 'propagateRelationTypes' array will be ignored.")
     private List<String> propagateRelationTypes;

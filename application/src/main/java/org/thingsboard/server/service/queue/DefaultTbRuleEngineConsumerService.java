@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.queue;
 
 import com.google.protobuf.ProtocolStringList;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -65,8 +67,6 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrateg
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -265,7 +265,21 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     void launchConsumer(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, Queue configuration, TbRuleEngineConsumerStats stats, String threadSuffix) {
-        consumersExecutor.execute(() -> consumerLoop(consumer, configuration, stats, threadSuffix));
+        if (isReady) {
+            consumersExecutor.execute(() -> consumerLoop(consumer, configuration, stats, threadSuffix));
+        } else {
+            scheduleLaunchConsumer(consumer, configuration, stats, threadSuffix);
+        }
+    }
+
+    private void scheduleLaunchConsumer(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, Queue configuration, TbRuleEngineConsumerStats stats, String threadSuffix) {
+        repartitionExecutor.schedule(() -> {
+            if (isReady) {
+                consumersExecutor.execute(() -> consumerLoop(consumer, configuration, stats, threadSuffix));
+            } else {
+                scheduleLaunchConsumer(consumer, configuration, stats, threadSuffix);
+            }
+        }, 10, TimeUnit.SECONDS);
     }
 
     void consumerLoop(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, org.thingsboard.server.common.data.queue.Queue configuration, TbRuleEngineConsumerStats stats, String threadSuffix) {

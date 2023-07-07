@@ -40,10 +40,12 @@ import {
   labelDataKeyValidator
 } from '@home/components/widget/lib/settings/chart/label-data-key.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { defaultLegendConfig, widgetType } from '@shared/models/widget.models';
 
-export function flotDefaultSettings(chartType: ChartType): Partial<TbFlotSettings> {
+export const flotDefaultSettings = (chartType: ChartType): Partial<TbFlotSettings> => {
   const settings: Partial<TbFlotSettings> = {
     stack: false,
+    enableSelection: true,
     fontColor: '#545454',
     fontSize: 10,
     showTooltip: true,
@@ -95,9 +97,11 @@ export function flotDefaultSettings(chartType: ChartType): Partial<TbFlotSetting
     };
     settings.customLegendEnabled = false;
     settings.dataKeysListForLabels = [];
+    settings.showLegend = true;
+    settings.legendConfig = defaultLegendConfig(widgetType.timeseries);
   }
   return settings;
-}
+};
 
 @Component({
   selector: 'tb-flot-widget-settings',
@@ -145,6 +149,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
       // Common settings
 
       stack: [false, []],
+      enableSelection: [true, []],
       fontSize: [10, [Validators.min(0)]],
       fontColor: ['#545454', []],
 
@@ -221,6 +226,11 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
         showLabels: [true, []]
       }));
 
+      // Legend settings
+
+      this.flotSettingsFormGroup.addControl('showLegend', this.fb.control(false, []));
+      this.flotSettingsFormGroup.addControl('legendConfig', this.fb.control(null, []));
+
       // Custom legend settings
 
       this.flotSettingsFormGroup.addControl('customLegendEnabled', this.fb.control(false, []));
@@ -240,6 +250,9 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
     });
 
     if (this.chartType === 'graph' || this.chartType === 'bar') {
+      this.flotSettingsFormGroup.get('showLegend').valueChanges.subscribe(() => {
+        this.updateValidators(true);
+      });
       this.flotSettingsFormGroup.get('comparisonEnabled').valueChanges.subscribe(() => {
         this.updateValidators(true);
       });
@@ -350,9 +363,15 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
     this.flotSettingsFormGroup.get('yaxis.ticksFormatter').updateValueAndValidity({emitEvent: false});
 
     if (this.chartType === 'graph' || this.chartType === 'bar') {
+      const showLegend: boolean = this.flotSettingsFormGroup.get('showLegend').value;
       const comparisonEnabled: boolean = this.flotSettingsFormGroup.get('comparisonEnabled').value;
       const timeForComparison: ComparisonDuration = this.flotSettingsFormGroup.get('timeForComparison').value;
       const customLegendEnabled: boolean = this.flotSettingsFormGroup.get('customLegendEnabled').value;
+      if (showLegend) {
+        this.flotSettingsFormGroup.get('legendConfig').enable({emitEvent});
+      } else {
+        this.flotSettingsFormGroup.get('legendConfig').disable({emitEvent});
+      }
       if (comparisonEnabled) {
         this.flotSettingsFormGroup.get('timeForComparison').enable({emitEvent: false});
         if (timeForComparison === 'customInterval') {
@@ -370,6 +389,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
         this.flotSettingsFormGroup.get('dataKeysListForLabels').disable({emitEvent});
       }
 
+      this.flotSettingsFormGroup.get('legendConfig').updateValueAndValidity({emitEvent: false});
       this.flotSettingsFormGroup.get('timeForComparison').updateValueAndValidity({emitEvent: false});
       this.flotSettingsFormGroup.get('comparisonCustomIntervalValue').updateValueAndValidity({emitEvent: false});
       this.flotSettingsFormGroup.get('dataKeysListForLabels').updateValueAndValidity({emitEvent: false});

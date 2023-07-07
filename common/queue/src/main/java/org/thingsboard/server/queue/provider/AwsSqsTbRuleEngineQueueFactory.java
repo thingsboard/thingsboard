@@ -47,7 +47,7 @@ import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
 import org.thingsboard.server.queue.sqs.TbAwsSqsQueueAttributes;
 import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 
 @Component

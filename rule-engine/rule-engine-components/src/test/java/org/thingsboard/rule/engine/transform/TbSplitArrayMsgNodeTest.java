@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,8 +45,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbSplitArrayMsgNodeTest {
-    final ObjectMapper mapper = new ObjectMapper();
-
     DeviceId deviceId;
     TbSplitArrayMsgNode node;
     EmptyNodeConfiguration config;
@@ -61,7 +58,7 @@ public class TbSplitArrayMsgNodeTest {
         callback = mock(TbMsgCallback.class);
         ctx = mock(TbContext.class);
         config = new EmptyNodeConfiguration();
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node = spy(new TbSplitArrayMsgNode());
         node.init(ctx, nodeConfiguration);
     }
@@ -99,6 +96,7 @@ public class TbSplitArrayMsgNodeTest {
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
         verify(ctx, never()).tellSuccess(any());
+        verify(ctx, never()).enqueueForTellNext(any(), anyString(), any(), any());
         verify(ctx, times(1)).tellFailure(newMsgCaptor.capture(), exceptionCaptor.capture());
 
         assertThat(exceptionCaptor.getValue()).isInstanceOf(RuntimeException.class);

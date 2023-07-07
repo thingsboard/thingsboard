@@ -52,9 +52,9 @@ import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -341,7 +341,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                             sessionNewEvents.put(edgeId, false);
                             Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
                                 @Override
-                                public void onSuccess(Void result) {
+                                public void onSuccess(Boolean newEventsAdded) {
+                                    if (Boolean.TRUE.equals(newEventsAdded)) {
+                                        sessionNewEvents.put(edgeId, true);
+                                    }
                                     scheduleEdgeEventsCheck(session);
                                 }
 
@@ -380,21 +383,26 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void onEdgeDisconnect(EdgeId edgeId) {
-        log.info("[{}] edge disconnected!", edgeId);
-        EdgeGrpcSession removed = sessions.remove(edgeId);
-        final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
-        newEventLock.lock();
-        try {
-            sessionNewEvents.remove(edgeId);
-        } finally {
-            newEventLock.unlock();
+    private void onEdgeDisconnect(EdgeId edgeId, UUID sessionId) {
+        log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
+        EdgeGrpcSession toRemove = sessions.get(edgeId);
+        if (toRemove.getSessionId().equals(sessionId)) {
+            toRemove = sessions.remove(edgeId);
+            final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
+            newEventLock.lock();
+            try {
+                sessionNewEvents.remove(edgeId);
+            } finally {
+                newEventLock.unlock();
+            }
+            save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
+            long lastDisconnectTs = System.currentTimeMillis();
+            save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, lastDisconnectTs);
+            pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edgeId, lastDisconnectTs, DISCONNECT_EVENT);
+            cancelScheduleEdgeEventsCheck(edgeId);
+        } else {
+            log.debug("[{}] edge session [{}] is not available anymore, nothing to remove. most probably this session is already outdated!", edgeId, sessionId);
         }
-        save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
-        long lastDisconnectTs = System.currentTimeMillis();
-        save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, lastDisconnectTs);
-        pushRuleEngineMessage(removed.getEdge().getTenantId(), edgeId, lastDisconnectTs, DISCONNECT_EVENT);
-        cancelScheduleEdgeEventsCheck(edgeId);
     }
 
     private void save(EdgeId edgeId, String key, long value) {
@@ -445,7 +453,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private void pushRuleEngineMessage(TenantId tenantId, EdgeId edgeId, long ts, String msgType) {
         try {
-            ObjectNode edgeState = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            ObjectNode edgeState = JacksonUtil.newObjectNode();
             if (msgType.equals(CONNECT_EVENT)) {
                 edgeState.put(DefaultDeviceStateService.ACTIVITY_STATE, true);
                 edgeState.put(DefaultDeviceStateService.LAST_CONNECT_TIME, ts);

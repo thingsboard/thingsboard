@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -39,6 +41,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -52,7 +55,6 @@ import static org.thingsboard.server.controller.ControllerConstants.EVENT_DEBUG_
 import static org.thingsboard.server.controller.ControllerConstants.EVENT_END_TIME_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EVENT_ERROR_FILTER_OBJ;
 import static org.thingsboard.server.controller.ControllerConstants.EVENT_LC_EVENT_FILTER_OBJ;
-import static org.thingsboard.server.controller.ControllerConstants.EVENT_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.EVENT_START_TIME_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EVENT_STATS_FILTER_OBJ;
 import static org.thingsboard.server.controller.ControllerConstants.EVENT_TEXT_SEARCH_DESCRIPTION;
@@ -60,7 +62,6 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
@@ -107,32 +108,32 @@ public class EventController extends BaseController {
 
     @ApiOperation(value = "Get Events by type (getEvents)",
             notes = "Returns a page of events for specified entity by specifying event type. " +
-                    PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
+                    PAGE_DATA_PARAMETERS, responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.GET)
     @ResponseBody
     public PageData<EventInfo> getEvents(
-            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
-            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
-            @ApiParam(value = "A string value representing event type", example = "STATS", required = true)
+            @Parameter(description = "A string value representing event type", example = "STATS", required = true)
             @PathVariable("eventType") String eventType,
-            @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = TENANT_ID_PARAM_DESCRIPTION, required = true)
             @RequestParam(TENANT_ID) String strTenantId,
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = EVENT_TEXT_SEARCH_DESCRIPTION)
+            @Parameter(description = EVENT_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EVENT_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"ts", "id"}))
             @RequestParam(required = false) String sortProperty,
-            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder,
-            @ApiParam(value = EVENT_START_TIME_DESCRIPTION)
+            @Parameter(description = EVENT_START_TIME_DESCRIPTION)
             @RequestParam(required = false) Long startTime,
-            @ApiParam(value = EVENT_END_TIME_DESCRIPTION)
+            @Parameter(description = EVENT_END_TIME_DESCRIPTION)
             @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
@@ -149,30 +150,30 @@ public class EventController extends BaseController {
                     "The call was deprecated to improve the performance of the system. " +
                     "Current implementation will return 'Lifecycle' events only. " +
                     "Use 'Get events by type' or 'Get events by filter' instead. " +
-                    PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
+                    PAGE_DATA_PARAMETERS, responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
     public PageData<EventInfo> getEvents(
-            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
-            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
-            @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = TENANT_ID_PARAM_DESCRIPTION, required = true)
             @RequestParam("tenantId") String strTenantId,
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = EVENT_TEXT_SEARCH_DESCRIPTION)
+            @Parameter(description = EVENT_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EVENT_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"ts", "id"}))
             @RequestParam(required = false) String sortProperty,
-            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder,
-            @ApiParam(value = EVENT_START_TIME_DESCRIPTION)
+            @Parameter(description = EVENT_START_TIME_DESCRIPTION)
             @RequestParam(required = false) Long startTime,
-            @ApiParam(value = EVENT_END_TIME_DESCRIPTION)
+            @Parameter(description = EVENT_END_TIME_DESCRIPTION)
             @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
@@ -190,32 +191,32 @@ public class EventController extends BaseController {
             notes = "Returns a page of events for the chosen entity by specifying the event filter. " +
                     PAGE_DATA_PARAMETERS + NEW_LINE +
                     EVENT_FILTER_DEFINITION,
-            produces = MediaType.APPLICATION_JSON_VALUE)
+            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
     public PageData<EventInfo> getEvents(
-            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
-            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
-            @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = TENANT_ID_PARAM_DESCRIPTION, required = true)
             @RequestParam(TENANT_ID) String strTenantId,
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = "A JSON value representing the event filter.", required = true)
+            @Parameter(description = "A JSON value representing the event filter.", required = true)
             @RequestBody EventFilter eventFilter,
-            @ApiParam(value = EVENT_TEXT_SEARCH_DESCRIPTION)
+            @Parameter(description = EVENT_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EVENT_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"ts", "id"}))
             @RequestParam(required = false) String sortProperty,
-            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder,
-            @ApiParam(value = EVENT_START_TIME_DESCRIPTION)
+            @Parameter(description = EVENT_START_TIME_DESCRIPTION)
             @RequestParam(required = false) Long startTime,
-            @ApiParam(value = EVENT_END_TIME_DESCRIPTION)
+            @Parameter(description = EVENT_END_TIME_DESCRIPTION)
             @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
@@ -232,15 +233,15 @@ public class EventController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}/clear", method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
-    public void clearEvents(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+    public void clearEvents(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                             @PathVariable(ENTITY_TYPE) String strEntityType,
-                            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+                            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
                             @PathVariable(ENTITY_ID) String strEntityId,
-                            @ApiParam(value = EVENT_START_TIME_DESCRIPTION)
+                            @Parameter(description = EVENT_START_TIME_DESCRIPTION)
                             @RequestParam(required = false) Long startTime,
-                            @ApiParam(value = EVENT_END_TIME_DESCRIPTION)
+                            @Parameter(description = EVENT_END_TIME_DESCRIPTION)
                             @RequestParam(required = false) Long endTime,
-                            @ApiParam(value = EVENT_FILTER_DEFINITION)
+                            @Parameter(description = EVENT_FILTER_DEFINITION)
                             @RequestBody EventFilter eventFilter) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
