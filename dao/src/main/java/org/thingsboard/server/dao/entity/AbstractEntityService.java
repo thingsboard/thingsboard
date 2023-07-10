@@ -130,10 +130,13 @@ public abstract class AbstractEntityService {
     }
 
     protected void publishDeleteEvent(TenantId tenantId, EntityId entityId, List<EdgeId> relatedEdgeIds) {
-        if (!CollectionUtils.isEmpty(relatedEdgeIds)) {
+        if (CollectionUtils.isEmpty(relatedEdgeIds)) {
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(entityId).build());
+        } else {
             for (EdgeId relatedEdgeId : relatedEdgeIds) {
                 eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(entityId).edgeId(relatedEdgeId).build());
             }
         }
     }
 }
+

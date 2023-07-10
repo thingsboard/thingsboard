@@ -160,6 +160,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     @After
     public void teardownEdgeTest() {
         try {
+            loginTenantAdmin();
+            doDelete("/api/edge/" + edge.getId().toString())
+                    .andExpect(status().isOk());
             edgeImitator.disconnect();
         } catch (Exception ignored) {}
     }

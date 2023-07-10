@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -60,6 +59,7 @@ import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
@@ -204,15 +204,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (alarm == null) {
             return AlarmApiCallResult.builder().successful(false).build();
         } else {
-            List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, alarm.getOriginator());
-            deleteEntityRelations(tenantId, alarm.getOriginator());
+            deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
-            if (!CollectionUtils.isEmpty(relatedEdgeIds)) {
-                for (EdgeId relatedEdgeId : relatedEdgeIds) {
-                    eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(relatedEdgeId)
-                            .entityId(alarmId).body(JacksonUtil.toString(alarm)).actionType(ActionType.DELETED).build());
-                }
-            }
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
+                    .entityId(alarmId).body(JacksonUtil.toString(alarm)).build());
             return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
         }
     }

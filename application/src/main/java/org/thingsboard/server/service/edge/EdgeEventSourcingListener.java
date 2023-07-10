@@ -77,7 +77,7 @@ public class EdgeEventSourcingListener {
         }
         log.trace("[{}] EntityDeleteEvent called: {}", event.getEntityId().getEntityType(), event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
-                null, null, EdgeEventActionType.DELETED);
+                event.getBody(), null, EdgeEventActionType.DELETED);
     }
 
     @TransactionalEventListener(fallbackExecution = true)
