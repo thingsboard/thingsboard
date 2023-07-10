@@ -194,6 +194,7 @@ import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
 import { ToggleHeaderComponent, ToggleOption } from '@shared/components/toggle-header.component';
 import { RuleChainSelectComponent } from '@shared/components/rule-chain/rule-chain-select.component';
 import { ToggleSelectComponent } from '@shared/components/toggle-select.component';
+import { UnitInputComponent } from '@shared/components/unit-input.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -367,6 +368,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToggleHeaderComponent,
     ToggleOption,
     ToggleSelectComponent,
+    UnitInputComponent,
     RuleChainSelectComponent
   ],
   imports: [
@@ -597,6 +599,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToggleHeaderComponent,
     ToggleOption,
     ToggleSelectComponent,
+    UnitInputComponent,
     RuleChainSelectComponent
   ]
 })
