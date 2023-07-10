@@ -135,6 +135,10 @@ security:
     path: "${SECURITY_JAVA_CACERTS_PATH:${java.home}/lib/security/cacerts}"
     password: "${SECURITY_JAVA_CACERTS_PASSWORD:changeit}"
 
+mail:
+  oauth2:
+    refreshTokenCheckingInterval: "${REFRESH_TOKEN_EXPIRATION_CHECKING_INTERVAL:86400}" # Number of seconds (1 day).
+
 # Usage statistics parameters
 usage:
   stats:
@@ -389,6 +393,10 @@ actors:
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
+    external:
+      # Force acknowledgement of the incoming message for external rule nodes to decrease processing latency.
+      # Enqueue the result of external node processing as a separate message to the rule engine.
+      force_ack: "${ACTORS_RULE_EXTERNAL_NODE_FORCE_ACK:false}"
   rpc:
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
     sequential: "${ACTORS_RPC_SEQUENTIAL:false}"
@@ -489,6 +497,9 @@ cache:
     entityCount:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
       maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+    resourceInfo:
+      timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_INFO_TTL:1440}"
+      maxSize: "${CACHE_SPECS_RESOURCE_INFO_MAX_SIZE:100000}"
 
   # deliberately placed outside 'specs' group above
   notificationRules:
@@ -502,7 +513,7 @@ cache:
 spring.data.redis.repositories.enabled: false
 
 redis:
-  # standalone or cluster
+  # standalone or cluster or sentinel
   connection:
     type: "${REDIS_CONNECTION_TYPE:standalone}"
   standalone:
@@ -522,6 +533,16 @@ redis:
     nodes: "${REDIS_NODES:}"
     # Maximum number of redirects to follow when executing commands across the cluster.
     max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    # if set false will be used pool config build from values of the pool config section
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+  sentinel:
+    # name of master node
+    master: "${REDIS_MASTER:}"
+    # comma-separated list of "host:port" pairs of sentinels
+    sentinels: "${REDIS_SENTINELS:}"
+    # password to authenticate with sentinel
+    password: "${REDIS_SENTINEL_PASSWORD:}"
+    # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   # db index
   db: "${REDIS_DB:0}"
@@ -1261,6 +1282,9 @@ vc:
 
 notification_system:
   thread_pool_size: "${TB_NOTIFICATION_SYSTEM_THREAD_POOL_SIZE:10}"
+  rules:
+    # Semicolon-separated deduplication durations (in millis) for trigger types. Format: 'NotificationRuleTriggerType1:123;NotificationRuleTriggerType2:456'
+    deduplication_durations: "${TB_NOTIFICATION_RULES_DEDUPLICATION_DURATIONS:NEW_PLATFORM_VERSION:0;RATE_LIMITS:14400000;}"
 
 management:
   endpoints:

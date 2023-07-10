@@ -115,7 +115,7 @@
                     matTooltip="{{'action.save' | translate}}"
                     matTooltipPosition="below">
               <mat-icon>done</mat-icon></button>
-            <button fxHide.lt-lg mat-button (click)="saveDashboard()">
+            <button fxHide.lt-lg mat-stroked-button (click)="saveDashboard()">
               <mat-icon>done</mat-icon>{{ 'action.save' | translate }}</button>
             <button fxHide.gt-md mat-icon-button (click)="toggleDashboardEditMode()"
                     matTooltip="{{'action.cancel' | translate}}"
@@ -360,18 +360,10 @@
                           [isReadOnly]="true"
                           (closeDetails)="onEditWidgetClosed()">
           <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <tb-toggle-header *ngIf="tbEditWidget.hasBasicMode" (valueChange)="tbEditWidget.widgetConfigMode = $event" ignoreMdLgSize="true"
-                              appearance="fill-invert" [options]="[
-                                {
-                                   name: translate.instant('widget.basic-mode'),
-                                   value: 'basic'
-                                },
-                                {
-                                   name: translate.instant('widget.advanced-mode'),
-                                   value: 'advanced'
-                                }
-                              ]" [value]="tbEditWidget.widgetConfigMode" name="widgetConfigModeHeader" useSelectOnMdLg="false">
-            </tb-toggle-header>
+            <tb-toggle-select *ngIf="tbEditWidget.hasBasicMode" appearance="fill-invert" [(ngModel)]="tbEditWidget.widgetConfigMode">
+              <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
+              <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
             <div [tb-help]="helpLinkIdForWidgetType()"></div>
           </div>
           <tb-edit-widget #tbEditWidget

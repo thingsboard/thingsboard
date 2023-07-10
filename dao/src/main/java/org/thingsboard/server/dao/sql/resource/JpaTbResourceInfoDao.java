@@ -19,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -51,21 +53,26 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
     }
 
     @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(UUID tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
+        ResourceType resourceType = filter.getResourceType();
         return DaoUtil.toPageData(resourceInfoRepository
                 .findAllTenantResourcesByTenantId(
-                        tenantId,
+                        filter.getTenantId().getId(),
                         TenantId.NULL_UUID,
+                        resourceType == null ? null : resourceType.name(),
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<TbResourceInfo> findTenantResourcesByTenantId(UUID tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
+        ResourceType resourceType = filter.getResourceType();
         return DaoUtil.toPageData(resourceInfoRepository
                 .findTenantResourcesByTenantId(
-                        tenantId,
+                        filter.getTenantId().getId(),
+                        resourceType == null ? null : resourceType.name(),
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
+
 }

@@ -28,6 +28,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -48,7 +49,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         configDirective = "tbExternalNodeRabbitMqConfig",
         iconUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHZlcnNpb249IjEuMSIgeT0iMHB4IiB4PSIwcHgiIHZpZXdCb3g9IjAgMCAxMDAwIDEwMDAiPjxwYXRoIHN0cm9rZS13aWR0aD0iLjg0OTU2IiBkPSJtODYwLjQ3IDQxNi4zMmgtMjYyLjAxYy0xMi45MTMgMC0yMy42MTgtMTAuNzA0LTIzLjYxOC0yMy42MTh2LTI3Mi43MWMwLTIwLjMwNS0xNi4yMjctMzYuMjc2LTM2LjI3Ni0zNi4yNzZoLTkzLjc5MmMtMjAuMzA1IDAtMzYuMjc2IDE2LjIyNy0zNi4yNzYgMzYuMjc2djI3MC44NGMtMC4yNTQ4NyAxNC4xMDMtMTEuNDY5IDI1LjU3Mi0yNS43NDIgMjUuNTcybC04NS42MzYgMC42Nzk2NWMtMTQuMTAzIDAtMjUuNTcyLTExLjQ2OS0yNS41NzItMjUuNTcybDAuNjc5NjUtMjcxLjUyYzAtMjAuMzA1LTE2LjIyNy0zNi4yNzYtMzYuMjc2LTM2LjI3NmgtOTMuNTM3Yy0yMC4zMDUgMC0zNi4yNzYgMTYuMjI3LTM2LjI3NiAzNi4yNzZ2NzYzLjg0YzAgMTguMDk2IDE0Ljc4MiAzMi40NTMgMzIuNDUzIDMyLjQ1M2g3MjIuODFjMTguMDk2IDAgMzIuNDUzLTE0Ljc4MiAzMi40NTMtMzIuNDUzdi00MzUuMzFjLTEuMTg5NC0xOC4xODEtMTUuMjkyLTMyLjE5OC0zMy4zODgtMzIuMTk4em0tMTIyLjY4IDI4Ny4wN2MwIDIzLjYxOC0xOC44NiA0Mi40NzgtNDIuNDc4IDQyLjQ3OGgtNzMuOTk3Yy0yMy42MTggMC00Mi40NzgtMTguODYtNDIuNDc4LTQyLjQ3OHYtNzQuMjUyYzAtMjMuNjE4IDE4Ljg2LTQyLjQ3OCA0Mi40NzgtNDIuNDc4aDczLjk5N2MyMy42MTggMCA0Mi40NzggMTguODYgNDIuNDc4IDQyLjQ3OHoiLz48L3N2Zz4="
 )
-public class TbRabbitMqNode implements TbNode {
+public class TbRabbitMqNode extends TbAbstractExternalNode {
 
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
@@ -61,6 +62,7 @@ public class TbRabbitMqNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        super.init(ctx);
         this.config = TbNodeUtils.convert(configuration, TbRabbitMqNodeConfiguration.class);
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(this.config.getHost());
@@ -83,11 +85,9 @@ public class TbRabbitMqNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(publishMessageAsync(ctx, msg),
-                ctx::tellSuccess,
-                t -> {
-                    TbMsg next = processException(ctx, msg, t);
-                    ctx.tellFailure(next, t);
-                });
+                m -> tellSuccess(ctx, m),
+                t -> tellFailure(ctx, processException(ctx, msg, t), t));
+        ackIfNeeded(ctx, msg);
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {

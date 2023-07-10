@@ -709,4 +709,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
     }
 
+    @Override
+    public void updateDefaultNotificationConfigs() {
+        notificationSettingsService.updateDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
+    }
+
 }

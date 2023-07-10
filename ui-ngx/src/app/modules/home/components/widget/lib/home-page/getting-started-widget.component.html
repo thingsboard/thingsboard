@@ -111,21 +111,10 @@
           </ng-template>
           <div [innerHTML]="'widgets.getting-started.tenant-admin.step2.content-before' | translate | safe: 'html'"></div>
           <div class="tb-bordered-content">
-            <tb-toggle-header #publishCommandSteps value="ubuntu" name="publishCommandSteps" useSelectOnMdLg="false"
-                              [options]="[
-                                {
-                                  name: 'Ubuntu',
-                                  value: 'ubuntu'
-                                },
-                                {
-                                  name: 'MacOS',
-                                  value: 'macos'
-                                },
-                                {
-                                  name: 'Windows',
-                                  value: 'windows'
-                                }
-                              ]">
+            <tb-toggle-header #publishCommandSteps value="ubuntu" name="publishCommandSteps" useSelectOnMdLg="false">
+              <tb-toggle-option value="ubuntu">Ubuntu</tb-toggle-option>
+              <tb-toggle-option value="macos">MacOS</tb-toggle-option>
+              <tb-toggle-option value="windows">Windows</tb-toggle-option>
             </tb-toggle-header>
             <ng-container [ngSwitch]="publishCommandSteps.value">
               <ng-template [ngSwitchCase]="'ubuntu'">

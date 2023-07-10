@@ -67,7 +67,8 @@
         "more": "More",
         "less": "Less",
         "skip": "Skip",
-        "send": "Send"
+        "send": "Send",
+        "reset": "Reset"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -174,6 +175,7 @@
         "domain-name-unique": "Domain name and protocol need to unique.",
         "domain-name-max-length": "Domain name should be less than 256",
         "error-verification-url": "A domain name shouldn't contain symbols '/' and ':'. Example: thingsboard.io",
+        "connection-settings": "Connection settings",
         "oauth2": {
           "access-token-uri": "Access token URI",
           "access-token-uri-required": "Access token URI is required.",
@@ -264,7 +266,28 @@
           "platform-android": "Android",
           "platform-ios": "iOS",
           "all-platforms": "All platforms",
-          "allowed-platforms": "Allowed platforms"
+          "smtp-provider": "SMTP provider",
+          "allowed-platforms": "Allowed platforms",
+          "authentication": "Authentication",
+          "basic": "Basic",
+          "provider": "Provider",
+          "redirect-url": "Redirect URI",
+          "domain-name": "Domain name",
+          "redirect-url-template": "Redirect URI template",
+          "microsoft-tenant-id": "Directory (tenant) Id",
+          "microsoft-tenant-id-required": "Directory (tenant) Id is required",
+          "token-uri": "Token URI",
+          "token-uri-required": "Token URI is required",
+          "redirect-uri": "Redirect URI",
+          "google-provider": "Google",
+          "microsoft-provider": "Office 365",
+          "sendgrid-provider": "Sendgrid",
+          "custom-provider": "Custom",
+          "generate-access-token": "Generate access token",
+          "update-access-token": "Update access token",
+          "access-token-status": "Access token status:",
+          "token-status-generated": "generated",
+          "token-status-not-generated": "not generated"
         },
         "smpp-provider": {
             "smpp-version": "SMPP version",
@@ -757,6 +780,18 @@
         "view-details": "View details",
         "view-statistics": "View statistics"
     },
+    "api-limit": {
+        "cassandra-queries": "Cassandra queries",
+        "entity-version-creation": "Entity version creation",
+        "entity-version-load": "Entity version load",
+        "notification-requests": "Notification requests",
+        "notification-requests-per-rule": "Notification requests per rule",
+        "rest-api-requests": "REST API requests",
+        "rest-api-requests-per-customer": "REST API requests per customer",
+        "transport-messages": "Transport messages",
+        "transport-messages-per-device": "Transport messages per device",
+        "ws-updates-per-session": "WS updates per session"
+    },
     "audit-log": {
         "audit": "Audit",
         "audit-logs": "Audit Logs",
@@ -840,7 +875,8 @@
         "created-time": "Created time",
         "loading": "Loading...",
         "proceed": "Proceed",
-        "open-details-page": "Open details page"
+        "open-details-page": "Open details page",
+        "not-found": "Not found"
     },
     "content-type": {
         "json": "Json",
@@ -1095,6 +1131,7 @@
     },
     "datakey": {
         "settings": "Settings",
+        "general": "General",
         "advanced": "Advanced",
         "key": "Key",
         "label": "Label",
@@ -1152,7 +1189,9 @@
         "delta-calculation-result": "Delta calculation result",
         "delta-calculation-result-previous-value": "Previous value",
         "delta-calculation-result-delta-absolute": "Delta (absolute)",
-        "delta-calculation-result-delta-percent": "Delta (percent)"
+        "delta-calculation-result-delta-percent": "Delta (percent)",
+        "source": "Source",
+        "latest": "Latest"
     },
     "datasource": {
         "type": "Datasource type",
@@ -1291,13 +1330,13 @@
         "password": "Password",
         "secret": "Secret",
         "secret-required": "Secret is required.",
-        "device-type": "Device type",
+        "device-type": "Device profile",
         "device-type-required": "Device type is required.",
         "select-device-type": "Select device type",
-        "enter-device-type": "Enter device type",
+        "enter-device-type": "Enter device profile",
         "any-device": "Any device",
-        "no-device-types-matching": "No device types matching '{{entitySubtype}}' were found.",
-        "device-type-list-empty": "No device types selected.",
+        "no-device-types-matching": "No device profiles matching '{{entitySubtype}}' were found.",
+        "device-type-list-empty": "No device profiles selected!",
         "device-types": "Device types",
         "name": "Name",
         "name-required": "Name is required.",
@@ -1341,13 +1380,8 @@
         "device-configuration": "Device configuration",
         "transport-configuration": "Transport configuration",
         "wizard": {
-            "device-wizard": "Device Wizard",
             "device-details": "Device details",
-            "new-device-profile": "Create new device profile",
-            "existing-device-profile": "Select existing device profile",
-            "specific-configuration": "Specific configuration",
-            "customer-to-assign-device": "Customer to assign the device",
-            "add-credentials": "Add credentials"
+            "customer-to-assign-device": "Customer to assign the device"
         },
         "unassign-devices-from-edge-title": "Are you sure you want to unassign { count, plural, =1 {1 device} other {# devices} }?",
         "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge."
@@ -1414,8 +1448,6 @@
         "delete": "Delete device profile",
         "copyId": "Copy device profile Id",
         "name-max-length": "Name should be less than 256",
-        "new-device-profile-name": "Device profile name",
-        "new-device-profile-name-required": "Device profile name is required.",
         "name": "Name",
         "name-required": "Name is required.",
         "type": "Profile type",
@@ -2000,6 +2032,7 @@
         "device-name-starts-with": "Devices whose names start with '{{prefix}}'",
         "type-device-profile": "Device profile",
         "type-device-profiles": "Device profiles",
+        "clear-selected-profiles": "Clear selected profiles",
         "list-of-device-profiles": "{ count, plural, =1 {One device profile} other {List of # device profiles} }",
         "device-profile-name-starts-with": "Device profiles whose names start with '{{prefix}}'",
         "type-asset-profile": "Asset profile",
@@ -2953,8 +2986,14 @@
         "left-side": "Left side layout"
     },
     "legend": {
-        "direction": "Legend direction",
-        "position": "Legend position",
+        "direction": "Direction",
+        "position": "Position",
+        "show-values": "Show values",
+        "min-option": "Min",
+        "max-option": "Max",
+        "average-option": "Average",
+        "total-option": "Total",
+        "latest-option": "Latest",
         "sort-legend": "Sort datakeys in legend",
         "show-max": "Show max value",
         "show-min": "Show min value",
@@ -3036,6 +3075,7 @@
         "api-feature-hint": "If the field is empty, the trigger will be applied to all api features",
         "api-usage-trigger-settings": "API usage trigger settings",
         "new-platform-version-trigger-settings": "New platform version trigger settings",
+        "rate-limits-trigger-settings": "Exceeded rate limits trigger settings",
         "at-least-one-should-be-selected": "At least one should be selected",
         "basic-settings": "Basic settings",
         "button-text": "Button text",
@@ -3153,6 +3193,8 @@
         "only-rule-chain-lifecycle-failures": "Only rule chain lifecycle failures",
         "only-rule-node-lifecycle-failures": "Only rule node lifecycle failures",
         "platform-users": "Platform users",
+        "rate-limits": "Rate limits",
+        "rate-limits-hint": "If the field is empty, the trigger will be applied to all rate limits",
         "recipient": "Recipient",
         "recipient-group": "Recipient group",
         "recipient-type": {
@@ -3231,7 +3273,8 @@
             "general": "General",
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "rule-node": "Rule node",
-            "new-platform-version": "New platform version"
+            "new-platform-version": "New platform version",
+            "rate-limits": "Exceeded rate limits"
         },
         "templates": "Templates",
         "notification-templates": "Notifications / Templates",
@@ -3250,6 +3293,7 @@
             "entity-action": "Entity action",
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "new-platform-version": "New platform version",
+            "rate-limits": "Exceeded rate limits",
             "trigger": "Trigger",
             "trigger-required": "Trigger is required"
         },
@@ -3434,6 +3478,7 @@
     "relation": {
         "relations": "Relations",
         "direction": "Direction",
+        "clear-relation-type": "Clear relation type",
         "search-direction": {
             "FROM": "From",
             "TO": "To"
@@ -3477,6 +3522,7 @@
     },
     "resource": {
         "add": "Add Resource",
+        "all-types": "All",
         "copyId": "Copy resource Id",
         "delete": "Delete resource",
         "delete-resource-text": "Be careful, after the confirmation the resource will become unrecoverable.",
@@ -3502,7 +3548,13 @@
         "system": "System",
         "title": "Title",
         "title-required": "Title is required.",
-        "title-max-length": "Title should be less than 256"
+        "title-max-length": "Title should be less than 256",
+        "type": {
+            "jks": "JKS",
+            "js-module": "JS module",
+            "lwm2m-model": "LWM2M model",
+            "pkcs-12": "PKCS #12"
+        }
     },
     "rulechain": {
         "rulechain": "Rule chain",
@@ -3579,7 +3631,7 @@
         "name-required": "Name is required.",
         "name-max-length": "Name should be less than 256",
         "type": "Type",
-        "description": "Description",
+        "rule-node-description": "Rule node description",
         "delete": "Delete rule node",
         "select-all-objects": "Select all nodes and connections",
         "deselect-all-objects": "Deselect all nodes and connections",
@@ -4032,6 +4084,15 @@
         "just-now": "Just now",
         "ago": "ago"
     },
+    "unit": {
+        "celsius": "Celsius",
+        "kelvin": "Kelvin",
+        "fahrenheit": "Fahrenheit",
+        "percentage": "Percentage",
+        "second": "Second",
+        "minute": "Minute",
+        "hour": "Hour"
+    },
     "user": {
         "user": "User",
         "users": "Users",
@@ -4355,6 +4416,7 @@
         "enable-fullscreen": "Enable fullscreen",
         "background-color": "Background color",
         "text-color": "Text color",
+        "border-radius": "Border radius",
         "padding": "Padding",
         "margin": "Margin",
         "widget-style": "Widget style",
@@ -4417,13 +4479,15 @@
         "preview": "Preview",
         "set": "Set",
         "set-message": "Set message",
-        "card-title": "Card title",
         "advanced-title-style": "Advanced title style",
         "card-style": "Card style",
         "text": "Text",
         "background": "Background",
         "advanced-widget-style": "Advanced widget style",
-        "card-buttons": "Card buttons"
+        "card-buttons": "Card buttons",
+        "show-card-buttons": "Show card buttons",
+        "card-appearance": "Card appearance",
+        "color": "Color"
     },
     "widget-type": {
         "import": "Import widget type",
@@ -4437,6 +4501,8 @@
         "chart": {
             "common-settings": "Common settings",
             "enable-stacking-mode": "Enable stacking mode",
+            "selection": "Time range selection",
+            "enable-selection-mode": "Enable selection mode",
             "line-shadow-size": "Line shadow size",
             "display-smooth-lines": "Display smooth (curved) lines",
             "default-bar-width": "Default bar width for non-aggregated data (milliseconds)",
@@ -4444,10 +4510,12 @@
             "bar-alignment-left": "Left",
             "bar-alignment-right": "Right",
             "bar-alignment-center": "Center",
+            "default-font": "Default font",
             "default-font-size": "Default font size",
             "default-font-color": "Default font color",
             "thresholds-line-width": "Default line width for all thresholds",
             "tooltip-settings": "Tooltip settings",
+            "tooltip": "Tooltip",
             "show-tooltip": "Show tooltip",
             "hover-individual-points": "Hover individual points",
             "show-cumulative-values": "Show cumulative values in stacking mode",
@@ -4522,9 +4590,10 @@
             "axis-position-right": "Right",
             "thresholds": "Thresholds",
             "no-thresholds": "No thresholds configured",
-            "add-threshold": "Add new threshold",
+            "add-threshold": "Add threshold",
             "show-values-for-comparison": "Show historical values for comparison",
             "comparison-values-label": "Historical values label",
+            "comparison-line-color": "Comparison line color",
             "threshold-settings": "Threshold settings",
             "use-as-threshold": "Use key value as threshold",
             "threshold-line-width": "Threshold line width",
@@ -4543,7 +4612,23 @@
             "border-color": "Border color",
             "legend-settings": "Legend settings",
             "display-legend": "Display legend",
-            "labels-font-color": "Labels font color"
+            "labels-font-color": "Labels font color",
+            "series": "Series",
+            "add-series": "Add series",
+            "series-settings": "Series settings",
+            "remove-series": "Remove series",
+            "no-series": "No series configured",
+            "no-series-error": "At least one series should be specified",
+            "chart-appearance": "Chart appearance",
+            "vertical-grid-lines": "Vertical grid lines",
+            "horizontal-grid-lines": "Horizontal grid lines",
+            "chart-background": "Chart background",
+            "grid-lines-color": "Grid lines color",
+            "border": "Border",
+            "axis": "Axis",
+            "vertical-axis": "Vertical axis",
+            "ticks": "Ticks",
+            "horizontal-axis": "Horizontal axis"
         },
         "dashboard-state": {
             "dashboard-state-settings": "Dashboard state settings",
@@ -5408,14 +5493,23 @@
             "display-alarm-activity": "Display alarm activity",
             "allow-alarms-assign": "Allow alarms assignment",
             "columns": "Columns",
+            "column-settings": "Column settings",
             "remove-column": "Remove column",
             "add-column": "Add column",
-            "no-columns": "No columns configured"
+            "no-columns": "No columns configured",
+            "columns-to-display": "Columns to display",
+            "table-header": "Table header",
+            "header-buttons": "Header buttons",
+            "table-buttons": "Table buttons",
+            "pagination": "Pagination",
+            "rows": "Rows",
+            "timeseries-column-error": "At least one timeseries column should be specified",
+            "table-tabs": "Table tabs"
         },
         "value-source": {
             "value-source": "Value source",
             "predefined-value": "Predefined value",
-            "entity-attribute": "Value taken from entity attribute",
+            "entity-attribute": "Entity attribute",
             "value": "Value",
             "source-entity-alias": "Source entity alias",
             "source-entity-attribute": "Source entity attribute"

@@ -50,7 +50,7 @@ export function fixedColorLevelValidator(control: AbstractControl): ValidationEr
 @Component({
   selector: 'tb-fixed-color-level',
   templateUrl: './fixed-color-level.component.html',
-  styleUrls: ['./fixed-color-level.component.scss', './../widget-settings.scss'],
+  styleUrls: ['./fixed-color-level.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

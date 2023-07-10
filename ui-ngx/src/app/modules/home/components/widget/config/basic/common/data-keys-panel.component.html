@@ -15,38 +15,37 @@
     limitations under the License.
 
 -->
-<div class="tb-widget-config-panel">
-  <div class="tb-widget-config-panel-title">{{ panelTitle }}</div>
-  <div class="tb-data-keys-table">
-    <div class="tb-data-keys-header">
-      <div class="tb-data-keys-header-cell" fxFlex translate>datakey.key</div>
-      <div class="tb-data-keys-header-cell" fxFlex translate>datakey.label</div>
-      <div *ngIf="!hideDataKeyColor" class="tb-data-keys-header-cell tb-color-header" translate>datakey.color</div>
-      <div class="tb-data-keys-header-cell tb-units-header" translate>widget-config.units-short</div>
-      <div class="tb-data-keys-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
-      <div class="tb-data-keys-header-cell tb-actions-header"></div>
+<div class="tb-form-panel">
+  <div class="tb-form-panel-title">{{ panelTitle }}</div>
+  <div class="tb-form-table">
+    <div class="tb-form-table-header">
+      <div *ngIf="hasAdditionalLatestDataKeys" class="tb-form-table-header-cell tb-source-header" translate>datakey.source</div>
+      <div class="tb-form-table-header-cell" fxFlex translate>datakey.key</div>
+      <div class="tb-form-table-header-cell" fxFlex translate>datakey.label</div>
+      <div *ngIf="!hideDataKeyColor" class="tb-form-table-header-cell tb-color-header" translate>datakey.color</div>
+      <div *ngIf="!hideUnits" class="tb-form-table-header-cell tb-units-header" translate>widget-config.units-short</div>
+      <div *ngIf="!hideDecimals" class="tb-form-table-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
+      <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-data-keys-body tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+    <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-form-table-body tb-drop-list"
+         cdkDropList cdkDropListOrientation="vertical"
+         [cdkDropListDisabled]="!dragEnabled"
          (cdkDropListDropped)="keyDrop($event)">
-      <div cdkDrag class="tb-data-keys-table-row tb-draggable" *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey;
-                 let $index = index;">
+      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+           class="tb-form-table-row tb-draggable"
+           *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
         <tb-data-key-row fxFlex
                          [formControl]="keyControl"
                          [datasourceType]="datasourceType"
                          [deviceId]="deviceId"
-                         [entityAliasId]="entityAliasId">
+                         [entityAliasId]="entityAliasId"
+                         (keyRemoved)="removeKey($index)">
         </tb-data-key-row>
-        <div class="tb-data-keys-table-row-buttons">
-          <button type="button"
-                  mat-icon-button
-                  (click)="removeKey($index)"
-                  [matTooltip]="removeKeyTitle"
-                  matTooltipPosition="above">
-            <mat-icon>delete</mat-icon>
-          </button>
+        <div class="tb-form-table-row-cell-buttons">
           <button mat-icon-button
                   type="button"
                   cdkDragHandle
+                  [ngClass]="{'tb-hidden': !dragEnabled}"
                   matTooltip="{{ 'action.drag' | translate }}"
                   matTooltipPosition="above">
             <mat-icon>drag_indicator</mat-icon>
@@ -54,6 +53,7 @@
         </div>
       </div>
     </div>
+    <tb-error *ngIf="errorText" noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
   </div>
   <div>
     <button type="button" mat-stroked-button color="primary" (click)="addKey()">

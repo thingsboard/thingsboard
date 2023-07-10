@@ -22,4 +22,7 @@ export * from './js-func.component';
 export * from './script-lang.component';
 export * from './slack-conversation-autocomplete.component';
 export * from './notification/template-autocomplete.component';
+export * from './resource/resource-autocomplete.component';
 export * from './toggle-header.component';
+export * from './toggle-select.component';
+export * from './unit-input.component';

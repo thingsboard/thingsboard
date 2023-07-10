@@ -163,7 +163,8 @@ tb-dashboard-toolbar {
                   }
                 }
 
-                tb-states-component {
+                tb-states-component,
+                tb-entity-state-controller {
                   pointer-events: all;
                 }
               }

@@ -15,16 +15,14 @@
  */
 package org.thingsboard.monitoring.data;
 
-import org.thingsboard.monitoring.config.TransportType;
-
 public class Latencies {
 
     public static final String WS_UPDATE = "wsUpdate";
     public static final String WS_CONNECT = "wsConnect";
     public static final String LOG_IN = "logIn";
 
-    public static String transportRequest(TransportType transportType) {
-        return String.format("%sTransportRequest", transportType.name().toLowerCase());
+    public static String request(String key) {
+        return String.format("%sRequest", key);
     }
 
 }

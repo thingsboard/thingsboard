@@ -85,7 +85,7 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
       if (cellData.data.length > 0) {
         const tvPair = cellData.data[cellData.data.length -
         1];
-        const value = tvPair[1];
+        const value = parseFloat(tvPair[1]);
         if (value !== this.gauge.value) {
           this.gauge.value = value;
         }

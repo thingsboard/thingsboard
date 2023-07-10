@@ -33,7 +33,7 @@
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">
     <mat-option *ngFor="let entity of filteredEntities | async" [value]="entity">
-      <span [innerHTML]="entity.name | highlight:searchText"></span>
+      <span [innerHTML]="entity.name | highlight:searchText:true:'ig'"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredEntities | async)?.length" [value]="null">
       <span>

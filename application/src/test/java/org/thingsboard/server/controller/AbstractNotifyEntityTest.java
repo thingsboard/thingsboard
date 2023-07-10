@@ -264,7 +264,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         int cntTime = 1;
         testNotificationMsgToEdgeServiceTime(entityId, tenantId, actionType, cntTime);
         testLogEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
-        tesPushMsgToCoreTime(cntTime);
+        testPushMsgToCoreTime(cntTime);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
@@ -363,13 +363,13 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 Mockito.any(entityId.getClass()), Mockito.any(ComponentLifecycleEvent.class));
     }
 
-    private void tesPushMsgToCoreTime(int cntTime) {
+    private void testPushMsgToCoreTime(int cntTime) {
         Mockito.verify(tbClusterService, times(cntTime)).pushMsgToCore(Mockito.any(ToDeviceActorNotificationMsg.class), Mockito.isNull());
     }
 
     protected void testLogEntityAction(HasName entity, EntityId originatorId, TenantId tenantId,
-                                     CustomerId customerId, UserId userId, String userName,
-                                     ActionType actionType, int cntTime, Object... additionalInfo) {
+                                       CustomerId customerId, UserId userId, String userName,
+                                       ActionType actionType, int cntTime, Object... additionalInfo) {
         ArgumentMatcher<HasName> matcherEntityEquals = entity == null ? Objects::isNull : argument -> argument.toString().equals(entity.toString());
         ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.equals(originatorId);
         ArgumentMatcher<CustomerId> matcherCustomerId = customerId == null ?
@@ -380,10 +380,10 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 actionType, cntTime, extractMatcherAdditionalInfo(additionalInfo));
     }
 
-    private void testLogEntityActionEntityEqClass(HasName entity, EntityId originatorId, TenantId tenantId,
-                                                  CustomerId customerId, UserId userId, String userName,
-                                                  ActionType actionType, int cntTime, Object... additionalInfo) {
-        ArgumentMatcher<HasName> matcherEntityEquals = argument -> argument.getClass().equals(entity.getClass());
+    protected void testLogEntityActionEntityEqClass(HasName entity, EntityId originatorId, TenantId tenantId,
+                                                    CustomerId customerId, UserId userId, String userName,
+                                                    ActionType actionType, int cntTime, Object... additionalInfo) {
+        ArgumentMatcher<HasName> matcherEntityEquals = argument -> entity.getClass().isAssignableFrom(argument.getClass());
         ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.equals(originatorId);
         ArgumentMatcher<CustomerId> matcherCustomerId = customerId == null ?
                 argument -> argument.getClass().equals(CustomerId.class) : argument -> argument.equals(customerId);
@@ -600,8 +600,8 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         return fieldName + " length must be equal or less than 255";
     }
 
-    protected String msgErrorNoFound(String entityClassName, String assetIdStr) {
-        return entityClassName + " with id [" + assetIdStr + "] is not found";
+    protected String msgErrorNoFound(String entityClassName, String entityIdStr) {
+        return entityClassName + " with id [" + entityIdStr + "] is not found";
     }
 
     private String entityClassToEntityTypeName(HasName entity) {
