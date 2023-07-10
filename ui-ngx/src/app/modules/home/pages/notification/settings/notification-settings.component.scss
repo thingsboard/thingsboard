@@ -17,6 +17,11 @@
 
 :host {
   .mat-mdc-card.settings-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     margin: 8px;
     @media #{$mat-gt-sm} {
       width: 60%;
@@ -24,13 +29,18 @@
     .mat-headline-5 {
       margin: 0;
     }
-    .notification-section {
+    .notification-form {
+      height: calc(100% - 48px);
+      min-height: min-content;
+      max-height: min-content;
       margin-bottom: 16px;
+    }
+    .notification-section {
+      height: 100%;
       border: 1px solid rgba(0, 0, 0, 0.12);
-      overflow-y: hidden;
-      overflow-x: scroll;
+      overflow: scroll;
       &-block {
-        min-width: 700px;
+        min-width: 470px;
       }
     }
   }

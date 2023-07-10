@@ -33,8 +33,8 @@
     <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
     </mat-progress-bar>
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-    <mat-card-content style="padding-top: 16px;">
-      <form [formGroup]="notificationSettings" (ngSubmit)="save()">
+    <mat-card-content style="padding-top: 16px; overflow: hidden;">
+      <form [formGroup]="notificationSettings" class="notification-form">
         <section class="notification-section">
           <div  class="notification-section-block">
             <div fxLayout="row" fxLayoutAlign="start center" style="height: 44px;">
@@ -48,7 +48,7 @@
                 </mat-checkbox>
               </div>
               <div fxFlex *ngFor="let deliveryMethods of notificationDeliveryMethods">
-                <div fxFlex fxLayoutAlign="center center">
+                <div fxFlex fxLayoutAlign="start center">
                   <mat-checkbox color="warn"
                                 [disabled]="!allowNotificationDeliveryMethods?.includes(deliveryMethods) || !getSomeChecked()"
                                 [checked]="getChecked(deliveryMethods)"
@@ -67,14 +67,15 @@
             </div>
           </div>
         </section>
-        <div fxLayout="row" fxLayoutAlign="end start">
-          <button mat-button mat-raised-button color="primary"
-                  type="submit"
-                  [disabled]="(isLoading$ | async) || notificationSettings.invalid || !notificationSettings.dirty">
-            {{ 'action.save' | translate }}
-          </button>
-        </div>
       </form>
+      <div fxLayout="row" fxLayoutAlign="end start">
+        <button mat-button mat-raised-button color="primary"
+                type="button"
+                (click)="save()"
+                [disabled]="(isLoading$ | async) || notificationSettings.invalid || !notificationSettings.dirty">
+          {{ 'action.save' | translate }}
+        </button>
+      </div>
     </mat-card-content>
   </mat-card>
 </div>
