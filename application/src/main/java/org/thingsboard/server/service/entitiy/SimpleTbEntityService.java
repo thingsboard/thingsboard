@@ -26,6 +26,6 @@ public interface SimpleTbEntityService<T> {
 
     T save(T entity, User user) throws Exception;
 
-    void delete(T entity, User user) throws ThingsboardException;
+    void delete(T entity, User user);
 
 }

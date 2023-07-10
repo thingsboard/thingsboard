@@ -151,15 +151,10 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public void delete(TbResource tbResource, User user) throws ThingsboardException {
+    public void delete(TbResource tbResource, User user) {
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
         try {
-            List<WidgetTypeDetails> widgets = widgetTypeService.findWidgetTypesInfosByTenantIdAndResourceId(tenantId, resourceId);
-            if (!widgets.isEmpty()) {
-                List<String> widgetNames = widgets.stream().map(BaseWidgetType::getName).collect(Collectors.toList());
-                throw new ThingsboardException(String.format("Following widget types uses current resource: %s", widgetNames), ThingsboardErrorCode.GENERAL);
-            }
             resourceService.deleteResource(tenantId, resourceId);
             tbClusterService.onResourceDeleted(tbResource, null);
             notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
