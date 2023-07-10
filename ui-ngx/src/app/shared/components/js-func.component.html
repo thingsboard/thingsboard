@@ -27,6 +27,7 @@
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyJs()">
       {{'js-func.tidy' | translate }}
     </button>
+    <ng-content></ng-content>
     <div *ngIf="helpId" [tb-help-popup]="helpId"></div>
     <fieldset style="width: initial">
       <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
