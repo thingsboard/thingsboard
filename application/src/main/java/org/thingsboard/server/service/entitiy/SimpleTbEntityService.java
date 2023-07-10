@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.entitiy;
 
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 public interface SimpleTbEntityService<T> {
 
