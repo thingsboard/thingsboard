@@ -33,8 +33,6 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
-import java.util.List;
-
 public interface TbNotificationEntityService {
 
     <I extends EntityId> void logEntityAction(TenantId tenantId, I entityId, ActionType actionType, User user,
@@ -52,11 +50,6 @@ public interface TbNotificationEntityService {
     <E extends HasName, I extends EntityId> void logEntityAction(TenantId tenantId, I entityId, E entity, CustomerId customerId,
                                                                  ActionType actionType, User user, Exception e,
                                                                  Object... additionalInfo);
-
-    <E extends HasName, I extends EntityId> void notifyDeleteEntity(TenantId tenantId, I entityId, E entity,
-                                                                    CustomerId customerId, ActionType actionType,
-                                                                    List<EdgeId> relatedEdgeIds,
-                                                                    User user, Object... additionalInfo);
 
     void notifyCreateOrUpdateTenant(Tenant tenant, ComponentLifecycleEvent event);
 
@@ -79,7 +72,7 @@ public interface TbNotificationEntityService {
 
     void notifyCreateOrUpdateAlarm(AlarmInfo alarm, ActionType actionType, User user, Object... additionalInfo);
 
-    void notifyAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user);
+    void logAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user);
 
     void logEntityRelationAction(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user,
                                  ActionType actionType, Object... additionalInfo);
