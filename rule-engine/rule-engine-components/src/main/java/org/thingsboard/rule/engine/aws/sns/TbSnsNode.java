@@ -87,7 +87,6 @@ public class TbSnsNode extends TbAbstractExternalNode {
         withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
                 t -> tellFailure(ctx, processException(ctx, tbMsg, t), t));
-        ackIfNeeded(ctx, msg);
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
