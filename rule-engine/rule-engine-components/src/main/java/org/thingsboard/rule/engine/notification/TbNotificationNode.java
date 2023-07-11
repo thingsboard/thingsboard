@@ -71,16 +71,17 @@ public class TbNotificationNode extends TbAbstractExternalNode {
                 .originatorEntityId(ctx.getSelf().getRuleChainId())
                 .build();
 
+        var tbMsg = ackIfNeeded(ctx, msg);
+
         DonAsynchron.withCallback(ctx.getNotificationExecutor().executeAsync(() ->
                         ctx.getNotificationCenter().processNotificationRequest(ctx.getTenantId(), notificationRequest, stats -> {
-                            TbMsgMetaData metaData = msg.getMetaData().copy();
+                            TbMsgMetaData metaData = tbMsg.getMetaData().copy();
                             metaData.putValue("notificationRequestResult", JacksonUtil.toString(stats));
-                            tellSuccess(ctx, TbMsg.transformMsg(msg, metaData));
+                            tellSuccess(ctx, TbMsg.transformMsg(tbMsg, metaData));
                         })),
                 r -> {
                 },
-                e -> tellFailure(ctx, msg, e));
-        ackIfNeeded(ctx, msg);
+                e -> tellFailure(ctx, tbMsg, e));
     }
 
 }

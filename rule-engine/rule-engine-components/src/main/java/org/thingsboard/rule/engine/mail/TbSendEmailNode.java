@@ -75,13 +75,13 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
         try {
             validateType(msg.getType());
             TbEmail email = getEmail(msg);
+            var tbMsg = ackIfNeeded(ctx, msg);
             withCallback(ctx.getMailExecutor().executeAsync(() -> {
-                        sendEmail(ctx, msg, email);
+                        sendEmail(ctx, tbMsg, email);
                         return null;
                     }),
-                    ok -> tellSuccess(ctx, msg),
-                    fail -> tellFailure(ctx, msg, fail));
-            ackIfNeeded(ctx, msg);
+                    ok -> tellSuccess(ctx, tbMsg),
+                    fail -> tellFailure(ctx, tbMsg, fail));
         } catch (Exception ex) {
             ctx.tellFailure(msg, ex);
         }
