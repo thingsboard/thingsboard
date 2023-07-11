@@ -21,7 +21,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { DebugEventType, DebugRuleNodeEventBody, Event, EventType, FilterEventBody } from '@shared/models/event.models';
+import { DebugEventType, Event, EventBody, EventType, FilterEventBody } from '@shared/models/event.models';
 import { TimePageLink } from '@shared/models/page/page-link';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -49,7 +49,6 @@ import {
   EventFilterPanelData,
   FilterEntityColumn
 } from '@home/components/event/event-filter-panel.component';
-import { NodeScriptTestService } from '@core/services/script/node-script-test.service';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -87,9 +86,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
-              private nodeScriptTestService: NodeScriptTestService,
               public testButtonLabel?: string,
-              private debugEventSelected?: EventEmitter<DebugRuleNodeEventBody>) {
+              private debugEventSelected?: EventEmitter<EventBody>) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';

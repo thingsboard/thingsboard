@@ -32,10 +32,9 @@ import { EntitiesTableComponent } from '@home/components/entity/entities-table.c
 import { EventTableConfig } from './event-table-config';
 import { EventService } from '@core/http/event.service';
 import { DialogService } from '@core/services/dialog.service';
-import { DebugEventType, DebugRuleNodeEventBody, EventType } from '@shared/models/event.models';
+import { DebugEventType, EventBody, EventType } from '@shared/models/event.models';
 import { Overlay } from '@angular/cdk/overlay';
 import { Subscription } from 'rxjs';
-import { NodeScriptTestService } from '@core/services/script/node-script-test.service';
 import { isNotEmptyStr } from '@core/utils';
 
 @Component({
@@ -109,7 +108,7 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   @Output()
-  debugEventSelected = new EventEmitter<DebugRuleNodeEventBody>(null);
+  debugEventSelected = new EventEmitter<EventBody>();
 
   @ViewChild(EntitiesTableComponent, {static: true}) entitiesTable: EntitiesTableComponent;
 
@@ -124,8 +123,7 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
               private dialog: MatDialog,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private cd: ChangeDetectorRef,
-              private nodeScriptTestService: NodeScriptTestService) {
+              private cd: ChangeDetectorRef) {
   }
 
   ngOnInit() {
@@ -144,7 +142,6 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.overlay,
       this.viewContainerRef,
       this.cd,
-      this.nodeScriptTestService,
       this.ruleNodeTestButtonLabel,
       this.debugEventSelected
     );
