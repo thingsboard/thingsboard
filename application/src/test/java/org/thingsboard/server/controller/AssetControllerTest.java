@@ -281,7 +281,7 @@ public class AssetControllerTest extends AbstractControllerTest {
         doDelete("/api/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedAsset, savedAsset.getId(), savedAsset.getId(),
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.DELETED, savedAsset.getId().getId().toString());
 

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.EventLoopGroup;

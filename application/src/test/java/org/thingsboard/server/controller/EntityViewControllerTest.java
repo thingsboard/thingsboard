@@ -247,7 +247,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         doDelete("/api/entityView/" + entityIdStr)
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedView, savedView.getId(), savedView.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventOneTime(savedView, savedView.getId(), savedView.getId(),
                 tenantId, view.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
                 ActionType.DELETED, entityIdStr);
 

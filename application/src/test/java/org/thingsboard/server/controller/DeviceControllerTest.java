@@ -494,7 +494,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         doDelete("/api/device/" + savedDevice.getId().getId())
                 .andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
+        testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
                 tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.DELETED, savedDevice.getId().getId().toString());
         testNotificationDeleteGatewayOneTime(savedDevice);
 
@@ -868,9 +868,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         deleteEntitiesAsync("/api/device/", loadedDevices, executor).get(TIMEOUT, TimeUnit.SECONDS);
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNeverAdditionalInfoAny(new Device(), new Device(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Device(), new Device(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.DELETED, cntEntity, 1);
+                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity,1);
         testNotificationUpdateGatewayNever();
     }
 

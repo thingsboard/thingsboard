@@ -119,7 +119,7 @@ public abstract class AbstractEntityService {
         List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(tenantId, entityId);
         if (entityViews != null && !entityViews.isEmpty()) {
             EntityView entityView = entityViews.get(0);
-            Boolean relationExists = relationService.checkRelation(
+            boolean relationExists = relationService.checkRelation(
                     tenantId, edgeId, entityView.getId(),
                     EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE
             );

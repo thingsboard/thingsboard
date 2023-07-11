@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
-import java.io.IOException;
 import java.util.function.Predicate;
 
 /**

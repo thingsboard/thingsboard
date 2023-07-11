@@ -153,7 +153,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         doDelete("/api/dashboard/" + savedDashboard.getId().getId().toString()).andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDashboard, savedDashboard.getId(), savedDashboard.getId(),
+        testNotifyEntityAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(),
                 savedDashboard.getTenantId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.DELETED,
                 savedDashboard.getId().getId().toString());
 
@@ -428,9 +428,9 @@ public class DashboardControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNeverAdditionalInfoAny(new Dashboard(), new Dashboard(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Dashboard(), new Dashboard(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.DELETED, cntEntity, 1);
+                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity, 1);
 
         pageLink = new PageLink(4, 0, title1);
         pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
