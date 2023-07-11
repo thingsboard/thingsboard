@@ -33,6 +33,7 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
@@ -52,6 +53,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -113,12 +115,13 @@ public class SwaggerConfiguration {
 
         SecurityScheme securityScheme = new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)
-                .scheme("basic")
+                .scheme("bearer")
                 .bearerFormat("JWT")
                 .in(SecurityScheme.In.HEADER)
                 .description("Enter Username / Password");
 
         var openApi = new OpenAPI()
+                .addServersItem(new Server().url("/").description("Default Server URL"))
                 .components(new Components().addSecuritySchemes("HTTP login form", securityScheme))
                 .info(info);
         addLoginOperation(openApi);
