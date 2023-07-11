@@ -17,8 +17,8 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { MenuService } from '@core/services/menu.service';
 import { MenuSection } from '@core/services/menu.models';
-import { Observable, of } from 'rxjs';
-import { mergeMap, share } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, share } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-side-menu',
@@ -32,7 +32,7 @@ export class SideMenuComponent implements OnInit {
 
   constructor(private menuService: MenuService) {
     this.menuSections$ = this.menuService.menuSections().pipe(
-      mergeMap((sections) => this.filterSections(sections)),
+      map((sections) => this.filterSections(sections)),
       share()
     );
   }
@@ -41,8 +41,8 @@ export class SideMenuComponent implements OnInit {
     return section.id;
   }
 
-  private filterSections(sections: Array<MenuSection>): Observable<Array<MenuSection>> {
-    return of(sections.filter(section => !section.disabled));
+  private filterSections(sections: Array<MenuSection>): Array<MenuSection> {
+    return sections.filter(section => !section.disabled);
   }
 
   ngOnInit() {
