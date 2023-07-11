@@ -26,7 +26,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { merge, Observable, of, Subject } from 'rxjs';
 import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -40,6 +40,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { isDefinedAndNotNull, isEqual } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { CustomerId } from '@shared/models/id/customer-id';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -55,7 +56,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   selectEntityFormGroup: UntypedFormGroup;
 
-  modelValue: string | null;
+  modelValue: string | EntityId | null;
 
   entityTypeValue: EntityType | AliasEntityType;
 
@@ -115,6 +116,10 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  @coerceBoolean()
+  returnFullId = false;
 
   @Input()
   @coerceBoolean()
@@ -331,6 +336,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   updateView(value: string | null, entity: BaseData<EntityId> | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
+      if (this.returnFullId && this.entityTypeValue === EntityType.CUSTOMER) {
+        this.modelValue = new CustomerId(this.modelValue);
+      }
       this.propagateChange(this.modelValue);
       this.entityChanged.emit(entity);
     }

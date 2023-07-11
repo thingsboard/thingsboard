@@ -89,10 +89,18 @@
       <tb-asset-profile-autocomplete
         [selectDefaultProfile]="isAdd"
         required
+        showCreateNewButton
         formControlName="assetProfileId"
         [showDetailsPageLink]="true"
         (assetProfileUpdated)="onAssetProfileUpdated()">
       </tb-asset-profile-autocomplete>
+      <tb-entity-autocomplete
+        *ngIf="isAdd"
+        returnFullId
+        formControlName="customerId"
+        labelText="asset.customer-to-assign-asset"
+        [entityType]="entityType.CUSTOMER">
+      </tb-entity-autocomplete>
       <mat-form-field class="mat-block">
         <mat-label translate>asset.label</mat-label>
         <input matInput formControlName="label">
