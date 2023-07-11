@@ -22,8 +22,10 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { UntypedFormControl } from '@angular/forms';
-import { merge, Observable, of } from 'rxjs';
+import { merge, Observable } from 'rxjs';
 import { delay, map, mapTo, mergeMap, share, startWith, tap } from 'rxjs/operators';
+import { ResourcesService } from '@core/services/resources.service';
+import { getMaterialIcons } from '@shared/models/icon.models';
 
 export interface MaterialIconsDialogData {
   icon: string;
@@ -50,6 +52,7 @@ export class MaterialIconsDialogComponent extends DialogComponent<MaterialIconsD
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: MaterialIconsDialogData,
               private utils: UtilsService,
+              private resourcesService: ResourcesService,
               public dialogRef: MatDialogRef<MaterialIconsDialogComponent, string>) {
     super(store, router, dialogRef);
     this.selectedIcon = data.icon;
@@ -58,15 +61,13 @@ export class MaterialIconsDialogComponent extends DialogComponent<MaterialIconsD
 
   ngOnInit(): void {
     this.icons$ = this.showAllControl.valueChanges.pipe(
-      map((showAll) => {
-        return {firstTime: false, showAll};
-      }),
-      startWith<{firstTime: boolean, showAll: boolean}>({firstTime: true, showAll: false}),
+      map((showAll) => ({firstTime: false, showAll})),
+      startWith<{firstTime: boolean; showAll: boolean}>({firstTime: true, showAll: false}),
       mergeMap((data) => {
+        const res = getMaterialIcons(this.resourcesService, data.showAll, '');
         if (data.showAll) {
-          return this.utils.getMaterialIcons().pipe(delay(100));
+          return res.pipe(delay(100));
         } else {
-          const res = of(this.utils.getCommonMaterialIcons());
           return data.firstTime ? res : res.pipe(delay(50));
         }
       }),

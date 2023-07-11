@@ -47,6 +47,7 @@ export interface ModulesWithFactories {
 })
 export class ResourcesService {
 
+  private loadedJsonResources: { [url: string]: ReplaySubject<any> } = {};
   private loadedResources: { [url: string]: ReplaySubject<void> } = {};
   private loadedModules: { [url: string]: ReplaySubject<Type<any>[]> } = {};
   private loadedModulesAndFactories: { [url: string]: ReplaySubject<ModulesWithFactories> } = {};
@@ -59,6 +60,27 @@ export class ResourcesService {
               private http: HttpClient,
               private injector: Injector) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(() => this.clearModulesCache());
+  }
+
+  public loadJsonResource<T>(url: string): Observable<T> {
+    if (this.loadedJsonResources[url]) {
+      return this.loadedJsonResources[url].asObservable();
+    }
+    const subject = new ReplaySubject<any>();
+    this.loadedJsonResources[url] = subject;
+    this.http.get(url).subscribe(
+      {
+        next: (o) => {
+          this.loadedJsonResources[url].next(o);
+          this.loadedJsonResources[url].complete();
+        },
+        error: () => {
+          this.loadedJsonResources[url].error(new Error(`Unable to load ${url}`));
+          delete this.loadedJsonResources[url];
+        }
+      }
+    );
+    return subject.asObservable();
   }
 
   public loadResource(url: string): Observable<any> {
