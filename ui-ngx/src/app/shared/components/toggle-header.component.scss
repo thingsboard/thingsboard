@@ -80,6 +80,33 @@
         }
       }
     }
+    &.tb-disabled {
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.03);
+
+      .mat-button-toggle.mat-button-toggle-appearance-standard {
+        color: rgba(0, 0, 0, 0.28);
+
+        &.mat-button-toggle-checked {
+          .mat-button-toggle-button {
+            background: transparent;
+            color: rgba(0, 0, 0, 0.38);
+            border-color: rgba(0, 0, 0, 0.38);
+          }
+        }
+      }
+      &.tb-fill {
+        .mat-button-toggle.mat-button-toggle-appearance-standard {
+          &.mat-button-toggle-checked {
+            .mat-button-toggle-button {
+              background: rgba(0, 0, 0, 0.12);
+              color: rgba(0, 0, 0, 0.38);
+              border: transparent;
+            }
+          }
+        }
+      }
+    }
   }
   @media #{$mat-md-lg} {
     .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header:not(.tb-ignore-md-lg) {

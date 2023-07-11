@@ -1134,13 +1134,8 @@
         "device-configuration": "設備配置",
         "transport-configuration": "傳輸配置",
         "wizard": {
-            "device-wizard": "設備嚮導",
             "device-details": "設備詳情",
-            "new-device-profile": "建立設備協議",
-            "existing-device-profile": "選擇現有的設備協議",
-            "specific-configuration": "具體配置",
-            "customer-to-assign-device": "客戶指定設備",
-            "add-credentials": "新增驗證資訊"
+            "customer-to-assign-device": "客戶指定設備"
         },
         "unassign-devices-from-edge-title": "您確定要解除邊緣設備 { count, plural, =1 {1 device} other {# devices} }的指定嗎？",
         "unassign-devices-from-edge-text": "確認後邊緣指定設備將解除指定及其所有相關資料將無法恢復。"
@@ -1205,8 +1200,6 @@
         "delete": "刪除設備協議",
         "copyId": "複製設備協議Id",
         "name-max-length": "名稱應小於256",
-        "new-device-profile-name": "設備協議名稱",
-        "new-device-profile-name-required": "需要設備協議名稱。",
         "name": "名稱",
         "name-required": "需要名稱",
         "type": "協議類型",

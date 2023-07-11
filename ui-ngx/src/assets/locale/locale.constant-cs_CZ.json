@@ -1018,13 +1018,8 @@
         "device-configuration": "Konfigurace zařízení",
         "transport-configuration": "Konfigurace přenosu",
         "wizard": {
-            "device-wizard": "Průvodce zařízením",
             "device-details": "Detail zařízení",
-            "new-device-profile": "Vytvořit nový profil zařízení",
-            "existing-device-profile": "Vybrat existující profil zařízení",
-            "specific-configuration": "Specifická konfigurace",
-            "customer-to-assign-device": "Přiřadit zařízení zákazníkovi",
-            "add-credentials": "Přidat přístupový údaj"
+            "customer-to-assign-device": "Přiřadit zařízení zákazníkovi"
         },
         "unassign-devices-from-edge-title": "Jste se jisti, že chcete odebrat { count, plural, =1 {1 zařízení} other {# zařízení} }?",
         "unassign-devices-from-edge-text": "Po potvrzení budou všechna vybraná zařízení odebrána a nebudou pro edge dostupná."
@@ -1045,8 +1040,6 @@
         "set-default": "Učinit profil zařízení defaultním",
         "delete": "Smazat profil zařízení",
         "copyId": "Kopírovat Id profilu zařízení",
-        "new-device-profile-name": "Název profilu zařízení",
-        "new-device-profile-name-required": "Název profilu zařízení je povinný.",
         "name": "Název",
         "name-required": "Název je povinný.",
         "type": "Typ profilu",

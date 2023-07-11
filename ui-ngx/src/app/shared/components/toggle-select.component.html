@@ -15,6 +15,12 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="outline" class="tb-inline-field center" subscriptSizing="dynamic">
-  <input matInput [formControl]="unitsFormControl" placeholder="{{ 'widget-config.set' | translate }}">
-</mat-form-field>
+<tb-toggle-header
+  ignoreMdLgSize="true"
+  useSelectOnMdLg="false"
+  [disabled]="disabled"
+  [appearance]="appearance"
+  [options]="options"
+  [value]="modelValue"
+  (valueChange)="updateModel($event)">
+</tb-toggle-header>

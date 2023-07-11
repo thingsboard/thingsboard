@@ -20,18 +20,10 @@
     <h2 translate>widget.add</h2>
     <span fxFlex>: {{data.widgetInfo.widgetName}}</span>
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-      <tb-toggle-header *ngIf="hasBasicMode" (valueChange)="widgetConfigMode = $event" ignoreMdLgSize="true"
-                        appearance="fill-invert" [options]="[
-                                {
-                                   name: translate.instant('widget.basic-mode'),
-                                   value: 'basic'
-                                },
-                                {
-                                   name: translate.instant('widget.advanced-mode'),
-                                   value: 'advanced'
-                                }
-                              ]" [value]="widgetConfigMode" name="widgetConfigModeHeader" useSelectOnMdLg="false">
-      </tb-toggle-header>
+      <tb-toggle-select *ngIf="hasBasicMode" appearance="fill-invert" [(ngModel)]="widgetConfigMode" [ngModelOptions]="{standalone: true}">
+        <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
       <div [tb-help]="helpLinkIdForWidgetType()"></div>
     </div>
     <button mat-icon-button
@@ -57,6 +49,7 @@
       <tb-widget-preview *ngIf="previewMode" class="tb-absolute-fill"
         [aliasController]="aliasController"
         [stateController]="stateController"
+        [dashboardTimewindow]="dashboard.configuration.timewindow"
         [widget]="widget"
         [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config">
         <div class="tb-preview-panel-content">

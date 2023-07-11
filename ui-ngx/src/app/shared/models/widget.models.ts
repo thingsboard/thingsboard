@@ -637,6 +637,7 @@ export interface WidgetConfig {
   backgroundColor?: string;
   padding?: string;
   margin?: string;
+  borderRadius?: string;
   widgetStyle?: {[klass: string]: any};
   widgetCss?: string;
   titleStyle?: {[klass: string]: any};

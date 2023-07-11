@@ -15,38 +15,62 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="alarmsTableWidgetSettingsForm" fxLayout="column">
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.table.common-table-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
-      <mat-label translate>widgets.table.alarms-table-title</mat-label>
-      <input matInput formControlName="alarmsTitle">
-    </mat-form-field>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
-      <section fxLayout="column" fxFlex>
-        <mat-checkbox formControlName="enableSelection">
-          {{ 'widgets.table.enable-alarms-selection' | translate }}
-        </mat-checkbox>
-        <mat-checkbox formControlName="enableSearch">
-          {{ 'widgets.table.enable-alarms-search' | translate }}
-        </mat-checkbox>
-        <mat-checkbox formControlName="enableSelectColumnDisplay">
-          {{ 'widgets.table.enable-select-column-display' | translate }}
-        </mat-checkbox>
-        <mat-checkbox formControlName="enableFilter">
-          {{ 'widgets.table.enable-alarm-filter' | translate }}
-        </mat-checkbox>
-      </section>
-      <section fxLayout="column" fxFlex>
-        <mat-checkbox formControlName="enableStickyHeader">
-          {{ 'widgets.table.enable-sticky-header' | translate }}
-        </mat-checkbox>
-        <mat-checkbox formControlName="enableStickyAction">
-          {{ 'widgets.table.enable-sticky-action' | translate }}
-        </mat-checkbox>
-      </section>
-    </section>
-    <mat-form-field fxFlex class="mat-block">
+<ng-container [formGroup]="alarmsTableWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.table-header</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width">{{ 'widgets.table.alarms-table-title' | translate }}</div>
+      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="alarmsTitle" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide"  formControlName="enableStickyHeader">
+        {{ 'widgets.table.enable-sticky-header' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>widgets.table.header-buttons</div>
+      <mat-slide-toggle class="mat-slide"  formControlName="enableSearch">
+        {{ 'widgets.table.enable-alarms-search' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide"  formControlName="enableSelectColumnDisplay">
+        {{ 'widgets.table.enable-select-column-display' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide"  formControlName="enableFilter">
+        {{ 'widgets.table.enable-alarm-filter' | translate }}
+      </mat-slide-toggle>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.columns</div>
+    <mat-slide-toggle class="mat-slide"  formControlName="enableSelection">
+      {{ 'widgets.table.enable-alarms-selection' | translate }}
+    </mat-slide-toggle>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide"  formControlName="enableStickyAction">
+        {{ 'widgets.table.enable-sticky-action' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>widgets.table.table-buttons</div>
+      <mat-slide-toggle class="mat-slide" formControlName="displayActivity">
+        {{ 'widgets.table.display-alarm-activity' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="displayDetails">
+        {{ 'widgets.table.display-alarm-details' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="allowAssign">
+        {{ 'widgets.table.allow-alarms-assign' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="allowAcknowledgment">
+        {{ 'widgets.table.allow-alarms-ack' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="allowClear">
+        {{ 'widgets.table.allow-alarms-clear' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <mat-form-field fxFlex subscriptSizing="dynamic">
       <mat-label translate>widgets.table.hidden-cell-button-display-mode</mat-label>
       <mat-select formControlName="reserveSpaceForHiddenAction">
         <mat-option [value]="'true'">
@@ -57,48 +81,34 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <section fxLayout="column" fxLayoutGap="8px">
-      <mat-slide-toggle formControlName="displayActivity">
-        {{ 'widgets.table.display-alarm-activity' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle fxFlex formControlName="displayDetails">
-        {{ 'widgets.table.display-alarm-details' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="allowAcknowledgment">
-        {{ 'widgets.table.allow-alarms-ack' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="allowClear">
-        {{ 'widgets.table.allow-alarms-clear' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="allowAssign">
-        {{ 'widgets.table.allow-alarms-assign' | translate }}
-      </mat-slide-toggle>
-      <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
-        <mat-slide-toggle fxFlex formControlName="displayPagination">
-          {{ 'widgets.table.display-pagination' | translate }}
-        </mat-slide-toggle>
-        <mat-form-field fxFlex class="mat-block">
-          <mat-label translate>widgets.table.default-page-size</mat-label>
-          <input matInput type="number" min="1" step="1" formControlName="defaultPageSize">
-        </mat-form-field>
-      </section>
-      <mat-form-field fxFlex class="mat-block">
-        <mat-label translate>widgets.table.default-sort-order</mat-label>
-        <input matInput formControlName="defaultSortOrder">
+    <mat-form-field fxFlex subscriptSizing="dynamic">
+      <mat-label translate>widgets.table.default-sort-order</mat-label>
+      <input matInput formControlName="defaultSortOrder">
+    </mat-form-field>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.pagination</div>
+    <mat-slide-toggle class="mat-slide" formControlName="displayPagination">
+      {{ 'widgets.table.display-pagination' | translate }}
+    </mat-slide-toggle>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.table.default-page-size</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="defaultPageSize" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-    </section>
-  </fieldset>
-  <fieldset class="fields-group fields-group-slider">
-    <legend class="group-title" translate>widgets.table.row-style</legend>
+    </div>
+  </div>
+  <div class="tb-form-panel tb-slide-toggle">
+    <div class="tb-form-panel-title" translate>widgets.table.rows</div>
     <mat-expansion-panel class="tb-settings" [expanded]="alarmsTableWidgetSettingsForm.get('useRowStyleFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
-        <mat-panel-title>
-          <mat-slide-toggle formControlName="useRowStyleFunction" (click)="$event.stopPropagation()"
+      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+        <mat-panel-title fxFlex="60">
+          <mat-slide-toggle class="mat-slide" formControlName="useRowStyleFunction" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.table.use-row-style-function' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
@@ -112,5 +122,5 @@
         </tb-js-func>
       </ng-template>
     </mat-expansion-panel>
-  </fieldset>
-</section>
+  </div>
+</ng-container>

@@ -1053,13 +1053,8 @@
         "device-configuration": "Configuration du dipositif",
         "transport-configuration": "Configuration du transport",
         "wizard": {
-            "device-wizard": "Wizard du dispositif",
             "device-details": "Détails du dispositif",
-            "new-device-profile": "Créer un nouveau profil de dispositif",
-            "existing-device-profile": "Choisissez un profile de dispositif existant",
-            "specific-configuration": "Configuration spécifique",
-            "customer-to-assign-device": "Client auquel assigner le dispositif",
-            "add-credentials": "Ajouter identifiants"
+            "customer-to-assign-device": "Client auquel assigner le dispositif"
         }
     },
     "device-profile": {
@@ -1079,8 +1074,6 @@
         "delete": "Supprimer le profil de dispositif",
         "copyId": "Copier l'Identifiant du profil de dispositif",
         "name-max-length": "La longueur du nom devrait être moins de 256",
-        "new-device-profile-name": "Nom du profil de dispositif",
-        "new-device-profile-name-required": "Nom du profil de dispositif est requis.",
         "name": "Nom",
         "name-required": "Nom est requis.",
         "type": "Type de profile",

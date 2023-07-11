@@ -14,40 +14,40 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilder } from '@angular/forms';
+import { Component, forwardRef, Input } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { _ToggleBase, ToggleHeaderAppearance } from '@shared/components/toggle-header.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-widget-units',
-  templateUrl: './widget-units.component.html',
+  selector: 'tb-toggle-select',
+  templateUrl: './toggle-select.component.html',
   styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetUnitsComponent),
+      useExisting: forwardRef(() => ToggleSelectComponent),
       multi: true
     }
   ]
 })
-export class WidgetUnitsComponent implements ControlValueAccessor, OnInit {
+export class ToggleSelectComponent extends _ToggleBase implements ControlValueAccessor {
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
-  unitsFormControl: FormControl;
+  @Input()
+  appearance: ToggleHeaderAppearance = 'stroked';
 
-  private propagateChange = (_val: any) => {};
+  modelValue: any;
 
-  constructor(private fb: UntypedFormBuilder) {
-  }
+  private propagateChange = null;
 
-  ngOnInit() {
-    this.unitsFormControl = this.fb.control('', []);
-    this.unitsFormControl.valueChanges.subscribe(val => this.propagateChange(val));
-  }
-
-  writeValue(units?: string): void {
-    this.unitsFormControl.patchValue(units, {emitEvent: false});
+  constructor(protected store: Store<AppState>) {
+    super(store);
   }
 
   registerOnChange(fn: any): void {
@@ -59,10 +59,14 @@ export class WidgetUnitsComponent implements ControlValueAccessor, OnInit {
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
-    if (this.disabled) {
-      this.unitsFormControl.disable({emitEvent: false});
-    } else {
-      this.unitsFormControl.enable({emitEvent: false});
-    }
+  }
+
+  writeValue(value: any): void {
+    this.modelValue = value;
+  }
+
+  updateModel(value: any) {
+    this.modelValue = value;
+    this.propagateChange(this.modelValue);
   }
 }

@@ -153,7 +153,8 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
     }
   }
 
-  showColorPicker() {
+  showColorPicker($event: MouseEvent) {
+    $event.stopPropagation();
     this.dialogs.colorPicker(this.colorFormGroup.get('color').value).subscribe(
       (color) => {
         if (color) {

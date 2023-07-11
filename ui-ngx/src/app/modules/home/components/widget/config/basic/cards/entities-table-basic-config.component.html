@@ -37,17 +37,17 @@
     [entityAliasId]="datasource?.entityAliasId"
     formControlName="columns">
   </tb-data-keys-panel>
-  <div class="tb-widget-config-panel">
-    <div class="tb-widget-config-panel-title" translate>widget-config.appearance</div>
-    <div class="tb-widget-config-row">
-      <mat-slide-toggle class="mat-slide"  formControlName="showTitle">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.card-title' | translate }}
       </mat-slide-toggle>
       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div class="tb-widget-config-row space-between same-padding">
+    <div class="tb-form-row space-between same-padding">
       <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
         {{ 'widget-config.card-icon' | translate }}
       </mat-slide-toggle>
@@ -62,15 +62,15 @@
         </tb-color-input>
       </div>
     </div>
-    <div class="tb-widget-config-row space-between">
-      <div translate>widgets.table.show-card-buttons</div>
+    <div class="tb-form-row space-between">
+      <div translate>widget-config.show-card-buttons</div>
       <mat-chip-listbox multiple formControlName="cardButtons">
         <mat-chip-option value="search">{{ 'action.search' | translate }}</mat-chip-option>
         <mat-chip-option value="columnsToDisplay">{{ 'widgets.table.columns-to-display' | translate }}</mat-chip-option>
         <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
       </mat-chip-listbox>
     </div>
-    <div class="tb-widget-config-row space-between same-padding">
+    <div class="tb-form-row space-between same-padding">
       <div>{{ 'widget-config.text-color' | translate }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
         <mat-divider vertical></mat-divider>
@@ -79,7 +79,7 @@
         </tb-color-input>
       </div>
     </div>
-    <div class="tb-widget-config-row space-between same-padding">
+    <div class="tb-form-row space-between same-padding">
       <div>{{ 'widget-config.background-color' | translate }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
         <mat-divider vertical></mat-divider>
