@@ -218,6 +218,19 @@
               height: 20px;
               font-size: 20px;
             }
+            .mat-mdc-button-touch-target {
+              width: 40px;
+              height: 40px;
+            }
+            &.tb-icon-24 {
+              width: 24px;
+              height: 24px;
+              padding: 0;
+              .mat-mdc-button-touch-target {
+                width: 24px;
+                height: 24px;
+              }
+            }
           }
           > .mat-icon {
             width: 20px;
@@ -278,7 +291,8 @@
       &:hover {
         .mat-mdc-text-field-wrapper {
           .mat-mdc-form-field-icon-suffix {
-            display: block;
+            display: flex;
+            align-items: center;
           }
         }
       }
