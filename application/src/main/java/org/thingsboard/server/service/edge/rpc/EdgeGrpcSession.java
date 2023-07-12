@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectResponseCode;
@@ -662,6 +663,11 @@ public final class EdgeGrpcSession implements Closeable {
             if (uplinkMsg.getDeviceCredentialsUpdateMsgCount() > 0) {
                 for (DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg : uplinkMsg.getDeviceCredentialsUpdateMsgList()) {
                     result.add(ctx.getDeviceProcessor().processDeviceCredentialsMsg(edge.getTenantId(), deviceCredentialsUpdateMsg));
+                }
+            }
+            if (uplinkMsg.getDeviceUpdateMsgCount() > 0) {
+                for (AssetUpdateMsg assetUpdateMsg : uplinkMsg.getAssetUpdateMsgList()) {
+                    result.add(ctx.getAssetProcessor().processAssetMsgFromEdge(edge.getTenantId(), edge, assetUpdateMsg));
                 }
             }
             if (uplinkMsg.getAlarmUpdateMsgCount() > 0) {

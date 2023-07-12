@@ -529,6 +529,7 @@ message UplinkMsg {
   repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13; // deprecated
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
+  repeated AssetUpdateMsg assetUpdateMsg = 16;
 }
 
 message UplinkResponseMsg {

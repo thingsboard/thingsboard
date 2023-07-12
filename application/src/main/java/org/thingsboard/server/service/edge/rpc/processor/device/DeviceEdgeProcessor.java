@@ -35,11 +35,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -111,15 +107,6 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         }
     }
 
-    private void createRelationFromEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId) {
-        EntityRelation relation = new EntityRelation();
-        relation.setFrom(edgeId);
-        relation.setTo(entityId);
-        relation.setTypeGroup(RelationTypeGroup.COMMON);
-        relation.setType(EntityRelation.EDGE_TYPE);
-        relationService.saveRelation(tenantId, relation);
-    }
-
     private void pushDeviceCreatedEventToRuleEngine(TenantId tenantId, Edge edge, DeviceId deviceId) {
         try {
             Device device = deviceService.findDeviceById(tenantId, deviceId);
@@ -140,21 +127,6 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         } catch (JsonProcessingException | IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", deviceId, DataConstants.ENTITY_CREATED, e);
         }
-    }
-
-    private TbMsgMetaData getActionTbMsgMetaData(Edge edge, CustomerId customerId) {
-        TbMsgMetaData metaData = getTbMsgMetaData(edge);
-        if (customerId != null && !customerId.isNullUid()) {
-            metaData.putValue("customerId", customerId.toString());
-        }
-        return metaData;
-    }
-
-    private TbMsgMetaData getTbMsgMetaData(Edge edge) {
-        TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("edgeId", edge.getId().toString());
-        metaData.putValue("edgeName", edge.getName());
-        return metaData;
     }
 
     public ListenableFuture<Void> processDeviceRpcCallFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
