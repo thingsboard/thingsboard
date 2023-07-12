@@ -40,7 +40,6 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { isDefinedAndNotNull, isEqual } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { CustomerId } from '@shared/models/id/customer-id';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -119,7 +118,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @Input()
   @coerceBoolean()
-  returnFullId = false;
+  useFullEntityId = false;
 
   @Input()
   @coerceBoolean()
@@ -176,7 +175,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             if (typeof value === 'string' || !value) {
               modelValue = null;
             } else {
-              modelValue = value.id.id;
+              modelValue = this.useFullEntityId ? value.id : value.id.id;
             }
             this.updateView(modelValue, value);
             if (value === null) {
@@ -312,7 +311,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       } catch (e) {
         this.propagateChange(null);
       }
-      this.modelValue = entity !== null ? entity.id.id : null;
+      this.modelValue = entity !== null ? this.useFullEntityId ? entity.id : entity.id.id : null;
       this.selectEntityFormGroup.get('entity').patchValue(entity !== null ? entity : '', {emitEvent: false});
       this.entityChanged.emit(entity);
     } else {
@@ -336,9 +335,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   updateView(value: string | null, entity: BaseData<EntityId> | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
-      if (this.returnFullId && this.entityTypeValue === EntityType.CUSTOMER) {
-        this.modelValue = new CustomerId(this.modelValue);
-      }
       this.propagateChange(this.modelValue);
       this.entityChanged.emit(entity);
     }

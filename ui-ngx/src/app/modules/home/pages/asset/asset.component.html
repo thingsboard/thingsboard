@@ -86,6 +86,13 @@
           {{ 'asset.name-max-length' | translate }}
         </mat-error>
       </mat-form-field>
+      <mat-form-field class="mat-block">
+        <mat-label translate>asset.label</mat-label>
+        <input matInput formControlName="label">
+        <mat-error *ngIf="entityForm.get('label').hasError('maxlength')">
+          {{ 'asset.label-max-length' | translate }}
+        </mat-error>
+      </mat-form-field>
       <tb-asset-profile-autocomplete
         [selectDefaultProfile]="isAdd"
         required
@@ -96,18 +103,11 @@
       </tb-asset-profile-autocomplete>
       <tb-entity-autocomplete
         *ngIf="isAdd"
-        returnFullId
+        useFullEntityId
         formControlName="customerId"
         labelText="asset.customer-to-assign-asset"
         [entityType]="entityType.CUSTOMER">
       </tb-entity-autocomplete>
-      <mat-form-field class="mat-block">
-        <mat-label translate>asset.label</mat-label>
-        <input matInput formControlName="label">
-        <mat-error *ngIf="entityForm.get('label').hasError('maxlength')">
-          {{ 'asset.label-max-length' | translate }}
-        </mat-error>
-      </mat-form-field>
       <div formGroupName="additionalInfo">
         <mat-form-field class="mat-block">
           <mat-label translate>asset.description</mat-label>
