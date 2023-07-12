@@ -15,16 +15,16 @@
     limitations under the License.
 
 -->
-<div class="tb-widget-config-panel">
-  <div class="tb-widget-config-panel-title">{{ panelTitle }}</div>
+<div class="tb-form-panel">
+  <div class="tb-form-panel-title">{{ panelTitle }}</div>
   <div class="tb-data-keys-table">
     <div class="tb-data-keys-header">
       <div *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys-header-cell tb-source-header" translate>datakey.source</div>
       <div class="tb-data-keys-header-cell" fxFlex translate>datakey.key</div>
       <div class="tb-data-keys-header-cell" fxFlex translate>datakey.label</div>
       <div *ngIf="!hideDataKeyColor" class="tb-data-keys-header-cell tb-color-header" translate>datakey.color</div>
-      <div class="tb-data-keys-header-cell tb-units-header" translate>widget-config.units-short</div>
-      <div class="tb-data-keys-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
+      <div *ngIf="!hideUnits" class="tb-data-keys-header-cell tb-units-header" translate>widget-config.units-short</div>
+      <div *ngIf="!hideDecimals" class="tb-data-keys-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
       <div class="tb-data-keys-header-cell tb-actions-header"></div>
     </div>
     <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-data-keys-body tb-drop-list"

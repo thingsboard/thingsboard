@@ -172,11 +172,12 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
     @Test
     public void testSetRootRuleChain() throws Exception {
         // create rule chain
-        edgeImitator.expectMessageAmount(1);
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("Edge New Root Rule Chain");
         ruleChain.setType(RuleChainType.EDGE);
         RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+
+        edgeImitator.expectMessageAmount(1);
         doPost("/api/edge/" + edge.getUuidId()
                 + "/ruleChain/" + savedRuleChain.getUuidId(), RuleChain.class);
         Assert.assertTrue(edgeImitator.waitForMessages());

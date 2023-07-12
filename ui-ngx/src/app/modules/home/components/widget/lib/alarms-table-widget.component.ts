@@ -138,6 +138,8 @@ import {
   AlarmFilterConfigComponent,
   AlarmFilterConfigData
 } from '@home/components/alarm/alarm-filter-config.component';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { UserId } from '@shared/models/id/user-id';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -382,7 +384,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : 1024;
 
-    const alarmFilter = this.entityService.resolveAlarmFilter(this.widgetConfig.alarmFilterConfig);
+    const alarmFilter = this.entityService.resolveAlarmFilter(this.widgetConfig.alarmFilterConfig, false);
     this.pageLink = {...this.pageLink, ...alarmFilter};
 
     this.noDataDisplayMessageText =
@@ -606,6 +608,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     overlayRef.backdropClick().subscribe(() => {
       overlayRef.dispose();
     });
+    const authUser = getCurrentAuthUser(this.store);
+    const assignedToCurrentUser = isDefinedAndNotNull(this.pageLink.assigneeId) && this.pageLink.assigneeId.id === authUser.userId;
+    const assigneeId = assignedToCurrentUser ? null : this.pageLink.assigneeId;
     const providers: StaticProvider[] = [
       {
         provide: ALARM_FILTER_CONFIG_DATA,
@@ -617,8 +622,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
             severityList: deepClone(this.pageLink.severityList),
             typeList: deepClone(this.pageLink.typeList),
             searchPropagatedAlarms: this.pageLink.searchPropagatedAlarms,
-            assignedToCurrentUser: isDefinedAndNotNull(this.pageLink.assigneeId)
-          }
+            assignedToCurrentUser,
+            assigneeId
+          },
+          initialAlarmFilterConfig: deepClone(this.widgetConfig.alarmFilterConfig)
         } as AlarmFilterConfigData
       },
       {
@@ -632,7 +639,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     componentRef.onDestroy(() => {
       if (componentRef.instance.panelResult) {
         const result = componentRef.instance.panelResult;
-        const alarmFilter = this.entityService.resolveAlarmFilter(result);
+        const alarmFilter = this.entityService.resolveAlarmFilter(result, false);
         this.pageLink = {...this.pageLink, ...alarmFilter};
         this.resetPageIndex();
         this.updateData();

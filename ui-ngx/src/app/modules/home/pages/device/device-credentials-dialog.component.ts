@@ -37,7 +37,7 @@ export interface DeviceCredentialsDialogData {
   selector: 'tb-device-credentials-dialog',
   templateUrl: './device-credentials-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: DeviceCredentialsDialogComponent}],
-  styleUrls: []
+  styleUrls: ['./device-credentials-dialog.component.scss']
 })
 export class DeviceCredentialsDialogComponent extends
   DialogComponent<DeviceCredentialsDialogComponent, DeviceCredentials> implements OnInit, ErrorStateMatcher {

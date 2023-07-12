@@ -67,6 +67,7 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                             .addUserCredentialsUpdateMsg(userCredentialsUpdateMsg)
                             .build();
                 }
+                break;
         }
         return downlinkMsg;
     }
