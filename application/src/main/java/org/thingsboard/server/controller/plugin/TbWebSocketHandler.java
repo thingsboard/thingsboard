@@ -239,7 +239,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             this.lastActivityTime = System.currentTimeMillis();
         }
 
-        synchronized void sendPing(long currentTime) {
+        void sendPing(long currentTime) {
             try {
                 long timeSinceLastActivity = currentTime - lastActivityTime;
                 if (timeSinceLastActivity >= pingTimeout) {
@@ -262,15 +262,15 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             }
         }
 
-        synchronized void processPongMessage(long currentTime) {
+        void processPongMessage(long currentTime) {
             lastActivityTime = currentTime;
         }
 
-        synchronized void sendMsg(String msg) {
+        void sendMsg(String msg) {
             sendMsg(new TbWebSocketTextMsg(msg));
         }
 
-        synchronized void sendMsg(TbWebSocketMsg<?> msg) {
+        void sendMsg(TbWebSocketMsg<?> msg) {
             if (isSending.compareAndSet(false, true)) {
                 sendMsgInternal(msg);
             } else {
