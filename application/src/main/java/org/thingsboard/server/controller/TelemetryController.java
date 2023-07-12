@@ -201,7 +201,7 @@ public class TelemetryController extends BaseController {
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, required = true, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES) @PathVariable("scope") String scope) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> getAttributeKeysCallback(result, tenantId, entityId, scope));
+                (result, tenantId, entityId) -> getAttributeKeysCallback(result, tenantId, entityId, scope));
     }
 
     @ApiOperation(value = "Get attributes (getAttributes)",
@@ -219,9 +219,9 @@ public class TelemetryController extends BaseController {
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE") @PathVariable("entityType") String entityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
-            SecurityUser user = getCurrentUser();
+        SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, null, keysStr));
+                (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, null, keysStr));
     }
 
 
@@ -245,7 +245,7 @@ public class TelemetryController extends BaseController {
             @ApiParam(value = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, scope, keysStr));
+                (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, scope, keysStr));
     }
 
     @ApiOperation(value = "Get time-series keys (getTimeseriesKeys)",
@@ -259,7 +259,7 @@ public class TelemetryController extends BaseController {
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE") @PathVariable("entityType") String entityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> Futures.addCallback(tsService.findAllLatest(tenantId, entityId), getTsKeysToResponseCallback(result), MoreExecutors.directExecutor()));
+                (result, tenantId, entityId) -> Futures.addCallback(tsService.findAllLatest(tenantId, entityId), getTsKeysToResponseCallback(result), MoreExecutors.directExecutor()));
     }
 
     @ApiOperation(value = "Get latest time-series value (getLatestTimeseries)",
@@ -487,13 +487,15 @@ public class TelemetryController extends BaseController {
             @ApiParam(value = "A long value representing the end timestamp of removal time range in milliseconds.")
             @RequestParam(name = "endTs", required = false) Long endTs,
             @ApiParam(value = "If the parameter is set to true, the latest telemetry will be rewritten in case that current latest value was removed, otherwise, in case that parameter is set to false the new latest value will not set.")
-            @RequestParam(name = "rewriteLatestIfDeleted", defaultValue = "false") boolean rewriteLatestIfDeleted) throws ThingsboardException {
+            @RequestParam(name = "rewriteLatestIfDeleted", defaultValue = "false") boolean rewriteLatestIfDeleted,
+            @ApiParam(value = "If the parameter is set to true, the latest telemetry can be removed, otherwise, in case that parameter is set to false the latest value will not removed.")
+            @RequestParam(name = "deleteLatest", required = false, defaultValue = "true") boolean deleteLatest) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-        return deleteTimeseries(entityId, keysStr, deleteAllDataForKeys, startTs, endTs, rewriteLatestIfDeleted);
+        return deleteTimeseries(entityId, keysStr, deleteAllDataForKeys, startTs, endTs, rewriteLatestIfDeleted, deleteLatest);
     }
 
     private DeferredResult<ResponseEntity> deleteTimeseries(EntityId entityIdStr, String keysStr, boolean deleteAllDataForKeys,
-                                                            Long startTs, Long endTs, boolean rewriteLatestIfDeleted) throws ThingsboardException {
+                                                            Long startTs, Long endTs, boolean rewriteLatestIfDeleted, boolean deleteLatest) throws ThingsboardException {
         List<String> keys = toKeysList(keysStr);
         if (keys.isEmpty()) {
             return getImmediateDeferredResult("Empty keys: " + keysStr, HttpStatus.BAD_REQUEST);
@@ -517,7 +519,7 @@ public class TelemetryController extends BaseController {
         return accessValidator.validateEntityAndCallback(user, Operation.WRITE_TELEMETRY, entityIdStr, (result, tenantId, entityId) -> {
             List<DeleteTsKvQuery> deleteTsKvQueries = new ArrayList<>();
             for (String key : keys) {
-                deleteTsKvQueries.add(new BaseDeleteTsKvQuery(key, deleteFromTs, deleteToTs, rewriteLatestIfDeleted));
+                deleteTsKvQueries.add(new BaseDeleteTsKvQuery(key, deleteFromTs, deleteToTs, rewriteLatestIfDeleted, deleteLatest));
             }
             tsSubService.deleteTimeseriesAndNotify(tenantId, entityId, keys, deleteTsKvQueries, new FutureCallback<>() {
                 @Override
@@ -533,6 +535,55 @@ public class TelemetryController extends BaseController {
                 }
             });
         });
+    }
+
+    @ApiOperation(value = "Delete entity latest time-series data (deleteEntityLatestTimeseries)",
+            notes = "Delete latest time-series for selected entity based on entity id, entity type and keys. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Timeseries for the selected keys in the request was removed. " +
+                    "Platform creates an audit log event about entity latest timeseries removal with action type 'TIMESERIES_DELETED'."),
+            @ApiResponse(code = 400, message = "Platform returns a bad request in case if keys list is empty."),
+            @ApiResponse(code = 401, message = "User is not authorized to delete entity latest timeseries for selected entity. Most likely, User belongs to different Customer or Tenant."),
+            @ApiResponse(code = 500, message = "The exception was thrown during processing the request. " +
+                    "Platform creates an audit log event about entity latest timeseries removal with action type 'TIMESERIES_DELETED' that includes an error stacktrace."),
+    })
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/{entityType}/{entityId}/timeseries/latest/delete", method = RequestMethod.DELETE)
+    @ResponseBody
+    public DeferredResult<ResponseEntity> deleteEntityLatestTimeseries(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE")
+                                                                       @PathVariable("entityType") String entityType,
+                                                                       @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+                                                                       @PathVariable("entityId") String entityIdStr,
+                                                                       @ApiParam(value = TELEMETRY_KEYS_DESCRIPTION, required = true)
+                                                                       @RequestParam(name = "keys") String keysStr) throws ThingsboardException {
+        EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
+        return deleteLatestTimeseries(entityId, keysStr);
+    }
+
+    private DeferredResult<ResponseEntity> deleteLatestTimeseries(EntityId entityIdStr, String keysStr) throws ThingsboardException {
+        List<String> keys = toKeysList(keysStr);
+        if (keys.isEmpty()) {
+            return getImmediateDeferredResult("Empty keys: " + keysStr, HttpStatus.BAD_REQUEST);
+        }
+        SecurityUser user = getCurrentUser();
+
+        return accessValidator.validateEntityAndCallback(user, Operation.WRITE_TELEMETRY, entityIdStr, (result, tenantId, entityId) ->
+                tsSubService.deleteLatestAndNotify(tenantId, entityId, keys, new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable Void tmp) {
+                        logLatestTimeseriesDeleted(user, entityId, keys, null);
+                        result.setResult(new ResponseEntity<>(HttpStatus.OK));
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        logLatestTimeseriesDeleted(user, entityId, keys, t);
+                        result.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                    }
+                })
+        );
     }
 
     @ApiOperation(value = "Delete device attributes (deleteDeviceAttributes)",
@@ -825,6 +876,11 @@ public class TelemetryController extends BaseController {
     private void logTimeseriesDeleted(SecurityUser user, EntityId entityId, List<String> keys, long startTs, long endTs, Throwable e) {
         notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.TIMESERIES_DELETED, user,
                 toException(e), keys, startTs, endTs);
+    }
+
+    private void logLatestTimeseriesDeleted(SecurityUser user, EntityId entityId, List<String> keys, Throwable e) {
+        notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.TIMESERIES_DELETED, user,
+                toException(e), keys);
     }
 
     private void logTelemetryUpdated(SecurityUser user, EntityId entityId, List<TsKvEntry> telemetry, Throwable e) {
