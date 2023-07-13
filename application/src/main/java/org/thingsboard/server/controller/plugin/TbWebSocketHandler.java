@@ -219,12 +219,12 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 .build();
     }
 
-    private class SessionMetaData implements SendHandler {
+    class SessionMetaData implements SendHandler {
         private final WebSocketSession session;
         private final RemoteEndpoint.Async asyncRemote;
         private final WebSocketSessionRef sessionRef;
 
-        private final AtomicBoolean isSending = new AtomicBoolean(false);
+        final AtomicBoolean isSending = new AtomicBoolean(false);
         private final Queue<TbWebSocketMsg<?>> msgQueue;
 
         private volatile long lastActivityTime;
@@ -254,11 +254,13 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             }
         }
 
-        private void closeSession(CloseStatus reason) {
+        void closeSession(CloseStatus reason) {
             try {
                 close(this.sessionRef, reason);
             } catch (IOException ioe) {
                 log.trace("[{}] Session transport error", session.getId(), ioe);
+            } finally {
+                msgQueue.clear();
             }
         }
 
@@ -271,20 +273,19 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
 
         void sendMsg(TbWebSocketMsg<?> msg) {
-            if (isSending.compareAndSet(false, true)) {
-                sendMsgInternal(msg);
-            } else {
-                try {
-                    msgQueue.add(msg);
-                } catch (RuntimeException e) {
-                    if (log.isTraceEnabled()) {
-                        log.trace("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId(), e);
-                    } else {
-                        log.info("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId());
-                    }
-                    closeSession(CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
+            try {
+                msgQueue.add(msg);
+            } catch (RuntimeException e) {
+                if (log.isTraceEnabled()) {
+                    log.trace("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId(), e);
+                } else {
+                    log.info("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId());
                 }
+                closeSession(CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
+                return;
             }
+
+            processNextMsg();
         }
 
         private void sendMsgInternal(TbWebSocketMsg<?> msg) {
@@ -292,9 +293,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 if (TbWebSocketMsgType.TEXT.equals(msg.getType())) {
                     TbWebSocketTextMsg textMsg = (TbWebSocketTextMsg) msg;
                     this.asyncRemote.sendText(textMsg.getMsg(), this);
+                    // isSending status will be reset in the onResult method by call back
                 } else {
                     TbWebSocketPingMsg pingMsg = (TbWebSocketPingMsg) msg;
-                    this.asyncRemote.sendPing(pingMsg.getMsg());
+                    this.asyncRemote.sendPing(pingMsg.getMsg()); // blocking call
+                    isSending.set(false);
                     processNextMsg();
                 }
             } catch (Exception e) {
@@ -308,12 +311,17 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             if (!result.isOK()) {
                 log.trace("[{}] Failed to send msg", session.getId(), result.getException());
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
-            } else {
-                processNextMsg();
+                return;
             }
+
+            isSending.set(false);
+            processNextMsg();
         }
 
         private void processNextMsg() {
+            if (msgQueue.isEmpty() || !isSending.compareAndSet(false, true)) {
+                return;
+            }
             TbWebSocketMsg<?> msg = msgQueue.poll();
             if (msg != null) {
                 sendMsgInternal(msg);
