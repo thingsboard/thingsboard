@@ -14,18 +14,12 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, Inject, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { UtilsService } from '@core/services/utils.service';
-import { UntypedFormControl } from '@angular/forms';
-import { merge, Observable } from 'rxjs';
-import { delay, map, mapTo, mergeMap, share, startWith, tap } from 'rxjs/operators';
-import { ResourcesService } from '@core/services/resources.service';
-import { getMaterialIcons } from '@shared/models/icon.models';
 
 export interface MaterialIconsDialogData {
   icon: string;
@@ -37,63 +31,16 @@ export interface MaterialIconsDialogData {
   providers: [],
   styleUrls: ['./material-icons-dialog.component.scss']
 })
-export class MaterialIconsDialogComponent extends DialogComponent<MaterialIconsDialogComponent, string>
-  implements OnInit, AfterViewInit {
-
-  @ViewChildren('iconButtons') iconButtons: QueryList<HTMLElement>;
+export class MaterialIconsDialogComponent extends DialogComponent<MaterialIconsDialogComponent, string> {
 
   selectedIcon: string;
-  icons$: Observable<Array<string>>;
-  loadingIcons$: Observable<boolean>;
-
-  showAllControl: UntypedFormControl;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: MaterialIconsDialogData,
-              private utils: UtilsService,
-              private resourcesService: ResourcesService,
               public dialogRef: MatDialogRef<MaterialIconsDialogComponent, string>) {
     super(store, router, dialogRef);
     this.selectedIcon = data.icon;
-    this.showAllControl = new UntypedFormControl(false);
-  }
-
-  ngOnInit(): void {
-    this.icons$ = this.showAllControl.valueChanges.pipe(
-      map((showAll) => ({firstTime: false, showAll})),
-      startWith<{firstTime: boolean; showAll: boolean}>({firstTime: true, showAll: false}),
-      mergeMap((data) => {
-        const res = getMaterialIcons(this.resourcesService, data.showAll, '');
-        if (data.showAll) {
-          return res.pipe(delay(100));
-        } else {
-          return data.firstTime ? res : res.pipe(delay(50));
-        }
-      }),
-      share()
-    );
-  }
-
-  ngAfterViewInit(): void {
-    this.loadingIcons$ = merge(
-      this.showAllControl.valueChanges.pipe(
-        mapTo(true),
-      ),
-      this.iconButtons.changes.pipe(
-        delay(100),
-        mapTo( false),
-      )
-    ).pipe(
-      tap((loadingIcons) => {
-        if (loadingIcons) {
-          this.showAllControl.disable({emitEvent: false});
-        } else {
-          this.showAllControl.enable({emitEvent: false});
-        }
-      }),
-      share()
-    );
   }
 
   selectIcon(icon: string) {

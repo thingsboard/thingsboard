@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import './scss/constants';
+
 .tb-default, .tb-dark {
   .tb-form-panel {
     box-shadow: 0 0 10px 6px rgba(11, 17, 51, 0.04);
@@ -177,6 +180,13 @@
         opacity: 0;
       }
     }
+    &:not(.mat-mdc-form-field-has-icon-prefix) {
+      .mat-mdc-text-field-wrapper {
+        &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
+          padding-left: 12px;
+        }
+      }
+    }
     &:not(.mat-mdc-form-field-has-icon-suffix) {
       .mat-mdc-text-field-wrapper {
         &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
@@ -186,7 +196,6 @@
     }
     .mat-mdc-text-field-wrapper {
       &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
-        padding-left: 12px;
         &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(:hover) {
           .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
             border-color: rgba(0, 0, 0, 0.12);
@@ -203,7 +212,7 @@
             line-height: 20px;
           }
         }
-        .mat-mdc-form-field-icon-suffix {
+        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix {
           height: 40px;
           font-size: 14px;
           line-height: 40px;
@@ -334,6 +343,51 @@
           }
         }
       }
+    }
+  }
+
+  .tb-no-data-available {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tb-no-data-bg {
+    margin: 10px;
+    position: relative;
+    flex: 1;
+    width: 100%;
+    max-height: 100px;
+    &:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #305680;
+      -webkit-mask-image: url(/assets/home/no_data_folder_bg.svg);
+      -webkit-mask-repeat: no-repeat;
+      -webkit-mask-size: contain;
+      -webkit-mask-position: center;
+      mask-image: url(/assets/home/no_data_folder_bg.svg);
+      mask-repeat: no-repeat;
+      mask-size: contain;
+      mask-position: center;
+    }
+  }
+
+  .tb-no-data-text {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.54);
+    @media #{$mat-md-lg} {
+      font-size: 12px;
+      line-height: 16px;
     }
   }
 }

@@ -21,32 +21,31 @@ import { Inject, Injectable, NgZone } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
 import {
+  base64toObj,
+  base64toString,
   baseUrl,
   createLabelFromDatasource,
   deepClone,
   deleteNullProperties,
-  guid, hashCode,
+  guid,
+  hashCode,
   isDefined,
   isDefinedAndNotNull,
   isString,
   isUndefined,
   objToBase64,
-  objToBase64URI,
-  base64toString,
-  base64toObj
+  objToBase64URI
 } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constants';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
-import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
-import materialIconsCodepoints from '!raw-loader!./material-icons-codepoints.raw';
-import { Observable, of, ReplaySubject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { publishReplay, refCount } from 'rxjs/operators';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import {
@@ -86,13 +85,6 @@ const defaultAlarmFields: Array<string> = [
   alarmFields.status.keyName
 ];
 
-const commonMaterialIcons: Array<string> = ['more_horiz', 'more_vert', 'open_in_new',
-  'visibility', 'play_arrow', 'arrow_back', 'arrow_downward',
-  'arrow_forward', 'arrow_upwards', 'close', 'refresh', 'menu', 'show_chart', 'multiline_chart', 'pie_chart', 'insert_chart', 'people',
-  'person', 'domain', 'devices_other', 'now_widgets', 'dashboards', 'map', 'pin_drop', 'my_location', 'extension', 'search',
-  'settings', 'notifications', 'notifications_active', 'info', 'info_outline', 'warning', 'list', 'file_download', 'import_export',
-  'share', 'add', 'edit', 'done', 'delete'];
-
 // @dynamic
 @Injectable({
   providedIn: 'root'
@@ -120,8 +112,6 @@ export class UtilsService {
   };
 
   defaultAlarmDataKeys: Array<DataKey> = [];
-
-  materialIcons: Array<string> = [];
 
   constructor(@Inject(WINDOW) private window: Window,
               private zone: NgZone,
@@ -306,31 +296,6 @@ export class UtilsService {
     return datasources;
   }
 
-  public getMaterialIcons(): Observable<Array<string>> {
-    if (this.materialIcons.length) {
-      return of(this.materialIcons);
-    } else {
-      const materialIconsSubject = new ReplaySubject<Array<string>>();
-      this.zone.runOutsideAngular(() => {
-        const codepointsArray = materialIconsCodepoints
-          .split('\n')
-          .filter((codepoint) => codepoint && codepoint.length);
-        codepointsArray.forEach((codepoint) => {
-          const values = codepoint.split(' ');
-          if (values && values.length === 2) {
-            this.materialIcons.push(values[0]);
-          }
-        });
-        materialIconsSubject.next(this.materialIcons);
-      });
-      return materialIconsSubject.asObservable();
-    }
-  }
-
-  public getCommonMaterialIcons(): Array<string> {
-    return commonMaterialIcons;
-  }
-
   public getMaterialColor(index: number) {
     const colorIndex = index % materialColors.length;
     return materialColors[colorIndex].value;
@@ -411,7 +376,7 @@ export class UtilsService {
 
   public stringToHslColor(str: string, saturationPercentage: number, lightnessPercentage: number): string {
     if (str && str.length) {
-      let hue = hashCode(str) % 360;
+      const hue = hashCode(str) % 360;
       return `hsl(${hue}, ${saturationPercentage}%, ${lightnessPercentage}%)`;
     }
   }

@@ -62,15 +62,18 @@ export class ResourcesService {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(() => this.clearModulesCache());
   }
 
-  public loadJsonResource<T>(url: string): Observable<T> {
+  public loadJsonResource<T>(url: string, postProcess?: (data: T) => T): Observable<T> {
     if (this.loadedJsonResources[url]) {
       return this.loadedJsonResources[url].asObservable();
     }
     const subject = new ReplaySubject<any>();
     this.loadedJsonResources[url] = subject;
-    this.http.get(url).subscribe(
+    this.http.get<T>(url).subscribe(
       {
         next: (o) => {
+          if (postProcess) {
+            o = postProcess(o);
+          }
           this.loadedJsonResources[url].next(o);
           this.loadedJsonResources[url].complete();
         },
