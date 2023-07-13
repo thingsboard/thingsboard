@@ -43,6 +43,11 @@
           (click)="editAssetProfile($event)">
     <mat-icon class="material-icons">edit</mat-icon>
   </button>
+  <button mat-button color="primary" matSuffix
+          (click)="createAssetProfile($event, '')"
+          *ngIf="!selectAssetProfileFormGroup.get('assetProfile').value && !disabled && addNewProfile">
+    <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+  </button>
   <mat-autocomplete
     class="tb-autocomplete"
     (closed)="onPanelClosed()"
