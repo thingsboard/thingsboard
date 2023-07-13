@@ -103,7 +103,8 @@ export class DialogService {
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           color
-        }
+        },
+        autoFocus: false
     }).afterClosed();
   }
 

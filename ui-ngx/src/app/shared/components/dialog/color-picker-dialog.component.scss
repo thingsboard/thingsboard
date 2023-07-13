@@ -13,35 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-.user-avatar {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  min-width: 28px;
-  min-height: 28px;
-  color: white;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.unassigned-icon {
-  font-size: 28px;
-  color: rgba(0, 0, 0, 0.38);
-  overflow: visible;
-  margin-left: 12px;
-  margin-right: 20px;
-  padding: 0;
-}
-
-.user-avatar, .unassigned-icon {
-  width: 28px;
-  height: 28px;
-  margin-left: 12px;
-  margin-right: 20px;
-  &.inline {
-    margin-left: 0;
-    margin-right: 8px;
+:host {
+  .tb-close-button {
+    position: absolute;
+    top: 6px;
+    right: 6px;
   }
 }
