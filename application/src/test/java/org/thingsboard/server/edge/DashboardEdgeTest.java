@@ -226,7 +226,7 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
     }
 
     private Dashboard saveDashboardOnCloudAndVerifyDeliveryToEdge() throws Exception {
-        // create entity view and assign to edge
+        // create dashboard and assign to edge
         Dashboard dashboard = new Dashboard();
         dashboard.setTitle(StringUtils.randomAlphanumeric(15));
         Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
