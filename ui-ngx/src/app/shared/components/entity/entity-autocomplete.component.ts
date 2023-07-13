@@ -311,7 +311,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       } catch (e) {
         this.propagateChange(null);
       }
-      this.modelValue = entity !== null ? this.useFullEntityId ? entity.id : entity.id.id : null;
+      this.modelValue = entity !== null ? (this.useFullEntityId ? entity.id : entity.id.id) : null;
       this.selectEntityFormGroup.get('entity').patchValue(entity !== null ? entity : '', {emitEvent: false});
       this.entityChanged.emit(entity);
     } else {
