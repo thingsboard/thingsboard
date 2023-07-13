@@ -59,10 +59,10 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        httpClient.processMessage(ctx, msg,
+        var tbMsg = ackIfNeeded(ctx, msg);
+        httpClient.processMessage(ctx, tbMsg,
                 m -> tellSuccess(ctx, m),
                 (m, t) -> tellFailure(ctx, m, t));
-        ackIfNeeded(ctx, msg);
     }
 
     @Override

@@ -80,16 +80,16 @@ public class TbMqttNode extends TbAbstractExternalNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(this.mqttNodeConfiguration.getTopicPattern(), msg);
-        this.mqttClient.publish(topic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE, mqttNodeConfiguration.isRetainedMessage())
+        var tbMsg = ackIfNeeded(ctx, msg);
+        this.mqttClient.publish(topic, Unpooled.wrappedBuffer(tbMsg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE, mqttNodeConfiguration.isRetainedMessage())
                 .addListener(future -> {
                             if (future.isSuccess()) {
-                                tellSuccess(ctx, msg);
+                                tellSuccess(ctx, tbMsg);
                             } else {
-                                tellFailure(ctx, processException(msg, future.cause()), future.cause());
+                                tellFailure(ctx, processException(tbMsg, future.cause()), future.cause());
                             }
                         }
                 );
-        ackIfNeeded(ctx, msg);
     }
 
     private TbMsg processException(TbMsg origMsg, Throwable e) {

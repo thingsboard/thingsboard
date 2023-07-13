@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.aws.sns;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -70,6 +71,9 @@ public class TbSnsNode extends TbAbstractExternalNode {
             this.snsClient = AmazonSNSClient.builder()
                     .withCredentials(credProvider)
                     .withRegion(this.config.getRegion())
+                    .withClientConfiguration(new ClientConfiguration()
+                            .withConnectionTimeout(10000)
+                            .withRequestTimeout(5000))
                     .build();
         } catch (Exception e) {
             throw new TbNodeException(e);
@@ -78,10 +82,10 @@ public class TbSnsNode extends TbAbstractExternalNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        withCallback(publishMessageAsync(ctx, msg),
+        var tbMsg = ackIfNeeded(ctx, msg);
+        withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
-                t -> tellFailure(ctx, processException(ctx, msg, t), t));
-        ackIfNeeded(ctx, msg);
+                t -> tellFailure(ctx, processException(ctx, tbMsg, t), t));
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {

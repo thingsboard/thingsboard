@@ -44,9 +44,12 @@ public abstract class TbAbstractExternalNode implements TbNode {
         }
     }
 
-    protected void ackIfNeeded(TbContext ctx, TbMsg msg) {
+    protected TbMsg ackIfNeeded(TbContext ctx, TbMsg msg) {
         if (forceAck) {
             ctx.ack(msg);
+            return msg.copyWithNewCtx();
+        } else {
+            return msg;
         }
     }
 

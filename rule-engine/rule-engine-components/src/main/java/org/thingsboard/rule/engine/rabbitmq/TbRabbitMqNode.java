@@ -34,6 +34,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
@@ -50,7 +51,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 )
 public class TbRabbitMqNode extends TbAbstractExternalNode {
 
-    private static final Charset UTF8 = Charset.forName("UTF-8");
+    private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     private static final String ERROR = "error";
 
@@ -83,10 +84,10 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        withCallback(publishMessageAsync(ctx, msg),
+        var tbMsg = ackIfNeeded(ctx, msg);
+        withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
-                t -> tellFailure(ctx, processException(msg, t), t));
-        ackIfNeeded(ctx, msg);
+                t -> tellFailure(ctx, processException(tbMsg, t), t));
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {

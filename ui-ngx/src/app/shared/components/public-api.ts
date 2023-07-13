@@ -25,3 +25,4 @@ export * from './notification/template-autocomplete.component';
 export * from './resource/resource-autocomplete.component';
 export * from './toggle-header.component';
 export * from './toggle-select.component';
+export * from './unit-input.component';
