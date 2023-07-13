@@ -530,6 +530,8 @@ message UplinkMsg {
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
   repeated AssetUpdateMsg assetUpdateMsg = 16;
+  repeated DashboardUpdateMsg dashboardUpdateMsg = 17;
+  repeated EntityViewUpdateMsg entityViewUpdateMsg = 18;
 }
 
 message UplinkResponseMsg {

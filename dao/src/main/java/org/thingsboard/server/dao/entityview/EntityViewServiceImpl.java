@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -102,9 +101,21 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
+    public EntityView saveEntityView(EntityView entityView, boolean doValidate) {
+        return doSaveEntityView(entityView, doValidate);
+    }
+
+    @Override
     public EntityView saveEntityView(EntityView entityView) {
+        return doSaveEntityView(entityView, true);
+    }
+
+    private EntityView doSaveEntityView(EntityView entityView, boolean doValidate) {
         log.trace("Executing save entity view [{}]", entityView);
-        EntityView old = entityViewValidator.validate(entityView, EntityView::getTenantId);
+        EntityView old = null;
+        if (doValidate) {
+            old = entityViewValidator.validate(entityView, EntityView::getTenantId);
+        }
         try {
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
             publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
