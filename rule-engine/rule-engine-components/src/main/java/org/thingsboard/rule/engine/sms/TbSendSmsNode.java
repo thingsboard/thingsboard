@@ -60,16 +60,16 @@ public class TbSendSmsNode extends TbAbstractExternalNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        var tbMsg = ackIfNeeded(ctx, msg);
         try {
             withCallback(ctx.getSmsExecutor().executeAsync(() -> {
-                        sendSms(ctx, msg);
+                        sendSms(ctx, tbMsg);
                         return null;
                     }),
-                    ok -> tellSuccess(ctx, msg),
-                    fail -> tellFailure(ctx, msg, fail));
-            ackIfNeeded(ctx, msg);
+                    ok -> tellSuccess(ctx, tbMsg),
+                    fail -> tellFailure(ctx, tbMsg, fail));
         } catch (Exception ex) {
-            ctx.tellFailure(msg, ex);
+            ctx.tellFailure(tbMsg, ex);
         }
     }
 

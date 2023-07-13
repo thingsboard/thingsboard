@@ -53,7 +53,6 @@ import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { debounceTime, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
@@ -93,15 +92,7 @@ import {
   DisplayColumnsPanelComponent,
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
-import {
-  AlarmDataInfo,
-  alarmFields,
-  AlarmInfo,
-  alarmSeverityColors,
-  alarmSeverityTranslations,
-  AlarmStatus,
-  alarmStatusTranslations
-} from '@shared/models/alarm.models';
+import { AlarmDataInfo, alarmFields, AlarmInfo, alarmSeverityColors, AlarmStatus } from '@shared/models/alarm.models';
 import { DatePipe } from '@angular/common';
 import {
   AlarmDetailsDialogComponent,
@@ -140,7 +131,6 @@ import {
   AlarmFilterConfigData
 } from '@home/components/alarm/alarm-filter-config.component';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { UserId } from '@shared/models/id/user-id';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -168,7 +158,8 @@ interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
   templateUrl: './alarms-table-widget.component.html',
   styleUrls: ['./alarms-table-widget.component.scss', './table-widget.scss']
 })
-export class AlarmsTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
+export class AlarmsTableWidgetComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {
+
 
   @Input()
   ctx: WidgetContext;
@@ -434,7 +425,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
             keySettings.columnWidth = '120px';
           }
           if (alarmField && alarmField.keyName  === alarmFields.assignee.keyName) {
-            keySettings.columnWidth = '120px'
+            keySettings.columnWidth = '120px';
           }
         }
         this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings, 'value, alarm, ctx');
@@ -546,14 +537,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       overlayRef.dispose();
     });
 
-    const columns: DisplayColumn[] = this.columns.map(column => {
-      return {
+    const columns: DisplayColumn[] = this.columns.map(column => ({
         title: column.title,
         def: column.def,
         display: this.displayedColumns.indexOf(column.def) > -1,
         selectable: this.columnSelectionAvailability[column.def]
-      };
-    });
+      }));
 
     const providers: StaticProvider[] = [
       {
@@ -1013,7 +1002,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           data: {
             alarmId: alarm.id.id
           }
-        }).afterClosed()
+        }).afterClosed();
     }
   }
 
@@ -1021,20 +1010,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (isDefined(value)) {
       const alarmField = alarmFields[key.name];
       if (alarmField) {
-        if (alarmField.time) {
-          return value ? this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss') : '';
-        } else if (alarmField.value === alarmFields.severity.value) {
-          return this.translate.instant(alarmSeverityTranslations.get(value));
-        } else if (alarmField.value === alarmFields.status.value) {
-          return alarmStatusTranslations.get(value) ? this.translate.instant(alarmStatusTranslations.get(value)) : value;
-        } else if (alarmField.value === alarmFields.originatorType.value) {
-          return this.translate.instant(entityTypeTranslations.get(value).type);
-        } else if (alarmField.value === alarmFields.assignee.value) {
-          return '';
-        }
-        else {
-          return value;
-        }
+        return this.utils.defaultAlarmFieldContent(key, value);
       }
       const entityField = entityFields[key.name];
       if (entityField) {
