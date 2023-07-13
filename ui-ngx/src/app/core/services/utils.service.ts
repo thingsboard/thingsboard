@@ -41,7 +41,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constants';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
 import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
-import { alarmFields } from '@shared/models/alarm.models';
+import { alarmFields, alarmSeverityTranslations, alarmStatusTranslations } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
@@ -55,6 +55,8 @@ import {
   TelemetryType
 } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { DatePipe } from '@angular/common';
+import { entityTypeTranslations } from '@shared/models/entity-type.models';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
@@ -115,6 +117,7 @@ export class UtilsService {
 
   constructor(@Inject(WINDOW) private window: Window,
               private zone: NgZone,
+              private datePipe: DatePipe,
               private translate: TranslateService) {
     let frame: Element = null;
     try {
@@ -168,6 +171,27 @@ export class UtilsService {
       this.initDefaultAlarmDataKeys();
     }
     return deepClone(this.defaultAlarmDataKeys);
+  }
+
+  public defaultAlarmFieldContent(key: DataKey | {name: string}, value: any): string {
+    if (isDefined(value)) {
+      const alarmField = alarmFields[key.name];
+      if (alarmField) {
+        if (alarmField.time) {
+          return value ? this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss') : '';
+        } else if (alarmField === alarmFields.severity) {
+          return this.translate.instant(alarmSeverityTranslations.get(value));
+        } else if (alarmField === alarmFields.status) {
+          return alarmStatusTranslations.get(value) ? this.translate.instant(alarmStatusTranslations.get(value)) : value;
+        } else if (alarmField === alarmFields.originatorType) {
+          return this.translate.instant(entityTypeTranslations.get(value).type);
+        } else if (alarmField.value === alarmFields.assignee.value) {
+          return '';
+        }
+      }
+      return value;
+    }
+    return '';
   }
 
   public generateObjectFromJsonSchema(schema: any): any {
