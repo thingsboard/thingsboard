@@ -309,7 +309,7 @@
     "attributes": "Atributos",
     "latest-telemetry": "Última telemetria",
     "attributes-scope": "Escopo de atributos de entidade",
-    "scope-latest-telemetry": "Última telemetria",
+    "scope-telemetry": "Telemetria",
     "scope-client": "Atributos do cliente",
     "scope-server": "Atributos do servidor",
     "scope-shared": "Atributos compartilhados",

@@ -256,7 +256,7 @@
         "attributes": "Attribūti",
         "latest-telemetry": "Jaunākā telemetrija",
         "attributes-scope": "Vienības atribūtu darbības joma",
-        "scope-latest-telemetry": "Jaunākā telemetrija",
+        "scope-telemetry": "Telemetrija",
         "scope-client": "Klientu atribūti",
         "scope-server": "Servera atribūti",
         "scope-shared": "Dalītie atribūti",

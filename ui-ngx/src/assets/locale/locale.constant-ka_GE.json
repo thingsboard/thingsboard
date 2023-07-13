@@ -290,7 +290,7 @@
     "attributes": "ატრიბუტები",
     "latest-telemetry": "უახლესი ტელემეტრია",
     "attributes-scope": "ობიექტის ატრიბუტების ფარგლები",
-    "scope-latest-telemetry": "უახლესი ტელემეტრია",
+    "scope-telemetry": "ტელემეტრია",
     "scope-client": "კლიენტის ატრიბუტები",
     "scope-server": "სერვერის ატრიბუტები",
     "scope-shared": "ატრიბუტების გაზიარება",

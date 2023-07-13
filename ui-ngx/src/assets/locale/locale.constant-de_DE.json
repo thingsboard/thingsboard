@@ -324,7 +324,7 @@
     "attributes": "Eigenschaften",
     "latest-telemetry": "Neueste Telemetrie",
     "attributes-scope": "Entitätseigenschaftsbereich",
-    "scope-latest-telemetry": "Neueste Telemetrie",
+    "scope-telemetry": "Telemetrie",
     "scope-client": "Client Eigenschaften",
     "scope-server": "Server Eigenschaften",
     "scope-shared": "Gemeinsame Eigenschaften",

@@ -291,7 +291,7 @@
     "attributes": "Χαρακτηριστικά",
     "latest-telemetry": "Τελευταία τηλεμετρία",
     "attributes-scope": "Πεδίο εφαρμογής Χαρακτηριστικών Οντότητας",
-    "scope-latest-telemetry": "Τελευταία τηλεμετρία",
+    "scope-telemetry": "Τηλεμετρία",
     "scope-client": "Χαρακτηριστικά Client",
     "scope-server": "Χαρακτηριστικά Server",
     "scope-shared": "Κοινόχρηστα Χαρακτηριστικά",

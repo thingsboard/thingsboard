@@ -244,7 +244,7 @@
 		"attributes": "属性",
 		"latest-telemetry": "最新テレメトリ",
 		"attributes-scope": "エンティティ属性のスコープ",
-		"scope-latest-telemetry": "最新テレメトリ",
+		"scope-telemetry": "テレメトリー",
 		"scope-client": "クライアントの属性",
 		"scope-server": "サーバーの属性",
 		"scope-shared": "共有属性",

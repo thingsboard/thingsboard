@@ -285,7 +285,7 @@
         "attributes": "Atribute",
         "latest-telemetry": "Ultimele Date Telemetrice",
         "attributes-scope": "Scop Atribute Entitate",
-        "scope-latest-telemetry": "Ultimele Date Telemetrice",
+        "scope-telemetry": "Telemetrie",
         "scope-client": "Atribute Client",
         "scope-server": "Atribute Server",
         "scope-shared": "Atribute Partajate",
