@@ -667,7 +667,7 @@
         "attributes": "Atributos",
         "latest-telemetry": "Última telemetría",
         "attributes-scope": "Alcance de los atributos del dispositivo",
-        "scope-latest-telemetry": "Última telemetría",
+        "scope-telemetry": "Telemetría",
         "scope-client": "Atributos de Cliente",
         "scope-server": "Atributos de Servidor",
         "scope-shared": "Atributos Compartidos",

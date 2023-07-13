@@ -50,16 +50,23 @@ export class AttributeService {
   }
 
   public deleteEntityTimeseries(entityId: EntityId, timeseries: Array<AttributeData>, deleteAllDataForKeys = false,
-                                startTs?: number, endTs?: number, config?: RequestConfig): Observable<any> {
+                                startTs?: number, endTs?: number, rewriteLatestIfDeleted = false, deleteLatest = false,
+                                config?: RequestConfig): Observable<any> {
     const keys = timeseries.map(attribute => encodeURIComponent(attribute.key)).join(',');
     let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete` +
-      `?keys=${keys}&deleteAllDataForKeys=${deleteAllDataForKeys}`;
+      `?keys=${keys}&deleteAllDataForKeys=${deleteAllDataForKeys}&rewriteLatestIfDeleted=${rewriteLatestIfDeleted}&deleteLatest=${deleteLatest}`;
     if (isDefinedAndNotNull(startTs)) {
       url += `&startTs=${startTs}`;
     }
     if (isDefinedAndNotNull(endTs)) {
       url += `&endTs=${endTs}`;
     }
+    return this.http.delete(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public deleteEntityLatestTimeseries(entityId: EntityId, timeseries: Array<AttributeData>, config?: RequestConfig): Observable<any> {
+    const keys = timeseries.map(attribute => encodeURIComponent(attribute.key)).join(',');
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/latest/delete?keys=${keys}`;
     return this.http.delete(url, defaultHttpOptionsFromConfig(config));
   }
 
@@ -103,7 +110,8 @@ export class AttributeService {
     });
     let deleteEntityTimeseriesObservable: Observable<any>;
     if (deleteTimeseries.length) {
-      deleteEntityTimeseriesObservable = this.deleteEntityTimeseries(entityId, deleteTimeseries, true, null, null, config);
+      deleteEntityTimeseriesObservable = this.deleteEntityTimeseries(entityId, deleteTimeseries, true,
+        null, null, false, false, config);
     } else {
       deleteEntityTimeseriesObservable = of(null);
     }
