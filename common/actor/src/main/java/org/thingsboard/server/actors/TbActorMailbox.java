@@ -15,7 +15,8 @@
  */
 package org.thingsboard.server.actors;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.msg.MsgType;
@@ -31,7 +32,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @Slf4j
-@Data
+@Getter
+@RequiredArgsConstructor
 public final class TbActorMailbox implements TbActorCtx {
     private static final boolean HIGH_PRIORITY = true;
     private static final boolean NORMAL_PRIORITY = false;

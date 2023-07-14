@@ -99,8 +99,6 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
         TenantProfile old = tenantProfileDao.findById(TenantId.SYS_TENANT_ID, tenantProfile.getId().getId());
         if (old == null) {
             throw new DataValidationException("Can't update non existing tenant profile!");
-        } else if (old.isIsolatedTbRuleEngine() != tenantProfile.isIsolatedTbRuleEngine()) {
-            throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
         }
         return old;
     }

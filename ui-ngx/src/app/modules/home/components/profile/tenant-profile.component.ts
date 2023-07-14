@@ -76,6 +76,52 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         additionalInfo: {
           description: ''
         }
+      },
+      {
+        id: guid(),
+        name: 'HighPriority',
+        topic: 'tb_rule_engine.hp',
+        pollInterval: 25,
+        partitions: 10,
+        consumerPerPartition: true,
+        packProcessingTimeout: 2000,
+        submitStrategy: {
+          type: 'BURST',
+          batchSize: 100
+        },
+        processingStrategy: {
+          type: 'RETRY_FAILED_AND_TIMED_OUT',
+          retries: 0,
+          failurePercentage: 0,
+          pauseBetweenRetries: 5,
+          maxPauseBetweenRetries: 5
+        },
+        additionalInfo: {
+          description: ''
+        }
+      },
+      {
+        id: guid(),
+        name: 'SequentialByOriginator',
+        topic: 'tb_rule_engine.sq',
+        pollInterval: 25,
+        partitions: 10,
+        consumerPerPartition: true,
+        packProcessingTimeout: 2000,
+        submitStrategy: {
+          type: 'SEQUENTIAL_BY_ORIGINATOR',
+          batchSize: 100
+        },
+        processingStrategy: {
+          type: 'RETRY_FAILED_AND_TIMED_OUT',
+          retries: 3,
+          failurePercentage: 0,
+          pauseBetweenRetries: 5,
+          maxPauseBetweenRetries: 5
+        },
+        additionalInfo: {
+          description: ''
+        }
       }
     ];
     const formGroup = this.fb.group(
@@ -118,9 +164,6 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     if (this.entityForm) {
       if (this.isEditValue) {
         this.entityForm.enable({emitEvent: false});
-        if (!this.isAdd) {
-          this.entityForm.get('isolatedTbRuleEngine').disable({emitEvent: false});
-        }
       } else {
         this.entityForm.disable({emitEvent: false});
       }

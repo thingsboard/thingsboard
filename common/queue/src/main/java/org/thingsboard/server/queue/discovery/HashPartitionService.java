@@ -165,6 +165,9 @@ public class HashPartitionService implements PartitionService {
         partitionTopicsMap.put(queueKey, queueUpdateMsg.getQueueTopic());
         partitionSizesMap.put(queueKey, queueUpdateMsg.getPartitions());
         myPartitions.remove(queueKey);
+        if (!tenantId.isSysTenantId()) {
+            tenantRoutingInfoMap.remove(tenantId);
+        }
     }
 
     @Override
@@ -358,16 +361,9 @@ public class HashPartitionService implements PartitionService {
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
             return false;
         }
-        TenantRoutingInfo routingInfo = tenantRoutingInfoMap.get(tenantId);
-        if (routingInfo == null) {
-            synchronized (tenantRoutingInfoMap) {
-                routingInfo = tenantRoutingInfoMap.get(tenantId);
-                if (routingInfo == null) {
-                    routingInfo = tenantRoutingInfoService.getRoutingInfo(tenantId);
-                    tenantRoutingInfoMap.put(tenantId, routingInfo);
-                }
-            }
-        }
+        TenantRoutingInfo routingInfo = tenantRoutingInfoMap.computeIfAbsent(tenantId, k -> {
+            return tenantRoutingInfoService.getRoutingInfo(tenantId);
+        });
         if (routingInfo == null) {
             throw new TenantNotFoundException(tenantId);
         }
