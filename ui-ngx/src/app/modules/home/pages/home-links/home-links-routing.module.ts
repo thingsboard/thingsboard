@@ -25,20 +25,19 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { map } from 'rxjs/operators';
-import {
-  getCurrentAuthUser,
-  selectHasRepository,
-  selectPersistDeviceStateToTelemetry
-} from '@core/auth/auth.selectors';
-import sysAdminHomePageDashboardJson from '!raw-loader!./sys_admin_home_page.raw';
-import tenantAdminHomePageDashboardJson from '!raw-loader!./tenant_admin_home_page.raw';
-import customerUserHomePageDashboardJson from '!raw-loader!./customer_user_home_page.raw';
+import { getCurrentAuthUser, selectPersistDeviceStateToTelemetry } from '@core/auth/auth.selectors';
 import { EntityKeyType } from '@shared/models/query/query.models';
+import { ResourcesService } from '@core/services/resources.service';
+
+const sysAdminHomePageJson = '/assets/dashboard/sys_admin_home_page.json';
+const tenantAdminHomePageJson = '/assets/dashboard/tenant_admin_home_page.json';
+const customerUserHomePageJson = '/assets/dashboard/customer_user_home_page.json';
 
 @Injectable()
 export class HomeDashboardResolver implements Resolve<HomeDashboard> {
 
   constructor(private dashboardService: DashboardService,
+              private resourcesService: ResourcesService,
               private store: Store<AppState>) {
   }
 
@@ -50,13 +49,13 @@ export class HomeDashboardResolver implements Resolve<HomeDashboard> {
           const authority = getCurrentAuthUser(this.store).authority;
           switch (authority) {
             case Authority.SYS_ADMIN:
-              dashboard$ = of(JSON.parse(sysAdminHomePageDashboardJson));
+              dashboard$ = this.resourcesService.loadJsonResource(sysAdminHomePageJson);
               break;
             case Authority.TENANT_ADMIN:
-              dashboard$ = this.updateDeviceActivityKeyFilterIfNeeded(JSON.parse(tenantAdminHomePageDashboardJson));
+              dashboard$ = this.updateDeviceActivityKeyFilterIfNeeded(this.resourcesService.loadJsonResource(tenantAdminHomePageJson));
               break;
             case Authority.CUSTOMER_USER:
-              dashboard$ = this.updateDeviceActivityKeyFilterIfNeeded(JSON.parse(customerUserHomePageDashboardJson));
+              dashboard$ = this.updateDeviceActivityKeyFilterIfNeeded(this.resourcesService.loadJsonResource(customerUserHomePageJson));
               break;
           }
           if (dashboard$) {
@@ -73,18 +72,20 @@ export class HomeDashboardResolver implements Resolve<HomeDashboard> {
     );
   }
 
-  private updateDeviceActivityKeyFilterIfNeeded(dashboard: HomeDashboard): Observable<HomeDashboard> {
+  private updateDeviceActivityKeyFilterIfNeeded(dashboard$: Observable<HomeDashboard>): Observable<HomeDashboard> {
     return this.store.pipe(select(selectPersistDeviceStateToTelemetry)).pipe(
-      map((persistToTelemetry) => {
-        if (persistToTelemetry) {
-          for (const filterId of Object.keys(dashboard.configuration.filters)) {
-            if (['Active Devices', 'Inactive Devices'].includes(dashboard.configuration.filters[filterId].filter)) {
-              dashboard.configuration.filters[filterId].keyFilters[0].key.type = EntityKeyType.TIME_SERIES;
+      mergeMap((persistToTelemetry) => dashboard$.pipe(
+          map((dashboard) => {
+            if (persistToTelemetry) {
+              for (const filterId of Object.keys(dashboard.configuration.filters)) {
+                if (['Active Devices', 'Inactive Devices'].includes(dashboard.configuration.filters[filterId].filter)) {
+                  dashboard.configuration.filters[filterId].keyFilters[0].key.type = EntityKeyType.TIME_SERIES;
+                }
+              }
             }
-          }
-        }
-        return dashboard;
-      })
+            return dashboard;
+          })
+        ))
     );
   }
 }

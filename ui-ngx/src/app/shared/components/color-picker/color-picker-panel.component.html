@@ -15,14 +15,16 @@
     limitations under the License.
 
 -->
-<div mat-dialog-content>
-  <button class="tb-close-button"
-          mat-icon-button
-          (click)="cancel()"
-          type="button">
-    <mat-icon>close</mat-icon>
-  </button>
-  <tb-color-picker-panel [color]="color"
-                         (colorSelected)="selectColor($event)">
-  </tb-color-picker-panel>
+<div class="tb-color-picker-panel">
+  <div class="tb-color-picker-title" translate>color.color</div>
+  <tb-color-picker [formControl]="colorPickerControl"></tb-color-picker>
+  <div class="tb-color-picker-panel-buttons">
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="selectColor()"
+            [disabled]="colorPickerControl.invalid || !colorPickerControl.dirty">
+      {{ 'action.select' | translate }}
+    </button>
+  </div>
 </div>

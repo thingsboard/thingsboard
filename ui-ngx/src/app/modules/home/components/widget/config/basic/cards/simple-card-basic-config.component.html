@@ -67,23 +67,17 @@
         <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
       </mat-chip-listbox>
     </div>
-    <div class="tb-form-row space-between same-padding">
+    <div class="tb-form-row space-between">
       <div>{{ 'widget-config.text-color' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-        <mat-divider vertical></mat-divider>
-        <tb-color-input asBoxInput
-                        formControlName="color">
-        </tb-color-input>
-      </div>
+      <tb-color-input asBoxInput
+                      formControlName="color">
+      </tb-color-input>
     </div>
-    <div class="tb-form-row space-between same-padding">
+    <div class="tb-form-row space-between">
       <div>{{ 'widget-config.background' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-        <mat-divider vertical></mat-divider>
-        <tb-color-input asBoxInput
-                        formControlName="backgroundColor">
-        </tb-color-input>
-      </div>
+      <tb-color-input asBoxInput
+                      formControlName="backgroundColor">
+      </tb-color-input>
     </div>
   </div>
   <tb-widget-actions-panel
