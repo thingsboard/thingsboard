@@ -36,14 +36,11 @@
             <span matSuffix>px</span>
           </mat-form-field>
         </div>
-        <div class="tb-form-row space-between same-padding">
+        <div class="tb-form-row space-between">
           <div>{{ 'widgets.chart.threshold-color' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <mat-divider vertical></mat-divider>
-            <tb-color-input asBoxInput
-                            formControlName="thresholdColor">
-            </tb-color-input>
-          </div>
+          <tb-color-input asBoxInput
+                          formControlName="thresholdColor">
+          </tb-color-input>
         </div>
       </ng-template>
     </mat-expansion-panel>
