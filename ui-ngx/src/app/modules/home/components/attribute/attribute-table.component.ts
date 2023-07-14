@@ -386,7 +386,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     if ($event) {
       $event.stopPropagation();
     }
-    const isMultipleDeletion = isUndefinedOrNull(attribute);
+    const isMultipleDeletion = isUndefinedOrNull(attribute) &&  this.dataSource.selection.selected.length > 1;
     const target = $event.target || $event.srcElement || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
@@ -424,22 +424,23 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     componentRef.onDestroy(() => {
       if (componentRef.instance.result !== null) {
         const strategy = componentRef.instance.result;
-        const timeseries = isMultipleDeletion ? this.dataSource.selection.selected : [attribute];
+        const timeseries = attribute ? [attribute]: this.dataSource.selection.selected;
         let deleteAllDataForKeys = false;
         let rewriteLatestIfDeleted = false;
         let startTs = null;
         let endTs = null;
-        let deleteLatest = false;
+        let deleteLatest = true;
         let task: Observable<any>;
         if (strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_INCLUDING_KEY) {
           deleteAllDataForKeys = true;
-          deleteLatest = true;
         }
         if (strategy === TimeseriesDeleteStrategy.DELETE_OLD_DATA_EXCEPT_LATEST_VALUE) {
           deleteAllDataForKeys = true;
+          deleteLatest = false;
         }
         if (strategy === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE) {
-          task = this.attributeService.deleteEntityLatestTimeseries(this.entityIdValue, timeseries);
+          rewriteLatestIfDeleted = componentRef.instance.rewriteLatestIfDeleted;
+          task = this.attributeService.deleteEntityLatestTimeseries(this.entityIdValue, timeseries, rewriteLatestIfDeleted);
         }
         if (strategy === TimeseriesDeleteStrategy.DELETE_DATA_FOR_TIME_PERIOD) {
           startTs = componentRef.instance.startDateTime.getTime();

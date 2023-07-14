@@ -43,7 +43,7 @@ export class DeleteTimeseriesPanelComponent implements OnInit {
 
   endDateTime: Date;
 
-  rewriteLatestIfDeleted: boolean = false;
+  rewriteLatestIfDeleted: boolean = true;
 
   strategiesTranslationsMap = timeseriesDeleteStrategyTranslations;
 
@@ -78,6 +78,10 @@ export class DeleteTimeseriesPanelComponent implements OnInit {
 
   isPeriodStrategy(): boolean {
     return this.strategy === TimeseriesDeleteStrategy.DELETE_DATA_FOR_TIME_PERIOD;
+  }
+
+  isDeleteLatestStrategy(): boolean {
+    return this.strategy === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE;
   }
 
   onStartDateTimeChange(newStartDateTime: Date) {

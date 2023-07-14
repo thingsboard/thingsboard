@@ -52,6 +52,8 @@
                  (ngModelChange)="onEndDateTimeChange($event)">
         </mat-form-field>
       </div>
+    </div>
+    <div *ngIf="isPeriodStrategy() || isDeleteLatestStrategy()">
       <mat-slide-toggle [(ngModel)]="rewriteLatestIfDeleted">
         {{ "attribute.delete-timeseries.rewrite-latest-value-if-deleted" | translate }}
       </mat-slide-toggle>
