@@ -20,6 +20,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.protobuf.ByteString;
@@ -36,6 +37,7 @@ import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.threeten.bp.Duration;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -75,8 +77,8 @@ public class TbPubSubNode extends TbAbstractExternalNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        msg = ackIfNeeded(ctx, msg);
         publishMessage(ctx, msg);
-        ackIfNeeded(ctx, msg);
     }
 
     @Override
@@ -134,8 +136,19 @@ public class TbPubSubNode extends TbAbstractExternalNode {
                         new ByteArrayInputStream(config.getServiceAccountKey().getBytes()));
         CredentialsProvider credProvider = FixedCredentialsProvider.create(credentials);
 
+        var retrySettings = RetrySettings.newBuilder()
+                .setTotalTimeout(Duration.ofSeconds(10))
+                .setInitialRetryDelay(Duration.ofMillis(50))
+                .setRetryDelayMultiplier(1.1)
+                .setMaxRetryDelay(Duration.ofSeconds(2))
+                .setInitialRpcTimeout(Duration.ofSeconds(2))
+                .setRpcTimeoutMultiplier(1)
+                .setMaxRpcTimeout(Duration.ofSeconds(10))
+                .build();
+
         return Publisher.newBuilder(topicName)
                 .setCredentialsProvider(credProvider)
+                .setRetrySettings(retrySettings)
                 .build();
     }
 }
