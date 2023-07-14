@@ -88,7 +88,7 @@
       }
     }
 
-    a {
+    a:not(.ignore-style-a) {
       font-weight: 500;
       color: #2a7dec;
       text-decoration: none;

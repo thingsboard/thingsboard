@@ -1,0 +1,226 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary">
+  <h2 translate>device.connectivity.check-connectivity</h2>
+  <span fxFlex></span>
+<!--  <div [tb-help]="'check-connectivity'"></div>-->
+  <button mat-icon-button
+          (click)="close()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content>
+  <section *ngIf="loadedCommand; else loadingCommand" class="tb-form-panel no-padding no-border">
+    <tb-toggle-header #transportProtocol
+                      value="{{ selectTransportType }}"
+                      name="TransportProtocol"
+                      useSelectOnMdLg="false"
+                      appearance="fill"
+                      [fxHide]="allowTransportType.size < 2">
+      <tb-toggle-option
+        *ngIf="allowTransportType.has(BasicTransportType.HTTP)"
+        [value]="BasicTransportType.HTTP">
+        {{ deviceTransportTypeTranslationMap.get(BasicTransportType.HTTP) | translate }}
+      </tb-toggle-option>
+      <tb-toggle-option
+        *ngIf="allowTransportType.has(DeviceTransportType.MQTT)"
+        [value]="DeviceTransportType.MQTT">
+        {{ deviceTransportTypeTranslationMap.get(DeviceTransportType.MQTT) | translate }}
+      </tb-toggle-option>
+      <tb-toggle-option
+        *ngIf="allowTransportType.has(DeviceTransportType.COAP)"
+        [value]="DeviceTransportType.COAP">
+        {{ deviceTransportTypeTranslationMap.get(DeviceTransportType.COAP) | translate }}
+      </tb-toggle-option>
+      <tb-toggle-option
+        *ngIf="allowTransportType.has(DeviceTransportType.SNMP)"
+        [value]="DeviceTransportType.SNMP">
+        {{ deviceTransportTypeTranslationMap.get(DeviceTransportType.SNMP) | translate }}
+      </tb-toggle-option>
+      <tb-toggle-option
+        *ngIf="allowTransportType.has(DeviceTransportType.LWM2M)"
+        [value]="DeviceTransportType.LWM2M">
+        {{ deviceTransportTypeTranslationMap.get(DeviceTransportType.LWM2M) | translate }}
+      </tb-toggle-option>
+    </tb-toggle-header>
+    <div class="tb-form-panel stroked" [fxHide]="!allowTransportType.size">
+      <ng-container [ngSwitch]="transportProtocol.value">
+        <ng-template [ngSwitchCase]="BasicTransportType.HTTP">
+          <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.use-following-instructions</div>
+          <div class="tb-hint-instruction">
+            <span class="content tb-form-panel-hint" translate>device.connectivity.install-curl</span>
+            <span tb-help-popup="device/install_curl"
+                  tb-help-popup-placement="bottom"
+                  trigger-style="letter-spacing:0.25px; font-size: 12px"
+                  [tb-help-popup-style]="{maxWidth: '800px'}"
+                  trigger-text="{{ 'action.see-documentation' | translate }}"></span>
+          </div>
+          <div *ngIf="commands.http">
+            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.http-command</div>
+            <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                         [data]=createMarkDownCommand(commands.http)></tb-markdown>
+          </div>
+          <div *ngIf="commands.https">
+            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.https-command</div>
+            <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                         [data]=createMarkDownCommand(commands.https)></tb-markdown>
+          </div>
+        </ng-template>
+        <ng-template [ngSwitchCase]="DeviceTransportType.MQTT">
+          <div *ngIf="!(commands.mqtts && commands.mqtts === 'Check documentation')" class="tb-form-panel no-padding no-border">
+            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.use-following-instructions</div>
+            <div class="tb-hint-instruction">
+              <span class="content tb-form-panel-hint" translate>device.connectivity.install-mqtt-client</span>
+              <span tb-help-popup="device/install_mqtt_client"
+                    tb-help-popup-placement="bottom"
+                    trigger-style="letter-spacing:0.25px; font-size: 12px"
+                    [tb-help-popup-style]="{maxWidth: '800px'}"
+                    trigger-text="{{ 'action.see-documentation' | translate }}"></span>
+            </div>
+          </div>
+          <div *ngIf="commands.mqtt">
+            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.mqtt-command</div>
+            <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                         [data]=createMarkDownCommand(commands.mqtt)></tb-markdown>
+          </div>
+          <div *ngIf="commands.mqtts">
+            <div *ngIf="commands.mqtts !== 'Check documentation'; else mqttCertificate">
+              <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.mqtts-command</div>
+              <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                           [data]=createMarkDownCommand(commands.mqtts)></tb-markdown>
+            </div>
+            <ng-template #mqttCertificate>
+              <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.mqtts-x509-command</div>
+              <div>
+                <a mat-button color="primary" href="https://thingsboard.io/docs/user-guide/certificates/?ubuntuThingsboardX509=x509Chain" target="_blank">
+                  <span>
+                    {{ 'action.see-documentation' | translate }}
+                    <mat-icon class="tb-mat-18">open_in_new</mat-icon>
+                  </span>
+                </a>
+              </div>
+            </ng-template>
+          </div>
+        </ng-template>
+        <ng-template [ngSwitchCase]="DeviceTransportType.COAP">
+          <div *ngIf="!(commands.coaps && commands.coaps === 'Check documentation')" class="tb-form-panel no-padding no-border">
+            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.use-following-instructions</div>
+            <div class="tb-hint-instruction">
+              <span class="content tb-form-panel-hint" translate>device.connectivity.install-coap-cli</span>
+              <span tb-help-popup="device/install_coap_client"
+                    tb-help-popup-placement="bottom"
+                    trigger-style="letter-spacing:0.25px; font-size: 12px"
+                    [tb-help-popup-style]="{maxWidth: '800px'}"
+                    trigger-text="{{ 'action.see-documentation' | translate }}"></span>
+            </div>
+          </div>
+          <div *ngIf="commands.coap">
+            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.coap-command</div>
+            <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                         [data]=createMarkDownCommand(commands.coap)></tb-markdown>
+          </div>
+          <div *ngIf="commands.coaps">
+            <div *ngIf="commands.coaps !== 'Check documentation'; else coapCertificate">
+              <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.coaps-command</div>
+              <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                           [data]=createMarkDownCommand(commands.coaps)></tb-markdown>
+            </div>
+            <ng-template #coapCertificate>
+              <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.coaps-x509-command</div>
+              <div>
+                <a mat-button color="primary" href="https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/" target="_blank">
+                  <span>
+                    {{ 'action.see-documentation' | translate }}
+                    <mat-icon class="tb-mat-18">open_in_new</mat-icon>
+                  </span>
+                </a>
+              </div>
+            </ng-template>
+          </div>
+        </ng-template>
+        <ng-template [ngSwitchCase]="DeviceTransportType.SNMP">
+          <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.snmp-command</div>
+          <div>
+            <a mat-button color="primary" href="https://thingsboard.io/docs/reference/snmp-api/" target="_blank">
+              <span>
+                {{ 'action.see-documentation' | translate }}
+                <mat-icon class="tb-mat-18">open_in_new</mat-icon>
+              </span>
+            </a>
+          </div>
+        </ng-template>
+        <ng-template [ngSwitchCase]="DeviceTransportType.LWM2M">
+          <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.lwm2m-command</div>
+          <div>
+            <a mat-button color="primary" href="https://thingsboard.io/docs/reference/lwm2m-api/" target="_blank">
+              <span>
+                {{ 'action.see-documentation' | translate }}
+                <mat-icon class="tb-mat-18">open_in_new</mat-icon>
+              </span>
+            </a>
+          </div>
+        </ng-template>
+      </ng-container>
+    </div>
+    <div class="tb-form-panel stroked">
+      <div fxFlex fxLayout="row">
+        <div class="tb-form-panel-title" translate>device.state</div>
+        <div class="status" [ngClass]="{'inactive': !status}">
+          {{ (status ? 'device.active' : 'device.inactive') | translate }}
+        </div>
+      </div>
+      <div class="tb-form-panel-hint tb-font-14" translate>attribute.latest-telemetry</div>
+      <div class="tb-form-table">
+        <div class="tb-form-table-header">
+          <div class="tb-form-table-header-cell" fxFlex translate>device.time</div>
+          <div class="tb-form-table-header-cell" fxFlex translate>attribute.key</div>
+          <div class="tb-form-table-header-cell" fxFlex translate>attribute.value</div>
+        </div>
+        <div *ngIf="latestTelemetry.length; else noData" class="tb-form-table-body">
+          <div class="tb-form-table-row" *ngFor="let telemetry of latestTelemetry">
+            <div class="tb-form-table-row-cell" fxFlex>{{ telemetry.lastUpdateTs | date: 'yyyy-MM-dd HH:mm:ss' }}</div>
+            <div class="tb-form-table-row-cell" fxFlex>{{ telemetry.key }}</div>
+            <div class="tb-form-table-row-cell" fxFlex>{{ telemetry.value }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<div mat-dialog-actions class="tb-dialog-actions">
+  <mat-slide-toggle fxShow="{{ showDontShowAgain }}" [(ngModel)]="notShowAgain">{{ 'action.dont-show-again' | translate}}</mat-slide-toggle>
+  <span fxFlex></span>
+  <button mat-button
+          [disabled]="(isLoading$ | async)"
+          (click)="close()">{{ 'action.cancel' | translate }}</button>
+</div>
+<ng-template #loadingCommand>
+  <div class="tb-loader">
+    <mat-spinner color="accent" diameter="65" strokeWidth="4"></mat-spinner>
+    <span class="mat-subtitle-1 label">
+        {{ 'device.connectivity.loading-check-connectivity-command' | translate }}
+      </span>
+  </div>
+</ng-template>
+<ng-template #noData>
+  <div class="tb-no-data-available">
+    <div class="tb-no-data-bg"></div>
+    <div class="tb-no-data-text" translate>attribute.no-latest-telemetry</div>
+  </div>
+</ng-template>

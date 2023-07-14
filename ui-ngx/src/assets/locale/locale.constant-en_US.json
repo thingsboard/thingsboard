@@ -69,7 +69,9 @@
         "skip": "Skip",
         "send": "Send",
         "reset": "Reset",
-        "show-more": "Show more"
+        "show-more": "Show more",
+        "dont-show-again": "Do not show again",
+        "see-documentation": "See documentation"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -691,6 +693,7 @@
     "attribute": {
         "attributes": "Attributes",
         "latest-telemetry": "Latest telemetry",
+        "no-latest-telemetry": "No latest telemetry",
         "attributes-scope": "Entity attributes scope",
         "scope-latest-telemetry": "Latest telemetry",
         "scope-client": "Client attributes",
@@ -1379,7 +1382,26 @@
             "customer-to-assign-device": "Customer to assign the device"
         },
         "unassign-devices-from-edge-title": "Are you sure you want to unassign { count, plural, =1 {1 device} other {# devices} }?",
-        "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge."
+        "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge.",
+        "time": "Time",
+        "connectivity": {
+            "check-connectivity": "Check connectivity",
+            "loading-check-connectivity-command": "Loading check connectivity commands...",
+            "use-following-instructions": "Use the following instructions for sending telemetry on behalf of the device using shell",
+            "install-curl": "Install cURL tool.",
+            "install-mqtt-client": "Install mgtt client tool.",
+            "install-coap-cli": "Install coap-cli tool.",
+            "http-command": "HTTP (Linux, macOS or Windows)",
+            "https-command": "HTTPS (Linux, macOS or Windows)",
+            "mqtt-command": "MQTT (Linux, macOS)",
+            "mqtts-command": "MQTT over SSL (Linux, macOS)",
+            "mqtts-x509-command": "Use the following documentation to connect the device via MQTT with authorization X509",
+            "coap-command": "CoAP (Linux, macOS)",
+            "coaps-command": "CoAP over DTLS (Linux, macOS)",
+            "coaps-x509-command": "Use the following documentation to connect the device via CoAP over DTLS with authorization X509",
+            "snmp-command": "Use the following documentation to connect the device through the SNMP.",
+            "lwm2m-command": "Use the following documentation to connect the device through the LWM2M."
+        }
     },
     "asset-profile": {
         "asset-profile": "Asset profile",
@@ -1461,6 +1483,7 @@
         "transport-type-lwm2m-hint": "LWM2M transport type",
         "transport-type-snmp": "SNMP",
         "transport-type-snmp-hint": "Specify SNMP transport configuration",
+        "transport-type-http": "HTTP",
         "description": "Description",
         "default": "Default",
         "profile-configuration": "Profile configuration",

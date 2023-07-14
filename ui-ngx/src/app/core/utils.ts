@@ -315,6 +315,8 @@ export const isEqual = (a: any, b: any): boolean => _.isEqual(a, b);
 
 export const isEmpty = (a: any): boolean => _.isEmpty(a);
 
+export const unset = (object: any, path: string | symbol): boolean => _.unset(object, path);
+
 export const isEqualIgnoreUndefined = (a: any, b: any): boolean => {
   if (a === b) {
     return true;

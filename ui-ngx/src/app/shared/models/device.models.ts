@@ -52,6 +52,12 @@ export enum DeviceTransportType {
   SNMP = 'SNMP'
 }
 
+export enum BasicTransportType {
+  HTTP = 'HTTP'
+}
+export type TransportType =  BasicTransportType | DeviceTransportType;
+export type NetworkTransportType =  BasicTransportType | Exclude<DeviceTransportType, DeviceTransportType.DEFAULT>;
+
 export enum TransportPayloadType {
   JSON = 'JSON',
   PROTOBUF = 'PROTOBUF'
@@ -99,13 +105,14 @@ export const deviceProfileTypeConfigurationInfoMap = new Map<DeviceProfileType, 
   ]
 );
 
-export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, string>(
+export const deviceTransportTypeTranslationMap = new Map<TransportType, string>(
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
     [DeviceTransportType.COAP, 'device-profile.transport-type-coap'],
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m'],
-    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp']
+    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp'],
+    [BasicTransportType.HTTP, 'device-profile.transport-type-http']
   ]
 );
 
@@ -119,13 +126,14 @@ export const deviceProvisionTypeTranslationMap = new Map<DeviceProvisionType, st
   ]
 );
 
-export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
+export const deviceTransportTypeHintMap = new Map<TransportType, string>(
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
     [DeviceTransportType.COAP, 'device-profile.transport-type-coap-hint'],
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint'],
-    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp-hint']
+    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp-hint'],
+    [BasicTransportType.HTTP, '']
   ]
 );
 
