@@ -71,7 +71,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     @Value("${zk.recalculate_delay:120000}")
     private Long recalculateDelay;
 
-    private final ConcurrentHashMap<String, ScheduledFuture<?>> delayedTasks;
+    protected final ConcurrentHashMap<String, ScheduledFuture<?>> delayedTasks;
 
     private final TbServiceInfoProvider serviceInfoProvider;
     private final PartitionService partitionService;
