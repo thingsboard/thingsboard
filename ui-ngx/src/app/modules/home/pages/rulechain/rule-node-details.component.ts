@@ -58,6 +58,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   @Output()
   initRuleNode = new EventEmitter<void>();
 
+  @Output()
+  changeScript = new EventEmitter<void>();
+
   ruleNodeType = RuleNodeType;
   entityType = EntityType;
 

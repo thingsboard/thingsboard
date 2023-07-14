@@ -1279,25 +1279,24 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   onDebugEventSelected(debugEventBody: DebugRuleNodeEventBody) {
-    if (this.ruleNodeComponent.ruleNodeConfigComponent.useDefinedDirective() &&
-      this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.getSupportTestFunction() &&
-      this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.testScript$) {
-        this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.testScript$(debugEventBody)
-          .subscribe((value) => {
-            if (value) {
-              this.selectedRuleNodeTabIndex = 0;
-            }
-          })
-      }
+    const ruleNodeConfigComponent = this.ruleNodeComponent.ruleNodeConfigComponent;
+    const ruleNodeConfigDefinedComponent = ruleNodeConfigComponent.definedConfigComponent;
+    if (ruleNodeConfigComponent.useDefinedDirective() && ruleNodeConfigDefinedComponent.hasScript && ruleNodeConfigDefinedComponent.testScript) {
+      ruleNodeConfigDefinedComponent.testScript(debugEventBody);
+    }
   }
 
   onRuleNodeInit() {
-      if (this.ruleNodeComponent.ruleNodeConfigComponent.useDefinedDirective() &&
-        this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.getSupportTestFunction()) {
-        this.ruleNodeTestButtonLabel = this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent.getTestButtonLabel();
-      } else {
-        this.ruleNodeTestButtonLabel = '';
-      }
+    const ruleNodeConfigDefinedComponent = this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent;
+    if (this.ruleNodeComponent.ruleNodeConfigComponent.useDefinedDirective() && ruleNodeConfigDefinedComponent.hasScript) {
+      this.ruleNodeTestButtonLabel = ruleNodeConfigDefinedComponent.testScriptLabel;
+    } else {
+      this.ruleNodeTestButtonLabel = '';
+    }
+  }
+
+  switchToFirstTab() {
+    this.selectedRuleNodeTabIndex = 0;
   }
 
   saveRuleNode() {

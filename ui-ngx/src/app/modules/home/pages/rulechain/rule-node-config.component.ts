@@ -87,6 +87,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
   @Output()
   initRuleNode = new EventEmitter<void>();
 
+  @Output()
+  changeScript = new EventEmitter<void>();
+
   nodeDefinitionValue: RuleNodeDefinition;
 
   @Input()
@@ -109,6 +112,8 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
   ruleNodeConfigFormGroup: UntypedFormGroup;
 
   changeSubscription: Subscription;
+
+  changeScriptSubscription: Subscription;
 
   definedConfigComponent: IRuleNodeConfigurationComponent;
 
@@ -139,6 +144,14 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
   ngOnDestroy(): void {
     if (this.definedConfigComponentRef) {
       this.definedConfigComponentRef.destroy();
+    }
+    if (this.changeSubscription) {
+      this.changeSubscription.unsubscribe();
+      this.changeSubscription = null;
+    }
+    if (this.changeScriptSubscription) {
+      this.changeScriptSubscription.unsubscribe();
+      this.changeScriptSubscription = null;
     }
   }
 
@@ -212,6 +225,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       this.changeSubscription = this.definedConfigComponent.configurationChanged.subscribe((configuration) => {
         this.updateModel(configuration);
       });
+      if (this.definedConfigComponent?.changeScript) {
+        this.changeScriptSubscription = this.definedConfigComponent.changeScript.subscribe(() => this.changeScript.emit());
+      }
     }
   }
 

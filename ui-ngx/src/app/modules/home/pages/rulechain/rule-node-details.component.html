@@ -51,7 +51,8 @@
         [ruleChainId]="ruleChainId"
         [ruleChainType]="ruleChainType"
         [nodeDefinition]="ruleNode.component.configurationDescriptor.nodeDefinition"
-        (initRuleNode)="initRuleNode.emit($event)">
+        (initRuleNode)="initRuleNode.emit($event)"
+        (changeScript)="changeScript.emit($event)">
       </tb-rule-node-config>
       <div formGroupName="additionalInfo" fxLayout="column" class="description-block">
         <mat-form-field class="mat-block">

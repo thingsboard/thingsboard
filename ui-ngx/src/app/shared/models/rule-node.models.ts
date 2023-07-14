@@ -73,13 +73,14 @@ export interface RuleNodeConfigurationDescriptor {
 export interface IRuleNodeConfigurationComponent {
   ruleNodeId: string;
   ruleChainId: string;
+  hasScript: boolean;
+  testScriptLabel?: string;
+  changeScript?: EventEmitter<void>;
   ruleChainType: RuleChainType;
   configuration: RuleNodeConfiguration;
   configurationChanged: Observable<RuleNodeConfiguration>;
   validate();
-  getSupportTestFunction(): boolean;
-  getTestButtonLabel? (): string;
-  testScript$? (debugEventBody?: DebugRuleNodeEventBody): Observable<string>;
+  testScript? (debugEventBody?: DebugRuleNodeEventBody);
   [key: string]: any;
 }
 
@@ -91,6 +92,8 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
   ruleNodeId: string;
 
   ruleChainId: string;
+
+  hasScript: boolean = false;
 
   ruleChainType: RuleChainType;
 
@@ -115,8 +118,7 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
   configurationChangedEmiter = new EventEmitter<RuleNodeConfiguration>();
   configurationChanged = this.configurationChangedEmiter.asObservable();
 
-  protected constructor(@Inject(Store) protected store: Store<AppState>,
-                        @Inject(TranslateService) protected translate: TranslateService) {
+  protected constructor(@Inject(Store) protected store: Store<AppState>) {
     super(store);
   }
 
@@ -132,14 +134,6 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
 
   validate() {
     this.onValidate();
-  }
-
-  getSupportTestFunction(): boolean {
-    return false;
-  }
-
-  getTestButtonLabel(): string {
-    return this.translate.instant('rulenode.test-script-function');
   }
 
   protected setupConfiguration(configuration: RuleNodeConfiguration) {
