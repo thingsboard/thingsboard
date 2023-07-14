@@ -130,7 +130,7 @@ public class TbAlarmNodeTest {
         long ts = msg.getTs();
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
+        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
         Alarm expectedAlarm = Alarm.builder()
                 .startTs(ts)
                 .endTs(ts)
@@ -177,7 +177,7 @@ public class TbAlarmNodeTest {
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFailedFuture(new NotImplementedException("message")));
-        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
+        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
 
         node.onMsg(ctx, msg);
 
@@ -188,13 +188,13 @@ public class TbAlarmNodeTest {
         verify(ctx, times(2)).getDbCallbackExecutor();
         verify(ctx).logJsEvalRequest();
         verify(ctx).getTenantId();
-        verify(alarmService).findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType");
+        verify(alarmService).findLatestByOriginatorAndType(tenantId, originator, "SomeType");
 
         verifyNoMoreInteractions(ctx, alarmService);
     }
 
     @Test
-    public void ifAlarmClearedCreateNew() throws ScriptException, IOException {
+    public void ifAlarmClearedUpdate() {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
@@ -202,7 +202,7 @@ public class TbAlarmNodeTest {
         Alarm clearedAlarm = Alarm.builder().cleared(true).acknowledged(true).build();
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(clearedAlarm);
+        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(clearedAlarm);
 
         Alarm expectedAlarm = Alarm.builder()
                 .startTs(ts)
@@ -214,10 +214,11 @@ public class TbAlarmNodeTest {
                 .type("SomeType")
                 .details(null)
                 .build();
-        when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
+
+        when(alarmService.updateAlarm(any(AlarmUpdateRequest.class))).thenReturn(
                 AlarmApiCallResult.builder()
                         .successful(true)
-                        .created(true)
+                        .modified(true)
                         .alarm(new AlarmInfo(expectedAlarm))
                         .build());
 
@@ -225,7 +226,7 @@ public class TbAlarmNodeTest {
 
         verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
         successCaptor.getValue().run();
-        verify(ctx).tellNext(any(), eq("Created"));
+        verify(ctx).tellNext(any(), eq("Updated"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
@@ -237,7 +238,7 @@ public class TbAlarmNodeTest {
         assertEquals("ALARM", typeCaptor.getValue());
         assertEquals(originator, originatorCaptor.getValue());
         assertEquals("value", metadataCaptor.getValue().getValue("key"));
-        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_NEW_ALARM));
+        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_EXISTING_ALARM));
         assertNotSame(metaData, metadataCaptor.getValue());
 
 
@@ -255,7 +256,7 @@ public class TbAlarmNodeTest {
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).severity(WARNING).endTs(oldEndDate).build();
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(activeAlarm);
+        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(activeAlarm);
 
         Alarm expectedAlarm = Alarm.builder()
                 .tenantId(tenantId)
@@ -439,7 +440,7 @@ public class TbAlarmNodeTest {
                 .build();
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
+        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
         when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
                 AlarmApiCallResult.builder()
                         .successful(true)
@@ -505,7 +506,7 @@ public class TbAlarmNodeTest {
                 .build();
 
         when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
+        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(null);
         when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
                 AlarmApiCallResult.builder()
                         .successful(true)
@@ -571,7 +572,7 @@ public class TbAlarmNodeTest {
                     .build();
 
             when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-            when(alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, "SomeType" + i)).thenReturn(null);
+            when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType" + i)).thenReturn(null);
             when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
                     AlarmApiCallResult.builder()
                             .successful(true)
