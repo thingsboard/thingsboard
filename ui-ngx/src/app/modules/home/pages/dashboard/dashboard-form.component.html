@@ -118,25 +118,27 @@
           {{ 'dashboard.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
+      <div class="tb-form-panel stroked no-padding-bottom">
+        <div class="tb-form-panel-title" translate>dashboard.mobile-app-settings</div>
+          <mat-slide-toggle fxFlex formControlName="mobileHide">
+            {{ 'dashboard.mobile-hide' | translate }}
+          </mat-slide-toggle>
+          <tb-image-input fxFlex
+                          label="{{'dashboard.image' | translate}}"
+                          maxSizeByte="524288"
+                          formControlName="image">
+          </tb-image-input>
+          <mat-form-field class="mat-block">
+            <mat-label translate>dashboard.mobile-order</mat-label>
+            <input matInput formControlName="mobileOrder" type="number" step="1">
+          </mat-form-field>
+      </div>
       <div formGroupName="configuration" fxLayout="column">
         <mat-form-field class="mat-block">
           <mat-label translate>dashboard.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
       </div>
-      <div translate>dashboard.mobile-app-settings</div>
-      <tb-image-input fxFlex
-                      label="{{'dashboard.image' | translate}}"
-                      maxSizeByte="524288"
-                      formControlName="image">
-      </tb-image-input>
-      <mat-checkbox fxFlex formControlName="mobileHide">
-        {{ 'dashboard.mobile-hide' | translate }}
-      </mat-checkbox>
-      <mat-form-field class="mat-block">
-        <mat-label translate>dashboard.mobile-order</mat-label>
-        <input matInput formControlName="mobileOrder" type="number" step="1">
-      </mat-form-field>
     </fieldset>
   </form>
 </div>
