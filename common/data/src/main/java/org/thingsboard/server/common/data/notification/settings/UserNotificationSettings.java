@@ -29,6 +29,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 public class UserNotificationSettings {
@@ -39,39 +40,42 @@ public class UserNotificationSettings {
 
     public static final UserNotificationSettings DEFAULT = new UserNotificationSettings(Collections.emptyMap());
 
-    private static final Set<NotificationDeliveryMethod> deliveryMethods = NotificationTargetType.PLATFORM_USERS.getSupportedDeliveryMethods();
+    public static final Set<NotificationDeliveryMethod> deliveryMethods = NotificationTargetType.PLATFORM_USERS.getSupportedDeliveryMethods();
 
     @JsonCreator
     public UserNotificationSettings(@JsonProperty("prefs") Map<NotificationType, NotificationPref> prefs) {
         this.prefs = prefs;
     }
 
-    public Set<NotificationDeliveryMethod> getEnabledDeliveryMethods(NotificationType notificationType) {
+    public boolean isEnabled(NotificationType notificationType, NotificationDeliveryMethod deliveryMethod) {
         NotificationPref pref = prefs.get(notificationType);
-        if (pref != null) {
-            return pref.isEnabled() ? pref.getEnabledDeliveryMethods() : Collections.emptySet();
-        } else {
-            return deliveryMethods;
+        if (pref == null) {
+            return true;
         }
+        if (!pref.isEnabled()) {
+            return false;
+        }
+        return pref.getEnabledDeliveryMethods().getOrDefault(deliveryMethod, true);
     }
 
     @Data
     public static class NotificationPref {
         private boolean enabled;
         @NotNull
-        private Set<NotificationDeliveryMethod> enabledDeliveryMethods;
+        private Map<NotificationDeliveryMethod, Boolean> enabledDeliveryMethods;
 
         public static NotificationPref createDefault() {
             NotificationPref pref = new NotificationPref();
             pref.setEnabled(true);
-            pref.setEnabledDeliveryMethods(deliveryMethods);
+            pref.setEnabledDeliveryMethods(deliveryMethods.stream().collect(Collectors.toMap(v -> v, v -> true)));
             return pref;
         }
 
         @JsonIgnore
         @AssertTrue(message = "Only email, Web and SMS delivery methods are allowed")
         public boolean isValid() {
-            return deliveryMethods.containsAll(enabledDeliveryMethods);
+            return enabledDeliveryMethods.entrySet().stream()
+                    .allMatch(entry -> deliveryMethods.contains(entry.getKey()) && entry.getValue() != null);
         }
     }
 

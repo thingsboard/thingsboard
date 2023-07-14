@@ -49,6 +49,7 @@ import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -95,12 +96,13 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
     }
 
     @Override
-    public void saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings) {
+    public UserNotificationSettings saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings) {
         User user = userService.findUserById(tenantId, userId);
         ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(user.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
         additionalInfo.set(USER_SETTINGS_KEY, JacksonUtil.valueToTree(settings));
         user.setAdditionalInfo(additionalInfo);
         userService.saveUser(user);
+        return formatUserNotificationSettings(settings);
     }
 
     @Override
@@ -108,20 +110,32 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         UserNotificationSettings settings = Optional.ofNullable(user.getAdditionalInfo().get(USER_SETTINGS_KEY))
                 .filter(not(JsonNode::isNull))
                 .map(json -> JacksonUtil.treeToValue(json, UserNotificationSettings.class))
-                .orElse(null);
-        if (!format) {
-            return Optional.ofNullable(settings).orElse(UserNotificationSettings.DEFAULT);
+                .orElse(UserNotificationSettings.DEFAULT);
+        if (format) {
+            settings = formatUserNotificationSettings(settings);
         }
+        return settings;
+    }
 
+    private UserNotificationSettings formatUserNotificationSettings(UserNotificationSettings settings) {
         Map<NotificationType, NotificationPref> prefs = new EnumMap<>(NotificationType.class);
         if (settings != null) {
             prefs.putAll(settings.getPrefs());
         }
         NotificationPref defaultPref = NotificationPref.createDefault();
         for (NotificationType notificationType : NotificationType.values()) {
-            prefs.putIfAbsent(notificationType, defaultPref);
+            NotificationPref pref = prefs.get(notificationType);
+            if (pref == null) {
+                prefs.put(notificationType, defaultPref);
+            } else {
+                var enabledDeliveryMethods = new LinkedHashMap<>(pref.getEnabledDeliveryMethods());
+                // in case a new delivery method was added to the platform
+                UserNotificationSettings.deliveryMethods.forEach(deliveryMethod -> {
+                    enabledDeliveryMethods.putIfAbsent(deliveryMethod, true);
+                });
+                pref.setEnabledDeliveryMethods(enabledDeliveryMethods);
+            }
         }
-        prefs.remove(NotificationType.GENERAL);
         return new UserNotificationSettings(prefs);
     }
 

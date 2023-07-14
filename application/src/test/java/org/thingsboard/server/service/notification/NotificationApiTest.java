@@ -62,7 +62,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -479,15 +478,27 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     public void testUserNotificationSettings() throws Exception {
         var entityActionNotificationPref = new UserNotificationSettings.NotificationPref();
         entityActionNotificationPref.setEnabled(true);
-        entityActionNotificationPref.setEnabledDeliveryMethods(Set.of(NotificationDeliveryMethod.WEB));
+        entityActionNotificationPref.setEnabledDeliveryMethods(Map.of(
+                NotificationDeliveryMethod.WEB, true,
+                NotificationDeliveryMethod.SMS, false,
+                NotificationDeliveryMethod.EMAIL, false
+        ));
 
         var entitiesLimitNotificationPref = new UserNotificationSettings.NotificationPref();
         entitiesLimitNotificationPref.setEnabled(true);
-        entitiesLimitNotificationPref.setEnabledDeliveryMethods(Set.of(NotificationDeliveryMethod.SMS));
+        entitiesLimitNotificationPref.setEnabledDeliveryMethods(Map.of(
+                NotificationDeliveryMethod.SMS, true,
+                NotificationDeliveryMethod.WEB, false,
+                NotificationDeliveryMethod.EMAIL, false
+        ));
 
         var apiUsageLimitNotificationPref = new UserNotificationSettings.NotificationPref();
         apiUsageLimitNotificationPref.setEnabled(false);
-        apiUsageLimitNotificationPref.setEnabledDeliveryMethods(Set.of(NotificationDeliveryMethod.WEB));
+        apiUsageLimitNotificationPref.setEnabledDeliveryMethods(Map.of(
+                NotificationDeliveryMethod.WEB, true,
+                NotificationDeliveryMethod.SMS, false,
+                NotificationDeliveryMethod.EMAIL, false
+        ));
 
         UserNotificationSettings settings = new UserNotificationSettings(Map.of(
                 NotificationType.ENTITY_ACTION, entityActionNotificationPref,
