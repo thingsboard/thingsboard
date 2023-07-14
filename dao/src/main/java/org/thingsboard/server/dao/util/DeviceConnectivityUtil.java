@@ -64,10 +64,6 @@ public class DeviceConnectivityUtil {
                     return null;
                 }
                 break;
-            case X509_CERTIFICATE:
-                if (MQTTS.equals(protocol)) {
-                    return CHECK_DOCUMENTATION;
-                }
             default:
                 return null;
         }
@@ -81,10 +77,6 @@ public class DeviceConnectivityUtil {
                 String client = COAPS.equals(protocol) ? "coap-client-openssl -v 9" : "coap-client";
                 return String.format("%s -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
                         client, protocol, host, port, deviceCredentials.getCredentialsId(), JSON_EXAMPLE_PAYLOAD);
-            case X509_CERTIFICATE:
-                if (COAPS.equals(protocol)) {
-                    return CHECK_DOCUMENTATION;
-                }
             default:
                 return null;
         }

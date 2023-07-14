@@ -755,6 +755,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private String getMqttPublishCommand(String protocol, String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
+        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
+            return CHECK_DOCUMENTATION;
+        }
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
         if (properties == null || !properties.getEnabled()) {
             return null;
@@ -765,6 +768,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private String getCoapPublishCommand(String protocol, String defaultHostname, DeviceCredentials deviceCredentials) {
+        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
+            return CHECK_DOCUMENTATION;
+        }
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
         if (properties == null || !properties.getEnabled()) {
             return null;
