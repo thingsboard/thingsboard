@@ -38,6 +38,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @RuleNode(
@@ -97,8 +98,8 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             }
         }
 
-        Alarm existingAlarm = ctx.getAlarmService().findLatestActiveByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
-        if (existingAlarm == null || existingAlarm.getStatus().isCleared()) {
+        Alarm existingAlarm = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
+        if (existingAlarm == null) {
             return createNewAlarm(ctx, msg, msgAlarm);
         } else {
             return updateAlarm(ctx, msg, existingAlarm, msgAlarm);

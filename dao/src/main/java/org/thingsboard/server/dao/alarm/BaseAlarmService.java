@@ -166,8 +166,13 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
+    public ListenableFuture<Alarm> findLatestByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
         return alarmDao.findLatestByOriginatorAndTypeAsync(tenantId, originator, type);
+    }
+
+    @Override
+    public Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
+        return alarmDao.findLatestByOriginatorAndType(tenantId, originator, type);
     }
 
     @Override

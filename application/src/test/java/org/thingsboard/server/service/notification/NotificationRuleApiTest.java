@@ -230,8 +230,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
         await().atMost(10, TimeUnit.SECONDS)
-                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get() != null);
-        Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get();
+                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndTypeAsync(tenantId, device.getId(), alarmType).get() != null);
+        Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndTypeAsync(tenantId, device.getId(), alarmType).get();
 
         long ts = System.currentTimeMillis();
         await().atMost(15, TimeUnit.SECONDS)
@@ -313,8 +313,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
         await().atMost(10, TimeUnit.SECONDS)
-                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get() != null);
-        Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get();
+                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndTypeAsync(tenantId, device.getId(), alarmType).get() != null);
+        Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndTypeAsync(tenantId, device.getId(), alarmType).get();
         getWsClient().waitForUpdate(true);
 
         Notification notification = getWsClient().getLastDataUpdate().getUpdate();

@@ -91,7 +91,9 @@ public interface RuleEngineAlarmService {
 
     Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
-    ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+    Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+
+    ListenableFuture<Alarm> findLatestByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type);
 
     AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId);
 

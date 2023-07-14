@@ -216,8 +216,13 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
+    public Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return alarmService.findLatestByOriginatorAndType(tenantId, originator, type);
+    }
+
+    @Override
+    public ListenableFuture<Alarm> findLatestByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
+        return alarmService.findLatestByOriginatorAndTypeAsync(tenantId, originator, type);
     }
 
     @Deprecated

@@ -93,7 +93,7 @@ public interface AlarmService extends EntityDaoService {
     AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId);
 
     @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+    ListenableFuture<Alarm> findLatestByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type);
 
     // Other API
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
@@ -114,6 +114,8 @@ public interface AlarmService extends EntityDaoService {
                                            AlarmStatus alarmStatus, String assigneeId);
 
     Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+
+    Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
