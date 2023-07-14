@@ -52,7 +52,7 @@ export class EditAttributeValuePanelComponent extends PageComponent implements O
 
   ngOnInit(): void {
     this.attributeFormGroup = this.fb.group({
-      value: [this.data.attributeValue, [Validators.required]]
+      value: [this.data.attributeValue, []]
     });
   }
 

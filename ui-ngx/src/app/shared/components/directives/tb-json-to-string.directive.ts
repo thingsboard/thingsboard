@@ -60,6 +60,9 @@ export class TbJsonToStringDirective implements ControlValueAccessor, Validator,
         this.parseError = true;
       }
     } catch (e) {
+      if (Array.isArray(this.data) && !this.data.length && newValue !== '[]') {
+        this.data = newValue;
+      }
       this.parseError = true;
     }
 

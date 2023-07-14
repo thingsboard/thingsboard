@@ -57,7 +57,7 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
   ngOnInit(): void {
     this.attributeFormGroup = this.fb.group({
       key: ['', [Validators.required, Validators.maxLength(255)]],
-      value: [null, [Validators.required]]
+      value: [null, []]
     });
   }
 
