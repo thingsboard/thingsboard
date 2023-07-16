@@ -1907,7 +1907,7 @@
                 "dialogTitle": "Launch command",
                 "dialogHideDashboardToolbar": true,
                 "dialogWidth": null,
-                "dialogHeight": 35,
+                "dialogHeight": 40,
                 "openInSeparateDialog": true,
                 "openInPopover": false,
                 "id": "337c767b-3217-d3d3-b955-7b0bd0858a1d"
@@ -5087,14 +5087,14 @@
             "useMarkdownTextFunction": true,
             "markdownTextFunction": "return `<div class=\"action-container\">\n<tb-gateway-command deviceId=\"${data[0].entityId}\"></tb-gateway-command>\n </div>`;",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".action-container {\r\n    display: flex;\r\n    flex-wrap: wrap;\r\n    flex-direction: row;\r\n    height: 100%;\r\n    width: 100%;\r\n    align-content: center;\r\n}\r\n\r\nbutton {\r\n    flex-grow: 1;\r\n    margin: 10px;\r\n    min-width: 150px;\r\n    height: auto;\r\n}"
+            "markdownCss": ".action-container {\r\n    display: flex;\r\n    flex-wrap: wrap;\r\n    flex-direction: row;\r\n    height: 100%;\r\n    width: 100%;\r\n}\r\n\r\nbutton {\r\n    flex-grow: 1;\r\n    margin: 10px;\r\n    min-width: 150px;\r\n    height: auto;\r\n}"
           },
           "title": "New Markdown/HTML Card",
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
           "titleTooltip": "",
-          "dropShadow": true,
+          "dropShadow": false,
           "enableFullscreen": false,
           "widgetStyle": {},
           "titleStyle": {

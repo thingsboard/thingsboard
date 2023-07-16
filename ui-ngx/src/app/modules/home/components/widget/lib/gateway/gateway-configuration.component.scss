@@ -22,6 +22,10 @@
     color: rgba(0, 0, 0, .12);
   }
 
+  .tb-form-panel {
+    margin-bottom: 20px;
+  }
+
   .mat-toolbar {
     background: transparent;
     color: rgba(0, 0, 0, .87) !important;
@@ -41,6 +45,11 @@
       margin-right: 15px;
     }
 
+    .slider-icon {
+      position: absolute;
+      transform: translateY(-3px);
+    }
+
     .block-title {
       font-size: 20px;
       font-weight: 400;
@@ -53,82 +62,17 @@
   }
 
   .security-toggle-group {
-    padding-bottom: 0;
-    background: transparent !important;
     margin-bottom: 15px;
-    border: none;
-    overflow: auto;
-
-    .mat-button-toggle {
-      border-radius: 15px;
-      border: 1px solid rgba(0, 0, 0, 0);
-      background: rgba(0, 0, 0, .05);
-      margin: 5px;
-      color: rgba(0, 0, 0, .2);
-      font-weight: 500;
-    }
-
-    .mat-button-toggle-checked {
-      border-radius: 15px;
-      border: 1px solid #305680;
-      background: white;
-      color: #305680;
-    }
+    margin-right: auto;
 
     ::ng-deep span {
-      text-transform: capitalize;
-      line-height: 20px;
-      font-size: 13px;
-      padding: 5px 25px;
-    }
-
-    ::ng-deep .mat-button-toggle-ripple {
-      border-radius: 15px;
-    }
-
-    ::ng-deep .mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
-      opacity: 0 !important;
+      padding: 0 25px;
     }
   }
 
   .logs-label {
     font-weight: 500;
     margin-bottom: 10px;
-  }
-
-  .logs-toggle-group {
-    border: none;
-    border-radius: 15px;
-    background: rgba(0, 0, 0, .05);
-    color: rgba(0, 0, 0, .2);
-    font-weight: 500;
-
-    .mat-button-toggle {
-      border: none;
-      background: rgba(0, 0, 0, .0);
-      color: rgba(0, 0, 0, .2);
-      font-weight: 500;
-    }
-
-    .mat-button-toggle-checked {
-      border-radius: 15px;
-      color: white;
-      background: #305680;
-    }
-
-    ::ng-deep span {
-      line-height: 20px;
-      font-size: 13px;
-      padding: 5px 25px;
-    }
-
-    ::ng-deep .mat-button-toggle-ripple {
-      border-radius: 15px;
-    }
-
-    ::ng-deep .mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
-      opacity: 0 !important;
-    }
   }
 
   .statistics-block {
@@ -167,10 +111,6 @@
     z-index: 100;
   }
 
-  .suffix-icon {
-    position: absolute;
-    transform: translateY(-3px);
-  }
 
   mat-panel-title {
     display: block;

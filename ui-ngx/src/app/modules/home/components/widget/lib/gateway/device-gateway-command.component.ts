@@ -33,7 +33,7 @@ enum OsType {
 @Component({
   selector: 'tb-gateway-command',
   templateUrl: './device-gateway-command.component.html',
-  styleUrls: []
+  styleUrls: ['./device-gateway-command.component.scss']
 })
 
 export class DeviceGatewayCommandComponent implements OnInit {

@@ -133,6 +133,8 @@ export class GatewayConfigurationComponent implements OnInit {
 
   logSelector: FormControl;
 
+  securityType: SecurityTypes;
+
 
   constructor(protected router: Router,
               protected store: Store<AppState>,
@@ -259,6 +261,7 @@ export class GatewayConfigurationComponent implements OnInit {
     const securityGroup = this.gatewayConfigGroup.get('thingsboard.security') as FormGroup;
     securityGroup.get('type').valueChanges.subscribe(type => {
       this.removeAllSecurityValidators();
+      console.log(type);
       if (type === SecurityTypes.ACCESS_TOKEN) {
         securityGroup.get('accessToken').addValidators([Validators.required]);
         securityGroup.get('accessToken').updateValueAndValidity();
@@ -315,6 +318,18 @@ export class GatewayConfigurationComponent implements OnInit {
     });
 
     this.fetchConfigAttribute(this.device);
+  }
+
+  updateSecurityValidators(value: SecurityTypes) {
+    this.gatewayConfigGroup.get('thingsboard.security.type').setValue(value, {emitEvent: true});
+  }
+
+  updateLogType(value: LocalLogsConfigs) {
+    this.logSelector.setValue(value);
+  }
+
+  updateStorageType(value: StorageTypes) {
+    this.gatewayConfigGroup.get('storage.type').setValue(value, {emitEvent: true})
   }
 
   fetchConfigAttribute(entityId: EntityId) {
