@@ -1106,9 +1106,9 @@
             "tags": ["concentration","amount of substance","mole per cubic meter","mol/m³"]
         },
         {
-            "name": "unit.battery",
+            "name": "unit.percent",
             "symbol": "%",
-            "tags": ["power source","state of charge (SoC)","battery","battery level","level","humidity","moisture",
+            "tags": ["power source","state of charge (SoC)","battery","battery level","level","humidity","moisture","percentage",
                 "relative humidity","water content","soil moisture","irrigation","water in soil","soil water content","VWC",
                 "Volumetric Water Content","Total Harmonic Distortion","THD","power quality","UV Transmittance","%"]
         },
@@ -1452,11 +1452,6 @@
             "name": "unit.richter-scale",
             "symbol": "richter",
             "tags": ["earthquake","seismic activity","richter"]
-        },
-        {
-            "name": "unit.percentage",
-            "symbol": "%",
-            "tags": ["percentage"]
         },
         {
             "name": "unit.second",
