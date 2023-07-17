@@ -68,6 +68,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.DataConstants.ALARM_ACK;
 import static org.thingsboard.server.common.data.DataConstants.IS_CLEARED_ALARM;
 import static org.thingsboard.server.common.data.DataConstants.IS_EXISTING_ALARM;
 import static org.thingsboard.server.common.data.DataConstants.IS_NEW_ALARM;
@@ -194,7 +195,7 @@ public class TbAlarmNodeTest {
     }
 
     @Test
-    public void ifAlarmClearedUpdate() {
+    public void ifAlarmClearedCreateNew() throws ScriptException, IOException {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
@@ -214,11 +215,10 @@ public class TbAlarmNodeTest {
                 .type("SomeType")
                 .details(null)
                 .build();
-
-        when(alarmService.updateAlarm(any(AlarmUpdateRequest.class))).thenReturn(
+        when(alarmService.createAlarm(any(AlarmCreateOrUpdateActiveRequest.class))).thenReturn(
                 AlarmApiCallResult.builder()
                         .successful(true)
-                        .modified(true)
+                        .created(true)
                         .alarm(new AlarmInfo(expectedAlarm))
                         .build());
 
@@ -226,7 +226,7 @@ public class TbAlarmNodeTest {
 
         verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
         successCaptor.getValue().run();
-        verify(ctx).tellNext(any(), eq("Updated"));
+        verify(ctx).tellNext(any(), eq("Created"));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
@@ -238,7 +238,7 @@ public class TbAlarmNodeTest {
         assertEquals("ALARM", typeCaptor.getValue());
         assertEquals(originator, originatorCaptor.getValue());
         assertEquals("value", metadataCaptor.getValue().getValue("key"));
-        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_EXISTING_ALARM));
+        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_NEW_ALARM));
         assertNotSame(metaData, metadataCaptor.getValue());
 
 
@@ -344,6 +344,59 @@ public class TbAlarmNodeTest {
         assertEquals("value", metadataCaptor.getValue().getValue("key"));
         assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_CLEARED_ALARM));
         assertNotSame(metaData, metadataCaptor.getValue());
+
+        Alarm actualAlarm = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
+        assertEquals(expectedAlarm, actualAlarm);
+    }
+
+    @Test
+    public void ifClearedAlarmIsAcknowledgedUpdate() {
+        initWithCreateAlarmScript();
+        metaData.putValue("key", "value");
+        TbMsg msg = TbMsg.newMsg(ALARM_ACK, originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
+        long ts = msg.getTs();
+        Alarm clearedAlarm = Alarm.builder().cleared(true).acknowledged(true).build();
+
+        when(detailsJs.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
+        when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(clearedAlarm);
+
+        Alarm expectedAlarm = Alarm.builder()
+                .startTs(ts)
+                .endTs(ts)
+                .tenantId(tenantId)
+                .originator(originator)
+                .severity(CRITICAL)
+                .propagate(true)
+                .type("SomeType")
+                .details(null)
+                .build();
+
+        when(alarmService.updateAlarm(any(AlarmUpdateRequest.class))).thenReturn(
+                AlarmApiCallResult.builder()
+                        .successful(true)
+                        .modified(true)
+                        .alarm(new AlarmInfo(expectedAlarm))
+                        .build());
+
+        node.onMsg(ctx, msg);
+
+        verify(ctx).enqueue(any(), successCaptor.capture(), failureCaptor.capture());
+        successCaptor.getValue().run();
+        verify(ctx).tellNext(any(), eq("Updated"));
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+
+        assertEquals("ALARM", typeCaptor.getValue());
+        assertEquals(originator, originatorCaptor.getValue());
+        assertEquals("value", metadataCaptor.getValue().getValue("key"));
+        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_EXISTING_ALARM));
+        assertNotSame(metaData, metadataCaptor.getValue());
+
 
         Alarm actualAlarm = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
         assertEquals(expectedAlarm, actualAlarm);

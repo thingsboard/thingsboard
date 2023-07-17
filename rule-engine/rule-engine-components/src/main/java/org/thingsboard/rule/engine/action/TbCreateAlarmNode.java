@@ -40,6 +40,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static org.thingsboard.server.common.data.DataConstants.ALARM_ACK;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
@@ -99,10 +101,10 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         }
 
         Alarm existingAlarm = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
-        if (existingAlarm == null) {
-            return createNewAlarm(ctx, msg, msgAlarm);
+        if (existingAlarm != null && (!existingAlarm.isCleared() || msg.getType().equals(ALARM_ACK))) {
+            return  updateAlarm(ctx, msg, existingAlarm, msgAlarm);
         } else {
-            return updateAlarm(ctx, msg, existingAlarm, msgAlarm);
+            return createNewAlarm(ctx, msg, msgAlarm);
         }
     }
 
