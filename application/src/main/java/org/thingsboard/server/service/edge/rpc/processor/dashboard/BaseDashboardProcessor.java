@@ -45,26 +45,25 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             }
             dashboard.setTitle(dashboardUpdateMsg.getTitle());
             dashboard.setConfiguration(JacksonUtil.toJsonNode(dashboardUpdateMsg.getConfiguration()));
-            Set<ShortCustomerInfo> assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
-            dashboard.setAssignedCustomers(assignedCustomers);
+            Set<ShortCustomerInfo> assignedCustomers = null;
+            if (dashboardUpdateMsg.hasAssignedCustomers()) {
+                assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
+                dashboard.setAssignedCustomers(assignedCustomers);
+            }
 
             dashboardValidator.validate(dashboard, Dashboard::getTenantId);
             if (created) {
                 dashboard.setId(dashboardId);
             }
-            dashboardService.saveDashboard(dashboard, false);
-            if (dashboardUpdateMsg.hasAssignedCustomers()) {
-                if (assignedCustomers != null && !assignedCustomers.isEmpty()) {
-                    for (ShortCustomerInfo assignedCustomer : assignedCustomers) {
-                        if (assignedCustomer.getCustomerId().equals(customerId)) {
-                            dashboardService.assignDashboardToCustomer(tenantId, dashboardId, assignedCustomer.getCustomerId());
-                        }
+            Dashboard savedDashboard = dashboardService.saveDashboard(dashboard, false);
+            if (assignedCustomers != null && !assignedCustomers.isEmpty()) {
+                for (ShortCustomerInfo assignedCustomer : assignedCustomers) {
+                    if (assignedCustomer.getCustomerId().equals(customerId)) {
+                        dashboardService.assignDashboardToCustomer(tenantId, dashboardId, assignedCustomer.getCustomerId());
                     }
-                } else {
-                    unassignCustomersFromDashboard(tenantId, dashboard);
                 }
             } else {
-                unassignCustomersFromDashboard(tenantId, dashboard);
+                unassignCustomersFromDashboard(tenantId, savedDashboard);
             }
         } finally {
             dashboardCreationLock.unlock();
