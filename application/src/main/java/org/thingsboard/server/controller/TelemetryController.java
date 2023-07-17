@@ -557,12 +557,14 @@ public class TelemetryController extends BaseController {
                                                                        @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
                                                                        @PathVariable("entityId") String entityIdStr,
                                                                        @ApiParam(value = TELEMETRY_KEYS_DESCRIPTION, required = true)
-                                                                       @RequestParam(name = "keys") String keysStr) throws ThingsboardException {
+                                                                       @RequestParam(name = "keys") String keysStr,
+                                                                       @ApiParam(value = "If the parameter is set to true, the latest telemetry will be rewritten in case that current latest value was removed, otherwise, in case that parameter is set to false the new latest value will not set.")
+                                                                       @RequestParam(name = "rewrite", defaultValue = "false") boolean rewrite) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-        return deleteLatestTimeseries(entityId, keysStr);
+        return deleteLatestTimeseries(entityId, keysStr, rewrite);
     }
 
-    private DeferredResult<ResponseEntity> deleteLatestTimeseries(EntityId entityIdStr, String keysStr) throws ThingsboardException {
+    private DeferredResult<ResponseEntity> deleteLatestTimeseries(EntityId entityIdStr, String keysStr, boolean rewrite) throws ThingsboardException {
         List<String> keys = toKeysList(keysStr);
         if (keys.isEmpty()) {
             return getImmediateDeferredResult("Empty keys: " + keysStr, HttpStatus.BAD_REQUEST);
@@ -570,7 +572,7 @@ public class TelemetryController extends BaseController {
         SecurityUser user = getCurrentUser();
 
         return accessValidator.validateEntityAndCallback(user, Operation.WRITE_TELEMETRY, entityIdStr, (result, tenantId, entityId) ->
-                tsSubService.deleteLatestAndNotify(tenantId, entityId, keys, new FutureCallback<>() {
+                tsSubService.deleteLatestAndNotify(tenantId, entityId, keys, rewrite, new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         logLatestTimeseriesDeleted(user, entityId, keys, null);
