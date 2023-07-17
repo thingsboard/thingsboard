@@ -168,7 +168,7 @@
                 "dialogTitle": "Docker commands",
                 "dialogHideDashboardToolbar": true,
                 "dialogWidth": null,
-                "dialogHeight": 40,
+                "dialogHeight": 45,
                 "openInSeparateDialog": true,
                 "openInPopover": false,
                 "id": "ae2e5995-505f-a241-5fb2-6cbaf08b1b55"
@@ -1911,7 +1911,7 @@
                 "dialogTitle": "Launch command",
                 "dialogHideDashboardToolbar": true,
                 "dialogWidth": null,
-                "dialogHeight": 40,
+                "dialogHeight": 45,
                 "openInSeparateDialog": true,
                 "openInPopover": false,
                 "id": "337c767b-3217-d3d3-b955-7b0bd0858a1d"
