@@ -58,7 +58,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg, edge);
-                    return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DASHBOARD, EdgeEventActionType.UPDATED, dashboardId, null);
+                    return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
                     Dashboard dashboardToDelete = dashboardService.findDashboardById(tenantId, dashboardId);
                     if (dashboardToDelete != null) {
@@ -80,11 +80,10 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
     }
 
     private void saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, Edge edge) {
-        boolean created = super.saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg);
+        boolean created = super.saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg, edge.getId());
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), dashboardId);
             pushDashboardCreatedEventToRuleEngine(tenantId, edge, dashboardId);
-            dashboardService.assignDashboardToEdge(tenantId, dashboardId, edge.getId());
         }
     }
 

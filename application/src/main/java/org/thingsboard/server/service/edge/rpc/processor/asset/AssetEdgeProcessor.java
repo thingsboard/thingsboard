@@ -60,7 +60,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, edge);
-                    return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.ASSET, EdgeEventActionType.UPDATED, assetId, null);
+                    return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
                     Asset assetToDelete = assetService.findAssetById(tenantId, assetId);
                     if (assetToDelete != null) {
@@ -83,12 +83,11 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
 
     private void saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, Edge edge) {
         CustomerId customerId = safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB());
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, customerId);
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, customerId, edge.getId());
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), assetId);
             pushAssetCreatedEventToRuleEngine(tenantId, edge, assetId);
-            assetService.assignAssetToEdge(tenantId, assetId, edge.getId());
         }
         Boolean assetNameUpdated = resultPair.getSecond();
         if (assetNameUpdated) {

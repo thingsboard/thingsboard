@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -45,7 +46,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
     @Autowired
     protected DataDecodingEncodingService dataDecodingEncodingService;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, CustomerId customerId) {
+    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, CustomerId customerId, EdgeId edgeId) {
         boolean created = false;
         boolean deviceNameUpdated = false;
         deviceCreationLock.lock();
@@ -98,6 +99,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
                 deviceCredentials.setCredentialsId(StringUtils.randomAlphanumeric(20));
                 deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
+                deviceService.assignDeviceToEdge(tenantId, deviceId, edgeId);
             }
             tbClusterService.onDeviceUpdated(savedDevice, created ? null : device);
         } finally {

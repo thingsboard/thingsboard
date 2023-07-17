@@ -59,7 +59,7 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     saveOrUpdateEntityView(tenantId, entityViewId, entityViewUpdateMsg, edge);
-                    return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.ENTITY_VIEW, EdgeEventActionType.UPDATED, entityViewId, null);
+                    return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
                     EntityView entityViewToDelete = entityViewService.findEntityViewById(tenantId, entityViewId);
                     if (entityViewToDelete != null) {
@@ -82,12 +82,11 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor {
 
     private void saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg, Edge edge) {
         CustomerId customerId = safeGetCustomerId(entityViewUpdateMsg.getCustomerIdMSB(), entityViewUpdateMsg.getCustomerIdLSB());
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateEntityView(tenantId, entityViewId, entityViewUpdateMsg, customerId);
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateEntityView(tenantId, entityViewId, entityViewUpdateMsg, customerId, edge.getId());
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), entityViewId);
             pushAssetCreatedEventToRuleEngine(tenantId, edge, entityViewId);
-            entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edge.getId());
         }
         Boolean assetNameUpdated = resultPair.getSecond();
         if (assetNameUpdated) {
