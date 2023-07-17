@@ -54,10 +54,6 @@
     //flex-shrink: 1;
   }
 
-  mat-expansion-panel {
-    border: 1px solid #305680;
-  }
-
   mat-card {
     padding-left: 10px;
     background: transparent;
@@ -73,10 +69,6 @@
 
   ::ng-deep tb-json-object-edit > div {
     flex-grow: 1;
-  }
-
-  .mat-accordion .mat-expansion-panel {
-    border-radius: 5px;
   }
 
   .action-btns {
