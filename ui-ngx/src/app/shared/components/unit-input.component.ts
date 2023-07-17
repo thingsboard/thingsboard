@@ -16,9 +16,9 @@
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { EMPTY, Observable, of, ReplaySubject, switchMap } from 'rxjs';
+import { Observable, of, shareReplay, switchMap } from 'rxjs';
 import { searchUnits, Unit, unitBySymbol } from '@shared/models/unit.models';
-import { map, mergeMap, share, startWith, tap } from 'rxjs/operators';
+import { map, mergeMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourcesService } from '@core/services/resources.service';
 
@@ -75,17 +75,16 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
           this.updateView(value);
         }),
         map(value => (value as Unit)?.symbol ? (value as Unit).symbol : (value ? value as string : '')),
-        mergeMap(symbol => this.fetchUnits(symbol) )
+        mergeMap(symbol => this.fetchUnits(symbol))
       );
   }
 
   writeValue(symbol?: string): void {
     this.searchText = '';
     this.modelValue = symbol;
-    EMPTY.pipe(
-      startWith(''),
-      switchMap(() => symbol
-        ? this.unitsConstant().pipe(map(units => unitBySymbol(units, symbol) ?? symbol))
+    of(symbol).pipe(
+      switchMap(value => value
+        ? this.unitsConstant().pipe(map(units => unitBySymbol(units, value) ?? value))
         : of(null))
     ).subscribe(result => {
       this.unitsFormControl.patchValue(result, {emitEvent: false});
@@ -158,12 +157,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
           name: this.translate.instant(u.name),
           tags: u.tags
         }))),
-        share({
-          connector: () => new ReplaySubject(1),
-          resetOnError: false,
-          resetOnComplete: false,
-          resetOnRefCountZero: false
-        })
+        shareReplay(1)
       );
     }
     return this.fetchUnits$;
