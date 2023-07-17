@@ -16,29 +16,26 @@
 package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Slf4j
 public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, EdgeId edgeId) {
+    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, CustomerId customerId) {
         boolean created = false;
         dashboardCreationLock.lock();
         try {
-            edgeSynchronizationManager.getSync().set(true);
-
             Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
             if (dashboard == null) {
                 created = true;
@@ -47,27 +44,39 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
                 dashboard.setCreatedTime(Uuids.unixTimestamp(dashboardId.getId()));
             }
             dashboard.setTitle(dashboardUpdateMsg.getTitle());
-            dashboard.setAssignedCustomers(dashboardUpdateMsg.hasAssignedCustomers() ?
-                    getAssignedCustomersFromMsg(dashboardUpdateMsg.getAssignedCustomers()) : null);
             dashboard.setConfiguration(JacksonUtil.toJsonNode(dashboardUpdateMsg.getConfiguration()));
+            Set<ShortCustomerInfo> assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
+            dashboard.setAssignedCustomers(assignedCustomers);
 
             dashboardValidator.validate(dashboard, Dashboard::getTenantId);
             if (created) {
                 dashboard.setId(dashboardId);
             }
             dashboardService.saveDashboard(dashboard, false);
-            if (created) {
-                dashboardService.assignDashboardToEdge(tenantId, dashboardId, edgeId);
+            if (dashboardUpdateMsg.hasAssignedCustomers()) {
+                if (assignedCustomers != null && !assignedCustomers.isEmpty()) {
+                    for (ShortCustomerInfo assignedCustomer : assignedCustomers) {
+                        if (assignedCustomer.getCustomerId().equals(customerId)) {
+                            dashboardService.assignDashboardToCustomer(tenantId, dashboardId, assignedCustomer.getCustomerId());
+                        }
+                    }
+                } else {
+                    unassignCustomersFromDashboard(tenantId, dashboard);
+                }
+            } else {
+                unassignCustomersFromDashboard(tenantId, dashboard);
             }
         } finally {
-            edgeSynchronizationManager.getSync().remove();
             dashboardCreationLock.unlock();
         }
         return created;
     }
 
-    private Set<ShortCustomerInfo> getAssignedCustomersFromMsg(String assignedCustomers) {
-        JavaType assignedCustomersType = JacksonUtil.constructCollectionType(HashSet.class, ShortCustomerInfo.class);
-        return JacksonUtil.fromString(assignedCustomers, assignedCustomersType);
+    private void unassignCustomersFromDashboard(TenantId tenantId, Dashboard dashboard) {
+        if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
+            for (ShortCustomerInfo assignedCustomer : dashboard.getAssignedCustomers()) {
+                dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), assignedCustomer.getCustomerId());
+            }
+        }
     }
 }

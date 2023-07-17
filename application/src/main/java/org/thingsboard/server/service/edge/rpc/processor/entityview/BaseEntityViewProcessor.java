@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.EdgeEntityType;
@@ -36,13 +35,11 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
 
-    protected Pair<Boolean, Boolean> saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg, CustomerId customerId, EdgeId edgeId) {
+    protected Pair<Boolean, Boolean> saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg, CustomerId customerId) {
         boolean created = false;
         boolean entityViewNameUpdated = false;
         entityViewCreationLock.lock();
         try {
-            edgeSynchronizationManager.getSync().set(true);
-
             EntityView entityView = entityViewService.findEntityViewById(tenantId, entityViewId);
             String entityViewName = entityViewUpdateMsg.getName();
             if (entityView == null) {
@@ -76,11 +73,7 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
                 entityView.setId(entityViewId);
             }
             entityViewService.saveEntityView(entityView, false);
-            if (created) {
-                entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edgeId);
-            }
         } finally {
-            edgeSynchronizationManager.getSync().remove();
             entityViewCreationLock.unlock();
         }
         return Pair.of(created, entityViewNameUpdated);
