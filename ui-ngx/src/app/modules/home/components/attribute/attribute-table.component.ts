@@ -386,7 +386,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     if ($event) {
       $event.stopPropagation();
     }
-    const isMultipleDeletion = isUndefinedOrNull(attribute) &&  this.dataSource.selection.selected.length > 1;
+    const isMultipleDeletion = isUndefinedOrNull(attribute) && this.dataSource.selection.selected.length > 1;
     const target = $event.target || $event.srcElement || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
@@ -424,34 +424,31 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     componentRef.onDestroy(() => {
       if (componentRef.instance.result !== null) {
         const strategy = componentRef.instance.result;
-        const timeseries = attribute ? [attribute]: this.dataSource.selection.selected;
+        const deleteTimeseries = attribute ? [attribute]: this.dataSource.selection.selected;
         let deleteAllDataForKeys = false;
         let rewriteLatestIfDeleted = false;
         let startTs = null;
         let endTs = null;
         let deleteLatest = true;
-        let task: Observable<any>;
-        if (strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_INCLUDING_KEY) {
+        if (strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA) {
           deleteAllDataForKeys = true;
         }
-        if (strategy === TimeseriesDeleteStrategy.DELETE_OLD_DATA_EXCEPT_LATEST_VALUE) {
+        if (strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE) {
           deleteAllDataForKeys = true;
           deleteLatest = false;
         }
         if (strategy === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE) {
           rewriteLatestIfDeleted = componentRef.instance.rewriteLatestIfDeleted;
-          task = this.attributeService.deleteEntityLatestTimeseries(this.entityIdValue, timeseries, rewriteLatestIfDeleted);
+          startTs = deleteTimeseries[0].lastUpdateTs;
+          endTs = startTs + 1;
         }
-        if (strategy === TimeseriesDeleteStrategy.DELETE_DATA_FOR_TIME_PERIOD) {
+        if (strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD) {
           startTs = componentRef.instance.startDateTime.getTime();
           endTs = componentRef.instance.endDateTime.getTime();
           rewriteLatestIfDeleted = componentRef.instance.rewriteLatestIfDeleted;
         }
-        if (!task) {
-          task = this.attributeService.deleteEntityTimeseries(this.entityIdValue, timeseries, deleteAllDataForKeys,
-            startTs, endTs, rewriteLatestIfDeleted, deleteLatest);
-        }
-        task.subscribe(() => this.reloadAttributes());
+        this.attributeService.deleteEntityTimeseries(this.entityIdValue, deleteTimeseries, deleteAllDataForKeys,
+          startTs, endTs, rewriteLatestIfDeleted, deleteLatest).subscribe(() => this.reloadAttributes());
       }
     });
   }
