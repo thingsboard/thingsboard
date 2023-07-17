@@ -14,36 +14,9 @@
  * limitations under the License.
  */
 :host {
-  .tb-material-icons-dialog {
-    position: relative;
-  }
-  .tb-icons-load {
-    top: 64px;
-    z-index: 3;
-    background: rgba(255, 255, 255, .75);
-  }
-}
-
-:host ::ng-deep {
-  .tb-material-icons-dialog {
-    button.mat-mdc-button-base.tb-select-icon-button {
-      width: 56px;
-      min-width: 56px;
-      height: 56px;
-      padding: 16px;
-      margin: 10px;
-      border: solid 1px #ffa500;
-      border-radius: 0;
-      line-height: 0;
-      display: inline-block;
-      vertical-align: baseline;
-      .mat-icon {
-        width: 24px;
-        margin: 0;
-        height: 24px;
-        vertical-align: initial;
-        font-size: 24px;
-      }
-    }
+  .tb-close-button {
+    position: absolute;
+    top: 6px;
+    right: 6px;
   }
 }

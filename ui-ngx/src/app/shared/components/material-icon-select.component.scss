@@ -22,20 +22,23 @@
       border: solid 1px rgba(0, 0, 0, .27);
       box-sizing: initial;
     }
-    &.icon-box {
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 4px;
-      cursor: pointer;
-      box-sizing: border-box;
-      padding: 8px;
-      height: 40px;
-      width: 40px;
-      font-size: 22px;
-      vertical-align: middle;
-      &.disabled {
-        cursor: initial;
-        color: rgba(0, 0, 0, 0.38);
-      }
+  }
+}
+
+:host ::ng-deep {
+  button.mat-mdc-button-base.icon-box {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 7px;
+    &:not(:disabled) {
+      color: rgba(0, 0, 0, 0.87);
+    }
+    > .mat-icon {
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
+      margin: 0;
     }
   }
 }

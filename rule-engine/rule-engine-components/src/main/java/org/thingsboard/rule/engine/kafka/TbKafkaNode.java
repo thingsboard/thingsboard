@@ -115,25 +115,25 @@ public class TbKafkaNode extends TbAbstractExternalNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(config.getTopicPattern(), msg);
         String keyPattern = config.getKeyPattern();
+        var tbMsg = ackIfNeeded(ctx, msg);
         try {
             if (initError != null) {
-                ctx.tellFailure(msg, new RuntimeException("Failed to initialize Kafka rule node producer: " + initError.getMessage()));
+                ctx.tellFailure(tbMsg, new RuntimeException("Failed to initialize Kafka rule node producer: " + initError.getMessage()));
             } else {
                 ctx.getExternalCallExecutor().executeAsync(() -> {
                     publish(
                             ctx,
-                            msg,
+                            tbMsg,
                             topic,
                             keyPattern == null || keyPattern.isEmpty()
                                     ? null
-                                    : TbNodeUtils.processPattern(config.getKeyPattern(), msg)
+                                    : TbNodeUtils.processPattern(config.getKeyPattern(), tbMsg)
                     );
                     return null;
                 });
             }
-            ackIfNeeded(ctx, msg);
         } catch (Exception e) {
-            ctx.tellFailure(msg, e);
+            ctx.tellFailure(tbMsg, e);
         }
     }
 

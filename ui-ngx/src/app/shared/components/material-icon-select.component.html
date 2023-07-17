@@ -29,7 +29,13 @@
   </mat-form-field>
 </div>
 <ng-template #boxInput>
-  <mat-icon class="icon-box" [ngStyle]="color && !disabled ? { color: color } : {}"
-            [ngClass]="{'disabled': disabled}"
-            (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</mat-icon>
+  <button type="button"
+          mat-stroked-button
+          class="icon-box"
+          [ngStyle]="color && !disabled ? { color: color } : {}"
+          [disabled]="disabled"
+          #matButton
+          (click)="openIconPopup($event, matButton)">
+    <mat-icon>{{materialIconFormGroup.get('icon').value}}</mat-icon>
+  </button>
 </ng-template>
