@@ -48,11 +48,11 @@
             <input matInput formControlName="titleTooltip" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
-        <div class="tb-form-row space-between same-padding">
+        <div class="tb-form-row space-between">
           <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
             {{ 'widget-config.display-icon' | translate }}
           </mat-slide-toggle>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-material-icon-select asBoxInput
                                      [color]="widgetSettings.get('iconColor').value"
               formControlName="titleIcon">
@@ -60,7 +60,6 @@
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <input matInput formControlName="iconSize">
             </mat-form-field>
-            <mat-divider vertical></mat-divider>
             <tb-color-input asBoxInput
                             formControlName="iconColor">
             </tb-color-input>
@@ -84,23 +83,17 @@
       </div>
       <div class="tb-form-panel">
         <div class="tb-form-panel-title" translate>widget-config.card-style</div>
-        <div class="tb-form-row space-between same-padding">
+        <div class="tb-form-row space-between">
           <div>{{ 'widget-config.text-color' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <mat-divider vertical></mat-divider>
-            <tb-color-input asBoxInput
-                            formControlName="color">
-            </tb-color-input>
-          </div>
+          <tb-color-input asBoxInput
+                          formControlName="color">
+          </tb-color-input>
         </div>
-        <div class="tb-form-row space-between same-padding">
+        <div class="tb-form-row space-between">
           <div>{{ 'widget-config.background-color' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <mat-divider vertical></mat-divider>
-            <tb-color-input asBoxInput
-                            formControlName="backgroundColor">
-            </tb-color-input>
-          </div>
+          <tb-color-input asBoxInput
+                          formControlName="backgroundColor">
+          </tb-color-input>
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'widget-config.padding' | translate }}</div>
