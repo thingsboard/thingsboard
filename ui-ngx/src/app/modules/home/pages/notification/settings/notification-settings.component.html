@@ -16,7 +16,7 @@
 
 -->
 <div>
-  <mat-card appearance="outlined" class="settings-card">
+  <mat-card appearance="outlined" class="settings-card tb-absolute-fill">
     <mat-card-header>
       <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px"
            fxLayoutAlign="space-between start" fxLayoutAlign.xs="start start">
@@ -68,14 +68,14 @@
           </div>
         </section>
       </form>
-      <div fxLayout="row" fxLayoutAlign="end start">
-        <button mat-button mat-raised-button color="primary"
-                type="button"
-                (click)="save()"
-                [disabled]="(isLoading$ | async) || notificationSettings.invalid || !notificationSettings.dirty">
-          {{ 'action.save' | translate }}
-        </button>
-      </div>
     </mat-card-content>
+    <div fxLayout="row" fxLayoutAlign="end start" style="padding: 16px;">
+      <button mat-button mat-raised-button color="primary"
+              type="button"
+              (click)="save()"
+              [disabled]="(isLoading$ | async) || notificationSettings.invalid || !notificationSettings.dirty">
+        {{ 'action.save' | translate }}
+      </button>
+    </div>
   </mat-card>
 </div>

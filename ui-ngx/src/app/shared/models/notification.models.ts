@@ -596,6 +596,11 @@ export interface NotificationUserSettings {
 
 export interface NotificationUserSetting {
   enabled: boolean;
-  enabledDeliveryMethods: Array<NotificationDeliveryMethod>;
+  enabledDeliveryMethods: {[key: string]: boolean};
 }
 
+export enum NotificationSettingsDeliveryMethod {
+  WEB = 'WEB',
+  SMS = 'SMS',
+  EMAIL = 'EMAIL'
+}
