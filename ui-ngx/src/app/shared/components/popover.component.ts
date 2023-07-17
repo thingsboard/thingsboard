@@ -63,8 +63,10 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 export type TbPopoverTrigger = 'click' | 'focus' | 'hover' | null;
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[tb-popover]',
   exportAs: 'tbPopover',
+  // eslint-disable-next-line @angular-eslint/no-host-metadata-property
   host: {
     '[class.tb-popover-open]': 'visible'
   }
@@ -265,12 +267,20 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
     } else if (delay > 0) {
       this.delayTimer = setTimeout(() => {
         this.delayTimer = undefined;
-        isEnter ? this.show() : this.hide();
+        if (isEnter) {
+          this.show();
+        } else {
+          this.hide();
+        }
       }, delay * 1000);
     } else {
       // `isOrigin` is used due to the tooltip will not hide immediately
       // (may caused by the fade-out animation).
-      isEnter && isOrigin ? this.show() : this.hide();
+      if (isEnter && isOrigin) {
+        this.show();
+      } else {
+        this.hide();
+      }
     }
   }
 
@@ -345,15 +355,15 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
     </ng-template>
   `
 })
-export class TbPopoverComponent implements OnDestroy, OnInit {
+export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
 
   @ViewChild('overlay', { static: false }) overlay!: CdkConnectedOverlay;
   @ViewChild('popoverRoot', { static: false }) popoverRoot!: ElementRef<HTMLElement>;
   @ViewChild('popover', { static: false }) popover!: ElementRef<HTMLElement>;
 
   tbContent: string | TemplateRef<void> | null = null;
-  tbComponentFactory: ComponentFactory<any> | null = null;
-  tbComponentRef: ComponentRef<any> | null = null;
+  tbComponentFactory: ComponentFactory<T> | null = null;
+  tbComponentRef: ComponentRef<T> | null = null;
   tbComponentContext: any;
   tbComponentInjector: Injector | null = null;
   tbComponentStyle: { [klass: string]: any }  = {};
