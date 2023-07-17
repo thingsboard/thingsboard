@@ -16,7 +16,7 @@
 
 -->
 <mat-toolbar color="primary">
-  <h2 translate>device.connectivity.check-connectivity</h2>
+  <h2 translate>{{ dialogTitle }}</h2>
   <span fxFlex></span>
 <!--  <div [tb-help]="'check-connectivity'"></div>-->
   <button mat-icon-button
@@ -181,7 +181,7 @@
     <div class="tb-form-panel stroked">
       <div fxFlex fxLayout="row">
         <div class="tb-form-panel-title" translate>device.state</div>
-        <div class="status" [ngClass]="{'inactive': !status}">
+        <div class="status" [ngClass]="{'inactive': !status, 'hide': status === undefined}">
           {{ (status ? 'device.active' : 'device.inactive') | translate }}
         </div>
       </div>
@@ -208,7 +208,7 @@
   <span fxFlex></span>
   <button mat-button
           [disabled]="(isLoading$ | async)"
-          (click)="close()">{{ 'action.cancel' | translate }}</button>
+          (click)="close()">{{ closeButtonLabel | translate }}</button>
 </div>
 <ng-template #loadingCommand>
   <div class="tb-loader">

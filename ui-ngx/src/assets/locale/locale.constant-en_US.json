@@ -1386,6 +1386,7 @@
         "time": "Time",
         "connectivity": {
             "check-connectivity": "Check connectivity",
+            "device-created-check-connectivity": "Device created. Let's check connectivity!",
             "loading-check-connectivity-command": "Loading check connectivity commands...",
             "use-following-instructions": "Use the following instructions for sending telemetry on behalf of the device using shell",
             "install-curl": "Install cURL tool.",
