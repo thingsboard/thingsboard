@@ -35,7 +35,7 @@ export interface DeleteTimeseriesPanelData {
 })
 export class DeleteTimeseriesPanelComponent implements OnInit {
 
-  strategy: string = TimeseriesDeleteStrategy.DELETE_ALL_DATA_INCLUDING_KEY;
+  strategy: string = TimeseriesDeleteStrategy.DELETE_ALL_DATA;
 
   result: string = null;
 
@@ -48,8 +48,8 @@ export class DeleteTimeseriesPanelComponent implements OnInit {
   strategiesTranslationsMap = timeseriesDeleteStrategyTranslations;
 
   multipleDeletionStrategies = [
-    TimeseriesDeleteStrategy.DELETE_ALL_DATA_INCLUDING_KEY,
-    TimeseriesDeleteStrategy.DELETE_OLD_DATA_EXCEPT_LATEST_VALUE
+    TimeseriesDeleteStrategy.DELETE_ALL_DATA,
+    TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE
   ];
 
   constructor(@Inject(DELETE_TIMESERIES_PANEL_DATA) public data: DeleteTimeseriesPanelData,
@@ -77,7 +77,7 @@ export class DeleteTimeseriesPanelComponent implements OnInit {
   }
 
   isPeriodStrategy(): boolean {
-    return this.strategy === TimeseriesDeleteStrategy.DELETE_DATA_FOR_TIME_PERIOD;
+    return this.strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD;
   }
 
   isDeleteLatestStrategy(): boolean {

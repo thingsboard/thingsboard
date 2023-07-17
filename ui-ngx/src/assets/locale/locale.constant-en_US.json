@@ -723,11 +723,11 @@
             "ends-on": "Ends on",
             "strategy": "Strategy",
             "delete-strategy": "Delete strategy",
-            "all-data-including-key": "Delete all data including key",
-            "old-data-except-latest": "Delete old data except latest value",
+            "all-data": "Delete all data",
+            "all-data-except-latest-value": "Delete all data except latest value",
             "latest-value": "Delete latest value",
-            "data-for-time-period": "Delete data for time period",
-            "rewrite-latest-value-if-deleted": "Rewrite latest value if deleted"
+            "all-data-for-time-period": "Delete all data for time period",
+            "rewrite-latest-value": "Rewrite latest value"
         }
     },
     "api-usage": {

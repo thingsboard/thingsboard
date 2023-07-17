@@ -64,14 +64,6 @@ export class AttributeService {
     return this.http.delete(url, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteEntityLatestTimeseries(entityId: EntityId, timeseries: Array<AttributeData>, rewrite = true,
-                                      config?: RequestConfig): Observable<any> {
-    const keys = timeseries.map(attribute => encodeURIComponent(attribute.key)).join(',');
-    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/latest/delete?keys=${keys}` +
-        `&rewrite=${rewrite}`;
-    return this.http.delete(url, defaultHttpOptionsFromConfig(config));
-  }
-
   public saveEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
                               config?: RequestConfig): Observable<any> {
     const attributesData: {[key: string]: any} = {};
