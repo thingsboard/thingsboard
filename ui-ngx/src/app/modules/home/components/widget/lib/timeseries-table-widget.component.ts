@@ -154,7 +154,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public displayPagination = true;
   public enableStickyHeader = true;
   public enableStickyAction = true;
-  public collapseCellActions = true;
+  public showCellActionsMenu = true;
   public pageSizeOptions;
   public textSearchMode = false;
   public hidePageSize = false;
@@ -307,7 +307,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
     this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : true;
-    this.collapseCellActions = isDefined(this.settings.collapseCellActions) ? this.settings.collapseCellActions : true;
+    this.showCellActionsMenu = isDefined(this.settings.showCellActionsMenu) ? this.settings.showCellActionsMenu : true;
     this.hideEmptyLines = isDefined(this.settings.hideEmptyLines) ? this.settings.hideEmptyLines : false;
     this.useEntityLabel = isDefined(this.widgetConfig.settings.useEntityLabel) ? this.widgetConfig.settings.useEntityLabel : false;
     this.showTimestamp = this.settings.showTimestamp !== false;

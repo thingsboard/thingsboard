@@ -5270,7 +5270,7 @@
             "rows": "Rows",
             "timeseries-column-error": "At least one timeseries column should be specified",
             "table-tabs": "Table tabs",
-            "collapse-cell-actions-mobile": "Collapse cell actions in mobile view"
+            "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
         },
         "value-source": {
             "value-source": "Value source",
