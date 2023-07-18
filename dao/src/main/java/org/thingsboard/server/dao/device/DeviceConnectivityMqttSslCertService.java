@@ -41,7 +41,7 @@ public class DeviceConnectivityMqttSslCertService implements TbDeviceConnectivit
         String sslCertPath = deviceConnectivityConfiguration.getConnectivity()
                 .get(MQTTS)
                 .getSslCertPath();
-        if (!sslCertPath.isEmpty() && ResourceUtils.resourceExists(this, sslCertPath)) {
+        if (sslCertPath != null && ResourceUtils.resourceExists(this, sslCertPath)) {
             certificate = FileUtils.readFileToString(new File(sslCertPath), StandardCharsets.UTF_8);
         }
     }

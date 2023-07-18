@@ -766,7 +766,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 credentials.getCredentialsId()));
         assertThat(commands.get(COAP)).isEqualTo(String.format("coap-client -m POST coap://localhost:5683/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
                 credentials.getCredentialsId()));
-        assertThat(commands.get(COAPS)).isEqualTo(String.format("coap-client-openssl -v 9 -m POST coaps://localhost:5684/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
+        assertThat(commands.get(COAPS)).isEqualTo(String.format("coap-client-openssl -m POST coaps://localhost:5684/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
                 credentials.getCredentialsId()));
     }
 
@@ -856,7 +856,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         assertThat(commands).hasSize(2);
         assertThat(commands.get(COAP)).isEqualTo(String.format("coap-client -m POST coap://localhost:5683/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
                 credentials.getCredentialsId()));
-        assertThat(commands.get(COAPS)).isEqualTo(String.format("coap-client-openssl -v 9 -m POST coaps://localhost:5684/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
+        assertThat(commands.get(COAPS)).isEqualTo(String.format("coap-client-openssl -m POST coaps://localhost:5684/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
                 credentials.getCredentialsId()));
     }
 
