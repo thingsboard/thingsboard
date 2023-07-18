@@ -109,6 +109,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     public void deleteResource(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Executing deleteResource [{}] [{}]", tenantId, resourceId);
         Validator.validateId(resourceId, INCORRECT_RESOURCE_ID + resourceId);
+        resourceValidator.validateDelete(tenantId, resourceId);
         resourceDao.removeById(tenantId, resourceId.getId());
     }
 
