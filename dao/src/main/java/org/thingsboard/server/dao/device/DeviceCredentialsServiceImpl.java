@@ -171,9 +171,6 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         } else {
             deviceCredentials.setCredentialsId(EncryptionUtil.getSha3Hash("|", mqttCredentials.getClientId(), mqttCredentials.getUserName()));
         }
-        if (StringUtils.isNotEmpty(mqttCredentials.getPassword())) {
-            mqttCredentials.setPassword(mqttCredentials.getPassword());
-        }
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
     }
 
