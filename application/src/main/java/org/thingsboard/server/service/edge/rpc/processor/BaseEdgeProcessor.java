@@ -26,10 +26,12 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -113,7 +115,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class BaseEdgeProcessor {
 
     protected static final Lock deviceCreationLock = new ReentrantLock();
+    protected static final Lock deviceProfileCreationLock = new ReentrantLock();
     protected static final Lock assetCreationLock = new ReentrantLock();
+    protected static final Lock assetProfileCreationLock = new ReentrantLock();
     protected static final Lock dashboardCreationLock = new ReentrantLock();
     protected static final Lock entityViewCreationLock = new ReentrantLock();
 
@@ -208,7 +212,13 @@ public abstract class BaseEdgeProcessor {
     protected DataValidator<Device> deviceValidator;
 
     @Autowired
+    protected DataValidator<DeviceProfile> deviceProfileValidator;
+
+    @Autowired
     protected DataValidator<Asset> assetValidator;
+
+    @Autowired
+    protected DataValidator<AssetProfile> assetProfileValidator;
 
     @Autowired
     protected DataValidator<Dashboard> dashboardValidator;
@@ -573,7 +583,7 @@ public abstract class BaseEdgeProcessor {
         return metaData;
     }
 
-    private TbMsgMetaData getTbMsgMetaData(Edge edge) {
+    protected TbMsgMetaData getTbMsgMetaData(Edge edge) {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("edgeId", edge.getId().toString());
         metaData.putValue("edgeName", edge.getName());

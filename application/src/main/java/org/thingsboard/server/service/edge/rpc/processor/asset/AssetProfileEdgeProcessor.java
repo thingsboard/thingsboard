@@ -15,25 +15,103 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.asset;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+
+import java.util.UUID;
 
 @Component
 @Slf4j
 @TbCoreComponent
-public class AssetProfileEdgeProcessor extends BaseEdgeProcessor {
+public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
+
+    public ListenableFuture<Void> processAssetProfileMsgFromEdge(TenantId tenantId, Edge edge, AssetProfileUpdateMsg assetProfileUpdateMsg) {
+        log.trace("[{}] executing processAssetProfileMsgFromEdge [{}] from edge [{}]", tenantId, assetProfileUpdateMsg, edge.getName());
+        AssetProfileId assetProfileId = new AssetProfileId(new UUID(assetProfileUpdateMsg.getIdMSB(), assetProfileUpdateMsg.getIdLSB()));
+        try {
+            edgeSynchronizationManager.getSync().set(true);
+
+            switch (assetProfileUpdateMsg.getMsgType()) {
+                case ENTITY_CREATED_RPC_MESSAGE:
+                case ENTITY_UPDATED_RPC_MESSAGE:
+                    saveOrUpdateAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg, edge);
+                    return Futures.immediateFuture(null);
+                case ENTITY_DELETED_RPC_MESSAGE:
+                case UNRECOGNIZED:
+                default:
+                    return handleUnsupportedMsgType(assetProfileUpdateMsg.getMsgType());
+            }
+        } catch (DataValidationException e) {
+            if (e.getMessage().contains("limit reached")) {
+                log.warn("[{}] Number of allowed asset profile violated {}", tenantId, assetProfileUpdateMsg, e);
+                return Futures.immediateFuture(null);
+            } else {
+                return Futures.immediateFailedFuture(e);
+            }
+        } finally {
+            edgeSynchronizationManager.getSync().remove();
+        }
+    }
+
+    private void saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg, Edge edge) {
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg);
+        Boolean created = resultPair.getFirst();
+        if (created) {
+            createRelationFromEdge(tenantId, edge.getId(), assetProfileId);
+            pushAssetProfileCreatedEventToRuleEngine(tenantId, edge, assetProfileId);
+        }
+        Boolean assetNameUpdated = resultPair.getSecond();
+        if (assetNameUpdated) {
+            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.ASSET_PROFILE, EdgeEventActionType.UPDATED, assetProfileId, null);
+        }
+    }
+
+    private void pushAssetProfileCreatedEventToRuleEngine(TenantId tenantId, Edge edge, AssetProfileId assetProfileId) {
+        try {
+            AssetProfile assetProfile = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
+            ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(assetProfile);
+            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, assetProfileId, getTbMsgMetaData(edge),
+                    TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
+            tbClusterService.pushMsgToRuleEngine(tenantId, assetProfileId, tbMsg, new TbQueueCallback() {
+                @Override
+                public void onSuccess(TbQueueMsgMetadata metadata) {
+                    log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", assetProfile);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", assetProfile, t);
+                }
+            });
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            log.warn("[{}] Failed to push asset profile action to rule engine: {}", assetProfileId, DataConstants.ENTITY_CREATED, e);
+        }
+    }
 
     public DownlinkMsg convertAssetProfileEventToDownlink(EdgeEvent edgeEvent) {
         AssetProfileId assetProfileId = new AssetProfileId(edgeEvent.getEntityId());
