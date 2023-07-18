@@ -146,7 +146,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         this.name = name;
     }
 
-    @ApiModelProperty(position = 6, required = true, value = "Device Profile Name", example = "Temperature Sensor")
+    @ApiModelProperty(position = 6, value = "Device Profile Name", example = "Temperature Sensor")
     public String getType() {
         return type;
     }
@@ -155,7 +155,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         this.type = type;
     }
 
-    @ApiModelProperty(position = 7, required = true, value = "Label that may be used in widgets", example = "Room 234 Sensor")
+    @ApiModelProperty(position = 7, value = "Label that may be used in widgets", example = "Room 234 Sensor")
     public String getLabel() {
         return label;
     }
