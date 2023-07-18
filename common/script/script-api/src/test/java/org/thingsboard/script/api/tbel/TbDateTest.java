@@ -25,12 +25,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 class TbDateTest {
@@ -99,4 +102,26 @@ class TbDateTest {
             future.get(30, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    void testToISOStringThreadLocalStaticFormatter() throws ExecutionException, InterruptedException, TimeoutException {
+        executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
+        long ts = 1709217342987L; //Thu Feb 29 2024 14:35:42.987 GMT+0000
+        int offset = Calendar.getInstance().get(Calendar.ZONE_OFFSET); // for example 3600000 for GMT + 1
+        TbDate tbDate = new TbDate(ts - offset);
+        String datePrefix = "2024-02-29T14:35:42.987"; //without time zone
+        assertThat(tbDate.toISOString())
+                .as("format in main thread")
+                .startsWith(datePrefix);
+        assertThat(executor.submit(tbDate::toISOString).get(30, TimeUnit.SECONDS))
+                .as("format in executor thread")
+                .startsWith(datePrefix);
+        assertThat(new TbDate(ts - offset).toISOString())
+                .as("new instance format in main thread")
+                .startsWith(datePrefix);
+        assertThat(executor.submit(() -> new TbDate(ts - offset).toISOString()).get(30, TimeUnit.SECONDS))
+                .as("new instance format in executor thread")
+                .startsWith(datePrefix);
+    }
+
 }

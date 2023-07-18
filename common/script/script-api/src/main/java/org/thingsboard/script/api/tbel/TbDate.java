@@ -35,7 +35,8 @@ public class TbDate extends Date {
     private static final DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
             "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
 
-    private static final DateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    private static final ThreadLocal<DateFormat> isoDateFormat = ThreadLocal.withInitial(() ->
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 
     public TbDate() {
         super();
@@ -73,9 +74,7 @@ public class TbDate extends Date {
     }
 
     public String toISOString() {
-        synchronized (TbDate.class) {
-            return isoDateFormat.format(this);
-        }
+        return isoDateFormat.get().format(this);
     }
 
     public String toLocaleString(String locale) {
