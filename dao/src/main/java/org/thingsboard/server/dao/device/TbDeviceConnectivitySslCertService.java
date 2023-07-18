@@ -15,12 +15,7 @@
  */
 package org.thingsboard.server.dao.device;
 
-import lombok.Data;
 
-@Data
-public class DeviceConnectivityInfo {
-    private Boolean enabled;
-    private String host;
-    private String port;
-    private String sslCertPath;
+public interface TbDeviceConnectivitySslCertService {
+    String getMqttSslCertificate();
 }

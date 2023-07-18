@@ -27,6 +27,7 @@ public class DeviceConnectivityUtil {
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
+    public static final String SERVER_CHAIN_PEM = "serverChainPem";
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
 
@@ -74,7 +75,7 @@ public class DeviceConnectivityUtil {
     public static String getCoapClientCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                String client = COAPS.equals(protocol) ? "coap-client-openssl -v 9" : "coap-client";
+                String client = COAPS.equals(protocol) ? "coap-client-openssl" : "coap-client";
                 return String.format("%s -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
                         client, protocol, host, port, deviceCredentials.getCredentialsId(), JSON_EXAMPLE_PAYLOAD);
             default:

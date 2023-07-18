@@ -99,6 +99,7 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.JSON_EXAMPL
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.CHECK_DOCUMENTATION;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.SERVER_CHAIN_PEM;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getCoapClientCommand;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getCurlCommand;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getMosquittoPublishCommand;
@@ -135,6 +136,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
     @Autowired
     private DeviceConnectivityConfiguration deviceConnectivityConfiguration;
+
+    @Autowired
+    private DeviceConnectivityMqttSslCertService deviceConnectivityMqttSslCertService;
 
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
@@ -180,6 +184,10 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 break;
             default:
                 commands.put(transportType.name(), CHECK_DOCUMENTATION);
+        }
+
+        if (commands.containsKey(MQTTS) && deviceConnectivityMqttSslCertService.getMqttSslCertificate() != null) {
+            commands.put(SERVER_CHAIN_PEM, deviceConnectivityMqttSslCertService.getMqttSslCertificate());
         }
         return commands;
     }
