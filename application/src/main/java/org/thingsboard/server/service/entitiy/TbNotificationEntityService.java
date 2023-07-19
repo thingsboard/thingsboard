@@ -70,7 +70,7 @@ public interface TbNotificationEntityService {
     void notifyCreateOrUpdateOrDeleteEdge(TenantId tenantId, EdgeId edgeId, CustomerId customerId, Edge edge, ActionType actionType,
                                           User user, Object... additionalInfo);
 
-    void notifyCreateOrUpdateAlarm(AlarmInfo alarm, ActionType actionType, User user, Object... additionalInfo);
+    void logCreateOrUpdateAlarm(AlarmInfo alarm, ActionType actionType, User user, Object... additionalInfo);
 
     void logAlarmComment(Alarm alarm, AlarmComment alarmComment, ActionType actionType, User user);
 

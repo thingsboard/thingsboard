@@ -134,7 +134,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     }
 
     @Override
-    public void notifyCreateOrUpdateAlarm(AlarmInfo alarm, ActionType actionType, User user, Object... additionalInfo) {
+    public void logCreateOrUpdateAlarm(AlarmInfo alarm, ActionType actionType, User user, Object... additionalInfo) {
         logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarm, alarm.getCustomerId(), actionType, user, additionalInfo);
     }
 
