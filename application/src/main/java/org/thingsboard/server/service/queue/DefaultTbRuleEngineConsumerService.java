@@ -266,7 +266,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         updateCurrentThreadName(threadSuffix);
         while (!stopped && !consumer.isStopped()) {
             try {
-                List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs = consumer.poll(pollDuration);
+                List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs = consumer.poll(configuration.getPollInterval());
                 if (msgs.isEmpty()) {
                     continue;
                 }
