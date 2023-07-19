@@ -46,7 +46,6 @@ import org.thingsboard.server.dao.service.Validator;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -252,37 +251,13 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     @Override
     public ListenableFuture<List<TsKvLatestRemovingResult>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys) {
-        return removeLatest(tenantId, entityId, keys, false);
-    }
-
-    @Override
-    public ListenableFuture<List<TsKvLatestRemovingResult>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys, boolean rewrite) {
         validate(entityId);
         List<ListenableFuture<TsKvLatestRemovingResult>> futures = Lists.newArrayListWithExpectedSize(keys.size());
-
-        ListenableFuture<List<TsKvEntry>> latestFuture;
-
-        if (rewrite) {
-            latestFuture = findLatest(tenantId, entityId, keys);
-        } else {
-            latestFuture = Futures.immediateFuture(null);
+        for (String key : keys) {
+            DeleteTsKvQuery query = new BaseDeleteTsKvQuery(key, 0, System.currentTimeMillis(), false);
+            futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
         }
-
-        return Futures.transformAsync(latestFuture, latest -> {
-            Map<String, Long> keyTsMap;
-            if (latest != null) {
-                keyTsMap = latest.stream().collect(Collectors.toMap(TsKvEntry::getKey, TsKvEntry::getTs));
-            } else {
-                keyTsMap = Collections.emptyMap();
-            }
-
-            for (String key : keys) {
-                long startTs = keyTsMap.getOrDefault(key, 0L);
-                DeleteTsKvQuery query = new BaseDeleteTsKvQuery(key, startTs, System.currentTimeMillis(), rewrite);
-                futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
-            }
-            return Futures.allAsList(futures);
-        }, MoreExecutors.directExecutor());
+        return Futures.allAsList(futures);
     }
 
     @Override

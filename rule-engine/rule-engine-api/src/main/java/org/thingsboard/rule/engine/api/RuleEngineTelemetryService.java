@@ -71,6 +71,4 @@ public interface RuleEngineTelemetryService {
     void deleteAllLatest(TenantId tenantId, EntityId entityId, FutureCallback<Collection<String>> callback);
 
     void deleteTimeseriesAndNotify(TenantId tenantId, EntityId entityId, List<String> keys, List<DeleteTsKvQuery> deleteTsKvQueries, FutureCallback<Void> callback);
-
-    void deleteLatestAndNotify(TenantId tenantId, EntityId entityId, List<String> keys, boolean rewrite, FutureCallback<Void> callback);
 }

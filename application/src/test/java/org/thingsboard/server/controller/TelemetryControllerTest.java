@@ -47,50 +47,6 @@ public class TelemetryControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDeleteLatest() throws Exception {
-        loginTenantAdmin();
-        Device device = createDevice();
-
-        SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(device.getId());
-
-        getWsClient().subscribeLatestUpdate(List.of(new EntityKey(TIME_SERIES, "data")), filter);
-
-        getWsClient().registerWaitForUpdate(1);
-
-        long startTs = System.currentTimeMillis();
-
-        String testBody = "{\"data\": \"value\"}";
-        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", testBody, String.class, status().isOk());
-
-        long endTs = System.currentTimeMillis();
-
-        ObjectNode latest = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries?keys=data", ObjectNode.class);
-
-        Assert.assertNotNull(latest);
-        var data = latest.get("data");
-        Assert.assertNotNull(data);
-
-        Assert.assertEquals("value", data.get(0).get("value").asText());
-
-        ObjectNode timeseries = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries?keys=data&startTs={startTs}&endTs={endTs}", ObjectNode.class, startTs, endTs);
-
-        Assert.assertNotNull(timeseries);
-
-        Assert.assertEquals("value", timeseries.get("data").get(0).get("value").asText());
-
-        doDeleteAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/latest/delete?keys=data", String.class);
-
-        latest = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries?keys=data", ObjectNode.class);
-
-        Assert.assertTrue(latest.get("data").get(0).get("value").isNull());
-
-        timeseries = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries?keys=data&startTs={startTs}&endTs={endTs}", ObjectNode.class, startTs, endTs);
-
-        Assert.assertEquals("value", timeseries.get("data").get(0).get("value").asText());
-    }
-
-    @Test
     public void testDeleteAllTelemetryWithLatest() throws Exception {
         loginTenantAdmin();
         Device device = createDevice();
