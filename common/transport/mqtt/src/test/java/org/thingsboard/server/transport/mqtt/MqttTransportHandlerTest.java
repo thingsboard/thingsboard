@@ -111,6 +111,13 @@ public class MqttTransportHandlerTest {
         return new MqttPublishMessage(mqttFixedHeader, variableHeader, payload);
     }
 
+    MqttPublishMessage getMqttPublishMessageAndProvisionResponse() {
+        MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, true, MqttQoS.AT_LEAST_ONCE, false, 1);
+        MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader("provision/response", packedId.incrementAndGet());
+        ByteBuf payload = new EmptyByteBuf(new PooledByteBufAllocator());
+        return new MqttPublishMessage(mqttFixedHeader, variableHeader, payload);
+    }
+
     @Test
     public void givenMqttConnectMessage_whenProcessMqttMsg_thenProcessConnect() {
         MqttConnectMessage msg = getMqttConnectMessage();
@@ -206,4 +213,20 @@ public class MqttTransportHandlerTest {
         messages.forEach((msg) -> verify(handler, times(1)).processRegularSessionMsg(ctx, msg));
     }
 
+    @Test
+    public void givenMqttConnectMessageAndPublishProvisionImmediately_whenProcessMqttMsg(){
+        givenMqttConnectMessage_whenProcessMqttMsg_thenProcessConnect();
+
+        List<MqttPublishMessage> messages = new ArrayList<>();
+        // add provision subscribe message
+        messages.add(getMqttPublishMessageAndProvisionResponse());
+
+        messages.forEach((msg) -> handler.channelRead(ctx, msg));
+
+        assertThat(handler.address, is(IP_ADDR));
+        assertThat(handler.deviceSessionCtx.getChannel(), is(ctx));
+        assertThat(handler.deviceSessionCtx.isConnected(), is(false));
+        verify(handler, never()).doDisconnect();
+        verify(handler, times(1)).processConnect(any(), any());
+    }
 }
