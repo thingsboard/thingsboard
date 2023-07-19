@@ -481,10 +481,18 @@
               </mat-slide-toggle>
               <mat-slide-toggle color="primary" fxFlex="100" formControlName="keepalivePermitWithoutCalls">
                 {{ 'gateway.permit-without-calls'  | translate }}
+                <mat-icon class="material-icons-outlined suffix-icon slider-icon " aria-hidden="false" aria-label="help-icon"
+                          style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.permit-without-calls' | translate }}">info
+                </mat-icon>
               </mat-slide-toggle>
               <mat-form-field appearance="outline" fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.server-port</mat-label>
                 <input matInput formControlName="serverPort" type="number" min="0"/>
+                <mat-icon class="mat-form-field-infix pointer-event suffix-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.server-port' | translate }}">info_outlined
+                </mat-icon>
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.serverPort').hasError('required')">
                   {{'gateway.thingsboard-port-required' | translate }}
                 </mat-error>
@@ -501,6 +509,10 @@
               <mat-form-field appearance="outline" fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-keep-alive-timeout</mat-label>
                 <input matInput formControlName="keepAliveTimeoutMs" type="number" min="0"/>
+                <mat-icon class="mat-form-field-infix pointer-event suffix-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.grpc-keep-alive-timeout' | translate }}">info_outlined
+                </mat-icon>
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.keepAliveTimeoutMs').hasError('required')">
                   {{'gateway.grpc-keep-alive-timeout-required' | translate }}
                 </mat-error>
@@ -514,6 +526,10 @@
               <mat-form-field appearance="outline" fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-keep-alive</mat-label>
                 <input matInput formControlName="keepAliveTimeMs" type="number" min="0"/>
+                <mat-icon class="mat-form-field-infix pointer-event suffix-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.grpc-keep-alive' | translate }}">info_outlined
+                </mat-icon>
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.keepAliveTimeMs').hasError('required')">
                   {{'gateway.grpc-keep-alive-required' | translate }}
                 </mat-error>
@@ -527,6 +543,10 @@
               <mat-form-field appearance="outline" fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-min-time-between-pings</mat-label>
                 <input matInput formControlName="minTimeBetweenPingsMs" type="number" min="0"/>
+                <mat-icon class="mat-form-field-infix pointer-event suffix-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.grpc-min-time-between-pings' | translate }}">info_outlined
+                </mat-icon>
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.minTimeBetweenPingsMs').hasError('required')">
                   {{'gateway.grpc-min-time-between-pings-required' | translate }}
                 </mat-error>
@@ -540,6 +560,10 @@
               <mat-form-field appearance="outline" fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-max-pings-without-data</mat-label>
                 <input matInput formControlName="maxPingsWithoutData" type="number" min="0"/>
+                <mat-icon class="mat-form-field-infix pointer-event suffix-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.grpc-max-pings-without-data' | translate }}">info_outlined
+                </mat-icon>
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.maxPingsWithoutData').hasError('required')">
                   {{'gateway.grpc-max-pings-without-data-required' | translate }}
                 </mat-error>
@@ -553,6 +577,10 @@
               <mat-form-field appearance="outline" fxFlex="calc(50%-15px)" fxFlex.lt-md="100" class="mat-block tb-value-type">
                 <mat-label translate>gateway.grpc-min-ping-interval-without-data</mat-label>
                 <input matInput formControlName="minPingIntervalWithoutDataMs" type="number" min="0"/>
+                <mat-icon class="mat-form-field-infix pointer-event suffix-icon"
+                          matSuffix style="cursor:pointer;"
+                          matTooltip="{{'gateway.hints.grpc-min-ping-interval-without-data' | translate }}">info_outlined
+                </mat-icon>
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.minPingIntervalWithoutDataMs').hasError('required')">
                   {{'gateway.grpc-min-ping-interval-without-data-required' | translate }}
                 </mat-error>
@@ -576,7 +604,7 @@
               </mat-slide-toggle>
               <mat-form-field appearance="outline" fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                 <mat-label translate>gateway.statistics.send-period</mat-label>
-                <input matInput formControlName="statsSendPeriodInSeconds" type="number" min="1"/>
+                <input matInput formControlName="statsSendPeriodInSeconds" type="number" min="60"/>
                 <mat-error
                   *ngIf="gatewayConfigGroup.get('thingsboard.statistics.statsSendPeriodInSeconds').hasError('required')">
                   {{'gateway.statistics.send-period-required' | translate }}

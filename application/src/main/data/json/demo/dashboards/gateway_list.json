@@ -1326,7 +1326,7 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "if (value.includes(\"RPC\")) {\n    let parsedValue = value.match(/\\|(\\w+)\\|/);\n    parsedValue = parsedValue ? parsedValue[1] :\n    parsedValue;\n    return parsedValue || value;\n} else return '';"
+                  "postFuncBody": "if (value.includes(\"RPC\")&&!value.includes(\"GRPC\")) {\n    let parsedValue = value.match(/\\|(\\w+)\\|/);\n    parsedValue = parsedValue ? parsedValue[1] :\n    parsedValue;\n    return parsedValue || value;\n} else return '';"
                 },
                 {
                   "name": "SERVICE_LOGS",
@@ -1654,7 +1654,7 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "if (value.includes(\"RPC\")) {\n    let parsedValue = value.match(/\\|(\\w+)\\|/);\n    parsedValue = parsedValue ? parsedValue[1] :\n    parsedValue;\n    return parsedValue || value;\n} else return '';"
+                  "postFuncBody": "if (value.includes(\"RPC\")&&!value.includes(\"GRPC\")) {\n    let parsedValue = value.match(/\\|(\\w+)\\|/);\n    parsedValue = parsedValue ? parsedValue[1] :\n    parsedValue;\n    return parsedValue || value;\n} else return '';"
                 },
                 {
                   "name": "SERVICE_LOGS",

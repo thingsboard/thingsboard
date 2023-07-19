@@ -76,7 +76,7 @@ export class GatewayServiceRPCComponent extends PageComponent implements AfterVi
     super(store);
     this.commandForm = this.fb.group({
       command: [null,[Validators.required]],
-      time: [60, [Validators.required]],
+      time: [60, [Validators.required, Validators.min(1)]],
       params: ["{}", [Validators.required]],
       result: [null]
     })

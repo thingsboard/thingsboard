@@ -155,7 +155,7 @@ export class GatewayConfigurationComponent implements OnInit {
         checkConnectorsConfigurationInSeconds: [60, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         statistics: this.fb.group({
           enable: [true, []],
-          statsSendPeriodInSeconds: [3600, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+          statsSendPeriodInSeconds: [3600, [Validators.required, Validators.min(60), Validators.pattern(/^-?[0-9]+$/)]],
           commands: this.fb.array([], [])
         }),
         maxPayloadSizeBytes: [1024, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
@@ -434,6 +434,7 @@ export class GatewayConfigurationComponent implements OnInit {
       grpcGroup.get('serverPort').enable();
       grpcGroup.get('keepAliveTimeMs').enable();
       grpcGroup.get('keepAliveTimeoutMs').enable();
+      grpcGroup.get('keepalivePermitWithoutCalls').enable();
       grpcGroup.get('maxPingsWithoutData').enable();
       grpcGroup.get('minTimeBetweenPingsMs').enable();
       grpcGroup.get('minPingIntervalWithoutDataMs').enable();
@@ -441,6 +442,7 @@ export class GatewayConfigurationComponent implements OnInit {
       grpcGroup.get('serverPort').disable();
       grpcGroup.get('keepAliveTimeMs').disable();
       grpcGroup.get('keepAliveTimeoutMs').disable();
+      grpcGroup.get('keepalivePermitWithoutCalls').disable();
       grpcGroup.get('maxPingsWithoutData').disable();
       grpcGroup.get('minTimeBetweenPingsMs').disable();
       grpcGroup.get('minPingIntervalWithoutDataMs').disable();

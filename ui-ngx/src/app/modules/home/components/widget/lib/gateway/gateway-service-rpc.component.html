@@ -27,7 +27,11 @@
   </mat-form-field>
   <mat-form-field class="mat-block tb-value-type" fxFlex *ngIf="!isConnector">
     <mat-label>{{'gateway.statistics.timeout-ms' | translate}}</mat-label>
-    <input matInput formControlName="time" type="number"/>
+    <input matInput formControlName="time" type="number" min="1"/>
+    <mat-error
+      *ngIf="commandForm.get('time').hasError('min')">
+      {{'gateway.statistics.timeout-min' | translate }}
+    </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block tb-value-type" fxFlex *ngIf="isConnector">
     <mat-label>{{'widget-config.datasource-parameters' | translate}}</mat-label>

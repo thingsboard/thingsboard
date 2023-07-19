@@ -2693,7 +2693,7 @@
         },
         "min-pack-send-delay": "Min pack send delay (in ms)",
         "min-pack-send-delay-required": "Min pack send delay is required",
-        "min-pack-send-delay-min": "Min pack send delay can not be less then 1",
+        "min-pack-send-delay-min": "Min pack send delay can not be less then 0",
         "no-connectors": "No connectors",
         "no-data": "No configurations",
         "no-gateway-found": "No gateway found.",
@@ -2725,7 +2725,7 @@
             "commands": "Commands",
             "send-period": "Statistic send period (in sec)",
             "send-period-required": "Statistic send period is required",
-            "send-period-min": "Statistic send period can not be less then 1",
+            "send-period-min": "Statistic send period can not be less then 60",
             "send-period-pattern": "Statistic send period is not valid",
             "check-connectors-configuration": "Check connectors configuration (in ms)",
             "check-connectors-configuration-required": "Check connectors configuration is required",
@@ -2841,7 +2841,14 @@
             "inactivity-timeout": "Inactivity device time after whose the gateway will disconnect device",
             "inactivity-period": "Periodicity of device activity check",
             "minimal-pack-delay": "Delay between sending packets (Decreasing this setting results in increased CPU usage)",
-            "qos": "Quality of Service in MQTT messaging (0 - at most once, 1 - at least once)"
+            "qos": "Quality of Service in MQTT messaging (0 - at most once, 1 - at least once)",
+            "server-port": "Network port on which GRPC server will listen for incoming connections.",
+            "grpc-keep-alive-timeout": "Maximum time (in milliseconds) the server should wait for a keepalive ping response before considering the connection dead.",
+            "grpc-keep-alive": "Duration (in milliseconds) between two successive keepalive ping messages when there is no active RPC call.",
+            "grpc-min-time-between-pings": "Minimum amount of time (in milliseconds) the server should wait between sending keepalive ping messages",
+            "grpc-max-pings-without-data": "Maximum number of keepalive ping messages that the server can send without receiving any data before it considers the connection dead.",
+            "grpc-min-ping-interval-without-data": "Minimum amount of time (in milliseconds) the server should wait between sending keepalive ping messages when there is no data being sent or received.",
+            "permit-without-calls": "Allow server to keep the GRPC connection alive even when there are no active RPC calls."
         }
     },
     "grid": {
