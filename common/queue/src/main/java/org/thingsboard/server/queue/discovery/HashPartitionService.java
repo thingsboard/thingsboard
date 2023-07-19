@@ -186,7 +186,8 @@ public class HashPartitionService implements PartitionService {
         TenantId isolatedOrSystemTenantId = getIsolatedOrSystemTenantId(serviceType, tenantId);
         QueueKey queueKey = new QueueKey(serviceType, queueName, isolatedOrSystemTenantId);
         if (!partitionSizesMap.containsKey(queueKey)) {
-            queueKey = new QueueKey(serviceType, isolatedOrSystemTenantId);
+            // TODO: fallback to Main in case no system queue
+            queueKey = new QueueKey(serviceType, queueName, TenantId.SYS_TENANT_ID);
         }
         return resolve(queueKey, entityId);
     }
@@ -207,6 +208,9 @@ public class HashPartitionService implements PartitionService {
                 .putLong(entityId.getId().getLeastSignificantBits()).hash().asInt();
 
         Integer partitionSize = partitionSizesMap.get(queueKey);
+        //        if (partitionSize == null) {
+//            throw new IllegalStateException("Can't get partition ")
+//        }
         int partition = Math.abs(hash % partitionSize);
 
         return buildTopicPartitionInfo(queueKey, partition);
