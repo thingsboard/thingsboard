@@ -19,9 +19,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.ActionRelationEvent;
@@ -64,7 +68,7 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("[{}] EntitySaveEvent called: {}", event.getEntityId().getEntityType(), event);
+        log.trace("[{}] SaveEntityEvent called: {}", event.getEntityId().getEntityType(), event);
         EdgeEventActionType action = Boolean.TRUE.equals(event.getAdded()) ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
                 null, null, action);
@@ -75,7 +79,7 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("[{}] EntityDeleteEvent called: {}", event.getEntityId().getEntityType(), event);
+        log.trace("[{}] DeleteEntityEvent called: {}", event.getEntityId().getEntityType(), event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                 event.getBody(), null, EdgeEventActionType.DELETED);
     }
@@ -85,7 +89,18 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("[{}] EntityActionEvent called: {}", event.getEntityId().getEntityType(), event);
+        if (ActionType.RELATION_DELETED.equals(event.getActionType())) {
+            EntityRelation relation = JacksonUtil.fromString(event.getBody(), EntityRelation.class);
+            if (relation == null) {
+                log.trace("skipping RELATION_DELETED event in case relation is null: {}", event);
+                return;
+            }
+            if (!RelationTypeGroup.COMMON.equals(relation.getTypeGroup())) {
+                log.trace("skipping RELATION_DELETED event in case NOT COMMON relation type group: {}", event);
+                return;
+            }
+        }
+        log.trace("[{}] ActionEntityEvent called: {}", event.getEntityId().getEntityType(), event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                 event.getBody(), null, edgeTypeByActionType(event.getActionType()));
     }
@@ -95,7 +110,16 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("EntityRelationActionEvent called: {}", event);
+        EntityRelation relation = JacksonUtil.fromString(event.getBody(), EntityRelation.class);
+        if (relation == null) {
+            log.trace("skipping ActionRelationEvent event in case relation is null: {}", event);
+            return;
+        }
+        if (!RelationTypeGroup.COMMON.equals(relation.getTypeGroup())) {
+            log.trace("skipping ActionRelationEvent event in case NOT COMMON relation type group: {}", event);
+            return;
+        }
+        log.trace("ActionRelationEvent called: {}", event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
                 event.getBody(), EdgeEventType.RELATION, edgeTypeByActionType(event.getActionType()));
     }

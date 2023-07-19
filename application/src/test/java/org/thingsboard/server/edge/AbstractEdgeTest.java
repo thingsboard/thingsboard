@@ -158,7 +158,10 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     @After
     public void teardownEdgeTest() {
         try {
+            edgeImitator.expectMessageAmount(2);
             loginTenantAdmin();
+            Assert.assertTrue(edgeImitator.waitForMessages());
+
             doDelete("/api/edge/" + edge.getId().toString())
                     .andExpect(status().isOk());
             edgeImitator.disconnect();
@@ -217,17 +220,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
         validateEdgeConfiguration();
 
-        // 4 messages
-        // - 2 from device profile fetcher (default and thermostat)
-        // - 1 from device fetcher
-        // - 1 from device controller (thermostat)
-        validateDeviceProfiles();
-
-        // 2 messages - 1 from device fetcher and 1 from device controller
-        validateDevices();
-
-        // 2 messages - 1 from asset fetcher and 1 from asset controller
-        validateAssets();
+        // 1 message from queue fetcher
+        validateQueues();
 
         // 2 messages - 1 from rule chain fetcher and 1 from rule chain controller
         UUID ruleChainUUID = validateRuleChains();
@@ -238,20 +232,29 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // 4 messages - 4 messages from fetcher - 2 from system level ('mail', 'mailTemplates') and 2 from admin level ('mail', 'mailTemplates')
         validateAdminSettings();
 
+        // 4 messages
+        // - 2 from device profile fetcher (default and thermostat)
+        // - 1 from device fetcher
+        // - 1 from device controller (thermostat)
+        validateDeviceProfiles();
+
         // 3 messages
         // - 1 message from asset profile fetcher
         // - 1 message from asset fetcher
         // - 1 message from asset controller
         validateAssetProfiles();
 
-        // 1 message from queue fetcher
-        validateQueues();
+        // 2 messages - 1 from device fetcher and 1 from device controller
+        validateDevices();
 
-        // 1 message from user fetcher
-        validateUsers();
+        // 2 messages - 1 from asset fetcher and 1 from asset controller
+        validateAssets();
 
         // 1 message from public customer fetcher
         validatePublicCustomer();
+
+        // 1 message from user fetcher
+        validateUsers();
     }
 
     private void validateEdgeConfiguration() throws Exception {
