@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.widget;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -25,6 +24,7 @@ import lombok.Setter;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HasTitle;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements HasName, HasTenantId, ExportableEntity<WidgetsBundleId> {
+public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements HasName, HasTenantId, ExportableEntity<WidgetsBundleId>, HasTitle {
 
     private static final long serialVersionUID = -7627368878362410489L;
 

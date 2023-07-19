@@ -101,7 +101,9 @@ export class ItemBufferService {
       if (datasources) {
         for (let i = 0; i < datasources.length; i++) {
           const datasource = datasources[i];
-          if ((datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) && datasource.entityAliasId) {
+          if ((datasource.type === DatasourceType.entity ||
+            datasource.type === DatasourceType.entityCount ||
+            datasource.type === DatasourceType.alarmCount) && datasource.entityAliasId) {
             entityAlias = dashboard.configuration.entityAliases[datasource.entityAliasId];
             if (entityAlias) {
               aliasesInfo.datasourceAliases[i] = this.prepareAliasInfo(entityAlias);
@@ -127,7 +129,9 @@ export class ItemBufferService {
       if (datasources) {
         for (let i = 0; i < datasources.length; i++) {
           const datasource = datasources[i];
-          if ((datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) && datasource.filterId) {
+          if ((datasource.type === DatasourceType.entity ||
+            datasource.type === DatasourceType.entityCount ||
+            datasource.type === DatasourceType.alarmCount) && datasource.filterId) {
             filter = dashboard.configuration.filters[datasource.filterId];
             if (filter) {
               filtersInfo.datasourceFilters[i] = this.prepareFilterInfo(filter);

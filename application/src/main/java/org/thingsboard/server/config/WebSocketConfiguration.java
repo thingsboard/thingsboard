@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.config;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -40,10 +42,14 @@ import java.util.Map;
 @Configuration
 @TbCoreComponent
 @EnableWebSocket
+@RequiredArgsConstructor
+@Slf4j
 public class WebSocketConfiguration implements WebSocketConfigurer {
 
     public static final String WS_PLUGIN_PREFIX = "/api/ws/plugins/";
     private static final String WS_PLUGIN_MAPPING = WS_PLUGIN_PREFIX + "**";
+
+    private final WebSocketHandler wsHandler;
 
     @Bean
     public ServletServerContainerFactoryBean createWebSocketContainer() {
@@ -55,7 +61,11 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(wsHandler(), WS_PLUGIN_MAPPING).setAllowedOriginPatterns("*")
+        if (!(wsHandler instanceof TbWebSocketHandler)) {
+            log.error("TbWebSocketHandler expected but [{}] provided", wsHandler);
+            throw new RuntimeException("TbWebSocketHandler expected but " + wsHandler + " provided");
+        }
+        registry.addHandler(wsHandler, WS_PLUGIN_MAPPING).setAllowedOriginPatterns("*")
                 .addInterceptors(new HttpSessionHandshakeInterceptor(), new HandshakeInterceptor() {
 
                     @Override
@@ -80,11 +90,6 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
                         //Do nothing
                     }
                 });
-    }
-
-    @Bean
-    public WebSocketHandler wsHandler() {
-        return new TbWebSocketHandler();
     }
 
     protected SecurityUser getCurrentUser() throws ThingsboardException {

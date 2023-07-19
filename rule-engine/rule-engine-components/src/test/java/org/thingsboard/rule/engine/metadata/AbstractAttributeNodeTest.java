@@ -219,7 +219,7 @@ public abstract class AbstractAttributeNodeTest {
 
     void mockFindDevice(Device device) {
         when(ctx.getDeviceService()).thenReturn(deviceService);
-        when(deviceService.findDeviceByIdAsync(any(), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
+        when(deviceService.findDeviceById(any(), eq(device.getId()))).thenReturn(device);
     }
 
     void mockFindAsset(Asset asset) {

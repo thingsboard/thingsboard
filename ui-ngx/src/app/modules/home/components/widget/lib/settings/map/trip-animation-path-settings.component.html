@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="tripAnimationPathSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.path-settings</legend>
-    <section class="row-fill" fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
       <tb-color-input
         fxFlex
         formControlName="color"
@@ -95,7 +95,7 @@
               label="{{ 'widgets.maps.decorator-custom-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
           </section>
-          <section class="row-fill" fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
+          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
             <mat-form-field fxFlex class="mat-block">
               <mat-label translate>widgets.maps.decorator-offset</mat-label>
               <input matInput formControlName="decoratorOffset">

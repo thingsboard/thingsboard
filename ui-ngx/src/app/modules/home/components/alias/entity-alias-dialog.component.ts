@@ -20,9 +20,9 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   FormGroupDirective,
   NgForm,
   ValidatorFn,
@@ -59,7 +59,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
 
   alias: EntityAlias;
 
-  entityAliasFormGroup: FormGroup;
+  entityAliasFormGroup: UntypedFormGroup;
 
   submitted = false;
 
@@ -68,7 +68,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
               @Inject(MAT_DIALOG_DATA) public data: EntityAliasDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<EntityAliasDialogComponent, EntityAlias>,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private utils: UtilsService,
               public translate: TranslateService,
               private entityService: EntityService) {
@@ -103,7 +103,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
   }
 
   validateDuplicateAliasName(): ValidatorFn {
-    return (c: FormControl) => {
+    return (c: UntypedFormControl) => {
       const newAlias = c.value.trim();
       const found = this.entityAliases.find((entityAlias) => entityAlias.alias === newAlias);
       if (found) {
@@ -122,7 +122,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
   ngOnInit(): void {
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

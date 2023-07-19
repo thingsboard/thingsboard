@@ -20,7 +20,7 @@
     <h2 translate>{{ importTitle }}</h2>
     <span fxFlex></span>
     <div [tb-help]="'entitiesImport'"></div>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             [disabled]="isImportData"
             type="button">
@@ -119,13 +119,13 @@
       <mat-step>
         <ng-template matStepLabel>{{ 'action.done' | translate }}</ng-template>
         <div fxLayout="column">
-          <p class="mat-body-1" *ngIf="this.statistical?.created">
+          <p class="mat-body-2" *ngIf="this.statistical?.created">
             {{ translate.instant('import.message.create-entities', {count: this.statistical.created}) }}
           </p>
-          <p class="mat-body-1" *ngIf="this.statistical?.updated">
+          <p class="mat-body-2" *ngIf="this.statistical?.updated">
             {{ translate.instant('import.message.update-entities', {count: this.statistical.updated}) }}
           </p>
-          <p class="mat-body-1" style="margin-bottom: 0.8em" *ngIf="this.statistical?.errors">
+          <p class="mat-body-2" style="margin-bottom: 0.8em" *ngIf="this.statistical?.errors">
             {{ translate.instant('import.message.error-entities', {count: this.statistical.errors}) }}
           </p>
           <mat-expansion-panel class="advanced-logs" [expanded]="false"

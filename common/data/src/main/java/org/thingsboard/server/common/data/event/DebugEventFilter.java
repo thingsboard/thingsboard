@@ -18,11 +18,7 @@ package org.thingsboard.server.common.data.event;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.springframework.data.domain.Page;
-import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.StringUtils;
-
-import java.util.UUID;
 
 @Data
 @ApiModel

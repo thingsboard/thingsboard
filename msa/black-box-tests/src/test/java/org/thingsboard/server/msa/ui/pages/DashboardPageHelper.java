@@ -33,8 +33,22 @@ public class DashboardPageHelper extends DashboardPageElements {
     }
 
     public void assignedCustomer(String title) {
-        manageAssignedEntityListField().click();
-        manageAssignedEntity(title).click();
-        manageAssignedUpdateBtn().click();
+        jsClick(manageAssignedEntityListField());
+        jsClick(manageAssignedEntity(title));
+        jsClick(manageAssignedUpdateBtn());
+    }
+
+    public void openSelectWidgetsBundleMenu() {
+        addBtn().click();
+        createNewDashboardBtn().click();
+    }
+
+    public void openCreateWidgetPopup() {
+        alarmWidgetBundle().click();
+        alarmTableWidget().click();
+    }
+
+    public void increaseSizeOfTheWidget() {
+        pull(widgetSECorner(), 700, 200);
     }
 }

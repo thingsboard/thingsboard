@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="keyFilterFormGroup" (ngSubmit)="save()" style="width: 900px;">
+<form [formGroup]="keyFilterFormGroup" (ngSubmit)="save()" style="width: 1200px;">
   <mat-toolbar color="primary">
     <h2>{{(data.isAdd ? 'filter.add-key-filter' : (data.readonly ? 'filter.key-filter' : 'filter.edit-key-filter')) | translate}}</h2>
     <span fxFlex></span>
@@ -46,7 +46,7 @@
                    [matAutocompleteDisabled]="!showAutocomplete">
             <button *ngIf="keyFilterFormGroup.get('key.key').value && showAutocomplete"
                     type="button"
-                    matSuffix mat-button mat-icon-button aria-label="Clear"
+                    matSuffix mat-icon-button aria-label="Clear"
                     (click)="clear()">
               <mat-icon class="material-icons">close</mat-icon>
             </button>
@@ -60,7 +60,7 @@
             </mat-error>
           </mat-form-field>
         </section>
-        <mat-form-field [fxFlex]="isConstantKeyType ? 20 : 30" class="mat-block">
+        <mat-form-field [fxFlex]="isConstantKeyType ? 20 : 30" class="mat-block tb-value-type">
           <mat-label translate>filter.value-type.value-type</mat-label>
           <mat-select formControlName="valueType">
             <mat-select-trigger>

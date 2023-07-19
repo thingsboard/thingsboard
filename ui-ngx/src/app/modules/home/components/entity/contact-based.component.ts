@@ -16,7 +16,7 @@
 
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { ContactBased } from '@shared/models/contact-based.model';
 import { AfterViewInit, ChangeDetectorRef, Directive } from '@angular/core';
 import { POSTAL_CODE_PATTERNS } from '@home/models/contact.models';
@@ -28,14 +28,14 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 export abstract class ContactBasedComponent<T extends ContactBased<HasId>> extends EntityComponent<T> implements AfterViewInit {
 
   protected constructor(protected store: Store<AppState>,
-                        protected fb: FormBuilder,
+                        protected fb: UntypedFormBuilder,
                         protected entityValue: T,
                         protected entitiesTableConfigValue: EntityTableConfig<T>,
                         protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
-  buildForm(entity: T): FormGroup {
+  buildForm(entity: T): UntypedFormGroup {
     const entityForm = this.buildEntityForm(entity);
     entityForm.addControl('country', this.fb.control(entity ? entity.country : '', [Validators.maxLength(255)]));
     entityForm.addControl('city', this.fb.control(entity ? entity.city : '', [Validators.maxLength(255)]));
@@ -82,7 +82,7 @@ export abstract class ContactBasedComponent<T extends ContactBased<HasId>> exten
     return zipValidators;
   }
 
-  abstract buildEntityForm(entity: T): FormGroup;
+  abstract buildEntityForm(entity: T): UntypedFormGroup;
 
   abstract updateEntityForm(entity: T);
 

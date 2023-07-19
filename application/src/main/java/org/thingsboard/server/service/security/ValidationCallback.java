@@ -16,10 +16,10 @@
 package org.thingsboard.server.service.security;
 
 import com.google.common.util.concurrent.FutureCallback;
-import org.thingsboard.server.service.telemetry.exception.AccessDeniedException;
-import org.thingsboard.server.service.telemetry.exception.EntityNotFoundException;
-import org.thingsboard.server.service.telemetry.exception.InternalErrorException;
-import org.thingsboard.server.service.telemetry.exception.UnauthorizedException;
+import org.thingsboard.server.exception.AccessDeniedException;
+import org.thingsboard.server.exception.EntityNotFoundException;
+import org.thingsboard.server.exception.InternalErrorException;
+import org.thingsboard.server.exception.UnauthorizedException;
 
 /**
  * Created by ashvayka on 31.03.18.

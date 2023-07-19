@@ -26,14 +26,24 @@
 
 :host ::ng-deep {
   .tb-material-icons-dialog {
-    button.mat-icon-button.tb-select-icon-button {
+    button.mat-mdc-button-base.tb-select-icon-button {
       width: 56px;
+      min-width: 56px;
       height: 56px;
       padding: 16px;
       margin: 10px;
       border: solid 1px #ffa500;
       border-radius: 0;
       line-height: 0;
+      display: inline-block;
+      vertical-align: baseline;
+      .mat-icon {
+        width: 24px;
+        margin: 0;
+        height: 24px;
+        vertical-align: initial;
+        font-size: 24px;
+      }
     }
   }
 }

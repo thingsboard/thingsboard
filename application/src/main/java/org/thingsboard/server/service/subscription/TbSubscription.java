@@ -33,7 +33,7 @@ public abstract class TbSubscription<T> {
     private final TenantId tenantId;
     private final EntityId entityId;
     private final TbSubscriptionType type;
-    private final BiConsumer<String, T> updateConsumer;
+    private final BiConsumer<? extends TbSubscription<T>, T> updateProcessor;
 
     @Override
     public boolean equals(Object o) {

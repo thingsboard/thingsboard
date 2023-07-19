@@ -16,19 +16,19 @@
 @import "../../../../../scss/constants";
 
 :host {
-  mat-card.profile-card {
+  .mat-mdc-card.profile-card {
     margin: 8px;
     @media #{$mat-gt-sm} {
       width: 60%;
     }
-    .mat-headline {
+    .mat-headline-5 {
       margin: 0;
     }
     .profile-email {
       font-size: 16px;
       font-weight: 400;
     }
-    .mat-subheader {
+    .mat-mdc-subheader {
       line-height: 24px;
       color: rgba(0,0,0,0.54);
       font-size: 14px;
@@ -48,7 +48,7 @@
           padding-bottom: 12px;
         }
       }
-      mat-checkbox {
+      .mat-mdc-checkbox {
         @media #{$mat-gt-sm} {
           margin-top: 16px;
         }

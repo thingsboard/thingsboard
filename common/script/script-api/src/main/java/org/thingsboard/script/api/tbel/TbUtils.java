@@ -18,7 +18,9 @@ package org.thingsboard.script.api.tbel;
 import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
+import org.mvel2.execution.ExecutionHashMap;
 import org.mvel2.util.MethodStub;
+import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -27,8 +29,12 @@ import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class TbUtils {
 
@@ -89,6 +95,14 @@ public class TbUtils {
                 byte[].class)));
         parserConfig.addImport("bytesToHex", new MethodStub(TbUtils.class.getMethod("bytesToHex",
                 ExecutionArrayList.class)));
+        parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
+                ExecutionContext.class, Map.class)));
+        parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
+                ExecutionContext.class, Map.class, boolean.class)));
+        parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
+                ExecutionContext.class, Map.class, List.class)));
+        parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
+                ExecutionContext.class, Map.class, List.class, boolean.class)));
     }
 
     public static String btoa(String input) {
@@ -225,7 +239,7 @@ public class TbUtils {
         }
         ExecutionArrayList<Byte> data = new ExecutionArrayList<>(ctx);
         for (int i = 0; i < len; i += 2) {
-            data.add((byte)((Character.digit(hex.charAt(i), 16) << 4)
+            data.add((byte) ((Character.digit(hex.charAt(i), 16) << 4)
                     + Character.digit(hex.charAt(i + 1), 16)));
         }
         return data;
@@ -315,5 +329,63 @@ public class TbUtils {
             value = value.replace(",", ".");
         }
         return value;
+    }
+
+    public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json) {
+        return toFlatMap(ctx, json, new ArrayList<>(), true);
+    }
+
+    public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json, boolean pathInKey) {
+        return toFlatMap(ctx, json, new ArrayList<>(), pathInKey);
+    }
+
+    public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json, List<String> excludeList) {
+        return toFlatMap(ctx, json, excludeList, true);
+    }
+
+    public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json, List<String> excludeList, boolean pathInKey) {
+        ExecutionHashMap<String, Object> map = new ExecutionHashMap<>(16, ctx);
+        parseRecursive(json, map, excludeList, "", pathInKey);
+        return map;
+    }
+
+    private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
+        if (json instanceof Map.Entry) {
+            Map.Entry<?, ?> entry = (Map.Entry<?, ?>) json;
+            if (StringUtils.isNotBlank(path)) {
+                path += ".";
+            }
+            if (excludeList.contains(entry.getKey())) {
+                return;
+            }
+            path += entry.getKey();
+            json = entry.getValue();
+        }
+        if (json instanceof Set || json instanceof List) {
+            String arrayPath = path + ".";
+            Object[] collection = ((Collection<?>) json).toArray();
+            for (int index = 0; index < collection.length; index++) {
+                parseRecursive(collection[index], map, excludeList, arrayPath + index, pathInKey);
+            }
+        } else if (json instanceof Map) {
+            Map<?, ?> node = (Map<?, ?>) json;
+            for (Map.Entry<?, ?> entry : node.entrySet()) {
+                parseRecursive(entry, map, excludeList, path, pathInKey);
+            }
+        } else {
+            if (pathInKey) {
+                map.put(path, json);
+            } else {
+                String key = path.substring(path.lastIndexOf('.') + 1);
+                if (StringUtils.isNumeric(key)) {
+                    int pos = path.length();
+                    for (int i = 0; i < 2; i++) {
+                        pos = path.lastIndexOf('.', pos - 1);
+                    }
+                    key = path.substring(pos + 1);
+                }
+                map.put(key, json);
+            }
+        }
     }
 }

@@ -22,8 +22,8 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 
 import java.io.Serializable;
 import java.util.UUID;

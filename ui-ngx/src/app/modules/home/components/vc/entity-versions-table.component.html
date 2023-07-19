@@ -16,13 +16,14 @@
 
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill" [ngClass]="{'tb-popover-mode': popoverComponent}">
-  <div fxFlex fxLayout="column" class="tb-entity-table-content" [ngClass]="{'mat-elevation-z1': !popoverComponent}">
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="!textSearchMode">
+  <div fxFlex fxLayout="column" class="tb-entity-table-content" [ngClass]="{'tb-outlined-border': !popoverComponent}">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
           <span class="tb-entity-table-title">{{(singleEntityMode ? 'version-control.entity-versions' : 'version-control.versions') | translate}}</span>
           <tb-branch-autocomplete
             #branchAutocompleteComponent
+            subscriptSizing="dynamic"
             [selectionMode]="true"
             [selectDefaultBranch]="false"
             [disabled]="isLoading$ | async"
@@ -31,7 +32,7 @@
           </tb-branch-autocomplete>
         </div>
         <span fxFlex></span>
-        <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center end">
+        <div fxLayout="row" fxLayoutAlign="center center" fxLayout.xs="column" fxLayoutAlign.xs="center end">
           <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
                   #createVersionButton
                   [disabled]="(isLoading$ | async) || (isReadOnly | async)"
@@ -63,7 +64,7 @@
         </div>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
@@ -103,6 +104,7 @@
               tooltipPosition="above"
               icon="content_paste"
               [style]="{
+                 padding: '4px',
                  'font-size': '16px',
                  color: 'rgba(0,0,0,.87)'
               }">

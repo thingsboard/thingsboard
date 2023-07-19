@@ -108,6 +108,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Override
     public void evict(Collection<K> keys) {
+        //Redis expects at least 1 key to delete. Otherwise - ERR wrong number of arguments for 'del' command
+        if (keys.isEmpty()) {
+            return;
+        }
         try (var connection = connectionFactory.getConnection()) {
             connection.del(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
         }

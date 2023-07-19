@@ -27,6 +27,17 @@ export interface BaseData<T extends HasId> {
   label?: string;
 }
 
+export function sortEntitiesByIds<I extends HasId, T extends BaseData<I>>(entities: T[], entityIds: string[]): T[] {
+  entities.sort((entity1, entity2) => {
+    const id1 = entity1.id.id;
+    const id2 = entity2.id.id;
+    const index1 = entityIds.indexOf(id1);
+    const index2 = entityIds.indexOf(id2);
+    return index1 - index2;
+  });
+  return entities;
+}
+
 export interface ExportableEntity<T extends EntityId> {
   createdTime?: number;
   id?: T;

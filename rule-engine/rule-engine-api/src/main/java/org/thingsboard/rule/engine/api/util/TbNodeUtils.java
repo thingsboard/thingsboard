@@ -45,7 +45,7 @@ public class TbNodeUtils {
         try {
             return mapper.treeToValue(configuration.getData(), clazz);
         } catch (JsonProcessingException e) {
-            throw new TbNodeException(e);
+            throw new TbNodeException(e, true);
         }
     }
 

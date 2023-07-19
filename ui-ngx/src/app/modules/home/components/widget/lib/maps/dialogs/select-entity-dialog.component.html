@@ -31,7 +31,7 @@
       <mat-label translate>entity.entity</mat-label>
       <mat-select formControlName="entity">
         <mat-option *ngFor="let entity of data.entities" [value]="entity">
-          {{ entity.entityName }}
+          {{ entity.entityParseName }}
         </mat-option>
       </mat-select>
     </mat-form-field>

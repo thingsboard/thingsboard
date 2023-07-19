@@ -16,13 +16,9 @@
 package org.thingsboard.server.actors.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.thingsboard.server.actors.AbstractTbActor;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.ProcessFailureStrategy;
-import org.thingsboard.server.actors.TbActor;
-import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 @Slf4j

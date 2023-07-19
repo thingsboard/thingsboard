@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.mat-option.branch-option {
+.mat-mdc-option.branch-option {
   .mat-icon, .check-placeholder {
     margin-right: 8px;
   }
@@ -21,7 +21,7 @@
     width: 18px;
     display: inline-block;
   }
-  .mat-option-text {
+  .mdc-list-item__primary-text {
     width: 100%;
     .default-branch {
       float: right;

@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EdgeId;

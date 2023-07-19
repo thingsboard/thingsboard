@@ -15,7 +15,7 @@
 ///
 
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { GaugeHighlight } from '@home/components/widget/lib/settings/gauge/gauge-highlight.component';
@@ -23,18 +23,18 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  analogueGaugeWidgetSettingsForm: FormGroup;
+  analogueGaugeWidgetSettingsForm: UntypedFormGroup;
 
   ctx = {
     settingsForm: null
   };
 
   constructor(protected store: Store<AppState>,
-              protected fb: FormBuilder) {
+              protected fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.analogueGaugeWidgetSettingsForm;
   }
 
@@ -208,11 +208,11 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
     this.analogueGaugeWidgetSettingsForm.get('animationRule').updateValueAndValidity({emitEvent});
   }
 
-  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
+  protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
     settingsForm.setControl('highlights', this.prepareHighlightsFormArray(settings.highlights), {emitEvent: false});
   }
 
-  private prepareHighlightsFormArray(highlights: GaugeHighlight[] | undefined): FormArray {
+  private prepareHighlightsFormArray(highlights: GaugeHighlight[] | undefined): UntypedFormArray {
     const highlightsControls: Array<AbstractControl> = [];
     if (highlights) {
       highlights.forEach((highlight) => {
@@ -222,8 +222,8 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
     return this.fb.array(highlightsControls);
   }
 
-  highlightsFormArray(): FormArray {
-    return this.analogueGaugeWidgetSettingsForm.get('highlights') as FormArray;
+  highlightsFormArray(): UntypedFormArray {
+    return this.analogueGaugeWidgetSettingsForm.get('highlights') as UntypedFormArray;
   }
 
   public trackByHighlightControl(index: number, highlightControl: AbstractControl): any {
@@ -231,7 +231,7 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
   }
 
   public removeHighlight(index: number) {
-    (this.analogueGaugeWidgetSettingsForm.get('highlights') as FormArray).removeAt(index);
+    (this.analogueGaugeWidgetSettingsForm.get('highlights') as UntypedFormArray).removeAt(index);
   }
 
   public addHighlight() {
@@ -240,7 +240,7 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
       to: null,
       color: null
     };
-    const highlightsArray = this.analogueGaugeWidgetSettingsForm.get('highlights') as FormArray;
+    const highlightsArray = this.analogueGaugeWidgetSettingsForm.get('highlights') as UntypedFormArray;
     const highlightControl = this.fb.control(highlight, [Validators.required]);
     (highlightControl as any).new = true;
     highlightsArray.push(highlightControl);
@@ -248,7 +248,7 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
   }
 
   highlightDrop(event: CdkDragDrop<string[]>) {
-    const highlightsArray = this.analogueGaugeWidgetSettingsForm.get('highlights') as FormArray;
+    const highlightsArray = this.analogueGaugeWidgetSettingsForm.get('highlights') as UntypedFormArray;
     const highlight = highlightsArray.at(event.previousIndex);
     highlightsArray.removeAt(event.previousIndex);
     highlightsArray.insert(event.currentIndex, highlight);

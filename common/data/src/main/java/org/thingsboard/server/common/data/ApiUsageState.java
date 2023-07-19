@@ -19,9 +19,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.ApiUsageStateId;
 
 @ToString
 @EqualsAndHashCode(callSuper = true)

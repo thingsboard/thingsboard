@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  mat-form-field.tb-value-type {
-    .mat-form-field-infix {
-      padding-bottom: 1px;
-    }
+  .mat-mdc-form-field.tb-value-type {
     mat-select-trigger {
       .mat-icon {
-        vertical-align: middle;
+        vertical-align: bottom;
         margin-right: 16px;
+        svg {
+          vertical-align: initial;
+        }
       }
     }
   }

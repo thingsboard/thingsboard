@@ -15,7 +15,7 @@
 ///
 
 import { Component, Input } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { COUNTRIES } from '@home/models/contact.models';
 
 @Component({
@@ -25,7 +25,7 @@ import { COUNTRIES } from '@home/models/contact.models';
 export class ContactComponent {
 
   @Input()
-  parentForm: FormGroup;
+  parentForm: UntypedFormGroup;
 
   @Input() isEdit: boolean;
 

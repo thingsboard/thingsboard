@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -116,7 +115,7 @@ import java.util.stream.Collectors;
  * @author Andrew Shvayka
  */
 @Slf4j
-class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
+public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     static final String SESSION_TIMEOUT_MESSAGE = "session timeout!";
     final TenantId tenantId;

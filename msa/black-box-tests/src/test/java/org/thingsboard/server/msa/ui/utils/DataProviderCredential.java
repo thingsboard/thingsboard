@@ -149,4 +149,11 @@ public class DataProviderCredential {
                 {description, newDescription, description + newDescription},
                 {description, Keys.CONTROL + "A" + Keys.BACK_SPACE, ""}};
     }
+
+    @DataProvider
+    public static Object[][] debugMode() {
+        return new Object[][]{
+                {false},
+                {true}};
+    }
 }

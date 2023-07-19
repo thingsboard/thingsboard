@@ -18,6 +18,7 @@ package org.thingsboard.server.actors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbActorStopReason;
 
 @Slf4j
 public class TestRootActor extends AbstractTbActor {
@@ -60,7 +61,7 @@ public class TestRootActor extends AbstractTbActor {
     }
 
     @Override
-    public void destroy() {
+    public void destroy(TbActorStopReason stopReason, Throwable cause) {
 
     }
 

@@ -17,8 +17,8 @@
 import { Component, ElementRef, forwardRef, Input, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR, ValidationErrors, Validator,
   Validators
@@ -62,14 +62,14 @@ export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccesso
 
   @ViewChild('instanceId') instanceId: ElementRef<HTMLInputElement>;
 
-  instancesListFormGroup: FormGroup;
+  instancesListFormGroup: UntypedFormGroup;
   instancesId = new Set<number>();
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
   instanceIdValueMax = INSTANCES_ID_VALUE_MAX;
 
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
     this.instancesListFormGroup = this.fb.group({
       instanceList: [null],
       instanceId: [null, [

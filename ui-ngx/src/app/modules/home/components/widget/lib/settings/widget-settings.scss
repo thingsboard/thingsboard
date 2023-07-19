@@ -30,7 +30,7 @@
 
       legend + * {
         display: block;
-        margin-top: 16px;
+        margin-top: 8px;
       }
 
       &.fields-group-slider {
@@ -77,16 +77,6 @@
 
 :host ::ng-deep {
   .tb-widget-settings {
-    .mat-checkbox-label {
-      white-space: normal;
-    }
-
-    .row-fill {
-      .mat-form-field-infix {
-        width: 100%;
-      }
-    }
-
     .mat-expansion-panel {
       &.tb-settings {
         box-shadow: none;
@@ -116,14 +106,6 @@
             padding: 0;
           }
         }
-
-        .mat-checkbox-layout {
-          margin: 5px 0;
-        }
-
-        .mat-checkbox-inner-container {
-          margin-right: 12px;
-        }
       }
 
       .mat-expansion-panel-content {
@@ -142,16 +124,5 @@
         margin-bottom: 8px;
       }
     }
-
-    .mat-slide-toggle-content {
-      white-space: normal;
-    }
-
-    .mat-slider-multiline {
-      .mat-slide-toggle-content {
-        line-height: 18px;
-      }
-    }
-
   }
 }

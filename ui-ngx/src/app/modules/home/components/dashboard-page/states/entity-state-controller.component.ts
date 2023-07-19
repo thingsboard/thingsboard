@@ -195,11 +195,14 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
     }
   }
 
-  public navigatePrevState(index: number): void {
+  public navigatePrevState(index: number, params?: StateParams): void {
     if (index < this.stateObject.length - 1) {
       this.stateObject.splice(index + 1, this.stateObject.length - index - 1);
       this.selectedStateIndex = this.stateObject.length - 1;
-      this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
+      if (params) {
+        this.stateObject[this.selectedStateIndex].params = params;
+      }
+      this.gotoState(this.stateObject[this.selectedStateIndex].id, true);
     }
   }
 

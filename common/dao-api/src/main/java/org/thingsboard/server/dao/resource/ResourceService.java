@@ -23,10 +23,12 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 
-public interface ResourceService {
+public interface ResourceService extends EntityDaoService {
+
     TbResource saveResource(TbResource resource);
 
     TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);

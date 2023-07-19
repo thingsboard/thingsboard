@@ -16,9 +16,11 @@
 package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -34,7 +36,7 @@ public class SearchDeviceProfileTest extends AbstractDriverBaseTest {
     private ProfilesPageHelper profilesPage;
     private String name;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewHelper(driver);
@@ -49,8 +51,11 @@ public class SearchDeviceProfileTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Device profiles smoke")
+    @Feature("Search device profile")
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "deviceProfileSearch")
-    @Description
+    @Description("Search device profile by first word in the name/Search device profile by second word in the name/" +
+            "Search device profile by symbol in the name/Search asset profile by number in the name")
     public void searchFirstWord(String name, String namePath) {
         testRestClient.postDeviceProfile(defaultDeviceProfile(name));
         this.name = name;

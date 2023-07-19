@@ -21,8 +21,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 
-import java.util.Optional;
-
 /**
  * @author Andrew Shvayka
  */

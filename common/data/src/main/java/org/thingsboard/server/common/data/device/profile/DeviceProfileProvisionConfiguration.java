@@ -31,7 +31,8 @@ import java.io.Serializable;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = DisabledDeviceProfileProvisionConfiguration.class, name = "DISABLED"),
         @JsonSubTypes.Type(value = AllowCreateNewDevicesDeviceProfileProvisionConfiguration.class, name = "ALLOW_CREATE_NEW_DEVICES"),
-        @JsonSubTypes.Type(value = CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration.class, name = "CHECK_PRE_PROVISIONED_DEVICES")})
+        @JsonSubTypes.Type(value = CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration.class, name = "CHECK_PRE_PROVISIONED_DEVICES"),
+        @JsonSubTypes.Type(value = X509CertificateChainProvisionConfiguration.class, name = "X509_CERTIFICATE_CHAIN")})
 public interface DeviceProfileProvisionConfiguration extends Serializable {
 
     String getProvisionDeviceSecret();

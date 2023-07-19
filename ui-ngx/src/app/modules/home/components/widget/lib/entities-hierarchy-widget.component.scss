@@ -28,7 +28,7 @@
 
 :host {
   .tb-entities-hierarchy {
-    mat-toolbar.mat-table-toolbar:not([color="primary"]) {
+    mat-toolbar.mat-mdc-table-toolbar:not([color="primary"]) {
       background: transparent;
     }
     mat-toolbar {

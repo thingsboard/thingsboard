@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator
@@ -65,7 +65,7 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
 
   label: string;
 
-  rateLimitsFormGroup: FormGroup;
+  rateLimitsFormGroup: UntypedFormGroup;
 
   get rateLimitsArray(): Array<RateLimits> {
     return this.rateLimitsFormGroup.get('rateLimits').value;
@@ -76,7 +76,7 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
   private propagateChange = null;
 
   constructor(private dialog: MatDialog,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {
@@ -107,7 +107,7 @@ export class RateLimitsComponent implements ControlValueAccessor, OnInit, Valida
     this.updateRateLimitsInfo();
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return null;
   }
 

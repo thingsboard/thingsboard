@@ -258,9 +258,9 @@ export function hashCode(str: string): number {
   }
   for (i = 0; i < str.length; i++) {
     char = str.charCodeAt(i);
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     hash = ((hash << 5) - hash) + char;
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     hash = hash & hash; // Convert to 32bit integer
   }
   return hash;
@@ -304,7 +304,7 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
     (target as any[]).forEach((v) => { cp.push(v); });
     return cp.map((n: any) => deepClone<any>(n)) as any;
   }
-  if (typeof target === 'object' && target !== {}) {
+  if (typeof target === 'object') {
     const cp = {...(target as { [key: string]: any })} as { [key: string]: any };
     Object.keys(cp).forEach(k => {
       if (!ignoreFields || ignoreFields.indexOf(k) === -1) {

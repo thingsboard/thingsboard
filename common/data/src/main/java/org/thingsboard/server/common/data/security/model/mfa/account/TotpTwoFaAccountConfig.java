@@ -26,8 +26,8 @@ import javax.validation.constraints.Pattern;
 @EqualsAndHashCode(callSuper = true)
 public class TotpTwoFaAccountConfig extends TwoFaAccountConfig {
 
-    @NotBlank(message = "OTP auth URL cannot be blank")
-    @Pattern(regexp = "otpauth://totp/(\\S+?):(\\S+?)\\?issuer=(\\S+?)&secret=(\\w+?)", message = "OTP auth url is invalid")
+    @NotBlank
+    @Pattern(regexp = "otpauth://totp/(\\S+?):(\\S+?)\\?issuer=(\\S+?)&secret=(\\w+?)", message = "is invalid")
     private String authUrl;
 
     @Override

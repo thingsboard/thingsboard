@@ -22,7 +22,6 @@ import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import javax.persistence.Entity;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 @EqualsAndHashCode(callSuper = true)
 @Data

@@ -65,7 +65,7 @@ public class StringDataEntry extends BasicKvEntry {
     public String toString() {
         return "StringDataEntry{" + "value='" + value + '\'' + "} " + super.toString();
     }
-    
+
     @Override
     public String getValueAsString() {
         return value;

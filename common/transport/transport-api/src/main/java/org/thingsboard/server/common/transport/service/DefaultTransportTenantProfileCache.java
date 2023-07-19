@@ -29,8 +29,8 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Collections;

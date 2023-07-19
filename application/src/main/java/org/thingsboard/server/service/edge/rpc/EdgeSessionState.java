@@ -28,6 +28,6 @@ import java.util.concurrent.ScheduledFuture;
 public class EdgeSessionState {
 
     private final Map<Integer, DownlinkMsg> pendingMsgsMap = Collections.synchronizedMap(new LinkedHashMap<>());
-    private SettableFuture<Void> sendDownlinkMsgsFuture;
+    private SettableFuture<Boolean> sendDownlinkMsgsFuture;
     private ScheduledFuture<?> scheduledSendDownlinkTask;
 }

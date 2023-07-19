@@ -37,7 +37,7 @@
                                          label="widgets.maps.polygon-key-name"
                                          formControlName="polygonKeyName">
         </tb-datasources-key-autocomplete>
-        <mat-checkbox formControlName="editablePolygon" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="editablePolygon">
           {{ 'widgets.maps.enable-polygon-edit' | translate }}
         </mat-checkbox>
         <fieldset class="fields-group fields-group-slider">
@@ -155,7 +155,7 @@
         </fieldset>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.maps.polygon-stroke</legend>
-          <section class="row-fill" fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
+          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
             <tb-color-input
               fxFlex
               formControlName="polygonStrokeColor"

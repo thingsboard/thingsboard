@@ -16,6 +16,7 @@
 package org.thingsboard.server.actors;
 
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbActorStopReason;
 
 public interface TbActor {
 
@@ -26,7 +27,7 @@ public interface TbActor {
     default void init(TbActorCtx ctx) throws TbActorException {
     }
 
-    default void destroy() throws TbActorException {
+    default void destroy(TbActorStopReason stopReason, Throwable cause) throws TbActorException {
     }
 
     default InitFailureStrategy onInitFailure(int attempt, Throwable t) {

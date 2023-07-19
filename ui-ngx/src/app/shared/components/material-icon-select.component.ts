@@ -18,7 +18,7 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TranslateService } from '@ngx-translate/core';
@@ -68,12 +68,12 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
 
   private propagateChange = null;
 
-  public materialIconFormGroup: FormGroup;
+  public materialIconFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private dialogs: DialogService,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 

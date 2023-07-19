@@ -33,7 +33,6 @@ export interface SelectEntityDialogData {
   styleUrls: ['./select-entity-dialog.component.scss']
 })
 export class SelectEntityDialogComponent extends DialogComponent<SelectEntityDialogComponent, FormattedData> {
-
   selectEntityFormGroup: FormGroup;
 
   constructor(protected store: Store<AppState>,

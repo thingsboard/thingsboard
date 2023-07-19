@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -68,7 +68,7 @@ export class CircleSettingsComponent extends PageComponent implements OnInit, Co
 
   private propagateChange = null;
 
-  public circleSettingsFormGroup: FormGroup;
+  public circleSettingsFormGroup: UntypedFormGroup;
 
   showTooltipActions = Object.values(ShowTooltipAction);
 
@@ -77,7 +77,7 @@ export class CircleSettingsComponent extends PageComponent implements OnInit, Co
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -157,7 +157,7 @@ export class CircleSettingsComponent extends PageComponent implements OnInit, Co
     this.updateValidators(false);
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.circleSettingsFormGroup.valid ? null : {
       circleSettings: {
         valid: false,

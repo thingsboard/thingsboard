@@ -19,7 +19,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { JwtSettings, SecuritySettings } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
@@ -37,8 +37,8 @@ import { Observable, of } from 'rxjs';
 })
 export class SecuritySettingsComponent extends PageComponent implements HasConfirmForm {
 
-  securitySettingsFormGroup: FormGroup;
-  jwtSecuritySettingsFormGroup: FormGroup;
+  securitySettingsFormGroup: UntypedFormGroup;
+  jwtSecuritySettingsFormGroup: UntypedFormGroup;
 
   private securitySettings: SecuritySettings;
   private jwtSettings: JwtSettings;
@@ -49,7 +49,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
               private authService: AuthService,
               private dialogService: DialogService,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
     this.buildSecuritySettingsForm();
     this.buildJwtSecuritySettingsForm();
@@ -156,7 +156,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     this.jwtSecuritySettingsFormGroup.reset(jwtSettings);
   }
 
-  private refreshTokenTimeGreatTokenTime(formGroup: FormGroup): { [key: string]: boolean } | null {
+  private refreshTokenTimeGreatTokenTime(formGroup: UntypedFormGroup): { [key: string]: boolean } | null {
     if (formGroup) {
       const tokenTime = formGroup.value.tokenExpirationTime;
       const refreshTokenTime = formGroup.value.refreshTokenExpTime;
@@ -171,7 +171,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     return null;
   }
 
-  private base64Format(control: FormControl): { [key: string]: boolean } | null {
+  private base64Format(control: UntypedFormControl): { [key: string]: boolean } | null {
     if (control.value === '' || control.value === 'thingsboardDefaultSigningKey') {
       return null;
     }
@@ -186,7 +186,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     }
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.securitySettingsFormGroup.dirty ? this.securitySettingsFormGroup : this.jwtSecuritySettingsFormGroup;
   }
 

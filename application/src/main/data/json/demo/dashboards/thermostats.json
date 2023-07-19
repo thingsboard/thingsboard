@@ -215,6 +215,8 @@
             "displayDetails": true,
             "allowAcknowledgment": true,
             "allowClear": true,
+            "allowAssign": true,
+            "displayComments": true,
             "displayPagination": true,
             "defaultPageSize": 10,
             "defaultSortOrder": "-createdTime",
@@ -277,6 +279,14 @@
                 "color": "#607d8b",
                 "settings": {},
                 "_hash": 0.7977920750136249
+              },
+              {
+                "name": "assignee",
+                "type": "alarm",
+                "label": "Assignee",
+                "color": "#9c27b0",
+                "settings": {},
+                "_hash": 0.8678751039018493
               }
             ]
           },

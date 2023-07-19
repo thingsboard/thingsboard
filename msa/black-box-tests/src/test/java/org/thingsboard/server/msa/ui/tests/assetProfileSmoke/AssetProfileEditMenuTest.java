@@ -16,10 +16,12 @@
 package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.openqa.selenium.Keys;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -39,7 +41,7 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
     private ProfilesPageHelper profilesPage;
     private String name;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewHelper(driver);
@@ -54,8 +56,10 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Edit asset profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Change name by edit menu")
     public void changeName() {
         String name = ENTITY_NAME + random();
         String newName = "Changed" + getRandomNumber();
@@ -77,8 +81,10 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(nameAfter, newName);
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Edit asset profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Delete name and save")
     public void deleteName() {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
@@ -92,8 +98,10 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertFalse(profilesPage.doneBtnEditViewVisible().isEnabled());
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Edit asset profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Save only with space")
     public void saveWithOnlySpaceInName() {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
@@ -110,8 +118,10 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
         Assert.assertEquals(profilesPage.warningMessage().getText(), EMPTY_ASSET_PROFILE_MESSAGE);
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Edit asset profile")
     @Test(priority = 30, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "editMenuDescription")
-    @Description
+    @Description("Write the description and save the changes/Change the description and save the changes/Delete the description and save the changes")
     public void editDescription(String description, String newDescription, String finalDescription) {
         String name = ENTITY_NAME + random();
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name, description));

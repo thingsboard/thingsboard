@@ -23,12 +23,14 @@ import { EdgeRoutingModule } from '@home/pages/edge/edge-routing.module';
 import { EdgeComponent } from '@modules/home/pages/edge/edge.component';
 import { EdgeTableHeaderComponent } from '@home/pages/edge/edge-table-header.component';
 import { EdgeTabsComponent } from '@home/pages/edge/edge-tabs.component';
+import { EdgeInstructionsDialogComponent } from './edge-instructions-dialog.component';
 
 @NgModule({
   declarations: [
     EdgeComponent,
     EdgeTableHeaderComponent,
-    EdgeTabsComponent
+    EdgeTabsComponent,
+    EdgeInstructionsDialogComponent
   ],
   imports: [
     CommonModule,

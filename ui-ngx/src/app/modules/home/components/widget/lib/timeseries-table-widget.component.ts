@@ -302,7 +302,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     let cssString = constructTableCssString(this.widgetConfig);
 
     const origBackgroundColor = this.widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
-    cssString += '.tb-table-widget mat-toolbar.mat-table-toolbar:not([color=primary]) {\n' +
+    cssString += '.tb-table-widget mat-toolbar.mat-mdc-table-toolbar:not([color=primary]) {\n' +
     'background-color: ' + origBackgroundColor + ' !important;\n' +
     '}\n';
 

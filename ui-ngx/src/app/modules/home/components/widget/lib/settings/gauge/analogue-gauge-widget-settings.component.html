@@ -31,7 +31,7 @@
   </tb-color-input>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gauge.ticks-settings</legend>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.min-value</mat-label>
         <input matInput type="number" formControlName="minValue">
@@ -41,7 +41,7 @@
         <input matInput type="number" formControlName="maxValue">
       </mat-form-field>
     </section>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="0px" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.major-ticks-count</mat-label>
         <input matInput type="number" min="0" formControlName="majorTicksCount">
@@ -52,7 +52,7 @@
                       label="{{ 'widgets.gauge.major-ticks-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="0px" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.minor-ticks-count</mat-label>
         <input matInput type="number" min="0" formControlName="minorTicks">
@@ -127,7 +127,7 @@
             <legend class="group-title" translate>widgets.gauge.value-font</legend>
             <tb-widget-font formControlName="valueFont" [hasShadowColor]="true"></tb-widget-font>
           </fieldset>
-          <section fxLayout="row wrap" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
             <tb-color-input fxFlex
                             formControlName="colorValueBoxRect"
                             icon="format_color_fill"
@@ -139,7 +139,7 @@
                             label="{{ 'widgets.gauge.value-box-rect-stroke-color-end' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
           </section>
-          <section fxLayout="row wrap" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
             <tb-color-input fxFlex
                             formControlName="colorValueBoxBackground"
                             icon="format_color_fill"
@@ -168,7 +168,7 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gauge.needle-settings</legend>
-    <section fxLayout="row wrap" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <tb-color-input fxFlex
                       formControlName="colorNeedle"
                       icon="format_color_fill"
@@ -180,7 +180,7 @@
                       label="{{ 'widgets.gauge.needle-color-end' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
-    <section fxLayout="row wrap" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section  fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <tb-color-input fxFlex
                       formControlName="colorNeedleShadowUp"
                       icon="format_color_fill"
@@ -294,7 +294,7 @@
 <ng-template #radialGauge let-settingsForm="settingsForm">
   <fieldset class="fields-group" [formGroup]="settingsForm">
     <legend class="group-title" translate>widgets.gauge.radial-gauge-settings</legend>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section  fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.start-ticks-angle</mat-label>
         <input matInput type="number" min="0" max="360" formControlName="startAngle">
@@ -314,7 +314,7 @@
 <ng-template #linearGauge let-settingsForm="settingsForm">
   <fieldset class="fields-group" [formGroup]="settingsForm">
     <legend class="group-title" translate>widgets.gauge.linear-gauge-settings</legend>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.gauge.bar-stroke-width</mat-label>
         <input matInput type="number" min="0" formControlName="barStrokeWidth">
@@ -325,7 +325,7 @@
                       label="{{ 'widgets.gauge.bar-stroke-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
-    <section fxLayout="row wrap" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <tb-color-input fxFlex
                       formControlName="colorBar"
                       icon="format_color_fill"
@@ -337,7 +337,7 @@
                       label="{{ 'widgets.gauge.bar-background-color-end' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
-    <section fxLayout="row wrap" fxLayoutGap="8px" fxLayoutAlign="start center">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <tb-color-input fxFlex
                       formControlName="colorBarProgress"
                       icon="format_color_fill"

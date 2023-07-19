@@ -36,16 +36,3 @@
     background-color: #fff;
   }
 }
-
-:host ::ng-deep {
-  mat-form-field {
-    .mat-form-field-infix {
-      width: 100%;
-      mat-select {
-        .mat-select-value {
-          max-width: 100%;
-        }
-      }
-    }
-  }
-}

@@ -175,10 +175,18 @@ import { AssetProfileDialogComponent } from '@home/components/profile/asset-prof
 import { AssetProfileAutocompleteComponent } from '@home/components/profile/asset-profile-autocomplete.component';
 import { MODULES_MAP } from '@shared/models/constants';
 import { modulesMap } from '@modules/common/modules-map';
+import { AlarmAssigneePanelComponent } from '@home/components/alarm/alarm-assignee-panel.component';
+import { RouterTabsComponent } from '@home/components/router-tabs.component';
+import { SendNotificationButtonComponent } from '@home/components/notification/send-notification-button.component';
+import { AlarmFilterConfigComponent } from '@home/components/alarm/alarm-filter-config.component';
+import { AlarmAssigneeSelectPanelComponent } from '@home/components/alarm/alarm-assignee-select-panel.component';
+import { AlarmAssigneeSelectComponent } from '@home/components/alarm/alarm-assignee-select.component';
+import { DeviceInfoFilterComponent } from '@home/components/device/device-info-filter.component';
 
 @NgModule({
   declarations:
     [
+      RouterTabsComponent,
       EntitiesTableComponent,
       AddEntityDialogComponent,
       DetailsPanelComponent,
@@ -197,6 +205,10 @@ import { modulesMap } from '@modules/common/modules-map';
       RelationFiltersComponent,
       AlarmTableHeaderComponent,
       AlarmTableComponent,
+      AlarmAssigneePanelComponent,
+      AlarmAssigneeSelectComponent,
+      AlarmAssigneeSelectPanelComponent,
+      AlarmFilterConfigComponent,
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
@@ -271,6 +283,7 @@ import { modulesMap } from '@modules/common/modules-map';
       DeviceProfileComponent,
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
+      DeviceInfoFilterComponent,
       AssetProfileComponent,
       AssetProfileDialogComponent,
       AssetProfileAutocompleteComponent,
@@ -318,7 +331,8 @@ import { modulesMap } from '@modules/common/modules-map';
       RateLimitsListComponent,
       RateLimitsComponent,
       RateLimitsTextComponent,
-      RateLimitsDetailsDialogComponent
+      RateLimitsDetailsDialogComponent,
+      SendNotificationButtonComponent
     ],
   imports: [
     CommonModule,
@@ -332,6 +346,7 @@ import { modulesMap } from '@modules/common/modules-map';
     DeviceProfileCommonModule
   ],
   exports: [
+    RouterTabsComponent,
     EntitiesTableComponent,
     AddEntityDialogComponent,
     DetailsPanelComponent,
@@ -344,6 +359,10 @@ import { modulesMap } from '@modules/common/modules-map';
     RelationTableComponent,
     RelationFiltersComponent,
     AlarmTableComponent,
+    AlarmAssigneePanelComponent,
+    AlarmAssigneeSelectComponent,
+    AlarmAssigneeSelectPanelComponent,
+    AlarmFilterConfigComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
     AliasesEntityAutocompleteComponent,
@@ -408,6 +427,7 @@ import { modulesMap } from '@modules/common/modules-map';
     DeviceProfileComponent,
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,
+    DeviceInfoFilterComponent,
     RuleChainAutocompleteComponent,
     DeviceWizardDialogComponent,
     AssetProfileComponent,
@@ -455,7 +475,8 @@ import { modulesMap } from '@modules/common/modules-map';
     RateLimitsListComponent,
     RateLimitsComponent,
     RateLimitsTextComponent,
-    RateLimitsDetailsDialogComponent
+    RateLimitsDetailsDialogComponent,
+    SendNotificationButtonComponent
   ],
   providers: [
     WidgetComponentService,

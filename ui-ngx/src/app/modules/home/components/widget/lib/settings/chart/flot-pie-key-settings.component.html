@@ -18,13 +18,13 @@
 <section class="tb-widget-settings" [formGroup]="flotPieKeySettingsForm" fxLayout="column">
   <fieldset class="fields-group" fxLayout="column">
     <legend class="group-title" translate>widgets.chart.common-settings</legend>
-    <mat-checkbox formControlName="hideDataByDefault" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="hideDataByDefault">
       {{ 'widgets.chart.data-is-hidden-by-default' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="disableDataHiding" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="disableDataHiding">
       {{ 'widgets.chart.disable-data-hiding' | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="removeFromLegend" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="removeFromLegend">
       {{ 'widgets.chart.remove-from-legend' | translate }}
     </mat-checkbox>
   </fieldset>

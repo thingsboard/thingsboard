@@ -16,7 +16,7 @@
 
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
   createDefaultEntityTypesVersionLoad, EntityTypeLoadResult,
   EntityTypeVersionLoadRequest,
@@ -53,7 +53,7 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
   @Input()
   popoverComponent: TbPopoverComponent;
 
-  loadVersionFormGroup: FormGroup;
+  loadVersionFormGroup: UntypedFormGroup;
 
   versionLoadResult: VersionLoadResult = null;
 
@@ -72,7 +72,7 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
               private cd: ChangeDetectorRef,
               private translate: TranslateService,
               private sanitizer: DomSanitizer,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 

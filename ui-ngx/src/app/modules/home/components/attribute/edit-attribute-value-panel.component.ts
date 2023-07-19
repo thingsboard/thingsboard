@@ -18,7 +18,7 @@ import { Component, Inject, InjectionToken, OnInit, SkipSelf } from '@angular/co
 import { ErrorStateMatcher } from '@angular/material/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { OverlayRef } from '@angular/cdk/overlay';
 
@@ -36,7 +36,7 @@ export interface EditAttributeValuePanelData {
 })
 export class EditAttributeValuePanelComponent extends PageComponent implements OnInit, ErrorStateMatcher {
 
-  attributeFormGroup: FormGroup;
+  attributeFormGroup: UntypedFormGroup;
 
   result: any = null;
 
@@ -46,7 +46,7 @@ export class EditAttributeValuePanelComponent extends PageComponent implements O
               @Inject(EDIT_ATTRIBUTE_VALUE_PANEL_DATA) public data: EditAttributeValuePanelData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public overlayRef: OverlayRef,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -56,7 +56,7 @@ export class EditAttributeValuePanelComponent extends PageComponent implements O
     });
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

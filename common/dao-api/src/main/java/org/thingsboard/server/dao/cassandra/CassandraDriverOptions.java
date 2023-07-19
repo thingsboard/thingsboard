@@ -20,13 +20,13 @@ import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
-import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import lombok.Data;
-import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
 
 import javax.annotation.PostConstruct;

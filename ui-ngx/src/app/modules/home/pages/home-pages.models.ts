@@ -19,6 +19,6 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 
 export const entityDetailsPageBreadcrumbLabelFunction: BreadCrumbLabelFunction<EntityDetailsPageComponent>
   = ((route, translate, component) => {
-  return component.entity?.name || component.headerSubtitle;
+  return component.entity?.name;
 });
 

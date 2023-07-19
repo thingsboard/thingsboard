@@ -17,7 +17,7 @@
 import { ActivationEnd, Router } from '@angular/router';
 import { Injectable } from '@angular/core';
 import { select, Store } from '@ngrx/store';
-import { Actions, Effect, ofType } from '@ngrx/effects';
+import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
 import { merge } from 'rxjs';
 import { distinctUntilChanged, filter, map, tap, withLatestFrom } from 'rxjs/operators';
@@ -49,8 +49,8 @@ export class SettingsEffects {
   ) {
   }
 
-  @Effect({dispatch: false})
-  persistSettings = this.actions$.pipe(
+  
+  persistSettings = createEffect(() => this.actions$.pipe(
     ofType(
       SettingsActionTypes.CHANGE_LANGUAGE,
     ),
@@ -58,18 +58,18 @@ export class SettingsEffects {
     tap(([action, settings]) =>
       this.localStorageService.setItem(SETTINGS_KEY, settings)
     )
-  );
+  ), {dispatch: false});
 
-  @Effect({dispatch: false})
-  setTranslateServiceLanguage = this.store.pipe(
+  
+  setTranslateServiceLanguage = createEffect(() => this.store.pipe(
     select(selectSettingsState),
     map(settings => settings.userLang),
     distinctUntilChanged(),
     tap(userLang => updateUserLang(this.translate, userLang))
-  );
+  ), {dispatch: false});
 
-  @Effect({dispatch: false})
-  setTitle = merge(
+  
+  setTitle = createEffect(() => merge(
     this.actions$.pipe(ofType(SettingsActionTypes.CHANGE_LANGUAGE)),
     this.router.events.pipe(filter(event => event instanceof ActivationEnd))
   ).pipe(
@@ -79,10 +79,10 @@ export class SettingsEffects {
         this.translate
       );
     })
-  );
+  ), {dispatch: false});
 
-  @Effect({dispatch: false})
-  setPublicId = merge(
+  
+  setPublicId = createEffect(() => merge(
     this.router.events.pipe(filter(event => event instanceof ActivationEnd))
   ).pipe(
     tap((event) => {
@@ -95,5 +95,5 @@ export class SettingsEffects {
           { lastPublicDashboardId: snapshot.params.dashboardId}));
       }
     })
-  );
+  ), {dispatch: false});
 }

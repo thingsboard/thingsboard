@@ -15,7 +15,7 @@
 ///
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -36,7 +36,7 @@ import {
 })
 export class MqttDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit {
 
-  mqttDeviceTransportConfigurationFormGroup: FormGroup;
+  mqttDeviceTransportConfigurationFormGroup: UntypedFormGroup;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -53,7 +53,7 @@ export class MqttDeviceTransportConfigurationComponent implements ControlValueAc
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {

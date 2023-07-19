@@ -16,9 +16,8 @@
 package org.thingsboard.rule.engine.rpc;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.StringUtils;
 
 @Data
 public class TbSendRpcReplyNodeConfiguration implements NodeConfiguration<TbSendRpcReplyNodeConfiguration> {

@@ -19,12 +19,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
@@ -33,6 +35,7 @@ import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,8 +45,11 @@ abstract public class BaseAlarmEdgeTest extends AbstractEdgeTest {
     public void testSendAlarmToCloud() throws Exception {
         Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
+        UUID alarmUUID = UUID.randomUUID();
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         AlarmUpdateMsg.Builder alarmUpdateMgBuilder = AlarmUpdateMsg.newBuilder();
+        alarmUpdateMgBuilder.setIdMSB(alarmUUID.getMostSignificantBits());
+        alarmUpdateMgBuilder.setIdLSB(alarmUUID.getLeastSignificantBits());
         alarmUpdateMgBuilder.setName("alarm from edge");
         alarmUpdateMgBuilder.setStatus(AlarmStatus.ACTIVE_UNACK.name());
         alarmUpdateMgBuilder.setSeverity(AlarmSeverity.CRITICAL.name());
@@ -65,6 +71,7 @@ abstract public class BaseAlarmEdgeTest extends AbstractEdgeTest {
         Optional<AlarmInfo> foundAlarm = alarms.stream().filter(alarm -> alarm.getType().equals("alarm from edge")).findAny();
         Assert.assertTrue(foundAlarm.isPresent());
         AlarmInfo alarmInfo = foundAlarm.get();
+        Assert.assertEquals(new AlarmId(alarmUUID), alarmInfo.getId());
         Assert.assertEquals(device.getId(), alarmInfo.getOriginator());
         Assert.assertEquals(AlarmStatus.ACTIVE_UNACK, alarmInfo.getStatus());
         Assert.assertEquals(AlarmSeverity.CRITICAL, alarmInfo.getSeverity());
@@ -76,7 +83,6 @@ abstract public class BaseAlarmEdgeTest extends AbstractEdgeTest {
         Device device = findDeviceByName("Edge Device 1");
         Alarm alarm = new Alarm();
         alarm.setOriginator(device.getId());
-        alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
         alarm.setType("alarm");
         alarm.setSeverity(AlarmSeverity.CRITICAL);
         edgeImitator.expectMessageAmount(1);
@@ -86,11 +92,27 @@ abstract public class BaseAlarmEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(latestMessage instanceof AlarmUpdateMsg);
         AlarmUpdateMsg alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, alarmUpdateMsg.getMsgType());
+        Assert.assertEquals(savedAlarm.getUuidId().getMostSignificantBits(), alarmUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedAlarm.getUuidId().getLeastSignificantBits(), alarmUpdateMsg.getIdLSB());
         Assert.assertEquals(savedAlarm.getType(), alarmUpdateMsg.getType());
         Assert.assertEquals(savedAlarm.getName(), alarmUpdateMsg.getName());
         Assert.assertEquals(device.getName(), alarmUpdateMsg.getOriginatorName());
         Assert.assertEquals(savedAlarm.getStatus().name(), alarmUpdateMsg.getStatus());
         Assert.assertEquals(savedAlarm.getSeverity().name(), alarmUpdateMsg.getSeverity());
+
+        // update alarm
+        String updatedDetails = "{\"testKey\":\"testValue\"}";
+        savedAlarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(updatedDetails));
+        edgeImitator.expectMessageAmount(1);
+        savedAlarm = doPost("/api/alarm", savedAlarm, Alarm.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof AlarmUpdateMsg);
+        alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, alarmUpdateMsg.getMsgType());
+        Assert.assertEquals(savedAlarm.getUuidId().getMostSignificantBits(), alarmUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedAlarm.getUuidId().getLeastSignificantBits(), alarmUpdateMsg.getIdLSB());
+        Assert.assertEquals(updatedDetails, alarmUpdateMsg.getDetails());
 
         // ack alarm
         edgeImitator.expectMessageAmount(1);

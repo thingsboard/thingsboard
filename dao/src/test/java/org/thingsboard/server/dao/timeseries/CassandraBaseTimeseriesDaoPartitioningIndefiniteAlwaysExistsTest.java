@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.timeseries;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
@@ -31,7 +30,6 @@ import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateWriteExecutor;
 
 import java.text.ParseException;
-import java.util.List;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;

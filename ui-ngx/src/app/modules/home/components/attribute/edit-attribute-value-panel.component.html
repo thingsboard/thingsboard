@@ -16,7 +16,7 @@
 
 -->
 <form class="mat-elevation-z1"
-      [formGroup]="attributeFormGroup" (ngSubmit)="update()" style="width: 400px; padding: 5px;">
+      [formGroup]="attributeFormGroup" (ngSubmit)="update()" style="padding: 5px;">
   <fieldset [disabled]="isLoading$ | async">
     <tb-value-input
       formControlName="value"

@@ -15,12 +15,9 @@
  */
 package org.thingsboard.server.msa.ui.base;
 
-import com.google.common.io.Files;
 import io.github.bonigarcia.wdm.WebDriverManager;
-import io.qameta.allure.Attachment;
-import lombok.SneakyThrows;
+import io.qameta.allure.Allure;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
@@ -30,25 +27,39 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.html5.WebStorage;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ContainerTestSuite;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.thingsboard.server.msa.TestProperties.getBaseUiUrl;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_EMAIL;
 import static org.thingsboard.server.msa.ui.utils.Const.TENANT_PASSWORD;
@@ -61,17 +72,20 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private static final int WIDTH = 1680;
     private static final int HEIGHT = 1050;
     private static final String REMOTE_WEBDRIVER_HOST = "http://localhost:4444";
-    protected static final PageLink pageLink = new PageLink(10);
-    private static final ContainerTestSuite instance = ContainerTestSuite.getInstance();
+    protected final PageLink pageLink = new PageLink(10);
+    private final ContainerTestSuite instance = ContainerTestSuite.getInstance();
     private JavascriptExecutor js;
+    public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
+    private final Duration duration = Duration.ofMillis(WAIT_TIMEOUT);
+    private WebStorage webStorage;
 
-    @SneakyThrows
-    @BeforeMethod
-    public void openBrowser() {
+    @BeforeClass
+    public void startUp() throws MalformedURLException {
         log.info("===>>> Setup driver");
         testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
         ChromeOptions options = new ChromeOptions();
         options.setAcceptInsecureCerts(true);
+        options.addArguments("-remote-allow-origins=*"); //temporary fix after updating google chrome
         if (instance.isActive()) {
             RemoteWebDriver remoteWebDriver = new RemoteWebDriver(new URL(REMOTE_WEBDRIVER_HOST), options);
             remoteWebDriver.setFileDetector(new LocalFileDetector());
@@ -81,16 +95,30 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
             driver = new ChromeDriver(options);
         }
         driver.manage().window().setSize(dimension);
-        openLocalhost();
+        openBaseUiUrl();
+    }
+
+    @BeforeMethod
+    public void open() {
+        openBaseUiUrl();
     }
 
     @AfterMethod
-    public void closeBrowser() {
+    public void addScreenshotToReport() {
+        captureScreen(driver, "After test page screenshot");
+    }
+
+    @AfterClass
+    public void teardown() {
         log.info("<<<=== Teardown");
         driver.quit();
     }
 
-    public void openLocalhost() {
+    public String getJwtTokenFromLocalStorage() {
+        return (String) getJs().executeScript("return window.localStorage.getItem('jwt_token');");
+    }
+
+    public void openBaseUiUrl() {
         driver.get(getBaseUiUrl());
     }
 
@@ -103,31 +131,32 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     }
 
     protected boolean urlContains(String urlPath) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(5000));
+        WebDriverWait wait = new WebDriverWait(driver, duration);
         try {
             wait.until(ExpectedConditions.urlContains(urlPath));
         } catch (WebDriverException e) {
-            log.error("This URL path is missing");
+            return fail("URL not contains " + urlPath);
         }
         return driver.getCurrentUrl().contains(urlPath);
     }
 
     public void jsClick(WebElement element) {
-        js = (JavascriptExecutor) driver;
-        js.executeScript("arguments[0].click();", element);
+        getJs().executeScript("arguments[0].click();", element);
     }
 
-    public static RuleChain getRuleChainByName(String name) {
-        try {
-            return testRestClient.getRuleChains(pageLink).getData().stream()
-                    .filter(s -> s.getName().equals(name)).collect(Collectors.toList()).get(0);
-        } catch (Exception e) {
-            log.error("No such rule chain with name: " + name);
-            return null;
-        }
+    public RuleChain getRuleChainByName(String name) {
+        return testRestClient.getRuleChains(pageLink).getData().stream()
+                .filter(s -> s.getName().equals(name))
+                .findFirst().orElse(null);
     }
 
-    public static Customer getCustomerByName(String name) {
+    public List<RuleChain> getRuleChainsByName(String name) {
+        return testRestClient.getRuleChains(pageLink).getData().stream()
+                .filter(s -> s.getName().equals(name))
+                .collect(Collectors.toList());
+    }
+
+    public Customer getCustomerByName(String name) {
         try {
             return testRestClient.getCustomers(pageLink).getData().stream()
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
@@ -137,7 +166,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    public static DeviceProfile getDeviceProfileByName(String name) {
+    public DeviceProfile getDeviceProfileByName(String name) {
         try {
             return testRestClient.getDeviceProfiles(pageLink).getData().stream()
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
@@ -147,7 +176,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    public static AssetProfile getAssetProfileByName(String name) {
+    public AssetProfile getAssetProfileByName(String name) {
         try {
             return testRestClient.getAssetProfiles(pageLink).getData().stream()
                     .filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
@@ -157,11 +186,87 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    @SneakyThrows
-    @Attachment(value = "Page screenshot", type = "image/png")
-    public static byte[] captureScreen(WebDriver driver, String dirPath) {
-        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        FileUtils.copyFile(screenshot, new File("./target/allure-results/screenshots/" + dirPath + "//" + screenshot.getName()));
-        return Files.toByteArray(screenshot);
+    public void captureScreen(WebDriver driver, String screenshotName) {
+        if (driver instanceof TakesScreenshot) {
+            Allure.addAttachment(screenshotName,
+                    new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
+        }
+    }
+
+    public JavascriptExecutor getJs() {
+        return js = (JavascriptExecutor) driver;
+    }
+
+    public void assertIsDisplayed(WebElement element) {
+        assertThat(element.isDisplayed()).as(element + " is displayed").isTrue();
+    }
+
+    public void assertIsDisable(WebElement element) {
+        assertThat(element.isEnabled()).as(element + " is disabled").isFalse();
+    }
+
+    public void deleteRuleChainByName(String ruleChainName) {
+        List<RuleChain> ruleChains = getRuleChainsByName(ruleChainName);
+        if (!ruleChains.isEmpty()) {
+            ruleChains.forEach(rc -> testRestClient.deleteRuleChain(rc.getId()));
+        }
+    }
+
+    public void setRootRuleChain(String ruleChainName) {
+        List<RuleChain> ruleChains = getRuleChainsByName(ruleChainName);
+        if (!ruleChains.isEmpty()) {
+            testRestClient.setRootRuleChain(ruleChains.stream().findFirst().get().getId());
+        }
+    }
+
+    public WebStorage getWebStorage() {
+        return webStorage = (WebStorage) driver;
+    }
+
+    public void clearStorage() {
+        getWebStorage().getLocalStorage().clear();
+        getWebStorage().getSessionStorage().clear();
+    }
+
+    public void deleteAlarmById(AlarmId alarmId) {
+        if (alarmId != null) {
+            testRestClient.deleteAlarm(alarmId);
+        }
+    }
+
+    public void deleteAlarmsByIds(AlarmId... alarmIds) {
+        for (AlarmId alarmId : alarmIds) {
+            deleteAlarmById(alarmId);
+        }
+    }
+
+    public void deleteCustomerById(CustomerId customerId) {
+        if (customerId != null) {
+            testRestClient.deleteCustomer(customerId);
+        }
+    }
+
+    public void deleteDeviceById(DeviceId deviceId) {
+        if (deviceId != null) {
+            testRestClient.deleteDevice(deviceId);
+        }
+    }
+
+    public void deleteAssetById(AssetId assetId) {
+        if (assetId != null) {
+            testRestClient.deleteAsset(assetId);
+        }
+    }
+
+    public void deleteEntityView(EntityViewId entityViewId) {
+        if (entityViewId != null) {
+            testRestClient.deleteEntityView(entityViewId);
+        }
+    }
+
+    public void deleteDashboardById(DashboardId dashboardId) {
+        if (dashboardId != null) {
+            testRestClient.deleteDashboard(dashboardId);
+        }
     }
 }

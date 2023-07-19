@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
-
 import java.io.Serializable;
 
 @ApiModel

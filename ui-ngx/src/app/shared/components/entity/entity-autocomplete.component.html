@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance">
-  <input matInput type="text" placeholder="{{ entityText | translate }}"
+  <mat-label>{{ label | translate }}</mat-label>
+  <input matInput type="text"
          #entityInput
          formControlName="entity"
          (focusin)="onFocus()"
@@ -24,7 +25,7 @@
          [matAutocomplete]="entityAutocomplete">
   <button *ngIf="selectEntityFormGroup.get('entity').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
@@ -41,6 +42,6 @@
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="selectEntityFormGroup.get('entity').hasError('required')">
-    {{ entityRequiredText | translate }}
+    {{ requiredErrorText | translate }}
   </mat-error>
 </mat-form-field>

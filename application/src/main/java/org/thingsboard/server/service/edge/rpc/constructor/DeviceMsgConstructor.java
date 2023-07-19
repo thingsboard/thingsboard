@@ -41,7 +41,7 @@ public class DeviceMsgConstructor {
     @Autowired
     private DataDecodingEncodingService dataDecodingEncodingService;
 
-    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, String conflictName) {
+    public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(device.getId().getId().getMostSignificantBits())
@@ -66,8 +66,9 @@ public class DeviceMsgConstructor {
             builder.setFirmwareIdMSB(device.getFirmwareId().getId().getMostSignificantBits())
                     .setFirmwareIdLSB(device.getFirmwareId().getId().getLeastSignificantBits());
         }
-        if (conflictName != null) {
-            builder.setConflictName(conflictName);
+        if (device.getSoftwareId() != null) {
+            builder.setSoftwareIdMSB(device.getSoftwareId().getId().getMostSignificantBits())
+                    .setSoftwareIdLSB(device.getSoftwareId().getId().getLeastSignificantBits());
         }
         if (device.getDeviceData() != null) {
             builder.setDeviceDataBytes(ByteString.copyFrom(dataDecodingEncodingService.encode(device.getDeviceData())));

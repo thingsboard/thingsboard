@@ -17,8 +17,8 @@
 import { Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -55,17 +55,17 @@ import { Subject } from 'rxjs';
 
 export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, ControlValueAccessor, Validator {
 
-  serverFormGroup: FormGroup;
+  serverFormGroup: UntypedFormGroup;
   securityConfigLwM2MType = Lwm2mSecurityType;
   securityConfigLwM2MTypes = Object.values(Lwm2mSecurityType);
   lwm2mSecurityTypeTranslationMap = Lwm2mSecurityTypeTranslationMap;
   publicKeyOrIdTooltipNamesMap = Lwm2mPublicKeyOrIdTooltipTranslationsMap;
   clientSecretKeyTooltipNamesMap = Lwm2mClientSecretKeyTooltipTranslationsMap;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
     this.serverFormGroup = this.fb.group({
       securityMode: [Lwm2mSecurityType.NO_SEC],
       clientPublicKeyOrId: [''],
@@ -148,5 +148,5 @@ export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, Control
 
     this.serverFormGroup.get('clientPublicKeyOrId').enable({emitEvent: false});
     this.serverFormGroup.get('clientSecretKey').enable();
-  }
+  };
 }

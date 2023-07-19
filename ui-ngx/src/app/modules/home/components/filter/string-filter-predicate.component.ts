@@ -17,8 +17,8 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -60,7 +60,7 @@ export class StringFilterPredicateComponent implements ControlValueAccessor, Val
 
   valueTypeEnum = EntityKeyValueType;
 
-  stringFilterPredicateFormGroup: FormGroup;
+  stringFilterPredicateFormGroup: UntypedFormGroup;
 
   stringOperations = Object.keys(StringOperation);
   stringOperationEnum = StringOperation;
@@ -68,7 +68,7 @@ export class StringFilterPredicateComponent implements ControlValueAccessor, Val
 
   private propagateChange = null;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {

@@ -16,17 +16,17 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.Tenant;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,23 +35,10 @@ import java.util.List;
 
 public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
 
+    @Autowired
+    WidgetsBundleService widgetsBundleService;
+
     private IdComparator<WidgetsBundle> idComparator = new IdComparator<>();
-
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
 
     @Test
     public void testSaveWidgetsBundle() throws IOException {
@@ -77,22 +64,26 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
         widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveWidgetsBundleWithEmptyTitle() {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
-        widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveWidgetsBundleWithInvalidTenant() {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
         widgetsBundle.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
-        widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testUpdateWidgetsBundleTenant() {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
@@ -100,13 +91,15 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
         WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
         savedWidgetsBundle.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
         try {
-            widgetsBundleService.saveWidgetsBundle(savedWidgetsBundle);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetsBundleService.saveWidgetsBundle(savedWidgetsBundle);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testUpdateWidgetsBundleAlias() {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTitle("My widgets bundle");
@@ -114,7 +107,9 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
         WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
         savedWidgetsBundle.setAlias("new_alias");
         try {
-            widgetsBundleService.saveWidgetsBundle(savedWidgetsBundle);
+            Assertions.assertThrows(DataValidationException.class, () -> {
+                widgetsBundleService.saveWidgetsBundle(savedWidgetsBundle);
+            });
         } finally {
             widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
         }
@@ -240,11 +235,6 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindTenantWidgetsBundlesByTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
 
         List<WidgetsBundle> widgetsBundles = new ArrayList<>();
         for (int i=0;i<127;i++) {
@@ -277,7 +267,6 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -285,11 +274,6 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
 
         List<WidgetsBundle> systemWidgetsBundles = widgetsBundleService.findSystemWidgetsBundles(tenantId);
 
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
         TenantId systemTenantId = TenantId.fromUUID(ModelConstants.NULL_UUID);
 
         List<WidgetsBundle> createdWidgetsBundles = new ArrayList<>();
@@ -362,8 +346,6 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
         Collections.sort(loadedWidgetsBundles, idComparator);
 
         Assert.assertEquals(systemWidgetsBundles, loadedWidgetsBundles);
-
-        tenantService.deleteTenant(tenantId);
     }
 
     @Test
@@ -371,11 +353,6 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
 
         List<WidgetsBundle> systemWidgetsBundles = widgetsBundleService.findSystemWidgetsBundles(tenantId);
 
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
-
-        TenantId tenantId = tenant.getId();
         TenantId systemTenantId = TenantId.fromUUID(ModelConstants.NULL_UUID);
 
         List<WidgetsBundle> createdWidgetsBundles = new ArrayList<>();
@@ -423,8 +400,6 @@ public abstract class BaseWidgetsBundleServiceTest extends AbstractServiceTest {
         Collections.sort(loadedWidgetsBundles, idComparator);
 
         Assert.assertEquals(systemWidgetsBundles, loadedWidgetsBundles);
-
-        tenantService.deleteTenant(tenantId);
     }
 
 }

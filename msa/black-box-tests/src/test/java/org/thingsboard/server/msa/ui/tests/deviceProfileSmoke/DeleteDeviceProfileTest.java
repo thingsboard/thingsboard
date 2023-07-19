@@ -16,8 +16,10 @@
 package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -33,15 +35,17 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
     private SideBarMenuViewHelper sideBarMenuView;
     private ProfilesPageHelper profilesPage;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewHelper(driver);
         profilesPage = new ProfilesPageHelper(driver);
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Delete one device profile")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove the device profile by clicking on the trash icon in the right side of device profile")
     public void removeDeviceProfile() {
         String name = ENTITY_NAME + random();
         testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
@@ -51,11 +55,13 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
         profilesPage.warningPopUpYesBtn().click();
         profilesPage.refreshBtn();
 
-        Assert.assertTrue(profilesPage.entityIsNotPresent(name));
+        Assert.assertTrue(profilesPage.assertEntityIsNotPresent(name));
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Delete one device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the device profile by clicking on the 'Delete device profile' btn in the entity view")
     public void removeDeviceProfileFromView() {
         String name = ENTITY_NAME + random();
         testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
@@ -66,11 +72,13 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
         profilesPage.warningPopUpYesBtn().click();
         profilesPage.refreshBtn();
 
-        Assert.assertTrue(profilesPage.entityIsNotPresent(name));
+        Assert.assertTrue(profilesPage.assertEntityIsNotPresent(name));
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Delete one device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove device profile by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedDeviceProfile() {
         String name = ENTITY_NAME + random();
         testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
@@ -81,19 +89,23 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
         profilesPage.warningPopUpYesBtn().click();
         profilesPage.refreshBtn();
 
-        Assert.assertTrue(profilesPage.entityIsNotPresent(name));
+        Assert.assertTrue(profilesPage.assertEntityIsNotPresent(name));
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Delete one device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the default device profile by clicking on the trash icon in the right side of device profile")
     public void removeDefaultDeviceProfile() {
         sideBarMenuView.openDeviceProfiles();
 
         Assert.assertFalse(profilesPage.deleteBtn("default").isEnabled());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Delete one device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the Default device profile by clicking on the 'Delete device profile' btn in the entity view")
     public void removeDefaultDeviceProfileFromView() {
         sideBarMenuView.openDeviceProfiles();
         profilesPage.entity("default").click();
@@ -101,17 +113,20 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
         Assert.assertTrue(profilesPage.deleteDeviceProfileFromViewBtnIsNotDisplayed());
     }
 
+    @Epic("Device profile smoke tests")
+    @Feature("Delete one device profile")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the default device profile by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedDefaultDeviceProfile() {
         sideBarMenuView.openDeviceProfiles();
 
         Assert.assertNotNull(profilesPage.presentCheckBox("default"));
         Assert.assertFalse(profilesPage.presentCheckBox("default").isDisplayed());
     }
-
+    @Epic("Device profile smoke tests")
+    @Feature("Delete one device profile")
     @Test(priority = 30, groups = "smoke")
-    @Description
+    @Description("Remove the device profile by clicking on the trash icon in the right side of device profile without refresh")
     public void removeDeviceProfileWithoutRefresh() {
         String name = ENTITY_NAME + random();
         testRestClient.postDeviceProfile(EntityPrototypes.defaultDeviceProfile(name));
@@ -120,6 +135,6 @@ public class DeleteDeviceProfileTest extends AbstractDriverBaseTest {
         profilesPage.deleteBtn(name).click();
         profilesPage.warningPopUpYesBtn().click();
 
-        Assert.assertTrue(profilesPage.entityIsNotPresent(name));
+        Assert.assertTrue(profilesPage.assertEntityIsNotPresent(name));
     }
 }

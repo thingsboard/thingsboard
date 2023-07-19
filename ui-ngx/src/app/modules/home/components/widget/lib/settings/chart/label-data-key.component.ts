@@ -18,8 +18,8 @@ import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@ang
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALUE_ACCESSOR, ValidationErrors,
   Validators
 } from '@angular/forms';
@@ -71,11 +71,11 @@ export class LabelDataKeyComponent extends PageComponent implements OnInit, Cont
 
   private propagateChange = null;
 
-  public labelDataKeyFormGroup: FormGroup;
+  public labelDataKeyFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 

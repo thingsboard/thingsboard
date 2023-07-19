@@ -18,13 +18,13 @@ package org.thingsboard.server.service.queue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 @Slf4j
 @Service
@@ -46,7 +46,7 @@ public class DefaultTenantRoutingInfoService implements TenantRoutingInfoService
         if (tenantProfile != null) {
             return new TenantRoutingInfo(tenantId, tenantProfile.isIsolatedTbRuleEngine());
         } else {
-            throw new RuntimeException("Tenant not found!");
+            throw new TenantNotFoundException(tenantId);
         }
     }
 }

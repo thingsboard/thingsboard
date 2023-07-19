@@ -16,9 +16,11 @@
 package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
@@ -33,7 +35,7 @@ public class SearchAssetProfileTest extends AbstractDriverBaseTest {
     private ProfilesPageHelper profilesPage;
     private String name;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewHelper(driver);
@@ -48,8 +50,11 @@ public class SearchAssetProfileTest extends AbstractDriverBaseTest {
         }
     }
 
+    @Epic("Asset profiles smoke")
+    @Feature("Search asset profile")
     @Test(priority = 10, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "assetProfileSearch")
-    @Description
+    @Description("Search asset profile by first word in the name/Search asset profile by second word in the name/" +
+            "Search asset profile by symbol in the name/Search asset profile by number in the name")
     public void searchFirstWord(String name, String namePath) {
         testRestClient.postAssetProfile(EntityPrototypes.defaultAssetProfile(name));
         this.name = name;

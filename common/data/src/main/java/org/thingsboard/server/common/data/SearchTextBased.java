@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.id.UUIDBased;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.thingsboard.server.common.data.id.UUIDBased;
 
 public abstract class SearchTextBased<I extends UUIDBased> extends BaseData<I> {
 

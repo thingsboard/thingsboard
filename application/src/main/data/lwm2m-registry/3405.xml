@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2019 Zumtobel Group. 
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
+  <Object ObjectType="MODefinition">
+		<Name>oA OGC-Security</Name>
+		<Description1><![CDATA[The 'OGC Security' provides the appropriate keying material for a specific OGC Application group in the context of OGC. The keying material will be provided by a key distribution server, and must not be readable by any instance outside the local node.]]></Description1>
+		<ObjectID>3405</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:ext:3405</ObjectURN>
+		<LWM2MVersion>1.1</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="4001">
+				<Name>ObjectVersion</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[LWM2M Object versioning label.]]></Description>
+			</Item>
+			<Item ID="901">
+				<Name>Documentary Description</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0..256 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Resource to hold a documentary text description of the object.]]></Description>
+			</Item>
+			<Item ID="0">
+				<Name>OGC Security ID</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Uniquely identifies the OpenAIS Security group that this instance is using.]]></Description>
+			</Item>
+			<Item ID="3">
+				<Name>Accepted Senders</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Opaque</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Stores the identities (OSCORE / IPv6) and Keys of accepted senders in the group]]></Description>
+			</Item>
+			<Item ID="5">
+				<Name>Secret Group Key</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Opaque</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Stores the shared symmetric key for low latency group communication.This Resource MUST NOT be readable by any server.]]></Description>
+			</Item>
+		</Resources>
+		<Description2><![CDATA[]]></Description2>
+	</Object>
+</LWM2M>

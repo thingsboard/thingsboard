@@ -47,8 +47,13 @@ export class AppComponent implements OnInit {
 
     console.log(`ThingsBoard Version: ${env.tbVersion}`);
 
-    this.matIconRegistry.addSvgIconSetInNamespace('mdi',
-      this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/mdi.svg'));
+    this.matIconRegistry.addSvgIconResolver((name, namespace) => {
+      if (namespace === 'mdi') {
+        return this.domSanitizer.bypassSecurityTrustResourceUrl(`./assets/mdi/${name}.svg`);
+      } else {
+        return null;
+      }
+    });
 
     this.matIconRegistry.addSvgIconLiteral(
       'google-logo',

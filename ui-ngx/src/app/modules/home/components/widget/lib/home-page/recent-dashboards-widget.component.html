@@ -1,0 +1,117 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
+  <ng-container *ngIf="hasDashboardsAccess; else noDataAvailable">
+    <div class="tb-card-header">
+      <a class="tb-title-link" routerLink="/dashboards">{{ 'widgets.recent-dashboards.title' | translate }}</a>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutAlign.lt-md="space-between center" fxLayoutGap="8px">
+        <tb-toggle-header #dashboardsToggle [value]="toggleValue" name="usageToggle" (valueChange)="toggleValueChange($event)" [options]="[
+          {
+            name: ctx.translate.instant('widgets.recent-dashboards.last'),
+            value: 'last'
+          },
+          {
+            name: ctx.translate.instant('widgets.recent-dashboards.starred'),
+            value: 'starred'
+          }
+        ]">
+        </tb-toggle-header>
+        <a *ngIf="authUser.authority === authority.TENANT_ADMIN" fxHide.md
+           mat-flat-button color="primary" routerLink="/dashboards" [queryParams]="{action: 'add'}">{{ 'dashboard.add' | translate }}</a>
+      </div>
+    </div>
+    <ng-container *ngIf="userDashboardsInfo; else loading" [ngSwitch]="dashboardsToggle.value">
+      <ng-template [ngSwitchCase]="'last'">
+        <div *ngIf="hasLastVisitedDashboards(); else noLastVisitedDashboards" style="overflow-y: auto;">
+          <table mat-table
+                 [dataSource]="lastVisitedDashboardsDataSource" matSort
+                 [matSortActive]="lastVisitedDashboardsPageLink.sortOrder?.property"
+                 [matSortDirection]="lastVisitedDashboardsPageLink.sortDirection()" matSortDisableClear>
+            <ng-container matColumnDef="starred">
+              <mat-header-cell class="star-cell" *matHeaderCellDef>
+              </mat-header-cell>
+              <mat-cell class="star-cell" *matCellDef="let lastVisitedDashboard">
+                <mat-icon (click)="toggleDashboardStar(lastVisitedDashboard)"
+                          class="star" [ngClass]="{'starred': lastVisitedDashboard.starred}">{{ lastVisitedDashboard.starred ? 'star' : 'star_border' }}</mat-icon>
+              </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="title">
+              <mat-header-cell class="title" *matHeaderCellDef mat-sort-header>
+                {{ 'widgets.recent-dashboards.name' | translate }}
+              </mat-header-cell>
+              <mat-cell class="title" *matCellDef="let lastVisitedDashboard">
+                <a routerLink="/dashboards/{{lastVisitedDashboard.id}}">{{ lastVisitedDashboard.title }}</a>
+              </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="lastVisited">
+              <mat-header-cell class="last-visited" *matHeaderCellDef mat-sort-header>
+                {{ 'widgets.recent-dashboards.last-viewed' | translate }}
+              </mat-header-cell>
+              <mat-cell class="last-visited" *matCellDef="let lastVisitedDashboard">
+                {{ lastVisitedDashboard.lastVisited | dateAgo:{applyAgo: true} }}
+              </mat-cell>
+            </ng-container>
+            <mat-header-row *matHeaderRowDef="lastVisitedDashboardsColumns; sticky: true"></mat-header-row>
+            <mat-row *matRowDef="let lastVisitedDashboard; columns: lastVisitedDashboardsColumns;"></mat-row>
+          </table>
+        </div>
+        <ng-template #noLastVisitedDashboards>
+          <div class="tb-no-dashboards">
+            <div class="tb-no-last-visited-bg"></div>
+            <div class="tb-no-last-visited-dashboards-text">{{ 'widgets.recent-dashboards.no-last-viewed-dashboards' | translate }}</div>
+          </div>
+        </ng-template>
+      </ng-template>
+      <ng-template [ngSwitchCase]="'starred'">
+        <div style="overflow-y: auto;">
+          <div class="tb-starred-dashboard-row" *ngFor="let dashboard of userDashboardsInfo?.starred">
+            <div class="tb-cell star-cell">
+              <mat-icon (click)="toggleDashboardStar(dashboard)"
+                        class="star" [ngClass]="{'starred': dashboard.starred}">{{ dashboard.starred ? 'star' : 'star_border' }}</mat-icon>
+            </div>
+            <div class="tb-cell title">
+              <a routerLink="/dashboards/{{dashboard.id}}">{{ dashboard.title }}</a>
+            </div>
+          </div>
+        </div>
+        <tb-dashboard-autocomplete class="tb-star-dashboard-autocomplete"
+                                   #starDashboardAutocomplete
+                                   subscriptSizing="dynamic"
+                                   appearance="outline"
+                                   [useIdValue]="false"
+                                   label=""
+                                   placeholder="{{ 'dashboard.select-dashboard' | translate }}"
+                                   [(ngModel)]="starredDashboardValue" (ngModelChange)="onStarDashboard($event)"></tb-dashboard-autocomplete>
+      </ng-template>
+    </ng-container>
+    <ng-template #loading>
+      <div class="tb-no-dashboards">
+        <mat-spinner [diameter]="50" mode="indeterminate"></mat-spinner>
+      </div>
+    </ng-template>
+  </ng-container>
+  <ng-template #noDataAvailable>
+    <div class="tb-card-header">
+      <div class="tb-title">{{ 'widgets.recent-dashboards.title' | translate }}</div>
+    </div>
+    <div class="tb-no-data-available">
+      <div class="tb-no-data-bg"></div>
+      <div class="tb-no-data-text" translate>widgets.home.no-data-available</div>
+    </div>
+  </ng-template>
+</div>

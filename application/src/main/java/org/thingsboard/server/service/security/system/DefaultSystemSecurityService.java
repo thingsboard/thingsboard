@@ -228,8 +228,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
         if (userCredentials != null && isPositiveInteger(passwordPolicy.getPasswordReuseFrequencyDays())) {
             long passwordReuseFrequencyTs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(passwordPolicy.getPasswordReuseFrequencyDays());
-            User user = userService.findUserById(tenantId, userCredentials.getUserId());
-            JsonNode additionalInfo = user.getAdditionalInfo();
+            JsonNode additionalInfo = userCredentials.getAdditionalInfo();
             if (additionalInfo instanceof ObjectNode && additionalInfo.has(UserServiceImpl.USER_PASSWORD_HISTORY)) {
                 JsonNode userPasswordHistoryJson = additionalInfo.get(UserServiceImpl.USER_PASSWORD_HISTORY);
                 Map<String, String> userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>() {});

@@ -32,8 +32,8 @@ public class AdminSettingsDataValidator extends DataValidator<AdminSettings> {
 
     @Override
     protected void validateCreate(TenantId tenantId, AdminSettings adminSettings) {
-        AdminSettings existentAdminSettingsWithKey = adminSettingsService.findAdminSettingsByKey(tenantId, adminSettings.getKey());
-        if (existentAdminSettingsWithKey != null) {
+        AdminSettings existingSettings = adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, adminSettings.getKey());
+        if (existingSettings != null) {
             throw new DataValidationException("Admin settings with such name already exists!");
         }
     }

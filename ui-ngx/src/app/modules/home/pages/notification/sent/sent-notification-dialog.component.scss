@@ -1,0 +1,286 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../scss/constants";
+@import "../../../../../../theme";
+
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
+  width: 820px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  .tb-title {
+    font-size: 16px;
+    line-height: 24px;
+    &.tb-required::after {
+      font-size: initial;
+      content: "*";
+    }
+
+    &.tb-error {
+      color: var(--mdc-theme-error, #f44336);
+
+      &.tb-required::after {
+        color: var(--mdc-theme-error, #f44336);
+      }
+    }
+  }
+
+  .tb-mat-error {
+    font-size: 13px;
+  }
+
+  .tb-hint {
+    padding: 0 0 8px;
+  }
+
+  .tb-hint-available-params {
+    border-radius: 6px;
+    background-color: rgba(48, 86, 128, 0.04);
+    margin-bottom: 8px;
+    padding: 8px 16px;
+
+    .content {
+      vertical-align: middle;
+    }
+  }
+
+  .delivery-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .delivery-methods-container {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .delivery-method-container {
+      display: inline-flex;
+      flex: 1 1 calc(50% - 8px);
+      padding: 16px 12px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 6px;
+
+      &.interact {
+        cursor: pointer;
+        color: inherit;
+      }
+
+      .delivery-method {
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
+
+  .additional-config-group {
+    padding: 16px 16px 0;
+    margin-bottom: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    width: 100%;
+    height: 100%;
+
+    .toggle {
+      margin-bottom: 16px;
+    }
+  }
+
+  .preview-group {
+    padding: 16px;
+    margin-bottom: 10px;
+    border: 1px groove rgba(0, 0, 0, .12);
+    border-radius: 4px;
+
+    &.notification {
+      background-color: #F3F6FA;
+    }
+
+    .group-title {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    &> div:not(:last-child) {
+      margin-bottom: 12px;
+    }
+
+    .details-recipient {
+      font-size: 14px;
+      line-height: 14px;
+
+      .number {
+        font-weight: 500;
+        margin-right: 4px;
+      }
+
+      &:not(:last-of-type) {
+        margin-bottom: 8px;
+      }
+    }
+
+    .divider {
+      margin-bottom: 8px;
+    }
+
+    .web-preview {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      display: flex;
+
+      tb-notification {
+        border: 1px groove $tb-primary-color;
+        border-radius: 4px;
+        max-width: 400px;
+        width: 80%;
+        background-color: #fff;
+      }
+    }
+
+    .notification-content {
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+      background: #fff;
+      padding: 12px 16px;
+      display: inline-grid;
+      width: 100%;
+
+      .subject {
+        padding-bottom: 12px;
+        font-weight: 500;
+        letter-spacing: 0.25px;
+      }
+
+      .html-content {
+        margin-top: 12px;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 20px;
+        overflow-x: auto;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .mat-mdc-dialog-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0 !important;
+
+    .mat-stepper-horizontal {
+      display: flex;
+      height: 100%;
+      overflow: hidden;
+
+      .mat-horizontal-stepper-wrapper {
+        flex: 1 1 100%;
+      }
+
+      .mat-horizontal-content-container {
+        height: 680px;
+        max-height: 100%;
+        width: 100%;;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+        @media #{$mat-gt-sm} {
+          min-width: 500px;
+        }
+      }
+    }
+  }
+
+  .mat-button-toggle-group.tb-notification-use-template-toggle-group {
+    &.mat-button-toggle-group-appearance-standard {
+      border: none;
+      border-radius: 18px;
+      margin-bottom: 24px;
+
+      .mat-button-toggle + .mat-button-toggle {
+        border-left: none;
+      }
+    }
+
+    .mat-button-toggle {
+      background: rgba(0, 0, 0, 0.06);
+      height: 36px;
+      align-items: center;
+      display: flex;
+
+      .mat-button-toggle-ripple {
+        top: 2px;
+        left: 2px;
+        right: 2px;
+        bottom: 2px;
+        border-radius: 18px;
+      }
+    }
+
+    .mat-button-toggle-button {
+      color: #959595;
+    }
+
+    .mat-button-toggle-focus-overlay {
+      border-radius: 18px;
+      margin: 2px;
+    }
+
+    .mat-button-toggle-checked .mat-button-toggle-button {
+      background-color: $tb-primary-color;
+      color: #fff;
+      border-radius: 18px;
+      margin-left: 2px;
+      margin-right: 2px;
+    }
+
+    .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+      line-height: 34px;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
+      opacity: .01;
+    }
+  }
+
+  .preview-group {
+    .notification-content {
+      .html-content,
+      .html-content * {
+        all: revert;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .delivery-methods-container {
+    .delivery-method-container {
+      &.interact * {
+        cursor: pointer;
+      }
+    }
+  }
+}

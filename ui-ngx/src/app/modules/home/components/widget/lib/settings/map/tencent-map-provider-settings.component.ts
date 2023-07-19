@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -61,7 +61,7 @@ export class TencentMapProviderSettingsComponent extends PageComponent implement
 
   private propagateChange = null;
 
-  public providerSettingsFormGroup: FormGroup;
+  public providerSettingsFormGroup: UntypedFormGroup;
 
   tencentMapTypes = Object.values(TencentMapType);
 
@@ -69,7 +69,7 @@ export class TencentMapProviderSettingsComponent extends PageComponent implement
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -106,7 +106,7 @@ export class TencentMapProviderSettingsComponent extends PageComponent implement
     );
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.providerSettingsFormGroup.valid ? null : {
       tencentMapProviderSettings: {
         valid: false,

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-// tslint:disable-next-line:no-reference
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../../../../../../src/typings/jquery.flot.typings.d.ts" />
 
 import { DataKey, Datasource, DatasourceData, FormattedData, JsonSettingsSchema } from '@shared/models/widget.models';
@@ -217,6 +217,7 @@ export interface TbFlotKeySettings {
   removeFromLegend: boolean;
   showLines: boolean;
   fillLines: boolean;
+  fillLinesOpacity: number;
   showPoints: boolean;
   showPointShape: string;
   pointShapeFormatter: string;

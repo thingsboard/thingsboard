@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.common.transport.service;
 
-import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.kafka.TbKafkaDecoder;
 
 import java.io.IOException;

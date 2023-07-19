@@ -41,7 +41,7 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.ENRICHMENT,
         name = "fetch device credentials",
         configClazz = TbFetchDeviceCredentialsNodeConfiguration.class,
-        nodeDescription = "Fetch device credentials for message originator",
+        nodeDescription = "Enrich the message body or metadata with the device credentials",
         nodeDetails = "Adds <b>credentialsType</b> and <b>credentials</b> properties to the message metadata if the " +
                 "configuration parameter <b>fetchToMetadata</b> is set to <code>true</code>, otherwise, adds properties " +
                 "to the message data. If originator type is not <b>DEVICE</b> or rule node failed to get device credentials " +

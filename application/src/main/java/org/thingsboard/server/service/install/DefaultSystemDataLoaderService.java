@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,6 +63,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -82,13 +84,14 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -97,6 +100,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -107,6 +111,8 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Profile("install")
@@ -170,6 +176,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private JwtSettingsService jwtSettingsService;
+
+    @Autowired
+    private NotificationSettingsService notificationSettingsService;
+
+    @Autowired
+    private NotificationTargetService notificationTargetService;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -499,6 +511,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         this.deleteSystemWidgetBundle("entity_admin_widgets");
         this.deleteSystemWidgetBundle("navigation_widgets");
         this.deleteSystemWidgetBundle("edge_widgets");
+        this.deleteSystemWidgetBundle("home_page_widgets");
         installScripts.loadSystemWidgets();
     }
 
@@ -669,6 +682,32 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             sequentialByOriginatorQueue.setProcessingStrategy(sequentialByOriginatorQueueProcessingStrategy);
             queueService.saveQueue(sequentialByOriginatorQueue);
         }
+    }
+
+    @Override
+    @SneakyThrows
+    public void createDefaultNotificationConfigs() {
+        log.info("Creating default notification configs for system admin");
+        if (notificationTargetService.countNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID) == 0) {
+            notificationSettingsService.createDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
+        }
+        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+        ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
+        log.info("Creating default notification configs for all tenants");
+        AtomicInteger count = new AtomicInteger();
+        for (TenantId tenantId : tenants) {
+            executor.submit(() -> {
+                if (notificationTargetService.countNotificationTargetsByTenantId(tenantId) == 0) {
+                    notificationSettingsService.createDefaultNotificationConfigs(tenantId);
+                    int n = count.incrementAndGet();
+                    if (n % 500 == 0) {
+                        log.info("{} tenants processed", n);
+                    }
+                }
+            });
+        }
+        executor.shutdown();
+        executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
     }
 
 }

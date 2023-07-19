@@ -23,12 +23,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Constraint(validatedBy = {})
 public @interface Length {
     String message() default "length must be equal or less than {max}";
 
-    String fieldName();
+    String fieldName() default "";
 
     int max() default 255;
 

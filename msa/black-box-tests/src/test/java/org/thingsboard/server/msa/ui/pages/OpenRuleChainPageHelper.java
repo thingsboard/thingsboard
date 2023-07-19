@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
 public class OpenRuleChainPageHelper extends OpenRuleChainPageElements {
     public OpenRuleChainPageHelper(WebDriver driver) {
@@ -32,7 +33,7 @@ public class OpenRuleChainPageHelper extends OpenRuleChainPageElements {
         return headName;
     }
 
-    public void waitUntilDoneBtnDisable() {
-        waitUntilVisibilityOfElementLocated(getDoneBtnDisable());
+    public void waitUntilBtnDisable(WebElement element) {
+        waitUntilAttributeContains(element, "disabled", "true");
     }
 }

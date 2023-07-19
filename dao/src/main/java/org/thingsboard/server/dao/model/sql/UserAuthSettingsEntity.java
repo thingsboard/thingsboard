@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.id.UserAuthSettingsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserAuthSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
-import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;

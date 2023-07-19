@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
 
@@ -39,24 +40,30 @@ public class AssetProfileInfo extends EntityInfo {
     @ApiModelProperty(position = 4, value = "Reference to the dashboard. Used in the mobile application to open the default dashboard when user navigates to asset details.")
     private final DashboardId defaultDashboardId;
 
+    @ApiModelProperty(position = 5, value = "Tenant id.")
+    private final TenantId tenantId;
+
     @JsonCreator
     public AssetProfileInfo(@JsonProperty("id") EntityId id,
-                             @JsonProperty("name") String name,
-                             @JsonProperty("image") String image,
-                             @JsonProperty("defaultDashboardId") DashboardId defaultDashboardId) {
+                            @JsonProperty("tenantId") TenantId tenantId,
+                            @JsonProperty("name") String name,
+                            @JsonProperty("image") String image,
+                            @JsonProperty("defaultDashboardId") DashboardId defaultDashboardId) {
         super(id, name);
+        this.tenantId = tenantId;
         this.image = image;
         this.defaultDashboardId = defaultDashboardId;
     }
 
-    public AssetProfileInfo(UUID uuid, String name, String image, UUID defaultDashboardId) {
+    public AssetProfileInfo(UUID uuid, UUID tenantId, String name, String image, UUID defaultDashboardId) {
         super(EntityIdFactory.getByTypeAndUuid(EntityType.ASSET_PROFILE, uuid), name);
+        this.tenantId = new TenantId(tenantId);
         this.image = image;
         this.defaultDashboardId = defaultDashboardId != null ? new DashboardId(defaultDashboardId) : null;
     }
 
     public AssetProfileInfo(AssetProfile profile) {
-        this(profile.getId(), profile.getName(), profile.getImage(), profile.getDefaultDashboardId());
+        this(profile.getId(), profile.getTenantId(), profile.getName(), profile.getImage(), profile.getDefaultDashboardId());
     }
 
 }

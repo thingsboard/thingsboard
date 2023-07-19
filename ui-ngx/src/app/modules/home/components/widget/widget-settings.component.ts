@@ -25,7 +25,7 @@ import {
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
   IRuleNodeConfigurationComponent,
   RuleNodeConfiguration,
@@ -78,7 +78,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
 
   definedDirectiveError: string;
 
-  widgetSettingsFormGroup: FormGroup;
+  widgetSettingsFormGroup: UntypedFormGroup;
 
   changeSubscription: Subscription;
 
@@ -92,7 +92,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
   constructor(private translate: TranslateService,
               private cfr: ComponentFactoryResolver,
               private widgetService: WidgetService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.widgetSettingsFormGroup = this.fb.group({
       settings: [null, Validators.required]
     });

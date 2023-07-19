@@ -175,8 +175,10 @@ export class EntityDataService {
       type: subscriptionType
     };
     if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity ||
-      entityDataSubscriptionOptions.datasourceType === DatasourceType.entityCount) {
+      entityDataSubscriptionOptions.datasourceType === DatasourceType.entityCount ||
+      entityDataSubscriptionOptions.datasourceType === DatasourceType.alarmCount) {
       entityDataSubscriptionOptions.entityFilter = datasource.entityFilter;
+      entityDataSubscriptionOptions.alarmFilter = datasource.alarmFilter;
       entityDataSubscriptionOptions.keyFilters = keyFilters;
       entityDataSubscriptionOptions.additionalKeyFilters = additionalKeyFilters;
       if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity) {

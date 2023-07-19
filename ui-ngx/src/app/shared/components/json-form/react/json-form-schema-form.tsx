@@ -43,12 +43,10 @@ import {
 } from './json-form.models';
 
 import _ from 'lodash';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { GroupInfo } from '@shared/models/widget.models';
 import ThingsboardMarkdown from '@shared/components/json-form/react/json-form-markdown';
 import { MouseEvent } from 'react';
-
-const tinycolor = tinycolor_;
 
 class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
 

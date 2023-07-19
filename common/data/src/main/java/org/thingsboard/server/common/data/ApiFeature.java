@@ -24,7 +24,7 @@ public enum ApiFeature {
     JS("jsExecutionApiState", "JavaScript functions execution"),
     EMAIL("emailApiState", "Email messages"),
     SMS("smsApiState", "SMS messages"),
-    ALARM("alarmApiState", "Created alarms");
+    ALARM("alarmApiState", "Alarms");
 
     @Getter
     private final String apiStateKey;

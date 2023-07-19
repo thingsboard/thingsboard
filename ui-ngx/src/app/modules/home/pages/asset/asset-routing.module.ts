@@ -25,7 +25,7 @@ import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 
-const routes: Routes = [
+export const assetRoutes: Routes = [
   {
     path: 'assets',
     data: {
@@ -65,6 +65,18 @@ const routes: Routes = [
         }
       }
     ]
+  }
+];
+
+const routes: Routes = [
+  {
+    path: 'assets',
+    pathMatch: 'full',
+    redirectTo: '/entities/assets'
+  },
+  {
+    path: 'assets/:entityId',
+    redirectTo: '/entities/assets/:entityId'
   }
 ];
 

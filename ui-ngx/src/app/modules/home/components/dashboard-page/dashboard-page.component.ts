@@ -94,7 +94,7 @@ import {
   WidgetContextMenuItem
 } from '../../models/dashboard-component.models';
 import { WidgetComponentService } from '../../components/widget/widget-component.service';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { ItemBufferService } from '@core/services/item-buffer.service';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -352,7 +352,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private itembuffer: ItemBufferService,
               private importExport: ImportExportService,
               private mobileService: MobileService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private dialog: MatDialog,
               private translate: TranslateService,
               private popoverService: TbPopoverService,
@@ -466,7 +466,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.singlePageMode = data.singlePageMode;
 
     this.readonly = this.embedded || (this.singlePageMode && !this.widgetEditMode && !this.route.snapshot.queryParamMap.get('edit'))
-                    || this.forceFullscreen || this.isMobileApp || this.authUser.authority === Authority.CUSTOMER_USER;
+                    || this.forceFullscreen || this.isMobileApp || this.authUser.authority === Authority.CUSTOMER_USER ||
+                    this.route.snapshot.queryParamMap.get('readonly') === 'true';
 
     this.dashboardCtx.aliasController = this.parentAliasController ? this.parentAliasController : new AliasController(this.utils,
       this.entityService,
@@ -492,7 +493,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       const cssParser = new cssjs();
       cssParser.testMode = false;
       this.dashboardPageClass  = 'tb-dashboard-page-css-' + guid();
-      cssParser.cssPreviewNamespace = this.dashboardPageClass;
+      cssParser.cssPreviewNamespace = 'tb-default .' + this.dashboardPageClass;
       cssParser.createStyleElement(this.dashboardPageClass, cssString);
     }
   }

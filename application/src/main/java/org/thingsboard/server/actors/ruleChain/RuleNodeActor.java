@@ -21,7 +21,6 @@ import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorId;
 import org.thingsboard.server.actors.TbEntityActorId;
-import org.thingsboard.server.actors.service.ComponentActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -32,7 +31,7 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
 @Slf4j
-public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessageProcessor> {
+public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNodeActorMessageProcessor> {
 
     private final String ruleChainName;
     private final RuleChainId ruleChainId;
@@ -131,6 +130,16 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
         public TbActor createActor() {
             return new RuleNodeActor(context, tenantId, ruleChainId, ruleChainName, ruleNodeId);
         }
+    }
+
+    @Override
+    protected RuleChainId getRuleChainId() {
+        return ruleChainId;
+    }
+
+    @Override
+    protected String getRuleChainName() {
+        return ruleChainName;
     }
 
     @Override

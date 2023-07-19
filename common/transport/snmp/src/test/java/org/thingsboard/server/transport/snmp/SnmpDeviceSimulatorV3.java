@@ -30,7 +30,6 @@ import org.snmp4j.agent.mo.MOMutableColumn;
 import org.snmp4j.agent.mo.MOMutableTableModel;
 import org.snmp4j.agent.mo.MOScalar;
 import org.snmp4j.agent.mo.MOTableIndex;
-import org.snmp4j.agent.mo.MOTableRow;
 import org.snmp4j.agent.mo.MOTableSubIndex;
 import org.snmp4j.agent.mo.ext.AgentppSimulationMib;
 import org.snmp4j.agent.mo.snmp.RowStatus;

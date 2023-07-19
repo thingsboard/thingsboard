@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 

@@ -29,7 +29,7 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.rpc-settings</legend>
-    <mat-checkbox formControlName="oneWayElseTwoWay" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="oneWayElseTwoWay">
       {{ 'widgets.rpc.is-one-way-command' | translate }}
     </mat-checkbox>
     <mat-form-field fxFlex class="mat-block">
@@ -46,7 +46,7 @@
       <mat-label translate>widgets.rpc.request-timeout</mat-label>
       <input matInput type="number" min="0" formControlName="requestTimeout">
     </mat-form-field>
-    <mat-checkbox formControlName="showError" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="showError">
       {{ 'widgets.rpc.show-rpc-error' | translate }}
     </mat-checkbox>
     <fieldset class="fields-group fields-group-slider">

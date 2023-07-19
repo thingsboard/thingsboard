@@ -17,14 +17,12 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import ThingsboardBaseComponent from './json-form-base-component';
 import reactCSS from 'reactcss';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import TextField from '@material-ui/core/TextField';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import IconButton from '@material-ui/core/IconButton';
 import Clear from '@material-ui/icons/Clear';
 import Tooltip from '@material-ui/core/Tooltip';
-
-const tinycolor = tinycolor_;
 
 interface ThingsboardColorState extends JsonFormFieldState {
   color: tinycolor.ColorFormats.RGBA | null;

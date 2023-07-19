@@ -1,0 +1,41 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<saturation-component class="saturation-component" [hue]="control.hue" [(color)]="control.value"></saturation-component>
+
+<div class="control-component">
+  <indicator-component class="indicator-component"
+                       [colorType]="presentations[selectedPresentation]"
+                       [color]="control.value">
+  </indicator-component>
+  <div class="hue-alpha-range">
+    <hue-component [(hue)]="control.hue" [(color)]="control.value"></hue-component>
+    <alpha-component [(color)]="control.value"></alpha-component>
+  </div>
+</div>
+
+<div class="color-input-block">
+  <div class="color-input" [ngSwitch]="presentations[selectedPresentation]">
+    <rgba-input-component *ngSwitchCase="'rgba'" label
+                          [(color)]="control.value" [(hue)]="control.hue"></rgba-input-component>
+    <hsla-input-component *ngSwitchCase="'hsla'" label
+                          [(color)]="control.value" [(hue)]="control.hue"></hsla-input-component>
+    <hex-input-component *ngSwitchCase="'hex'" label prefix="#" [(color)]="control.value"
+                         [(hue)]="control.hue"></hex-input-component>
+  </div>
+  <div class="type-btn" (click)="changePresentation()"></div>
+</div>

@@ -19,7 +19,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { AdminSettings, GeneralSettings } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
@@ -31,13 +31,13 @@ import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 })
 export class GeneralSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
 
-  generalSettings: FormGroup;
+  generalSettings: UntypedFormGroup;
   adminSettings: AdminSettings<GeneralSettings>;
 
   constructor(protected store: Store<AppState>,
               private router: Router,
               private adminService: AdminService,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -68,7 +68,7 @@ export class GeneralSettingsComponent extends PageComponent implements OnInit, H
     );
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.generalSettings;
   }
 

@@ -29,15 +29,4 @@
       border-radius: 5px 0 0 5px;
     }
   }
-
-  &::ng-deep {
-    .mat-button-wrapper {
-      line-height: 18px;
-      span {
-        font-size: 18px;
-        font-weight: 400;
-        white-space: normal;
-      }
-    }
-  }
 }

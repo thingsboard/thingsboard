@@ -19,7 +19,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { DashboardService } from '@core/http/dashboard.service';
 import { HomeDashboardInfo } from '@shared/models/dashboard.models';
@@ -33,12 +33,12 @@ import { DashboardId } from '@shared/models/id/dashboard-id';
 })
 export class HomeSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
 
-  homeSettings: FormGroup;
+  homeSettings: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private router: Router,
               private dashboardService: DashboardService,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -69,7 +69,7 @@ export class HomeSettingsComponent extends PageComponent implements OnInit, HasC
     );
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.homeSettings;
   }
 

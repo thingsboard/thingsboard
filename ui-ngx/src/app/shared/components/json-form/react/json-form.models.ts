@@ -14,11 +14,9 @@
 /// limitations under the License.
 ///
 
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { GroupInfo } from '@shared/models/widget.models';
 import { MouseEvent } from 'react';
-
-const tinycolor = tinycolor_;
 
 export interface SchemaValidationResult {
   valid: boolean;

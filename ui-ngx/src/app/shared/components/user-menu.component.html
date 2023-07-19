@@ -23,7 +23,7 @@
       <span *ngIf="authorityName$ | async; let authorityName" class="tb-user-authority">{{ authorityName | translate }}</span>
     </div>
   </div>
-  <button mat-button mat-icon-button [matMenuTriggerFor]="userMenu">
+  <button mat-icon-button [matMenuTriggerFor]="userMenu">
     <mat-icon class="material-icons">more_vert</mat-icon>
   </button>
   <mat-menu #userMenu="matMenu" xPosition="before">

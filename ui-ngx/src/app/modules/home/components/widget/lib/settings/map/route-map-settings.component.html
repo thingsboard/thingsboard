@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="routeMapSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.route-map-settings</legend>
-    <section fxLayout="row" fxLayoutGap="8px">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.maps.stroke-weight</mat-label>
         <input matInput type="number" min="0" formControlName="strokeWeight">

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.edge;
 
-import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;

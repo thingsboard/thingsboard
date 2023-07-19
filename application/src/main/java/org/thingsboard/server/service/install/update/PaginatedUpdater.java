@@ -16,8 +16,6 @@
 package org.thingsboard.server.service.install.update;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.SearchTextBased;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 

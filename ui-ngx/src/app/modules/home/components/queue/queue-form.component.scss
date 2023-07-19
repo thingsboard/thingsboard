@@ -34,16 +34,9 @@
   }
 
   ::ng-deep {
-    .mat-form-field-infix {
-      width: 100% !important;
-    }
     .queue-strategy {
       .mat-expansion-panel-header {
         height: 50px;
-      }
-
-      .mat-expansion-panel-body {
-        padding-bottom: 0 !important;
       }
     }
   }

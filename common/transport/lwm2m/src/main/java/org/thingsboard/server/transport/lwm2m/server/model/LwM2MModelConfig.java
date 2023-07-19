@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.common.util.CollectionsUtil.diffSets;
+import static org.thingsboard.server.common.data.util.CollectionsUtil.diffSets;
 
 @Data
 @NoArgsConstructor

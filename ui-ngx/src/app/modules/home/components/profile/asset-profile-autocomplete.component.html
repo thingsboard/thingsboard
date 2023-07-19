@@ -15,8 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectAssetProfileFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ 'asset-profile.asset-profile' | translate }}"
+<mat-form-field [formGroup]="selectAssetProfileFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
+  <mat-label>{{ 'asset-profile.asset-profile' | translate }}</mat-label>
+  <input matInput type="text"
          #assetProfileInput
          formControlName="assetProfile"
          (focusin)="onFocus()"
@@ -30,13 +31,13 @@
   </a>
   <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
   <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value && !disabled && editProfileEnabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Edit"
+          matSuffix mat-icon-button aria-label="Edit"
           matTooltip="{{ 'asset-profile.edit' | translate }}"
           matTooltipPosition="above"
           (click)="editAssetProfile($event)">

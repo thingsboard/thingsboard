@@ -20,7 +20,6 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Data
 public class TbGetEntityAttrNodeConfiguration implements NodeConfiguration<TbGetEntityAttrNodeConfiguration> {

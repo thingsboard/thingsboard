@@ -15,7 +15,7 @@
 ///
 
 import { Component, forwardRef, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -58,8 +58,8 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
 
   customActionEditorCompleter = CustomActionEditorCompleter;
 
-  mobileActionFormGroup: FormGroup;
-  mobileActionTypeFormGroup: FormGroup;
+  mobileActionFormGroup: UntypedFormGroup;
+  mobileActionTypeFormGroup: UntypedFormGroup;
 
   functionScopeVariables: string[];
 
@@ -78,7 +78,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private widgetService: WidgetService) {
     this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
@@ -158,6 +158,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     }
     this.mobileActionTypeFormGroup = this.fb.group({});
     if (type) {
+      let processLaunchResultFunction;
       switch (type) {
         case WidgetMobileActionType.takePictureFromGallery:
         case WidgetMobileActionType.takePhoto:
@@ -177,7 +178,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
         case WidgetMobileActionType.mapDirection:
         case WidgetMobileActionType.mapLocation:
           let getLocationFunction = action?.getLocationFunction;
-          let processLaunchResultFunction = action?.processLaunchResultFunction;
+          processLaunchResultFunction = action?.processLaunchResultFunction;
           if (changed) {
             const defaultGetLocationFunction = getDefaultGetLocationFunction();
             if (defaultGetLocationFunction !== getLocationFunction) {

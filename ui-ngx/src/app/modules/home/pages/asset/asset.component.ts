@@ -18,7 +18,7 @@ import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
@@ -41,7 +41,7 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: AssetInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<AssetInfo>,
-              public fb: FormBuilder,
+              public fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -63,7 +63,7 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
     return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
   }
 
-  buildForm(entity: AssetInfo): FormGroup {
+  buildForm(entity: AssetInfo): UntypedFormGroup {
     return this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],

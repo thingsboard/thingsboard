@@ -17,7 +17,8 @@
 
 :host {
   .dialog-container {
-    min-width: 650px !important;
+    min-width: 750px !important;
+    max-width: 750px !important;
 
     @media #{$mat-lt-md} {
       min-width: 100% !important;

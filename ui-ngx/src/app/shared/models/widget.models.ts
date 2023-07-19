@@ -23,13 +23,19 @@ import { AlarmSearchStatus, AlarmSeverity } from '@shared/models/alarm.models';
 import { DataKeyType } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import * as moment_ from 'moment';
-import { EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
+import {
+  AlarmFilter,
+  AlarmFilterConfig,
+  EntityDataPageLink,
+  EntityFilter,
+  KeyFilter
+} from '@shared/models/query/query.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, Directive, EventEmitter, Inject, OnInit } from '@angular/core';
+import { AfterViewInit, Directive, EventEmitter, Inject, OnInit, Type } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { AbstractControl, FormGroup } from '@angular/forms';
+import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -315,14 +321,16 @@ export interface DataKey extends KeyInfo {
 export enum DatasourceType {
   function = 'function',
   entity = 'entity',
-  entityCount = 'entityCount'
+  entityCount = 'entityCount',
+  alarmCount = 'alarmCount'
 }
 
 export const datasourceTypeTranslationMap = new Map<DatasourceType, string>(
   [
     [ DatasourceType.function, 'function.function' ],
     [ DatasourceType.entity, 'entity.entity' ],
-    [ DatasourceType.entityCount, 'entity.entities-count' ]
+    [ DatasourceType.entityCount, 'entity.entities-count' ],
+    [ DatasourceType.alarmCount, 'entity.alarms-count' ]
   ]
 );
 
@@ -348,6 +356,8 @@ export interface Datasource {
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
   entityFilter?: EntityFilter;
+  alarmFilterConfig?: AlarmFilterConfig;
+  alarmFilter?: AlarmFilter;
   dataKeyStartIndex?: number;
   latestDataKeyStartIndex?: number;
   [key: string]: any;
@@ -550,6 +560,7 @@ export interface CustomActionDescriptor {
   customResources?: Array<WidgetResource>;
   customHtml?: string;
   customCss?: string;
+  customModules?: Type<any>[];
 }
 
 export interface WidgetActionDescriptor extends CustomActionDescriptor {
@@ -624,10 +635,7 @@ export interface WidgetConfig {
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
   settings?: WidgetSettings;
   alarmSource?: Datasource;
-  alarmStatusList?: AlarmSearchStatus[];
-  alarmSeverityList?: AlarmSeverity[];
-  alarmTypeList?: string[];
-  searchPropagatedAlarms?: boolean;
+  alarmFilterConfig?: AlarmFilterConfig;
   datasources?: Array<Datasource>;
   targetDeviceAliasIds?: Array<string>;
   [key: string]: any;
@@ -706,7 +714,7 @@ function removeEmptyWidgetSettings(settings: WidgetSettings): WidgetSettings {
 }
 
 @Directive()
-// tslint:disable-next-line:directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class WidgetSettingsComponent extends PageComponent implements
   IWidgetSettingsComponent, OnInit, AfterViewInit {
 
@@ -802,7 +810,7 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
     }
   }
 
-  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
+  protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
   }
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
@@ -819,7 +827,7 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
 
   protected onValidate() {}
 
-  protected abstract settingsForm(): FormGroup;
+  protected abstract settingsForm(): UntypedFormGroup;
 
   protected abstract onSettingsSet(settings: WidgetSettings);
 

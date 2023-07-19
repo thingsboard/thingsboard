@@ -19,8 +19,8 @@ import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@ang
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALUE_ACCESSOR, ValidationErrors,
   Validators
 } from '@angular/forms';
@@ -77,11 +77,11 @@ export class FixedColorLevelComponent extends PageComponent implements OnInit, C
 
   private propagateChange = null;
 
-  public fixedColorLevelFormGroup: FormGroup;
+  public fixedColorLevelFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 

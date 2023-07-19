@@ -74,7 +74,7 @@
           <section fxFlex fxLayout="column" fxLayout.gt-sm="row">
             <tb-dashboard-autocomplete
               fxFlex
-              placeholder="{{ 'dashboard.home-dashboard' | translate }}"
+              label="{{ 'dashboard.home-dashboard' | translate }}"
               formControlName="homeDashboardId"
               [dashboardsScope]="'tenant'"
               [tenantId]="entity?.id.id"

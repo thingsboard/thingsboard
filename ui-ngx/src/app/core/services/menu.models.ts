@@ -20,12 +20,15 @@ export declare type MenuSectionType = 'link' | 'toggle';
 
 export interface MenuSection extends HasUUID{
   name: string;
+  fullName?: string;
   type: MenuSectionType;
   path: string;
   icon: string;
   isMdiIcon?: boolean;
-  height?: string;
   pages?: Array<MenuSection>;
+  opened?: boolean;
+  disabled?: boolean;
+  rootOnly?: boolean;
 }
 
 export interface HomeSection {

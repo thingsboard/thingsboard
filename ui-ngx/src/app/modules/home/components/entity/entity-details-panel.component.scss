@@ -23,16 +23,16 @@
 :host ::ng-deep {
   tb-details-panel {
     > .mat-content {
-      > .mat-tab-group {
-        > .mat-tab-body-wrapper {
+      > .mat-mdc-tab-group {
+        > .mat-mdc-tab-body-wrapper {
           position: absolute;
           top: 49px;
           left: 0;
           right: 0;
           bottom: 0;
         }
-        > .mat-tab-header {
-          .mat-tab-label {
+        > .mat-mdc-tab-header {
+          .mat-mdc-tab {
             min-width: 40px;
           }
         }

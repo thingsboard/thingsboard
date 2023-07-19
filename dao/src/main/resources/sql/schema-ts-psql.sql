@@ -34,13 +34,10 @@ CREATE TABLE IF NOT EXISTS ts_kv_dictionary
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
 );
 
-CREATE OR REPLACE PROCEDURE drop_partitions_by_max_ttl(IN partition_type varchar, IN system_ttl bigint, INOUT deleted bigint)
+CREATE OR REPLACE PROCEDURE drop_partitions_by_system_ttl(IN partition_type varchar, IN system_ttl bigint, INOUT deleted bigint)
     LANGUAGE plpgsql AS
 $$
 DECLARE
-    max_tenant_ttl             bigint;
-    max_customer_ttl           bigint;
-    max_ttl                    bigint;
     date                       timestamp;
     partition_by_max_ttl_date  varchar;
     partition_by_max_ttl_month varchar;
@@ -52,20 +49,9 @@ DECLARE
     partition_day              integer;
 
 BEGIN
-    SELECT max(attribute_kv.long_v)
-    FROM tenant
-             INNER JOIN attribute_kv ON tenant.id = attribute_kv.entity_id
-    WHERE attribute_kv.attribute_key = 'TTL'
-    into max_tenant_ttl;
-    SELECT max(attribute_kv.long_v)
-    FROM customer
-             INNER JOIN attribute_kv ON customer.id = attribute_kv.entity_id
-    WHERE attribute_kv.attribute_key = 'TTL'
-    into max_customer_ttl;
-    max_ttl := GREATEST(system_ttl, max_customer_ttl, max_tenant_ttl);
-    if max_ttl IS NOT NULL AND max_ttl > 0 THEN
-        date := to_timestamp(EXTRACT(EPOCH FROM current_timestamp) - max_ttl);
-        partition_by_max_ttl_date := get_partition_by_max_ttl_date(partition_type, date);
+    if system_ttl IS NOT NULL AND system_ttl > 0 THEN
+        date := to_timestamp(EXTRACT(EPOCH FROM current_timestamp) - system_ttl);
+        partition_by_max_ttl_date := get_partition_by_system_ttl_date(partition_type, date);
         RAISE NOTICE 'Date by max ttl: %', date;
         RAISE NOTICE 'Partition by max ttl: %', partition_by_max_ttl_date;
         IF partition_by_max_ttl_date IS NOT NULL THEN
@@ -203,7 +189,7 @@ BEGIN
 END
 $$;
 
-CREATE OR REPLACE FUNCTION get_partition_by_max_ttl_date(IN partition_type varchar, IN date timestamp, OUT partition varchar) AS
+CREATE OR REPLACE FUNCTION get_partition_by_system_ttl_date(IN partition_type varchar, IN date timestamp, OUT partition varchar) AS
 $$
 BEGIN
     CASE

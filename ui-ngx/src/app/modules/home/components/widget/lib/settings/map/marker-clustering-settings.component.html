@@ -34,7 +34,7 @@
         <mat-slide-toggle formControlName="zoomOnClick" class="slide-block">
           {{ 'widgets.maps.zoom-on-cluster-click' | translate }}
         </mat-slide-toggle>
-        <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
+        <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
           <mat-form-field fxFlex class="mat-block">
             <mat-label translate>widgets.maps.max-cluster-zoom</mat-label>
             <input matInput type="number" min="0" max="18" step="1" formControlName="maxZoom">
@@ -45,22 +45,22 @@
           </mat-form-field>
         </section>
         <section class="flex-gap-xs" fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutGap.xs="16px">
-          <mat-slide-toggle fxFlex formControlName="animate" class="slide-block mat-slider-multiline">
+          <mat-slide-toggle fxFlex formControlName="animate" class="slide-block">
             {{ 'widgets.maps.cluster-zoom-animation' | translate }}
           </mat-slide-toggle>
-          <mat-slide-toggle fxFlex formControlName="showCoverageOnHover" class="slide-block mat-slider-multiline">
+          <mat-slide-toggle fxFlex formControlName="showCoverageOnHover" class="slide-block">
             {{ 'widgets.maps.show-markers-bounds-on-cluster-mouse-over' | translate }}
           </mat-slide-toggle>
         </section>
-        <mat-slide-toggle formControlName="spiderfyOnMaxZoom" class="slide-block mat-slider-multiline">
+        <mat-slide-toggle formControlName="spiderfyOnMaxZoom" class="slide-block">
           {{ 'widgets.maps.spiderfy-max-zoom-level' | translate }}
         </mat-slide-toggle>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.maps.load-optimization</legend>
-          <mat-slide-toggle formControlName="chunkedLoading" class="flex-gap-xs mat-slider-multiline large">
+          <mat-slide-toggle formControlName="chunkedLoading" class="flex-gap-xs large">
             {{ 'widgets.maps.cluster-chunked-loading' | translate }}
           </mat-slide-toggle>
-          <mat-slide-toggle formControlName="removeOutsideVisibleBounds" class="slide-block mat-slider-multiline">
+          <mat-slide-toggle formControlName="removeOutsideVisibleBounds" class="slide-block">
             {{ 'widgets.maps.cluster-markers-lazy-load' | translate }}
           </mat-slide-toggle>
         </fieldset>

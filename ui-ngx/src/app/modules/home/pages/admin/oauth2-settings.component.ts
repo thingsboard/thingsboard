@@ -15,7 +15,7 @@
 ///
 
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
 import {
   ClientAuthenticationMethod,
   DomainSchema,
@@ -56,15 +56,15 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private oauth2Service: OAuth2Service,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private dialogService: DialogService,
               private translate: TranslateService,
               @Inject(WINDOW) private window: Window) {
     super(store);
   }
 
-  get oauth2ParamsInfos(): FormArray {
-    return this.oauth2SettingsForm.get('oauth2ParamsInfos') as FormArray;
+  get oauth2ParamsInfos(): UntypedFormArray {
+    return this.oauth2SettingsForm.get('oauth2ParamsInfos') as UntypedFormArray;
   }
 
   private URL_REGEXP = /^[A-Za-z][A-Za-z\d.+-]*:\/*(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?(?:\/[\w#!:.,?+=&%@\-/]*)?$/;
@@ -91,7 +91,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA];
 
-  oauth2SettingsForm: FormGroup;
+  oauth2SettingsForm: UntypedFormGroup;
   oauth2Info: OAuth2Info;
 
   clientAuthenticationMethods = Object.keys(ClientAuthenticationMethod);
@@ -147,7 +147,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     this.templateProvider.sort();
   }
 
-  private formBasicGroup(mapperConfigBasic?: MapperConfigBasic): FormGroup {
+  private formBasicGroup(mapperConfigBasic?: MapperConfigBasic): UntypedFormGroup {
     let tenantNamePattern;
     if (mapperConfigBasic?.tenantNamePattern) {
       tenantNamePattern = mapperConfigBasic.tenantNamePattern;
@@ -181,7 +181,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     return basicGroup;
   }
 
-  private formCustomGroup(mapperConfigCustom?: MapperConfigCustom): FormGroup {
+  private formCustomGroup(mapperConfigCustom?: MapperConfigCustom): UntypedFormGroup {
     return this.fb.group({
       url: [mapperConfigCustom?.url ? mapperConfigCustom.url : null,
         [Validators.required, Validators.pattern(this.URL_REGEXP), Validators.maxLength(255)]],
@@ -206,7 +206,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     }
   }
 
-  private uniqueDomainValidator(control: FormGroup): { [key: string]: boolean } | null {
+  private uniqueDomainValidator(control: UntypedFormGroup): { [key: string]: boolean } | null {
     if (control.parent?.value) {
       const domain = control.value.name;
       const listProtocols = control.parent.getRawValue()
@@ -220,7 +220,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     return null;
   }
 
-  private uniquePkgNameValidator(control: FormGroup): { [key: string]: boolean } | null {
+  private uniquePkgNameValidator(control: UntypedFormGroup): { [key: string]: boolean } | null {
     if (control.parent?.value) {
       const pkgName = control.value.pkgName;
       const mobileInfosList = control.parent.getRawValue()
@@ -244,7 +244,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     return this.translate.instant('admin.oauth2.new-domain');
   }
 
-  private buildOAuth2ParamsInfoForm(oauth2ParamsInfo?: OAuth2ParamsInfo): FormGroup {
+  private buildOAuth2ParamsInfoForm(oauth2ParamsInfo?: OAuth2ParamsInfo): UntypedFormGroup {
     const formOAuth2Params = this.fb.group({
       domainInfos: this.fb.array([], Validators.required),
       mobileInfos: this.fb.array([]),
@@ -269,7 +269,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     return formOAuth2Params;
   }
 
-  private buildDomainInfoForm(domainInfo?: OAuth2DomainInfo): FormGroup {
+  private buildDomainInfoForm(domainInfo?: OAuth2DomainInfo): UntypedFormGroup {
     return this.fb.group({
       name: [domainInfo ? domainInfo.name : this.window.location.hostname, [
         Validators.required, Validators.maxLength(255),
@@ -278,7 +278,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     }, {validators: this.uniqueDomainValidator});
   }
 
-  private buildMobileInfoForm(mobileInfo?: OAuth2MobileInfo): FormGroup {
+  private buildMobileInfoForm(mobileInfo?: OAuth2MobileInfo): UntypedFormGroup {
     return this.fb.group({
       pkgName: [mobileInfo?.pkgName, [Validators.required]],
       appSecret: [mobileInfo?.appSecret, [Validators.required, Validators.minLength(16), Validators.maxLength(2048),
@@ -286,7 +286,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     }, {validators: this.uniquePkgNameValidator});
   }
 
-  private buildRegistrationForm(registration?: OAuth2RegistrationInfo): FormGroup {
+  private buildRegistrationForm(registration?: OAuth2RegistrationInfo): UntypedFormGroup {
     let additionalInfo = null;
     if (isDefinedAndNotNull(registration?.additionalInfo)) {
       additionalInfo = registration.additionalInfo;
@@ -350,14 +350,14 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     }));
 
     this.subscriptions.push(clientRegistrationFormGroup.get('additionalInfo.providerName').valueChanges.subscribe((provider) => {
-      (clientRegistrationFormGroup.get('scope') as FormArray).clear();
+      (clientRegistrationFormGroup.get('scope') as UntypedFormArray).clear();
       this.setProviderDefaultValue(provider, clientRegistrationFormGroup);
     }));
 
     return clientRegistrationFormGroup;
   }
 
-  private setProviderDefaultValue(provider: string, clientRegistration: FormGroup) {
+  private setProviderDefaultValue(provider: string, clientRegistration: UntypedFormGroup) {
     if (provider === 'Custom') {
       clientRegistration.reset(this.defaultProvider, {emitEvent: false});
       clientRegistration.get('accessTokenUri').enable();
@@ -369,7 +369,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       template.clientId = '';
       template.clientSecret = '';
       template.scope.forEach(() => {
-        (clientRegistration.get('scope') as FormArray).push(this.fb.control(''));
+        (clientRegistration.get('scope') as UntypedFormArray).push(this.fb.control(''));
       });
       clientRegistration.get('accessTokenUri').disable();
       clientRegistration.get('authorizationUri').disable();
@@ -380,7 +380,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   }
 
   private changeMapperConfigType(control: AbstractControl, type: MapperConfigType, predefinedValue?: MapperConfig) {
-    const mapperConfig = control.get('mapperConfig') as FormGroup;
+    const mapperConfig = control.get('mapperConfig') as UntypedFormGroup;
     if (type === MapperConfigType.CUSTOM) {
       mapperConfig.removeControl('basic');
       mapperConfig.addControl('custom', this.formCustomGroup(predefinedValue?.custom));
@@ -410,14 +410,14 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     );
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.oauth2SettingsForm;
   }
 
   addScope(event: MatChipInputEvent, control: AbstractControl): void {
-    const input = event.input;
+    const input = event.chipInput.inputElement;
     const value = event.value;
-    const controller = control.get('scope') as FormArray;
+    const controller = control.get('scope') as UntypedFormArray;
     if ((value.trim() !== '')) {
       controller.push(this.fb.control(value.trim()));
       controller.markAsDirty();
@@ -429,7 +429,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   }
 
   removeScope(i: number, control: AbstractControl): void {
-    const controller = control.get('scope') as FormArray;
+    const controller = control.get('scope') as UntypedFormArray;
     controller.removeAt(i);
     controller.markAsTouched();
     controller.markAsDirty();
@@ -459,16 +459,16 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
     });
   }
 
-  clientRegistrations(control: AbstractControl): FormArray {
-    return control.get('clientRegistrations') as FormArray;
+  clientRegistrations(control: AbstractControl): UntypedFormArray {
+    return control.get('clientRegistrations') as UntypedFormArray;
   }
 
-  domainInfos(control: AbstractControl): FormArray {
-    return control.get('domainInfos') as FormArray;
+  domainInfos(control: AbstractControl): UntypedFormArray {
+    return control.get('domainInfos') as UntypedFormArray;
   }
 
-  mobileInfos(control: AbstractControl): FormArray {
-    return control.get('mobileInfos') as FormArray;
+  mobileInfos(control: AbstractControl): UntypedFormArray {
+    return control.get('mobileInfos') as UntypedFormArray;
   }
 
   addRegistration(control: AbstractControl): void {

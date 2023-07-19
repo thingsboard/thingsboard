@@ -20,7 +20,7 @@ import { AppState } from '../core.state';
 import { LoadState } from './load.models';
 import { take } from 'rxjs/operators';
 
-export const selectLoadState = createFeatureSelector<AppState, LoadState>(
+export const selectLoadState = createFeatureSelector< LoadState>(
   'load'
 );
 

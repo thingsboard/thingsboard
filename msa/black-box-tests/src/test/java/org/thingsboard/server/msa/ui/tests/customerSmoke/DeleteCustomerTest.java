@@ -16,8 +16,10 @@
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
@@ -35,7 +37,7 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
     private CustomerPageHelper customerPage;
     private RuleChainsPageHelper ruleChainsPage;
 
-    @BeforeMethod
+    @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
         sideBarMenuView = new SideBarMenuViewElements(driver);
@@ -43,8 +45,10 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         ruleChainsPage = new RuleChainsPageHelper(driver);
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 10, groups = "smoke")
-    @Description
+    @Description("Remove the customer by clicking on the trash icon in the right side of refresh")
     public void removeCustomerByRightSideBtn() {
         String customer = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customer));
@@ -53,11 +57,13 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         String deletedCustomer = customerPage.deleteRuleChainTrash(customer);
         customerPage.refreshBtn().click();
 
-        Assert.assertTrue(customerPage.entityIsNotPresent(deletedCustomer));
+        Assert.assertTrue(customerPage.assertEntityIsNotPresent(deletedCustomer));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove customer by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void removeSelectedCustomer() {
         String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
@@ -66,26 +72,30 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         String deletedCustomer = customerPage.deleteSelected(customerName);
         ruleChainsPage.refreshBtn().click();
 
-        Assert.assertTrue(ruleChainsPage.entityIsNotPresent(deletedCustomer));
+        Assert.assertTrue(ruleChainsPage.assertEntityIsNotPresent(deletedCustomer));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the customer by clicking on the 'Delete customer' btn in the entity view")
     public void removeFromCustomerView() {
         String customerName = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
 
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
-        customerPage.customerViewDeleteBtn().click();
+        jsClick(customerPage.customerViewDeleteBtn());
         customerPage.warningPopUpYesBtn().click();
-        customerPage.refreshBtn().click();
+        jsClick(customerPage.refreshBtn());
 
-        Assert.assertTrue(customerPage.entityIsNotPresent(customerName));
+        Assert.assertTrue(customerPage.assertEntityIsNotPresent(customerName));
     }
 
+    @Epic("Customers smoke tests")
+    @Feature("Delete customer")
     @Test(priority = 20, groups = "smoke")
-    @Description
+    @Description("Remove the customer by clicking on the trash icon in the right side of customer without refresh")
     public void removeCustomerByRightSideBtnWithoutRefresh() {
         String customer = ENTITY_NAME + random();
         testRestClient.postCustomer(defaultCustomerPrototype(customer));
@@ -94,6 +104,6 @@ public class DeleteCustomerTest extends AbstractDriverBaseTest {
         String deletedCustomer = customerPage.deleteRuleChainTrash(customer);
         customerPage.refreshBtn().click();
 
-        Assert.assertTrue(customerPage.entityIsNotPresent(deletedCustomer));
+        Assert.assertTrue(customerPage.assertEntityIsNotPresent(deletedCustomer));
     }
 }

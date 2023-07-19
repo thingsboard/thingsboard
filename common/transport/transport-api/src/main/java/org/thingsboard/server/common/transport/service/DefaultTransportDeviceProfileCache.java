@@ -25,8 +25,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Optional;

@@ -15,7 +15,7 @@
 ///
 
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -38,9 +38,9 @@ export class DeviceProfileConfigurationComponent implements ControlValueAccessor
 
   deviceProfileType = DeviceProfileType;
 
-  deviceProfileConfigurationFormGroup: FormGroup;
+  deviceProfileConfigurationFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -59,7 +59,7 @@ export class DeviceProfileConfigurationComponent implements ControlValueAccessor
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {

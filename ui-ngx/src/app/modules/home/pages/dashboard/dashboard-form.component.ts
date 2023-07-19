@@ -18,7 +18,7 @@ import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -49,7 +49,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
               private dashboardService: DashboardService,
               @Inject('entity') protected entityValue: Dashboard,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Dashboard>,
-              public fb: FormBuilder,
+              public fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -76,7 +76,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
     }
   }
 
-  buildForm(entity: Dashboard): FormGroup {
+  buildForm(entity: Dashboard): UntypedFormGroup {
     this.updateFields(entity);
     return this.fb.group(
       {

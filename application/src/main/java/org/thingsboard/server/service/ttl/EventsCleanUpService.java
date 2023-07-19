@@ -21,7 +21,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.concurrent.TimeUnit;
 

@@ -21,18 +21,19 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
-import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
+import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
+import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
+import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -152,7 +153,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                     update.getLatestValues().forEach((key, value) -> attrSub.getKeyStates().put(key, value));
                     break;
             }
-            subscriptionUpdateExecutor.submit(() -> subscription.getUpdateConsumer().accept(sessionId, update));
+            subscriptionUpdateExecutor.submit(() -> subscription.getUpdateProcessor().accept(subscription, update));
         }
         callback.onSuccess();
     }
@@ -163,7 +164,17 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         TbSubscription subscription = subscriptionsBySessionId
                 .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());
         if (subscription != null && subscription.getType() == TbSubscriptionType.ALARMS) {
-            subscriptionUpdateExecutor.submit(() -> subscription.getUpdateConsumer().accept(sessionId, update));
+            subscriptionUpdateExecutor.submit(() -> subscription.getUpdateProcessor().accept(subscription, update));
+        }
+        callback.onSuccess();
+    }
+
+    @Override
+    public void onSubscriptionUpdate(String sessionId, int subscriptionId, NotificationsSubscriptionUpdate update, TbCallback callback) {
+        TbSubscription subscription = subscriptionsBySessionId.getOrDefault(sessionId, Collections.emptyMap()).get(subscriptionId);
+        if (subscription != null && (subscription.getType() == TbSubscriptionType.NOTIFICATIONS
+                || subscription.getType() == TbSubscriptionType.NOTIFICATIONS_COUNT)) {
+            subscriptionUpdateExecutor.submit(() -> subscription.getUpdateProcessor().accept(subscription, update));
         }
         callback.onSuccess();
     }

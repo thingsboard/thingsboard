@@ -18,7 +18,6 @@ package org.thingsboard.server.service.queue.processing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
-import org.thingsboard.server.queue.settings.TbRuleEngineQueueSubmitStrategyConfiguration;
 
 @Component
 @Slf4j

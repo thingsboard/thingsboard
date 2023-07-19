@@ -131,7 +131,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
               );
             }
         },
-        '40px'),
+        '48px'),
     );
     if (updateTableColumns) {
       this.getTable().columnsUpdated(true);

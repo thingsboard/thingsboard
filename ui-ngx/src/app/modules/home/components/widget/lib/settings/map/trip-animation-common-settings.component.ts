@@ -17,9 +17,9 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -64,12 +64,12 @@ export class TripAnimationCommonSettingsComponent extends PageComponent implemen
 
   private propagateChange = null;
 
-  public tripAnimationCommonSettingsFormGroup: FormGroup;
+  public tripAnimationCommonSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -123,7 +123,7 @@ export class TripAnimationCommonSettingsComponent extends PageComponent implemen
     this.updateValidators(false);
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.tripAnimationCommonSettingsFormGroup.valid ? null : {
       tripAnimationCommonSettings: {
         valid: false,

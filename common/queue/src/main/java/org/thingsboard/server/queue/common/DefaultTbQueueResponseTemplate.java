@@ -19,12 +19,12 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.MessagesStats;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueHandler;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
-import org.thingsboard.server.common.stats.MessagesStats;
 
 import java.util.List;
 import java.util.UUID;

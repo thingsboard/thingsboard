@@ -17,9 +17,11 @@ package org.thingsboard.server.common.data;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.EntityViewId;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class EntityViewInfo extends EntityView {
 
     @ApiModelProperty(position = 12, value = "Title of the Customer that owns the entity view.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)

@@ -21,7 +21,7 @@
 
 .tb-help-popup-button {
   position: relative;
-  .mat-progress-spinner {
+  .mat-mdc-progress-spinner {
     position: absolute;
     top: 0;
     left: 0;
@@ -29,27 +29,40 @@
     border-radius: 50%;
     width: 32px !important;
     height: 32px !important;
-    svg {
+    .mdc-circular-progress__indeterminate-container {
+      width: 20px;
+      height: 20px;
       top: 6px;
       left: 6px;
+    }
+    svg {
+      width: 20px;
+      height: 20px;
     }
   }
 }
 
-.tb-help-popup-text-button {
+.tb-help-popup-text-button.mat-mdc-button.mat-mdc-button-base {
   position: relative;
   padding: 0 2px 0 8px;
   line-height: 28px;
-  &.mat-stroked-button {
+  height: auto;
+  transition: border 0s;
+  &.mat-mdc-outlined-button {
     padding: 0 1px 0 7px;
     line-height: 26px;
   }
-  .mat-icon {
-    padding-left: 4px;
-  }
-  .mat-progress-spinner {
-    display: inline-block;
-    margin-left: 4px;
-    margin-right: 5px;
+  .mdc-button__label > span {
+    .mat-icon {
+      vertical-align: middle;
+      padding-left: 4px;
+      box-sizing: initial;
+    }
+    .mat-mdc-progress-spinner {
+      display: inline-block;
+      margin-left: 4px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
   }
 }

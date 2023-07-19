@@ -16,16 +16,14 @@
 @import "../../../../scss/constants";
 
 :host {
-  width: 100%;
-  height: 100%;
-  form,
-  fieldset {
-    height: 100%;
-  }
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  max-width: 100%;
+  background-color: #fff;
 
   .mat-content {
     overflow: hidden;
-    background-color: #fff;
   }
 
   .mat-padding {
@@ -45,7 +43,7 @@
     .limit-slider-value {
       margin-left: 16px;
       min-width: 25px;
-      max-width: 80px;
+      max-width: 100px;
     }
     mat-form-field input[type=number] {
       text-align: center;
@@ -68,21 +66,16 @@
 }
 
 :host ::ng-deep {
-  mat-radio-button {
+  .mat-mdc-radio-button {
     display: block;
-    margin-bottom: 16px;
-    .mat-radio-label {
-      width: 100%;
+    .mdc-form-field {
       align-items: start;
-      .mat-radio-label-content {
-        width: 100%;
+      > label {
+        padding-top: 10px;
       }
     }
   }
-  .mat-slider-horizontal .mat-slider-thumb-label {
-    width: 38px;
-    height: 38px;
-    top: -46px;
-    right: -19px;
+  .mat-mdc-tab-group:not(.tb-headless) {
+    height: 100%;
   }
 }

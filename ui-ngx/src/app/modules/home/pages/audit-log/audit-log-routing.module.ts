@@ -19,7 +19,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
 
-const routes: Routes = [
+export const auditLogsRoutes: Routes = [
   {
     path: 'auditLogs',
     component: AuditLogTableComponent,
@@ -35,8 +35,16 @@ const routes: Routes = [
   }
 ];
 
+const routes: Routes = [
+  {
+    path: 'auditLogs',
+    redirectTo: '/security-settings/auditLogs'
+  }
+];
+
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
+  providers: []
 })
 export class AuditLogRoutingModule { }

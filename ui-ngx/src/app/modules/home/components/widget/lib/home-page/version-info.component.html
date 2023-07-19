@@ -1,0 +1,63 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-card-content" fxLayout="column">
+  <div class="tb-card-header">
+    <div class="tb-card-title">
+      <div class="tb-title" translate>widgets.version-info.title</div>
+    </div>
+    <a mat-button color="primary" class="tb-contact-us" href="https://thingsboard.io/docs/contact-us/" target="_blank">{{ 'widgets.version-info.contact-us' | translate }}</a>
+  </div>
+  <div fxLayout="row" fxLayoutGap="8px" fxLayout.gt-md-lg="column" fxFlex>
+    <div class="tb-version-info-container" fxLayout="row" fxFlex>
+      <div fxFlex fxLayout="column" fxLayoutAlign="space-evenly stretch">
+        <div class="tb-card-header">
+          <a class="tb-version-link" [href]="updateMessage?.currentVersionReleaseNotesUrl" target="_blank">
+            <span fxHide.md-lg translate>widgets.version-info.current-version</span>
+            <span fxHide.lt-md fxHide.gt-md-lg translate>widgets.version-info.current</span>
+          </a>
+        </div>
+        <div class="tb-version">{{ updateMessage?.currentVersion }}</div>
+        <div fxHide.gt-md-lg style="height: 24px;">
+        </div>
+      </div>
+    </div>
+    <div class="tb-version-info-container" fxLayout="row" fxFlex *ngIf="updateMessage?.updateAvailable; else versionUpToDate">
+      <div fxFlex fxLayout="column" fxLayoutAlign="space-evenly stretch">
+        <div class="tb-card-header">
+          <a class="tb-version-link" [href]="updateMessage?.latestVersionReleaseNotesUrl" target="_blank">
+            <span fxHide.md-lg translate>widgets.version-info.available-version</span>
+            <span fxHide.lt-md fxHide.gt-md-lg translate>widgets.version-info.available</span>
+          </a>
+        </div>
+        <div class="tb-version">{{ updateMessage?.latestVersion }}</div>
+        <div fxHide.gt-md-lg fxLayout="row" fxLayoutAlign="end end">
+          <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">{{ 'widgets.version-info.upgrade' | translate }}</a>
+        </div>
+      </div>
+      <div fxHide.lt-md fxHide.md-lg fxLayout="column" fxLayoutAlign="center">
+        <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">{{ 'widgets.version-info.upgrade' | translate }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+<ng-template #versionUpToDate>
+  <div class="tb-version-info-container up-to-date" fxFlex fxLayout="column" fxLayoutAlign="space-evenly center">
+    <div class="material-icons-round check-icon">check</div>
+    <div class="up-to-date-text" translate>widgets.version-info.version-is-up-to-date</div>
+  </div>
+</ng-template>

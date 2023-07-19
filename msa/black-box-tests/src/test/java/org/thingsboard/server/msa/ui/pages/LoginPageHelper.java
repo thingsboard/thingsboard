@@ -27,5 +27,6 @@ public class LoginPageHelper extends LoginPageElements {
         emailField().sendKeys(Const.TENANT_EMAIL);
         passwordField().sendKeys(Const.TENANT_PASSWORD);
         submitBtn().click();
+        waitUntilUrlContainsText("/home");
     }
 }

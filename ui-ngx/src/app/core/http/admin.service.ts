@@ -21,6 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
   AutoCommitSettings,
+  FeaturesInfo,
   JwtSettings,
   MailServerSettings,
   RepositorySettings,
@@ -130,5 +131,9 @@ export class AdminService {
 
   public checkUpdates(config?: RequestConfig): Observable<UpdateMessage> {
     return this.http.get<UpdateMessage>(`/api/admin/updates`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getFeaturesInfo(config?: RequestConfig): Observable<FeaturesInfo> {
+    return this.http.get<FeaturesInfo>('/api/admin/featuresInfo', defaultHttpOptionsFromConfig(config));
   }
 }

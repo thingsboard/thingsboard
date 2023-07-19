@@ -16,7 +16,6 @@
 package org.thingsboard.server.msa.ui.utils;
 
 import static org.thingsboard.server.msa.TestProperties.getBaseUrl;
-import static org.thingsboard.server.msa.ui.base.AbstractBasePage.getRandomNumber;
 
 public class Const {
 

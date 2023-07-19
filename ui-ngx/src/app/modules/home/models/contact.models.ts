@@ -266,7 +266,7 @@ export const COUNTRIES = [
   'Zimbabwe'
 ];
 
-/* tslint:disable */
+/* eslint-disable */
 export const POSTAL_CODE_PATTERNS = {
   'United States': '(\\d{5}([\\-]\\d{4})?)',
   'Australia': '[0-9]{4}',
@@ -287,5 +287,5 @@ export const POSTAL_CODE_PATTERNS = {
   'Sweden': '\\d{3}\\s?\\d{2}',
   'United Kingdom': '[A-Za-z]{1,2}[0-9Rr][0-9A-Za-z]? [0-9][ABD-HJLNP-UW-Zabd-hjlnp-uw-z]{2}'
 };
-/* tslint:enable */
+/* eslint-enable */
 

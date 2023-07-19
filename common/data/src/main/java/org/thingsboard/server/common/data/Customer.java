@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
-public class Customer extends ContactBased<CustomerId> implements HasTenantId, ExportableEntity<CustomerId> {
+public class Customer extends ContactBased<CustomerId> implements HasTenantId, ExportableEntity<CustomerId>, HasTitle {
 
     private static final long serialVersionUID = -1599722990298929275L;
 

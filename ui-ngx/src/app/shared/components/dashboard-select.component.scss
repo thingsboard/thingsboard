@@ -16,8 +16,7 @@
 :host {
   width: min-content; //for Safari
   min-width: 52px;
-
-  mat-select {
+  .mat-mdc-select {
     max-width: 300px;
     pointer-events: all;
   }
@@ -33,9 +32,12 @@
 }
 
 :host ::ng-deep {
-  mat-select {
-    .mat-select-value {
+  .mat-mdc-select {
+    .mat-mdc-select-value {
       max-width: 282px;
+    }
+    .mat-mdc-select-arrow {
+      width: 24px;
     }
   }
 }

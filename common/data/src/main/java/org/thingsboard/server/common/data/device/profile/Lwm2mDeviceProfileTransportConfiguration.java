@@ -17,9 +17,9 @@ package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryMappingConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 
 import java.util.List;
 

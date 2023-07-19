@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <h2 translate>{{settings ? 'dashboard.settings' : 'layout.settings'}}</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -132,6 +132,9 @@
               {{ 'dashboard.max-margin-message' | translate }}
             </mat-error>
           </mat-form-field>
+          <mat-slide-toggle fxFlex formControlName="outerMargin" style="display: block; padding-bottom: 12px;">
+            {{ 'dashboard.apply-outer-margin' | translate }}
+          </mat-slide-toggle>
           <mat-slide-toggle fxFlex formControlName="autoFillHeight" style="display: block; padding-bottom: 12px;">
             {{ 'dashboard.autofill-height' | translate }}
           </mat-slide-toggle>

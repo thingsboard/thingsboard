@@ -24,7 +24,7 @@
     <mat-slide-toggle formControlName="isPrimary" class="slide-block">
       {{ 'widgets.rpc.button-primary' | translate }}
     </mat-slide-toggle>
-    <section fxLayout="row wrap" fxLayoutGap="8px">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <tb-color-input fxFlex
                       formControlName="textColor"
                       icon="format_color_fill"

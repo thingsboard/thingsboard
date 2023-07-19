@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+FILE INFORMATION
+
+OMA Permanent Document
+   File: OMA-SUP-XML_24-V1_0-20201110-A.xml
+   Path: http://www.openmobilealliance.org/release/ObjLwM2M_MQTT_Server/
+
+OMNA LwM2M Registry
+   Path: https://github.com/OpenMobileAlliance/lwm2m-registry
+   Name: 24.xml
+
+NORMATIVE INFORMATION
+
+  Information about this file can be found in the latest revision of
+
+    OMA-TS-LightweightM2M_Core-V1_2
+
+  This is available at http://www.openmobilealliance.org/release/LightweightM2M/
+
+  Send comments to https://github.com/OpenMobileAlliance/OMA_LwM2M_for_Developers/issues
+
+LEGAL DISCLAIMER
+
+  Copyright 2020 Open Mobile Alliance.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+  3. Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived
+  from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+  COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+  The above license is used as a license under copyright only.  Please
+  reference the OMA IPR Policy for patent licensing terms:
+  https://www.omaspecworks.org/about/intellectual-property-rights/
+
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
+	<Object ObjectType="MODefinition">
+		<Name>MQTT Server</Name>
+		<Description1><![CDATA[This object defines configuration parameters for an MQTT client to interact with a MQTT server.]]></Description1>
+		<ObjectID>24</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:oma:24</ObjectURN>
+		<LWM2MVersion>1.2</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="0">
+				<Name>Will Retain</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The Will Retain value to declare in the MQTT CONNECT message.]]></Description>
+			</Item>
+			<Item ID="1">
+				<Name>Will Topic</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The Will Topic to include in the MQTT CONNECT message.]]></Description>
+			</Item>
+			<Item ID="2">
+				<Name>Will Message</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The Will Message to include in the MQTT CONNECT message.]]></Description>
+			</Item>
+			<Item ID="3">
+				<Name>Clean Session</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The Clean Session value to declare in the MQTT CONNECT message.]]></Description>
+			</Item>
+			<Item ID="4">
+				<Name>Will QoS</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..3</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The Will QoS value to declare in the MQTT CONNECT message.]]></Description>
+			</Item>
+			<Item ID="5">
+				<Name>Keep Alive</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The Keep Alive value to declare in the MQTT CONNECT message.]]></Description>
+			</Item>
+			<Item ID="6">
+				<Name>Client Identifier</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration/>
+				<Units/>
+				<Description><![CDATA[The Client Identifier identifies the MQTT client to the MQTT server. MQTT server must support ClientIds which are between 1 and 23 UTF-8 encoded bytes in length, and that contain only the characters "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ". MQTT server may allow ClientId's that contain more than 23 encoded bytes and may support ClientId's that contain characters not included in the list.]]></Description>
+			</Item>
+			<Item ID="7">
+				<Name>User Name</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration/>
+				<Units/>
+				<Description><![CDATA[The User Name to declare in the MQTT CONNECT message. It must be a UTF-8 encoded string. It can be used by the MQTT server for authentication and authorization.]]></Description>
+			</Item>
+			<Item ID="8">
+				<Name>Password</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Opaque</Type>
+				<RangeEnumeration/>
+				<Units/>
+				<Description><![CDATA[The Password value to declare in the MQTT CONNECT message.]]></Description>
+			</Item>
+		</Resources>
+		<Description2 />
+	</Object>
+</LWM2M>

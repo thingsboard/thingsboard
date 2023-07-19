@@ -15,7 +15,7 @@
 ///
 
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -55,11 +55,11 @@ export class GaugeHighlightComponent extends PageComponent implements OnInit, Co
 
   private propagateChange = null;
 
-  public gaugeHighlightFormGroup: FormGroup;
+  public gaugeHighlightFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 

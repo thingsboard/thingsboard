@@ -46,9 +46,7 @@
   <ng-container matColumnDef="key">
     <mat-header-cell *matHeaderCellDef class="mat-column-key"> {{ 'import.column-key' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
-      <mat-form-field floatLabel="always" hideRequiredMarker
-                      *ngIf="isColumnTypeDiffers(column.type)">
-        <mat-label></mat-label>
+      <mat-form-field *ngIf="isColumnTypeDiffers(column.type)">
         <input matInput [required]="isColumnTypeDiffers(column.type)"
                [(ngModel)]="column.key" (ngModelChange)="columnsUpdated()"
                placeholder="{{ 'import.column-value' | translate }}"/>

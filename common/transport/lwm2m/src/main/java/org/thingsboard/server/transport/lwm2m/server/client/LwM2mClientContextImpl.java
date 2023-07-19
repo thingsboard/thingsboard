@@ -42,7 +42,7 @@ import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 
 import java.util.Arrays;
@@ -75,7 +75,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Autowired
     @Lazy
-    private DefaultLwM2mUplinkMsgHandler defaultLwM2MUplinkMsgHandler;
+    private LwM2mUplinkMsgHandler defaultLwM2MUplinkMsgHandler;
     @Autowired
     @Lazy
     private LwM2MOtaUpdateService otaUpdateService;

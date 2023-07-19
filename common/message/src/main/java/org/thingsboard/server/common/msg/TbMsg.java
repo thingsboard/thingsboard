@@ -22,12 +22,11 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
@@ -276,6 +275,11 @@ public final class TbMsg implements Serializable {
     public TbMsg copyWithRuleNodeId(RuleChainId ruleChainId, RuleNodeId ruleNodeId, UUID msgId) {
         return new TbMsg(this.queueName, msgId, this.ts, this.type, this.originator, this.customerId,
                 this.metaData, this.dataType, this.data, ruleChainId, ruleNodeId, this.ctx, callback);
+    }
+
+    public TbMsg copyWithNewCtx() {
+        return new TbMsg(this.queueName, this.id, this.ts, this.type, this.originator, this.customerId,
+                this.metaData, this.dataType, this.data, ruleChainId, ruleNodeId, this.ctx.copy(), TbMsgCallback.EMPTY);
     }
 
     public TbMsgCallback getCallback() {

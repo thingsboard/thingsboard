@@ -16,8 +16,7 @@
 
 -->
 <section [formGroup]="alarmScheduleForm" fxLayout="column">
-  <mat-form-field class="mat-block" hideRequiredMarker floatLabel="always">
-    <mat-label> </mat-label>
+  <mat-form-field class="mat-block">
     <mat-select formControlName="type" required placeholder="{{ 'device-profile.schedule-type' | translate }}">
       <mat-option *ngFor="let alarmScheduleType of alarmScheduleTypes" [value]="alarmScheduleType">
         {{ alarmScheduleTypeTranslate.get(alarmScheduleType) | translate }}
@@ -36,13 +35,13 @@
     <section *ngIf="alarmScheduleForm.get('type').value === alarmScheduleType.SPECIFIC_TIME">
       <tb-alarm-dynamic-value formControlName = 'dynamicValue' helpId = 'device-profile/alarm_specific_schedule_format'></tb-alarm-dynamic-value>
       <div class="tb-small" style="margin-bottom: 0.5em" translate>device-profile.schedule-days</div>
-      <div fxLayout="column" fxLayout.gt-md="row" fxLayoutGap="16px">
-        <div fxLayout="row" fxLayoutGap="16px">
+      <div fxLayout="column" fxLayout.gt-md="row" fxLayoutGap="8px">
+        <div fxLayout="row" fxLayoutGap="8px">
           <mat-checkbox *ngFor="let day of firstRowDays" [formControl]="weeklyRepeatControl(day)">
             {{ dayOfWeekTranslationsArray[day] | translate }}
           </mat-checkbox>
         </div>
-        <div fxLayout="row" fxLayoutGap="16px">
+        <div fxLayout="row" fxLayoutGap="8px">
           <mat-checkbox *ngFor="let day of secondRowDays" [formControl]="weeklyRepeatControl(day)">
             {{ dayOfWeekTranslationsArray[day] | translate }}
           </mat-checkbox>

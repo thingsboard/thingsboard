@@ -29,14 +29,12 @@ import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 
 @ApiModel
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackageId> implements HasName, HasTenantId {
+public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackageId> implements HasName, HasTenantId, HasTitle {
 
     private static final long serialVersionUID = 3168391583570815419L;
 

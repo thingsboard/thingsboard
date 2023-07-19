@@ -36,14 +36,14 @@ public class PlatformTwoFaSettings {
     private List<TwoFaProviderConfig> providers;
 
     @NotNull
-    @Min(value = 5, message = "minimum verification code sent period must be greater than or equal 5")
+    @Min(value = 5)
     private Integer minVerificationCodeSendPeriod;
-    @Pattern(regexp = "[1-9]\\d*:[1-9]\\d*", message = "verification code check rate limit configuration is invalid")
+    @Pattern(regexp = "[1-9]\\d*:[1-9]\\d*", message = "is invalid")
     private String verificationCodeCheckRateLimit;
-    @Min(value = 0, message = "maximum number of verification failure before user lockout must be positive")
+    @Min(value = 0, message = "must be positive")
     private Integer maxVerificationFailuresBeforeUserLockout;
     @NotNull
-    @Min(value = 60, message = "total amount of time allotted for verification must be greater than or equal 60")
+    @Min(value = 60)
     private Integer totalAllowedTimeForVerification;
 
 

@@ -14,21 +14,21 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
   Validator,
   Validators
 } from '@angular/forms';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import {
   EntityKeyType,
   entityKeyTypeTranslationMap,
@@ -39,6 +39,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
 import { KeyFilterDialogComponent, KeyFilterDialogData } from '@home/components/filter/key-filter-dialog.component';
 import { EntityId } from '@shared/models/id/entity-id';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-key-filter-list',
@@ -57,7 +58,7 @@ import { EntityId } from '@shared/models/id/entity-id';
     }
   ]
 })
-export class KeyFilterListComponent implements ControlValueAccessor, Validator, OnInit {
+export class KeyFilterListComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 
   @Input() disabled: boolean;
 
@@ -69,29 +70,37 @@ export class KeyFilterListComponent implements ControlValueAccessor, Validator, 
 
   @Input() entityId: EntityId;
 
-  keyFilterListFormGroup: FormGroup;
+  keyFilterListFormGroup: UntypedFormGroup;
 
   entityKeyTypeTranslations = entityKeyTypeTranslationMap;
 
-  keyFiltersControl: FormControl;
+  keyFiltersControl: UntypedFormControl;
 
+  private destroy$ = new Subject<void>();
   private propagateChange = null;
 
-  private valueChangeSubscription: Subscription = null;
-
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private dialog: MatDialog) {
   }
 
   ngOnInit(): void {
-    this.keyFilterListFormGroup = this.fb.group({});
-    this.keyFilterListFormGroup.addControl('keyFilters',
-      this.fb.array([]));
+    this.keyFilterListFormGroup = this.fb.group({
+      keyFilters: this.fb.array([])
+    });
     this.keyFiltersControl = this.fb.control(null);
+
+    this.keyFilterListFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
-  keyFiltersFormArray(): FormArray {
-    return this.keyFilterListFormGroup.get('keyFilters') as FormArray;
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  get keyFiltersFormArray(): UntypedFormArray {
+    return this.keyFilterListFormGroup.get('keyFilters') as UntypedFormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -119,34 +128,32 @@ export class KeyFilterListComponent implements ControlValueAccessor, Validator, 
   }
 
   writeValue(keyFilters: Array<KeyFilterInfo>): void {
-    if (this.valueChangeSubscription) {
-      this.valueChangeSubscription.unsubscribe();
-    }
-    const keyFilterControls: Array<AbstractControl> = [];
-    if (keyFilters) {
-      for (const keyFilter of keyFilters) {
-        keyFilterControls.push(this.fb.control(keyFilter, [Validators.required]));
-      }
-    }
-    this.keyFilterListFormGroup.setControl('keyFilters', this.fb.array(keyFilterControls));
-    this.valueChangeSubscription = this.keyFilterListFormGroup.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
-    if (this.disabled) {
-      this.keyFilterListFormGroup.disable({emitEvent: false});
+    if (keyFilters.length === this.keyFiltersFormArray.length) {
+      this.keyFiltersFormArray.patchValue(keyFilters, {emitEvent: false});
     } else {
-      this.keyFilterListFormGroup.enable({emitEvent: false});
+      const keyFilterControls: Array<AbstractControl> = [];
+      if (keyFilters) {
+        for (const keyFilter of keyFilters) {
+          keyFilterControls.push(this.fb.control(keyFilter, [Validators.required]));
+        }
+      }
+      this.keyFilterListFormGroup.setControl('keyFilters', this.fb.array(keyFilterControls), {emitEvent: false});
+      if (this.disabled) {
+        this.keyFilterListFormGroup.disable({emitEvent: false});
+      } else {
+        this.keyFilterListFormGroup.enable({emitEvent: false});
+      }
     }
     const keyFiltersArray = keyFilterInfosToKeyFilters(keyFilters);
     this.keyFiltersControl.patchValue(keyFiltersArray, {emitEvent: false});
   }
 
   public removeKeyFilter(index: number) {
-    (this.keyFilterListFormGroup.get('keyFilters') as FormArray).removeAt(index);
+    (this.keyFilterListFormGroup.get('keyFilters') as UntypedFormArray).removeAt(index);
   }
 
   public addKeyFilter() {
-    const keyFiltersFormArray = this.keyFilterListFormGroup.get('keyFilters') as FormArray;
+    const keyFiltersFormArray = this.keyFilterListFormGroup.get('keyFilters') as UntypedFormArray;
     this.openKeyFilterDialog(null).subscribe((result) => {
       if (result) {
         keyFiltersFormArray.push(this.fb.control(result, [Validators.required]));
@@ -156,11 +163,11 @@ export class KeyFilterListComponent implements ControlValueAccessor, Validator, 
 
   public editKeyFilter(index: number) {
     const keyFilter: KeyFilterInfo =
-      (this.keyFilterListFormGroup.get('keyFilters') as FormArray).at(index).value;
+      (this.keyFilterListFormGroup.get('keyFilters') as UntypedFormArray).at(index).value;
     this.openKeyFilterDialog(keyFilter).subscribe(
       (result) => {
         if (result) {
-          (this.keyFilterListFormGroup.get('keyFilters') as FormArray).at(index).patchValue(result);
+          (this.keyFilterListFormGroup.get('keyFilters') as UntypedFormArray).at(index).patchValue(result);
         }
       }
     );

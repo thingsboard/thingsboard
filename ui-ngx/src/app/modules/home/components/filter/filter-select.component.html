@@ -15,10 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field [floatLabel]="showLabel ? 'auto' : 'always'"
-                [hideRequiredMarker]="!showLabel" [formGroup]="selectFilterFormGroup" class="mat-block">
-  <mat-label *ngIf="!showLabel"></mat-label>
-  <input matInput type="text" placeholder="{{ 'filter.filter' | translate }}"
+<mat-form-field [formGroup]="selectFilterFormGroup" class="mat-block">
+  <mat-label *ngIf="showLabel">{{ 'filter.filter' | translate }}</mat-label>
+  <input matInput type="text" placeholder="{{ !showLabel ? ('filter.filter' | translate) : ''}}"
          #filterInput
          formControlName="filter"
          (focusin)="onFocus()"

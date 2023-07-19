@@ -22,8 +22,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.servlet.http.HttpServletRequest;

@@ -17,7 +17,6 @@ package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 
 import java.util.AbstractMap;
 import java.util.Map;

@@ -19,7 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { RepositorySettingsComponent } from '@home/components/vc/repository-settings.component';
 
 @Component({
@@ -38,7 +38,7 @@ export class RepositoryAdminSettingsComponent extends PageComponent implements O
   ngOnInit() {
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.repositorySettingsComponent?.repositorySettingsForm;
   }
 }

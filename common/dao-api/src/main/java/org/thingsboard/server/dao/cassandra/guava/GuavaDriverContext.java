@@ -18,21 +18,13 @@ package org.thingsboard.server.dao.cassandra.guava;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
-import com.datastax.oss.driver.api.core.tracker.RequestTracker;
-import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * A Custom {@link DefaultDriverContext} that overrides {@link #getRequestProcessorRegistry()} to

@@ -425,6 +425,7 @@ public abstract class BaseAssetProfileControllerTest extends AbstractControllerT
         Collections.sort(loadedAssetProfileInfos, assetProfileInfoIdComparator);
 
         List<AssetProfileInfo> assetProfileInfos = assetProfiles.stream().map(assetProfile -> new AssetProfileInfo(assetProfile.getId(),
+                assetProfile.getTenantId(),
                 assetProfile.getName(), assetProfile.getImage(), assetProfile.getDefaultDashboardId())).collect(Collectors.toList());
 
         Assert.assertEquals(assetProfileInfos, loadedAssetProfileInfos);

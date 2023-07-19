@@ -44,14 +44,3 @@
     margin-top: 0.5em;
   }
 }
-
-:host ::ng-deep {
-  mat-form-field {
-    .mat-form-field-wrapper {
-      padding-bottom: 1em;
-    }
-    .mat-form-field-infix {
-      width: 100%;
-    }
-  }
-}

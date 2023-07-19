@@ -19,9 +19,9 @@
 <ng-template #homeLinks>
   <mat-grid-list class="tb-home-links" [cols]="cols" rowHeight="280px">
     <mat-grid-tile [colspan]="sectionColspan(section)" *ngFor="let section of homeSections$| async">
-      <mat-card style="width: 100%;">
+      <mat-card appearance="outlined" style="width: 100%;">
         <mat-card-title>
-          <span translate class="mat-headline">{{section.name}}</span>
+          <span translate class="mat-headline-5">{{section.name}}</span>
         </mat-card-title>
         <mat-card-content>
           <mat-grid-list rowHeight="170px" [cols]="section.places.length">

@@ -19,12 +19,10 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.haproxy.HAProxyMessage;
-import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.MqttTransportService;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 @Slf4j

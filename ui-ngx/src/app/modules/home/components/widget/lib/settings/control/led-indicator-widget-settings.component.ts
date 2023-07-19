@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
@@ -41,15 +41,15 @@ export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent
 
   dataKeyType = DataKeyType;
 
-  ledIndicatorWidgetSettingsForm: FormGroup;
+  ledIndicatorWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private widgetService: WidgetService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.ledIndicatorWidgetSettingsForm;
   }
 

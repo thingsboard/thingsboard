@@ -25,9 +25,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.*;
-
-import static org.thingsboard.server.dao.service.Validator.validateId;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Slf4j

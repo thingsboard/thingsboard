@@ -28,7 +28,7 @@
 
 :host {
   .tb-edges-overview {
-    mat-toolbar.mat-table-toolbar:not([color="primary"]) {
+    mat-toolbar.mat-mdc-table-toolbar:not([color="primary"]) {
       background: transparent;
     }
     mat-toolbar {
@@ -40,7 +40,7 @@
       }
     }
 
-    .mat-subheader {
+    .mat-mdc-subheader {
       padding: 15px;
       color: rgba(0,0,0,0.54);
       font-size: 14px;

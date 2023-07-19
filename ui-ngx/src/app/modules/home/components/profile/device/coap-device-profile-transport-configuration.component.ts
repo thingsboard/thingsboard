@@ -15,7 +15,7 @@
 ///
 
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -55,9 +55,9 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   transportPayloadTypes = Object.values(TransportPayloadType);
   transportPayloadTypeTranslations = transportPayloadTypeTranslationMap;
 
-  coapTransportConfigurationFormGroup: FormGroup;
+  coapTransportConfigurationFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private requiredValue: boolean;
 
   private transportPayloadTypeConfiguration = this.fb.group({
@@ -83,7 +83,7 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {
@@ -134,13 +134,13 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
     return transportPayloadType === TransportPayloadType.PROTOBUF;
   }
 
-  get clientSettingsFormGroup(): FormGroup {
-    return this.coapTransportConfigurationFormGroup.get('clientSettings') as FormGroup;
+  get clientSettingsFormGroup(): UntypedFormGroup {
+    return this.coapTransportConfigurationFormGroup.get('clientSettings') as UntypedFormGroup;
   }
 
   private updateCoapDeviceTypeBasedControls(type: CoapTransportDeviceType, forceUpdated = false) {
     const coapDeviceTypeConfigurationFormGroup = this.coapTransportConfigurationFormGroup
-      .get('coapDeviceTypeConfiguration') as FormGroup;
+      .get('coapDeviceTypeConfiguration') as UntypedFormGroup;
     if (forceUpdated) {
       coapDeviceTypeConfigurationFormGroup.patchValue({
         transportPayloadTypeConfiguration: this.transportPayloadTypeConfiguration

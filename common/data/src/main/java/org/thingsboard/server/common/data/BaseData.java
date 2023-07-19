@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.common.data;
 
-import java.io.Serializable;
-
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.UUIDBased;
+
+import java.io.Serializable;
 
 public abstract class BaseData<I extends UUIDBased> extends IdBased<I> implements Serializable {
 

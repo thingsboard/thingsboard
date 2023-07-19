@@ -83,7 +83,7 @@ public class QueueController extends BaseController {
                                                         @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        ServiceType type = ServiceType.valueOf(serviceType);
+        ServiceType type = ServiceType.of(serviceType);
         switch (type) {
             case TB_RULE_ENGINE:
                 return queueService.findQueuesByTenantId(getTenantId(), pageLink);
@@ -136,7 +136,7 @@ public class QueueController extends BaseController {
 
         checkEntity(queue.getId(), queue, Resource.QUEUE);
 
-        ServiceType type = ServiceType.valueOf(serviceType);
+        ServiceType type = ServiceType.of(serviceType);
         switch (type) {
             case TB_RULE_ENGINE:
                 queue.setTenantId(getTenantId());

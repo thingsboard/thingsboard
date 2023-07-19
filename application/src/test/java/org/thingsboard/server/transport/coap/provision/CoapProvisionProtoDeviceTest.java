@@ -21,8 +21,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -34,6 +32,7 @@ import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsDataProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsType;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceCredentialsMsg;
@@ -41,6 +40,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceReque
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.transport.coap.CoapTestClient;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 

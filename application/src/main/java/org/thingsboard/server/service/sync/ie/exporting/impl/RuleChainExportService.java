@@ -15,10 +15,8 @@
  */
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -27,12 +25,10 @@ import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
-import org.thingsboard.common.util.RegexUtils;
 
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 @TbCoreComponent

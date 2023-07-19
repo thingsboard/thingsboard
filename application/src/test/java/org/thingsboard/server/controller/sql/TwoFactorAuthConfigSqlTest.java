@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.controller.sql;
 
-import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.controller.TwoFactorAuthConfigTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 @DaoSqlTest
 public class TwoFactorAuthConfigSqlTest extends TwoFactorAuthConfigTest {

@@ -64,5 +64,12 @@
       height: 0;
       visibility: hidden;
     }
+    .entity-type-config-content {
+      .mat-mdc-checkbox {
+        label {
+          white-space: nowrap;
+        }
+      }
+    }
   }
 }

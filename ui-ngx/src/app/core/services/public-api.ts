@@ -23,7 +23,7 @@ export * from './dynamic-component-factory.service';
 export * from './item-buffer.service';
 export * from './menu.models';
 export * from './menu.service';
-export * from './notification.service';
+export * from './toast-notification.service';
 export * from './raf.service';
 export * from './resources.service';
 export * from './time.service';

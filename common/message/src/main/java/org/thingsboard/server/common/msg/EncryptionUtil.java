@@ -35,6 +35,14 @@ public class EncryptionUtil {
                 .replaceAll("-----END CERTIFICATE-----", "");
     }
 
+    public static String certTrimNewLinesForChainInDeviceProfile(String input) {
+        return input.replaceAll("\n", "")
+                .replaceAll("\r", "")
+                .replaceAll("-----BEGIN CERTIFICATE-----", "-----BEGIN CERTIFICATE-----\n")
+                .replaceAll("-----END CERTIFICATE-----", "\n-----END CERTIFICATE-----\n")
+                .trim();
+    }
+
     public static String pubkTrimNewLines(String input) {
         return input.replaceAll("-----BEGIN PUBLIC KEY-----", "")
                 .replaceAll("\n", "")

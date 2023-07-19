@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 :host {
-  .mat-form-field {
+  .mat-mdc-form-field {
     width: 100%;
+    mat-label {
+      .mat-icon {
+        margin-right: 4px;
+      }
+    }
   }
-}
-
-:host ::ng-deep {
-  .mat-form-field-infix{
-    width: 150px;
+  .tb-color-preview {
+    margin-left: 8px;
+    margin-right: 5px;
   }
 }

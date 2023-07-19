@@ -17,15 +17,14 @@
 -->
 <mat-form-field [formGroup]="linksFormGroup" style="width: 100%;">
   <mat-label translate>rulenode.link-labels</mat-label>
-  <mat-chip-list #chipList>
-    <mat-chip
+  <mat-chip-grid #chipList>
+    <mat-chip-row
       *ngFor="let label of labels"
-      [selectable]="!disabled"
       [removable]="!disabled"
       (removed)="remove(label)">
       {{label.name}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip>
+    </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? ('rulenode.link-label' | translate) : '' }}"
            style="max-width: 200px;"
            #labelInput
@@ -38,7 +37,7 @@
            [matChipInputFor]="chipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
            (matChipInputTokenEnd)="add($event)">
-  </mat-chip-list>
+  </mat-chip-grid>
   <mat-autocomplete #labelAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     (optionSelected)="selected($event)"

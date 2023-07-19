@@ -41,7 +41,7 @@
               <img class="tb-image-preview" [src]="safeImageUrl" />
             </div>
             <div *ngIf="!disabled" class="tb-image-action-container">
-              <button mat-button mat-icon-button color="primary"
+              <button mat-icon-button color="primary"
                       type="button"
                       (click)="clearImage($index)"
                       matTooltip="{{ 'action.remove' | translate }}"

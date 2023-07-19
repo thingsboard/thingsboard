@@ -18,7 +18,6 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,7 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @ApiModel
-public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName, HasTenantId {
+public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName, HasTenantId, HasTitle {
 
     private TenantId tenantId;
     @NoXss

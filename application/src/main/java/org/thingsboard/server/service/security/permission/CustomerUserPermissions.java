@@ -119,6 +119,15 @@ public class CustomerUserPermissions extends AbstractPermissions {
             if (!Authority.CUSTOMER_USER.equals(userEntity.getAuthority())) {
                 return false;
             }
+
+            if (!user.getCustomerId().equals(userEntity.getCustomerId())) {
+                return false;
+            }
+
+            if (Operation.READ.equals(operation)) {
+                return true;
+            }
+
             return user.getId().equals(userId);
         }
 
