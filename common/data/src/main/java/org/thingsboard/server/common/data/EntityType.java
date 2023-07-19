@@ -36,7 +36,7 @@ public enum EntityType {
     RULE_CHAIN,
     RULE_NODE,
     ENTITY_VIEW {
-        // backward compatibility for TbMsgTypeSwitchNode to return correct rule node connection.
+        // backward compatibility for TbOriginatorTypeSwitchNode to return correct rule node connection.
         @Override
         public String getNormalName() {
             return "Entity View";
