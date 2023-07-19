@@ -438,11 +438,7 @@ public final class TbMsg implements Serializable {
 
     public TbMsgCallback getCallback() {
         // May be null in case of deserialization;
-        if (callback != null) {
-            return callback;
-        } else {
-            return TbMsgCallback.EMPTY;
-        }
+        return Objects.requireNonNullElse(callback, TbMsgCallback.EMPTY);
     }
 
     public void pushToStack(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {

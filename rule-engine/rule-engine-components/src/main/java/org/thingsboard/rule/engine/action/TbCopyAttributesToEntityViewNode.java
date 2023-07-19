@@ -96,7 +96,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                 if ((endTime != 0 && endTime > now && startTime < now) || (endTime == 0 && startTime < now)) {
                                     if (ATTRIBUTES_DELETED.name().equals(msg.getType())) {
                                         List<String> attributes = new ArrayList<>();
-                                        for (JsonElement element : new JsonParser().parse(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray()) {
+                                        for (JsonElement element : JsonParser.parseString(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray()) {
                                             if (element.isJsonPrimitive()) {
                                                 JsonPrimitive value = element.getAsJsonPrimitive();
                                                 if (value.isString()) {
@@ -111,7 +111,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                                     getFutureCallback(ctx, msg, entityView));
                                         }
                                     } else {
-                                        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
+                                        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
                                         List<AttributeKvEntry> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).collect(Collectors.toList());
                                         ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), entityView.getId(), scope, filteredAttributes,

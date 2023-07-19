@@ -88,7 +88,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         }
         long ts = computeTs(msg, config.isUseServerTs());
         String src = msg.getData();
-        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(JsonParser.parseString(src), ts);
         if (tsKvMap.isEmpty()) {
             ctx.tellFailure(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;
