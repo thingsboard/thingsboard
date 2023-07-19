@@ -45,13 +45,12 @@ public class DefaultTbTenantProfileService extends AbstractTbEntityService imple
     public TenantProfile save(TenantId tenantId, TenantProfile tenantProfile, TenantProfile oldTenantProfile) throws ThingsboardException {
         TenantProfile savedTenantProfile = checkNotNull(tenantProfileService.saveTenantProfile(tenantId, tenantProfile));
         tenantProfileCache.put(savedTenantProfile);
-
-        List<TenantId> tenantIds = tenantService.findTenantIdsByTenantProfileId(savedTenantProfile.getId());
-        tbQueueService.updateQueuesByTenants(tenantIds, savedTenantProfile, oldTenantProfile);
-
         tbClusterService.onTenantProfileChange(savedTenantProfile, null);
         tbClusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, savedTenantProfile.getId(),
                 tenantProfile.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+
+        List<TenantId> tenantIds = tenantService.findTenantIdsByTenantProfileId(savedTenantProfile.getId());
+        tbQueueService.updateQueuesByTenants(tenantIds, savedTenantProfile, oldTenantProfile);
 
         return savedTenantProfile;
     }

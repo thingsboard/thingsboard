@@ -82,6 +82,7 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
         if (profileOpt.isPresent()) {
             TenantProfile newProfile = profileOpt.get();
             log.trace("[{}] put: {}", newProfile.getId(), newProfile);
+            profiles.put(newProfile.getId(), newProfile);
             Set<TenantId> affectedTenants = tenantProfileIds.get(newProfile.getId());
             return new TenantProfileUpdateResult(newProfile, affectedTenants != null ? affectedTenants : Collections.emptySet());
         } else {
