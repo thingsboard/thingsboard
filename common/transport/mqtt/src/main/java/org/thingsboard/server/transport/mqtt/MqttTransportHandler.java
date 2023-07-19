@@ -256,6 +256,28 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             case DISCONNECT:
                 ctx.close();
                 break;
+             case SUBSCRIBE:
+                MqttSubscribeMessage mqttSubMsg = (MqttSubscribeMessage) msg;
+                log.trace("[{}] Processing subscription [{}]!", sessionId, mqttSubMsg.variableHeader().messageId());
+                List<Integer> grantedQoSList = new ArrayList<>();
+                for (MqttTopicSubscription subscription : mqttSubMsg.payload().topicSubscriptions()) {
+                    String topic = subscription.topicName();
+                    MqttQoS reqQoS = subscription.qualityOfService();
+                    try {
+                        switch (topic) {
+                            case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
+                                registerSubQoS(topic, grantedQoSList, reqQoS);
+                                break;
+                            default:
+                                grantedQoSList.add(FAILURE.value());
+                        }
+                    }catch (Exception e){
+                        log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS, e);
+                        grantedQoSList.add(FAILURE.value());
+                    }
+                }
+                ctx.writeAndFlush(createSubAckMessage(mqttSubMsg.variableHeader().messageId(), grantedQoSList));
+                break;
         }
     }
 
