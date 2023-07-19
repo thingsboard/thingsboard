@@ -15,6 +15,16 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="outline" class="tb-inline-field" subscriptSizing="dynamic">
-  <input matInput [formControl]="unitsFormControl" placeholder="{{ 'widget-config.set' | translate }}">
-</mat-form-field>
+<div class="tb-color-picker-panel">
+  <div class="tb-color-picker-title" translate>color.color</div>
+  <tb-color-picker [formControl]="colorPickerControl"></tb-color-picker>
+  <div class="tb-color-picker-panel-buttons">
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="selectColor()"
+            [disabled]="colorPickerControl.invalid || !colorPickerControl.dirty">
+      {{ 'action.select' | translate }}
+    </button>
+  </div>
+</div>

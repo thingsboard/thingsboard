@@ -68,7 +68,8 @@
         "less": "Less",
         "skip": "Skip",
         "send": "Send",
-        "reset": "Reset"
+        "reset": "Reset",
+        "show-more": "Show more"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -3466,7 +3467,8 @@
         "output": "Output",
         "test": "Test",
         "help": "Help",
-        "reset-debug-mode": "Reset debug mode in all nodes"
+        "reset-debug-mode": "Reset debug mode in all nodes",
+        "test-with-this-message": "{{test}} with this message"
     },
     "timezone": {
       "timezone": "Timezone",
@@ -3859,6 +3861,15 @@
         "interval": "Interval",
         "just-now": "Just now",
         "ago": "ago"
+    },
+    "unit": {
+        "celsius": "Celsius",
+        "kelvin": "Kelvin",
+        "fahrenheit": "Fahrenheit",
+        "percentage": "Percentage",
+        "second": "Second",
+        "minute": "Minute",
+        "hour": "Hour"
     },
     "user": {
         "user": "User",
@@ -5490,11 +5501,17 @@
             }
         }
     },
+    "color": {
+        "color": "Color"
+    },
     "icon": {
         "icon": "Icon",
+        "icons": "Icons",
         "select-icon": "Select icon",
         "material-icons": "Material icons",
-        "show-all": "Show all icons"
+        "show-all": "Show all icons",
+        "search-icon": "Search icon",
+        "no-icons-found": "No icons found for '{{iconSearch}}'"
     },
     "phone-input": {
         "phone-input-label": "Phone number",
