@@ -1004,7 +1004,7 @@ device:
       enabled: "${DEVICE_CONNECTIVITY_MQTTS_ENABLED:false}"
       host: "${DEVICE_CONNECTIVITY_MQTTS_HOST:}"
       port: "${DEVICE_CONNECTIVITY_MQTTS_PORT:8883}"
-      tb_server_chain_path: "${DEVICE_CONNECTIVITY_MQTTS_SERVER_CHAIN_PATH:}"
+      ssl_server_pem_path: "${DEVICE_CONNECTIVITY_MQTTS_SERVER_CHAIN_PATH:}"
     coap:
       enabled: "${DEVICE_CONNECTIVITY_COAP_ENABLED:true}"
       host: "${DEVICE_CONNECTIVITY_COAP_HOST:}"

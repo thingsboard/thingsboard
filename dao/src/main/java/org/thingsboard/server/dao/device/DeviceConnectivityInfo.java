@@ -22,5 +22,5 @@ public class DeviceConnectivityInfo {
     private Boolean enabled;
     private String host;
     private String port;
-    private String sslCertPath;
+    private String sslServerPemPath;
 }
