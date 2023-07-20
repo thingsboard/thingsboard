@@ -686,8 +686,7 @@
         "unassign-asset-from-edge-text": "After the confirmation the asset will be unassigned and won't be accessible by the edge.",
         "unassign-assets-from-edge-title": "Are you sure you want to unassign { count, plural, =1 {1 asset} other {# assets} }?",
         "unassign-assets-from-edge-text": "After the confirmation all selected assets will be unassigned and won't be accessible by the edge.",
-        "selected-assets": "{ count, plural, =1 {1 asset} other {# assets} } selected",
-        "customer-to-assign-asset": "Customer to assign the asset"
+        "selected-assets": "{ count, plural, =1 {1 asset} other {# assets} } selected"
     },
     "attribute": {
         "attributes": "Attributes",
