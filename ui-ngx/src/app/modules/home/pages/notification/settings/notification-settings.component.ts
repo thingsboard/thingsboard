@@ -67,11 +67,9 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
 
   private getNotificationDeliveryMethods(): NotificationDeliveryMethod[] {
     const deliveryMethods = new Set([
-      NotificationDeliveryMethod.WEB,
-      NotificationDeliveryMethod.SMS,
-      NotificationDeliveryMethod.EMAIL
+      NotificationDeliveryMethod.SLACK
     ]);
-    return Object.values(NotificationDeliveryMethod).filter(type => deliveryMethods.has(type));
+    return Object.values(NotificationDeliveryMethod).filter(type => !deliveryMethods.has(type));
   }
 
   private buildNotificationSettingsForm() {
