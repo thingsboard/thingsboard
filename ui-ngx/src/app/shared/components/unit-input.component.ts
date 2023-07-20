@@ -24,10 +24,6 @@ import { ResourcesService } from '@core/services/resources.service';
 
 const unitsModels = '/assets/model/units.json';
 
-interface UnitsJson {
-  units: Array<Unit>;
-}
-
 @Component({
   selector: 'tb-unit-input',
   templateUrl: './unit-input.component.html',
@@ -151,8 +147,8 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
 
   private unitsConstant(): Observable<Array<Unit>> {
     if (this.fetchUnits$ === null) {
-      this.fetchUnits$ = this.resourcesService.loadJsonResource<UnitsJson>(unitsModels).pipe(
-        map(units => units.units.map(u => ({
+      this.fetchUnits$ = this.resourcesService.loadJsonResource<Array<Unit>>(unitsModels).pipe(
+        map(units => units.map(u => ({
           symbol: u.symbol,
           name: this.translate.instant(u.name),
           tags: u.tags
