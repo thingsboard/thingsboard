@@ -186,6 +186,9 @@ public class HashPartitionService implements PartitionService {
     @Override
     public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
         TenantId isolatedOrSystemTenantId = getIsolatedOrSystemTenantId(serviceType, tenantId);
+        if (queueName == null) {
+            queueName = MAIN_QUEUE_NAME;
+        }
         QueueKey queueKey = new QueueKey(serviceType, queueName, isolatedOrSystemTenantId);
         if (!partitionSizesMap.containsKey(queueKey)) {
             if (isolatedOrSystemTenantId.isSysTenantId()) {
