@@ -119,8 +119,10 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
 
     private JsonNode getHttpTransportPublishCommands(String defaultHostname, DeviceCredentials deviceCredentials) {
         ObjectNode httpCommands = JacksonUtil.newObjectNode();
-        httpCommands.put(HTTP, getHttpPublishCommand(HTTP, defaultHostname, deviceCredentials));
-        httpCommands.put(HTTPS, getHttpPublishCommand(HTTPS, defaultHostname, deviceCredentials));
+        Optional.ofNullable(getHttpPublishCommand(HTTP, defaultHostname, deviceCredentials))
+                .ifPresent(v -> httpCommands.put(HTTP, v));
+        Optional.ofNullable(getHttpPublishCommand(HTTPS, defaultHostname, deviceCredentials))
+                .ifPresent(v -> httpCommands.put(HTTPS, v));
         return httpCommands;
     }
 
