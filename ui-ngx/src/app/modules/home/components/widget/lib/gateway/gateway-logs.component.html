@@ -46,12 +46,6 @@
                   *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
   <mat-row [ngClass]="{'mat-row-select': true}"
            *matRowDef="let attribute; columns: displayedColumns;"></mat-row>
-  <!--        <ng-container matColumnDef="lastUpdateTs">-->
-  <!--          <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 150px; max-width: 150px; width: 150px;"> {{ 'attribute.last-update-time' | translate }} </mat-header-cell>-->
-  <!--          <mat-cell *matCellDef="let attribute">-->
-  <!--            {{ attribute.lastUpdateTs | date:'yyyy-MM-dd HH:mm:ss' }}-->
-  <!--          </mat-cell>-->
-  <!--        </ng-container>-->
 </table>
 <span [fxShow]="dataSource.data.length === 0"
       fxLayoutAlign="center center"
