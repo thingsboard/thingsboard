@@ -63,8 +63,8 @@ public class KvUtils {
             validatedKeys.put(key, Boolean.TRUE);
         }
 
-        Object value = tsKvEntry.getValue();
         if (valueNoXssValidation) {
+            Object value = tsKvEntry.getValue();
             if (value instanceof CharSequence || value instanceof JsonNode) {
                 if (!NoXssValidator.isValid(value.toString())) {
                     throw new DataValidationException("Validation error: value is malformed");
