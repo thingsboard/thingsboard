@@ -99,7 +99,8 @@
                 </mat-cell>
               </ng-container>
               <mat-header-row *matHeaderRowDef="source.displayedColumns; sticky: enableStickyHeader"></mat-header-row>
-              <mat-row *matRowDef="let row; columns: source.displayedColumns; let rowIndex = index"
+              <mat-row [ngClass]="{'tb-pointer': hasRowAction}"
+                       *matRowDef="let row; columns: source.displayedColumns; let rowIndex = index"
                        [ngStyle]="rowStyle(source, row, rowIndex)"
                        (click)="onRowClick($event, row)"></mat-row>
             </table>

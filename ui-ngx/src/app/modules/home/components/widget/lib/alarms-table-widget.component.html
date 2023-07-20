@@ -160,7 +160,8 @@
         <mat-row [ngClass]="{'mat-row-select': enableSelection,
                              'mat-selected': alarmsDatasource.isSelected(alarm),
                              'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm),
-                             'invisible': alarmsDatasource.dataLoading}"
+                             'invisible': alarmsDatasource.dataLoading,
+                             'tb-pointer': hasRowAction}"
                  *matRowDef="let alarm; columns: displayedColumns; let row = index"
                  [ngStyle]="rowStyle(alarm, row)"
                  (click)="onRowClick($event, alarm)"></mat-row>
