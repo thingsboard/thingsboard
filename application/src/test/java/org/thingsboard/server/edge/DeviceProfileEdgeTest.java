@@ -301,7 +301,6 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForResponses());
 
         UplinkResponseMsg latestResponseMsg = edgeImitator.getLatestResponseMsg();
-        System.out.println("latestMsg = " + latestResponseMsg);
         Assert.assertTrue(latestResponseMsg.getSuccess());
 
         AssetProfile assetProfile = doGet("/api/deviceProfile/" + uuid, AssetProfile.class);

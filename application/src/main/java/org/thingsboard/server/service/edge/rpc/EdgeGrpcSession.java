@@ -156,8 +156,8 @@ public final class EdgeGrpcSession implements Closeable {
                 }
                 if (connected) {
                     if (requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
-                        if (requestMsg.hasSyncRequestMsg() && requestMsg.getSyncRequestMsg().getSyncRequired()) {
-                            boolean fullSync = true;
+                        if (requestMsg.hasSyncRequestMsg()) {
+                            boolean fullSync = false;
                             if (requestMsg.getSyncRequestMsg().hasFullSync()) {
                                 fullSync = requestMsg.getSyncRequestMsg().getFullSync();
                             }

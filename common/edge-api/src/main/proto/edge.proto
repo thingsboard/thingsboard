@@ -85,7 +85,7 @@ message ConnectResponseMsg {
 }
 
 message SyncRequestMsg {
-  bool syncRequired = 1;
+  bool syncRequired = 1; // deprecated
   optional bool fullSync = 2;
 }
 
