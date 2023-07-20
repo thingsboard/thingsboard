@@ -50,8 +50,6 @@
 
   .mat-mdc-form-field {
     flex-grow: 1;
-    //min-width: 200px;
-    //flex-shrink: 1;
   }
 
   mat-card {
@@ -67,9 +65,7 @@
     margin: 15px;
   }
 
-  ::ng-deep tb-json-object-edit > div {
-    flex-grow: 1;
-  }
+
 
   .action-btns {
     margin: 10px 10px 0;
@@ -78,5 +74,9 @@
   mat-row {
     cursor: pointer;
   }
+}
+
+:host ::ng-deep tb-json-object-edit > div {
+  flex-grow: 1;
 }
 

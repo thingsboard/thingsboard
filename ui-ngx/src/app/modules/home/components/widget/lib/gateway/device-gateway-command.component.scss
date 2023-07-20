@@ -17,16 +17,21 @@
   width: 100%;
   height: 100%;
   display: block;
+}
 
-  ::ng-deep .tb-markdown-view .start-code code[class*="language-"],
-  ::ng-deep .tb-markdown-view .start-code pre[class*="language-"] {
-    overflow: hidden;
-    white-space: break-spaces;
-    word-break: break-all;
+:host ::ng-deep {
+  .tb-markdown-view {
+    .start-code {
+      code[class*="language-"], pre[class*="language-"] {
+        overflow: hidden;
+        white-space: break-spaces;
+        word-break: break-all;
+      }
+
+      .code-wrapper {
+        padding: 0;
+      }
     }
-
-  ::ng-deep .tb-markdown-view .start-code .code-wrapper {
-    padding: 0;
   }
 }
 
