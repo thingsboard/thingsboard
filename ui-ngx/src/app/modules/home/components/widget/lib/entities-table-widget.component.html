@@ -89,7 +89,7 @@
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
         <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity),
                              'invisible': entityDatasource.dataLoading,
-                             'tb-pointer': rowPointer}"
+                             'tb-pointer': hasRowAction}"
                  *matRowDef="let entity; columns: displayedColumns; let row = index"
                  [ngStyle]="rowStyle(entity, row)"
                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
