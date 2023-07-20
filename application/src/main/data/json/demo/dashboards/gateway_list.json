@@ -446,7 +446,7 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "var newValue = value == true ? \"Active\" : \"Inactive\";\r\nreturn newValue;"
+                  "postFuncBody": "var newValue = value == 'true' ? \"Active\" : \"Inactive\";\r\nreturn newValue;"
                 },
                 {
                   "name": "activeDevices",
@@ -480,7 +480,12 @@
                   "settings": {},
                   "_hash": 0.36755550699981954
                 }
-              ]
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
             },
             {
               "type": "entityCount",
@@ -569,7 +574,8 @@
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
-          "enableDataExport": false
+          "enableDataExport": false,
+          "displayTimewindow": true
         },
         "row": 0,
         "col": 0,
@@ -5283,7 +5289,7 @@
             "widgets": {
               "27e6b37c-085e-824d-fb13-69651a545ec1": {
                 "sizeX": 48,
-                "sizeY": 21,
+                "sizeY": 16,
                 "row": 0,
                 "col": 0
               }
