@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.dao.device;
 
-import lombok.Data;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.Device;
 
-@Data
-public class DeviceConnectivityInfo {
-    private Boolean enabled;
-    private String host;
-    private String port;
-    private String sslServerPemPath;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Map;
+
+public interface DeviceConnectivityService {
+
+    JsonNode findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException;
+
+    String getSslServerChain(String protocol) throws IOException;
 }

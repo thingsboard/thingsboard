@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
@@ -48,7 +47,6 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -76,13 +74,9 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -91,17 +85,6 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.COAP;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.COAPS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTP;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.JSON_EXAMPLE_PAYLOAD;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.CHECK_DOCUMENTATION;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getCoapClientCommand;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getCurlCommand;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getMosquittoPublishCommand;
 
 @Service("DeviceDaoService")
 @Slf4j
@@ -133,55 +116,11 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Autowired
     private EntityCountService countService;
 
-    @Autowired
-    private DeviceConnectivityConfiguration deviceConnectivityConfiguration;
-
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceInfoById [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
         return deviceDao.findDeviceInfoById(tenantId, deviceId.getId());
-    }
-
-    @Override
-    public Map<String, String> findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
-        DeviceId deviceId = device.getId();
-        log.trace("Executing findDevicePublishTelemetryCommands [{}]", deviceId);
-        validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
-
-        String defaultHostname = new URI(baseUrl).getHost();
-        DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
-        DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
-        DeviceTransportType transportType = deviceProfile.getTransportType();
-
-        Map<String, String> commands = new HashMap<>();
-        switch (transportType) {
-            case DEFAULT:
-                Optional.ofNullable(getHttpPublishCommand(HTTP, defaultHostname, creds)).ifPresent(v -> commands.put(HTTP, v));
-                Optional.ofNullable(getHttpPublishCommand(HTTPS, defaultHostname, creds)).ifPresent(v -> commands.put(HTTPS, v));
-                Optional.ofNullable(getMqttPublishCommand(MQTT, defaultHostname, creds)).ifPresent(v -> commands.put(MQTT, v));
-                Optional.ofNullable(getMqttPublishCommand(MQTTS, defaultHostname, creds)).ifPresent(v -> commands.put(MQTTS, v));
-                Optional.ofNullable(getCoapPublishCommand(COAP, defaultHostname, creds)).ifPresent(v -> commands.put(COAP, v));
-                Optional.ofNullable(getCoapPublishCommand(COAPS, defaultHostname, creds)).ifPresent(v -> commands.put(COAPS, v));
-                break;
-            case MQTT:
-                MqttDeviceProfileTransportConfiguration transportConfiguration =
-                        (MqttDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-                String topicName = transportConfiguration.getDeviceTelemetryTopic();
-                TransportPayloadType payloadType = transportConfiguration.getTransportPayloadTypeConfiguration().getTransportPayloadType();
-                String payload = (payloadType == TransportPayloadType.PROTOBUF) ? " -f protobufFileName" : " -m " + JSON_EXAMPLE_PAYLOAD;
-
-                Optional.ofNullable(getMqttPublishCommand(MQTT, defaultHostname, topicName, creds, payload)).ifPresent(v -> commands.put(MQTT, v));
-                Optional.ofNullable(getMqttPublishCommand(MQTTS, defaultHostname, topicName, creds, payload)).ifPresent(v -> commands.put(MQTTS, v));
-                break;
-            case COAP:
-                    Optional.ofNullable(getCoapPublishCommand(COAP, defaultHostname, creds)).ifPresent(v -> commands.put(COAP, v));
-                    Optional.ofNullable(getCoapPublishCommand(COAPS, defaultHostname, creds)).ifPresent(v -> commands.put(COAPS, v));
-                break;
-            default:
-                commands.put(transportType.name(), CHECK_DOCUMENTATION);
-        }
-        return commands;
     }
 
     @Override
@@ -739,44 +678,4 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return EntityType.DEVICE;
     }
 
-    private String getHttpPublishCommand(String protocol, String defaultHostname, DeviceCredentials deviceCredentials) {
-        DeviceConnectivityInfo httpProps = deviceConnectivityConfiguration.getConnectivity().get(protocol);
-        if (httpProps == null || !httpProps.getEnabled() ||
-                deviceCredentials.getCredentialsType() != DeviceCredentialsType.ACCESS_TOKEN) {
-            return null;
-        }
-        String hostName = httpProps.getHost().isEmpty() ? defaultHostname : httpProps.getHost();
-        String port = httpProps.getPort().isEmpty() ? "" : ":" + httpProps.getPort();
-        return getCurlCommand(protocol, hostName, port, deviceCredentials);
-    }
-
-    private String getMqttPublishCommand(String protocol, String defaultHostname, DeviceCredentials deviceCredentials) {
-        return getMqttPublishCommand(protocol, defaultHostname, DEFAULT_DEVICE_TELEMETRY_TOPIC, deviceCredentials, " -m " + JSON_EXAMPLE_PAYLOAD);
-    }
-
-    private String getMqttPublishCommand(String protocol, String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
-        if (MQTTS.equals(protocol) && deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
-            return CHECK_DOCUMENTATION;
-        }
-        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
-        if (properties == null || !properties.getEnabled()) {
-            return null;
-        }
-        String mqttHost = properties.getHost().isEmpty() ? defaultHostname : properties.getHost();
-        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
-        return getMosquittoPublishCommand(protocol, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials, payload);
-    }
-
-    private String getCoapPublishCommand(String protocol, String defaultHostname, DeviceCredentials deviceCredentials) {
-        if (COAPS.equals(protocol) && deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
-            return CHECK_DOCUMENTATION;
-        }
-        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
-        if (properties == null || !properties.getEnabled()) {
-            return null;
-        }
-        String hostName = properties.getHost().isEmpty() ? defaultHostname : properties.getHost();
-        String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
-        return getCoapClientCommand(protocol, hostName, port, deviceCredentials);
-    }
 }

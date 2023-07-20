@@ -93,26 +93,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.COAP;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.COAPS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTP;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
 
-@TestPropertySource(properties = {
-        "device.connectivity.https.enabled=true",
-        "device.connectivity.mqtts.enabled=true",
-        "device.connectivity.coaps.enabled=true",
-})
 @ContextConfiguration(classes = {DeviceControllerTest.Config.class})
 @DaoSqlTest
 public class DeviceControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<Device>> PAGE_DATA_DEVICE_TYPE_REF = new TypeReference<>() {
     };
-
-    private static final String DEVICE_TELEMETRY_TOPIC = "v1/devices/customTopic";
-    private static final String CHECK_DOCUMENTATION = "Check documentation";
 
     ListeningExecutorService executor;
 
@@ -121,8 +107,6 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;
-    private DeviceProfileId mqttDeviceProfileId;
-    private DeviceProfileId coapDeviceProfileId;
 
     @SpyBean
     private GatewayNotificationsService gatewayNotificationsService;
@@ -157,34 +141,6 @@ public class DeviceControllerTest extends AbstractControllerTest {
         tenantAdmin.setLastName("Downs");
 
         tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
-
-        DeviceProfile mqttProfile = new DeviceProfile();
-        mqttProfile.setName("Mqtt device profile");
-        mqttProfile.setType(DeviceProfileType.DEFAULT);
-        mqttProfile.setTransportType(DeviceTransportType.MQTT);
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
-        transportConfiguration.setDeviceTelemetryTopic(DEVICE_TELEMETRY_TOPIC);
-        deviceProfileData.setTransportConfiguration(transportConfiguration);
-        mqttProfile.setProfileData(deviceProfileData);
-        mqttProfile.setDefault(false);
-        mqttProfile.setDefaultRuleChainId(null);
-
-        mqttDeviceProfileId = doPost("/api/deviceProfile", mqttProfile, DeviceProfile.class).getId();
-
-        DeviceProfile coapProfile = new DeviceProfile();
-        coapProfile.setName("Coap device profile");
-        coapProfile.setType(DeviceProfileType.DEFAULT);
-        coapProfile.setTransportType(DeviceTransportType.COAP);
-        DeviceProfileData deviceProfileData2 = new DeviceProfileData();
-        deviceProfileData2.setConfiguration(new DefaultDeviceProfileConfiguration());
-        deviceProfileData2.setTransportConfiguration(new CoapDeviceProfileTransportConfiguration());
-        coapProfile.setProfileData(deviceProfileData);
-        coapProfile.setDefault(false);
-        coapProfile.setDefaultRuleChainId(null);
-
-        coapDeviceProfileId = doPost("/api/deviceProfile", coapProfile, DeviceProfile.class).getId();
     }
 
     @After
@@ -741,144 +697,6 @@ public class DeviceControllerTest extends AbstractControllerTest {
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
-    }
-
-    @Test
-    public void testFetchPublishTelemetryCommandsForDefaultDevice() throws Exception {
-        Device device = new Device();
-        device.setName("My device");
-        device.setType("default");
-        Device savedDevice = doPost("/api/device", device, Device.class);
-        Map<String, String> commands =
-                doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
-
-        DeviceCredentials credentials =
-                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
-
-        assertThat(commands).hasSize(6);
-        assertThat(commands.get(HTTP)).isEqualTo(String.format("curl -v -X POST http://localhost:8080/api/v1/%s/telemetry --header Content-Type:application/json --data \"{temperature:25}\"",
-                credentials.getCredentialsId()));
-        assertThat(commands.get(HTTPS)).isEqualTo(String.format("curl -v -X POST https://localhost:443/api/v1/%s/telemetry --header Content-Type:application/json --data \"{temperature:25}\"",
-                credentials.getCredentialsId()));
-        assertThat(commands.get(MQTT)).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
-                credentials.getCredentialsId()));
-        assertThat(commands.get(MQTTS)).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
-                credentials.getCredentialsId()));
-        assertThat(commands.get(COAP)).isEqualTo(String.format("coap-client -m POST coap://localhost:5683/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
-                credentials.getCredentialsId()));
-        assertThat(commands.get(COAPS)).isEqualTo(String.format("coap-client-openssl -v 9 -m POST coaps://localhost:5684/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
-                credentials.getCredentialsId()));
-    }
-
-    @Test
-    public void testFetchPublishTelemetryCommandsForMqttDeviceWithAccessToken() throws Exception {
-        Device device = new Device();
-        device.setName("My device");
-        device.setDeviceProfileId(mqttDeviceProfileId);
-
-        Device savedDevice = doPost("/api/device", device, Device.class);
-        DeviceCredentials credentials =
-                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
-
-        Map<String, String> commands =
-                doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
-        assertThat(commands).hasSize(2);
-        assertThat(commands.get(MQTT)).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s -u %s -m \"{temperature:25}\"",
-                DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
-        assertThat(commands.get(MQTTS)).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 -t %s -u %s -m \"{temperature:25}\"",
-                DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
-    }
-
-    @Test
-    public void testFetchPublishTelemetryCommandsForDeviceWithMqttBasicCreds() throws Exception {
-        Device device = new Device();
-        device.setName("My device");
-        device.setDeviceProfileId(mqttDeviceProfileId);
-
-        Device savedDevice = doPost("/api/device", device, Device.class);
-        DeviceCredentials credentials =
-                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
-        credentials.setCredentialsId(null);
-        credentials.setCredentialsType(DeviceCredentialsType.MQTT_BASIC);
-        BasicMqttCredentials basicMqttCredentials = new BasicMqttCredentials();
-        String clientId = "testClientId";
-        String userName = "testUsername";
-        String password = "testPassword";
-        basicMqttCredentials.setClientId(clientId);
-        basicMqttCredentials.setUserName(userName);
-        basicMqttCredentials.setPassword(password);
-        credentials.setCredentialsValue(JacksonUtil.toString(basicMqttCredentials));
-        doPost("/api/device/credentials", credentials)
-                .andExpect(status().isOk());
-
-        Map<String, String> commands =
-                doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
-        assertThat(commands).hasSize(2);
-        assertThat(commands.get(MQTT)).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"",
-                DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
-        assertThat(commands.get(MQTTS)).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"",
-                DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
-    }
-
-    @Test
-    public void testFetchPublishTelemetryCommandsForDeviceWithX509Creds() throws Exception {
-        Device device = new Device();
-        device.setName("My device");
-        device.setDeviceProfileId(mqttDeviceProfileId);
-
-        Device savedDevice = doPost("/api/device", device, Device.class);
-        DeviceCredentials credentials =
-                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
-        credentials.setCredentialsId(null);
-        credentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
-        credentials.setCredentialsValue("testValue");
-        doPost("/api/device/credentials", credentials)
-                .andExpect(status().isOk());
-
-        Map<String, String> commands =
-                doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
-        assertThat(commands).hasSize(1);
-        assertThat(commands.get(MQTTS)).isEqualTo(CHECK_DOCUMENTATION);
-    }
-
-    @Test
-    public void testFetchPublishTelemetryCommandsForСoapDevice() throws Exception {
-        Device device = new Device();
-        device.setName("My device");
-        device.setDeviceProfileId(coapDeviceProfileId);
-
-        Device savedDevice = doPost("/api/device", device, Device.class);
-        DeviceCredentials credentials =
-                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
-
-        Map<String, String> commands =
-                doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
-        assertThat(commands).hasSize(2);
-        assertThat(commands.get(COAP)).isEqualTo(String.format("coap-client -m POST coap://localhost:5683/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
-                credentials.getCredentialsId()));
-        assertThat(commands.get(COAPS)).isEqualTo(String.format("coap-client-openssl -v 9 -m POST coaps://localhost:5684/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
-                credentials.getCredentialsId()));
-    }
-
-    @Test
-    public void testFetchPublishTelemetryCommandsForСoapDeviceWithX509Creds() throws Exception {
-        Device device = new Device();
-        device.setName("My device");
-        device.setDeviceProfileId(coapDeviceProfileId);
-
-        Device savedDevice = doPost("/api/device", device, Device.class);
-        DeviceCredentials credentials =
-                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
-        credentials.setCredentialsId(null);
-        credentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
-        credentials.setCredentialsValue("testValue");
-        doPost("/api/device/credentials", credentials)
-                .andExpect(status().isOk());
-
-        Map<String, String> commands =
-                doGetTyped("/api/device/" + savedDevice.getId().getId() + "/commands",  new TypeReference<>() {});
-        assertThat(commands).hasSize(1);
-        assertThat(commands.get(COAPS)).isEqualTo(CHECK_DOCUMENTATION);
     }
 
     @Test

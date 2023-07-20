@@ -24,9 +24,13 @@ public class DeviceConnectivityUtil {
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
     public static final String MQTT = "mqtt";
+    public static final String LINUX = "linux";
+    public static final String WINDOWS = "windows";
+    public static final String DOCKER = "docker";
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
+    public static final String MQTT_SSL_PEM_FILE_NAME = "tb-server-chain.pem";
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
 
@@ -35,10 +39,10 @@ public class DeviceConnectivityUtil {
                 protocol, host, port, deviceCredentials.getCredentialsId());
     }
 
-    public static String getMosquittoPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials, String payload) {
+    public static String getMosquittoPubPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
         StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1");
         if (MQTTS.equals(protocol)) {
-            command.append(" --cafile tb-server-chain.pem");
+            command.append(" --cafile pathToFile/" + MQTT_SSL_PEM_FILE_NAME);
         }
         command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
         command.append(" -t ").append(deviceTelemetryTopic);
@@ -67,14 +71,54 @@ public class DeviceConnectivityUtil {
             default:
                 return null;
         }
-        command.append(payload);
+        command.append(" -m " + JSON_EXAMPLE_PAYLOAD);
+        return command.toString();
+    }
+
+    public static String getDockerMosquittoClientsPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
+        StringBuilder command = new StringBuilder("docker run");
+        if (MQTTS.equals(protocol)) {
+            command.append(" --volume pathToFile/" + MQTT_SSL_PEM_FILE_NAME + ":/tmp/" + MQTT_SSL_PEM_FILE_NAME);
+        }
+        command.append(" -it --rm thingsboard/mosquitto-clients pub");
+        if (MQTTS.equals(protocol)) {
+            command.append(" --cafile tmp/" + MQTT_SSL_PEM_FILE_NAME);
+        }
+        command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
+        command.append(" -t ").append(deviceTelemetryTopic);
+
+        switch (deviceCredentials.getCredentialsType()) {
+            case ACCESS_TOKEN:
+                command.append(" -u ").append(deviceCredentials.getCredentialsId());
+                break;
+            case MQTT_BASIC:
+                BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
+                        BasicMqttCredentials.class);
+                if (credentials != null) {
+                    if (credentials.getClientId() != null) {
+                        command.append(" -i ").append(credentials.getClientId());
+                    }
+                    if (credentials.getUserName() != null) {
+                        command.append(" -u ").append(credentials.getUserName());
+                    }
+                    if (credentials.getPassword() != null) {
+                        command.append(" -P ").append(credentials.getPassword());
+                    }
+                } else {
+                    return null;
+                }
+                break;
+            default:
+                return null;
+        }
+        command.append(" -m " + JSON_EXAMPLE_PAYLOAD);
         return command.toString();
     }
 
     public static String getCoapClientCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                String client = COAPS.equals(protocol) ? "coap-client-openssl -v 9" : "coap-client";
+                String client = COAPS.equals(protocol) ? "coap-client-openssl" : "coap-client";
                 return String.format("%s -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
                         client, protocol, host, port, deviceCredentials.getCredentialsId(), JSON_EXAMPLE_PAYLOAD);
             default:
