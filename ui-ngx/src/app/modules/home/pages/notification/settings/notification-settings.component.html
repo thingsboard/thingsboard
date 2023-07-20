@@ -62,7 +62,10 @@
             </div>
             <mat-divider></mat-divider>
             <div *ngFor="let settingsControl of notificationSettingsFormArray.controls; let i = index; let $last = last;">
-              <tb-notification-setting-form [formControl]="settingsControl" [allowDeliveryMethods]="allowNotificationDeliveryMethods"></tb-notification-setting-form>
+              <tb-notification-setting-form [formControl]="settingsControl"
+                                            [deliveryMethods]="notificationDeliveryMethods"
+                                            [allowDeliveryMethods]="allowNotificationDeliveryMethods">
+              </tb-notification-setting-form>
               <mat-divider *ngIf="!$last"></mat-divider>
             </div>
           </div>

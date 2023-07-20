@@ -20,7 +20,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subscription } from 'rxjs';
 import {
-  NotificationDeliveryMethod, NotificationSettingsDeliveryMethod,
+  NotificationDeliveryMethod,
   NotificationTemplateTypeTranslateMap,
   NotificationUserSetting
 } from '@shared/models/notification.models';
@@ -43,12 +43,13 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   disabled: boolean;
 
   @Input()
-  allowDeliveryMethods = [];
+  deliveryMethods: NotificationDeliveryMethod[] = [];
+
+  @Input()
+  allowDeliveryMethods: NotificationDeliveryMethod[] = [];
 
   notificationSettingsFormGroup: UntypedFormGroup;
 
-  notificationDeliveryMethod = NotificationSettingsDeliveryMethod;
-  notificationDeliveryMethodMap = Object.values(NotificationSettingsDeliveryMethod);
   notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
 
   private propagateChange = null;
@@ -68,7 +69,7 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
 
   ngOnInit() {
     const deliveryMethod = {};
-    this.notificationDeliveryMethodMap.forEach(value => {
+    this.deliveryMethods.forEach(value => {
       deliveryMethod[value] = true;
     });
     this.notificationSettingsFormGroup = this.fb.group(

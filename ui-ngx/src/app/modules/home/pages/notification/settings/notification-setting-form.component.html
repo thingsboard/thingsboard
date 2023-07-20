@@ -27,7 +27,7 @@
         </span>
       </mat-checkbox>
     </div>
-    <div fxFlex fxLayout="row" *ngFor="let deliveryMethods of notificationDeliveryMethodMap">
+    <div fxFlex fxLayout="row" *ngFor="let deliveryMethods of deliveryMethods">
       <div fxFlex fxLayoutAlign="start center">
         <mat-checkbox color="primary"
                       [disabled]="!allowDeliveryMethods?.includes(deliveryMethods) || !notificationSettingsFormGroup.get('enabled').value"

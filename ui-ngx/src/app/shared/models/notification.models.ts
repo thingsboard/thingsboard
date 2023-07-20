@@ -598,9 +598,3 @@ export interface NotificationUserSetting {
   enabled: boolean;
   enabledDeliveryMethods: {[key: string]: boolean};
 }
-
-export enum NotificationSettingsDeliveryMethod {
-  WEB = 'WEB',
-  SMS = 'SMS',
-  EMAIL = 'EMAIL'
-}

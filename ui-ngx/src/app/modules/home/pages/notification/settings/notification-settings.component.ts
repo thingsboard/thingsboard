@@ -25,7 +25,7 @@ import { ActivatedRoute } from '@angular/router';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import {
   NotificationDeliveryMethod,
-  NotificationDeliveryMethodTranslateMap, NotificationSettingsDeliveryMethod,
+  NotificationDeliveryMethodTranslateMap,
   NotificationUserSettings
 } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
@@ -40,7 +40,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
 
   notificationSettings: UntypedFormGroup;
 
-  notificationDeliveryMethods = Object.values(NotificationSettingsDeliveryMethod);
+  notificationDeliveryMethods: NotificationDeliveryMethod[];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
 
   allowNotificationDeliveryMethods: Array<NotificationDeliveryMethod>;
@@ -55,6 +55,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
   }
 
   ngOnInit() {
+    this.notificationDeliveryMethods = this.getNotificationDeliveryMethods();
 
     this.notificationService.getAvailableDeliveryMethods({ignoreLoading: true}).subscribe(allowMethods => {
       this.allowNotificationDeliveryMethods = allowMethods;
@@ -62,6 +63,15 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
 
     this.buildNotificationSettingsForm();
     this.patchNotificationSettings(this.route.snapshot.data.userSettings);
+  }
+
+  private getNotificationDeliveryMethods(): NotificationDeliveryMethod[] {
+    const deliveryMethods = new Set([
+      NotificationDeliveryMethod.WEB,
+      NotificationDeliveryMethod.SMS,
+      NotificationDeliveryMethod.EMAIL
+    ]);
+    return Object.values(NotificationDeliveryMethod).filter(type => deliveryMethods.has(type));
   }
 
   private buildNotificationSettingsForm() {
@@ -77,8 +87,8 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
       preparedSettings = this.prepareNotificationSettings(settings.prefs);
       preparedSettings.forEach((setting) => {
         setting.enabledDeliveryMethods = Object.assign(
-          setting.enabledDeliveryMethods,
-          this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {})
+          this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {}),
+          setting.enabledDeliveryMethods
         );
         notificationSettingsControls.push(this.fb.control(setting, [Validators.required]));
       });
