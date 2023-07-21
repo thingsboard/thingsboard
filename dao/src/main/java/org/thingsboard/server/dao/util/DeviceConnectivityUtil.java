@@ -19,6 +19,9 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DeviceConnectivityUtil {
 
     public static final String HTTP = "http";
@@ -42,7 +45,7 @@ public class DeviceConnectivityUtil {
     public static String getMosquittoPubPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
         StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1");
         if (MQTTS.equals(protocol)) {
-            command.append(" --cafile pathToFile/" + MQTT_SSL_PEM_FILE_NAME);
+            command.append(" --cafile tmp/" + MQTT_SSL_PEM_FILE_NAME);
         }
         command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
         command.append(" -t ").append(deviceTelemetryTopic);
@@ -75,12 +78,12 @@ public class DeviceConnectivityUtil {
         return command.toString();
     }
 
-    public static String getDockerMosquittoClientsPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
-        StringBuilder command = new StringBuilder("docker run");
+    public static String getDockerMosquittoClientsPublishCommand(String protocol, String baseUrl, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
+        StringBuilder command = new StringBuilder("docker run -it --rm thingsboard/mosquitto-clients ");
         if (MQTTS.equals(protocol)) {
-            command.append(" --volume pathToFile/" + MQTT_SSL_PEM_FILE_NAME + ":/tmp/" + MQTT_SSL_PEM_FILE_NAME);
+            command.append("/bin/sh -c \"curl -o /tmp/tb-server-chain.pem ").append(baseUrl).append("/api/device-connectivity/mqtts/certificate/download && ");
         }
-        command.append(" -it --rm thingsboard/mosquitto-clients pub");
+        command.append("pub");
         if (MQTTS.equals(protocol)) {
             command.append(" --cafile tmp/" + MQTT_SSL_PEM_FILE_NAME);
         }
@@ -112,6 +115,9 @@ public class DeviceConnectivityUtil {
                 return null;
         }
         command.append(" -m " + JSON_EXAMPLE_PAYLOAD);
+        if (MQTTS.equals(protocol)) {
+            command.append("\"");
+        }
         return command.toString();
     }
 

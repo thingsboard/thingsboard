@@ -89,7 +89,6 @@ public class DeviceConnectivityController extends BaseController {
     }
 
     @ApiOperation(value = "Download mqtt ssl certificate using file path defined in device.connectivity properties (downloadMqttServerCertificate)", notes = "Download Mqtt server certificate." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/device-connectivity/{protocol}/certificate/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadMqttServerCertificate(@ApiParam(value = PROTOCOL_PARAM_DESCRIPTION)
