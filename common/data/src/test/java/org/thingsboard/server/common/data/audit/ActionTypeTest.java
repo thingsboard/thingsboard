@@ -56,6 +56,8 @@ class ActionTypeTest {
         for (var type : types) {
             if (typesWithNullRuleEngineMsgType.contains(type)) {
                 assertThat(type.getRuleEngineMsgType()).isEmpty();
+            } else {
+                assertThat(type.getRuleEngineMsgType()).isPresent();
             }
         }
     }

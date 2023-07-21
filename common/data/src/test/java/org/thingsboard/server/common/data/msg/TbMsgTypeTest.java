@@ -62,6 +62,8 @@ class TbMsgTypeTest {
         for (var type : tbMsgTypes) {
             if (typesWithNullRuleNodeConnection.contains(type)) {
                 assertThat(type.getRuleNodeConnection()).isNull();
+            } else {
+                assertThat(type.getRuleNodeConnection()).isNotNull();
             }
         }
     }
