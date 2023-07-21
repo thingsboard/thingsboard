@@ -213,11 +213,11 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 credentials.getCredentialsId()));
 
 
-        JsonNode linuxMqttCommands = commands.get(MQTT);
-        assertThat(linuxMqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t v1/devices/me/telemetry " +
+        JsonNode mqttCommands = commands.get(MQTT);
+        assertThat(mqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t v1/devices/me/telemetry " +
                         "-u %s -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
-        assertThat(linuxMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile pathToFile/tb-server-chain.pem -h localhost -p 8883 " +
+        assertThat(mqttCommands.get(MQTTS).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile pathToFile/tb-server-chain.pem -h localhost -p 8883 " +
                         "-t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
 
@@ -331,7 +331,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 doGetTyped("/api/device-connectivity/" + savedDevice.getId().getId(),  new TypeReference<>() {});
         assertThat(commands).hasSize(1);
         assertThat(commands.get(MQTT).get(MQTTS).asText()).isEqualTo(CHECK_DOCUMENTATION);
-        assertThat(commands.get(MQTT).get(DOCKER).get(MQTTS).asText()).isEqualTo(CHECK_DOCUMENTATION);
+        assertThat(commands.get(MQTT).get(DOCKER)).isNull();
     }
 
     @Test
