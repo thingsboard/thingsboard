@@ -122,16 +122,6 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
 
   writeValue(value: EntityId | null): void {
     if (value != null) {
-      if (value.id === NULL_UUID) {
-        value.id = null;
-      }
-      if (value.entityType === AliasEntityType.CURRENT_TENANT
-        || value.entityType === AliasEntityType.CURRENT_USER
-        || value.entityType === AliasEntityType.CURRENT_USER_OWNER) {
-        value.id = NULL_UUID;
-      } else if (value.entityType === AliasEntityType.CURRENT_CUSTOMER && !value.id) {
-        this.modelValue.id = NULL_UUID;
-      }
       this.modelValue = value;
       this.entitySelectFormGroup.get('entityType').patchValue(value.entityType, {emitEvent: false});
       this.entitySelectFormGroup.get('entityId').patchValue(value, {emitEvent: false});
@@ -155,8 +145,6 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
       if (this.modelValue.entityType === AliasEntityType.CURRENT_TENANT
         || this.modelValue.entityType === AliasEntityType.CURRENT_USER
         || this.modelValue.entityType === AliasEntityType.CURRENT_USER_OWNER) {
-        this.modelValue.id = NULL_UUID;
-      } else if (this.modelValue.entityType === AliasEntityType.CURRENT_CUSTOMER && !this.modelValue.id) {
         this.modelValue.id = NULL_UUID;
       }
 
