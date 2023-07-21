@@ -1221,8 +1221,7 @@
         "device-configuration": "设备配置",
         "transport-configuration": "传输配置",
         "wizard": {
-            "device-details": "设备详细信息",
-            "customer-to-assign-device": "客户分配设备"
+            "device-details": "设备详细信息"
         },
         "unassign-devices-from-edge-title": "确定要取消分配  { count, plural, =1 {1 个设备} other {# 个设备} } 吗？",
         "unassign-devices-from-edge-text": "确认后,设备将被取消分配，边缘将无法访问。"

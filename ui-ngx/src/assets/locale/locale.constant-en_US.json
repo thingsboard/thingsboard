@@ -1375,8 +1375,7 @@
         "device-configuration": "Device configuration",
         "transport-configuration": "Transport configuration",
         "wizard": {
-            "device-details": "Device details",
-            "customer-to-assign-device": "Customer to assign the device"
+            "device-details": "Device details"
         },
         "unassign-devices-from-edge-title": "Are you sure you want to unassign { count, plural, =1 {1 device} other {# devices} }?",
         "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge."

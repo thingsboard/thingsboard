@@ -1325,8 +1325,7 @@
         "device-configuration": "Configuración del dispositivo",
         "transport-configuration": "Configuración del transporte",
         "wizard": {
-            "device-details": "Detalles del dispositivo",
-            "customer-to-assign-device": "Cliente al que asignar el dispositivo"
+            "device-details": "Detalles del dispositivo"
         },
         "unassign-devices-from-edge-title": "¿Está seguro de que desea desasignar {count, plural, =1 {1 dispositivo} other {# dispositivos} }?",
         "unassign-devices-from-edge-text": "Después de la confirmación, todos los dispositivos seleccionados quedarán sin asignar y el Edge no podrá acceder a ellos."

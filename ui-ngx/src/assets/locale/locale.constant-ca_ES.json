@@ -1376,8 +1376,7 @@
         "device-configuration": "Configuració del dispositiu",
         "transport-configuration": "Configuració del transport",
         "wizard": {
-            "device-details": "Detalls del dispositiu",
-            "customer-to-assign-device": "Client al que assignar el dispositiu"
+            "device-details": "Detalls del dispositiu"
         },
         "unassign-devices-from-edge-title": "Està segur de que desitja desassignar {count, plural, =1 {1 dispositivo} other {# dispositivos} }?",
         "unassign-devices-from-edge-text": "Després de la confirmació, tots els dispositius seleccionats quedaran sense assignar i la vora no podrà accedir a ells."
