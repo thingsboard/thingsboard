@@ -96,7 +96,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_DEVICE_ID = "Incorrect deviceId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
-    public static final String DEFAULT_DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
 
     @Autowired
     private DeviceDao deviceDao;
