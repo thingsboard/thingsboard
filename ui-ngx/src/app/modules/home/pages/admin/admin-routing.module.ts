@@ -319,8 +319,7 @@ const routes: Routes = [
           title: 'admin.2fa.2fa',
           breadcrumb: {
             label: 'admin.2fa.2fa',
-            icon: 'mdi:two-factor-authentication',
-            isMdiIcon: true
+            icon: 'mdi:two-factor-authentication'
           }
         }
       },

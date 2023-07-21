@@ -4407,6 +4407,17 @@
             "ticks": "Ticks",
             "horizontal-axis": "Horizontal axis"
         },
+        "color": {
+            "color-settings": "Color settings",
+            "color-type-constant": "Constant",
+            "color-type-range": "Range",
+            "color-type-function": "Function",
+            "color": "Color",
+            "value-range": "Value range",
+            "from": "From",
+            "to": "To",
+            "color-function": "Color function"
+        },
         "dashboard-state": {
             "dashboard-state-settings": "Dashboard state settings",
             "dashboard-state": "Dashboard state id",
@@ -5216,6 +5227,16 @@
             "label-position-left": "Left",
             "label-position-top": "Top"
         },
+        "value-card": {
+            "layout": "Layout",
+            "layout-square": "Square",
+            "layout-vertical": "Vertical",
+            "layout-centered": "Centered",
+            "layout-simplified": "Simplified",
+            "layout-horizontal": "Horizontal",
+            "layout-horizontal-reversed": "Horizontal reversed",
+            "label": "Label"
+        },
         "table": {
             "common-table-settings": "Common Table Settings",
             "enable-search": "Enable search",
@@ -5290,6 +5311,7 @@
             "source-entity-attribute": "Source entity attribute"
         },
         "widget-font": {
+            "font-settings": "Font settings",
             "font-family": "Font family",
             "size": "Size",
             "relative-font-size": "Relative font size (percents)",
@@ -5303,7 +5325,8 @@
             "font-weight-bolder": "Bolder",
             "font-weight-lighter": "Lighter",
             "color": "Color",
-            "shadow-color": "Shadow color"
+            "shadow-color": "Shadow color",
+            "preview": "Preview"
         },
         "home": {
             "no-data-available": "No data available"

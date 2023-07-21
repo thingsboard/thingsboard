@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, OnInit, SkipSelf, ViewEncapsulation } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm } from '@angular/forms';
+import { FormGroupDirective, NgForm, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { Widget, WidgetConfigMode, widgetTypesData } from '@shared/models/widget.models';
@@ -41,7 +41,8 @@ export interface AddWidgetDialogData {
   selector: 'tb-add-widget-dialog',
   templateUrl: './add-widget-dialog.component.html',
   providers: [/*{provide: ErrorStateMatcher, useExisting: AddWidgetDialogComponent}*/],
-  styleUrls: []
+  styleUrls: ['./add-widget-dialog.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogComponent, Widget>
   implements OnInit, ErrorStateMatcher {

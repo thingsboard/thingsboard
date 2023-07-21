@@ -45,6 +45,12 @@ export class WidgetPreviewComponent extends PageComponent implements OnInit, OnC
   @Input()
   widgetConfig: WidgetConfig;
 
+  @Input()
+  previewWidth = '100%';
+
+  @Input()
+  previewHeight = '70%';
+
   widgets: Widget[];
 
   constructor(protected store: Store<AppState>) {
