@@ -106,6 +106,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
     @Before
     public void setupEdgeTest() throws Exception {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
+        loginTenantAdmin();
     }
 
     @After
