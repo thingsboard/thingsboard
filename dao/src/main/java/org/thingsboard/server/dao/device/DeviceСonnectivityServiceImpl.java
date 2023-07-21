@@ -85,22 +85,27 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
         ObjectNode commands = JacksonUtil.newObjectNode();
         switch (transportType) {
             case DEFAULT:
-                commands.set(HTTP, getHttpTransportPublishCommands(defaultHostname, creds));
-                commands.set(MQTT, getMqttTransportPublishCommands(defaultHostname, creds));
-                commands.set(COAP, getCoapTransportPublishCommands(defaultHostname, creds));
+                Optional.ofNullable(getHttpTransportPublishCommands(defaultHostname, creds))
+                        .ifPresent(v -> commands.set(HTTP, v));
+                Optional.ofNullable(getMqttTransportPublishCommands(defaultHostname, creds))
+                        .ifPresent(v -> commands.set(MQTT, v));
+                Optional.ofNullable(getCoapTransportPublishCommands(defaultHostname, creds))
+                        .ifPresent(v -> commands.set(COAP, v));
                 break;
             case MQTT:
                 MqttDeviceProfileTransportConfiguration transportConfiguration =
                         (MqttDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
                 String topicName = transportConfiguration.getDeviceTelemetryTopic();
 
-                commands.set(MQTT, getMqttTransportPublishCommands(defaultHostname, topicName, creds));
+                Optional.ofNullable(getMqttTransportPublishCommands(defaultHostname, topicName, creds))
+                        .ifPresent(v -> commands.set(MQTT, v));
                 break;
             case COAP:
-                commands.set(COAP, getCoapTransportPublishCommands(defaultHostname, creds));
+                Optional.ofNullable(getCoapTransportPublishCommands(defaultHostname, creds))
+                        .ifPresent(v -> commands.set(COAP, v));
                 break;
             default:
-                commands.set(transportType.name(), JacksonUtil.toJsonNode(CHECK_DOCUMENTATION));
+                commands.put(transportType.name(), CHECK_DOCUMENTATION);
         }
         return commands;
     }
@@ -123,7 +128,7 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
                 .ifPresent(v -> httpCommands.put(HTTP, v));
         Optional.ofNullable(getHttpPublishCommand(HTTPS, defaultHostname, deviceCredentials))
                 .ifPresent(v -> httpCommands.put(HTTPS, v));
-        return httpCommands;
+        return httpCommands.isEmpty() ? null : httpCommands;
     }
 
     private String getHttpPublishCommand(String protocol, String defaultHostname, DeviceCredentials deviceCredentials) {
@@ -145,32 +150,22 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
     private JsonNode getMqttTransportPublishCommands(String defaultHostname, String topic, DeviceCredentials deviceCredentials) {
         ObjectNode mqttCommands = JacksonUtil.newObjectNode();
 
-        ObjectNode linuxMqttCommands = JacksonUtil.newObjectNode();
-        Optional.ofNullable(getMqttPublishCommand(LINUX, MQTT, defaultHostname, topic, deviceCredentials))
-                .ifPresent(v -> linuxMqttCommands.put(MQTT, v));
-        Optional.ofNullable(getMqttPublishCommand(LINUX, MQTTS, defaultHostname, topic, deviceCredentials))
-                .ifPresent(v -> linuxMqttCommands.put(MQTTS, v));
-
-        ObjectNode windowsMqttCommands = JacksonUtil.newObjectNode();
-        Optional.ofNullable(getMqttPublishCommand(WINDOWS, MQTT, defaultHostname, topic, deviceCredentials))
-                .ifPresent(v -> windowsMqttCommands.put(MQTT, v));
-        Optional.ofNullable(getMqttPublishCommand(WINDOWS, MQTTS, defaultHostname, topic, deviceCredentials))
-                .ifPresent(v -> windowsMqttCommands.put(MQTTS, v));
+        Optional.ofNullable(getMqttPublishCommand(MQTT, defaultHostname, topic, deviceCredentials))
+                .ifPresent(v -> mqttCommands.put(MQTT, v));
+        Optional.ofNullable(getMqttPublishCommand(MQTTS, defaultHostname, topic, deviceCredentials))
+                .ifPresent(v -> mqttCommands.put(MQTTS, v));
 
         ObjectNode dockerMqttCommands = JacksonUtil.newObjectNode();
-        Optional.ofNullable(getMqttPublishCommand(DOCKER, MQTT, defaultHostname, topic, deviceCredentials))
+        Optional.ofNullable(getDockerMqttPublishCommand(MQTT, defaultHostname, topic, deviceCredentials))
                 .ifPresent(v -> dockerMqttCommands.put(MQTT, v));
-        Optional.ofNullable(getMqttPublishCommand(DOCKER, MQTTS, defaultHostname, topic, deviceCredentials))
+        Optional.ofNullable(getDockerMqttPublishCommand(MQTTS, defaultHostname, topic, deviceCredentials))
                 .ifPresent(v -> dockerMqttCommands.put(MQTTS, v));
 
-        mqttCommands.set(LINUX, linuxMqttCommands);
-        mqttCommands.set(WINDOWS, windowsMqttCommands);
         mqttCommands.set(DOCKER, dockerMqttCommands);
-
-        return mqttCommands;
+        return mqttCommands.isEmpty() ? null : mqttCommands;
     }
 
-    private String getMqttPublishCommand(String os, String protocol, String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
+    private String getMqttPublishCommand(String protocol, String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
         if (MQTTS.equals(protocol) && deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
             return CHECK_DOCUMENTATION;
         }
@@ -180,29 +175,31 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
         }
         String mqttHost = properties.getHost().isEmpty() ? defaultHostname : properties.getHost();
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
-        switch (os) {
-            case LINUX:
-                return getMosquittoPubPublishCommand(protocol, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
-            case WINDOWS:
-                return getMosquittoPubPublishCommand(protocol, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
-            case DOCKER:
-                return getDockerMosquittoClientsPublishCommand(protocol, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
-            default:
-                throw new IllegalArgumentException("Unsupported operating system: " + os);
+        return getMosquittoPubPublishCommand(protocol, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
+    }
+
+    private String getDockerMqttPublishCommand(String protocol, String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
+        if (MQTTS.equals(protocol) && deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
+            return CHECK_DOCUMENTATION;
         }
+        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
+        if (properties == null || !properties.getEnabled()) {
+            return null;
+        }
+        String mqttHost = properties.getHost().isEmpty() ? defaultHostname : properties.getHost();
+        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+        return getDockerMosquittoClientsPublishCommand(protocol, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
     }
 
     private JsonNode getCoapTransportPublishCommands(String defaultHostname, DeviceCredentials deviceCredentials) {
         ObjectNode coapCommands = JacksonUtil.newObjectNode();
 
-        ObjectNode linuxCoapCommands = JacksonUtil.newObjectNode();
         Optional.ofNullable(getCoapPublishCommand(LINUX, COAP, defaultHostname, deviceCredentials))
-                .ifPresent(v -> linuxCoapCommands.put(COAP, v));
+                .ifPresent(v -> coapCommands.put(COAP, v));
         Optional.ofNullable(getCoapPublishCommand(LINUX, COAPS, defaultHostname, deviceCredentials))
-                .ifPresent(v -> linuxCoapCommands.put(COAPS, v));
+                .ifPresent(v -> coapCommands.put(COAPS, v));
 
-        coapCommands.set(LINUX, linuxCoapCommands);
-        return coapCommands;
+        return coapCommands.isEmpty() ? null : coapCommands;
     }
 
     private String getCoapPublishCommand(String os, String protocol, String defaultHostname, DeviceCredentials deviceCredentials) {
