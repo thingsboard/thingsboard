@@ -161,7 +161,9 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
         Optional.ofNullable(getDockerMqttPublishCommand(MQTTS, defaultHostname, topic, deviceCredentials))
                 .ifPresent(v -> dockerMqttCommands.put(MQTTS, v));
 
-        mqttCommands.set(DOCKER, dockerMqttCommands);
+        if (!dockerMqttCommands.isEmpty()) {
+            mqttCommands.set(DOCKER, dockerMqttCommands);
+        }
         return mqttCommands.isEmpty() ? null : mqttCommands;
     }
 
@@ -179,9 +181,6 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
     }
 
     private String getDockerMqttPublishCommand(String protocol, String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
-        if (MQTTS.equals(protocol) && deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
-            return CHECK_DOCUMENTATION;
-        }
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
         if (properties == null || !properties.getEnabled()) {
             return null;
