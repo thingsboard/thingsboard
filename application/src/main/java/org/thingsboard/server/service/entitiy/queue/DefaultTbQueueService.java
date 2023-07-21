@@ -17,6 +17,7 @@ package org.thingsboard.server.service.entitiy.queue;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -44,12 +45,14 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 @AllArgsConstructor
 public class DefaultTbQueueService extends AbstractTbEntityService implements TbQueueService {
-    private static final long DELETE_DELAY = 30;
 
     private final QueueService queueService;
     private final TbClusterService tbClusterService;
     private final TbQueueAdmin tbQueueAdmin;
     private final SchedulerComponent scheduler;
+
+    @Value("${queue.rule-engine.topic_deletion_delay:60}")
+    private int topicDeletionDelay;
 
     @Override
     public Queue saveQueue(Queue queue) {
@@ -119,10 +122,9 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
                     for (int i = currentPartitions; i < oldPartitions; i++) {
                         String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
                         log.info("Removed partition [{}]", fullTopicName);
-                        tbQueueAdmin.deleteTopic(
-                                fullTopicName);
+                        tbQueueAdmin.deleteTopic(fullTopicName);
                     }
-                }, DELETE_DELAY, TimeUnit.SECONDS);
+                }, topicDeletionDelay, TimeUnit.SECONDS);
             }
         } else if (!oldQueue.equals(queue)) {
             tbClusterService.onQueueChange(queue);
@@ -144,7 +146,7 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
                     log.error("Failed to delete queue [{}]", fullTopicName);
                 }
             }
-        }, DELETE_DELAY, TimeUnit.SECONDS);
+        }, topicDeletionDelay, TimeUnit.SECONDS);
 
         notificationEntityService.notifySendMsgToEdgeService(queue.getTenantId(), queue.getId(), EdgeEventActionType.DELETED);
     }
