@@ -84,6 +84,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+
 @ContextConfiguration(classes = {DeviceControllerTest.Config.class})
 @DaoSqlTest
 public class DeviceControllerTest extends AbstractControllerTest {

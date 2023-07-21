@@ -134,7 +134,6 @@ public class DeviceController extends BaseController {
 
     private final TbDeviceService tbDeviceService;
 
-
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
                     "If the user has the authority of 'TENANT_ADMIN', the server checks that the device is owned by the same tenant. " +

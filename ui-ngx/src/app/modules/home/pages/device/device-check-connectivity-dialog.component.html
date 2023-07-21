@@ -144,8 +144,8 @@
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
-                              noSecLabel: 'MQTT', noSec: this.commands.mqtt.mqtt,
-                              secLabel: 'MQTTs', sec: this.commands.mqtt.mqtts,
+                              noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
+                              secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
                               doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
                   </ng-container>
                 </div>
@@ -165,8 +165,8 @@
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
-                              noSecLabel: 'MQTT', noSec: this.commands.mqtt.mqtt,
-                              secLabel: 'MQTTs', sec: this.commands.mqtt.mqtts,
+                              noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
+                              secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
                               doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
                   </ng-container>
                 </div>
@@ -186,14 +186,14 @@
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
-                              noSecLabel: 'MQTT', noSec: this.commands.mqtt.mqtt,
-                              secLabel: 'MQTTs', sec: this.commands.mqtt.mqtts,
+                              noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
+                              secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
                               doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
                   </ng-container>
                 </div>
               </ng-template>
             </mat-tab>
-            <mat-tab *ngIf="!!this.commands.mqtt.docker">
+            <mat-tab *ngIf="!!commands.mqtt.docker">
               <ng-template mat-tab-label>
                 <mat-icon class="tabs-icon" svgIcon="docker"></mat-icon>
                 Docker
@@ -202,8 +202,8 @@
                 <div class="tb-form-panel no-padding no-border tb-tab-body">
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
-                              noSecLabel: 'MQTT', noSec: this.commands.mqtt.docker.mqtt,
-                              secLabel: 'MQTTs', sec: this.commands.mqtt.docker.mqtts,
+                              noSecLabel: 'MQTT', noSec: commands.mqtt.docker.mqtt,
+                              secLabel: 'MQTTs', sec: commands.mqtt.docker.mqtts,
                               doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
                   </ng-container>
                 </div>
@@ -228,8 +228,8 @@
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
-                              noSecLabel: 'CoAP', noSec: this.commands.coap.coap,
-                              secLabel: 'CoAPs', sec: this.commands.coap.coaps,
+                              noSecLabel: 'CoAP', noSec: commands.coap.coap,
+                              secLabel: 'CoAPs', sec: commands.coap.coaps,
                               doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/'}}}">
                   </ng-container>
                 </div>
@@ -249,14 +249,14 @@
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
-                              noSecLabel: 'CoAP', noSec: this.commands.coap.coap,
-                              secLabel: 'CoAPs', sec: this.commands.coap.coaps,
+                              noSecLabel: 'CoAP', noSec: commands.coap.coap,
+                              secLabel: 'CoAPs', sec: commands.coap.coaps,
                               doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/'}}}">
                   </ng-container>
                 </div>
               </ng-template>
             </mat-tab>
-            <mat-tab *ngIf="!!this.commands.coap.docker">
+            <mat-tab *ngIf="!!commands.coap.docker">
               <ng-template mat-tab-label>
                 <mat-icon class="tabs-icon" svgIcon="docker"></mat-icon>
                 Docker
@@ -265,8 +265,8 @@
                 <div class="tb-form-panel no-padding no-border tb-tab-body">
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
-                              noSecLabel: 'CoAP', noSec: this.commands.coap.docker.coap,
-                              secLabel: 'CoAPs', sec: this.commands.coap.docker.coaps,
+                              noSecLabel: 'CoAP', noSec: commands.coap.docker.coap,
+                              secLabel: 'CoAPs', sec: commands.coap.docker.coaps,
                               doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/'}}}">
                   </ng-container>
                 </div>

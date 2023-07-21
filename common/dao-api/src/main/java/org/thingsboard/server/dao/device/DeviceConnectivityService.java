@@ -20,7 +20,6 @@ import org.thingsboard.server.common.data.Device;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Map;
 
 public interface DeviceConnectivityService {
 
