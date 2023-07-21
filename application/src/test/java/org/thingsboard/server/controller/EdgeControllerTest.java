@@ -859,17 +859,19 @@ public class EdgeControllerTest extends AbstractControllerTest {
         verifyFetchersMsgs(edgeImitator);
         // verify queue msgs
         Assert.assertTrue(findRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, "Edge Root Rule Chain"));
-        verifyDeviceProfileMsg(edgeImitator.getDownlinkMsgs().get(16), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default");
-        verifyDeviceMsg(edgeImitator.getDownlinkMsgs().get(17), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1");
-        verifyAssetProfileMsg(edgeImitator.getDownlinkMsgs().get(18), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test");
-        verifyAssetProfileMsg(edgeImitator.getDownlinkMsgs().get(19), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test");
-        verifyAssetMsg(edgeImitator.getDownlinkMsgs().get(20), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1");
+        Assert.assertTrue(findDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(findDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
+        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(findAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
+        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
 
         edgeImitator.expectMessageAmount(15);
         doPost("/api/edge/sync/" + edge.getId());
         assertThat(edgeImitator.waitForMessages()).as("await for messages after edge sync rest api call").isTrue();
 
         verifyFetchersMsgs(edgeImitator);
+        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
 
         edgeImitator.allowIgnoredTypes();
         try {
@@ -886,27 +888,35 @@ public class EdgeControllerTest extends AbstractControllerTest {
     }
 
     private void verifyFetchersMsgs(EdgeImitator edgeImitator) {
-        verifyQueueMsg(edgeImitator.getDownlinkMsgs().get(0), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Main");
+        Assert.assertTrue(findAndVerifyQueueMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Main"));
         Assert.assertTrue(findRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
-        verifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs().get(2), "mail", true);
-        verifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs().get(3), "mail", false);
-        verifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs().get(4), "mailTemplates", true);
-        verifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs().get(5), "mailTemplates", false);
-        verifyDeviceProfileMsg(edgeImitator.getDownlinkMsgs().get(6), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default");
-        verifyAssetProfileMsg(edgeImitator.getDownlinkMsgs().get(7), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default");
-        verifyAssetProfileMsg(edgeImitator.getDownlinkMsgs().get(8), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test");
-        verifyUserMsg(edgeImitator.getDownlinkMsgs().get(9), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, TENANT_ADMIN_EMAIL, Authority.TENANT_ADMIN);
-        verifyCustomerMsg(edgeImitator.getDownlinkMsgs().get(10), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public");
-        verifyDeviceProfileMsg(edgeImitator.getDownlinkMsgs().get(11), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default");
-        verifyDeviceMsg(edgeImitator.getDownlinkMsgs().get(12), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1");
-        verifyAssetProfileMsg(edgeImitator.getDownlinkMsgs().get(13), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test");
-        verifyAssetMsg(edgeImitator.getDownlinkMsgs().get(14), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1");
+        Assert.assertTrue(findAndVerifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail", true));
+        Assert.assertTrue(findAndVerifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail", false));
+        Assert.assertTrue(findAndVerifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mailTemplates", true));
+        Assert.assertTrue(findAndVerifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mailTemplates", false));
+        Assert.assertTrue(findDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(findAndVerifyUserMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, TENANT_ADMIN_EMAIL, Authority.TENANT_ADMIN));
+        Assert.assertTrue(findAndVerifyCustomerMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public"));
+        Assert.assertTrue(findDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(findDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
+        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(findAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
     }
 
-    private void verifyQueueMsg(AbstractMessage message, UpdateMsgType msgType, String name) {
-        QueueUpdateMsg queueUpdateMsg = (QueueUpdateMsg) message;
-        Assert.assertEquals(msgType, queueUpdateMsg.getMsgType());
-        Assert.assertEquals(name, queueUpdateMsg.getName());
+    private boolean findAndVerifyQueueMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof QueueUpdateMsg) {
+                QueueUpdateMsg queueUpdateMsg = (QueueUpdateMsg) message;
+                if (msgType.equals(queueUpdateMsg.getMsgType())
+                        && name.equals(queueUpdateMsg.getName())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean findRuleChainMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
@@ -916,6 +926,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
                 if (msgType.equals(ruleChainUpdateMsg.getMsgType())
                         && name.equals(ruleChainUpdateMsg.getName())
                         && ruleChainUpdateMsg.getRoot()) {
+                    messages.remove(message);
                     return true;
                 }
             }
@@ -923,47 +934,103 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private void verifyAdminSettingsMsg(AbstractMessage message, String key, boolean isSystem) {
-        AdminSettingsUpdateMsg adminSettingsUpdateMsg = (AdminSettingsUpdateMsg) message;
-        Assert.assertEquals(key, adminSettingsUpdateMsg.getKey());
-        Assert.assertEquals(isSystem, adminSettingsUpdateMsg.getIsSystem());
+    private boolean findAndVerifyAdminSettingsMsg(List<AbstractMessage> messages, String key, boolean isSystem) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof AdminSettingsUpdateMsg) {
+                AdminSettingsUpdateMsg adminSettingsUpdateMsg = (AdminSettingsUpdateMsg) message;
+                if (key.equals(adminSettingsUpdateMsg.getKey())
+                        && isSystem == adminSettingsUpdateMsg.getIsSystem()) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    private void verifyDeviceProfileMsg(AbstractMessage message, UpdateMsgType msgType, String name) {
-        DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) message;
-        Assert.assertEquals(msgType, deviceProfileUpdateMsg.getMsgType());
-        Assert.assertEquals(name, deviceProfileUpdateMsg.getName());
+    private boolean findDeviceProfileMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof DeviceProfileUpdateMsg) {
+                DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) message;
+                if (msgType.equals(deviceProfileUpdateMsg.getMsgType())
+                        && name.equals(deviceProfileUpdateMsg.getName())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    private void verifyDeviceMsg(AbstractMessage message, UpdateMsgType msgType, String name) {
-        DeviceUpdateMsg deviceUpdateMsg = (DeviceUpdateMsg) message;
-        Assert.assertEquals(msgType, deviceUpdateMsg.getMsgType());
-        Assert.assertEquals(name, deviceUpdateMsg.getName());
+    private boolean findDeviceMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof DeviceUpdateMsg) {
+                DeviceUpdateMsg deviceUpdateMsg = (DeviceUpdateMsg) message;
+                if (msgType.equals(deviceUpdateMsg.getMsgType())
+                        && name.equals(deviceUpdateMsg.getName())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    private void verifyAssetProfileMsg(AbstractMessage message, UpdateMsgType msgType, String name) {
-        AssetProfileUpdateMsg assetProfileUpdateMsg = (AssetProfileUpdateMsg) message;
-        Assert.assertEquals(msgType, assetProfileUpdateMsg.getMsgType());
-        Assert.assertEquals(name, assetProfileUpdateMsg.getName());
+    private boolean findAssetProfileMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof AssetProfileUpdateMsg) {
+                AssetProfileUpdateMsg assetProfileUpdateMsg = (AssetProfileUpdateMsg) message;
+                if (msgType.equals(assetProfileUpdateMsg.getMsgType())
+                        && name.equals(assetProfileUpdateMsg.getName())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    private void verifyAssetMsg(AbstractMessage message, UpdateMsgType msgType, String name) {
-        AssetUpdateMsg assetUpdateMsg = (AssetUpdateMsg) message;
-        Assert.assertEquals(msgType, assetUpdateMsg.getMsgType());
-        Assert.assertEquals(name, assetUpdateMsg.getName());
+    private boolean findAssetMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof AssetUpdateMsg) {
+                AssetUpdateMsg assetUpdateMsg = (AssetUpdateMsg) message;
+                if (msgType.equals(assetUpdateMsg.getMsgType())
+                        && name.equals(assetUpdateMsg.getName())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    private void verifyUserMsg(AbstractMessage message, UpdateMsgType msgType, String email, Authority authority) {
-        UserUpdateMsg userUpdateMsg = (UserUpdateMsg) message;
-        Assert.assertEquals(msgType, userUpdateMsg.getMsgType());
-        Assert.assertEquals(email, userUpdateMsg.getEmail());
-        Assert.assertEquals(authority.name(), userUpdateMsg.getAuthority());
+    private boolean findAndVerifyUserMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String email, Authority authority) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof UserUpdateMsg) {
+                UserUpdateMsg userUpdateMsg = (UserUpdateMsg) message;
+                if (msgType.equals(userUpdateMsg.getMsgType())
+                        && email.equals(userUpdateMsg.getEmail())
+                        && authority.name().equals(userUpdateMsg.getAuthority())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    private void verifyCustomerMsg(AbstractMessage message, UpdateMsgType msgType, String title) {
-        CustomerUpdateMsg customerUpdateMsg = (CustomerUpdateMsg) message;
-        Assert.assertEquals(msgType, customerUpdateMsg.getMsgType());
-        Assert.assertEquals(title, customerUpdateMsg.getTitle());
+    private boolean findAndVerifyCustomerMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String title) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof CustomerUpdateMsg) {
+                CustomerUpdateMsg customerUpdateMsg = (CustomerUpdateMsg) message;
+                if (msgType.equals(customerUpdateMsg.getMsgType())
+                        && title.equals(customerUpdateMsg.getTitle())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Test
