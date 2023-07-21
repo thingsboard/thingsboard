@@ -213,17 +213,12 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 credentials.getCredentialsId()));
 
 
-        JsonNode linuxMqttCommands = commands.get(MQTT).get(LINUX);
+        JsonNode linuxMqttCommands = commands.get(MQTT);
         assertThat(linuxMqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t v1/devices/me/telemetry " +
                         "-u %s -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
         assertThat(linuxMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile pathToFile/tb-server-chain.pem -h localhost -p 8883 " +
                         "-t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
-                credentials.getCredentialsId()));
-
-        JsonNode windowsMqttCommands = commands.get(MQTT).get(WINDOWS);
-        assertThat(windowsMqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t v1/devices/me/telemetry " +
-                        "-u %s -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
 
 
@@ -235,13 +230,11 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                         "-it --rm thingsboard/mosquitto-clients pub --cafile tmp/tb-server-chain.pem -h localhost -p 8883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
 
-        JsonNode linuxCoapCommands = commands.get(COAP).get(LINUX);
+        JsonNode linuxCoapCommands = commands.get(COAP);
         assertThat(linuxCoapCommands.get(COAP).asText()).isEqualTo(String.format("coap-client -m POST coap://localhost:5683/api/v1/%s/telemetry " +
-                        "-t json -e \"{temperature:25}\"",
-                credentials.getCredentialsId()));
+                        "-t json -e \"{temperature:25}\"", credentials.getCredentialsId()));
         assertThat(linuxCoapCommands.get(COAPS).asText()).isEqualTo(String.format("coap-client-openssl -m POST coaps://localhost:5684/api/v1/%s/telemetry" +
-                        " -t json -e \"{temperature:25}\"",
-                credentials.getCredentialsId()));
+                        " -t json -e \"{temperature:25}\"", credentials.getCredentialsId()));
     }
 
     @Test
@@ -258,17 +251,12 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 doGetTyped("/api/device-connectivity/" + savedDevice.getId().getId() ,  new TypeReference<>() {});
         assertThat(commands).hasSize(1);
 
-        JsonNode linuxMqttCommands = commands.get(MQTT).get(LINUX);
+        JsonNode linuxMqttCommands = commands.get(MQTT);
         assertThat(linuxMqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s " +
                         "-u %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
         assertThat(linuxMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile pathToFile/tb-server-chain.pem -h localhost -p 8883 " +
                         "-t %s -u %s -m \"{temperature:25}\"",
-                DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
-
-        JsonNode windowsMqttCommands = commands.get(MQTT).get(WINDOWS);
-        assertThat(windowsMqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s " +
-                        "-u %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
 
 
@@ -303,24 +291,17 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         doPost("/api/device/credentials", credentials)
                 .andExpect(status().isOk());
 
-
         JsonNode commands =
                 doGetTyped("/api/device-connectivity/" + savedDevice.getId().getId() ,  new TypeReference<>() {});
         assertThat(commands).hasSize(1);
 
-        JsonNode linuxMqttCommands = commands.get(MQTT).get(LINUX);
+        JsonNode linuxMqttCommands = commands.get(MQTT);
         assertThat(linuxMqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s " +
                         "-i %s -u %s -P %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
         assertThat(linuxMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile pathToFile/tb-server-chain.pem -h localhost -p 8883 " +
                         "-t %s -i %s -u %s -P %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
-
-        JsonNode windowsMqttCommands = commands.get(MQTT).get(WINDOWS);
-        assertThat(windowsMqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s " +
-                        "-i %s -u %s -P %s -m \"{temperature:25}\"",
-                DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
-
 
         JsonNode dockerMqttCommands = commands.get(MQTT).get(DOCKER);
         assertThat(dockerMqttCommands.get(MQTT).asText()).isEqualTo(String.format("docker run -it --rm thingsboard/mosquitto-clients pub -h localhost" +
@@ -349,8 +330,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         JsonNode commands =
                 doGetTyped("/api/device-connectivity/" + savedDevice.getId().getId(),  new TypeReference<>() {});
         assertThat(commands).hasSize(1);
-        assertThat(commands.get(MQTT).get(LINUX).get(MQTTS).asText()).isEqualTo(CHECK_DOCUMENTATION);
-        assertThat(commands.get(MQTT).get(WINDOWS).get(MQTTS).asText()).isEqualTo(CHECK_DOCUMENTATION);
+        assertThat(commands.get(MQTT).get(MQTTS).asText()).isEqualTo(CHECK_DOCUMENTATION);
         assertThat(commands.get(MQTT).get(DOCKER).get(MQTTS).asText()).isEqualTo(CHECK_DOCUMENTATION);
     }
 
@@ -368,7 +348,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 doGetTyped("/api/device-connectivity/" + savedDevice.getId().getId(),  new TypeReference<>() {});
         assertThat(commands).hasSize(1);
 
-        JsonNode linuxCommands = commands.get(COAP).get(LINUX);
+        JsonNode linuxCommands = commands.get(COAP);
         assertThat(linuxCommands.get(COAP).asText()).isEqualTo(String.format("coap-client -m POST coap://localhost:5683/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
                 credentials.getCredentialsId()));
         assertThat(linuxCommands.get(COAPS).asText()).isEqualTo(String.format("coap-client-openssl -m POST coaps://localhost:5684/api/v1/%s/telemetry -t json -e \"{temperature:25}\"",
@@ -393,6 +373,6 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         JsonNode commands =
                 doGetTyped("/api/device-connectivity/" + savedDevice.getId().getId(),  new TypeReference<>() {});
         assertThat(commands).hasSize(1);
-        assertThat(commands.get(COAP).get(LINUX).get(COAPS).asText()).isEqualTo(CHECK_DOCUMENTATION);
+        assertThat(commands.get(COAP).get(COAPS).asText()).isEqualTo(CHECK_DOCUMENTATION);
     }
 }
