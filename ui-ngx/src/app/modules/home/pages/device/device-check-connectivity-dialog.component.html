@@ -59,121 +59,235 @@
         {{ deviceTransportTypeTranslationMap.get(DeviceTransportType.LWM2M) | translate }}
       </tb-toggle-option>
     </tb-toggle-header>
-    <div class="tb-form-panel stroked" [fxHide]="!allowTransportType.size">
+    <div class="tb-form-panel no-padding no-border" [fxHide]="!allowTransportType.size">
       <ng-container [ngSwitch]="transportProtocol.value">
         <ng-template [ngSwitchCase]="BasicTransportType.HTTP">
-          <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.use-following-instructions</div>
-          <div class="tb-hint-instruction">
-            <span class="content tb-form-panel-hint" translate>device.connectivity.install-curl</span>
-            <span tb-help-popup="device/install_curl"
-                  tb-help-popup-placement="bottom"
-                  trigger-style="letter-spacing:0.25px; font-size: 12px"
-                  [tb-help-popup-style]="{maxWidth: '800px'}"
-                  trigger-text="{{ 'action.see-documentation' | translate }}"></span>
-          </div>
-          <div *ngIf="commands.http">
-            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.http-command</div>
-            <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                         [data]=createMarkDownCommand(commands.http)></tb-markdown>
-          </div>
-          <div *ngIf="commands.https">
-            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.https-command</div>
-            <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                         [data]=createMarkDownCommand(commands.https)></tb-markdown>
-          </div>
+          <div class="tb-no-data-text" translate>device.connectivity.use-following-instructions</div>
+          <mat-tab-group [(selectedIndex)]="httpTabIndex">
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="windows"></mat-icon>
+                Windows
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                    <div class="tb-install-windows" translate>device.connectivity.install-curl-windows</div>
+                  </div>
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'HTTP', noSec: commands.http.http,
+                              secLabel: 'HTTPs', sec: commands.http.https,
+                              doc: {text: '', href: ''}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
+                MacOS
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                                 [data]='createMarkDownCommand("sudo apt-get install curl")'></tb-markdown>
+                  </div>
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'HTTP', noSec: commands.http.http,
+                              secLabel: 'HTTPs', sec: commands.http.https,
+                              doc: {text: '', href: ''}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
+                Linux
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                                 [data]='createMarkDownCommand("brew install curl")'></tb-markdown>
+                  </div>
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'HTTP', noSec: commands.http.http,
+                              secLabel: 'HTTPs', sec: commands.http.https,
+                              doc: {text: '', href: ''}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+          </mat-tab-group>
         </ng-template>
         <ng-template [ngSwitchCase]="DeviceTransportType.MQTT">
-          <div *ngIf="!(commands.mqtts && commands.mqtts === 'Check documentation')" class="tb-form-panel no-padding no-border">
-            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.use-following-instructions</div>
-            <div class="tb-hint-instruction">
-              <span class="content tb-form-panel-hint" translate>device.connectivity.install-mqtt-client</span>
-              <span tb-help-popup="device/install_mqtt_client"
-                    tb-help-popup-placement="bottom"
-                    trigger-style="letter-spacing:0.25px; font-size: 12px"
-                    [tb-help-popup-style]="{maxWidth: '800px'}"
-                    trigger-text="{{ 'action.see-documentation' | translate }}"></span>
-            </div>
-          </div>
-          <div *ngIf="commands.mqtt">
-            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.mqtt-command</div>
-            <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                         [data]=createMarkDownCommand(commands.mqtt)></tb-markdown>
-          </div>
-          <div *ngIf="commands.mqtts">
-            <div *ngIf="commands.mqtts !== 'Check documentation'; else mqttCertificate">
-              <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.mqtts-command</div>
-              <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                           [data]=createMarkDownCommand(commands.mqtts)></tb-markdown>
-            </div>
-            <ng-template #mqttCertificate>
-              <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.mqtts-x509-command</div>
-              <div>
-                <a mat-button color="primary" href="https://thingsboard.io/docs/user-guide/certificates/?ubuntuThingsboardX509=x509Chain" target="_blank">
-                  <span>
-                    {{ 'action.see-documentation' | translate }}
-                    <mat-icon class="tb-mat-18">open_in_new</mat-icon>
-                  </span>
-                </a>
-              </div>
-            </ng-template>
-          </div>
+          <div class="tb-no-data-text" translate>device.connectivity.use-following-instructions</div>
+          <mat-tab-group [(selectedIndex)]="mqttTabIndex">
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="windows"></mat-icon>
+                Windows
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                    <div class="tb-install-windows">Coming Soon!!!!</div>
+                  </div>
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'MQTT', noSec: this.commands.mqtt.mqtt,
+                              secLabel: 'MQTTs', sec: this.commands.mqtt.mqtts,
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
+                MacOS
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                                 [data]='createMarkDownCommand("brew install mosquitto-clients")'></tb-markdown>
+                  </div>
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'MQTT', noSec: this.commands.mqtt.mqtt,
+                              secLabel: 'MQTTs', sec: this.commands.mqtt.mqtts,
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
+                Linux
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                                 [data]='createMarkDownCommand("sudo apt-get install curl mosquitto-clients")'></tb-markdown>
+                  </div>
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'MQTT', noSec: this.commands.mqtt.mqtt,
+                              secLabel: 'MQTTs', sec: this.commands.mqtt.mqtts,
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+            <mat-tab *ngIf="!!this.commands.mqtt.docker">
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="docker"></mat-icon>
+                Docker
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'MQTT', noSec: this.commands.mqtt.docker.mqtt,
+                              secLabel: 'MQTTs', sec: this.commands.mqtt.docker.mqtts,
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+          </mat-tab-group>
         </ng-template>
         <ng-template [ngSwitchCase]="DeviceTransportType.COAP">
-          <div *ngIf="!(commands.coaps && commands.coaps === 'Check documentation')" class="tb-form-panel no-padding no-border">
-            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.use-following-instructions</div>
-            <div class="tb-hint-instruction">
-              <span class="content tb-form-panel-hint" translate>device.connectivity.install-coap-cli</span>
-              <span tb-help-popup="device/install_coap_client"
-                    tb-help-popup-placement="bottom"
-                    trigger-style="letter-spacing:0.25px; font-size: 12px"
-                    [tb-help-popup-style]="{maxWidth: '800px'}"
-                    trigger-text="{{ 'action.see-documentation' | translate }}"></span>
-            </div>
-          </div>
-          <div *ngIf="commands.coap">
-            <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.coap-command</div>
-            <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                         [data]=createMarkDownCommand(commands.coap)></tb-markdown>
-          </div>
-          <div *ngIf="commands.coaps">
-            <div *ngIf="commands.coaps !== 'Check documentation'; else coapCertificate">
-              <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.coaps-command</div>
-              <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                           [data]=createMarkDownCommand(commands.coaps)></tb-markdown>
-            </div>
-            <ng-template #coapCertificate>
-              <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.coaps-x509-command</div>
-              <div>
-                <a mat-button color="primary" href="https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/" target="_blank">
-                  <span>
-                    {{ 'action.see-documentation' | translate }}
-                    <mat-icon class="tb-mat-18">open_in_new</mat-icon>
-                  </span>
-                </a>
-              </div>
-            </ng-template>
-          </div>
+          <div class="tb-no-data-text" translate>device.connectivity.use-following-instructions</div>
+          <mat-tab-group [(selectedIndex)]="coapTabIndex">
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
+                MacOS
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                                 [data]='installCoap'></tb-markdown>
+                  </div>
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'CoAP', noSec: this.commands.coap.coap,
+                              secLabel: 'CoAPs', sec: this.commands.coap.coaps,
+                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/'}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
+                Linux
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                                 [data]='installCoap'></tb-markdown>
+                  </div>
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'CoAP', noSec: this.commands.coap.coap,
+                              secLabel: 'CoAPs', sec: this.commands.coap.coaps,
+                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/'}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+            <mat-tab *ngIf="!!this.commands.coap.docker">
+              <ng-template mat-tab-label>
+                <mat-icon class="tabs-icon" svgIcon="docker"></mat-icon>
+                Docker
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <ng-container
+                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                              noSecLabel: 'CoAP', noSec: this.commands.coap.docker.coap,
+                              secLabel: 'CoAPs', sec: this.commands.coap.docker.coaps,
+                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/'}}}">
+                  </ng-container>
+                </div>
+              </ng-template>
+            </mat-tab>
+          </mat-tab-group>
         </ng-template>
         <ng-template [ngSwitchCase]="DeviceTransportType.SNMP">
-          <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.snmp-command</div>
-          <div>
-            <a mat-button color="primary" href="https://thingsboard.io/docs/reference/snmp-api/" target="_blank">
-              <span>
-                {{ 'action.see-documentation' | translate }}
-                <mat-icon class="tb-mat-18">open_in_new</mat-icon>
-              </span>
-            </a>
+          <div class="tb-form-panel stroked">
+            <ng-container
+              *ngTemplateOutlet="seeDocumentation; context:
+                {doc: {text: 'device.connectivity.snmp-command', href: 'https://thingsboard.io/docs/reference/snmp-api/'}}">
+            </ng-container>
           </div>
         </ng-template>
         <ng-template [ngSwitchCase]="DeviceTransportType.LWM2M">
-          <div class="tb-form-panel-hint tb-font-14" translate>device.connectivity.lwm2m-command</div>
-          <div>
-            <a mat-button color="primary" href="https://thingsboard.io/docs/reference/lwm2m-api/" target="_blank">
-              <span>
-                {{ 'action.see-documentation' | translate }}
-                <mat-icon class="tb-mat-18">open_in_new</mat-icon>
-              </span>
-            </a>
+          <div class="tb-form-panel stroked">
+            <ng-container
+              *ngTemplateOutlet="seeDocumentation; context:
+                {doc: {text: 'device.connectivity.lwm2m-command', href: 'https://thingsboard.io/docs/reference/lwm2m-api/'}}">
+            </ng-container>
           </div>
         </ng-template>
       </ng-container>
@@ -222,5 +336,46 @@
   <div class="tb-no-data-available">
     <div class="tb-no-data-bg"></div>
     <div class="tb-no-data-text" translate>attribute.no-latest-telemetry</div>
+  </div>
+</ng-template>
+
+<ng-template #executeCommand let-cmd="cmd">
+  <div class="tb-form-panel stroked">
+    <div fxLayout="row" fxLayoutAlign="space-between center" [fxHide]="!(cmd.noSec || cmd.sec !== 'Check documentation')">
+      <div class="tb-form-panel-title" translate>device.connectivity.execute-following-command</div>
+      <tb-toggle-header #protocolType value="{{ cmd.noSec ? 'noSec' : 'sec'}}" name="protocolType" useSelectOnMdLg="false"
+                        [fxShow]="cmd.noSec && cmd.sec">
+        <tb-toggle-option value="noSec">{{ cmd.noSecLabel }}</tb-toggle-option>
+        <tb-toggle-option value="sec">{{ cmd.secLabel }}</tb-toggle-option>
+      </tb-toggle-header>
+    </div>
+    <ng-container [ngSwitch]="protocolType.value">
+      <ng-template [ngSwitchCase]="'noSec'">
+        <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                     [data]=createMarkDownCommand(cmd.noSec)></tb-markdown>
+      </ng-template>
+      <ng-template [ngSwitchCase]="'sec'">
+        <div *ngIf="cmd.sec !== 'Check documentation'; else checkDocumentation">
+          <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                       [data]=createMarkDownCommand(cmd.sec)></tb-markdown>
+        </div>
+        <ng-template #checkDocumentation>
+          <ng-container
+            *ngTemplateOutlet="seeDocumentation; context:
+                {doc: cmd.doc}">
+          </ng-container>
+        </ng-template>
+      </ng-template>
+    </ng-container>
+  </div>
+</ng-template>
+
+<ng-template #seeDocumentation let-doc="doc">
+  <div class="tb-form-row no-border no-padding space-between">
+    <div class="tb-font-14 tb-flex-1">{{ doc.text | translate }}</div>
+    <a mat-stroked-button color="primary" href="{{doc.href }}" target="_blank">
+      <mat-icon>description</mat-icon>
+      {{ 'common.documentation' | translate }}
+    </a>
   </div>
 </ng-template>

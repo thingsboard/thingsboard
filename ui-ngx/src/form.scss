@@ -144,6 +144,13 @@
     &.space-between {
       justify-content: space-between;
     }
+    &.no-border {
+      border: none;
+      border-radius: 0;
+    }
+    &.no-padding {
+      padding: 0;
+    }
     .mat-divider-vertical {
       height: 56px;
       margin-top: -7px;

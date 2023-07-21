@@ -94,6 +94,11 @@ export class AppComponent implements OnInit {
       )
     );
 
+    this.matIconRegistry.addSvgIcon('windows', this.domSanitizer.bypassSecurityTrustResourceUrl('/assets/windows.svg'));
+    this.matIconRegistry.addSvgIcon('macos', this.domSanitizer.bypassSecurityTrustResourceUrl('/assets/macos.svg'));
+    this.matIconRegistry.addSvgIcon('linux', this.domSanitizer.bypassSecurityTrustResourceUrl('/assets/linux.svg'));
+    this.matIconRegistry.addSvgIcon('docker', this.domSanitizer.bypassSecurityTrustResourceUrl('/assets/docker.svg'));
+
     this.storageService.testLocalStorage();
 
     this.setupTranslate();

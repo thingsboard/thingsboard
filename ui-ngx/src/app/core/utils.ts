@@ -355,9 +355,7 @@ const SNAKE_CASE_REGEXP = /[A-Z]/g;
 
 export function snakeCase(name: string, separator: string): string {
   separator = separator || '_';
-  return name.replace(SNAKE_CASE_REGEXP, (letter, pos) => {
-    return (pos ? separator : '') + letter.toLowerCase();
-  });
+  return name.replace(SNAKE_CASE_REGEXP, (letter, pos) => (pos ? separator : '') + letter.toLowerCase());
 }
 
 export function getDescendantProp(obj: any, path: string): any {
@@ -776,3 +774,25 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
   }
   return label;
 }
+
+export const getOS = (): string => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  const macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos|mac_powerpc)/i;
+  const windowsPlatforms = /(win32|win64|windows|wince)/i;
+  const iosPlatforms = /(iphone|ipad|ipod|darwin|ios)/i;
+  let os = null;
+
+  if (macosPlatforms.test(userAgent)) {
+    os = 'macos';
+  } else if (iosPlatforms.test(userAgent)) {
+    os = 'ios';
+  } else if (windowsPlatforms.test(userAgent)) {
+    os = 'windows';
+  } else if (/android/.test(userAgent)) {
+    os = 'android';
+  } else if (/linux/.test(userAgent)) {
+    os = 'linux';
+  }
+
+  return os;
+};

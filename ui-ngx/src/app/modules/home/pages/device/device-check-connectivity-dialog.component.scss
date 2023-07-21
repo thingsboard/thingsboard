@@ -68,6 +68,10 @@
     font-size: 14px;
   }
 
+  .tb-flex-1 {
+    flex: 1;
+  }
+
   .tb-form-table-body {
     max-height: 88px;
     overflow-y: auto;
@@ -82,6 +86,10 @@
     .tb-no-data-bg {
       min-height: 68px;
     }
+  }
+
+  .tb-install-windows {
+    min-height: 42px;
   }
 
   @media #{$mat-sm} {
@@ -112,12 +120,13 @@
       .code-wrapper {
         padding: 0;
         pre[class*=language-] {
+          margin: 0;
           background: #F3F6FA;
           border-color: #305680;
         }
       }
       button.clipboard-btn {
-        right: 0;
+        right: -2px;
         p {
           color: #305680;
         }
@@ -147,5 +156,13 @@
       vertical-align: text-bottom;
       box-sizing: initial;
     }
+  }
+
+  .tabs-icon {
+    margin-right: 8px;
+  }
+
+  .tb-form-panel.tb-tab-body {
+    padding: 16px 0 0;
   }
 }

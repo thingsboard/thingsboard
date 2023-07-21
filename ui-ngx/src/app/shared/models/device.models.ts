@@ -837,6 +837,31 @@ export interface ClaimResult {
   response: ClaimResponse;
 }
 
+export interface PublishTelemetryCommand {
+  http?: {
+    http?: string;
+    https?: string;
+  };
+  mqtt: {
+    mqtt?: string;
+    mqtts?: string | Array<string>;
+    docker?: {
+      mqtt?: string;
+      mqtts?: string | Array<string>;
+    };
+  };
+  coap: {
+    coap?: string;
+    coaps?: string | Array<string>;
+    docker?: {
+      coap?: string;
+      coaps?: string | Array<string>;
+    };
+  };
+  lwm2m?: string;
+  snmp?: string;
+}
+
 export const dayOfWeekTranslations = new Array<string>(
   'device-profile.schedule-day.monday',
   'device-profile.schedule-day.tuesday',

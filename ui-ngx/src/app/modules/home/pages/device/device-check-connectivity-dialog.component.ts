@@ -38,16 +38,19 @@ import {
   BasicTransportType,
   DeviceTransportType,
   deviceTransportTypeTranslationMap,
-  NetworkTransportType
+  NetworkTransportType,
+  PublishTelemetryCommand
 } from '@shared/models/device.models';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { ActionPreferencesUpdateUserSettings } from '@core/auth/auth.actions';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { getOS } from '@core/utils';
 
 export interface DeviceCheckConnectivityDialogData {
   deviceId: EntityId;
   afterAdd: boolean;
 }
+
 @Component({
   selector: 'tb-device-check-connectivity-dialog',
   templateUrl: './device-check-connectivity-dialog.component.html',
@@ -62,7 +65,7 @@ export class DeviceCheckConnectivityDialogComponent extends
 
   latestTelemetry: Array<AttributeData> = [];
 
-  commands: {[key: string]: string};
+  commands: PublishTelemetryCommand;
 
   allowTransportType = new Set<NetworkTransportType>();
   selectTransportType: NetworkTransportType;
@@ -76,6 +79,45 @@ export class DeviceCheckConnectivityDialogComponent extends
   closeButtonLabel: string;
 
   notShowAgain = false;
+
+  httpTabIndex = 0;
+  mqttTabIndex = 0;
+  coapTabIndex = 0;
+
+  readonly installCoap = '```bash\n' +
+    'git clone https://github.com/obgm/libcoap --recursive\n' +
+    '{:copy-code}\n' +
+    '```\n' +
+    '<br />\n' +
+    '\n' +
+    '```bash\n' +
+    'cd libcoap\n' +
+    '{:copy-code}\n' +
+    '```\n' +
+    '<br />\n' +
+    '\n' +
+    '```bash\n' +
+    './autogen.sh\n' +
+    '{:copy-code}\n' +
+    '```\n' +
+    '<br />\n' +
+    '\n' +
+    '```bash\n' +
+    './configure --with-openssl --disable-doxygen --disable-manpages --disable-shared\n' +
+    '{:copy-code}\n' +
+    '```\n' +
+    '<br />\n' +
+    '\n' +
+    '```bash\n' +
+    'make\n' +
+    '{:copy-code}\n' +
+    '```\n' +
+    '<br />\n' +
+    '\n' +
+    '```bash\n' +
+    'sudo make install\n' +
+    '{:copy-code}\n' +
+    '```';
 
   private telemetrySubscriber: TelemetrySubscriber;
 
@@ -125,11 +167,21 @@ export class DeviceCheckConnectivityDialogComponent extends
     }
   }
 
-  createMarkDownCommand(command: string): string {
+  createMarkDownCommand(commands: string | string[]): string {
+    if (Array.isArray(commands)) {
+      const formatCommands: Array<string> = [];
+      commands.forEach(command => formatCommands.push(this.createMarkDownSingleCommand(command)));
+      return formatCommands.join('<br />\n');
+    } else {
+      return this.createMarkDownSingleCommand(commands);
+    }
+  }
+
+  private createMarkDownSingleCommand(command: string): string {
     return '```bash\n' +
-            command +
-            '{:copy-code}\n' +
-            '```';
+      command +
+      '{:copy-code}\n' +
+      '```';
   }
 
   private loadCommands() {
@@ -144,6 +196,7 @@ export class DeviceCheckConnectivityDialogComponent extends
           }
         });
         this.selectTransportType = this.allowTransportType.values().next().value;
+        this.selectTabIndexForUserOS();
         this.loadedCommand = true;
       }
     );
@@ -178,6 +231,30 @@ export class DeviceCheckConnectivityDialogComponent extends
         }
       );
     });
+  }
+
+  private selectTabIndexForUserOS() {
+    const currentOS = getOS();
+    switch (currentOS) {
+      case 'linux':
+      case 'android':
+        this.httpTabIndex = 2;
+        this.mqttTabIndex = 2;
+        this.coapTabIndex = 1;
+        break;
+      case 'macos':
+      case 'ios':
+        this.httpTabIndex = 1;
+        this.mqttTabIndex = 1;
+        break;
+      case 'windows':
+        this.httpTabIndex = 0;
+        this.mqttTabIndex = 0;
+        break;
+      default:
+        this.mqttTabIndex = this.commands.mqtt?.docker ? 3 : 0;
+        this.coapTabIndex = this.commands.coap?.docker ? 2 : 1;
+    }
   }
 
 }

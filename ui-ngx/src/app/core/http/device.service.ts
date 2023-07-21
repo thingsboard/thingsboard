@@ -25,8 +25,10 @@ import {
   ClaimResult,
   Device,
   DeviceCredentials,
-  DeviceInfo, DeviceInfoQuery,
-  DeviceSearchQuery
+  DeviceInfo,
+  DeviceInfoQuery,
+  DeviceSearchQuery,
+  PublishTelemetryCommand
 } from '@app/shared/models/device.models';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
@@ -208,8 +210,8 @@ export class DeviceService {
     return this.http.post<BulkImportResult>('/api/device/bulk_import', entitiesData, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDevicePublishTelemetryCommands(deviceId: string, config?: RequestConfig): Observable<{[key: string]: string}> {
-    return this.http.get<{[key: string]: string}>(`/api/device/${deviceId}/commands`, defaultHttpOptionsFromConfig(config));
+  public getDevicePublishTelemetryCommands(deviceId: string, config?: RequestConfig): Observable<PublishTelemetryCommand> {
+    return this.http.get<PublishTelemetryCommand>(`/api/device-connectivity/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
 }
