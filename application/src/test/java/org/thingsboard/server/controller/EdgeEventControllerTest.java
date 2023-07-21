@@ -27,8 +27,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -38,7 +36,6 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
@@ -54,7 +51,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
@@ -62,9 +58,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 @DaoSqlTest
 public class EdgeEventControllerTest extends AbstractControllerTest {
-
-    private Tenant savedTenant;
-    private User tenantAdmin;
 
     @Autowired
     private EdgeEventDao edgeEventDao;
@@ -80,33 +73,11 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
 
     @Before
     public void beforeTest() throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        Assert.assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant2@thingsboard.org");
-        tenantAdmin.setFirstName("Joe");
-        tenantAdmin.setLastName("Downs");
-
-        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
-        // sleep 1 seconds to avoid CREDENTIALS updated message for the user
-        // user credentials is going to be stored and updated event pushed to edge notification service
-        // while service will be processing this event edge could be already added and additional message will be pushed
-        Thread.sleep(1000);
+        loginTenantAdmin();
     }
 
     @After
     public void afterTest() throws Exception {
-        loginSysAdmin();
-
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
     }
 
     @Test
@@ -127,6 +98,13 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
 
         EntityRelation relation = new EntityRelation(savedAsset.getId(), savedDevice.getId(), EntityRelation.CONTAINS_TYPE);
 
+        Awaitility.await()
+                .atMost(30, TimeUnit.SECONDS)
+                .until(() -> {
+                    List<EdgeEvent> edgeEvents = findEdgeEvents(edgeId);
+                    return edgeEvents.size() == 3;
+                });
+
         doPost("/api/relation", relation);
 
         Awaitility.await()
@@ -135,11 +113,12 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
                     List<EdgeEvent> edgeEvents = findEdgeEvents(edgeId);
                     return edgeEvents.size() == 4;
                 });
+
         List<EdgeEvent> edgeEvents = findEdgeEvents(edgeId);
-        Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.RULE_CHAIN.equals(ee.getType())));
-        Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.DEVICE.equals(ee.getType())));
-        Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.ASSET.equals(ee.getType())));
-        Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.RELATION.equals(ee.getType())));
+        Assert.assertEquals(EdgeEventType.RULE_CHAIN, edgeEvents.get(0).getType()); // root rule chain
+        Assert.assertEquals(EdgeEventType.DEVICE, edgeEvents.get(1).getType()); // TestDevice
+        Assert.assertEquals(EdgeEventType.ASSET, edgeEvents.get(2).getType()); // TestAsset
+        Assert.assertEquals(EdgeEventType.RELATION, edgeEvents.get(3).getType());
     }
 
     @Test
@@ -195,7 +174,7 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
         edgeEvent.setCreatedTime(System.currentTimeMillis());
         edgeEvent.setTenantId(tenantId);
         edgeEvent.setAction(EdgeEventActionType.ADDED);
-        edgeEvent.setEntityId(tenantAdmin.getUuidId());
+        edgeEvent.setEntityId(tenantAdminUser.getUuidId());
         edgeEvent.setType(EdgeEventType.ALARM);
         try {
             edgeEventDao.saveAsync(edgeEvent).get();
