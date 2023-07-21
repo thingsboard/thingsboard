@@ -393,10 +393,12 @@ export class GatewayConfigurationComponent implements OnInit {
   checkAndFetchCredentials(security): void {
     if (security.type !== SecurityTypes.TLS_PRIVATE_KEY) {
       this.deviceService.getDeviceCredentials(this.device.id).subscribe(credentials => {
-        if (credentials.credentialsType === DeviceCredentialsType.ACCESS_TOKEN || security.type !== SecurityTypes.TLS_ACCESS_TOKEN) {
+        if (credentials.credentialsType === DeviceCredentialsType.ACCESS_TOKEN || security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
+          this.gatewayConfigGroup.get('thingsboard.security.type').setValue(SecurityTypes.ACCESS_TOKEN);
           this.gatewayConfigGroup.get('thingsboard.security.accessToken').setValue(credentials.credentialsId);
         } else if (credentials.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
           const parsedValue = JSON.parse(credentials.credentialsValue);
+          this.gatewayConfigGroup.get('thingsboard.security.type').setValue(SecurityTypes.USERNAME_PASSWORD);
           this.gatewayConfigGroup.get('thingsboard.security.clientId').setValue(parsedValue.clientId);
           this.gatewayConfigGroup.get('thingsboard.security.username').setValue(parsedValue.userName);
           this.gatewayConfigGroup.get('thingsboard.security.password').setValue(parsedValue.password);

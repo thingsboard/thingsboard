@@ -41,7 +41,7 @@ export interface GatewayConnector {
   type: string;
   configuration?: string;
   configurationJson: string;
-  log_level: string;
+  logLevel: string;
   key?: string;
 }
 

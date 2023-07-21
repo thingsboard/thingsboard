@@ -47,7 +47,7 @@ export interface gatewayConnector {
   type: string;
   configuration?: string;
   configurationJson: string;
-  log_level: string;
+  logLevel: string;
   key?: string;
 }
 
@@ -138,7 +138,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.connectorForm = this.fb.group({
       name: ['', [Validators.required]],
       type: ['', [Validators.required]],
-      log_level: ['', [Validators.required]],
+      logLevel: ['', [Validators.required]],
       key: ['auto'],
       class: [''],
       configuration: [''],
@@ -265,7 +265,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.connectorForm.setValue({
       name: '',
       type: 'mqtt',
-      log_level: GatewayLogLevel.info,
+      logLevel: GatewayLogLevel.info,
       key: 'auto',
       class: '',
       configuration: '',
