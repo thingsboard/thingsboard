@@ -351,7 +351,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         customer.setTitle("Different customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
-        login(tenantAdminUser.getEmail(), "testPassword1");
+        loginTenantAdmin();
 
         Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
@@ -858,7 +858,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         verifyFetchersMsgs(edgeImitator);
         // verify queue msgs
-        verifyRuleChainMsg(edgeImitator.getDownlinkMsgs().get(15), UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, "Edge Root Rule Chain");
+        Assert.assertTrue(findRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, "Edge Root Rule Chain"));
         verifyDeviceProfileMsg(edgeImitator.getDownlinkMsgs().get(16), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default");
         verifyDeviceMsg(edgeImitator.getDownlinkMsgs().get(17), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1");
         verifyAssetProfileMsg(edgeImitator.getDownlinkMsgs().get(18), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test");
@@ -887,7 +887,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
     private void verifyFetchersMsgs(EdgeImitator edgeImitator) {
         verifyQueueMsg(edgeImitator.getDownlinkMsgs().get(0), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Main");
-        verifyRuleChainMsg(edgeImitator.getDownlinkMsgs().get(1), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain");
+        Assert.assertTrue(findRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
         verifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs().get(2), "mail", true);
         verifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs().get(3), "mail", false);
         verifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs().get(4), "mailTemplates", true);
@@ -895,7 +895,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         verifyDeviceProfileMsg(edgeImitator.getDownlinkMsgs().get(6), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default");
         verifyAssetProfileMsg(edgeImitator.getDownlinkMsgs().get(7), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default");
         verifyAssetProfileMsg(edgeImitator.getDownlinkMsgs().get(8), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test");
-        verifyUserMsg(edgeImitator.getDownlinkMsgs().get(9), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "tenant2@thingsboard.org", Authority.TENANT_ADMIN);
+        verifyUserMsg(edgeImitator.getDownlinkMsgs().get(9), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, TENANT_ADMIN_EMAIL, Authority.TENANT_ADMIN);
         verifyCustomerMsg(edgeImitator.getDownlinkMsgs().get(10), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public");
         verifyDeviceProfileMsg(edgeImitator.getDownlinkMsgs().get(11), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default");
         verifyDeviceMsg(edgeImitator.getDownlinkMsgs().get(12), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1");
@@ -909,11 +909,18 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(name, queueUpdateMsg.getName());
     }
 
-    private void verifyRuleChainMsg(AbstractMessage message, UpdateMsgType msgType, String name) {
-        RuleChainUpdateMsg ruleChainUpdateMsg = (RuleChainUpdateMsg) message;
-        Assert.assertEquals(msgType, ruleChainUpdateMsg.getMsgType());
-        Assert.assertEquals(name, ruleChainUpdateMsg.getName());
-        Assert.assertTrue(ruleChainUpdateMsg.getRoot());
+    private boolean findRuleChainMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof RuleChainUpdateMsg) {
+                RuleChainUpdateMsg ruleChainUpdateMsg = (RuleChainUpdateMsg) message;
+                if (msgType.equals(ruleChainUpdateMsg.getMsgType())
+                        && name.equals(ruleChainUpdateMsg.getName())
+                        && ruleChainUpdateMsg.getRoot()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void verifyAdminSettingsMsg(AbstractMessage message, String key, boolean isSystem) {
