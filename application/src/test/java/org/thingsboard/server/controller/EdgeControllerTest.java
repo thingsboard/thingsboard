@@ -858,12 +858,12 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         verifyFetchersMsgs(edgeImitator);
         // verify queue msgs
-        Assert.assertTrue(findRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, "Edge Root Rule Chain"));
-        Assert.assertTrue(findDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
-        Assert.assertTrue(findDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
-        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
-        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
-        Assert.assertTrue(findAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
+        Assert.assertTrue(popRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, "Edge Root Rule Chain"));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
         Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
 
         edgeImitator.expectMessageAmount(15);
@@ -888,24 +888,24 @@ public class EdgeControllerTest extends AbstractControllerTest {
     }
 
     private void verifyFetchersMsgs(EdgeImitator edgeImitator) {
-        Assert.assertTrue(findAndVerifyQueueMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Main"));
-        Assert.assertTrue(findRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
-        Assert.assertTrue(findAndVerifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail", true));
-        Assert.assertTrue(findAndVerifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail", false));
-        Assert.assertTrue(findAndVerifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mailTemplates", true));
-        Assert.assertTrue(findAndVerifyAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mailTemplates", false));
-        Assert.assertTrue(findDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
-        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
-        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
-        Assert.assertTrue(findAndVerifyUserMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, TENANT_ADMIN_EMAIL, Authority.TENANT_ADMIN));
-        Assert.assertTrue(findAndVerifyCustomerMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public"));
-        Assert.assertTrue(findDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
-        Assert.assertTrue(findDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
-        Assert.assertTrue(findAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
-        Assert.assertTrue(findAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
+        Assert.assertTrue(popQueueMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Main"));
+        Assert.assertTrue(popRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail", true));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail", false));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mailTemplates", true));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mailTemplates", false));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popUserMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, TENANT_ADMIN_EMAIL, Authority.TENANT_ADMIN));
+        Assert.assertTrue(popCustomerMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public"));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
     }
 
-    private boolean findAndVerifyQueueMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+    private boolean popQueueMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
         for (AbstractMessage message : messages) {
             if (message instanceof QueueUpdateMsg) {
                 QueueUpdateMsg queueUpdateMsg = (QueueUpdateMsg) message;
@@ -919,7 +919,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean findRuleChainMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+    private boolean popRuleChainMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
         for (AbstractMessage message : messages) {
             if (message instanceof RuleChainUpdateMsg) {
                 RuleChainUpdateMsg ruleChainUpdateMsg = (RuleChainUpdateMsg) message;
@@ -934,7 +934,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean findAndVerifyAdminSettingsMsg(List<AbstractMessage> messages, String key, boolean isSystem) {
+    private boolean popAdminSettingsMsg(List<AbstractMessage> messages, String key, boolean isSystem) {
         for (AbstractMessage message : messages) {
             if (message instanceof AdminSettingsUpdateMsg) {
                 AdminSettingsUpdateMsg adminSettingsUpdateMsg = (AdminSettingsUpdateMsg) message;
@@ -948,7 +948,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean findDeviceProfileMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+    private boolean popDeviceProfileMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
         for (AbstractMessage message : messages) {
             if (message instanceof DeviceProfileUpdateMsg) {
                 DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) message;
@@ -962,7 +962,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean findDeviceMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+    private boolean popDeviceMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
         for (AbstractMessage message : messages) {
             if (message instanceof DeviceUpdateMsg) {
                 DeviceUpdateMsg deviceUpdateMsg = (DeviceUpdateMsg) message;
@@ -976,7 +976,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean findAssetProfileMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+    private boolean popAssetProfileMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
         for (AbstractMessage message : messages) {
             if (message instanceof AssetProfileUpdateMsg) {
                 AssetProfileUpdateMsg assetProfileUpdateMsg = (AssetProfileUpdateMsg) message;
@@ -990,7 +990,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean findAssetMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
+    private boolean popAssetMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
         for (AbstractMessage message : messages) {
             if (message instanceof AssetUpdateMsg) {
                 AssetUpdateMsg assetUpdateMsg = (AssetUpdateMsg) message;
@@ -1004,7 +1004,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean findAndVerifyUserMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String email, Authority authority) {
+    private boolean popUserMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String email, Authority authority) {
         for (AbstractMessage message : messages) {
             if (message instanceof UserUpdateMsg) {
                 UserUpdateMsg userUpdateMsg = (UserUpdateMsg) message;
@@ -1019,7 +1019,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean findAndVerifyCustomerMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String title) {
+    private boolean popCustomerMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String title) {
         for (AbstractMessage message : messages) {
             if (message instanceof CustomerUpdateMsg) {
                 CustomerUpdateMsg customerUpdateMsg = (CustomerUpdateMsg) message;
