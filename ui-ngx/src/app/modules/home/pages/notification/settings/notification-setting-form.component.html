@@ -18,19 +18,17 @@
 <form [formGroup]="notificationSettingsFormGroup" fxLayout="column">
   <div fxLayout="row" style="height: 48px;">
     <div fxFlex="50" fxLayoutAlign="start center">
-      <button mat-icon-button
-        (click)="toggleEnabled()">
-        <mat-icon style="color: rgba(0, 0, 0, 0.54);"
-                  [svgIcon]="notificationSettingsFormGroup.get('enabled').value ? 'mdi:toggle-switch': 'mdi:toggle-switch-off-outline'">
-        </mat-icon>
-      </button>
-      <span class="notification-type"
-            [ngClass]="{'notification-type-disabled': !notificationSettingsFormGroup.get('enabled').value}">
-        {{notificationTemplateTypeTranslateMap.get(notificationSettingsFormGroup.get('name').value)?.name | translate}}
-      </span>
+      <mat-checkbox color="primary"
+                    [checked]="notificationSettingsFormGroup.get('enabled').value"
+                    (click)="toggleEnabled()">
+        <span class="notification-type"
+              [ngClass]="{'notification-type-disabled': !notificationSettingsFormGroup.get('enabled').value}">
+          {{notificationTemplateTypeTranslateMap.get(notificationSettingsFormGroup.get('name').value)?.name | translate}}
+        </span>
+      </mat-checkbox>
     </div>
-    <div fxFlex fxLayout="row" *ngFor="let deliveryMethods of notificationDeliveryMethodMap">
-      <div fxFlex fxLayoutAlign="center center">
+    <div fxFlex fxLayout="row" *ngFor="let deliveryMethods of deliveryMethods">
+      <div fxFlex fxLayoutAlign="start center">
         <mat-checkbox color="primary"
                       [disabled]="!allowDeliveryMethods?.includes(deliveryMethods) || !notificationSettingsFormGroup.get('enabled').value"
                       [checked]="getChecked(deliveryMethods)"

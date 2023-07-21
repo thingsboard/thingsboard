@@ -43,12 +43,13 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   disabled: boolean;
 
   @Input()
-  allowDeliveryMethods = [];
+  deliveryMethods: NotificationDeliveryMethod[] = [];
+
+  @Input()
+  allowDeliveryMethods: NotificationDeliveryMethod[] = [];
 
   notificationSettingsFormGroup: UntypedFormGroup;
 
-  notificationDeliveryMethod = NotificationDeliveryMethod;
-  notificationDeliveryMethodMap = [NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.SMS, NotificationDeliveryMethod.EMAIL];
   notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
 
   private propagateChange = null;
@@ -67,11 +68,17 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   }
 
   ngOnInit() {
+    const deliveryMethod = {};
+    this.deliveryMethods.forEach(value => {
+      deliveryMethod[value] = true;
+    });
     this.notificationSettingsFormGroup = this.fb.group(
       {
         name: [''],
         enabled: [true],
-        enabledDeliveryMethods: []
+        enabledDeliveryMethods: this.fb.group({
+          ...deliveryMethod
+        })
       });
     this.valueChange$ = this.notificationSettingsFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -99,17 +106,12 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   }
 
   getChecked(deliveryMethod: NotificationDeliveryMethod): boolean {
-    return this.notificationSettingsFormGroup.get('enabledDeliveryMethods').value.includes(deliveryMethod);
+    return this.notificationSettingsFormGroup.get('enabledDeliveryMethods').get(deliveryMethod).value;
   }
 
   toggleDeliviryMethod(deliveryMethod: NotificationDeliveryMethod) {
-    const enabledDeliveryMethods = this.notificationSettingsFormGroup.get('enabledDeliveryMethods').value;
-    if (enabledDeliveryMethods.includes(deliveryMethod)) {
-      enabledDeliveryMethods.splice(enabledDeliveryMethods.indexOf(deliveryMethod), 1);
-    } else {
-      enabledDeliveryMethods.push(deliveryMethod);
-    }
-    this.notificationSettingsFormGroup.get('enabledDeliveryMethods').patchValue(enabledDeliveryMethods);
+    this.notificationSettingsFormGroup.get('enabledDeliveryMethods').get(deliveryMethod)
+      .patchValue(!this.notificationSettingsFormGroup.get('enabledDeliveryMethods').get(deliveryMethod).value);
   }
 
   writeValue(value: NotificationUserSetting): void {

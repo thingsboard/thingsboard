@@ -40,7 +40,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
 
   notificationSettings: UntypedFormGroup;
 
-  notificationDeliveryMethods = [NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.SMS, NotificationDeliveryMethod.EMAIL];
+  notificationDeliveryMethods: NotificationDeliveryMethod[];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
 
   allowNotificationDeliveryMethods: Array<NotificationDeliveryMethod>;
@@ -55,6 +55,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
   }
 
   ngOnInit() {
+    this.notificationDeliveryMethods = this.getNotificationDeliveryMethods();
 
     this.notificationService.getAvailableDeliveryMethods({ignoreLoading: true}).subscribe(allowMethods => {
       this.allowNotificationDeliveryMethods = allowMethods;
@@ -62,6 +63,13 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
 
     this.buildNotificationSettingsForm();
     this.patchNotificationSettings(this.route.snapshot.data.userSettings);
+  }
+
+  private getNotificationDeliveryMethods(): NotificationDeliveryMethod[] {
+    const deliveryMethods = new Set([
+      NotificationDeliveryMethod.SLACK
+    ]);
+    return Object.values(NotificationDeliveryMethod).filter(type => !deliveryMethods.has(type));
   }
 
   private buildNotificationSettingsForm() {
@@ -76,6 +84,10 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     if (settings.prefs) {
       preparedSettings = this.prepareNotificationSettings(settings.prefs);
       preparedSettings.forEach((setting) => {
+        setting.enabledDeliveryMethods = Object.assign(
+          this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {}),
+          setting.enabledDeliveryMethods
+        );
         notificationSettingsControls.push(this.fb.control(setting, [Validators.required]));
       });
     }
@@ -105,7 +117,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
           if (settings) {
             settings.forEach((setting) => {
               setting.enabled = true;
-              setting.enabledDeliveryMethods = this.notificationDeliveryMethods;
+              setting.enabledDeliveryMethods = this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {});
               notificationSettingsControls.push(this.fb.control(setting, [Validators.required]));
             });
           }
@@ -119,7 +131,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
   getChecked = (method: NotificationDeliveryMethod = null): boolean => {
     const type = this.notificationSettings.get('prefs').value;
     if (isDefinedAndNotNull(method)) {
-      return isDefinedAndNotNull(type) && type.every(resource => resource.enabledDeliveryMethods.includes(method));
+      return isDefinedAndNotNull(type) && type.every(resource => resource.enabledDeliveryMethods[method]);
     }
     return isDefinedAndNotNull(type) && type.every(resource => resource.enabled);
   };
@@ -133,7 +145,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     const type = this.notificationSettings.get('prefs').value;
     if (isDefinedAndNotNull(type)) {
       const checkedResource = isDefinedAndNotNull(deliveryMethod) ?
-        type.filter(resource => resource.enabledDeliveryMethods.includes(deliveryMethod)) :
+        type.filter(resource => resource.enabledDeliveryMethods[deliveryMethod]) :
         type.filter(resource => resource.enabled);
       return checkedResource.length !== 0 && checkedResource.length !== type.length;
     }
@@ -143,13 +155,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
   changeInstanceTypeCheckBox = (value: boolean, deliveryMethod: NotificationDeliveryMethod = null): void => {
     const type = deepClone(this.notificationSettings.get('prefs').value);
     if (isDefinedAndNotNull(deliveryMethod)) {
-      type.forEach(notificationType => {
-        if (value && !notificationType.enabledDeliveryMethods.includes(deliveryMethod)) {
-          notificationType.enabledDeliveryMethods.push(deliveryMethod);
-        } else if (!value && notificationType.enabledDeliveryMethods.includes(deliveryMethod)) {
-          notificationType.enabledDeliveryMethods.splice(notificationType.enabledDeliveryMethods.indexOf(deliveryMethod), 1);
-        }
-      });
+      type.forEach(notificationType => notificationType.enabledDeliveryMethods[deliveryMethod] = value);
     } else {
       type.forEach(notificationType => notificationType.enabled = value);
     }

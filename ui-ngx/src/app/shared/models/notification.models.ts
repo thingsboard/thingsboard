@@ -596,6 +596,5 @@ export interface NotificationUserSettings {
 
 export interface NotificationUserSetting {
   enabled: boolean;
-  enabledDeliveryMethods: Array<NotificationDeliveryMethod>;
+  enabledDeliveryMethods: {[key: string]: boolean};
 }
-

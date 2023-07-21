@@ -24,13 +24,17 @@
     .mat-headline-5 {
       margin: 0;
     }
+    .notification-form {
+      height: 100%;
+      min-height: min-content;
+      max-height: min-content;
+    }
     .notification-section {
-      margin-bottom: 16px;
+      height: 100%;
       border: 1px solid rgba(0, 0, 0, 0.12);
-      overflow-y: hidden;
-      overflow-x: scroll;
+      overflow: scroll;
       &-block {
-        min-width: 700px;
+        min-width: 470px;
       }
     }
   }
