@@ -287,7 +287,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       connector.key = 'auto';
     }
     if (!connector.class) {
-      connector.class = 'auto';
+      connector.class = '';
     }
     this.initialConnector = connector;
     this.connectorForm.setValue(connector);
