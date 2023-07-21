@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy.queue;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @TbCoreComponent
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class DefaultTbQueueService extends AbstractTbEntityService implements TbQueueService {
 
     private final QueueService queueService;
