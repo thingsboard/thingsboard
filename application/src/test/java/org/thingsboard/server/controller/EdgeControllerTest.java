@@ -833,26 +833,27 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSyncEdge() throws Exception {
-        Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
+        Asset asset = new Asset();
+        asset.setName("Test Sync Edge Asset 1");
+        asset.setType("test");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
         Device device = new Device();
         device.setName("Test Sync Edge Device 1");
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
+
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/device/" + savedDevice.getId().getId().toString(), Device.class);
-
-        Asset asset = new Asset();
-        asset.setName("Test Sync Edge Asset 1");
-        asset.setType("test");
-        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
 
         EdgeImitator edgeImitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
         edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(21);
+        edgeImitator.expectMessageAmount(20);
         edgeImitator.connect();
         assertThat(edgeImitator.waitForMessages()).as("await for messages on first connect").isTrue();
 
@@ -862,9 +863,14 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
-        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
-        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
+        boolean empty = edgeImitator.getDownlinkMsgs().isEmpty();
+        if (!empty) {
+            for (AbstractMessage downlinkMsg : edgeImitator.getDownlinkMsgs()) {
+                System.out.println(">>> " + downlinkMsg);
+            }
+        }
+        Assert.assertTrue(empty);
 
         edgeImitator.expectMessageAmount(15);
         doPost("/api/edge/sync/" + edge.getId());
