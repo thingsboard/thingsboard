@@ -864,13 +864,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
-        boolean empty = edgeImitator.getDownlinkMsgs().isEmpty();
-        if (!empty) {
-            for (AbstractMessage downlinkMsg : edgeImitator.getDownlinkMsgs()) {
-                System.out.println(">>> " + downlinkMsg);
-            }
-        }
-        Assert.assertTrue(empty);
+        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
 
         edgeImitator.expectMessageAmount(15);
         doPost("/api/edge/sync/" + edge.getId());
