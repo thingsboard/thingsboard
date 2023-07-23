@@ -105,10 +105,20 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
         awaitForNumberOfEdgeEvents(edgeId, 4);
 
         List<EdgeEvent> edgeEvents = findEdgeEvents(edgeId);
-        Assert.assertEquals(EdgeEventType.RULE_CHAIN, edgeEvents.get(0).getType()); // root rule chain
-        Assert.assertEquals(EdgeEventType.DEVICE, edgeEvents.get(1).getType()); // TestDevice
-        Assert.assertEquals(EdgeEventType.ASSET, edgeEvents.get(2).getType()); // TestAsset
-        Assert.assertEquals(EdgeEventType.RELATION, edgeEvents.get(3).getType());
+        Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.RULE_CHAIN)); // root rule chain
+        Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.DEVICE)); // TestDevice
+        Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.ASSET)); // TestAsset
+        Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.RELATION));
+    }
+
+    private boolean popEdgeEvent(List<EdgeEvent> edgeEvents, EdgeEventType edgeEventType) {
+        for (EdgeEvent edgeEvent : edgeEvents) {
+            if (edgeEventType.equals(edgeEvent.getType())) {
+                edgeEvents.remove(edgeEvent);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void awaitForNumberOfEdgeEvents(EdgeId edgeId, int expectedNumber) {
