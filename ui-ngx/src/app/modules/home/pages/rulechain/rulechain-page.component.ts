@@ -87,7 +87,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffer.service';
 import { Hotkey } from 'angular2-hotkeys';
-import { DebugEventType, EventType } from '@shared/models/event.models';
+import { DebugEventType, DebugRuleNodeEventBody, EventType } from '@shared/models/event.models';
 import { MatMiniFabButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
@@ -153,6 +153,7 @@ export class RuleChainPageComponent extends PageComponent
   editingRuleNodeAllowCustomLabels = false;
   editingRuleNodeLinkLabels: {[label: string]: LinkLabel};
   editingRuleNodeSourceRuleChainId: string;
+  ruleNodeTestButtonLabel: string;
 
   @ViewChild('tbRuleNode') ruleNodeComponent: RuleNodeDetailsComponent;
   @ViewChild('tbRuleNodeLink') ruleNodeLinkComponent: RuleNodeLinkComponent;
@@ -1275,6 +1276,27 @@ export class RuleChainPageComponent extends PageComponent
     this.ruleNodeLinkComponent.ruleNodeLinkFormGroup.markAsPristine();
     const edge = this.ruleChainModel.edges[this.editingRuleNodeLinkIndex];
     this.editingRuleNodeLink = deepClone(edge);
+  }
+
+  onDebugEventSelected(debugEventBody: DebugRuleNodeEventBody) {
+    const ruleNodeConfigComponent = this.ruleNodeComponent.ruleNodeConfigComponent;
+    const ruleNodeConfigDefinedComponent = ruleNodeConfigComponent.definedConfigComponent;
+    if (ruleNodeConfigComponent.useDefinedDirective() && ruleNodeConfigDefinedComponent.hasScript && ruleNodeConfigDefinedComponent.testScript) {
+      ruleNodeConfigDefinedComponent.testScript(debugEventBody);
+    }
+  }
+
+  onRuleNodeInit() {
+    const ruleNodeConfigDefinedComponent = this.ruleNodeComponent.ruleNodeConfigComponent.definedConfigComponent;
+    if (this.ruleNodeComponent.ruleNodeConfigComponent.useDefinedDirective() && ruleNodeConfigDefinedComponent.hasScript) {
+      this.ruleNodeTestButtonLabel = ruleNodeConfigDefinedComponent.testScriptLabel;
+    } else {
+      this.ruleNodeTestButtonLabel = '';
+    }
+  }
+
+  switchToFirstTab() {
+    this.selectedRuleNodeTabIndex = 0;
   }
 
   saveRuleNode() {

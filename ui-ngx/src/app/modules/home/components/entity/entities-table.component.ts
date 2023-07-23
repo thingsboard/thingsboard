@@ -637,6 +637,10 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     }
   }
 
+  cellActionDescriptorsUpdated() {
+    this.cellActionDescriptors = [...this.entitiesTableConfig.cellActionDescriptors];
+  }
+
   headerCellStyle(column: EntityColumn<BaseData<HasId>>) {
     const index = this.entitiesTableConfig.columns.indexOf(column);
     let res = this.headerCellStyleCache[index];
