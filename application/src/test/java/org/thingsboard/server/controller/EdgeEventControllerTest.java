@@ -109,6 +109,7 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.DEVICE)); // TestDevice
         Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.ASSET)); // TestAsset
         Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.RELATION));
+        Assert.assertTrue(edgeEvents.isEmpty());
     }
 
     private boolean popEdgeEvent(List<EdgeEvent> edgeEvents, EdgeEventType edgeEventType) {
