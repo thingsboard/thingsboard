@@ -235,14 +235,11 @@
             <input matInput formControlName="comparisonValuesLabel" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
-        <div class="tb-form-row space-between same-padding">
+        <div class="tb-form-row space-between">
           <div>{{ 'widgets.chart.comparison-line-color' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <mat-divider vertical></mat-divider>
-            <tb-color-input asBoxInput
-                            formControlName="color">
-            </tb-color-input>
-          </div>
+          <tb-color-input asBoxInput
+                          formControlName="color">
+          </tb-color-input>
         </div>
       </ng-template>
     </mat-expansion-panel>

@@ -67,7 +67,7 @@
                 <mat-cell *matCellDef="let row" [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
                                                                    maxWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
                                                                    width: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px' }">
-                  <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+                  <div [fxHide]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                     <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                       <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
                       <button *ngIf="actionDescriptor.icon"
@@ -79,7 +79,7 @@
                       </button>
                     </ng-container>
                   </div>
-                  <div fxHide fxShow.lt-lg *ngIf="row.hasActions">
+                  <div fxHide [fxShow.lt-lg]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" *ngIf="row.hasActions">
                     <button mat-icon-button
                             (click)="$event.stopPropagation(); ctx.detectChanges();"
                             [matMenuTriggerFor]="cellActionsMenu">
@@ -99,7 +99,8 @@
                 </mat-cell>
               </ng-container>
               <mat-header-row *matHeaderRowDef="source.displayedColumns; sticky: enableStickyHeader"></mat-header-row>
-              <mat-row *matRowDef="let row; columns: source.displayedColumns; let rowIndex = index"
+              <mat-row [ngClass]="{'tb-pointer': hasRowAction}"
+                       *matRowDef="let row; columns: source.displayedColumns; let rowIndex = index"
                        [ngStyle]="rowStyle(source, row, rowIndex)"
                        (click)="onRowClick($event, row)"></mat-row>
             </table>

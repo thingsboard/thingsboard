@@ -84,10 +84,10 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        withCallback(publishMessageAsync(ctx, msg),
+        var tbMsg = ackIfNeeded(ctx, msg);
+        withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
-                t -> tellFailure(ctx, processException(ctx, msg, t), t));
-        ackIfNeeded(ctx, msg);
+                t -> tellFailure(ctx, processException(ctx, tbMsg, t), t));
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {

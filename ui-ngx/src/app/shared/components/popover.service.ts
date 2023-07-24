@@ -65,7 +65,7 @@ export class TbPopoverService {
   displayPopover<T>(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef,
                     componentType: Type<T>, preferredPlacement: PopoverPlacement = 'top', hideOnClickOutside = true,
                     injector?: Injector, context?: any, overlayStyle: any = {}, popoverStyle: any = {}, style?: any,
-                    showCloseButton = true): TbPopoverComponent {
+                    showCloseButton = true): TbPopoverComponent<T> {
     const componentRef = this.createPopoverRef(hostView);
     return this.displayPopoverWithComponentRef(componentRef, trigger, renderer, componentType, preferredPlacement, hideOnClickOutside,
       injector, context, overlayStyle, popoverStyle, style, showCloseButton);
@@ -74,7 +74,7 @@ export class TbPopoverService {
   displayPopoverWithComponentRef<T>(componentRef: ComponentRef<TbPopoverComponent>, trigger: Element, renderer: Renderer2,
                                     componentType: Type<T>, preferredPlacement: PopoverPlacement = 'top',
                                     hideOnClickOutside = true, injector?: Injector, context?: any, overlayStyle: any = {},
-                                    popoverStyle: any = {}, style?: any, showCloseButton = true): TbPopoverComponent {
+                                    popoverStyle: any = {}, style?: any, showCloseButton = true): TbPopoverComponent<T> {
     const component = componentRef.instance;
     this.popoverWithTriggers.push({
       trigger,

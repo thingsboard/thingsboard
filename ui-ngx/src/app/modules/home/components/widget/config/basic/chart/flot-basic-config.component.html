@@ -47,16 +47,15 @@
         <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div class="tb-form-row space-between same-padding">
+    <div class="tb-form-row space-between">
       <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
         {{ 'widget-config.card-icon' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <tb-material-icon-select asBoxInput
                                  [color]="flotWidgetConfigForm.get('iconColor').value"
                                  formControlName="titleIcon">
         </tb-material-icon-select>
-        <mat-divider vertical></mat-divider>
         <tb-color-input asBoxInput
                         formControlName="iconColor">
         </tb-color-input>
@@ -68,23 +67,17 @@
         <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
       </mat-chip-listbox>
     </div>
-    <div class="tb-form-row space-between same-padding">
+    <div class="tb-form-row space-between">
       <div>{{ 'widget-config.text-color' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-        <mat-divider vertical></mat-divider>
-        <tb-color-input asBoxInput
-                        formControlName="color">
-        </tb-color-input>
-      </div>
+      <tb-color-input asBoxInput
+                      formControlName="color">
+      </tb-color-input>
     </div>
-    <div class="tb-form-row space-between same-padding">
+    <div class="tb-form-row space-between">
       <div>{{ 'widget-config.background-color' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-        <mat-divider vertical></mat-divider>
-        <tb-color-input asBoxInput
-                        formControlName="backgroundColor">
-        </tb-color-input>
-      </div>
+      <tb-color-input asBoxInput
+                      formControlName="backgroundColor">
+      </tb-color-input>
     </div>
   </div>
   <div class="tb-form-panel">

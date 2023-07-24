@@ -61,12 +61,12 @@ public class TbSlackNode extends TbAbstractExternalNode {
         }
 
         String message = TbNodeUtils.processPattern(config.getMessageTemplate(), msg);
+        var tbMsg = ackIfNeeded(ctx, msg);
         DonAsynchron.withCallback(ctx.getExternalCallExecutor().executeAsync(() -> {
                     ctx.getSlackService().sendMessage(ctx.getTenantId(), token, config.getConversation().getId(), message);
                 }),
-                r -> tellSuccess(ctx, msg),
-                e -> tellFailure(ctx, msg, e));
-        ackIfNeeded(ctx, msg);
+                r -> tellSuccess(ctx, tbMsg),
+                e -> tellFailure(ctx, tbMsg, e));
     }
 
 }
