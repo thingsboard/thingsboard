@@ -182,6 +182,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public displayedColumns: string[] = [];
   public alarmsDatasource: AlarmsDatasource;
   public noDataDisplayMessageText: string;
+  public hasRowAction: boolean;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -496,6 +497,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
 
     this.setCellButtonAction = !!(actionCellDescriptors.length + this.ctx.actionsApi.getActionDescriptors('actionCellButton').length);
+    this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length;
 
     if (this.setCellButtonAction) {
       this.displayedColumns.push('actions');
