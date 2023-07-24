@@ -89,6 +89,16 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
       const isRoot = rootPath === '';
       const tabs: Array<MenuSection> = found ? found.pages.filter(page => !page.disabled && (!page.rootOnly || isRoot)) : [];
       return tabs.map((tab) => ({...tab, path: rootPath + tab.path}));
+    } else if (activatedRoute.snapshot.data.useChildrenRoutesForTabs && sectionPath.endsWith(activatedRoute.routeConfig.path)) {
+      const activeRouterChildren = activatedRoute.routeConfig.children.filter(page => page.path !== '');
+      return activeRouterChildren.map(tab => ({
+        id: tab.component.name,
+        type: 'link',
+        name: tab.data?.breadcrumb?.label ?? '',
+        icon: tab.data?.breadcrumb?.icon ?? '',
+        isMdiIcon: tab.data?.breadcrumb?.icon.startsWith('mdi:') ?? false,
+        path: `${sectionPath}/${tab.path}`
+      }));
     } else {
       return [];
     }

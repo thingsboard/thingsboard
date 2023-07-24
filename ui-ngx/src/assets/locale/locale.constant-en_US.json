@@ -11,8 +11,7 @@
         "permission-denied-text": "You don't have permission to perform this operation!"
     },
     "account": {
-        "account": "Account",
-        "personal-info": "Personal info"
+        "account": "Account"
     },
     "action": {
         "activate": "Activate",

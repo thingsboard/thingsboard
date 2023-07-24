@@ -30,7 +30,8 @@ const routes: Routes = [
       breadcrumb: {
         label: 'account.account',
         icon: 'account_circle'
-      }
+      },
+      useChildrenRoutesForTabs: true
     },
     children: [
       {

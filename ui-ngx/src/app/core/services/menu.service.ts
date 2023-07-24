@@ -262,34 +262,6 @@ export class MenuService {
             isMdiIcon: true
           }
         ]
-      },
-      {
-        id: 'account',
-        name: 'profile.profile',
-        type: 'link',
-        path: '/account',
-        disabled: true,
-        icon: 'mdi:message-badge',
-        isMdiIcon: true,
-        pages: [
-          {
-            id: 'personal_info',
-            name: 'account.personal-info',
-            fullName: 'account.personal-info',
-            type: 'link',
-            path: '/account/profile',
-            icon: 'mdi:badge-account-horizontal',
-            isMdiIcon: true
-          },
-          {
-            id: 'security',
-            name: 'security.security',
-            fullName: 'security.security',
-            type: 'link',
-            path: '/account/security',
-            icon: 'lock'
-          }
-        ]
       }
     );
     return sections;
@@ -662,34 +634,6 @@ export class MenuService {
             icon: 'track_changes'
           }
         ]
-      },
-      {
-        id: 'account',
-        name: 'profile.profile',
-        type: 'link',
-        path: '/account',
-        disabled: true,
-        icon: 'mdi:message-badge',
-        isMdiIcon: true,
-        pages: [
-          {
-            id: 'personal_info',
-            name: 'account.personal-info',
-            fullName: 'account.personal-info',
-            type: 'link',
-            path: '/account/profile',
-            icon: 'mdi:badge-account-horizontal',
-            isMdiIcon: true
-          },
-          {
-            id: 'security',
-            name: 'security.security',
-            fullName: 'security.security',
-            type: 'link',
-            path: '/account/security',
-            icon: 'lock'
-          }
-        ]
       }
     );
     return sections;
@@ -939,34 +883,6 @@ export class MenuService {
             type: 'link',
             path: '/notification/inbox',
             icon: 'inbox'
-          }
-        ]
-      },
-      {
-        id: 'account',
-        name: 'profile.profile',
-        type: 'link',
-        path: '/account',
-        disabled: true,
-        icon: 'mdi:message-badge',
-        isMdiIcon: true,
-        pages: [
-          {
-            id: 'personal_info',
-            name: 'account.personal-info',
-            fullName: 'account.personal-info',
-            type: 'link',
-            path: '/account/profile',
-            icon: 'mdi:badge-account-horizontal',
-            isMdiIcon: true
-          },
-          {
-            id: 'security',
-            name: 'security.security',
-            fullName: 'security.security',
-            type: 'link',
-            path: '/account/security',
-            icon: 'lock'
           }
         ]
       }
