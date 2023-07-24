@@ -5280,7 +5280,8 @@
             "pagination": "Pagination",
             "rows": "Rows",
             "timeseries-column-error": "At least one timeseries column should be specified",
-            "table-tabs": "Table tabs"
+            "table-tabs": "Table tabs",
+            "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
         },
         "value-source": {
             "value-source": "Value source",

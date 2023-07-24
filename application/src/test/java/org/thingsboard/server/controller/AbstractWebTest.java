@@ -191,6 +191,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected TenantId tenantId;
     protected TenantProfileId tenantProfileId;
     protected UserId tenantAdminUserId;
+    protected User tenantAdminUser;
     protected CustomerId tenantAdminCustomerId;
     protected CustomerId customerId;
     protected TenantId differentTenantId;
@@ -277,14 +278,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         tenantId = savedTenant.getId();
         tenantProfileId = savedTenant.getTenantProfileId();
 
-        User tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(tenantId);
-        tenantAdmin.setEmail(TENANT_ADMIN_EMAIL);
+        tenantAdminUser = new User();
+        tenantAdminUser.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdminUser.setTenantId(tenantId);
+        tenantAdminUser.setEmail(TENANT_ADMIN_EMAIL);
 
-        tenantAdmin = createUserAndLogin(tenantAdmin, TENANT_ADMIN_PASSWORD);
-        tenantAdminUserId = tenantAdmin.getId();
-        tenantAdminCustomerId = tenantAdmin.getCustomerId();
+        tenantAdminUser = createUserAndLogin(tenantAdminUser, TENANT_ADMIN_PASSWORD);
+        tenantAdminUserId = tenantAdminUser.getId();
+        tenantAdminCustomerId = tenantAdminUser.getCustomerId();
 
         Customer customer = new Customer();
         customer.setTitle("Customer");
