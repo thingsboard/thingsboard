@@ -171,7 +171,7 @@ export class DeviceCheckConnectivityDialogComponent extends
     if (Array.isArray(commands)) {
       const formatCommands: Array<string> = [];
       commands.forEach(command => formatCommands.push(this.createMarkDownSingleCommand(command)));
-      return formatCommands.join('<br />\n');
+      return formatCommands.join(`\n<br />\n\n`);
     } else {
       return this.createMarkDownSingleCommand(commands);
     }

@@ -156,8 +156,12 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
                 .ifPresent(v -> mqttCommands.put(MQTT, v));
         List<String> mqttsPublishCommand = getMqttsPublishCommand(baseUrl, topic, deviceCredentials);
         if (mqttsPublishCommand != null){
-            ArrayNode arrayNode = mqttCommands.putArray(MQTTS);
-            mqttsPublishCommand.forEach(arrayNode::add);
+            if (mqttsPublishCommand.size() > 1) {
+                ArrayNode arrayNode = mqttCommands.putArray(MQTTS);
+                mqttsPublishCommand.forEach(arrayNode::add);
+            } else {
+                mqttCommands.put(MQTTS, mqttsPublishCommand.get(0));
+            }
         }
 
         ObjectNode dockerMqttCommands = JacksonUtil.newObjectNode();

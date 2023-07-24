@@ -19,9 +19,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DeviceConnectivityUtil {
 
     public static final String HTTP = "http";
