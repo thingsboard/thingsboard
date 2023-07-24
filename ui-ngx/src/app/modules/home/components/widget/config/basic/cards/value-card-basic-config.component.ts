@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, Injector } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -28,8 +28,13 @@ import {
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
-import { isDefinedAndNotNull, isUndefined } from '@core/utils';
-import { getLabel, setLabel } from '@home/components/widget/config/widget-settings.models';
+import { formatValue, isDefinedAndNotNull, isUndefined } from '@core/utils';
+import {
+  DateFormatProcessor,
+  DateFormatSettings,
+  getLabel,
+  setLabel
+} from '@home/components/widget/config/widget-settings.models';
 import {
   valueCardDefaultSettings,
   ValueCardLayout,
@@ -65,9 +70,14 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
 
   valueCardWidgetConfigForm: UntypedFormGroup;
 
+  valuePreviewFn = this._valuePreviewFn.bind(this);
+
+  datePreviewFn = this._datePreviewFn.bind(this);
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private cd: ChangeDetectorRef,
+              private $injector: Injector,
               private fb: UntypedFormBuilder) {
     super(store, widgetConfigComponent);
   }
@@ -251,4 +261,16 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
     config.enableFullscreen = buttons.includes('fullscreen');
   }
 
+  private _valuePreviewFn(): string {
+    const units: string = this.valueCardWidgetConfigForm.get('units').value;
+    const decimals: number = this.valueCardWidgetConfigForm.get('decimals').value;
+    return formatValue(22, decimals, units, true);
+  }
+
+  private _datePreviewFn(): string {
+    const dateFormat: DateFormatSettings = this.valueCardWidgetConfigForm.get('dateFormat').value;
+    const processor = DateFormatProcessor.fromSettings(this.$injector, dateFormat);
+    processor.update(Date.now());
+    return processor.formatted;
+  }
 }

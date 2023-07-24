@@ -23,11 +23,7 @@
       <mat-form-field fxFlex appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput type="number" min="0" formControlName="size" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
-        <mat-select formControlName="sizeUnit">
-          <mat-option *ngFor="let cssUnit of cssUnitsList" [value]="cssUnit">{{ cssUnit }}</mat-option>
-        </mat-select>
-      </mat-form-field>
+      <tb-css-unit-select fxFlex formControlName="sizeUnit"></tb-css-unit-select>
     </div>
   </div>
   <div class="tb-form-row no-border no-padding">

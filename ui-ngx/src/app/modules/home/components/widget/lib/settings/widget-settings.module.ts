@@ -276,6 +276,11 @@ import { ColorSettingsComponent } from '@home/components/widget/lib/settings/com
 import {
   ColorSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/color-settings-panel.component';
+import { CssUnitSelectComponent } from '@home/components/widget/lib/settings/common/css-unit-select.component';
+import { DateFormatSelectComponent } from '@home/components/widget/lib/settings/common/date-format-select.component';
+import {
+  DateFormatSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/date-format-settings-panel.component';
 
 @NgModule({
   declarations: [
@@ -383,7 +388,10 @@ import {
     FontSettingsComponent,
     FontSettingsPanelComponent,
     ColorSettingsComponent,
-    ColorSettingsPanelComponent
+    ColorSettingsPanelComponent,
+    CssUnitSelectComponent,
+    DateFormatSelectComponent,
+    DateFormatSettingsPanelComponent
   ],
   imports: [
     CommonModule,
@@ -495,7 +503,10 @@ import {
     FontSettingsComponent,
     FontSettingsPanelComponent,
     ColorSettingsComponent,
-    ColorSettingsPanelComponent
+    ColorSettingsPanelComponent,
+    CssUnitSelectComponent,
+    DateFormatSelectComponent,
+    DateFormatSettingsPanelComponent
   ]
 })
 export class WidgetSettingsModule {

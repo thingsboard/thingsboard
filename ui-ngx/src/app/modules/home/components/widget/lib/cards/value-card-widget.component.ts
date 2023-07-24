@@ -21,7 +21,7 @@ import { DatePipe } from '@angular/common';
 import {
   backgroundStyle,
   ColorProcessor,
-  ComponentStyle,
+  ComponentStyle, DateFormatProcessor,
   getDataKey,
   getLabel,
   getSingleTsValue,
@@ -62,7 +62,7 @@ export class ValueCardWidgetComponent implements OnInit {
   valueColor: ColorProcessor;
 
   showDate = true;
-  dateText = '';
+  dateFormat: DateFormatProcessor;
   dateStyle: ComponentStyle = {};
   dateColor: ColorProcessor;
 
@@ -70,7 +70,6 @@ export class ValueCardWidgetComponent implements OnInit {
   overlayStyle: ComponentStyle = {};
 
   private horizontal = false;
-  private dateFormat: string;
   private decimals = 0;
   private units = '';
 
@@ -110,7 +109,7 @@ export class ValueCardWidgetComponent implements OnInit {
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showDate = this.settings.showDate;
-    this.dateFormat = this.settings.dateFormat;
+    this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
     this.dateStyle = textStyle(this.settings.dateFont,  '1.33', '0.25px');
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
@@ -126,15 +125,16 @@ export class ValueCardWidgetComponent implements OnInit {
 
   public onDataUpdated() {
     const tsValue = getSingleTsValue(this.ctx.data);
+    let ts;
     let value;
     if (tsValue) {
+      ts = tsValue[0];
       value = tsValue[1];
       this.valueText = formatValue(value, this.decimals, this.units, true);
-      this.dateText = this.date.transform(tsValue[0], this.dateFormat);
     } else {
       this.valueText = 'N/A';
-      this.dateText = '';
     }
+    this.dateFormat.update(ts);
     this.iconColor.update(value);
     this.labelColor.update(value);
     this.valueColor.update(value);

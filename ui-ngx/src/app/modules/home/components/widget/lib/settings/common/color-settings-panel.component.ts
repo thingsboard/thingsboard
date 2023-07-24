@@ -108,6 +108,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
 
   removeRange(index: number) {
     this.rangeListFormArray.removeAt(index);
+    this.colorSettingsFormGroup.markAsDirty();
     setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
@@ -115,7 +116,8 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
     const newRange: ColorRange = {
       color: 'rgba(0,0,0,0.87)'
     };
-    this.rangeListFormArray.push(this.colorRangeControl(newRange), {emitEvent: true});
+    this.rangeListFormArray.push(this.colorRangeControl(newRange));
+    this.colorSettingsFormGroup.markAsDirty();
     setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 

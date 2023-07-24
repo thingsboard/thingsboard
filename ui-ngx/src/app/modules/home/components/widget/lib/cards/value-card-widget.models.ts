@@ -19,8 +19,8 @@ import {
   BackgroundType,
   ColorSettings,
   constantColor,
-  cssUnit,
-  Font
+  cssUnit, DateFormatSettings,
+  Font, lastUpdateAgoDateFormat
 } from '@home/components/widget/config/widget-settings.models';
 
 export enum ValueCardLayout {
@@ -75,7 +75,7 @@ export interface ValueCardWidgetSettings {
   valueFont: Font;
   valueColor: ColorSettings;
   showDate: boolean;
-  dateFormat: string;
+  dateFormat: DateFormatSettings;
   dateFont: Font;
   dateColor: ColorSettings;
   background: BackgroundSettings;
@@ -106,7 +106,7 @@ export const valueCardDefaultSettings = (horizontal: boolean): ValueCardWidgetSe
   },
   valueColor: constantColor('rgba(0, 0, 0, 0.87)'),
   showDate: true,
-  dateFormat: 'yyyy-MM-dd HH:mm:ss',
+  dateFormat: lastUpdateAgoDateFormat(),
   dateFont: {
     family: 'Roboto',
     size: 12,

@@ -16,6 +16,10 @@
 
 import { isDefinedAndNotNull, isNumber, isNumeric, parseFunction } from '@core/utils';
 import { DataKey, Datasource, DatasourceData } from '@shared/models/widget.models';
+import { Injector } from '@angular/core';
+import { DatePipe, formatDate } from '@angular/common';
+import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import { TranslateService } from '@ngx-translate/core';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -166,6 +170,104 @@ class FunctionColorProcessor extends ColorProcessor {
       this.color = this.colorFunction(value) || this.settings.color;
     }
   }
+}
+
+export interface DateFormatSettings {
+  format?: string;
+  lastUpdateAgo?: boolean;
+  custom?: boolean;
+}
+
+export const simpleDateFormat = (format: string): DateFormatSettings => ({
+  format,
+  lastUpdateAgo: false,
+  custom: false
+});
+
+export const lastUpdateAgoDateFormat = (): DateFormatSettings => ({
+  format: null,
+  lastUpdateAgo: true,
+  custom: false
+});
+
+export const customDateFormat = (format: string): DateFormatSettings => ({
+  format,
+  lastUpdateAgo: false,
+  custom: true
+});
+
+export const dateFormats = ['MMM dd yyyy HH:mm', 'dd MMM yyyy HH:mm', 'yyyy MMM dd HH:mm',
+  'MM/dd/yyyy HH:mm', 'dd/MM/yyyy HH:mm', 'yyyy/MM/dd HH:mm:ss']
+  .map(f => simpleDateFormat(f)).concat([lastUpdateAgoDateFormat(), customDateFormat('EEE, MMMM dd, yyyy')]);
+
+export const compareDateFormats = (df1: DateFormatSettings, df2: DateFormatSettings): boolean => {
+  if (df1 === df2) {
+    return true;
+  } else if (df1 && df2) {
+    if (df1.lastUpdateAgo && df2.lastUpdateAgo) {
+      return true;
+    } else if (df1.custom && df2.custom) {
+      return true;
+    } else if (!df1.lastUpdateAgo && !df2.lastUpdateAgo && !df1.custom && !df2.custom) {
+      return df1.format === df2.format;
+    }
+  }
+  return false;
+};
+
+export abstract class DateFormatProcessor {
+
+  static fromSettings($injector: Injector, settings: DateFormatSettings): DateFormatProcessor {
+    if (settings.lastUpdateAgo) {
+      return new LastUpdateAgoDateFormatProcessor($injector, settings);
+    } else {
+      return new SimpleDateFormatProcessor($injector, settings);
+    }
+  }
+
+  formatted = '';
+
+  protected constructor(protected $injector: Injector,
+                        protected settings: DateFormatSettings) {
+  }
+
+  abstract update(ts: string | number | Date): void;
+
+}
+
+export class SimpleDateFormatProcessor extends DateFormatProcessor {
+
+  private datePipe: DatePipe;
+
+  constructor(protected $injector: Injector,
+              protected settings: DateFormatSettings) {
+    super($injector, settings);
+    this.datePipe = $injector.get(DatePipe);
+  }
+
+  update(ts: string| number | Date): void {
+    this.formatted = this.datePipe.transform(ts, this.settings.format);
+  }
+
+}
+
+export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
+
+  private dateAgoPipe: DateAgoPipe;
+  private translate: TranslateService;
+
+  constructor(protected $injector: Injector,
+              protected settings: DateFormatSettings) {
+    super($injector, settings);
+    this.dateAgoPipe = $injector.get(DateAgoPipe);
+    this.translate = $injector.get(TranslateService);
+  }
+
+  update(ts: string| number | Date): void {
+    this.formatted = this.translate.instant('date.last-update-n-ago-text',
+      {agoText: this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true})});
+  }
+
 }
 
 export enum BackgroundType {

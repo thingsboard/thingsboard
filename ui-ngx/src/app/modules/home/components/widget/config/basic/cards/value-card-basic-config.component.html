@@ -55,5 +55,50 @@
         </tb-color-settings>
       </div>
     </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
+        {{ 'widgets.value-card.icon' | translate }}
+      </mat-slide-toggle>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field fxFlex appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-material-icon-select asBoxInput
+                                 [color]="valueCardWidgetConfigForm.get('iconColor').value?.color"
+                                 formControlName="icon">
+        </tb-material-icon-select>
+        <tb-color-settings formControlName="iconColor">
+        </tb-color-settings>
+      </div>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>widgets.value-card.value</div>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <tb-unit-input fxFlex formControlName="units"></tb-unit-input>
+        <mat-form-field fxFlex appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix translate>widget-config.decimals-suffix</div>
+        </mat-form-field>
+        <tb-font-settings formControlName="valueFont"
+                          [previewText]="valuePreviewFn">
+        </tb-font-settings>
+        <tb-color-settings formControlName="valueColor">
+        </tb-color-settings>
+      </div>
+    </div>
+  </div>
+  <div class="tb-form-row">
+    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showDate">
+      {{ 'widgets.value-card.date' | translate }}
+    </mat-slide-toggle>
+    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <tb-date-format-select fxFlex formControlName="dateFormat"></tb-date-format-select>
+      <tb-font-settings formControlName="dateFont"
+                        [previewText]="datePreviewFn">
+      </tb-font-settings>
+      <tb-color-settings formControlName="dateColor">
+      </tb-color-settings>
+    </div>
   </div>
 </ng-container>
