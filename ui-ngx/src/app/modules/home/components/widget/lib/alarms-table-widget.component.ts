@@ -160,6 +160,7 @@ interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
 })
 export class AlarmsTableWidgetComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {
 
+
   @Input()
   ctx: WidgetContext;
 
@@ -171,6 +172,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public displayPagination = true;
   public enableStickyHeader = true;
   public enableStickyAction = false;
+  public showCellActionsMenu = true;
   public pageSizeOptions;
   public pageLink: AlarmDataPageLink;
   public sortOrderProperty: string;
@@ -180,6 +182,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public displayedColumns: string[] = [];
   public alarmsDatasource: AlarmsDatasource;
   public noDataDisplayMessageText: string;
+  public hasRowAction: boolean;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -355,6 +358,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
     this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : false;
+    this.showCellActionsMenu = isDefined(this.settings.showCellActionsMenu) ? this.settings.showCellActionsMenu : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
     let enableFilter;
     if (isDefined(this.settings.enableFilter)) {
@@ -493,6 +497,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
 
     this.setCellButtonAction = !!(actionCellDescriptors.length + this.ctx.actionsApi.getActionDescriptors('actionCellButton').length);
+    this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length;
 
     if (this.setCellButtonAction) {
       this.displayedColumns.push('actions');

@@ -14,19 +14,6 @@
 /// limitations under the License.
 ///
 
-export interface Unit {
-  name: string;
-  symbol: string;
-  tags: string[];
-}
-
-export const unitBySymbol = (_units: Array<Unit>, symbol: string): Unit => _units.find(u => u.symbol === symbol);
-
-const searchUnitTags = (unit: Unit, searchText: string): boolean =>
-  !!unit.tags.find(t => t.toUpperCase().includes(searchText.toUpperCase()));
-
-export const searchUnits = (_units: Array<Unit>, searchText: string): Array<Unit> => _units.filter(
-    u => u.symbol.toUpperCase().includes(searchText.toUpperCase()) ||
-      u.name.toUpperCase().includes(searchText.toUpperCase()) ||
-      searchUnitTags(u, searchText)
-);
+export * from './notification-websocket.service';
+export * from './telemetry-websocket.service';
+export * from './websocket.service';

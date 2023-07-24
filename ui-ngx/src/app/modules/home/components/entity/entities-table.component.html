@@ -217,7 +217,7 @@
               <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 48) + 'px',
                                                                     maxWidth: (cellActionDescriptors.length * 48) + 'px',
                                                                     width: (cellActionDescriptors.length * 48) + 'px' }">
-                <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+                <div [fxHide]="cellActionDescriptors.length !== 1" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                   <button mat-icon-button [disabled]="(isLoading$ | async) || !actionDescriptor.isEnabled(entity)"
                           *ngFor="let actionDescriptor of cellActionDescriptors"
                           matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
@@ -228,7 +228,7 @@
                       {{actionDescriptor.icon}}</mat-icon>
                   </button>
                 </div>
-                <div fxHide fxShow.lt-lg *ngIf="cellActionDescriptors.length">
+                <div fxHide [fxShow.lt-lg]="cellActionDescriptors.length !== 1" *ngIf="cellActionDescriptors.length">
                   <button mat-icon-button
                           (click)="$event.stopPropagation()"
                           [matMenuTriggerFor]="cellActionsMenu">
