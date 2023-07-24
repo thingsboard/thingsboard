@@ -144,10 +144,10 @@ $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0,
     transform: translateX(-50%) rotate(45deg);
   }
   &-placement-topLeft > &-content > &-arrow {
-    left: 16px;
+    right: 16px;
   }
   &-placement-topRight > &-content > &-arrow {
-    right: 16px;
+    left: 16px;
   }
 
   &-placement-right > &-content > &-arrow,
@@ -165,10 +165,10 @@ $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0,
     transform: translateY(-50%) rotate(45deg);
   }
   &-placement-rightTop > &-content > &-arrow {
-    top: 12px;
+    bottom: 12px;
   }
   &-placement-rightBottom > &-content > &-arrow {
-    bottom: 12px;
+    top: 12px;
   }
 
   &-placement-bottom > &-content > &-arrow,
@@ -186,10 +186,10 @@ $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0,
     transform: translateX(-50%) rotate(45deg);
   }
   &-placement-bottomLeft > &-content > &-arrow {
-    left: 16px;
+    right: 16px;
   }
   &-placement-bottomRight > &-content > &-arrow {
-    right: 16px;
+    left: 16px;
   }
 
   &-placement-left > &-content > &-arrow,
@@ -207,9 +207,9 @@ $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0,
     transform: translateY(-50%) rotate(45deg);
   }
   &-placement-leftTop > &-content > &-arrow {
-    top: 12px;
+    bottom: 12px;
   }
   &-placement-leftBottom > &-content > &-arrow {
-    bottom: 12px;
+    top: 12px;
   }
 }

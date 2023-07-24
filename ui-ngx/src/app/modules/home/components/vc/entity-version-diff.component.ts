@@ -305,7 +305,7 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
       this.popoverService.hidePopover(trigger);
     } else {
       const restoreVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionRestoreComponent, 'leftTop', true, null,
+        this.viewContainerRef, EntityVersionRestoreComponent, 'leftBottom', true, null,
         {
           versionName: this.versionName,
           versionId: this.versionId,

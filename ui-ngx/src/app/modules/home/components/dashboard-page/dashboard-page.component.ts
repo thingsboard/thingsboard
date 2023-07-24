@@ -1513,7 +1513,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.popoverService.hidePopover(trigger);
     } else {
       const versionControlPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, VersionControlComponent, 'leftTop', true, null,
+        this.viewContainerRef, VersionControlComponent, 'leftBottom', true, null,
         {
           detailsMode: true,
           active: true,
