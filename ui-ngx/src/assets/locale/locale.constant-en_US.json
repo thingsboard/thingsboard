@@ -1392,6 +1392,7 @@
             "use-following-instructions": "Use the following instructions for sending telemetry on behalf of the device using shell",
             "execute-following-command": "Executive the following command",
             "install-curl-windows": "Starting Windows 10 b17063, cURL is available by default",
+            "install-mqtt-windows": "Use the instructions to download, install, setup and run mosquitto_pub",
             "install-necessary-client-tools": "Install necessary client tools",
             "mqtts-x509-command": "Use the following documentation to connect the device via MQTT with authorization X509",
             "coaps-x509-command": "Use the following documentation to connect the device via CoAP over DTLS with authorization X509",

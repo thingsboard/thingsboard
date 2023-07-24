@@ -124,6 +124,13 @@
           background: #F3F6FA;
           border-color: #305680;
           padding-right: 38px;
+          overflow: scroll;
+          padding-bottom: 4px;
+
+          &::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+          }
         }
       }
       button.clipboard-btn {

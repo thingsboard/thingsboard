@@ -140,7 +140,12 @@
                 <div class="tb-form-panel no-padding no-border tb-tab-body">
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                    <div class="tb-install-windows">Coming Soon!!!!</div>
+                    <div class="tb-install-windows">
+                      <ng-container *ngTemplateOutlet="seeDocumentation; context:
+                        {doc: {text: 'device.connectivity.install-mqtt-windows',
+                        href: 'https://thingsboard.io/docs/getting-started-guides/helloworld/?connectdevice=mqtt-windows#step-2-connect-device'}}">
+                      </ng-container>
+                    </div>
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
