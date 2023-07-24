@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.device;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -36,6 +37,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -48,7 +52,6 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.LINUX;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.WINDOWS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getCoapClientCommand;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getCurlCommand;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getDockerMosquittoClientsPublishCommand;
@@ -77,7 +80,6 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
         log.trace("Executing findDevicePublishTelemetryCommands [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
 
-        String defaultHostname = new URI(baseUrl).getHost();
         DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
         DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
         DeviceTransportType transportType = deviceProfile.getTransportType();
@@ -85,11 +87,11 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
         ObjectNode commands = JacksonUtil.newObjectNode();
         switch (transportType) {
             case DEFAULT:
-                Optional.ofNullable(getHttpTransportPublishCommands(defaultHostname, creds))
+                Optional.ofNullable(getHttpTransportPublishCommands(baseUrl, creds))
                         .ifPresent(v -> commands.set(HTTP, v));
-                Optional.ofNullable(getMqttTransportPublishCommands(defaultHostname, creds))
+                Optional.ofNullable(getMqttTransportPublishCommands(baseUrl, creds))
                         .ifPresent(v -> commands.set(MQTT, v));
-                Optional.ofNullable(getCoapTransportPublishCommands(defaultHostname, creds))
+                Optional.ofNullable(getCoapTransportPublishCommands(baseUrl, creds))
                         .ifPresent(v -> commands.set(COAP, v));
                 break;
             case MQTT:
@@ -97,11 +99,11 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
                         (MqttDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
                 String topicName = transportConfiguration.getDeviceTelemetryTopic();
 
-                Optional.ofNullable(getMqttTransportPublishCommands(defaultHostname, topicName, creds))
+                Optional.ofNullable(getMqttTransportPublishCommands(baseUrl, topicName, creds))
                         .ifPresent(v -> commands.set(MQTT, v));
                 break;
             case COAP:
-                Optional.ofNullable(getCoapTransportPublishCommands(defaultHostname, creds))
+                Optional.ofNullable(getCoapTransportPublishCommands(baseUrl, creds))
                         .ifPresent(v -> commands.set(COAP, v));
                 break;
             default:
@@ -122,7 +124,7 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
         }
     }
 
-    private JsonNode getHttpTransportPublishCommands(String defaultHostname, DeviceCredentials deviceCredentials) {
+    private JsonNode getHttpTransportPublishCommands(String defaultHostname, DeviceCredentials deviceCredentials) throws URISyntaxException {
         ObjectNode httpCommands = JacksonUtil.newObjectNode();
         Optional.ofNullable(getHttpPublishCommand(HTTP, defaultHostname, deviceCredentials))
                 .ifPresent(v -> httpCommands.put(HTTP, v));
@@ -131,34 +133,37 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
         return httpCommands.isEmpty() ? null : httpCommands;
     }
 
-    private String getHttpPublishCommand(String protocol, String defaultHostname, DeviceCredentials deviceCredentials) {
+    private String getHttpPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo httpProps = deviceConnectivityConfiguration.getConnectivity().get(protocol);
         if (httpProps == null || !httpProps.getEnabled() ||
                 deviceCredentials.getCredentialsType() != DeviceCredentialsType.ACCESS_TOKEN) {
             return null;
         }
-        String hostName = httpProps.getHost().isEmpty() ? defaultHostname : httpProps.getHost();
+        String hostName = httpProps.getHost().isEmpty() ? new URI(baseUrl).getHost() : httpProps.getHost();
         String port = httpProps.getPort().isEmpty() ? "" : ":" + httpProps.getPort();
 
         return getCurlCommand(protocol, hostName, port, deviceCredentials);
     }
 
-    private JsonNode getMqttTransportPublishCommands(String defaultHostname, DeviceCredentials deviceCredentials) {
-        return getMqttTransportPublishCommands(defaultHostname, DEFAULT_DEVICE_TELEMETRY_TOPIC, deviceCredentials);
+    private JsonNode getMqttTransportPublishCommands(String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
+        return getMqttTransportPublishCommands(baseUrl, DEFAULT_DEVICE_TELEMETRY_TOPIC, deviceCredentials);
     }
 
-    private JsonNode getMqttTransportPublishCommands(String defaultHostname, String topic, DeviceCredentials deviceCredentials) {
+    private JsonNode getMqttTransportPublishCommands(String baseUrl, String topic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         ObjectNode mqttCommands = JacksonUtil.newObjectNode();
 
-        Optional.ofNullable(getMqttPublishCommand(MQTT, defaultHostname, topic, deviceCredentials))
+        Optional.ofNullable(getMqttPublishCommand(baseUrl, topic, deviceCredentials))
                 .ifPresent(v -> mqttCommands.put(MQTT, v));
-        Optional.ofNullable(getMqttPublishCommand(MQTTS, defaultHostname, topic, deviceCredentials))
-                .ifPresent(v -> mqttCommands.put(MQTTS, v));
+        List<String> mqttsPublishCommand = getMqttsPublishCommand(baseUrl, topic, deviceCredentials);
+        if (mqttsPublishCommand != null){
+            ArrayNode arrayNode = mqttCommands.putArray(MQTTS);
+            mqttsPublishCommand.forEach(arrayNode::add);
+        }
 
         ObjectNode dockerMqttCommands = JacksonUtil.newObjectNode();
-        Optional.ofNullable(getDockerMqttPublishCommand(MQTT, defaultHostname, topic, deviceCredentials))
+        Optional.ofNullable(getDockerMqttPublishCommand(MQTT,baseUrl, topic, deviceCredentials))
                 .ifPresent(v -> dockerMqttCommands.put(MQTT, v));
-        Optional.ofNullable(getDockerMqttPublishCommand(MQTTS, defaultHostname, topic, deviceCredentials))
+        Optional.ofNullable(getDockerMqttPublishCommand(MQTTS, baseUrl, topic, deviceCredentials))
                 .ifPresent(v -> dockerMqttCommands.put(MQTTS, v));
 
         if (!dockerMqttCommands.isEmpty()) {
@@ -167,41 +172,62 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
         return mqttCommands.isEmpty() ? null : mqttCommands;
     }
 
-    private String getMqttPublishCommand(String protocol, String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
-        if (MQTTS.equals(protocol) && deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
-            return CHECK_DOCUMENTATION;
+    private String getMqttPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
+        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(MQTT);
+        if (properties == null || !properties.getEnabled()) {
+            return null;
         }
+        String mqttHost = properties.getHost().isEmpty() ? new URI(baseUrl).getHost() : properties.getHost();
+        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+        return getMosquittoPubPublishCommand(MQTT, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
+    }
+
+    private List<String> getMqttsPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
+        String pubCommand;
+        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
+            return List.of(CHECK_DOCUMENTATION);
+        } else {
+            DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(MQTTS);
+            if (properties == null || !properties.getEnabled()) {
+                return null;
+            }
+            String mqttHost = properties.getHost().isEmpty() ? new URI(baseUrl).getHost() : properties.getHost();
+            String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+            pubCommand = getMosquittoPubPublishCommand(MQTTS, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
+        }
+
+        ArrayList<String> commands = new ArrayList<>();
+        if (pubCommand != null) {
+            commands.add("curl " + baseUrl + "/api/device-connectivity/mqtts/certificate/download -o /tmp/tb-server-chain.pem");
+            commands.add(pubCommand);
+            return commands;
+        }
+        return null;
+    }
+
+
+    private String getDockerMqttPublishCommand(String protocol, String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
         if (properties == null || !properties.getEnabled()) {
             return null;
         }
-        String mqttHost = properties.getHost().isEmpty() ? defaultHostname : properties.getHost();
+        String mqttHost = properties.getHost().isEmpty() ? new URI(baseUrl).getHost() : properties.getHost();
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
-        return getMosquittoPubPublishCommand(protocol, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
+        return getDockerMosquittoClientsPublishCommand(protocol, baseUrl, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
     }
 
-    private String getDockerMqttPublishCommand(String protocol, String defaultHostname, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
-        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
-        if (properties == null || !properties.getEnabled()) {
-            return null;
-        }
-        String mqttHost = properties.getHost().isEmpty() ? defaultHostname : properties.getHost();
-        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
-        return getDockerMosquittoClientsPublishCommand(protocol, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
-    }
-
-    private JsonNode getCoapTransportPublishCommands(String defaultHostname, DeviceCredentials deviceCredentials) {
+    private JsonNode getCoapTransportPublishCommands(String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         ObjectNode coapCommands = JacksonUtil.newObjectNode();
 
-        Optional.ofNullable(getCoapPublishCommand(LINUX, COAP, defaultHostname, deviceCredentials))
+        Optional.ofNullable(getCoapPublishCommand(COAP, baseUrl, deviceCredentials))
                 .ifPresent(v -> coapCommands.put(COAP, v));
-        Optional.ofNullable(getCoapPublishCommand(LINUX, COAPS, defaultHostname, deviceCredentials))
+        Optional.ofNullable(getCoapPublishCommand(COAPS, baseUrl, deviceCredentials))
                 .ifPresent(v -> coapCommands.put(COAPS, v));
 
         return coapCommands.isEmpty() ? null : coapCommands;
     }
 
-    private String getCoapPublishCommand(String os, String protocol, String defaultHostname, DeviceCredentials deviceCredentials) {
+    private String getCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         if (COAPS.equals(protocol) && deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
             return CHECK_DOCUMENTATION;
         }
@@ -209,14 +235,9 @@ public class DeviceСonnectivityServiceImpl implements DeviceConnectivityService
         if (properties == null || !properties.getEnabled()) {
             return null;
         }
-        String hostName = properties.getHost().isEmpty() ? defaultHostname : properties.getHost();
+        String hostName = properties.getHost().isEmpty() ? new URI(baseUrl).getHost() : properties.getHost();
         String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
 
-        switch (os) {
-            case LINUX:
-                return getCoapClientCommand(protocol, hostName, port, deviceCredentials);
-            default:
-                throw new IllegalArgumentException("Unsupported operating system: " + os);
-        }
+        return getCoapClientCommand(protocol, hostName, port, deviceCredentials);
     }
 }
