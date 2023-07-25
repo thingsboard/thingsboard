@@ -23,7 +23,7 @@
   .connector-container {
     width: 100%;
 
-    &>mat-card, &>div {
+    & > mat-card, & > div {
       min-width: calc(50% - 15px);
     }
 
@@ -65,7 +65,23 @@
     margin: 15px;
   }
 
+  .status-block {
+    text-align: center;
+    border-radius: 16px;
+    font-weight: 500;
+    width: fit-content;
+    padding: 5px 15px;
+  }
 
+  .status-sync {
+    background: rgba(25, 128, 56, .06);
+    color: rgb(25, 128, 56);
+  }
+
+  .status-unsync {
+    background: rgba(203, 37, 48, .06);
+    color: rgb(203, 37, 48);
+  }
 
   .action-btns {
     margin: 10px 10px 0;

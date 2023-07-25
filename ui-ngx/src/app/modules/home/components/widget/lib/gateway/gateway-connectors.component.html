@@ -61,11 +61,12 @@
             {{ 'gateway.connectors-table-status' | translate }}
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
-            <button mat-icon-button
-                    [matTooltip]="isConnectorSynced(attribute)?'Synced' : 'Unsynced'"
-                    matTooltipPosition="above">
-              <mat-icon>{{isConnectorSynced(attribute)?'sync' : 'sync_problem'}}</mat-icon>
-            </button>
+              <div
+              [ngClass]="{
+              'status-block': true,
+              'status-sync':isConnectorSynced(attribute),
+              'status-unsync':isConnectorSynced(attribute)
+              }">{{isConnectorSynced(attribute)?'Synchronised' : 'Unsynchronised'}}</div>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
