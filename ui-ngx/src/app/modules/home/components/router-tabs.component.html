@@ -24,8 +24,7 @@
          #rla="routerLinkActive"
          mat-tab-link
          [active]="rla.isActive">
-        <mat-icon *ngIf="!tab.isMdiIcon && tab.icon !== null" class="tb-mat-18">{{tab.icon}}</mat-icon>
-        <mat-icon *ngIf="tab.isMdiIcon && tab.icon !== null" [svgIcon]="tab.icon" class="tb-mat-18"></mat-icon>
+        <tb-icon *ngIf="tab.icon !== null" class="tb-mat-18">{{tab.icon}}</tb-icon>
         <span>{{tab.name | translate}}</span>
       </a>
     </nav>

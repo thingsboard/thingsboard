@@ -446,7 +446,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       this.titleIconStyle.color = this.widget.config.iconColor;
     }
     if (this.widget.config.iconSize) {
+      this.titleIconStyle.width = this.widget.config.iconSize;
+      this.titleIconStyle.height = this.widget.config.iconSize;
       this.titleIconStyle.fontSize = this.widget.config.iconSize;
+      this.titleIconStyle.lineHeight = this.widget.config.iconSize;
     }
 
     this.dropShadow = isDefined(this.widget.config.dropShadow) ? this.widget.config.dropShadow : true;

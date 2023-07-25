@@ -195,6 +195,9 @@ import { ToggleHeaderComponent, ToggleOption } from '@shared/components/toggle-h
 import { RuleChainSelectComponent } from '@shared/components/rule-chain/rule-chain-select.component';
 import { ToggleSelectComponent } from '@shared/components/toggle-select.component';
 import { UnitInputComponent } from '@shared/components/unit-input.component';
+import { MaterialIconsComponent } from '@shared/components/material-icons.component';
+import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
+import { TbIconComponent } from '@shared/components/icon.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -364,12 +367,15 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     GtMdLgLayoutGapDirective,
     GtMdLgShowHideDirective,
     ColorPickerComponent,
+    ColorPickerPanelComponent,
     ResourceAutocompleteComponent,
     ToggleHeaderComponent,
     ToggleOption,
     ToggleSelectComponent,
     UnitInputComponent,
-    RuleChainSelectComponent
+    MaterialIconsComponent,
+    RuleChainSelectComponent,
+    TbIconComponent
   ],
   imports: [
     CommonModule,
@@ -595,12 +601,15 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     GtMdLgLayoutGapDirective,
     GtMdLgShowHideDirective,
     ColorPickerComponent,
+    ColorPickerPanelComponent,
     ResourceAutocompleteComponent,
     ToggleHeaderComponent,
     ToggleOption,
     ToggleSelectComponent,
     UnitInputComponent,
-    RuleChainSelectComponent
+    MaterialIconsComponent,
+    RuleChainSelectComponent,
+    TbIconComponent
   ]
 })
 export class SharedModule { }

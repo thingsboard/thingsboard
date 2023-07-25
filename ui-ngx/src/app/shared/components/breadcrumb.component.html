@@ -37,11 +37,9 @@
 </div>
 <ng-template #breadcrumbWithIcon let-breadcrumb="breadcrumb">
   <img *ngIf="breadcrumb.iconUrl" [src]="breadcrumb.iconUrl"/>
-  <mat-icon *ngIf="!breadcrumb.iconUrl && breadcrumb.isMdiIcon" [svgIcon]="breadcrumb.icon">
-  </mat-icon>
-  <mat-icon *ngIf="!breadcrumb.iconUrl && !breadcrumb.isMdiIcon">
+  <tb-icon *ngIf="!breadcrumb.iconUrl">
     {{ breadcrumb.icon }}
-  </mat-icon>
+  </tb-icon>
   {{ breadcrumb.ignoreTranslate
   ? (breadcrumb.labelFunction ? breadcrumb.labelFunction() : utils.customTranslation(breadcrumb.label, breadcrumb.label))
   : (breadcrumb.label | translate) }}

@@ -52,6 +52,7 @@ import { GatewayConfigurationComponent } from '@home/components/widget/lib/gatew
 import {
   GatewayRemoteConfigurationDialogComponent
 } from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
+import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/value-card-widget.component';
 
 @NgModule({
   declarations:
@@ -82,7 +83,8 @@ import {
       GatewayServiceRPCComponent,
       DeviceGatewayCommandComponent,
       GatewayConfigurationComponent,
-      GatewayRemoteConfigurationDialogComponent
+      GatewayRemoteConfigurationDialogComponent,
+      ValueCardWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -117,7 +119,8 @@ import {
         GatewayServiceRPCComponent,
         DeviceGatewayCommandComponent,
         GatewayConfigurationComponent,
-        GatewayRemoteConfigurationDialogComponent
+        GatewayRemoteConfigurationDialogComponent,
+        ValueCardWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
