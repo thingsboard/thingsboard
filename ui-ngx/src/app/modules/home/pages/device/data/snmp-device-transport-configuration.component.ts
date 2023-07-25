@@ -127,6 +127,9 @@ export class SnmpDeviceTransportConfigurationComponent implements ControlValueAc
       this.snmpDeviceTransportConfigurationFormGroup.disable({emitEvent: false});
     } else {
       this.snmpDeviceTransportConfigurationFormGroup.enable({emitEvent: false});
+      this.updateDisabledFormValue(
+        this.snmpDeviceTransportConfigurationFormGroup.get('protocolVersion').value || SnmpDeviceProtocolVersion.V2C
+      );
     }
   }
 

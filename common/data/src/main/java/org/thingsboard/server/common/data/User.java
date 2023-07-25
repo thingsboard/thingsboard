@@ -129,7 +129,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.authority = authority;
     }
 
-    @ApiModelProperty(position = 8, required = true, value = "First name of the user", example = "John")
+    @ApiModelProperty(position = 8, required = false, value = "First name of the user", example = "John")
     public String getFirstName() {
         return firstName;
     }
@@ -138,7 +138,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.firstName = firstName;
     }
 
-    @ApiModelProperty(position = 9, required = true, value = "Last name of the user", example = "Doe")
+    @ApiModelProperty(position = 9, required = false, value = "Last name of the user", example = "Doe")
     public String getLastName() {
         return lastName;
     }
@@ -147,7 +147,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.lastName = lastName;
     }
 
-    @ApiModelProperty(position = 10, required = true, value = "Phone number of the user", example = "38012345123")
+    @ApiModelProperty(position = 10, required = false, value = "Phone number of the user", example = "38012345123")
     public String getPhone() {
         return phone;
     }

@@ -80,6 +80,7 @@ export interface IEntitiesTableComponent {
   exitFilterMode(): void;
   resetSortAndFilter(update?: boolean, preserveTimewindow?: boolean): void;
   columnsUpdated(resetData?: boolean): void;
+  cellActionDescriptorsUpdated(): void;
   headerCellStyle(column: EntityColumn<BaseData<HasId>>): any;
   clearCellCache(col: number, row: number): void;
   cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): any;

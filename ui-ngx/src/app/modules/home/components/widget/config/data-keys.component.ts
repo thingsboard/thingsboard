@@ -27,6 +27,7 @@ import {
   SimpleChanges,
   SkipSelf,
   ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -56,7 +57,6 @@ import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { DialogService } from '@core/services/dialog.service';
 import { MatDialog } from '@angular/material/dialog';
 import {
   DataKeyConfigDialogComponent,
@@ -69,6 +69,8 @@ import { DndDropEvent } from 'ngx-drag-drop/lib/dnd-dropzone.directive';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { DatasourceComponent } from '@home/components/widget/config/datasource.component';
+import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
+import { TbPopoverService } from '@shared/components/popover.service';
 
 @Component({
   selector: 'tb-data-keys',
@@ -208,10 +210,11 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
               private datasourceComponent: DatasourceComponent,
               public translate: TranslateService,
               private utils: UtilsService,
-              private dialogs: DialogService,
               private dialog: MatDialog,
               private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef,
+              private popoverService: TbPopoverService,
+              private viewContainerRef: ViewContainerRef,
               private renderer: Renderer2,
               public truncate: TruncatePipe) {
   }
@@ -471,15 +474,30 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     this.propagateChange(this.modelValue);
   }
 
-  showColorPicker(key: DataKey) {
-    this.dialogs.colorPicker(key.color).subscribe(
-      (color) => {
+  openColorPickerPopup(key: DataKey, $event: Event, keyColorButton: HTMLDivElement) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = keyColorButton;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, ColorPickerPanelComponent, 'left', true, null,
+        {
+          color: key.color
+        },
+        {},
+        {}, {}, true);
+      colorPickerPopover.tbComponentRef.instance.popover = colorPickerPopover;
+      colorPickerPopover.tbComponentRef.instance.colorSelected.subscribe((color) => {
+        colorPickerPopover.hide();
         if (color && key.color !== color) {
           key.color = color;
           this.propagateChange(this.modelValue);
         }
-      }
-    );
+      });
+    }
   }
 
   editDataKey(key: DataKey, index: number) {

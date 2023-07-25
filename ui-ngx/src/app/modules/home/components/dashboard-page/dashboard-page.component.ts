@@ -1152,7 +1152,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
       (widgetTypeInfo) => {
         const config: WidgetConfig = this.dashboardUtils.widgetConfigFromWidgetType(widgetTypeInfo);
-        config.title = 'New ' + widgetTypeInfo.widgetName;
+        if (!config.title) {
+          config.title = 'New ' + widgetTypeInfo.widgetName;
+        }
         let newWidget: Widget = {
           isSystemType: widget.isSystemType,
           bundleAlias: widget.bundleAlias,

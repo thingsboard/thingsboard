@@ -497,6 +497,9 @@ cache:
     entityCount:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
       maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+    resourceInfo:
+      timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_INFO_TTL:1440}"
+      maxSize: "${CACHE_SPECS_RESOURCE_INFO_MAX_SIZE:100000}"
 
   # deliberately placed outside 'specs' group above
   notificationRules:

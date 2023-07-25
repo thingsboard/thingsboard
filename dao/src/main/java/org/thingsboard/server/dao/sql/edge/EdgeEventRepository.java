@@ -30,8 +30,10 @@ public interface EdgeEventRepository extends JpaRepository<EdgeEventEntity, UUID
     @Query("SELECT e FROM EdgeEventEntity e WHERE " +
             "e.tenantId = :tenantId " +
             "AND e.edgeId = :edgeId " +
-            "AND (:startTime IS NULL OR e.createdTime > :startTime) " +
+            "AND (:startTime IS NULL OR e.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
+            "AND (:seqIdStart IS NULL OR e.seqId > :seqIdStart) " +
+            "AND (:seqIdEnd IS NULL OR e.seqId < :seqIdEnd) " +
             "AND LOWER(e.edgeEventType) LIKE LOWER(CONCAT('%', :textSearch, '%'))"
     )
     Page<EdgeEventEntity> findEdgeEventsByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
@@ -39,20 +41,7 @@ public interface EdgeEventRepository extends JpaRepository<EdgeEventEntity, UUID
                                                             @Param("textSearch") String textSearch,
                                                             @Param("startTime") Long startTime,
                                                             @Param("endTime") Long endTime,
+                                                            @Param("seqIdStart") Long seqIdStart,
+                                                            @Param("seqIdEnd") Long seqIdEnd,
                                                             Pageable pageable);
-
-    @Query("SELECT e FROM EdgeEventEntity e WHERE " +
-            "e.tenantId = :tenantId " +
-            "AND e.edgeId = :edgeId " +
-            "AND (:startTime IS NULL OR e.createdTime > :startTime) " +
-            "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
-            "AND e.edgeEventAction <> 'TIMESERIES_UPDATED' " +
-            "AND LOWER(e.edgeEventType) LIKE LOWER(CONCAT('%', :textSearch, '%'))"
-    )
-    Page<EdgeEventEntity> findEdgeEventsByTenantIdAndEdgeIdWithoutTimeseriesUpdated(@Param("tenantId") UUID tenantId,
-                                                                                    @Param("edgeId") UUID edgeId,
-                                                                                    @Param("textSearch") String textSearch,
-                                                                                    @Param("startTime") Long startTime,
-                                                                                    @Param("endTime") Long endTime,
-                                                                                    Pageable pageable);
 }

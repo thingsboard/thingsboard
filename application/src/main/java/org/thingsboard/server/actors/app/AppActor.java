@@ -73,10 +73,14 @@ public class AppActor extends ContextAwareActor {
     @Override
     protected boolean doProcess(TbActorMsg msg) {
         if (!ruleChainsInitialized) {
-            initTenantActors();
-            ruleChainsInitialized = true;
-            if (msg.getMsgType() != MsgType.APP_INIT_MSG && msg.getMsgType() != MsgType.PARTITION_CHANGE_MSG) {
-                log.warn("Rule Chains initialized by unexpected message: {}", msg);
+            if (MsgType.APP_INIT_MSG.equals(msg.getMsgType())) {
+                initTenantActors();
+                ruleChainsInitialized = true;
+            } else {
+                if (!msg.getMsgType().isIgnoreOnStart()) {
+                    log.warn("Attempt to initialize Rule Chains by unexpected message: {}", msg);
+                }
+                return true;
             }
         }
         switch (msg.getMsgType()) {
