@@ -198,7 +198,7 @@ public class HashPartitionService implements PartitionService {
                 if (!MAIN_QUEUE_NAME.equals(queueName) && !partitionSizesMap.containsKey(queueKey)) {
                     queueKey = new QueueKey(serviceType, TenantId.SYS_TENANT_ID);
                 }
-                log.warn("Using queue {} instead of isolated {}", queueKey, queueName);
+                log.warn("Using queue {} instead of isolated {} for tenant {}", queueKey, queueName, isolatedOrSystemTenantId);
             }
         }
         return resolve(queueKey, entityId);

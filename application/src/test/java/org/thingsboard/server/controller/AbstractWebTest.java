@@ -57,6 +57,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.actors.DefaultTbActorSystem;
 import org.thingsboard.server.actors.TbActorId;

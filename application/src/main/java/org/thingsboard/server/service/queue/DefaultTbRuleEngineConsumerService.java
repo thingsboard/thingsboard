@@ -152,7 +152,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private void initConsumer(Queue configuration) {
         QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, configuration);
         consumerConfigurations.putIfAbsent(queueKey, configuration);
-        consumerStats.putIfAbsent(queueKey, new TbRuleEngineConsumerStats(configuration.getName(), statsFactory));
+        consumerStats.putIfAbsent(queueKey, new TbRuleEngineConsumerStats(configuration, statsFactory));
         if (!configuration.isConsumerPerPartition()) {
             consumers.computeIfAbsent(queueKey, queueName -> tbRuleEngineQueueFactory.createToRuleEngineMsgConsumer(configuration));
         } else {

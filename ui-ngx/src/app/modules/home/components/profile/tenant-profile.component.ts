@@ -56,10 +56,10 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     const mainQueue = [
       {
         id: guid(),
-        consumerPerPartition: false,
+        consumerPerPartition: true,
         name: 'Main',
         packProcessingTimeout: 2000,
-        partitions: 1,
+        partitions: 2,
         pollInterval: 25,
         processingStrategy: {
           failurePercentage: 0,
@@ -82,8 +82,8 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         name: 'HighPriority',
         topic: 'tb_rule_engine.hp',
         pollInterval: 25,
-        partitions: 1,
-        consumerPerPartition: false,
+        partitions: 2,
+        consumerPerPartition: true,
         packProcessingTimeout: 2000,
         submitStrategy: {
           type: 'BURST',
@@ -105,8 +105,8 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         name: 'SequentialByOriginator',
         topic: 'tb_rule_engine.sq',
         pollInterval: 25,
-        partitions: 1,
-        consumerPerPartition: false,
+        partitions: 2,
+        consumerPerPartition: true,
         packProcessingTimeout: 2000,
         submitStrategy: {
           type: 'SEQUENTIAL_BY_ORIGINATOR',
