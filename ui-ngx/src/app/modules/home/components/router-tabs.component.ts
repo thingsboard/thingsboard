@@ -96,7 +96,6 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
         type: 'link',
         name: tab.data?.breadcrumb?.label ?? '',
         icon: tab.data?.breadcrumb?.icon ?? '',
-        isMdiIcon: tab.data?.breadcrumb?.icon.startsWith('mdi:') ?? false,
         path: `${sectionPath}/${tab.path}`
       }));
     } else {
