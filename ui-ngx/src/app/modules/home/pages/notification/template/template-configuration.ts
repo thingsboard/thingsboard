@@ -43,6 +43,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
   emailTemplateForm: FormGroup;
   smsTemplateForm: FormGroup;
   slackTemplateForm: FormGroup;
+  microsoftTeamsTemplateForm: FormGroup;
 
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
@@ -95,7 +96,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
         icon: this.fb.group({
           enabled: [false],
           icon: [{value: 'notifications', disabled: true}, Validators.required],
-          color: ['#757575']
+          color: [{value: '#757575', disabled: true}]
         }),
         actionButtonConfig: this.fb.group({
           enabled: [false],
@@ -114,8 +115,10 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
     ).subscribe((value) => {
       if (value) {
         this.webTemplateForm.get('additionalConfig.icon.icon').enable({emitEvent: false});
+        this.webTemplateForm.get('additionalConfig.icon.color').enable({emitEvent: false});
       } else {
         this.webTemplateForm.get('additionalConfig.icon.icon').disable({emitEvent: false});
+        this.webTemplateForm.get('additionalConfig.icon.color').disable({emitEvent: false});
       }
     });
 
@@ -163,11 +166,34 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       body: ['', Validators.required]
     });
 
+    this.microsoftTeamsTemplateForm = this.fb.group({
+      subject: [''],
+      body: ['', Validators.required],
+      themeColor: [''],
+      button: this.fb.group({
+        enabled: [false],
+        name: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(50)]],
+        uri: [{value: '', disabled: true}, Validators.required],
+      }),
+    });
+
+    this.microsoftTeamsTemplateForm.get('button.enabled').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      if (value) {
+        this.microsoftTeamsTemplateForm.get('button').enable({emitEvent: false});
+      } else {
+        this.microsoftTeamsTemplateForm.get('button').disable({emitEvent: false});
+        this.microsoftTeamsTemplateForm.get('button.enabled').enable({emitEvent: false});
+      }
+    });
+
     this.deliveryMethodFormsMap = new Map<NotificationDeliveryMethod, FormGroup>([
       [NotificationDeliveryMethod.WEB, this.webTemplateForm],
       [NotificationDeliveryMethod.EMAIL, this.emailTemplateForm],
       [NotificationDeliveryMethod.SMS, this.smsTemplateForm],
-      [NotificationDeliveryMethod.SLACK, this.slackTemplateForm]
+      [NotificationDeliveryMethod.SLACK, this.slackTemplateForm],
+      [NotificationDeliveryMethod.MICROSOFT_TEAMS, this.microsoftTeamsTemplateForm]
     ]);
   }
 
