@@ -114,7 +114,6 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
 
     @Override
     protected void doUnsubscribe() {
-        log.info("unsubscribe topic and close consumer for topic {}", getTopic());
         if (consumer != null) {
             consumer.unsubscribe();
             consumer.close();

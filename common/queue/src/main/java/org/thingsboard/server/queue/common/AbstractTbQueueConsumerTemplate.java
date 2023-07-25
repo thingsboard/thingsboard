@@ -162,7 +162,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
 
     @Override
     public void unsubscribe() {
-        log.info("unsubscribe topic and stop consumer {}", getTopic());
+        log.info("Unsubscribing from topics and stopping consumer for topics {}", partitions.stream()
+                .map(TopicPartitionInfo::getFullTopicName)
+                .collect(Collectors.joining(", ")));
         stopped = true;
         consumerLock.lock();
         try {
