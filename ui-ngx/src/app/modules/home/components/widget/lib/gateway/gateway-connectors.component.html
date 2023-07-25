@@ -65,7 +65,7 @@
               [ngClass]="{
               'status-block': true,
               'status-sync':isConnectorSynced(attribute),
-              'status-unsync':isConnectorSynced(attribute)
+              'status-unsync':!isConnectorSynced(attribute)
               }">{{isConnectorSynced(attribute)?'Synchronised' : 'Unsynchronised'}}</div>
           </mat-cell>
         </ng-container>
