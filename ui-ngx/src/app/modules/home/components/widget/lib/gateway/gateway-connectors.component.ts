@@ -83,11 +83,13 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   attributeDataSource: AttributeDatasource;
 
+  sharedAttributeData: Array<AttributeData>;
+
   inactiveConnectorsDataSource: AttributeDatasource;
 
   dataSource: MatTableDataSource<AttributeData>;
 
-  displayedColumns = ['enabled', 'key', 'type', 'actions'];
+  displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'actions'];
 
   gatewayConnectorDefaultTypes = GatewayConnectorDefaultTypesTranslates;
 
@@ -167,7 +169,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, ['inactive_connectors'])).subscribe(attributes => {
         if (attributes.length) {
           this.activeConnectors = attributes[0].length ? attributes[0][0].value : [];
+          this.activeConnectors = typeof this.activeConnectors === 'string' ? JSON.parse(this.activeConnectors): this.activeConnectors;
           this.inactiveConnectors = attributes[1].length ? attributes[1][0].value : [];
+          this.inactiveConnectors = typeof this.inactiveConnectors === 'string' ? JSON.parse(this.inactiveConnectors): this.inactiveConnectors;
           this.updateData(true);
         } else {
           this.activeConnectors = [];
@@ -184,6 +188,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (value.type !== 'grpc') {
       delete value.key;
     }
+    if (value.type !== 'custom') {
+      delete value.class;
+    }
+    value.ts = new Date().getTime();
     const attributesToSave = [{
       key: value.name,
       value
@@ -242,12 +250,23 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
     this.attributeDataSource.loadAttributes(this.device, AttributeScope.CLIENT_SCOPE, this.pageLink, reload).subscribe(data => {
       this.activeData = data.data.filter(value => this.activeConnectors.includes(value.key));
+      this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.combineData();
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
       this.inactiveData = data.data.filter(value =>this.inactiveConnectors.includes(value.key));
       this.combineData();
     });
+  }
+
+  isConnectorSynced(attribute: AttributeData) {
+    const connectorData = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
+    if (!connectorData.ts) return false;
+    const sharedIndex = this.sharedAttributeData.findIndex(data=>{
+      const sharedData = typeof data.value === 'string' ? JSON.parse(data.value): data.value;
+      return sharedData.name === connectorData.name && sharedData.ts && sharedData.ts <= connectorData.ts;
+    })
+    return sharedIndex !== -1;
   }
 
   combineData() {

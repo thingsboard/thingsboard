@@ -56,6 +56,18 @@
             {{ returnType(attribute) }}
           </mat-cell>
         </ng-container>
+        <ng-container matColumnDef="syncStatus">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
+            {{ 'gateway.connectors-table-status' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
+            <button mat-icon-button
+                    [matTooltip]="isConnectorSynced(attribute)?'Synced' : 'Unsynced'"
+                    matTooltipPosition="above">
+              <mat-icon>{{isConnectorSynced(attribute)?'sync' : 'sync_problem'}}</mat-icon>
+            </button>
+          </mat-cell>
+        </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
           <mat-header-cell *matHeaderCellDef
                            [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px'}">

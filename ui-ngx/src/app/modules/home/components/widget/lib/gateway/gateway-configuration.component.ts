@@ -18,7 +18,16 @@ import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
-import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { AttributeService } from '@core/http/attribute.service';
@@ -28,9 +37,9 @@ import {
   GatewayRemoteConfigurationDialogData
 } from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
 import { DeviceService } from '@core/http/device.service';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { DeviceCredentialsType } from '@shared/models/device.models';
+import { DeviceCredentials, DeviceCredentialsType } from '@shared/models/device.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 export enum StorageTypes {
@@ -135,6 +144,8 @@ export class GatewayConfigurationComponent implements OnInit {
 
   securityType: SecurityTypes;
 
+  initialCredentials: DeviceCredentials;
+
 
   constructor(protected router: Router,
               protected store: Store<AppState>,
@@ -216,14 +227,13 @@ export class GatewayConfigurationComponent implements OnInit {
       })
     });
 
-    this.gatewayConfigGroup.get('thingsboard.security').valueChanges.subscribe(security => {
-      if (security.username) {
-        this.clientIdUserNameFieldsToggle('clientId');
-      } else if (security.clientId) {
-        this.clientIdUserNameFieldsToggle('username');
-      } else if (!security.username && !security.clientId) {
-        this.clientIdUserNameFieldsToggle();
+    this.gatewayConfigGroup.get('thingsboard.security.password').valueChanges.subscribe(password => {
+      if (password !== '') {
+        this.gatewayConfigGroup.get('thingsboard.security.username').setValidators([Validators.required]);
+      } else {
+        this.gatewayConfigGroup.get('thingsboard.security.username').setValidators([]);
       }
+      this.gatewayConfigGroup.get('thingsboard.security.username').updateValueAndValidity({emitEvent: false});
     });
 
     this.toggleRpcFields(false);
@@ -261,7 +271,6 @@ export class GatewayConfigurationComponent implements OnInit {
     const securityGroup = this.gatewayConfigGroup.get('thingsboard.security') as FormGroup;
     securityGroup.get('type').valueChanges.subscribe(type => {
       this.removeAllSecurityValidators();
-      console.log(type);
       if (type === SecurityTypes.ACCESS_TOKEN) {
         securityGroup.get('accessToken').addValidators([Validators.required]);
         securityGroup.get('accessToken').updateValueAndValidity();
@@ -278,10 +287,7 @@ export class GatewayConfigurationComponent implements OnInit {
         securityGroup.get('caCert').addValidators([Validators.required]);
         securityGroup.get('caCert').updateValueAndValidity();
       } else if (type === SecurityTypes.USERNAME_PASSWORD) {
-        securityGroup.get('clientId').addValidators([Validators.required]);
-        securityGroup.get('clientId').updateValueAndValidity();
-        securityGroup.get('username').addValidators([Validators.required]);
-        securityGroup.get('username').updateValueAndValidity();
+        securityGroup.addValidators([this.atLeastOneRequired(Validators.required, ['clientId', 'username'])])
         // securityGroup.get('password').addValidators([Validators.required]);
         // securityGroup.get('password').updateValueAndValidity();
       }
@@ -320,8 +326,20 @@ export class GatewayConfigurationComponent implements OnInit {
     this.fetchConfigAttribute(this.device);
   }
 
+  atLeastOneRequired(validator: ValidatorFn, controls: string[] = null) {
+    return (group: UntypedFormGroup): ValidationErrors | null => {
+      if (!controls) {
+        controls = Object.keys(group.controls);
+      }
+      const hasAtLeastOne = group?.controls && controls.some(k => !validator(group.controls[k]));
+
+      return hasAtLeastOne ? null : {atLeastOne: true};
+    };
+  }
+
   updateSecurityValidators(value: SecurityTypes) {
     this.gatewayConfigGroup.get('thingsboard.security.type').setValue(value, {emitEvent: true});
+    this.gatewayConfigGroup.get('thingsboard.security.type').markAsDirty();
   }
 
   updateLogType(value: LocalLogsConfigs) {
@@ -393,9 +411,13 @@ export class GatewayConfigurationComponent implements OnInit {
   checkAndFetchCredentials(security): void {
     if (security.type !== SecurityTypes.TLS_PRIVATE_KEY) {
       this.deviceService.getDeviceCredentials(this.device.id).subscribe(credentials => {
+        this.initialCredentials = credentials;
         if (credentials.credentialsType === DeviceCredentialsType.ACCESS_TOKEN || security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
-          this.gatewayConfigGroup.get('thingsboard.security.type').setValue(SecurityTypes.ACCESS_TOKEN);
+          this.gatewayConfigGroup.get('thingsboard.security.type').setValue(security.type === SecurityTypes.TLS_ACCESS_TOKEN? SecurityTypes.TLS_ACCESS_TOKEN : SecurityTypes.ACCESS_TOKEN);
           this.gatewayConfigGroup.get('thingsboard.security.accessToken').setValue(credentials.credentialsId);
+          if(security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
+            this.gatewayConfigGroup.get('thingsboard.security.caCert').setValue(security.caCert);
+          }
         } else if (credentials.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
           const parsedValue = JSON.parse(credentials.credentialsValue);
           this.gatewayConfigGroup.get('thingsboard.security.type').setValue(SecurityTypes.USERNAME_PASSWORD);
@@ -451,30 +473,6 @@ export class GatewayConfigurationComponent implements OnInit {
     }
   }
 
-  clientIdUserNameFieldsToggle(type?: string) {
-    const clientIdForm = this.gatewayConfigGroup.get('thingsboard.security.clientId');
-    const usernameForm = this.gatewayConfigGroup.get('thingsboard.security.username');
-    switch (type) {
-      case 'clientId':
-        if (clientIdForm.enabled) {
-          clientIdForm.disable({emitEvent: false});
-        }
-        break;
-      case 'username':
-        if (usernameForm.enabled) {
-          usernameForm.disable({emitEvent: false});
-        }
-        break;
-      default:
-        if (clientIdForm.disabled) {
-          clientIdForm.enable({emitEvent: false});
-        }
-        if (usernameForm.disabled) {
-          usernameForm.enable({emitEvent: false});
-        }
-        break;
-    }
-  }
 
   addCommand(command?): void {
     const data = command || {};
@@ -514,6 +512,7 @@ export class GatewayConfigurationComponent implements OnInit {
 
   removeAllSecurityValidators(): void {
     const securityGroup = this.gatewayConfigGroup.get('thingsboard.security') as FormGroup;
+    securityGroup.clearValidators();
     for (const controlsKey in securityGroup.controls) {
       if (controlsKey !== 'type') {
         securityGroup.controls[controlsKey].clearValidators();
@@ -580,7 +579,8 @@ export class GatewayConfigurationComponent implements OnInit {
         handlers: [
           'consoleHandler'
         ]
-      }
+      },
+      ts: new Date().getTime()
     };
     for (const key of Object.keys(logsObj.local)) {
       logAttrObj.handlers[key + 'Handler'] = this.createHandlerObj(logsObj.local[key], key);
@@ -622,27 +622,74 @@ export class GatewayConfigurationComponent implements OnInit {
       key: 'logs_configuration',
       value: this.generateLogsFile(value.logs)
     });
+    value.grpc.ts = new Date().getTime();
     attributes.push({
       key: 'grpc_configuration',
       value: value.grpc
     });
+    value.storage.ts = new Date().getTime();
     attributes.push({
       key: 'storage_configuration',
       value: value.storage
     });
+    value.thingsboard.ts = new Date().getTime();
     attributes.push({
       key: 'general_configuration',
       value: value.thingsboard
     });
 
+
     this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributes).subscribe(_ => {
-      if (this.dialogRef) {
-        this.dialogRef.close();
-      } else {
-        this.gatewayConfigGroup.markAsPristine();
-        this.cd.detectChanges();
-      }
+      this.updateCredentials(value.thingsboard.security).subscribe(_ => {
+        if (this.dialogRef) {
+          this.dialogRef.close();
+        } else {
+          this.gatewayConfigGroup.markAsPristine();
+          this.cd.detectChanges();
+        }
+      })
     });
+  }
+
+  updateCredentials(securityConfig): Observable<any> {
+    let updateCredentials = false;
+    let newCredentials = {};
+    if (securityConfig.type === SecurityTypes.USERNAME_PASSWORD) {
+      if (this.initialCredentials.credentialsType !== DeviceCredentialsType.MQTT_BASIC) {
+        updateCredentials = true;
+      } else {
+        const parsedCredentials = JSON.parse(this.initialCredentials.credentialsValue);
+        updateCredentials = !(parsedCredentials.clientId === securityConfig.clientId && parsedCredentials.userName === securityConfig.username && parsedCredentials.password === securityConfig.password);
+      }
+      if (updateCredentials) {
+        let credentialsValue: { clientId?, userName?, password? } = {};
+        const credentialsType = DeviceCredentialsType.MQTT_BASIC;
+        if (securityConfig.clientId) credentialsValue.clientId = securityConfig.clientId;
+        if (securityConfig.username) credentialsValue.userName = securityConfig.username;
+        if (securityConfig.password) credentialsValue.password = securityConfig.password;
+        newCredentials = {
+            credentialsType,
+            credentialsValue: JSON.stringify(credentialsValue)
+        };
+      }
+    } else if (securityConfig.type === SecurityTypes.ACCESS_TOKEN || securityConfig.type === SecurityTypes.TLS_ACCESS_TOKEN) {
+      if (this.initialCredentials.credentialsType !== DeviceCredentialsType.ACCESS_TOKEN) {
+        updateCredentials = true;
+      } else {
+        updateCredentials = this.initialCredentials.credentialsId !== securityConfig.accessToken;
+      }
+      if (updateCredentials) {
+        newCredentials = {
+          credentialsType: DeviceCredentialsType.ACCESS_TOKEN,
+          credentialsId: securityConfig.accessToken
+        }
+      }
+    }
+
+    if (updateCredentials) {
+      return this.deviceService.saveDeviceCredentials({...this.initialCredentials,...newCredentials})
+    }
+    return of(null);
   }
 
   cancel(): void {

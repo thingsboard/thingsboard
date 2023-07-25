@@ -139,7 +139,11 @@
                             matSuffix style="cursor:pointer;"
                             matTooltip="{{'gateway.hints.password' | translate }}">info_outlined
                   </mat-icon>
+
                 </mat-form-field>
+                <tb-error style="margin-top: -12px; display: block;" fxFlex="100"
+                          [error]="gatewayConfigGroup.get('thingsboard.security').hasError('atLeastOne') ?
+              ('device.client-id-or-user-name-necessary' | translate) : ''"></tb-error>
                 <tb-file-input
                   fxFlex="100"
                   hint="{{'gateway.hints.ca-cert' | translate}}"
