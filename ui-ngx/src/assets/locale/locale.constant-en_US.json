@@ -943,6 +943,13 @@
         "edges": "Customer edge instances",
         "manage-edges": "Manage edges"
     },
+    "date": {
+        "last-update-n-ago": "Last update N ago",
+        "last-update-n-ago-text": "Last update {{ agoText }}",
+        "custom-date": "Custom date",
+        "format": "Format",
+        "preview": "Preview"
+    },
     "datetime": {
         "date-from": "Date from",
         "time-from": "Time from",
@@ -3836,15 +3843,22 @@
     "timewindow": {
         "timewindow": "Timewindow",
         "years": "{ years, plural, =1 { year } other {# years } }",
+        "years-short": "{{ years }}y",
         "months": "{ months, plural, =1 { month } other {# months } }",
+        "months-short": "{{ months }}M",
         "weeks": "{ weeks, plural, =1 { week } other {# weeks } }",
+        "weeks-short": "{{ weeks }}w",
         "days": "{ days, plural, =1 { day } other {# days } }",
+        "days-short": "{{ days }}d",
         "hours": "{ hours, plural, =0 { hour } =1 {1 hour } other {# hours } }",
         "hr": "{{ hr }} hr",
+        "hr-short": "{{ hr }}h",
         "minutes": "{ minutes, plural, =0 { minute } =1 {1 minute } other {# minutes } }",
         "min": "{{ min }} min",
+        "min-short": "{{ min }}m",
         "seconds": "{ seconds, plural, =0 { second } =1 {1 second } other {# seconds } }",
         "sec": "{{ sec }} sec",
+        "sec-short": "{{ sec }}s",
         "short": {
             "days": "{ days, plural, =1 {1 day } other {# days } }",
             "hours": "{ hours, plural, =1 {1 hour } other {# hours } }",
@@ -3863,6 +3877,7 @@
         "hide": "Hide",
         "interval": "Interval",
         "just-now": "Just now",
+        "just-now-lower": "just now",
         "ago": "ago"
     },
     "unit": {
@@ -4622,6 +4637,7 @@
         "decimals": "Number of digits after floating point",
         "units-short": "Units",
         "decimals-short": "Decimals",
+        "decimals-suffix": "decimals",
         "timewindow": "Timewindow",
         "use-dashboard-timewindow": "Use dashboard timewindow",
         "use-widget-timewindow": "Use widget timewindow",
@@ -4820,6 +4836,17 @@
             "vertical-axis": "Vertical axis",
             "ticks": "Ticks",
             "horizontal-axis": "Horizontal axis"
+        },
+        "color": {
+            "color-settings": "Color settings",
+            "color-type-constant": "Constant",
+            "color-type-range": "Range",
+            "color-type-function": "Function",
+            "color": "Color",
+            "value-range": "Value range",
+            "from": "From",
+            "to": "To",
+            "color-function": "Color function"
         },
         "dashboard-state": {
             "dashboard-state-settings": "Dashboard state settings",
@@ -5630,6 +5657,19 @@
             "label-position-left": "Left",
             "label-position-top": "Top"
         },
+        "value-card": {
+            "layout": "Layout",
+            "layout-square": "Square",
+            "layout-vertical": "Vertical",
+            "layout-centered": "Centered",
+            "layout-simplified": "Simplified",
+            "layout-horizontal": "Horizontal",
+            "layout-horizontal-reversed": "Horizontal reversed",
+            "label": "Label",
+            "icon": "Icon",
+            "value": "Value",
+            "date": "Date"
+        },
         "table": {
             "common-table-settings": "Common Table Settings",
             "enable-search": "Enable search",
@@ -5705,6 +5745,7 @@
             "source-entity-attribute": "Source entity attribute"
         },
         "widget-font": {
+            "font-settings": "Font settings",
             "font-family": "Font family",
             "size": "Size",
             "relative-font-size": "Relative font size (percents)",
@@ -5718,7 +5759,8 @@
             "font-weight-bolder": "Bolder",
             "font-weight-lighter": "Lighter",
             "color": "Color",
-            "shadow-color": "Shadow color"
+            "shadow-color": "Shadow color",
+            "preview": "Preview"
         },
         "home": {
             "no-data-available": "No data available"

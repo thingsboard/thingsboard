@@ -24,21 +24,3 @@
     }
   }
 }
-
-:host ::ng-deep {
-  button.mat-mdc-button-base.icon-box {
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-    padding: 7px;
-    &:not(:disabled) {
-      color: rgba(0, 0, 0, 0.87);
-    }
-    > .mat-icon {
-      width: 24px;
-      height: 24px;
-      font-size: 24px;
-      margin: 0;
-    }
-  }
-}
