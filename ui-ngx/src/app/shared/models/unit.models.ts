@@ -20,45 +20,7 @@ export interface Unit {
   tags: string[];
 }
 
-export const units: Array<Unit> = [
-  {
-    name: 'unit.celsius',
-    symbol: '°C',
-    tags: ['temperature']
-  },
-  {
-    name: 'unit.kelvin',
-    symbol: 'K',
-    tags: ['temperature']
-  },
-  {
-    name: 'unit.fahrenheit',
-    symbol: '°F',
-    tags: ['temperature']
-  },
-  {
-    name: 'unit.percentage',
-    symbol: '%',
-    tags: ['percentage']
-  },
-  {
-    name: 'unit.second',
-    symbol: 's',
-    tags: ['time']
-  },
-  {
-    name: 'unit.minute',
-    symbol: 'min',
-    tags: ['time']
-  },
-  {
-    name: 'unit.hour',
-    symbol: 'h',
-    tags: ['time']
-  }
-];
-
-export const unitBySymbol = (symbol: string): Unit => units.find(u => u.symbol === symbol);
+export const unitBySymbol = (_units: Array<Unit>, symbol: string): Unit => _units.find(u => u.symbol === symbol);
 
 const searchUnitTags = (unit: Unit, searchText: string): boolean =>
   !!unit.tags.find(t => t.toUpperCase().includes(searchText.toUpperCase()));

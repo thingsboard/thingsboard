@@ -73,7 +73,7 @@
           </div>
           <div *ngIf="!hideDataKeyColor" style="padding: 3px;">
             <div #keyColorButton class="tb-color-preview small box" (click)="openColorPickerPopup(key, $event, keyColorButton)">
-              <div class="tb-color-result" [ngStyle]="{background: key.color}"></div>
+              <div class="tb-color-result" [style]="{background: key.color}"></div>
             </div>
           </div>
           <button *ngIf="!disabled"

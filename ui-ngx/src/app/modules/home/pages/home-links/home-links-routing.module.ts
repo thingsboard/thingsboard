@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Injectable, NgModule } from '@angular/core';
-import { Resolve, RouterModule, Routes } from '@angular/router';
+import { inject, NgModule } from '@angular/core';
+import { ActivatedRouteSnapshot, ResolveFn, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { HomeLinksComponent } from './home-links.component';
 import { Authority } from '@shared/models/authority.enum';
@@ -33,62 +33,58 @@ const sysAdminHomePageJson = '/assets/dashboard/sys_admin_home_page.json';
 const tenantAdminHomePageJson = '/assets/dashboard/tenant_admin_home_page.json';
 const customerUserHomePageJson = '/assets/dashboard/customer_user_home_page.json';
 
-@Injectable()
-export class HomeDashboardResolver implements Resolve<HomeDashboard> {
-
-  constructor(private dashboardService: DashboardService,
-              private resourcesService: ResourcesService,
-              private store: Store<AppState>) {
-  }
-
-  resolve(): Observable<HomeDashboard> {
-    return this.dashboardService.getHomeDashboard().pipe(
-      mergeMap((dashboard) => {
-        if (!dashboard) {
-          let dashboard$: Observable<HomeDashboard>;
-          const authority = getCurrentAuthUser(this.store).authority;
-          switch (authority) {
-            case Authority.SYS_ADMIN:
-              dashboard$ = this.resourcesService.loadJsonResource(sysAdminHomePageJson);
-              break;
-            case Authority.TENANT_ADMIN:
-              dashboard$ = this.updateDeviceActivityKeyFilterIfNeeded(this.resourcesService.loadJsonResource(tenantAdminHomePageJson));
-              break;
-            case Authority.CUSTOMER_USER:
-              dashboard$ = this.updateDeviceActivityKeyFilterIfNeeded(this.resourcesService.loadJsonResource(customerUserHomePageJson));
-              break;
-          }
-          if (dashboard$) {
-            return dashboard$.pipe(
-              map((homeDashboard) => {
-                homeDashboard.hideDashboardToolbar = true;
-                return homeDashboard;
-              })
-            );
+const updateDeviceActivityKeyFilterIfNeeded = (store: Store<AppState>,
+                                               dashboard$: Observable<HomeDashboard>): Observable<HomeDashboard> =>
+  store.pipe(select(selectPersistDeviceStateToTelemetry)).pipe(
+    mergeMap((persistToTelemetry) => dashboard$.pipe(
+      map((dashboard) => {
+        if (persistToTelemetry) {
+          for (const filterId of Object.keys(dashboard.configuration.filters)) {
+            if (['Active Devices', 'Inactive Devices'].includes(dashboard.configuration.filters[filterId].filter)) {
+              dashboard.configuration.filters[filterId].keyFilters[0].key.type = EntityKeyType.TIME_SERIES;
+            }
           }
         }
-        return of(dashboard);
+        return dashboard;
       })
-    );
-  }
+    ))
+  );
 
-  private updateDeviceActivityKeyFilterIfNeeded(dashboard$: Observable<HomeDashboard>): Observable<HomeDashboard> {
-    return this.store.pipe(select(selectPersistDeviceStateToTelemetry)).pipe(
-      mergeMap((persistToTelemetry) => dashboard$.pipe(
-          map((dashboard) => {
-            if (persistToTelemetry) {
-              for (const filterId of Object.keys(dashboard.configuration.filters)) {
-                if (['Active Devices', 'Inactive Devices'].includes(dashboard.configuration.filters[filterId].filter)) {
-                  dashboard.configuration.filters[filterId].keyFilters[0].key.type = EntityKeyType.TIME_SERIES;
-                }
-              }
-            }
-            return dashboard;
-          })
-        ))
-    );
-  }
-}
+export const homeDashboardResolver: ResolveFn<HomeDashboard> = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+  dashboardService = inject(DashboardService),
+  resourcesService = inject(ResourcesService),
+  store: Store<AppState> = inject(Store<AppState>)
+): Observable<HomeDashboard> =>
+  dashboardService.getHomeDashboard().pipe(
+    mergeMap((dashboard) => {
+      if (!dashboard) {
+        let dashboard$: Observable<HomeDashboard>;
+        const authority = getCurrentAuthUser(store).authority;
+        switch (authority) {
+          case Authority.SYS_ADMIN:
+            dashboard$ = resourcesService.loadJsonResource(sysAdminHomePageJson);
+            break;
+          case Authority.TENANT_ADMIN:
+            dashboard$ = updateDeviceActivityKeyFilterIfNeeded(store, resourcesService.loadJsonResource(tenantAdminHomePageJson));
+            break;
+          case Authority.CUSTOMER_USER:
+            dashboard$ = updateDeviceActivityKeyFilterIfNeeded(store, resourcesService.loadJsonResource(customerUserHomePageJson));
+            break;
+        }
+        if (dashboard$) {
+          return dashboard$.pipe(
+            map((homeDashboard) => {
+              homeDashboard.hideDashboardToolbar = true;
+              return homeDashboard;
+            })
+          );
+        }
+      }
+      return of(dashboard);
+    })
+  );
 
 const routes: Routes = [
   {
@@ -103,16 +99,13 @@ const routes: Routes = [
       }
     },
     resolve: {
-      homeDashboard: HomeDashboardResolver
+      homeDashboard: homeDashboardResolver
     }
   }
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-  providers: [
-    HomeDashboardResolver
-  ]
+  exports: [RouterModule]
 })
 export class HomeLinksRoutingModule { }
