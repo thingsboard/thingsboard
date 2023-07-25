@@ -227,8 +227,10 @@ export class GatewayConfigurationComponent implements OnInit {
       })
     });
 
+    console.log(this.gatewayConfigGroup)
+
     this.gatewayConfigGroup.get('thingsboard.security.password').valueChanges.subscribe(password => {
-      if (password !== '') {
+      if (password && password !== '') {
         this.gatewayConfigGroup.get('thingsboard.security.username').setValidators([Validators.required]);
       } else {
         this.gatewayConfigGroup.get('thingsboard.security.username').setValidators([]);
@@ -423,7 +425,7 @@ export class GatewayConfigurationComponent implements OnInit {
           this.gatewayConfigGroup.get('thingsboard.security.type').setValue(SecurityTypes.USERNAME_PASSWORD);
           this.gatewayConfigGroup.get('thingsboard.security.clientId').setValue(parsedValue.clientId);
           this.gatewayConfigGroup.get('thingsboard.security.username').setValue(parsedValue.userName);
-          this.gatewayConfigGroup.get('thingsboard.security.password').setValue(parsedValue.password);
+          this.gatewayConfigGroup.get('thingsboard.security.password').setValue(parsedValue.password, {emitEvent: false});
         } else if (credentials.credentialsType === DeviceCredentialsType.X509_CERTIFICATE) {
           //if sertificate is present set sertificate as present
         }
