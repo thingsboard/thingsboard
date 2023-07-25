@@ -2736,7 +2736,7 @@
             "send-period-required": "Statistic send period is required",
             "send-period-min": "Statistic send period can not be less then 60",
             "send-period-pattern": "Statistic send period is not valid",
-            "check-connectors-configuration": "Check connectors configuration (in s)",
+            "check-connectors-configuration": "Check connectors configuration (in sec)",
             "check-connectors-configuration-required": "Check connectors configuration is required",
             "check-connectors-configuration-min": "Check connectors configuration can not be less then 1",
             "check-connectors-configuration-pattern": "Check connectors configuration is not valid",

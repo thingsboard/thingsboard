@@ -18,7 +18,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, NgZone,
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, UntypedFormControl, ValidatorFn, Validators } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 import { MatDialog } from '@angular/material/dialog';
 import { AttributeService } from '@core/http/attribute.service';
@@ -120,6 +120,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   inactiveData: Array<any> = [];
 
+  initialConnector: gatewayConnector;
+
   constructor(protected router: Router,
               protected store: Store<AppState>,
               protected fb: FormBuilder,
@@ -138,7 +140,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.inactiveConnectorsDataSource = new AttributeDatasource(this.attributeService, this.telemetryWsService, this.zone, this.translate);
     this.dataSource = new MatTableDataSource<AttributeData>([]);
     this.connectorForm = this.fb.group({
-      name: ['', [Validators.required]],
+      name: ['', [Validators.required, this.uniqNameRequired()]],
       type: ['', [Validators.required]],
       logLevel: ['', [Validators.required]],
       key: ['auto'],
@@ -148,9 +150,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     });
     this.connectorForm.disable();
   }
-
-
-  initialConnector: gatewayConnector;
 
   ngAfterViewInit() {
     this.connectorForm.valueChanges.subscribe(() => {
@@ -169,9 +168,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, ['inactive_connectors'])).subscribe(attributes => {
         if (attributes.length) {
           this.activeConnectors = attributes[0].length ? attributes[0][0].value : [];
-          this.activeConnectors = typeof this.activeConnectors === 'string' ? JSON.parse(this.activeConnectors): this.activeConnectors;
+          this.activeConnectors = typeof this.activeConnectors === 'string' ? JSON.parse(this.activeConnectors) : this.activeConnectors;
           this.inactiveConnectors = attributes[1].length ? attributes[1][0].value : [];
-          this.inactiveConnectors = typeof this.inactiveConnectors === 'string' ? JSON.parse(this.inactiveConnectors): this.inactiveConnectors;
+          this.inactiveConnectors = typeof this.inactiveConnectors === 'string' ? JSON.parse(this.inactiveConnectors) : this.inactiveConnectors;
           this.updateData(true);
         } else {
           this.activeConnectors = [];
@@ -180,6 +179,27 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         }
       });
     }
+  }
+
+  uniqNameRequired(): ValidatorFn {
+    return (c: UntypedFormControl) => {
+      const newName = c.value.trim().toLowerCase();
+      const found = this.dataSource.data.find((connectorAttr) => {
+        const connectorData = typeof connectorAttr.value === 'string' ? JSON.parse(connectorAttr.value) : connectorAttr.value;
+        return connectorData.name.toLowerCase() === newName;
+      });
+      if (found) {
+        if (this.initialConnector && this.initialConnector.name.toLowerCase() === newName) {
+          return null;
+        }
+        return {
+          duplicateName: {
+            valid: false
+          }
+        };
+      }
+      return null;
+    };
   }
 
   saveConnector(): void {
@@ -204,8 +224,12 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       updateActiveConnectors = true;
       const activeIndex = this.activeConnectors.indexOf(this.initialConnector.name);
       const inactiveIndex = this.inactiveConnectors.indexOf(this.initialConnector.name);
-      if (activeIndex !== -1) {this.activeConnectors.splice(activeIndex, 1);}
-      if (inactiveIndex !== -1) {this.inactiveConnectors.splice(activeIndex, 1);}
+      if (activeIndex !== -1) {
+        this.activeConnectors.splice(activeIndex, 1);
+      }
+      if (inactiveIndex !== -1) {
+        this.inactiveConnectors.splice(activeIndex, 1);
+      }
     }
     if (!this.activeConnectors.includes(value.name) && scope == AttributeScope.SHARED_SCOPE) {
       this.activeConnectors.push(value.name);
@@ -253,17 +277,22 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.combineData();
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
-      this.inactiveData = data.data.filter(value =>this.inactiveConnectors.includes(value.key));
+      this.inactiveData = data.data.filter(value => this.inactiveConnectors.includes(value.key));
       this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.combineData();
     });
   }
 
   isConnectorSynced(attribute: AttributeData) {
-    const connectorData = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
+    const connectorData = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
     if (!connectorData.ts) return false;
-    const sharedIndex = this.sharedAttributeData.findIndex(data=>{
-      const sharedData = typeof data.value === 'string' ? JSON.parse(data.value): data.value;
+    const clientIndex = this.activeData.findIndex(data => {
+      const sharedData = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+      return sharedData.name === connectorData.name;
+    })
+    if (clientIndex == -1) return false;
+    const sharedIndex = this.sharedAttributeData.findIndex(data => {
+      const sharedData = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
       return sharedData.name === connectorData.name && sharedData.ts && sharedData.ts <= connectorData.ts;
     })
     return sharedIndex !== -1;
@@ -298,7 +327,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (this.connectorForm.disabled) {
       this.connectorForm.enable();
     }
-    const connector = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
+    const connector = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
     if (!connector.configuration) {
       connector.configuration = '';
     }
@@ -325,8 +354,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   returnType(attribute) {
-    const value = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
-    return  this.gatewayConnectorDefaultTypes.get(value.type);
+    const value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
+    return this.gatewayConnectorDefaultTypes.get(value.type);
   }
 
   deleteConnector(attribute: AttributeData, $event: Event): void {
@@ -342,8 +371,12 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [attribute]));
         const activeIndex = this.activeConnectors.indexOf(attribute.key);
         const inactiveIndex = this.inactiveConnectors.indexOf(attribute.key);
-        if (activeIndex !== -1) {this.activeConnectors.splice(activeIndex, 1);}
-        if (inactiveIndex !== -1) {this.inactiveConnectors.splice(activeIndex, 1);}
+        if (activeIndex !== -1) {
+          this.activeConnectors.splice(activeIndex, 1);
+        }
+        if (inactiveIndex !== -1) {
+          this.inactiveConnectors.splice(activeIndex, 1);
+        }
         tasks.push(this.attributeService.saveEntityAttributes(this.device, scope, [{
           key: scope == AttributeScope.SHARED_SCOPE ? 'active_connectors' : 'inactive_connectors',
           value: scope == AttributeScope.SHARED_SCOPE ? this.activeConnectors : this.inactiveConnectors
@@ -368,7 +401,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
+    attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
     const params = deepClone(this.ctx.stateController.getStateParams());
     params.connector_logs = attribute;
     params.targetEntityParamName = 'connector_logs';
@@ -379,7 +412,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value): attribute.value;
+    attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
     const params = deepClone(this.ctx.stateController.getStateParams());
     params.connector_rpc = attribute;
     params.targetEntityParamName = 'connector_rpc';

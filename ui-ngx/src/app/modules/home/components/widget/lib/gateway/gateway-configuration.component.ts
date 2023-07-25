@@ -227,8 +227,6 @@ export class GatewayConfigurationComponent implements OnInit {
       })
     });
 
-    console.log(this.gatewayConfigGroup)
-
     this.gatewayConfigGroup.get('thingsboard.security.password').valueChanges.subscribe(password => {
       if (password && password !== '') {
         this.gatewayConfigGroup.get('thingsboard.security.username').setValidators([Validators.required]);
@@ -507,7 +505,8 @@ export class GatewayConfigurationComponent implements OnInit {
     return this.gatewayConfigGroup.get('thingsboard.statistics.commands') as FormArray;
   }
 
-  removeCommandControl(index: number): void {
+  removeCommandControl(index: number, event: any): void {
+    if (event.pointerType === '') return;
     this.commandFormArray().removeAt(index);
     this.gatewayConfigGroup.markAsDirty();
   }

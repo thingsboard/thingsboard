@@ -66,7 +66,7 @@
               'status-block': true,
               'status-sync':isConnectorSynced(attribute),
               'status-unsync':!isConnectorSynced(attribute)
-              }">{{isConnectorSynced(attribute)?'Synchronised' : 'Unsynchronised'}}</div>
+              }">{{isConnectorSynced(attribute)?'sync' : 'out of sync'}}</div>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>

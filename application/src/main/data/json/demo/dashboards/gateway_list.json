@@ -435,20 +435,6 @@
                   "_hash": 0.9806146353493157
                 },
                 {
-                  "name": "Status",
-                  "type": "attribute",
-                  "label": "active",
-                  "color": "#f44336",
-                  "settings": {},
-                  "_hash": 0.7141801635241265,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "var newValue = value == 'true' ? \"Active\" : \"Inactive\";\r\nreturn newValue;"
-                },
-                {
                   "name": "activeDevices",
                   "type": "attribute",
                   "label": "activeDevices",
@@ -479,6 +465,20 @@
                   "color": "#e91e63",
                   "settings": {},
                   "_hash": 0.36755550699981954
+                },
+                {
+                  "name": "active",
+                  "type": "attribute",
+                  "label": "Status",
+                  "color": "#e91e63",
+                  "settings": {},
+                  "_hash": 0.10301612696488416,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "var newValue = value == 'true' ? \"Active\" : \"Inactive\";\nreturn newValue;"
                 }
               ],
               "alarmFilterConfig": {
@@ -550,7 +550,7 @@
           "padding": "8px",
           "settings": {
             "useMarkdownTextFunction": true,
-            "markdownTextFunction": "var blockData = '';\n\nfunction createDataBlock(value, label, mobile) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile? '100%': 'auto'}; min-height: ${mobile? 'auto': '57px'}\">\n        <div class=\"divider\"></div>\n        <mat-divider vertical style=\"height:100%\"></mat-divider>\n            <mat-card-header>\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Name, \"Gateway Name\", ctx.isMobile);\ncreateDataBlock(data[0].Type, \"Gateway Type\");\ncreateDataBlock(data[0].active, \"Status\");\ncreateDataBlock(data[1]?data[1].count:0, \"Active Devices\");\ncreateDataBlock(data[2]?data[2][\"count 2\"]:0, \"Inactive Devices\");\ncreateDataBlock(data[0].active_connectors?JSON.parse(data[0].active_connectors).length:0, \"Enabled Connectors\");\ncreateDataBlock(data[0].inactive_connectors?JSON.parse(data[0].inactive_connectors).length:0, \"Disabled Connectors\");\nreturn `<div fxLayout=\"row wrap\" fxLayoutGap=\"8px\" class=\"cards-container\">${blockData}</div>`;",
+            "markdownTextFunction": "var blockData = '';\n\nfunction createDataBlock(value, label, mobile) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile? '100%': 'auto'}; min-height: ${mobile? 'auto': '57px'}\">\n        <div class=\"divider\"></div>\n        <mat-divider vertical style=\"height:100%\"></mat-divider>\n            <mat-card-header>\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Name, \"Gateway Name\", ctx.isMobile);\ncreateDataBlock(data[0].Type, \"Gateway Type\");\ncreateDataBlock(data[0].Status, \"Status\");\ncreateDataBlock(data[1]?data[1].count:0, \"Active Devices\");\ncreateDataBlock(data[2]?data[2][\"count 2\"]:0, \"Inactive Devices\");\ncreateDataBlock(data[0].active_connectors?JSON.parse(data[0].active_connectors).length:0, \"Enabled Connectors\");\ncreateDataBlock(data[0].inactive_connectors?JSON.parse(data[0].inactive_connectors).length:0, \"Disabled Connectors\");\nreturn `<div fxLayout=\"row wrap\" fxLayoutGap=\"8px\" class=\"cards-container\">${blockData}</div>`;",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".divider {\n    position: absolute;\n    width: 3px;\n    top: 8px;\n    border-radius: 2px;\n    bottom: 8px;\n    border: 1px solid rgba(31, 70, 144, 1);\n    background-color: rgba(31, 70, 144, 1);\n    left: 10px;\n}\n.mdc-card {\n    position: relative;\n    padding-left: 10px;\n    margin-bottom: 1px;\n}\n\n.mat-mdc-card-subtitle {\n    font-weight: 400;\n    font-size: 12px;\n}\n\n.mat-mdc-card-header {\n    padding: 8px 16px 0;\n}\n\n.mat-mdc-card-content:last-child {\n    padding-bottom: 8px;\n    font-size: 16px;\n}\n\n.cards-container {\n    height: calc(100% - 1px);\n    justify-content: stretch;\n    align-items: center;\n    margin-bottom: 1px;\n}"
           },
@@ -1385,13 +1385,16 @@
           "padding": "8px",
           "settings": {
             "enableSearch": true,
+            "enableSelectColumnDisplay": true,
             "enableStickyHeader": true,
             "enableStickyAction": true,
+            "showCellActionsMenu": true,
             "reserveSpaceForHiddenAction": "true",
             "showTimestamp": true,
             "showMilliseconds": false,
-            "displayPagination": false,
+            "displayPagination": true,
             "useEntityLabel": false,
+            "defaultPageSize": 10,
             "hideEmptyLines": true,
             "disableStickyHeader": false,
             "useRowStyleFunction": false
@@ -1714,13 +1717,16 @@
           "padding": "8px",
           "settings": {
             "enableSearch": true,
+            "enableSelectColumnDisplay": true,
             "enableStickyHeader": true,
             "enableStickyAction": true,
+            "showCellActionsMenu": true,
             "reserveSpaceForHiddenAction": "true",
             "showTimestamp": true,
             "showMilliseconds": false,
-            "displayPagination": false,
+            "displayPagination": true,
             "useEntityLabel": false,
+            "defaultPageSize": 10,
             "hideEmptyLines": true,
             "disableStickyHeader": false,
             "useRowStyleFunction": false

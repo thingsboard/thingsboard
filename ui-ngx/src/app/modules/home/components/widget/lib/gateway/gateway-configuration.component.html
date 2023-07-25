@@ -683,7 +683,7 @@
                     </mat-icon>
                   </mat-form-field>
                 </mat-card>
-                <button mat-icon-button (click)="removeCommandControl($index)"
+                <button mat-icon-button (click)="removeCommandControl($index, $event)"
                         [disabled]="!gatewayConfigGroup.get('thingsboard.remoteConfiguration').value"
                         matTooltip="{{ 'gateway.statistics.remove' | translate }}"
                         matTooltipPosition="above">
