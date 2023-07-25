@@ -20,12 +20,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.ActionRelationEvent;
@@ -39,7 +45,7 @@ import static org.thingsboard.server.service.entitiy.DefaultTbNotificationEntity
 /**
  * This event listener does not support async event processing because relay on ThreadLocal
  * Another possible approach is to implement a special annotation and a bunch of classes similar to TransactionalApplicationListener
- * This class is the simplest approach to maintain replica synchronization within the single class.
+ * This class is the simplest approach to maintain edge synchronization within the single class.
  * <p>
  * For async event publishers, you have to decide whether publish event on creating async task in the same thread where dao method called
  * @Autowired
@@ -64,8 +70,11 @@ public class EdgeEventSourcingListener {
     }
 
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(SaveEntityEvent event) {
+    public void handleEvent(SaveEntityEvent<?> event) {
         if (edgeSynchronizationManager.isSync()) {
+            return;
+        }
+        if (!isValidEdgeEventEntity(event.getEntity())) {
             return;
         }
         log.trace("[{}] SaveEntityEvent called: {}", event.getEntityId().getEntityType(), event);
@@ -122,5 +131,20 @@ public class EdgeEventSourcingListener {
         log.trace("ActionRelationEvent called: {}", event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
                 event.getBody(), EdgeEventType.RELATION, edgeTypeByActionType(event.getActionType()));
+    }
+
+    private boolean isValidEdgeEventEntity(Object entity) {
+        if (entity instanceof OtaPackageInfo) {
+            OtaPackageInfo otaPackageInfo = (OtaPackageInfo) entity;
+            return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
+        } else if (entity instanceof RuleChain) {
+            RuleChain ruleChain = (RuleChain) entity;
+            return RuleChainType.EDGE.equals(ruleChain.getType());
+        } else if (entity instanceof User) {
+            User user = (User) entity;
+            return !Authority.SYS_ADMIN.equals(user.getAuthority());
+        }
+        // Default: If the entity doesn't match any of the conditions, consider it as valid.
+        return true;
     }
 }
