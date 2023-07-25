@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -143,6 +144,9 @@ public class EdgeEventSourcingListener {
         } else if (entity instanceof User) {
             User user = (User) entity;
             return !Authority.SYS_ADMIN.equals(user.getAuthority());
+        } else if (entity instanceof AlarmApiCallResult) {
+            AlarmApiCallResult alarmApiCallResult = (AlarmApiCallResult) entity;
+            return alarmApiCallResult.isModified();
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
         return true;

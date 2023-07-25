@@ -95,11 +95,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public AlarmApiCallResult updateAlarm(AlarmUpdateRequest request) {
         validateAlarmRequest(request);
-        var result = withPropagated(alarmDao.updateAlarm(request));
-        if (result.isModified()) {
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId())
-                    .entityId(result.getAlarm().getId()).build());
-        }
+        AlarmApiCallResult result = withPropagated(alarmDao.updateAlarm(request));
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId()).entity(result)
+                .entityId(result.getAlarm().getId()).build());
         return result;
     }
 
