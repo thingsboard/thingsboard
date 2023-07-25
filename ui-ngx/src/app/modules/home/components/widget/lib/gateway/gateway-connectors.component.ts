@@ -250,11 +250,11 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
     this.attributeDataSource.loadAttributes(this.device, AttributeScope.CLIENT_SCOPE, this.pageLink, reload).subscribe(data => {
       this.activeData = data.data.filter(value => this.activeConnectors.includes(value.key));
-      this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.combineData();
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
       this.inactiveData = data.data.filter(value =>this.inactiveConnectors.includes(value.key));
+      this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.combineData();
     });
   }
