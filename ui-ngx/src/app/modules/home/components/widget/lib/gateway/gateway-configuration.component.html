@@ -85,7 +85,8 @@
             <div fxLayout="column" formGroupName="security">
               <tb-toggle-header fxFlex="100" class="security-toggle-group"
                                 [value]="gatewayConfigGroup.get('thingsboard.security.type').value"
-                                name="securityTypeToggle" (valueChange)="updateSecurityValidators($event)">
+                                name="securityTypeToggle" (valueChange)="updateSecurityValidators($event)"
+                                useSelectOnMdLg="false" ignoreMdLgSize="true">
                 <tb-toggle-option *ngFor="let securityType of securityTypes | keyvalue"
                                   [value]="securityType.key">{{ securityType.value | translate }}</tb-toggle-option>
               </tb-toggle-header>
@@ -230,7 +231,8 @@
               <div translate class="expansion-panel-header tb-form-panel-title">gateway.logs.local</div>
             <div fxLayout="column">
               <tb-toggle-header fxFlex="100" class="security-toggle-group"
-                                [value]="logSelector.value" name="logTypeToggle" (valueChange)="updateLogType($event)">
+                                [value]="logSelector.value" name="logTypeToggle" (valueChange)="updateLogType($event)"
+                                useSelectOnMdLg="false" ignoreMdLgSize="true">
                 <tb-toggle-option *ngFor="let logConfig of localLogsConfigLabels| keyvalue" [value]="logConfig.key"
                                   class="first-capital">{{ logConfig.value }}</tb-toggle-option>
               </tb-toggle-header>
@@ -303,7 +305,8 @@
             <div fxLayout="column">
               <tb-toggle-header fxFlex="100" class="security-toggle-group"
                                 [value]="gatewayConfigGroup.get('storage.type').value" name="storageType"
-                                (valueChange)="updateStorageType($event)">
+                                (valueChange)="updateStorageType($event)"
+                                useSelectOnMdLg="false" ignoreMdLgSize="true">
                 <tb-toggle-option *ngFor="let storageType of storageTypes | keyvalue" [value]="storageType.key">
                   {{ storageType.value | translate }}</tb-toggle-option>
 
@@ -315,7 +318,7 @@
                 <mat-form-field appearance="outline" *ngIf="gatewayConfigGroup.get('storage.type').value === 'memory'"
                                 fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                   <mat-label translate>gateway.storage-read-record-count</mat-label>
-                  <input matInput formControlName="read_records_count"/>
+                  <input type="number" matInput formControlName="read_records_count"/>
                   <mat-error *ngIf="gatewayConfigGroup.get('storage.read_records_count').hasError('required')">
                     {{'gateway.storage-read-record-count-required' | translate}}
                   </mat-error>
@@ -334,7 +337,7 @@
                 <mat-form-field appearance="outline" *ngIf="gatewayConfigGroup.get('storage.type').value === 'memory'"
                                 fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                   <mat-label translate>gateway.storage-max-records</mat-label>
-                  <input matInput formControlName="max_records_count"/>
+                  <input type="number" matInput formControlName="max_records_count"/>
                   <mat-error *ngIf="gatewayConfigGroup.get('storage.max_records_count').hasError('required')">
                     {{'gateway.storage-max-records-required' | translate}}
                   </mat-error>
@@ -366,7 +369,7 @@
                 <mat-form-field appearance="outline" *ngIf="gatewayConfigGroup.get('storage.type').value === 'file'"
                                 fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                   <mat-label translate>gateway.storage-max-files</mat-label>
-                  <input matInput formControlName="max_file_count"/>
+                  <input matInput type="number" formControlName="max_file_count"/>
                   <mat-error *ngIf="gatewayConfigGroup.get('storage.max_file_count').hasError('required')">
                     {{'gateway.storage-max-files-required' | translate}}
                   </mat-error>
@@ -385,7 +388,7 @@
                 <mat-form-field appearance="outline" *ngIf="gatewayConfigGroup.get('storage.type').value === 'file'"
                                 fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                   <mat-label translate>gateway.storage-max-read-record-count</mat-label>
-                  <input matInput formControlName="max_read_records_count"/>
+                  <input matInput type="number" formControlName="max_read_records_count"/>
                   <mat-error *ngIf="gatewayConfigGroup.get('storage.max_read_records_count').hasError('required')">
                     {{'gateway.storage-max-read-record-count-required' | translate}}
                   </mat-error>
@@ -404,7 +407,7 @@
                 <mat-form-field appearance="outline" *ngIf="gatewayConfigGroup.get('storage.type').value === 'file'"
                                 fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                   <mat-label translate>gateway.storage-max-file-records</mat-label>
-                  <input matInput formControlName="max_records_per_file"/>
+                  <input matInput type="number" formControlName="max_records_per_file"/>
                   <mat-error *ngIf="gatewayConfigGroup.get('storage.max_records_per_file').hasError('required')">
                     {{'gateway.storage-max-records-required' | translate}}
                   </mat-error>
@@ -436,7 +439,7 @@
                 <mat-form-field appearance="outline" *ngIf="gatewayConfigGroup.get('storage.type').value === 'sqlite'"
                                 fxFlex="calc(50%-15px)" class="mat-block tb-value-type">
                   <mat-label translate>gateway.messages-ttl-check-in-hours</mat-label>
-                  <input matInput formControlName="messages_ttl_check_in_hours"/>
+                  <input matInput type="number" formControlName="messages_ttl_check_in_hours"/>
                   <mat-error *ngIf="gatewayConfigGroup.get('storage.messages_ttl_check_in_hours').hasError('required')">
                     {{'gateway.messages-ttl-check-in-hours-required' | translate}}
                   </mat-error>
@@ -455,7 +458,7 @@
                 <mat-form-field appearance="outline" *ngIf="gatewayConfigGroup.get('storage.type').value === 'sqlite'"
                                 fxFlex="calc(50%-15px)" class="mat-block tb-value-type" style="flex-grow: 0">
                   <mat-label translate>gateway.messages-ttl-in-days</mat-label>
-                  <input matInput formControlName="messages_ttl_in_days"/>
+                  <input matInput type="number" formControlName="messages_ttl_in_days"/>
                   <mat-error *ngIf="gatewayConfigGroup.get('storage.messages_ttl_in_days').hasError('required')">
                     {{'gateway.messages-ttl-in-days-required' | translate}}
                   </mat-error>

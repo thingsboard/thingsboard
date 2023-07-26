@@ -1350,7 +1350,7 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "if (value.includes(\"RPC\")) {\n    return value;\n} else return '';"
+                  "postFuncBody": "if (value.includes(\"RPC\")&&!value.includes(\"GRPC\")) {\n    return value;\n} else return '';"
                 }
               ],
               "alarmFilterConfig": {
@@ -1681,7 +1681,7 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "if (value.includes(\"RPC\")) {\n    return value;\n} else return '';"
+                  "postFuncBody": "if (value.includes(\"RPC\")&&!value.includes(\"GRPC\")) {\n    return value;\n} else return '';"
                 }
               ],
               "alarmFilterConfig": {

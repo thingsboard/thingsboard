@@ -339,6 +339,12 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.connectorForm.markAsPristine();
   }
 
+  isSameConnector(attribute): boolean {
+    if (!this.initialConnector) return false;
+    const connector = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
+    return this.initialConnector.name === connector.name;
+  }
+
   showToast(message: string) {
     this.store.dispatch(new ActionNotificationShow(
       {

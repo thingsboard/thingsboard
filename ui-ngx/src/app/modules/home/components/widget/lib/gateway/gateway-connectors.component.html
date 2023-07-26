@@ -127,7 +127,8 @@
         </ng-container>
         <mat-header-row [ngClass]="{'mat-row-select': true}"
                         *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-        <mat-row [ngClass]="{'mat-row-select': true}"
+        <mat-row [ngClass]="{'mat-row-select': true,
+                'tb-current-entity': isSameConnector(attribute)}"
                  *matRowDef="let attribute; columns: displayedColumns;" (click)="selectConnector(attribute)"></mat-row>
       </table>
       <mat-divider></mat-divider>

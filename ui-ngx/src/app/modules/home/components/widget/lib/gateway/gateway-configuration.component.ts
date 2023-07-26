@@ -347,7 +347,8 @@ export class GatewayConfigurationComponent implements OnInit {
   }
 
   updateStorageType(value: StorageTypes) {
-    this.gatewayConfigGroup.get('storage.type').setValue(value, {emitEvent: true})
+    this.gatewayConfigGroup.get('storage.type').setValue(value, {emitEvent: true});
+    this.gatewayConfigGroup.get('storage.type').markAsDirty();
   }
 
   fetchConfigAttribute(entityId: EntityId) {
