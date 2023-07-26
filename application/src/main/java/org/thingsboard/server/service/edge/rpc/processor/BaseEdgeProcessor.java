@@ -262,11 +262,11 @@ public abstract class BaseEdgeProcessor {
     protected DbCallbackExecutorService dbCallbackExecutorService;
 
     protected ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
-                                                     EdgeId edgeId,
-                                                     EdgeEventType type,
-                                                     EdgeEventActionType action,
-                                                     EntityId entityId,
-                                                     JsonNode body) {
+                                                   EdgeId edgeId,
+                                                   EdgeEventType type,
+                                                   EdgeEventActionType action,
+                                                   EntityId entityId,
+                                                   JsonNode body) {
         log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type[{}], " +
                         "action [{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
@@ -363,12 +363,13 @@ public abstract class BaseEdgeProcessor {
             case CREDENTIALS_UPDATED:
             case ASSIGNED_TO_CUSTOMER:
             case UNASSIGNED_FROM_CUSTOMER:
-            case DELETED:
                 if (edgeId != null) {
                     return saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body);
                 } else {
-                    return handleEntityActionToRelatedEdgesOrAllTenantEdges(tenantId, type, actionType, entityId, body);
+                    return pushNotificationToAllRelatedEdges(tenantId, entityId, type, actionType);
                 }
+            case DELETED:
+                return handleEntityDeletedAction(tenantId, edgeId, type, entityId, body);
             case ASSIGNED_TO_EDGE:
             case UNASSIGNED_FROM_EDGE:
                 ListenableFuture<Void> future = saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body);
@@ -542,15 +543,24 @@ public abstract class BaseEdgeProcessor {
         }
     }
 
-    private ListenableFuture<Void> handleEntityActionToRelatedEdgesOrAllTenantEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId, JsonNode body) {
-        switch (type) {
-            case ASSET:
-            case DEVICE:
-            case ENTITY_VIEW:
-            case DASHBOARD:
-                return Futures.transform(Futures.allAsList(processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, body)), voids -> null, dbCallbackExecutorService);
-            default:
-                return pushNotificationToAllRelatedEdges(tenantId, entityId, type, actionType);
+    private ListenableFuture<Void> handleEntityDeletedAction(TenantId tenantId,
+                                                             EdgeId edgeId,
+                                                             EdgeEventType type,
+                                                             EntityId entityId,
+                                                             JsonNode body) {
+        EdgeEventActionType deleted = EdgeEventActionType.DELETED;
+        if (edgeId != null) {
+            return saveEdgeEvent(tenantId, edgeId, type, deleted, entityId, body);
+        } else {
+            switch (type) {
+                case ASSET:
+                case DEVICE:
+                case ENTITY_VIEW:
+                case DASHBOARD:
+                    return Futures.transform(Futures.allAsList(processActionForAllEdgesByTenantId(tenantId, type, deleted, entityId, body)), voids -> null, dbCallbackExecutorService);
+                default:
+                    return pushNotificationToAllRelatedEdges(tenantId, entityId, type, deleted);
+            }
         }
     }
 }
