@@ -92,6 +92,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), assetId);
             pushAssetCreatedEventToRuleEngine(tenantId, edge, assetId);
+            assetService.assignAssetToEdge(tenantId, assetId, edge.getId());
         }
         Boolean assetNameUpdated = resultPair.getSecond();
         if (assetNameUpdated) {
