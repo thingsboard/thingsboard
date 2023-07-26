@@ -21,7 +21,7 @@
       {{ 'tenant-profile.entities' | translate }} <span translate>tenant-profile.unlimited</span>
     </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-devices</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxDevices"
@@ -32,8 +32,9 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDevices').hasError('min')">
           {{ 'tenant-profile.maximum-devices-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-dashboards</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxDashboards"
@@ -44,10 +45,11 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDashboards').hasError('min')">
           {{ 'tenant-profile.maximum-dashboards-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
     </div>
     <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-assets</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxAssets"
@@ -58,8 +60,9 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxAssets').hasError('min')">
           {{ 'tenant-profile.maximum-assets-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-users</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxUsers"
@@ -70,6 +73,7 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxUsers').hasError('min')">
           {{ 'tenant-profile.maximum-users-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
     </div>
     <mat-expansion-panel class="configuration-panel">
@@ -80,7 +84,7 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <mat-form-field fxFlex class="mat-block" appearance="fill">
+          <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.maximum-customers</mat-label>
             <input matInput required min="0" step="1"
                    formControlName="maxCustomers"
@@ -91,8 +95,9 @@
             <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCustomers').hasError('min')">
               {{ 'tenant-profile.maximum-customers-range' | translate}}
             </mat-error>
+            <mat-hint></mat-hint>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block" appearance="fill">
+          <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.maximum-rule-chains</mat-label>
             <input matInput required min="0" step="1"
                    formControlName="maxRuleChains"
@@ -103,6 +108,7 @@
             <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleChains').hasError('min')">
               {{ 'tenant-profile.maximum-rule-chains-range' | translate}}
             </mat-error>
+            <mat-hint></mat-hint>
           </mat-form-field>
         </div>
       </ng-template>
@@ -114,7 +120,7 @@
       {{ 'tenant-profile.rule-engine' | translate }} <span translate>tenant-profile.unlimited</span>
     </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-r-e-executions</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxREExecutions"
@@ -125,8 +131,9 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxREExecutions').hasError('min')">
           {{ 'tenant-profile.max-r-e-executions-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-transport-messages</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxTransportMessages"
@@ -137,6 +144,7 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('min')">
           {{ 'tenant-profile.max-transport-messages-required' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
     </div>
     <mat-expansion-panel class="configuration-panel">
@@ -147,7 +155,7 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <mat-form-field fxFlex class="mat-block" appearance="fill">
+          <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-j-s-executions</mat-label>
             <input matInput required min="0" step="1"
                    formControlName="maxJSExecutions"
@@ -158,8 +166,9 @@
             <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxJSExecutions').hasError('min')">
               {{ 'tenant-profile.max-j-s-executions-range' | translate}}
             </mat-error>
+            <mat-hint></mat-hint>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block" appearance="fill">
+          <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-transport-data-points</mat-label>
             <input matInput required min="0" step="1"
                    formControlName="maxTransportDataPoints"
@@ -170,10 +179,11 @@
             <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('min')">
               {{ 'tenant-profile.max-transport-data-points-range' | translate}}
             </mat-error>
+            <mat-hint></mat-hint>
           </mat-form-field>
         </div>
         <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-          <mat-form-field fxFlex class="mat-block" appearance="fill">
+          <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
             <input matInput required min="0" step="1"
                    formControlName="maxRuleNodeExecutionsPerMessage"
@@ -184,6 +194,7 @@
             <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleNodeExecutionsPerMessage').hasError('min')">
               {{ 'tenant-profile.max-rule-node-executions-per-message-range' | translate}}
             </mat-error>
+            <mat-hint></mat-hint>
           </mat-form-field>
           <div fxFlex></div>
         </div>
@@ -196,7 +207,7 @@
       {{ 'tenant-profile.time-to-live' | translate }} <span translate>tenant-profile.unlimited</span>
     </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-d-p-storage-days</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxDPStorageDays"
@@ -207,8 +218,9 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDPStorageDays').hasError('min')">
           {{ 'tenant-profile.max-d-p-storage-days-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.alarms-ttl-days</mat-label>
         <input matInput required min="0" step="1"
                formControlName="alarmsTtlDays"
@@ -219,10 +231,11 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('alarmsTtlDays').hasError('min')">
           {{ 'tenant-profile.alarms-ttl-days-days-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
     </div>
     <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.default-storage-ttl-days</mat-label>
         <input matInput required min="0" step="1"
                formControlName="defaultStorageTtlDays"
@@ -233,8 +246,9 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('defaultStorageTtlDays').hasError('min')">
           {{ 'tenant-profile.default-storage-ttl-days-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.rpc-ttl-days</mat-label>
         <input matInput required min="0" step="1"
                formControlName="rpcTtlDays"
@@ -245,6 +259,7 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('rpcTtlDays').hasError('min')">
           {{ 'tenant-profile.rpc-ttl-days-days-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
     </div>
   </fieldset>
@@ -253,8 +268,24 @@
     <legend class="group-title">
       {{ 'tenant-profile.alarms-and-notifications' | translate }} <span translate>tenant-profile.unlimited</span>
     </legend>
+    <mat-slide-toggle class="slide-toggle-element" fxFlex formControlName="smsEnabled">
+      {{ 'tenant-profile.sms-enabled' | translate }}
+    </mat-slide-toggle>
+    <mat-form-field *ngIf="defaultTenantProfileConfigurationFormGroup.get('smsEnabled').value" fxFlex class="mat-block"
+                    appearance="fill" subscriptSizing="dynamic">
+      <mat-label translate>tenant-profile.max-sms</mat-label>
+      <input matInput required min="0" step="1"
+             formControlName="maxSms"
+             type="number">
+      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('required')">
+        {{ 'tenant-profile.max-sms-required' | translate}}
+      </mat-error>
+      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('min')">
+        {{ 'tenant-profile.max-sms-range' | translate}}
+      </mat-error>
+    </mat-form-field>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-emails</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxEmails"
@@ -265,8 +296,9 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxEmails').hasError('min')">
           {{ 'tenant-profile.max-emails-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-created-alarms</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxCreatedAlarms"
@@ -277,23 +309,9 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('min')">
           {{ 'tenant-profile.max-created-alarms-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
     </div>
-    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
-        <mat-label translate>tenant-profile.max-sms</mat-label>
-        <input matInput required min="0" step="1"
-               formControlName="maxSms"
-               type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('required')">
-          {{ 'tenant-profile.max-sms-required' | translate}}
-        </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('min')">
-          {{ 'tenant-profile.max-sms-range' | translate}}
-        </mat-error>
-      </mat-form-field>
-      <div fxFlex></div>
-  </div>
   </fieldset>
 
   <fieldset class="fields-group">
@@ -301,7 +319,7 @@
       {{ 'tenant-profile.ota-files-in-bytes' | translate }} <span translate>tenant-profile.unlimited</span>
     </legend>
     <div class="fields-element" fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-resources-sum-data-size</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxResourcesInBytes"
@@ -312,18 +330,20 @@
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourcesInBytes').hasError('min')">
           {{ 'tenant-profile.maximum-resources-sum-data-size-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block" appearance="fill">
+      <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-ota-packages-sum-data-size</mat-label>
         <input matInput required min="0" step="1"
                formControlName="maxOtaPackagesInBytes"
                type="number">
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('required')">
-          {{ 'tenant-profile.maximum-ota-packages-sum-data-size-required' | translate}}
+          {{ 'tenant-profile.maximum-ota-package-sum-data-size-required' | translate}}
         </mat-error>
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('min')">
-          {{ 'tenant-profile.maximum-ota-packages-sum-data-size-range' | translate}}
+          {{ 'tenant-profile.maximum-ota-package-sum-data-size-range' | translate}}
         </mat-error>
+        <mat-hint></mat-hint>
       </mat-form-field>
     </div>
   </fieldset>

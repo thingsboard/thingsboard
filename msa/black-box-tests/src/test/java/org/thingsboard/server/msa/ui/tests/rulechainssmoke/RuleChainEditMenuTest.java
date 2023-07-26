@@ -99,7 +99,7 @@ public class RuleChainEditMenuTest extends AbstractRuleChainTest {
         assertThat(ruleChainsPage.getDescription()).as("The description changed correctly").isEqualTo(finalDescription);
     }
 
-    @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "debugMode")
+    @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "enable")
     @Description("Enable debug mode/Disable debug mode")
     public void debugMode(boolean debugMode) {
         ruleChainName = ENTITY_NAME + random();

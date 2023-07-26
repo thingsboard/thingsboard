@@ -15,7 +15,10 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -24,33 +27,53 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 
+import java.util.Arrays;
+
+@Slf4j
 @RuleNode(
         type = ComponentType.ENRICHMENT,
-        name="related attributes",
-        configClazz = TbGetRelatedAttrNodeConfiguration.class,
-        nodeDescription = "Add Originators Related Entity Attributes or Latest Telemetry into Message Metadata",
-        nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
-                "If multiple Related Entities are found, only first Entity is used for attributes enrichment, other entities are discarded. " +
-                "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
-                "If Latest Telemetry enrichment configured, latest telemetry added into metadata. " +
-                "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.temperature</code>.",
+        name = "related entity data",
+        configClazz = TbGetRelatedDataNodeConfiguration.class,
+        version = 1,
+        nodeDescription = "Adds originators related entity attributes or latest telemetry or fields into message or message metadata",
+        nodeDetails = "Related entity lookup based on the configured relation query. " +
+                "If multiple related entities are found, only first entity is used for message enrichment, other entities are discarded. " +
+                "Useful when you need to retrieve data from an entity that has a relation to the message originator and use them for further message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeRelatedAttributesConfig")
+public class TbGetRelatedAttributeNode extends TbAbstractGetEntityDataNode<EntityId> {
 
-public class TbGetRelatedAttributeNode extends TbEntityGetAttrNode<EntityId> {
-
-    private TbGetRelatedAttrNodeConfiguration config;
+    private static final String RELATED_ENTITY_NOT_FOUND_MESSAGE = "Failed to find related entity to message originator using relation query specified in the configuration!";
 
     @Override
-    public void init(TbContext context, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbGetRelatedAttrNodeConfiguration.class);
-        setConfig(config);
+    public TbGetRelatedDataNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbGetRelatedDataNodeConfiguration.class);
+        checkIfMappingIsNotEmptyOrElseThrow(config.getDataMapping());
+        checkDataToFetchSupportedOrElseThrow(config.getDataToFetch());
+        return config;
     }
 
     @Override
-    protected ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
-        return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, config.getRelationsQuery());
+    public ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
+        var relatedAttrConfig = (TbGetRelatedDataNodeConfiguration) config;
+        return Futures.transformAsync(
+                EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, relatedAttrConfig.getRelationsQuery()),
+                checkIfEntityIsPresentOrThrow(RELATED_ENTITY_NOT_FOUND_MESSAGE),
+                ctx.getDbCallbackExecutor());
     }
+
+    @Override
+    protected void checkDataToFetchSupportedOrElseThrow(DataToFetch dataToFetch) throws TbNodeException {
+        if (dataToFetch == null) {
+            throw new TbNodeException("DataToFetch property cannot be null! Supported values are: " + Arrays.toString(DataToFetch.values()));
+        }
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        return fromVersion == 0 ? upgradeToUseFetchToAndDataToFetch(oldConfiguration) : new TbPair<>(false, oldConfiguration);
+    }
+
 }

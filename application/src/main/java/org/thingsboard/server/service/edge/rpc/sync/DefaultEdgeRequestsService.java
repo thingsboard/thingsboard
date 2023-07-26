@@ -155,7 +155,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 future = Futures.immediateFuture(null);
             } else {
                 Map<String, Object> entityData = new HashMap<>();
-                ObjectNode attributes = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+                ObjectNode attributes = JacksonUtil.newObjectNode();
                 for (AttributeKvEntry attr : ssAttributes) {
                     if (DefaultDeviceStateService.PERSISTENT_ATTRIBUTES.contains(attr.getKey())
                             && !DefaultDeviceStateService.INACTIVITY_TIMEOUT.equals(attr.getKey())) {

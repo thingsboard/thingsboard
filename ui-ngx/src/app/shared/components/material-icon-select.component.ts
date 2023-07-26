@@ -14,14 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TranslateService } from '@ngx-translate/core';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { MaterialIconsComponent } from '@shared/components/material-icons.component';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'tb-material-icon-select',
@@ -38,7 +42,14 @@ import { TranslateService } from '@ngx-translate/core';
 export class MaterialIconSelectComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
   @Input()
+  @coerceBoolean()
+  asBoxInput = false;
+
+  @Input()
   label = this.translate.instant('icon.icon');
+
+  @Input()
+  color: string;
 
   @Input()
   disabled: boolean;
@@ -73,7 +84,11 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
   constructor(protected store: Store<AppState>,
               private dialogs: DialogService,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef,
+              private fb: UntypedFormBuilder,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -126,13 +141,41 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
             this.materialIconFormGroup.patchValue(
               {icon}, {emitEvent: true}
             );
+            this.cd.markForCheck();
           }
         }
       );
     }
   }
 
+  openIconPopup($event: Event, matButton: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = matButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const materialIconsPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, MaterialIconsComponent, 'left', true, null,
+        {
+          selectedIcon: this.materialIconFormGroup.get('icon').value
+        },
+        {},
+        {}, {}, true);
+      materialIconsPopover.tbComponentRef.instance.popover = materialIconsPopover;
+      materialIconsPopover.tbComponentRef.instance.iconSelected.subscribe((icon) => {
+        materialIconsPopover.hide();
+        this.materialIconFormGroup.patchValue(
+          {icon}, {emitEvent: true}
+        );
+        this.cd.markForCheck();
+      });
+    }
+  }
+
   clear() {
     this.materialIconFormGroup.get('icon').patchValue(null, {emitEvent: true});
+    this.cd.markForCheck();
   }
 }

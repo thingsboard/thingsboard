@@ -20,7 +20,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 
 @Data
-public class TbTransformMsgNodeConfiguration extends TbTransformNodeConfiguration implements NodeConfiguration {
+public class TbTransformMsgNodeConfiguration implements NodeConfiguration<TbTransformMsgNodeConfiguration> {
 
     private ScriptLanguage scriptLang;
     private String jsScript;

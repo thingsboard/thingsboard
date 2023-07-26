@@ -161,6 +161,11 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteWidgetsBundle(tenantId, (WidgetsBundleId) id);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.WIDGETS_BUNDLE;
     }

@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.UserEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -43,7 +43,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
  */
 @Component
 @SqlDao
-public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> implements UserDao {
+public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements UserDao {
 
     @Autowired
     private UserRepository userRepository;

@@ -174,10 +174,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
-        if (device.getId() == null) {
-            Device deviceWithName = this.findDeviceByTenantIdAndName(device.getTenantId(), device.getName());
-            device = deviceWithName == null ? device : deviceWithName.updateDevice(device);
-        }
         Device savedDevice = this.saveDeviceWithoutCredentials(device, true);
         deviceCredentials.setDeviceId(savedDevice.getId());
         if (device.getId() == null) {
@@ -636,6 +632,12 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public long countByTenantId(TenantId tenantId) {
         return deviceDao.countByTenantId(tenantId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteDevice(tenantId, (DeviceId) id);
     }
 
     private PaginatedRemover<TenantId, Device> tenantDevicesRemover =

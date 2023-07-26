@@ -1221,13 +1221,8 @@
         "device-configuration": "设备配置",
         "transport-configuration": "传输配置",
         "wizard": {
-            "device-wizard": "设备向导",
             "device-details": "设备详细信息",
-            "new-device-profile": "新建设备配置",
-            "existing-device-profile": "选择已有设备配置",
-            "specific-configuration": "指定配置",
-            "customer-to-assign-device": "客户分配设备",
-            "add-credentials": "添加凭据"
+            "customer-to-assign-device": "客户分配设备"
         },
         "unassign-devices-from-edge-title": "确定要取消分配  { count, plural, =1 {1 个设备} other {# 个设备} } 吗？",
         "unassign-devices-from-edge-text": "确认后,设备将被取消分配，边缘将无法访问。"
@@ -1292,8 +1287,6 @@
         "delete": "删除设备配置",
         "copyId": "复制设备配置 ID",
         "name-max-length": "名称长度必须少于256个字符",
-        "new-device-profile-name": "设备配置名称",
-        "new-device-profile-name-required": "设备配置名称必填。",
         "name": "名称",
         "name-required": "名称是必需的。",
         "type": "配置类型",
@@ -2943,7 +2936,6 @@
         "name-required": "名称必填。",
         "name-max-length": "名称长度必须少于256个字符",
         "type": "类型",
-        "description": "说明",
         "delete": "删除规则节点",
         "select-all-objects": "选择所有节点和连接",
         "deselect-all-objects": "取消选择所有节点和连接",

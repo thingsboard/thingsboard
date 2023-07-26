@@ -41,8 +41,10 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
   protected defaultSettings(): WidgetSettings {
     return {
       enableSearch: true,
+      enableSelectColumnDisplay: true,
       enableStickyHeader: true,
       enableStickyAction: true,
+      showCellActionsMenu: true,
       reserveSpaceForHiddenAction: 'true',
       showTimestamp: true,
       showMilliseconds: false,
@@ -59,8 +61,10 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
   protected onSettingsSet(settings: WidgetSettings) {
     this.timeseriesTableWidgetSettingsForm = this.fb.group({
       enableSearch: [settings.enableSearch, []],
+      enableSelectColumnDisplay: [settings.enableSelectColumnDisplay, []],
       enableStickyHeader: [settings.enableStickyHeader, []],
       enableStickyAction: [settings.enableStickyAction, []],
+      showCellActionsMenu: [settings.showCellActionsMenu, []],
       reserveSpaceForHiddenAction: [settings.reserveSpaceForHiddenAction, []],
       showTimestamp: [settings.showTimestamp, []],
       showMilliseconds: [settings.showMilliseconds, []],

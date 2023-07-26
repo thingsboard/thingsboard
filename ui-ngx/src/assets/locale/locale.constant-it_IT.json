@@ -1278,7 +1278,6 @@
         "name": "Nome",
         "name-required": "Nome obbligatorio.",
         "type": "Tipo",
-        "description": "Descrizione",
         "delete": "Elimina nodo regola",
         "select-all-objects": "Seleziona tutti i nodi e le connessioni",
         "deselect-all-objects": "Deseleziona tutti i nodi e le connessioni",

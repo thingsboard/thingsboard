@@ -53,7 +53,8 @@ public enum ActionType {
     UNASSIGNED_FROM_EDGE(false),
     ADDED_COMMENT(false),
     UPDATED_COMMENT(false),
-    DELETED_COMMENT(false);
+    DELETED_COMMENT(false),
+    SMS_SENT(false);
 
     private final boolean isRead;
 

@@ -236,7 +236,7 @@ export class ImageMapProviderSettingsComponent extends PageComponent implements 
       mergeMap((aliasInfo) => {
         return this.entityService.getEntityKeysByEntityFilter(
           aliasInfo.entityFilter,
-          dataKeyTypes,
+          dataKeyTypes, [],
           {ignoreLoading: true, ignoreErrors: true}
         ).pipe(
           catchError(() => of([]))

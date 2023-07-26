@@ -259,7 +259,21 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     void launchConsumer(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, Queue configuration, TbRuleEngineConsumerStats stats, String threadSuffix) {
-        consumersExecutor.execute(() -> consumerLoop(consumer, configuration, stats, threadSuffix));
+        if (isReady) {
+            consumersExecutor.execute(() -> consumerLoop(consumer, configuration, stats, threadSuffix));
+        } else {
+            scheduleLaunchConsumer(consumer, configuration, stats, threadSuffix);
+        }
+    }
+
+    private void scheduleLaunchConsumer(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, Queue configuration, TbRuleEngineConsumerStats stats, String threadSuffix) {
+        repartitionExecutor.schedule(() -> {
+            if (isReady) {
+                consumersExecutor.execute(() -> consumerLoop(consumer, configuration, stats, threadSuffix));
+            } else {
+                scheduleLaunchConsumer(consumer, configuration, stats, threadSuffix);
+            }
+        }, 10, TimeUnit.SECONDS);
     }
 
     void consumerLoop(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, org.thingsboard.server.common.data.queue.Queue configuration, TbRuleEngineConsumerStats stats, String threadSuffix) {

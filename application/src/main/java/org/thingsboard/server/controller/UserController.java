@@ -406,7 +406,7 @@ public class UserController extends BaseController {
     public void setUserCredentialsEnabled(
             @ApiParam(value = USER_ID_PARAM_DESCRIPTION)
             @PathVariable(USER_ID) String strUserId,
-            @ApiParam(value = "Disable (\"true\") or enable (\"false\") the credentials.", defaultValue = "true")
+            @ApiParam(value = "Enable (\"true\") or disable (\"false\") the credentials.", defaultValue = "true")
             @RequestParam(required = false, defaultValue = "true") boolean userCredentialsEnabled) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         UserId userId = new UserId(toUUID(strUserId));

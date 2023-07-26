@@ -17,18 +17,19 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TbFetchDeviceCredentialsNodeConfiguration implements NodeConfiguration<TbFetchDeviceCredentialsNodeConfiguration> {
-
-    private boolean fetchToMetadata;
+public class TbFetchDeviceCredentialsNodeConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbFetchDeviceCredentialsNodeConfiguration> {
 
     @Override
     public TbFetchDeviceCredentialsNodeConfiguration defaultConfiguration() {
-        TbFetchDeviceCredentialsNodeConfiguration configuration = new TbFetchDeviceCredentialsNodeConfiguration();
-        configuration.setFetchToMetadata(true);
+        var configuration = new TbFetchDeviceCredentialsNodeConfiguration();
+        configuration.setFetchTo(FetchTo.METADATA);
         return configuration;
     }
+
 }

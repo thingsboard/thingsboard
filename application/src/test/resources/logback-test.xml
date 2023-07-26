@@ -28,6 +28,12 @@
     <logger name="org.thingsboard.server.transport.lwm2m.server" level="INFO"/>
     <logger name="org.eclipse.californium.core" level="INFO"/>
 
+    <!-- Coap client context debug for the test scope -->
+    <!--    <logger name="org.thingsboard.server.transport.coap.client.DefaultCoapClientContext" level="TRACE" />-->
+
+    <!-- Device actor message processor debug for the test scope -->
+    <!--    <logger name="org.thingsboard.server.actors.device.DeviceActorMessageProcessor" level="DEBUG" />-->
+
     <root level="WARN">
         <appender-ref ref="console"/>
     </root>

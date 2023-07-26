@@ -22,6 +22,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CalculateDeltaNodeConfiguration implements NodeConfiguration<CalculateDeltaNodeConfiguration> {
+
     private String inputValueKey;
     private String outputValueKey;
     private boolean useCache;
@@ -32,7 +33,7 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
 
     @Override
     public CalculateDeltaNodeConfiguration defaultConfiguration() {
-        CalculateDeltaNodeConfiguration configuration = new CalculateDeltaNodeConfiguration();
+        var configuration = new CalculateDeltaNodeConfiguration();
         configuration.setInputValueKey("pulseCounter");
         configuration.setOutputValueKey("delta");
         configuration.setUseCache(true);

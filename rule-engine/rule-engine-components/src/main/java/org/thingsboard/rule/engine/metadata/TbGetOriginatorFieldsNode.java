@@ -15,22 +15,20 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.util.EntitiesFieldsAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import static org.thingsboard.common.util.DonAsynchron.withCallback;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by ashvayka on 19.01.18.
@@ -39,47 +37,43 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator fields",
         configClazz = TbGetOriginatorFieldsConfiguration.class,
-        nodeDescription = "Add Message Originator fields values into Message Metadata",
-        nodeDetails = "Will fetch fields values specified in mapping. If specified field is not part of originator fields it will be ignored.",
+        version = 1,
+        nodeDescription = "Adds message originator fields values into message or message metadata",
+        nodeDetails = "Fetches fields values specified in the mapping. If specified field is not part of originator fields it will be ignored. " +
+                "Useful when you need to retrieve originator fields and use them for further message processing.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorFieldsConfig")
-public class TbGetOriginatorFieldsNode implements TbNode {
+public class TbGetOriginatorFieldsNode extends TbAbstractGetMappedDataNode<EntityId, TbGetOriginatorFieldsConfiguration> {
 
-    private TbGetOriginatorFieldsConfiguration config;
-    private boolean ignoreNullStrings;
+    protected final static String DATA_MAPPING_PROPERTY_NAME = "dataMapping";
+    protected static final String OLD_DATA_MAPPING_PROPERTY_NAME = "fieldsMapping";
 
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        config = TbNodeUtils.convert(configuration, TbGetOriginatorFieldsConfiguration.class);
-        ignoreNullStrings = config.isIgnoreNullStrings();
+    protected TbGetOriginatorFieldsConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbGetOriginatorFieldsConfiguration.class);
+        checkIfMappingIsNotEmptyOrElseThrow(config.getDataMapping());
+        return config;
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
-        try {
-            withCallback(putEntityFields(ctx, msg.getOriginator(), msg),
-                    i -> ctx.tellSuccess(msg), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
-        } catch (Throwable th) {
-            ctx.tellFailure(msg, th);
-        }
+    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+        var msgDataAsJsonNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
+        processFieldsData(ctx, msg, msg.getOriginator(), msgDataAsJsonNode, config.isIgnoreNullStrings());
     }
 
-    private ListenableFuture<Void> putEntityFields(TbContext ctx, EntityId entityId, TbMsg msg) {
-        if (config.getFieldsMapping().isEmpty()) {
-            return Futures.immediateFuture(null);
-        } else {
-            return Futures.transform(EntitiesFieldsAsyncLoader.findAsync(ctx, entityId),
-                    data -> {
-                        config.getFieldsMapping().forEach((field, metaKey) -> {
-                            String val = data.getFieldValue(field, ignoreNullStrings);
-                            if (val != null) {
-                                msg.getMetaData().putValue(metaKey, val);
-                            }
-                        });
-                        return null;
-                    }, MoreExecutors.directExecutor()
-            );
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        if (fromVersion == 0) {
+            var newConfigObjectNode = (ObjectNode) oldConfiguration;
+            if (!newConfigObjectNode.has(OLD_DATA_MAPPING_PROPERTY_NAME)) {
+                throw new TbNodeException("property to update: '" + OLD_DATA_MAPPING_PROPERTY_NAME + "' doesn't exists in configuration!");
+            }
+            newConfigObjectNode.set(DATA_MAPPING_PROPERTY_NAME, newConfigObjectNode.get(OLD_DATA_MAPPING_PROPERTY_NAME));
+            newConfigObjectNode.remove(OLD_DATA_MAPPING_PROPERTY_NAME);
+            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, FetchTo.METADATA.name());
+            return new TbPair<>(true, newConfigObjectNode);
         }
+        return new TbPair<>(false, oldConfiguration);
     }
 
 }

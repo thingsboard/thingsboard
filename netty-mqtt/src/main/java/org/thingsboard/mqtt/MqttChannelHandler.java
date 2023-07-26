@@ -35,7 +35,9 @@ import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.Promise;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> {
 
     private final MqttClientImpl client;
@@ -48,31 +50,36 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MqttMessage msg) throws Exception {
-        switch (msg.fixedHeader().messageType()) {
-            case CONNACK:
-                handleConack(ctx.channel(), (MqttConnAckMessage) msg);
-                break;
-            case SUBACK:
-                handleSubAck((MqttSubAckMessage) msg);
-                break;
-            case PUBLISH:
-                handlePublish(ctx.channel(), (MqttPublishMessage) msg);
-                break;
-            case UNSUBACK:
-                handleUnsuback((MqttUnsubAckMessage) msg);
-                break;
-            case PUBACK:
-                handlePuback((MqttPubAckMessage) msg);
-                break;
-            case PUBREC:
-                handlePubrec(ctx.channel(), msg);
-                break;
-            case PUBREL:
-                handlePubrel(ctx.channel(), msg);
-                break;
-            case PUBCOMP:
-                handlePubcomp(msg);
-                break;
+        if (msg.decoderResult().isSuccess()) {
+            switch (msg.fixedHeader().messageType()) {
+                case CONNACK:
+                    handleConack(ctx.channel(), (MqttConnAckMessage) msg);
+                    break;
+                case SUBACK:
+                    handleSubAck((MqttSubAckMessage) msg);
+                    break;
+                case PUBLISH:
+                    handlePublish(ctx.channel(), (MqttPublishMessage) msg);
+                    break;
+                case UNSUBACK:
+                    handleUnsuback((MqttUnsubAckMessage) msg);
+                    break;
+                case PUBACK:
+                    handlePuback((MqttPubAckMessage) msg);
+                    break;
+                case PUBREC:
+                    handlePubrec(ctx.channel(), msg);
+                    break;
+                case PUBREL:
+                    handlePubrel(ctx.channel(), msg);
+                    break;
+                case PUBCOMP:
+                    handlePubcomp(msg);
+                    break;
+            }
+        } else {
+            log.error("[{}] Message decoding failed: {}", client.getClientConfig().getClientId(), msg.decoderResult().cause().getMessage());
+            ctx.close();
         }
     }
 

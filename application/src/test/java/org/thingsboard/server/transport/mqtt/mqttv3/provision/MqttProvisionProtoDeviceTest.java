@@ -43,6 +43,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
+import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestSubscribeOnTopicCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
 import java.util.concurrent.TimeUnit;
@@ -269,7 +270,7 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
     protected byte[] createMqttClientAndPublish(byte[] provisionRequestMsg) throws Exception {
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait("provision");
-        MqttTestCallback onProvisionCallback = new MqttTestCallback(DEVICE_PROVISION_RESPONSE_TOPIC);
+        MqttTestCallback onProvisionCallback = new MqttTestSubscribeOnTopicCallback(DEVICE_PROVISION_RESPONSE_TOPIC);
         client.setCallback(onProvisionCallback);
         client.subscribe(DEVICE_PROVISION_RESPONSE_TOPIC, MqttQoS.AT_MOST_ONCE);
         client.publishAndWait(DEVICE_PROVISION_REQUEST_TOPIC, provisionRequestMsg);

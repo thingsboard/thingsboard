@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.EventLoopGroup;
@@ -35,6 +34,7 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
@@ -120,8 +120,6 @@ import java.util.function.Consumer;
  */
 @Slf4j
 class DefaultTbContext implements TbContext {
-
-    public final static ObjectMapper mapper = new ObjectMapper();
 
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;
@@ -215,6 +213,12 @@ class DefaultTbContext implements TbContext {
     public void enqueueForTellFailure(TbMsg tbMsg, String failureMessage) {
         TopicPartitionInfo tpi = resolvePartition(tbMsg);
         enqueueForTellNext(tpi, tbMsg, Collections.singleton(TbRelationTypes.FAILURE), failureMessage, null, null);
+    }
+
+    @Override
+    public void enqueueForTellFailure(TbMsg tbMsg, Throwable th) {
+        TopicPartitionInfo tpi = resolvePartition(tbMsg);
+        enqueueForTellNext(tpi, tbMsg, Collections.singleton(TbRelationTypes.FAILURE), getFailureMessage(th), null, null);
     }
 
     @Override
@@ -314,16 +318,7 @@ class DefaultTbContext implements TbContext {
         if (nodeCtx.getSelf().isDebugMode()) {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, TbRelationTypes.FAILURE, th);
         }
-        String failureMessage;
-        if (th != null) {
-            if (!StringUtils.isEmpty(th.getMessage())) {
-                failureMessage = th.getMessage();
-            } else {
-                failureMessage = th.getClass().getSimpleName();
-            }
-        } else {
-            failureMessage = null;
-        }
+        String failureMessage = getFailureMessage(th);
         nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getRuleChainId(),
                 nodeCtx.getSelf().getId(), Collections.singleton(TbRelationTypes.FAILURE),
                 msg, failureMessage));
@@ -422,8 +417,8 @@ class DefaultTbContext implements TbContext {
 
     public <E, I extends EntityId, K extends HasRuleEngineProfile> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action, K profile) {
         try {
-            return entityActionMsg(id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)), action, profile);
-        } catch (JsonProcessingException | IllegalArgumentException e) {
+            return entityActionMsg(id, getActionMetaData(ruleNodeId), JacksonUtil.toString(JacksonUtil.valueToTree(entity)), action, profile);
+        } catch (IllegalArgumentException e) {
             throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + action + " msg: " + e);
         }
     }
@@ -728,6 +723,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public boolean isExternalNodeForceAck() {
+        return mainCtx.isExternalNodeForceAck();
+    }
+
+    @Override
     public RuleEngineRpcService getRpcService() {
         return mainCtx.getTbRuleEngineDeviceRpcService();
     }
@@ -843,10 +843,24 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void checkTenantEntity(EntityId entityId) {
+    public void checkTenantEntity(EntityId entityId) throws TbNodeException {
         if (!this.getTenantId().equals(TenantIdLoader.findTenantId(this, entityId))) {
-            throw new RuntimeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.");
+            throw new TbNodeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.", true);
         }
+    }
+
+    private static String getFailureMessage(Throwable th) {
+        String failureMessage;
+        if (th != null) {
+            if (!StringUtils.isEmpty(th.getMessage())) {
+                failureMessage = th.getMessage();
+            } else {
+                failureMessage = th.getClass().getSimpleName();
+            }
+        } else {
+            failureMessage = null;
+        }
+        return failureMessage;
     }
 
     private class SimpleTbQueueCallback implements TbQueueCallback {

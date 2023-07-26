@@ -3286,10 +3286,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/systemjs@6.1.1":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@types/systemjs/-/systemjs-6.1.1.tgz#eae17f2a080e867d01a2dd614f524ab227cf5a41"
-  integrity sha512-d1M6eDKBGWx7RbYy295VEFoOF9YDJkPI959QYnmzcmeaV+SP4D0xV7dEh3sN5XF3GvO3PhGzm+17Z598nvHQuQ==
+"@types/systemjs@6.13.1":
+  version "6.13.1"
+  resolved "https://registry.yarnpkg.com/@types/systemjs/-/systemjs-6.13.1.tgz#fccf8049fdf328bca4cfbad3a9cc7bf088b45048"
+  integrity sha512-Jxo2/uif1WpkabfyvWpFmPWFPDdwKUmyL7xWzjtxNALEu2pgce+eISjbf0Vr+SsK/D9savO5kTRcf+COLK5eiQ==
 
 "@types/tinycolor2@^1.4.3":
   version "1.4.3"
@@ -10101,10 +10101,10 @@ symbol-observable@4.0.0:
   resolved "https://registry.yarnpkg.com/symbol-observable/-/symbol-observable-4.0.0.tgz#5b425f192279e87f2f9b937ac8540d1984b39205"
   integrity sha512-b19dMThMV4HVFynSAM1++gBHAbk2Tc/osgLIBZMKsyqh34jb2e8Os7T6ZW/Bt3pJFdBTd2JwAnAAEQV7rSNvcQ==
 
-systemjs@6.11.0:
-  version "6.11.0"
-  resolved "https://registry.yarnpkg.com/systemjs/-/systemjs-6.11.0.tgz#8df8e74fc05822e6c40170aa409b9ca64833315f"
-  integrity sha512-7YPIY44j+BoY+E6cGBSw0oCU8SNTTIHKZgftcBdwWkDzs/M86Fdlr21FrzAyph7Zo8r3CFGscyFe4rrBtixrBg==
+systemjs@6.14.1:
+  version "6.14.1"
+  resolved "https://registry.yarnpkg.com/systemjs/-/systemjs-6.14.1.tgz#95a580b91b50d0d69ff178ed4816f0ddbcea23c1"
+  integrity sha512-8ftwWd+XnQtZ/aGbatrN4QFNGrKJzmbtixW+ODpci7pyoTajg4sonPP8aFLESAcuVxaC1FyDESt+SpfFCH9rZQ==
 
 table-layout@^1.0.2:
   version "1.0.2"

@@ -213,7 +213,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
                 metaData.putValue("deviceType", device.getType());
                 metaData.putValue(DataConstants.DEVICE_ID, deviceId.getId().toString());
             }
-            ObjectNode data = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            ObjectNode data = JacksonUtil.newObjectNode();
             data.put("method", deviceRpcCallMsg.getRequestMsg().getMethod());
             data.put("params", deviceRpcCallMsg.getRequestMsg().getParams());
             TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, null, metaData,

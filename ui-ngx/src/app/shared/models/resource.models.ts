@@ -21,14 +21,16 @@ import { TbResourceId } from '@shared/models/id/tb-resource-id';
 export enum ResourceType {
   LWM2M_MODEL = 'LWM2M_MODEL',
   PKCS_12 = 'PKCS_12',
-  JKS = 'JKS'
+  JKS = 'JKS',
+  JS_MODULE = 'JS_MODULE'
 }
 
 export const ResourceTypeMIMETypes = new Map<ResourceType, string>(
   [
     [ResourceType.LWM2M_MODEL, 'application/xml,text/xml'],
     [ResourceType.PKCS_12, 'application/x-pkcs12'],
-    [ResourceType.JKS, 'application/x-java-keystore']
+    [ResourceType.JKS, 'application/x-java-keystore'],
+    [ResourceType.JS_MODULE, 'text/javascript,application/javascript']
   ]
 );
 
@@ -36,19 +38,21 @@ export const ResourceTypeExtension = new Map<ResourceType, string>(
   [
     [ResourceType.LWM2M_MODEL, 'xml'],
     [ResourceType.PKCS_12, 'p12,pfx'],
-    [ResourceType.JKS, 'jks']
+    [ResourceType.JKS, 'jks'],
+    [ResourceType.JS_MODULE, 'js']
   ]
 );
 
 export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
   [
-    [ResourceType.LWM2M_MODEL, 'LWM2M model'],
-    [ResourceType.PKCS_12, 'PKCS #12'],
-    [ResourceType.JKS, 'JKS']
+    [ResourceType.LWM2M_MODEL, 'resource.type.lwm2m-model'],
+    [ResourceType.PKCS_12, 'resource.type.pkcs-12'],
+    [ResourceType.JKS, 'resource.type.jks'],
+    [ResourceType.JS_MODULE, 'resource.type.js-module']
   ]
 );
 
-export interface ResourceInfo extends BaseData<TbResourceId> {
+export interface ResourceInfo extends Omit<BaseData<TbResourceId>, 'name' | 'label'> {
   tenantId?: TenantId;
   resourceKey?: string;
   title?: string;
@@ -58,6 +62,7 @@ export interface ResourceInfo extends BaseData<TbResourceId> {
 export interface Resource extends ResourceInfo {
   data: string;
   fileName: string;
+  name?: string;
 }
 
 export interface Resources extends ResourceInfo {

@@ -1287,7 +1287,6 @@
         "name": "Nosaukums",
         "name-required": "Nosaukums ir nepieciešams.",
         "type": "Tips",
-        "description": "Apraksts",
         "delete": "Dzēst noteikumu nodi",
         "select-all-objects": "Atlasīt visas nodes un savienojumus",
         "deselect-all-objects": "Noņemt visas nodes un savienojumus",

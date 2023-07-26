@@ -29,7 +29,7 @@ import {
   DateRangeNavigatorWidgetComponent
 } from '@home/components/widget/lib/date-range-navigator/date-range-navigator.component';
 import { MultipleInputWidgetComponent } from '@home/components/widget/lib/multiple-input-widget.component';
-import { TripAnimationComponent } from '@home/components/widget/trip-animation/trip-animation.component';
+import { TripAnimationComponent } from '@home/components/widget/lib/trip-animation/trip-animation.component';
 import { PhotoCameraInputWidgetComponent } from '@home/components/widget/lib/photo-camera-input.component';
 import { GatewayFormComponent } from '@home/components/widget/lib/gateway/gateway-form.component';
 import { NavigationCardsWidgetComponent } from '@home/components/widget/lib/navigation-cards-widget.component';
@@ -41,6 +41,9 @@ import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-wi
 import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
 import { HomePageWidgetsModule } from '@home/components/widget/lib/home-page/home-page-widgets.module';
 import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import { FlotWidgetComponent } from '@home/components/widget/lib/flot-widget.component';
+import { LegendComponent } from '@home/components/widget/lib/legend.component';
+import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/value-card-widget.component';
 
 @NgModule({
   declarations:
@@ -62,7 +65,10 @@ import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
       NavigationCardWidgetComponent,
       QrCodeWidgetComponent,
       MarkdownWidgetComponent,
-      SelectEntityDialogComponent
+      SelectEntityDialogComponent,
+      LegendComponent,
+      FlotWidgetComponent,
+      ValueCardWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -88,7 +94,10 @@ import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
         NavigationCardsWidgetComponent,
         NavigationCardWidgetComponent,
         QrCodeWidgetComponent,
-        MarkdownWidgetComponent
+        MarkdownWidgetComponent,
+        LegendComponent,
+        FlotWidgetComponent,
+        ValueCardWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

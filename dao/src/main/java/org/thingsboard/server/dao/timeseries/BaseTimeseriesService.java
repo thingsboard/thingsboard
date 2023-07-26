@@ -133,6 +133,15 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
+    public List<TsKvEntry> findLatestSync(TenantId tenantId, EntityId entityId, Collection<String> keys) {
+        validate(entityId);
+        List<TsKvEntry> latestEntries = Lists.newArrayListWithExpectedSize(keys.size());
+        keys.forEach(key -> Validator.validateString(key, "Incorrect key " + key));
+        keys.forEach(key -> latestEntries.add(timeseriesLatestDao.findLatestSync(tenantId, entityId, key)));
+        return latestEntries;
+    }
+
+    @Override
     public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId) {
         validate(entityId);
         return timeseriesLatestDao.findAllLatest(tenantId, entityId);

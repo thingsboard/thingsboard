@@ -21,11 +21,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasRuleEngineProfile;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -38,7 +39,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @ToString(exclude = {"image"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class AssetProfile extends SearchTextBased<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId> {
+public class AssetProfile extends BaseData<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId> {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
@@ -110,11 +111,6 @@ public class AssetProfile extends SearchTextBased<AssetProfileId> implements Has
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 
     @ApiModelProperty(position = 5, value = "Used to mark the default profile. Default profile is used when the asset profile is not specified during asset creation.")

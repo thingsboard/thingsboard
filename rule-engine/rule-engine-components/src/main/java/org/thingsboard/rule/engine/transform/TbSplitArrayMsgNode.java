@@ -77,8 +77,10 @@ public class TbSplitArrayMsgNode implements TbNode {
                         ctx.tellFailure(msg, e);
                     }
                 });
-                data.forEach(msgNode -> ctx.enqueueForTellNext(TbMsg.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode)),
-                        TbRelationTypes.SUCCESS, wrapper::onSuccess, wrapper::onFailure));
+                data.forEach(msgNode -> {
+                    TbMsg outMsg = TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode));
+                    ctx.enqueueForTellNext(outMsg, TbRelationTypes.SUCCESS, wrapper::onSuccess, wrapper::onFailure);
+                });
             }
         } else {
             ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Array!"));

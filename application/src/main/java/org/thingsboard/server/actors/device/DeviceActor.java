@@ -59,10 +59,10 @@ public class DeviceActor extends ContextAwareActor {
     protected boolean doProcess(TbActorMsg msg) {
         switch (msg.getMsgType()) {
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
-                processor.process(ctx, (TransportToDeviceActorMsgWrapper) msg);
+                processor.process((TransportToDeviceActorMsgWrapper) msg);
                 break;
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
-                processor.processAttributesUpdate(ctx, (DeviceAttributesEventNotificationMsg) msg);
+                processor.processAttributesUpdate((DeviceAttributesEventNotificationMsg) msg);
                 break;
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processCredentialsUpdate(msg);
@@ -74,10 +74,10 @@ public class DeviceActor extends ContextAwareActor {
                 processor.processRpcRequest(ctx, (ToDeviceRpcRequestActorMsg) msg);
                 break;
             case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
-                processor.processRpcResponsesFromEdge(ctx, (FromDeviceRpcResponseActorMsg) msg);
+                processor.processRpcResponsesFromEdge((FromDeviceRpcResponseActorMsg) msg);
                 break;
             case DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG:
-                processor.processServerSideRpcTimeout(ctx, (DeviceActorServerSideRpcTimeoutMsg) msg);
+                processor.processServerSideRpcTimeout((DeviceActorServerSideRpcTimeoutMsg) msg);
                 break;
             case SESSION_TIMEOUT_MSG:
                 processor.checkSessionsTimeout();
@@ -86,7 +86,7 @@ public class DeviceActor extends ContextAwareActor {
                 processor.processEdgeUpdate((DeviceEdgeUpdateMsg) msg);
                 break;
             case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
-                processor.processRemoveRpc(ctx, (RemoveRpcActorMsg) msg);
+                processor.processRemoveRpc((RemoveRpcActorMsg) msg);
                 break;
             default:
                 return false;

@@ -162,7 +162,6 @@ export class SentNotificationDialogComponent extends
       }
       this.notificationRequestForm.get('useTemplate').setValue(useTemplate, {onlySelf : true});
     }
-
     this.refreshAllowDeliveryMethod();
   }
 
@@ -337,19 +336,23 @@ export class SentNotificationDialogComponent extends
   refreshAllowDeliveryMethod() {
     this.notificationService.getAvailableDeliveryMethods({ignoreLoading: true}).subscribe(allowMethods => {
       this.allowNotificationDeliveryMethods = allowMethods;
-      this.updateDeliveryMethodsDisableState();
-      this.showRefresh = (this.notificationDeliveryMethods.length !== allowMethods.length);
+      if (!this.notificationRequestForm.get('useTemplate').value) {
+        this.updateDeliveryMethodsDisableState();
+        this.showRefresh = (this.notificationDeliveryMethods.length !== allowMethods.length);
+      }
     });
   }
 
   private updateDeliveryMethodsDisableState() {
-    this.notificationDeliveryMethods.forEach(method => {
-      if (this.allowNotificationDeliveryMethods.includes(method)) {
-        this.getDeliveryMethodsTemplatesControl(method).enable({emitEvent: true});
-      } else {
-        this.getDeliveryMethodsTemplatesControl(method).disable({emitEvent: true});
-        this.getDeliveryMethodsTemplatesControl(method).setValue(false, {emitEvent: true}); //used for notify again
-      }
-    });
+    if (this.allowNotificationDeliveryMethods) {
+      this.notificationDeliveryMethods.forEach(method => {
+        if (this.allowNotificationDeliveryMethods.includes(method)) {
+          this.getDeliveryMethodsTemplatesControl(method).enable({emitEvent: true});
+        } else {
+          this.getDeliveryMethodsTemplatesControl(method).disable({emitEvent: true});
+          this.getDeliveryMethodsTemplatesControl(method).setValue(false, {emitEvent: true}); //used for notify again
+        }
+      });
+    }
   }
 }

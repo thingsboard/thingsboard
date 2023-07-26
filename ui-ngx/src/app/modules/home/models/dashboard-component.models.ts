@@ -328,6 +328,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   backgroundColor: string;
   padding: string;
   margin: string;
+  borderRadius: string;
 
   title: string;
   customTranslatedTitle: string;
@@ -427,6 +428,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.backgroundColor = this.widget.config.backgroundColor || '#fff';
     this.padding = this.widget.config.padding || '8px';
     this.margin = this.widget.config.margin || '0px';
+    this.borderRadius = this.widget.config.borderRadius;
 
     this.title = isDefined(this.widgetContext.widgetTitle)
       && this.widgetContext.widgetTitle.length ? this.widgetContext.widgetTitle : this.widget.config.title;
@@ -444,7 +446,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       this.titleIconStyle.color = this.widget.config.iconColor;
     }
     if (this.widget.config.iconSize) {
+      this.titleIconStyle.width = this.widget.config.iconSize;
+      this.titleIconStyle.height = this.widget.config.iconSize;
       this.titleIconStyle.fontSize = this.widget.config.iconSize;
+      this.titleIconStyle.lineHeight = this.widget.config.iconSize;
     }
 
     this.dropShadow = isDefined(this.widget.config.dropShadow) ? this.widget.config.dropShadow : true;
@@ -478,7 +483,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       color: this.color,
       backgroundColor: this.backgroundColor,
       padding: this.padding,
-      margin: this.margin};
+      margin: this.margin,
+      borderRadius: this.borderRadius};
     if (this.widget.config.widgetStyle) {
       this.style = {...this.style, ...this.widget.config.widgetStyle};
     }

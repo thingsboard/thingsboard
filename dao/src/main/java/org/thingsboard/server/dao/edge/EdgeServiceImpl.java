@@ -476,7 +476,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     public String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId, String tbRuleChainInputNodeClassName) {
         List<RuleChain> edgeRuleChains = findEdgeRuleChains(tenantId, edgeId);
         List<RuleChainId> edgeRuleChainIds = edgeRuleChains.stream().map(IdBased::getId).collect(Collectors.toList());
-        ObjectNode result = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode result = JacksonUtil.newObjectNode();
         for (RuleChain edgeRuleChain : edgeRuleChains) {
             List<RuleNode> ruleNodes =
                     ruleChainService.loadRuleChainMetaData(edgeRuleChain.getTenantId(), edgeRuleChain.getId()).getNodes();
@@ -494,7 +494,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                     }
                 }
                 if (!missingRuleChains.isEmpty()) {
-                    ArrayNode array = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+                    ArrayNode array = JacksonUtil.newArrayNode();
                     for (String missingRuleChain : missingRuleChains) {
                         array.add(missingRuleChain);
                     }

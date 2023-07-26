@@ -226,16 +226,19 @@ export class FilterSelectComponent implements ControlValueAccessor, OnInit, Afte
     }
   }
 
-  createFilter($event: Event, filter: string) {
+  createFilter($event: Event, filter: string, focusOnCancel = true) {
     $event.preventDefault();
+    $event.stopPropagation();
     this.creatingFilter = true;
     if (this.callbacks && this.callbacks.createFilter) {
       this.callbacks.createFilter(filter).subscribe((newFilter) => {
           if (!newFilter) {
-            setTimeout(() => {
-              this.filterInput.nativeElement.blur();
-              this.filterInput.nativeElement.focus();
-            }, 0);
+            if (focusOnCancel) {
+              setTimeout(() => {
+                this.filterInput.nativeElement.blur();
+                this.filterInput.nativeElement.focus();
+              }, 0);
+            }
           } else {
             this.filterList.push(newFilter);
             this.modelValue = newFilter.id;

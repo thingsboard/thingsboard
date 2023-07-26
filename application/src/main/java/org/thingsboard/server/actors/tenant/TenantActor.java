@@ -49,7 +49,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
-import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
@@ -211,10 +210,6 @@ public class TenantActor extends RuleChainManagerActor {
             log.trace("[{}] Ack message because Rule Engine is disabled", tenantId);
             tbMsg.getCallback().onSuccess();
         }
-        systemContext.getNotificationRuleProcessor().process(RuleEngineMsgTrigger.builder()
-                .tenantId(tenantId)
-                .msg(tbMsg)
-                .build());
     }
 
     private void onRuleChainMsg(RuleChainAwareMsg msg) {

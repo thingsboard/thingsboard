@@ -17,6 +17,7 @@
 
 @mixin theme-overwrites($primary, $config-or-theme) {
   @include _mat-form-field-overwrites($primary, $config-or-theme);
+  @include _mat-button-overwrites($primary, $config-or-theme);
 }
 
 @mixin _mat-form-field-overwrites($primary, $config-or-theme) {
@@ -48,6 +49,17 @@
     .mat-mdc-form-field-focus-overlay {
       &:before {
         opacity: 0.87;
+      }
+    }
+  }
+}
+
+@mixin _mat-button-overwrites($primary, $config-or-theme) {
+  .mat-toolbar {
+    .mat-mdc-outlined-button {
+      --mdc-outlined-button-outline-color: inherit;
+      &:not(:disabled) {
+        border-color: var(--mdc-outlined-button-outline-color, inherit);
       }
     }
   }

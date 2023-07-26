@@ -86,8 +86,7 @@
                     matTooltip="{{ actionDescriptor.name }}"
                     matTooltipPosition="above"
                     (click)="actionDescriptor.onAction($event)">
-              <mat-icon *ngIf="actionDescriptor.isMdiIcon" [svgIcon]="actionDescriptor.icon"></mat-icon>
-              <mat-icon *ngIf="!actionDescriptor.isMdiIcon">{{actionDescriptor.icon}}</mat-icon>
+              <tb-icon>{{actionDescriptor.icon}}</tb-icon>
             </button>
             <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
                     matTooltip="{{ 'action.refresh' | translate }}"
@@ -218,17 +217,18 @@
               <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 48) + 'px',
                                                                     maxWidth: (cellActionDescriptors.length * 48) + 'px',
                                                                     width: (cellActionDescriptors.length * 48) + 'px' }">
-                <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+                <div [fxHide]="cellActionDescriptors.length !== 1" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                   <button mat-icon-button [disabled]="(isLoading$ | async) || !actionDescriptor.isEnabled(entity)"
                           *ngFor="let actionDescriptor of cellActionDescriptors"
                           matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
                           matTooltipPosition="above"
                           (click)="actionDescriptor.onAction($event, entity)">
-                    <mat-icon [svgIcon]="actionDescriptor.mdiIcon" [ngStyle]="actionDescriptor.style">
+                    <mat-icon svgIcon="{{ actionDescriptor.mdiIconFunction ? actionDescriptor.mdiIconFunction(entity) : actionDescriptor.mdiIcon }}"
+                              [ngStyle]="actionDescriptor.style">
                       {{actionDescriptor.icon}}</mat-icon>
                   </button>
                 </div>
-                <div fxHide fxShow.lt-lg *ngIf="cellActionDescriptors.length">
+                <div fxHide [fxShow.lt-lg]="cellActionDescriptors.length !== 1" *ngIf="cellActionDescriptors.length">
                   <button mat-icon-button
                           (click)="$event.stopPropagation()"
                           [matMenuTriggerFor]="cellActionsMenu">
@@ -239,7 +239,8 @@
                             [disabled]="isLoading$ | async"
                             [fxShow]="actionDescriptor.isEnabled(entity)"
                             (click)="actionDescriptor.onAction($event, entity)">
-                      <mat-icon [svgIcon]="actionDescriptor.mdiIcon" [ngStyle]="actionDescriptor.style">
+                      <mat-icon svgIcon="{{ actionDescriptor.mdiIconFunction ? actionDescriptor.mdiIconFunction(entity) : actionDescriptor.mdiIcon }}"
+                                [ngStyle]="actionDescriptor.style">
                         {{actionDescriptor.icon}}</mat-icon>
                       <span>{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}</span>
                     </button>

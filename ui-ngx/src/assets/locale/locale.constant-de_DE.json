@@ -1495,7 +1495,6 @@
     "name": "Name",
     "name-required": "Name ist erforderlich.",
     "type": "Typ",
-    "description": "Beschreibung",
     "delete": "Regelknoten löschen",
     "select-all-objects": "Alle Knoten und Verbindungen auswählen",
     "deselect-all-objects": "Auswahl aller Knoten und Verbindungen aufheben",

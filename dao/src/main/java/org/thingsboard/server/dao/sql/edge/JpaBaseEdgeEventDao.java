@@ -28,13 +28,14 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.EdgeEventEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
@@ -43,7 +44,9 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +58,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @SqlDao
 @RequiredArgsConstructor
 @Slf4j
-public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntity, EdgeEvent> implements EdgeEventDao {
+public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEvent> implements EdgeEventDao {
 
     private final UUID systemTenantId = NULL_UUID;
 
@@ -86,7 +89,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
     private long edgeEventsTtl;
 
-    private static final String TABLE_NAME = ModelConstants.EDGE_EVENT_COLUMN_FAMILY_NAME;
+    private static final String TABLE_NAME = ModelConstants.EDGE_EVENT_TABLE_NAME;
 
     private TbSqlBlockingQueueWrapper<EdgeEventEntity> queue;
 
@@ -118,7 +121,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
             }
         };
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, 1, statsFactory);
-        queue.init(logExecutor, v -> edgeEventInsertRepository.save(v),
+        queue.init(logExecutor, edgeEventInsertRepository::save,
                 Comparator.comparing(EdgeEventEntity::getTs)
         );
     }
@@ -171,29 +174,23 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
 
 
     @Override
-    public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
-        if (withTsUpdate) {
-            return DaoUtil.toPageData(
-                    edgeEventRepository
-                            .findEdgeEventsByTenantIdAndEdgeId(
-                                    tenantId,
-                                    edgeId.getId(),
-                                    Objects.toString(pageLink.getTextSearch(), ""),
-                                    pageLink.getStartTime(),
-                                    pageLink.getEndTime(),
-                                    DaoUtil.toPageable(pageLink)));
-        } else {
-            return DaoUtil.toPageData(
-                    edgeEventRepository
-                            .findEdgeEventsByTenantIdAndEdgeIdWithoutTimeseriesUpdated(
-                                    tenantId,
-                                    edgeId.getId(),
-                                    Objects.toString(pageLink.getTextSearch(), ""),
-                                    pageLink.getStartTime(),
-                                    pageLink.getEndTime(),
-                                    DaoUtil.toPageable(pageLink)));
-
+    public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink) {
+        List<SortOrder> sortOrders = new ArrayList<>();
+        if (pageLink.getSortOrder() != null) {
+            sortOrders.add(pageLink.getSortOrder());
         }
+        sortOrders.add(new SortOrder("seqId"));
+        return DaoUtil.toPageData(
+                edgeEventRepository
+                        .findEdgeEventsByTenantIdAndEdgeId(
+                                tenantId,
+                                edgeId.getId(),
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
+                                seqIdStart,
+                                seqIdEnd,
+                                DaoUtil.toPageable(pageLink, sortOrders)));
     }
 
     @Override

@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
@@ -25,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -40,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
@@ -48,10 +49,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbChangeOriginatorNodeTest {
+
+    private static final String CUSTOMER_SOURCE = "CUSTOMER";
 
     private TbChangeOriginatorNode node;
 
@@ -152,15 +154,18 @@ public class TbChangeOriginatorNodeTest {
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(null));
 
+        ArgumentCaptor<NoSuchElementException> exceptionCaptor = ArgumentCaptor.forClass(NoSuchElementException.class);
+
         node.onMsg(ctx, msg);
-        verify(ctx).tellNext(same(msg), same(FAILURE));
+        verify(ctx).tellFailure(same(msg), exceptionCaptor.capture());
+
+        assertEquals("Failed to find new originator!", exceptionCaptor.getValue().getMessage());
     }
 
     public void init() throws TbNodeException {
         TbChangeOriginatorNodeConfiguration config = new TbChangeOriginatorNodeConfiguration();
-        config.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
-        ObjectMapper mapper = new ObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        config.setOriginatorSource(CUSTOMER_SOURCE);
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
 

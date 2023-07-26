@@ -32,7 +32,6 @@ public class MqttTestCallback implements MqttCallback {
     protected final CountDownLatch deliveryLatch;
     protected int qoS;
     protected byte[] payloadBytes;
-    protected String awaitSubTopic;
     protected boolean pubAckReceived;
 
     public MqttTestCallback() {
@@ -45,12 +44,6 @@ public class MqttTestCallback implements MqttCallback {
         this.deliveryLatch = new CountDownLatch(1);
     }
 
-    public MqttTestCallback(String awaitSubTopic) {
-        this.subscribeLatch = new CountDownLatch(1);
-        this.deliveryLatch = new CountDownLatch(1);
-        this.awaitSubTopic = awaitSubTopic;
-    }
-
     @Override
     public void connectionLost(Throwable throwable) {
         log.warn("connectionLost: ", throwable);
@@ -59,23 +52,10 @@ public class MqttTestCallback implements MqttCallback {
 
     @Override
     public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
-        if (awaitSubTopic == null) {
-            log.warn("messageArrived on topic: {}", requestTopic);
-            qoS = mqttMessage.getQos();
-            payloadBytes = mqttMessage.getPayload();
-            subscribeLatch.countDown();
-        } else {
-            messageArrivedOnAwaitSubTopic(requestTopic, mqttMessage);
-        }
-    }
-
-    protected void messageArrivedOnAwaitSubTopic(String requestTopic, MqttMessage mqttMessage) {
-        log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
-        if (awaitSubTopic.equals(requestTopic)) {
-            qoS = mqttMessage.getQos();
-            payloadBytes = mqttMessage.getPayload();
-            subscribeLatch.countDown();
-        }
+        log.warn("messageArrived on topic: {}", requestTopic);
+        qoS = mqttMessage.getQos();
+        payloadBytes = mqttMessage.getPayload();
+        subscribeLatch.countDown();
     }
 
     @Override

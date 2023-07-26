@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.service.rule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
@@ -42,12 +45,13 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.install.InstallScripts;
-import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,8 +74,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     private final RuleChainService ruleChainService;
     private final RelationService relationService;
     private final InstallScripts installScripts;
-
-    private final EntitiesVersionControlService vcService;
+    private final ComponentDiscoveryService componentDiscoveryService;
 
     @Override
     public Set<String> getRuleChainOutputLabels(TenantId tenantId, RuleChainId ruleChainId) {
@@ -277,7 +280,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
         RuleChainId ruleChainId = ruleChain.getId();
         RuleChainId ruleChainMetaDataId = ruleChainMetaData.getRuleChainId();
         try {
-            RuleChainUpdateResult result = ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData);
+            RuleChainUpdateResult result = ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData, this::updateRuleNodeConfiguration);
             checkNotNull(result.isSuccess() ? true : null);
 
             List<RuleChain> updatedRuleChains;
@@ -402,6 +405,45 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
                     user, e, ruleChainId.toString());
             throw e;
         }
+    }
+
+    @Override
+    public RuleNode updateRuleNodeConfiguration(RuleNode node) {
+        var ruleChainId = node.getRuleChainId();
+        var ruleNodeId = node.getId();
+        var ruleNodeType = node.getType();
+        try {
+            var ruleNodeClass = componentDiscoveryService.getRuleNodeInfo(ruleNodeType)
+                    .orElseThrow(() -> new RuntimeException("Rule node " + ruleNodeType + " is not supported!"));
+            if (ruleNodeClass.isVersioned()) {
+                TbVersionedNode tbVersionedNode = (TbVersionedNode) ruleNodeClass.getClazz().getDeclaredConstructor().newInstance();
+                int fromVersion = node.getConfigurationVersion();
+                int toVersion = ruleNodeClass.getCurrentVersion();
+                if (fromVersion < toVersion) {
+                    log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
+                            ruleNodeId, ruleNodeType, fromVersion, toVersion);
+                    try {
+                        TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(fromVersion, node.getConfiguration());
+                        if (upgradeResult.getFirst()) {
+                            node.setConfiguration(upgradeResult.getSecond());
+                        }
+                        node.setConfigurationVersion(toVersion);
+                        log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
+                                ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
+                    } catch (TbNodeException e) {
+                        log.warn("Failed to upgrade rule node with id: {} type: {} rule chain id: {} fromVersion: {} toVersion: {} due to: ",
+                                ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion, e);
+                    }
+                } else {
+                    log.debug("Rule node with id: {} type: {} ruleChainId: {} already set to latest version!",
+                            ruleNodeId, ruleChainId, ruleNodeType);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to update the rule node with id: {} type: {}, rule chain id: {}",
+                    ruleNodeId, ruleNodeType, ruleChainId, e);
+        }
+        return node;
     }
 
     private Set<RuleChainId> updateRelatedRuleChains(TenantId tenantId, RuleChainId ruleChainId, Map<String, String> labelsMap) {

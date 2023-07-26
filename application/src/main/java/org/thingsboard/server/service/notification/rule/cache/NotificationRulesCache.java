@@ -17,12 +17,12 @@ package org.thingsboard.server.service.notification.rule.cache;
 
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
 import java.util.List;
 
 public interface NotificationRulesCache {
 
-    List<NotificationRule> get(TenantId tenantId, NotificationRuleTriggerType triggerType);
+    List<NotificationRule> getEnabled(TenantId tenantId, NotificationRuleTriggerType triggerType);
 
 }

@@ -30,7 +30,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
 
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND d.customerId = :customerId " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<EdgeEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                  @Param("customerId") UUID customerId,
                                                  @Param("textSearch") String textSearch,
@@ -43,7 +43,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     EdgeInfoEntity findEdgeInfoById(@Param("edgeId") UUID edgeId);
 
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<EdgeEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                     @Param("textSearch") String textSearch,
                                     Pageable pageable);
@@ -52,14 +52,14 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "FROM EdgeEntity d " +
             "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
             "WHERE d.tenantId = :tenantId " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<EdgeInfoEntity> findEdgeInfosByTenantId(@Param("tenantId") UUID tenantId,
                                                  @Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND d.type = :type " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<EdgeEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                            @Param("type") String type,
                                            @Param("textSearch") String textSearch,
@@ -70,7 +70,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
             "WHERE d.tenantId = :tenantId " +
             "AND d.type = :type " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                         @Param("type") String type,
                                                         @Param("textSearch") String textSearch,
@@ -79,7 +79,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND d.customerId = :customerId " +
             "AND d.type = :type " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<EdgeEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                         @Param("customerId") UUID customerId,
                                                         @Param("type") String type,
@@ -91,7 +91,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                                 @Param("customerId") UUID customerId,
                                                                 @Param("searchText") String searchText,
@@ -103,7 +103,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND LOWER(a.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                                        @Param("customerId") UUID customerId,
                                                                        @Param("type") String type,
@@ -113,7 +113,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     @Query("SELECT ee FROM EdgeEntity ee, RelationEntity re WHERE ee.tenantId = :tenantId " +
             "AND ee.id = re.fromId AND re.fromType = 'EDGE' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.toId = :entityId AND re.toType = :entityType " +
-            "AND LOWER(ee.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND LOWER(ee.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<EdgeEntity> findByTenantIdAndEntityId(@Param("tenantId") UUID tenantId,
                                                @Param("entityId") UUID entityId,
                                                @Param("entityType") String entityType,

@@ -34,13 +34,13 @@ public interface TenantProfileRepository extends JpaRepository<TenantProfileEnti
     EntityInfo findTenantProfileInfoById(@Param("tenantProfileId") UUID tenantProfileId);
 
     @Query("SELECT t FROM TenantProfileEntity t WHERE " +
-            "LOWER(t.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "LOWER(t.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<TenantProfileEntity> findTenantProfiles(@Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(t.id, 'TENANT_PROFILE', t.name) " +
             "FROM TenantProfileEntity t " +
-            "WHERE LOWER(t.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "WHERE LOWER(t.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<EntityInfo> findTenantProfileInfos(@Param("textSearch") String textSearch,
                                             Pageable pageable);
 

@@ -1797,7 +1797,7 @@
         "name": "Ім'я",
         "name-required": "Необхідно вказати ім'я.",
         "type": "Тип",
-        "description": "Опис",
+        "rule-node-description": "Опис вузла правил",
         "delete": "Видалити вузол правил",
         "select-all-objects": "Вибрати усі вузли та з'єднання",
         "deselect-all-objects": "Зняти виділення з усіх вузлів і з'єднань",

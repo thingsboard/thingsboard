@@ -24,6 +24,9 @@ import java.util.Base64;
 import static org.apache.commons.lang3.StringUtils.repeat;
 
 public class StringUtils {
+
+    private static final int DEFAULT_TOKEN_LENGTH = 8;
+
     public static final SecureRandom RANDOM = new SecureRandom();
 
     public static final String EMPTY = "";
@@ -203,6 +206,10 @@ public class StringUtils {
         RANDOM.nextBytes(bytes);
         Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
         return encoder.encodeToString(bytes);
+    }
+
+    public static String generateSafeToken() {
+        return generateSafeToken(DEFAULT_TOKEN_LENGTH);
     }
 
 }

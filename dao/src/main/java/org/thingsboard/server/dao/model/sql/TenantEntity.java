@@ -29,7 +29,7 @@ import javax.persistence.Table;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.TENANT_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.TENANT_TABLE_NAME)
 public final class TenantEntity extends AbstractTenantEntity<Tenant> {
 
     public TenantEntity() {

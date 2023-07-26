@@ -26,34 +26,39 @@ import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.rule.DefaultNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.EscalatedNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmNotificationRuleTriggerConfig.AlarmAction;
-import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
-import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.data.notification.rule.trigger.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmAssignmentNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmCommentNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig.AlarmAction;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.ApiUsageLimitNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EntitiesLimitNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EntityActionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NewPlatformVersionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.RateLimitsNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import static java.util.function.Predicate.not;
 import static org.thingsboard.common.util.JacksonUtil.newObjectNode;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 
@@ -66,6 +71,7 @@ public class DefaultNotifications {
             .subject("Infrastructure maintenance")
             .text("Maintenance work is scheduled for tomorrow (7:00 a.m. - 9:00 a.m. UTC)")
             .build();
+
     public static final DefaultNotification entitiesLimitForSysadmin = DefaultNotification.builder()
             .name("Entities count limit notification for sysadmin")
             .type(NotificationType.ENTITIES_LIMIT)
@@ -88,6 +94,7 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when count of entities of some type reached 80% threshold of the limit")
                     .build())
             .build();
+
     public static final DefaultNotification apiFeatureWarningForSysadmin = DefaultNotification.builder()
             .name("API feature warning notification for sysadmin")
             .type(NotificationType.API_USAGE_LIMIT)
@@ -134,6 +141,51 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when API feature is disabled")
                     .build())
             .build();
+
+    public static final DefaultNotification exceededRateLimits = DefaultNotification.builder()
+            .name("Exceeded per-tenant rate limits notification for tenant")
+            .type(NotificationType.RATE_LIMITS)
+            .subject("Rate limits exceeded")
+            .text("Rate limits for ${api} exceeded")
+            .icon("block").color("#e91a1a")
+            .rule(DefaultRule.builder()
+                    .name("Per-tenant rate limits exceeded")
+                    .triggerConfig(RateLimitsNotificationRuleTriggerConfig.builder()
+                            .apis(Arrays.stream(LimitedApi.values())
+                                    .filter(LimitedApi::isPerTenant)
+                                    .filter(api -> api.getLabel() != null)
+                                    .collect(Collectors.toSet()))
+                            .build())
+                    .description("Send notification to tenant admins when some per-tenant rate limit is exceeded")
+                    .build())
+            .build();
+    public static final DefaultNotification exceededPerEntityRateLimits = DefaultNotification.builder()
+            .name("Exceeded per-entity rate limits notification for tenant")
+            .type(NotificationType.RATE_LIMITS)
+            .subject("Rate limits exceeded")
+            .text("Rate limits for ${api} exceeded for '${limitLevelEntityName}'")
+            .icon("block").color("#e91a1a")
+            .rule(DefaultRule.builder()
+                    .name("Per-entity rate limits exceeded")
+                    .triggerConfig(RateLimitsNotificationRuleTriggerConfig.builder()
+                            .apis(Arrays.stream(LimitedApi.values())
+                                    .filter(not(LimitedApi::isPerTenant))
+                                    .filter(api -> api.getLabel() != null)
+                                    .collect(Collectors.toSet()))
+                            .build())
+                    .description("Send notification to tenant admins when some per-entity rate limit is exceeded for an entity")
+                    .build())
+            .build();
+    public static final DefaultNotification exceededRateLimitsForSysadmin = exceededRateLimits.toBuilder()
+            .name("Exceeded per-tenant rate limits notification for sysadmin")
+            .subject("Rate limits exceeded for tenant ${tenantName}")
+            .button("Go to tenant").link("/tenants/${tenantId}")
+            .rule(exceededRateLimits.getRule().toBuilder()
+                    .name("Per-tenant rate limits exceeded (sysadmin)")
+                    .description("Send notification to system admins when a tenant exceeds some per-tenant rate limit")
+                    .build())
+            .build();
+
     public static final DefaultNotification newPlatformVersion = DefaultNotification.builder()
             .name("New platform version notification")
             .type(NotificationType.NEW_PLATFORM_VERSION)
@@ -206,6 +258,7 @@ public class DefaultNotifications {
             .button("Go to device").link("/devices/${deviceId}")
             .rule(DefaultRule.builder()
                     .name("Device activity status change")
+                    .enabled(false)
                     .triggerConfig(DeviceActivityNotificationRuleTriggerConfig.builder()
                             .devices(null)
                             .deviceProfiles(null)
@@ -342,6 +395,7 @@ public class DefaultNotifications {
             DefaultRule defaultRule = this.rule;
             NotificationRule rule = new NotificationRule();
             rule.setName(defaultRule.getName());
+            rule.setEnabled(defaultRule.getEnabled() == null || defaultRule.getEnabled());
             rule.setTemplateId(templateId);
             rule.setTriggerType(defaultRule.getTriggerConfig().getTriggerType());
             rule.setTriggerConfig(defaultRule.getTriggerConfig());
@@ -368,6 +422,7 @@ public class DefaultNotifications {
     @Builder(toBuilder = true)
     public static class DefaultRule {
         private final String name;
+        private final Boolean enabled;
         private final NotificationRuleTriggerConfig triggerConfig;
         private final String description;
     }

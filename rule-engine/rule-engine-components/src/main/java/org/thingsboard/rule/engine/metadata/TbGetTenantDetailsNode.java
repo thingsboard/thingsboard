@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -22,36 +23,52 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.ContactBased;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "tenant details",
         configClazz = TbGetTenantDetailsNodeConfiguration.class,
-        nodeDescription = "Adds fields from Tenant details to the message body or metadata",
-        nodeDetails = "If checkbox: <b>Add selected details to the message metadata</b> is selected, existing fields will be added to the message metadata instead of message data.<br><br>" +
-                "<b>Note:</b> only Device, Asset, and Entity View type are allowed.<br><br>" +
-                "If the originator of the message is not assigned to Tenant, or originator type is not supported - Message will be forwarded to <b>Failure</b> chain, otherwise, <b>Success</b> chain will be used.",
+        version = 1,
+        nodeDescription = "Adds message originator tenant details into message or message metadata",
+        nodeDetails = "Useful when we need to retrieve contact information from your tenant " +
+                "such as email, phone, address, etc., for notifications via email, SMS, and other notification providers.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
-public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration> {
+public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration, TenantId> {
 
     private static final String TENANT_PREFIX = "tenant_";
 
     @Override
-    protected TbGetTenantDetailsNodeConfiguration loadGetEntityDetailsNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbGetTenantDetailsNodeConfiguration.class);
+    protected TbGetTenantDetailsNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbGetTenantDetailsNodeConfiguration.class);
+        checkIfDetailsListIsNotEmptyOrElseThrow(config.getDetailsList());
+        return config;
     }
 
     @Override
-    protected ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg) {
-        return getTbMsgListenableFuture(ctx, msg, getDataAsJson(msg), TENANT_PREFIX);
+    protected String getPrefix() {
+        return TENANT_PREFIX;
     }
 
     @Override
-    protected ListenableFuture<? extends ContactBased> getContactBasedListenableFuture(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<Tenant> getContactBasedFuture(TbContext ctx, TbMsg msg) {
         return ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), ctx.getTenantId());
     }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        return fromVersion == 0 ?
+                upgradeRuleNodesWithOldPropertyToUseFetchTo(
+                        oldConfiguration,
+                        "addToMetadata",
+                        FetchTo.METADATA.name(),
+                        FetchTo.DATA.name()) :
+                new TbPair<>(false, oldConfiguration);
+    }
+
 }

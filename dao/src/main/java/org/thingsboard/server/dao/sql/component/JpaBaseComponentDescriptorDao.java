@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.component.ComponentDescriptorDao;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -40,7 +40,7 @@ import java.util.UUID;
  * Created by Valerii Sosliuk on 5/6/2017.
  */
 @Component
-public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<ComponentDescriptorEntity, ComponentDescriptor>
+public class JpaBaseComponentDescriptorDao extends JpaAbstractDao<ComponentDescriptorEntity, ComponentDescriptor>
         implements ComponentDescriptorDao {
 
     @Autowired

@@ -34,16 +34,21 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
             "(SELECT sr FROM TbResourceEntity sr " +
             "WHERE sr.tenantId = :tenantId " +
             "AND tr.resourceType = sr.resourceType " +
-            "AND tr.resourceKey = sr.resourceKey)))")
+            "AND tr.resourceKey = sr.resourceKey)))" +
+            "AND (:resourceType IS NULL OR tr.resourceType = :resourceType)")
     Page<TbResourceInfoEntity> findAllTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
                                                                 @Param("systemAdminId") UUID sysadminId,
+                                                                @Param("resourceType") String resourceType,
                                                                 @Param("searchText") String searchText,
                                                                 Pageable pageable);
 
     @Query("SELECT ri FROM TbResourceInfoEntity ri WHERE " +
             "ri.tenantId = :tenantId " +
+            "AND (:resourceType IS NULL OR ri.resourceType = :resourceType)" +
             "AND LOWER(ri.title) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<TbResourceInfoEntity> findTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
+                                                             @Param("resourceType") String resourceType,
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);
+
 }

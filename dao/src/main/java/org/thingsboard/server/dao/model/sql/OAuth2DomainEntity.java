@@ -34,7 +34,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.OAUTH2_DOMAIN_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.OAUTH2_DOMAIN_TABLE_NAME)
 public class OAuth2DomainEntity extends BaseSqlEntity<OAuth2Domain> {
 
     @Column(name = ModelConstants.OAUTH2_PARAMS_ID_PROPERTY)

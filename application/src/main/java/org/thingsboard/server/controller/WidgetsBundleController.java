@@ -117,7 +117,7 @@ public class WidgetsBundleController extends BaseController {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         WidgetsBundle widgetsBundle = checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
-        tbWidgetsBundleService.delete(widgetsBundle);
+        tbWidgetsBundleService.delete(widgetsBundle, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Widget Bundles (getWidgetsBundles)",

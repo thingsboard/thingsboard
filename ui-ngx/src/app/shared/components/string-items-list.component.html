@@ -15,24 +15,47 @@
     limitations under the License.
 
 -->
-<section [formGroup]="stringItemsForm">
-  <mat-form-field fxFlex class="mat-block" [floatLabel]="floatLabel" [appearance]="appearance" [subscriptSizing]="subscriptSizing">
-    <mat-label *ngIf="label">{{ label }}</mat-label>
-    <mat-chip-grid #itemsChipList formControlName="items" [required]="required">
-      <mat-chip-row *ngFor="let item of stringItemsList"
-                [removable]="!disabled"
-                [contentEditable]="editable && !disabled"
-                (removed)="removeItems(item)">
-        {{item}}
-        <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-      </mat-chip-row>
-      <input placeholder="{{ placeholder }}"
-             [matChipInputFor]="itemsChipList"
-             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-             matChipInputAddOnBlur
-             (matChipInputTokenEnd)="addItem($event)">
-    </mat-chip-grid>
-    <mat-hint>{{ hint }}</mat-hint>
-    <mat-error *ngIf="stringItemsForm.get('items').hasError('required')">{{ requiredText }}</mat-error>
-  </mat-form-field>
-</section>
+<mat-form-field [formGroup]="stringItemsForm" fxFlex class="mat-block"
+                [floatLabel]="floatLabel"
+                [appearance]="appearance"
+                [subscriptSizing]="subscriptSizing">
+  <mat-label *ngIf="label">{{ label }}</mat-label>
+  <mat-chip-grid #itemsChipList formControlName="items" [required]="required">
+    <mat-chip-row *ngFor="let item of itemList"
+                  [removable]="!disabled"
+                  [contentEditable]="editable && !disabled"
+                  (removed)="removeItems(item)">
+      {{ item.name }}
+      <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
+    </mat-chip-row>
+    <input matInput type="text"
+           placeholder="{{ placeholder }}"
+           style="max-width: 300px;min-width: 250px"
+           #stringItemInput
+           (focusin)="onFocus()"
+           formControlName="item"
+           #origin="matAutocompleteOrigin"
+           [matChipInputFor]="itemsChipList"
+           [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+           matAutocompleteOrigin
+           matChipInputAddOnBlur
+           (matChipInputTokenEnd)="addItem($event)"
+           [matAutocompleteConnectedTo]="origin"
+           [matAutocomplete]="stringItemAutocomplete"
+           [matAutocompleteDisabled]="!predefinedValues?.length">
+  </mat-chip-grid>
+  <mat-autocomplete #stringItemAutocomplete="matAutocomplete"
+                    [displayWith]="displayValueFn"
+                    class="tb-autocomplete">
+    <mat-option *ngFor="let value of filteredValues | async" [value]="value">
+      <span [innerHTML]="value.name | highlight:searchText"></span>
+    </mat-option>
+    <mat-option *ngIf="!(filteredValues | async)?.length" [value]="null">
+      {{ 'common.not-found' | translate }}
+    </mat-option>
+  </mat-autocomplete>
+  <mat-hint>{{ hint }}</mat-hint>
+  <mat-error *ngIf="stringItemsForm.get('items').hasError('required')">
+    {{ requiredText }}
+  </mat-error>
+</mat-form-field>

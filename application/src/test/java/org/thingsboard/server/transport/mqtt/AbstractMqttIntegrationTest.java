@@ -20,6 +20,7 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
@@ -170,7 +171,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         device.setName(name);
         device.setType(type);
         if (gateway) {
-            ObjectNode additionalInfo = mapper.createObjectNode();
+            ObjectNode additionalInfo = JacksonUtil.newObjectNode();
             additionalInfo.put("gateway", true);
             device.setAdditionalInfo(additionalInfo);
         }

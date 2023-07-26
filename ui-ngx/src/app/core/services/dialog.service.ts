@@ -29,6 +29,7 @@ import {
 } from '@shared/components/dialog/material-icons-dialog.component';
 import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
+import { ErrorAlertDialogComponent } from '@shared/components/dialog/error-alert-dialog.component';
 import { TodoDialogComponent } from '@shared/components/dialog/todo-dialog.component';
 
 @Injectable(
@@ -78,6 +79,23 @@ export class DialogService {
     return dialogRef.afterClosed();
   }
 
+  errorAlert(title: string, message: string, error: any, ok: string = null, fullscreen: boolean = false): Observable<any> {
+    const dialogConfig: MatDialogConfig = {
+      disableClose: true,
+      data: {
+        title,
+        message,
+        error,
+        ok: ok || this.translate.instant('action.ok')
+      }
+    };
+    if (fullscreen) {
+      dialogConfig.panelClass = ['tb-fullscreen-dialog'];
+    }
+    const dialogRef = this.dialog.open(ErrorAlertDialogComponent, dialogConfig);
+    return dialogRef.afterClosed();
+  }
+
   colorPicker(color: string): Observable<string> {
     return this.dialog.open<ColorPickerDialogComponent, ColorPickerDialogData, string>(ColorPickerDialogComponent,
       {
@@ -85,7 +103,8 @@ export class DialogService {
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           color
-        }
+        },
+        autoFocus: false
     }).afterClosed();
   }
 
@@ -96,7 +115,8 @@ export class DialogService {
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           icon
-        }
+        },
+        autoFocus: false
       }).afterClosed();
   }
 

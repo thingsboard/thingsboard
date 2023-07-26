@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.model.sql.DashboardEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
@@ -39,7 +39,7 @@ import java.util.UUID;
  */
 @Component
 @SqlDao
-public class JpaDashboardDao extends JpaAbstractSearchTextDao<DashboardEntity, Dashboard> implements DashboardDao {
+public class JpaDashboardDao extends JpaAbstractDao<DashboardEntity, Dashboard> implements DashboardDao {
 
     @Autowired
     DashboardRepository dashboardRepository;

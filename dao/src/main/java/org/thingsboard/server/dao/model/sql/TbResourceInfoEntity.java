@@ -21,14 +21,15 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
@@ -40,7 +41,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = RESOURCE_TABLE_NAME)
-public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implements SearchTextEntity<TbResourceInfo> {
+public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implements BaseEntity<TbResourceInfo> {
 
     @Column(name = RESOURCE_TENANT_ID_COLUMN, columnDefinition = "uuid")
     private UUID tenantId;
@@ -57,6 +58,9 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
+    @Column(name = RESOURCE_ETAG_COLUMN)
+    private String hashCode;
+
     public TbResourceInfoEntity() {
     }
 
@@ -70,6 +74,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         this.resourceType = resource.getResourceType().name();
         this.resourceKey = resource.getResourceKey();
         this.searchText = resource.getSearchText();
+        this.hashCode = resource.getEtag();
     }
 
     @Override
@@ -81,11 +86,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceKey(resourceKey);
         resource.setSearchText(searchText);
+        resource.setEtag(hashCode);
         return resource;
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return title;
     }
 }

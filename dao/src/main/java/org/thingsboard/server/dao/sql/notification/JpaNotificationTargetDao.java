@@ -67,6 +67,12 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
     }
 
     @Override
+    public List<NotificationTarget> findByTenantIdAndUsersFilterType(TenantId tenantId, UsersFilterType filterType) {
+        return DaoUtil.convertDataList(notificationTargetRepository.findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(tenantId.getId(), "",
+                List.of(filterType.name()), DaoUtil.toPageable(new PageLink(Integer.MAX_VALUE))).getContent());
+    }
+
+    @Override
     public void removeByTenantId(TenantId tenantId) {
         notificationTargetRepository.deleteByTenantId(tenantId.getId());
     }
@@ -74,6 +80,26 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
     @Override
     public Long countByTenantId(TenantId tenantId) {
         return notificationTargetRepository.countByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public NotificationTarget findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(notificationTargetRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public NotificationTarget findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(notificationTargetRepository.findByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
+    public PageData<NotificationTarget> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationTargetRepository.findByTenantId(tenantId, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public NotificationTargetId getExternalIdByInternal(NotificationTargetId internalId) {
+        return DaoUtil.toEntityId(notificationTargetRepository.getExternalIdByInternal(internalId.getId()), NotificationTargetId::new);
     }
 
     @Override

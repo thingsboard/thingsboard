@@ -23,13 +23,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.notification.NotificationType;
+import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.NotificationTemplateEntity;
 
 import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface NotificationTemplateRepository extends JpaRepository<NotificationTemplateEntity, UUID> {
+public interface NotificationTemplateRepository extends JpaRepository<NotificationTemplateEntity, UUID>, ExportableEntityRepository<NotificationTemplateEntity> {
 
     @Query("SELECT t FROM NotificationTemplateEntity t WHERE t.tenantId = :tenantId AND " +
             "t.notificationType IN :notificationTypes " +
@@ -42,5 +43,12 @@ public interface NotificationTemplateRepository extends JpaRepository<Notificati
 
     @Transactional
     void deleteByTenantId(UUID tenantId);
+
+    NotificationTemplateEntity findByTenantIdAndName(UUID tenantId, String name);
+
+    Page<NotificationTemplateEntity> findByTenantId(UUID tenantId, Pageable pageable);
+
+    @Query("SELECT externalId FROM NotificationTemplateEntity WHERE id = :id")
+    UUID getExternalIdByInternal(@Param("id") UUID internalId);
 
 }

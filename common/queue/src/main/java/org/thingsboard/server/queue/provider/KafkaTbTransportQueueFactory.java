@@ -18,7 +18,9 @@ package org.thingsboard.server.queue.provider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
@@ -131,6 +133,16 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         requestBuilder.clientId("transport-node-core-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(coreSettings.getTopic());
         requestBuilder.admin(coreAdmin);
+        return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreNotificationMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("transport-node-to-core-notifications-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(coreSettings.getTopic());
+        requestBuilder.admin(notificationAdmin);
         return requestBuilder.build();
     }
 

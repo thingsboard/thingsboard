@@ -245,7 +245,8 @@ const getTimewindowType = (timewindow: Timewindow): TimewindowType => {
   }
 };
 
-export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalOnly: boolean, timeService: TimeService): Timewindow => {
+export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalOnly: boolean,
+                                               historyOnly: boolean, timeService: TimeService): Timewindow => {
   const model = defaultTimewindow(timeService);
   if (value) {
     model.hideInterval = value.hideInterval;
@@ -315,6 +316,9 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
   }
   if (quickIntervalOnly) {
     model.realtime.realtimeType = RealtimeWindowType.INTERVAL;
+  }
+  if (historyOnly) {
+    model.selectedTab = TimewindowType.HISTORY;
   }
   return model;
 };
@@ -448,6 +452,15 @@ export const calculateIntervalStartTime = (interval: QuickTimeInterval, currentD
     case QuickTimeInterval.PREVIOUS_MONTH:
       currentDate.subtract(1, 'months');
       return currentDate.startOf('month');
+    case QuickTimeInterval.PREVIOUS_QUARTER:
+      currentDate.subtract(1, 'quarter');
+      return currentDate.startOf('quarter');
+    case QuickTimeInterval.PREVIOUS_HALF_YEAR:
+      if (currentDate.get('quarter') < 3) {
+        return currentDate.startOf('year').subtract(2, 'quarters');
+      } else {
+        return currentDate.startOf('year');
+      }
     case QuickTimeInterval.PREVIOUS_YEAR:
       currentDate.subtract(1, 'years');
       return currentDate.startOf('year');
