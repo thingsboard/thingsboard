@@ -328,15 +328,17 @@ interface WebDeliveryMethodAdditionalConfig {
     icon: string;
     color: string;
   };
-  actionButtonConfig: {
-    enabled: boolean;
-    text: string;
-    linkType: ActionButtonLinkType;
-    link?: string;
-    dashboardId?: string;
-    dashboardState?: string;
-    setEntityIdInState?: boolean;
-  };
+  actionButtonConfig: NotificationButtonConfig;
+}
+
+interface NotificationButtonConfig {
+  enabled: boolean;
+  text: string;
+  linkType: ActionButtonLinkType;
+  link?: string;
+  dashboardId?: string;
+  dashboardState?: string;
+  setEntityIdInState?: boolean;
 }
 
 interface EmailDeliveryMethodNotificationTemplate {
@@ -350,11 +352,7 @@ interface SlackDeliveryMethodNotificationTemplate {
 
 interface MicrosoftTeamsDeliveryMethodNotificationTemplate {
   subject?: string;
-  button: {
-    enabled: boolean;
-    name?: string;
-    uri?: string;
-  };
+  button: NotificationButtonConfig;
 }
 
 export enum NotificationStatus {

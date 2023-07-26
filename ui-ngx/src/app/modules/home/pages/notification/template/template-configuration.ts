@@ -98,15 +98,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
           icon: [{value: 'notifications', disabled: true}, Validators.required],
           color: [{value: '#757575', disabled: true}]
         }),
-        actionButtonConfig: this.fb.group({
-          enabled: [false],
-          text: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(50)]],
-          linkType: [ActionButtonLinkType.LINK],
-          link: [{value: '', disabled: true}, Validators.required],
-          dashboardId: [{value: null, disabled: true}, Validators.required],
-          dashboardState: [{value: null, disabled: true}],
-          setEntityIdInState: [{value: true, disabled: true}],
-        }),
+        actionButtonConfig: this.createButtonConfigForm()
       })
     });
 
@@ -119,37 +111,6 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       } else {
         this.webTemplateForm.get('additionalConfig.icon.icon').disable({emitEvent: false});
         this.webTemplateForm.get('additionalConfig.icon.color').disable({emitEvent: false});
-      }
-    });
-
-    this.webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      if (value) {
-        this.webTemplateForm.get('additionalConfig.actionButtonConfig').enable({emitEvent: false});
-        this.webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').updateValueAndValidity({onlySelf: true});
-      } else {
-        this.webTemplateForm.get('additionalConfig.actionButtonConfig').disable({emitEvent: false});
-        this.webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').enable({emitEvent: false});
-      }
-    });
-
-    this.webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      const isEnabled = this.webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value;
-      if (isEnabled) {
-        if (value === ActionButtonLinkType.LINK) {
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').disable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').disable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').disable({emitEvent: false});
-        } else {
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').enable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').enable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').enable({emitEvent: false});
-        }
       }
     });
 
@@ -170,22 +131,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       subject: [''],
       body: ['', Validators.required],
       themeColor: [''],
-      button: this.fb.group({
-        enabled: [false],
-        name: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(50)]],
-        uri: [{value: '', disabled: true}, Validators.required],
-      }),
-    });
-
-    this.microsoftTeamsTemplateForm.get('button.enabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      if (value) {
-        this.microsoftTeamsTemplateForm.get('button').enable({emitEvent: false});
-      } else {
-        this.microsoftTeamsTemplateForm.get('button').disable({emitEvent: false});
-        this.microsoftTeamsTemplateForm.get('button.enabled').enable({emitEvent: false});
-      }
+      button: this.createButtonConfigForm()
     });
 
     this.deliveryMethodFormsMap = new Map<NotificationDeliveryMethod, FormGroup>([
@@ -223,5 +169,49 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       }
     });
     return deepTrim(template);
+  }
+
+  private createButtonConfigForm(): FormGroup {
+    const form = this.fb.group({
+      enabled: [false],
+      text: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(50)]],
+      linkType: [ActionButtonLinkType.LINK],
+      link: [{value: '', disabled: true}, Validators.required],
+      dashboardId: [{value: null, disabled: true}, Validators.required],
+      dashboardState: [{value: null, disabled: true}],
+      setEntityIdInState: [{value: true, disabled: true}],
+    });
+
+    form.get('enabled').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      if (value) {
+        form.enable({emitEvent: false});
+        form.get('linkType').updateValueAndValidity({onlySelf: true});
+      } else {
+        form.disable({emitEvent: false});
+        form.get('enabled').enable({emitEvent: false});
+      }
+    });
+
+    form.get('linkType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      const isEnabled = form.get('enabled').value;
+      if (isEnabled) {
+        if (value === ActionButtonLinkType.LINK) {
+          form.get('link').enable({emitEvent: false});
+          form.get('dashboardId').disable({emitEvent: false});
+          form.get('dashboardState').disable({emitEvent: false});
+          form.get('setEntityIdInState').disable({emitEvent: false});
+        } else {
+          form.get('link').disable({emitEvent: false});
+          form.get('dashboardId').enable({emitEvent: false});
+          form.get('dashboardState').enable({emitEvent: false});
+          form.get('setEntityIdInState').enable({emitEvent: false});
+        }
+      }
+    });
+    return form;
   }
 }

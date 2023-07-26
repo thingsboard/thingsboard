@@ -384,28 +384,54 @@
                   </mat-slide-toggle>
                 </mat-panel-title>
               </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent>
+              <ng-template matExpansionPanelContent class="tb-extension-panel">
                 <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
                   <mat-form-field class="mat-block" fxFlex>
                     <mat-label translate>notification.button-text</mat-label>
-                    <input matInput formControlName="name" required>
-                    <mat-error *ngIf="microsoftTeamsTemplateForm.get('button.name').hasError('required')">
+                    <input matInput formControlName="text" required>
+                    <mat-error *ngIf="microsoftTeamsTemplateForm.get('button.text').hasError('required')">
                       {{ 'notification.button-text-required' | translate }}
                     </mat-error>
-                    <mat-error *ngIf="microsoftTeamsTemplateForm.get('button.name').hasError('maxlength')">
+                    <mat-error *ngIf="microsoftTeamsTemplateForm.get('button.text').hasError('maxlength')">
                       {{ 'notification.button-text-max-length' | translate :
-                      {length: microsoftTeamsTemplateForm.get('button.name').getError('maxlength').requiredLength}
+                      {length: microsoftTeamsTemplateForm.get('button.text').getError('maxlength').requiredLength}
                       }}
                     </mat-error>
                   </mat-form-field>
-                  <mat-form-field fxFlex>
+                </div>
+                <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
+                  <mat-form-field fxFlex="30" fxFlex.xs="100">
+                    <mat-label translate>notification.action-type</mat-label>
+                    <mat-select formControlName="linkType">
+                      <mat-option *ngFor="let actionButtonLinkType of actionButtonLinkTypes" [value]="actionButtonLinkType">
+                        {{ actionButtonLinkTypeTranslateMap.get(actionButtonLinkType) | translate }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field fxFlex
+                                  *ngIf="microsoftTeamsTemplateForm.get('button.linkType').value === actionButtonLinkType.LINK; else dashboardSelector">
                     <mat-label translate>notification.link</mat-label>
-                    <input matInput formControlName="uri" required>
-                    <mat-error *ngIf="microsoftTeamsTemplateForm.get('button.uri').hasError('required')">
+                    <input matInput formControlName="link" required>
+                    <mat-error *ngIf="microsoftTeamsTemplateForm.get('button.link').hasError('required')">
                       {{ 'notification.link-required' | translate }}
                     </mat-error>
                   </mat-form-field>
+                  <ng-template #dashboardSelector>
+                    <tb-dashboard-autocomplete
+                      fxFlex="35" fxFlex.xs="100"
+                      required
+                      formControlName="dashboardId">
+                    </tb-dashboard-autocomplete>
+                    <tb-dashboard-state-autocomplete fxFlex="35" fxFlex.xs="100"
+                                                     [dashboardId]="microsoftTeamsTemplateForm.get('button.dashboardId').value"
+                                                     formControlName="dashboardState">
+                    </tb-dashboard-state-autocomplete>
+                  </ng-template>
                 </div>
+                <mat-slide-toggle formControlName="setEntityIdInState" class="toggle"
+                                  *ngIf="microsoftTeamsTemplateForm.get('button.linkType').value === actionButtonLinkType.DASHBOARD">
+                  {{ 'notification.set-entity-from-notification' | translate }}
+                </mat-slide-toggle>
               </ng-template>
             </mat-expansion-panel>
           </div>
