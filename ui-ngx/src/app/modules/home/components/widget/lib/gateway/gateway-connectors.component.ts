@@ -100,7 +100,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   device: EntityId;
 
   @ViewChild('nameInput') nameInput: ElementRef;
-  @ViewChild(MatSort) sort: MatSort;
+  @ViewChild(MatSort, { static: false }) sort: MatSort;
 
   connectorForm: FormGroup;
 
@@ -228,7 +228,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         this.activeConnectors.splice(activeIndex, 1);
       }
       if (inactiveIndex !== -1) {
-        this.inactiveConnectors.splice(activeIndex, 1);
+        this.inactiveConnectors.splice(inactiveIndex, 1);
       }
     }
     if (!this.activeConnectors.includes(value.name) && scope == AttributeScope.SHARED_SCOPE) {
@@ -376,7 +376,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.dialogService.confirm(title, content, 'Cancel', 'Delete').subscribe(result => {
       if (result) {
         const tasks = [];
-        const scope = (this.activeConnectors.includes(attribute.key) || !this.initialConnector) ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
+        const scope = (this.initialConnector && this.activeConnectors.includes(this.initialConnector.name)) ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
         tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [attribute]));
         const activeIndex = this.activeConnectors.indexOf(attribute.key);
         const inactiveIndex = this.inactiveConnectors.indexOf(attribute.key);
