@@ -137,7 +137,7 @@
       <mat-card fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="15px" fxLayoutGap.lt-md="5px">
         <mat-form-field class="mat-block tb-value-type">
           <mat-label>{{ 'gateway.connectors-table-name' | translate }}</mat-label>
-          <input matInput formControlName="name"/>
+          <input matInput formControlName="name" #nameInput/>
         </mat-form-field>
         <mat-form-field class="mat-block tb-value-type">
           <mat-label>{{ 'gateway.connectors-table-type' | translate }}</mat-label>
