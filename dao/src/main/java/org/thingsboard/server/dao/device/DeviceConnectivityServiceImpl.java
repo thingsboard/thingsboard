@@ -91,10 +91,17 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             case MQTT:
                 MqttDeviceProfileTransportConfiguration transportConfiguration =
                         (MqttDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-                String topicName = transportConfiguration.getDeviceTelemetryTopic();
+                //TODO: add sparkplug command with emulator (check SSL)
+                if (transportConfiguration.isSparkplug()) {
+                    ObjectNode sparkplug = JacksonUtil.newObjectNode();
+                    sparkplug.put("sparkplug", CHECK_DOCUMENTATION);
+                    commands.set(MQTT, sparkplug);
+                } else {
+                    String topicName = transportConfiguration.getDeviceTelemetryTopic();
 
-                Optional.ofNullable(getMqttTransportPublishCommands(baseUrl, topicName, creds))
-                        .ifPresent(v -> commands.set(MQTT, v));
+                    Optional.ofNullable(getMqttTransportPublishCommands(baseUrl, topicName, creds))
+                            .ifPresent(v -> commands.set(MQTT, v));
+                }
                 break;
             case COAP:
                 Optional.ofNullable(getCoapTransportPublishCommands(baseUrl, creds))

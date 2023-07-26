@@ -295,7 +295,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testFetchPublishTelemetryCommandsForСoapDevice() throws Exception {
+    public void testFetchPublishTelemetryCommandsForCoapDevice() throws Exception {
         Device device = new Device();
         device.setName("My device");
         device.setDeviceProfileId(coapDeviceProfileId);
@@ -317,7 +317,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testFetchPublishTelemetryCommandsForСoapDeviceWithX509Creds() throws Exception {
+    public void testFetchPublishTelemetryCommandsForCoapDeviceWithX509Creds() throws Exception {
         Device device = new Device();
         device.setName("My device");
         device.setDeviceProfileId(coapDeviceProfileId);
