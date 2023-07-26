@@ -3488,7 +3488,7 @@
         "created": "{{created}} 创建",
         "updated": "{{updated}} 更新",
         "deleted": "{{deleted}} 删除",
-        "remove-other-entities-confirm-text": "请注意！在还原版本中不存在的当前实体<br/> 将被永久 <b>删除</b>。<br/><br/>请输入 <b>remove other entities</b> 进行确认。",
+        "remove-other-entities-confirm-text": "请注意！在还原版本中不存在的当前实体<br/> 将被永久 <b>删除</b>。<br/><br/>请输入 <b>\"remove other entities\"</b> 进行确认。",
         "auto-commit-to-branch": "自动提交到 <b>{{ branch }}</b> 分支",
         "default-create-entity-version-name": "{{entityName}} 更新",
         "sync-strategy-merge-hint": "创建或更新选定的实体，仓库其他实体均<b>不修改</b>。",

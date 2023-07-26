@@ -3338,7 +3338,7 @@
         "created": "{{created}}已創建",
         "updated": "{{updated}}已更新",
         "deleted": "{{deleted}} 已刪除",
-        "remove-other-entities-confirm-text": "小心！這將永久刪除您要恢復的版本中不存在的所有當前實體。請鍵入刪除其他實體進行確認。",
+        "remove-other-entities-confirm-text": "小心！這將永久刪除所有在您要恢復的版本中不存在的當前實體。請輸入 \"remove other entities\" 進行確認。",
         "auto-commit-to-branch": "自動提交到{{ branch }}分支",
         "default-create-entity-version-name": "{{entityName}} 更新",
         "sync-strategy-merge-hint": "在存儲庫中創建或更新選定實體。所有其他存儲實體都不會被修改。",

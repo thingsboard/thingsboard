@@ -3907,7 +3907,7 @@
         "created": "{{created}} creadas",
         "updated": "{{updated}} actualizadas",
         "deleted": "{{deleted}} borradas",
-        "remove-other-entities-confirm-text": "Atención! Esta acción <b>borrará</b> permanentemente <b>todas</b> las entidades actuales<br/>no presentes en la versión a restaurar.<br/><br/>Escribe <b>remove other entities</b> para confirmar.",
+        "remove-other-entities-confirm-text": "Atención! Esta acción <b>borrará</b> permanentemente <b>todas</b> las entidades actuales<br/>no presentes en la versión a restaurar.<br/><br/>Escribe <b>\"remove other entities\"</b> para confirmar.",
         "auto-commit-to-branch": "auto-publicar a la rama <b>{{ branch }}</b>",
         "default-create-entity-version-name": "{{entityName}} actualización",
         "sync-strategy-merge-hint": "Crea o actualiza las entidades seleccionadas en el repositorio. Las demás entidades <b>no serán modificadas</b>.",
