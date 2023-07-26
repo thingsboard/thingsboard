@@ -94,7 +94,7 @@
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
                     <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                                 [data]='createMarkDownCommand("sudo apt-get install curl")'></tb-markdown>
+                                 [data]='createMarkDownCommand("brew install curl")'></tb-markdown>
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
@@ -115,7 +115,7 @@
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
                     <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                                 [data]='createMarkDownCommand("brew install curl")'></tb-markdown>
+                                 [data]='createMarkDownCommand("sudo apt-get install curl")'></tb-markdown>
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
