@@ -164,7 +164,6 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -758,10 +757,6 @@ public abstract class BaseController {
 
     TbResourceInfo checkResourceInfoId(TbResourceId resourceId, Operation operation) throws ThingsboardException {
         return checkEntityId(resourceId, resourceService::findResourceInfoById, operation);
-    }
-
-    String checkSslServerPemFile(String protocol) throws ThingsboardException, IOException {
-        return checkNotNull(deviceConnectivityService.getSslServerChain(protocol), "Mqtt ssl server chain pem file is not found");
     }
 
     OtaPackage checkOtaPackageId(OtaPackageId otaPackageId, Operation operation) throws ThingsboardException {

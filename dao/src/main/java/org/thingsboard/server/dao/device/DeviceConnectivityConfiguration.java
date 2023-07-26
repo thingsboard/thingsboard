@@ -26,4 +26,9 @@ import java.util.Map;
 @Data
 public class DeviceConnectivityConfiguration {
     private Map<String, DeviceConnectivityInfo> connectivity;
+
+    public boolean isEnabled(String protocol) {
+        var info = connectivity.get(protocol);
+        return info != null && info.isEnabled();
+    }
 }

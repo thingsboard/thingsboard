@@ -30,19 +30,22 @@ public class DeviceConnectivityUtil {
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
-    public static final String MQTT_SSL_PEM_FILE_NAME = "tb-server-chain.pem";
+    public static final String PEM_CERT_FILE_NAME = "tb-server-chain.pem";
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
+    public static final String DOCKER_RUN = "docker run --rm -it ";
+    public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
+    public static final String COAP_IMAGE = "thingsboard/coap-clients ";
 
-    public static String getCurlCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
+    public static String getHttpPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         return String.format("curl -v -X POST %s://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + JSON_EXAMPLE_PAYLOAD,
                 protocol, host, port, deviceCredentials.getCredentialsId());
     }
 
-    public static String getMosquittoPubPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
+    public static String getMqttPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
         StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1");
         if (MQTTS.equals(protocol)) {
-            command.append(" --cafile tmp/" + MQTT_SSL_PEM_FILE_NAME);
+            command.append(" --cafile ").append(PEM_CERT_FILE_NAME);
         }
         command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
         command.append(" -t ").append(deviceTelemetryTopic);
@@ -75,50 +78,34 @@ public class DeviceConnectivityUtil {
         return command.toString();
     }
 
-    public static String getDockerMosquittoClientsPublishCommand(String protocol, String baseUrl, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
-        StringBuilder command = new StringBuilder("docker run -it --rm thingsboard/mosquitto-clients ");
-        if (MQTTS.equals(protocol)) {
-            command.append("/bin/sh -c \"curl -o /tmp/tb-server-chain.pem ").append(baseUrl).append("/api/device-connectivity/mqtts/certificate/download && ");
-        }
-        command.append("pub");
-        if (MQTTS.equals(protocol)) {
-            command.append(" --cafile tmp/" + MQTT_SSL_PEM_FILE_NAME);
-        }
-        command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
-        command.append(" -t ").append(deviceTelemetryTopic);
+    public static String getDockerMqttPublishCommand(String protocol, String baseUrl, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
+        String mqttCommand = getMqttPublishCommand(protocol, host, port, deviceTelemetryTopic, deviceCredentials);
 
-        switch (deviceCredentials.getCredentialsType()) {
-            case ACCESS_TOKEN:
-                command.append(" -u ").append(deviceCredentials.getCredentialsId());
-                break;
-            case MQTT_BASIC:
-                BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
-                        BasicMqttCredentials.class);
-                if (credentials != null) {
-                    if (credentials.getClientId() != null) {
-                        command.append(" -i ").append(credentials.getClientId());
-                    }
-                    if (credentials.getUserName() != null) {
-                        command.append(" -u ").append(credentials.getUserName());
-                    }
-                    if (credentials.getPassword() != null) {
-                        command.append(" -P ").append(credentials.getPassword());
-                    }
-                } else {
-                    return null;
-                }
-                break;
-            default:
-                return null;
+        if (mqttCommand == null) {
+            return null;
         }
-        command.append(" -m " + JSON_EXAMPLE_PAYLOAD);
+
+        StringBuilder mqttDockerCommand = new StringBuilder();
+        mqttDockerCommand.append(DOCKER_RUN).append(MQTT_IMAGE);
+
         if (MQTTS.equals(protocol)) {
-            command.append("\"");
+            mqttDockerCommand.append("/bin/sh -c \"")
+                    .append(getCurlPemCertCommand(baseUrl, protocol))
+                    .append(" && ")
+                    .append(mqttCommand)
+                    .append("\"");
+        } else {
+            mqttDockerCommand.append(mqttCommand);
         }
-        return command.toString();
+
+        return mqttDockerCommand.toString();
     }
 
-    public static String getCoapClientCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
+    public static String getCurlPemCertCommand(String baseUrl, String protocol) {
+        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", PEM_CERT_FILE_NAME, baseUrl, protocol);
+    }
+
+    public static String getCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 String client = COAPS.equals(protocol) ? "coap-client-openssl" : "coap-client";
@@ -127,5 +114,10 @@ public class DeviceConnectivityUtil {
             default:
                 return null;
         }
+    }
+
+    public static String getDockerCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
+        String coapCommand = getCoapPublishCommand(protocol, host, port, deviceCredentials);
+        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN, COAP_IMAGE, coapCommand) : null;
     }
 }

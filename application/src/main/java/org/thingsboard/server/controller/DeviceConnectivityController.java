@@ -22,7 +22,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -49,7 +48,7 @@ import static org.thingsboard.server.controller.ControllerConstants.PROTOCOL;
 import static org.thingsboard.server.controller.ControllerConstants.PROTOCOL_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT_SSL_PEM_FILE_NAME;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.PEM_CERT_FILE_NAME;
 
 @RestController
 @TbCoreComponent
@@ -70,15 +69,15 @@ public class DeviceConnectivityController extends BaseController {
                     examples = @io.swagger.annotations.Example(
                             value = {
                                     @io.swagger.annotations.ExampleProperty(
-                                            mediaType="application/json",
-                                            value="{\"http\":\"curl -v -X POST http://localhost:8080/api/v1/0ySs4FTOn5WU15XLmal8/telemetry --header Content-Type:application/json --data {temperature:25}\"," +
+                                            mediaType = "application/json",
+                                            value = "{\"http\":\"curl -v -X POST http://localhost:8080/api/v1/0ySs4FTOn5WU15XLmal8/telemetry --header Content-Type:application/json --data {temperature:25}\"," +
                                                     "\"mqtt\":\"mosquitto_pub -d -q 1 -h localhost -t v1/devices/me/telemetry -i myClient1 -u myUsername1 -P myPassword -m {temperature:25}\"," +
                                                     "\"coap\":\"coap-client -m POST coap://localhost:5683/api/v1/0ySs4FTOn5WU15XLmal8/telemetry -t json -e {temperature:25}\"}")}))})
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device-connectivity/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
     public JsonNode getDevicePublishTelemetryCommands(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
-                                        @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
+                                                      @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
@@ -91,16 +90,17 @@ public class DeviceConnectivityController extends BaseController {
     @RequestMapping(value = "/device-connectivity/{protocol}/certificate/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadMqttServerCertificate(@ApiParam(value = PROTOCOL_PARAM_DESCRIPTION)
-                                                                                                  @PathVariable(PROTOCOL) String protocol) throws ThingsboardException, IOException {
-        String certificate = checkSslServerPemFile(protocol);
+                                                                                              @PathVariable(PROTOCOL) String protocol) throws ThingsboardException, IOException {
+        checkParameter(PROTOCOL, protocol);
+        var pemCert =
+                checkNotNull(deviceConnectivityService.getPemCertFile(protocol), protocol + " pem cert file is not found!");
 
-        ByteArrayResource cert = new ByteArrayResource(certificate.getBytes());
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + MQTT_SSL_PEM_FILE_NAME)
-                .header("x-filename", MQTT_SSL_PEM_FILE_NAME)
-                .contentLength(cert.contentLength())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + PEM_CERT_FILE_NAME)
+                .header("x-filename", PEM_CERT_FILE_NAME)
+                .contentLength(pemCert.contentLength())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(cert);
+                .body(pemCert);
     }
 
 }

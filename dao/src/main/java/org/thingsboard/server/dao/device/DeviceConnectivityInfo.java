@@ -19,8 +19,8 @@ import lombok.Data;
 
 @Data
 public class DeviceConnectivityInfo {
-    private Boolean enabled;
+    private boolean enabled;
     private String host;
     private String port;
-    private String sslServerPemPath;
+    private String pemCertFile;
 }

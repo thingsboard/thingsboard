@@ -16,14 +16,14 @@
 package org.thingsboard.server.dao.device;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.core.io.Resource;
 import org.thingsboard.server.common.data.Device;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 
 public interface DeviceConnectivityService {
 
     JsonNode findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException;
 
-    String getSslServerChain(String protocol) throws IOException;
+    Resource getPemCertFile(String protocol);
 }
