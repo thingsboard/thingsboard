@@ -434,6 +434,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const scopeOld = wasEnabled ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
     const scopeNew = !wasEnabled ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
     attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
+    attribute.value.ts = new Date().getTime();
     const tasks = [this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [{
       key: 'active_connectors',
       value: this.activeConnectors
@@ -442,7 +443,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       value: this.inactiveConnectors
     }]), this.attributeService.deleteEntityAttributes(this.device, scopeOld, [attribute]),
       this.attributeService.saveEntityAttributes(this.device, scopeNew, [attribute])];
-    console.log(attribute)
     if (wasEnabled) {
       const index = this.activeConnectors.indexOf(attribute.key);
       this.activeConnectors.splice(index, 1);
