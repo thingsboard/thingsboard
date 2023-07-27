@@ -165,7 +165,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       } else if (sortHeaderId === 'enabled') {
         return this.activeConnectors.includes(data.key) ? 1 : 0;
       }
-      return data[sortHeaderId];
+      return data[sortHeaderId] || data.value[sortHeaderId];
     };
 
     this.viewsInited = true;
