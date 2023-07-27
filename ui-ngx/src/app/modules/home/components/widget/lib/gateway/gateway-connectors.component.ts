@@ -398,7 +398,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
             this.cd.detectChanges();
             this.connectorForm.disable();
           }
-          this.updateData(true);
+          this.updateData();
         });
       }
     });
