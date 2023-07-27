@@ -72,9 +72,9 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
     }
 
     @Override
-    public void deleteRelations(TenantId tenantId, CustomerId customerId, EntityId entityId, User user) throws ThingsboardException {
+    public void deleteCommonRelations(TenantId tenantId, CustomerId customerId, EntityId entityId, User user) throws ThingsboardException {
         try {
-            relationService.deleteEntityRelations(tenantId, entityId);
+            relationService.deleteEntityCommonRelations(tenantId, entityId);
             notificationEntityService.logEntityAction(tenantId, entityId, null, customerId, ActionType.RELATIONS_DELETED, user);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, entityId, null, customerId,
