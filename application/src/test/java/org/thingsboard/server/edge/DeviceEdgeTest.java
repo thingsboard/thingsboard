@@ -102,11 +102,11 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedDevice.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getIdMSB());
         Assert.assertEquals(savedDevice.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getIdLSB());
 
-        // delete device - no messages expected
+        // delete device - message expected, message send to all edges
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/device/" + savedDevice.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(1));
 
         // create device #2 and assign to edge
         edgeImitator.expectMessageAmount(2);
@@ -274,7 +274,9 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         tenantProfile.getProfileData().setConfiguration(profileConfiguration);
         doPost("/api/tenantProfile/", tenantProfile, TenantProfile.class);
 
+        edgeImitator.expectMessageAmount(2);
         loginTenantAdmin();
+        Assert.assertTrue(edgeImitator.waitForMessages());
 
         UUID uuid = Uuids.timeBased();
 

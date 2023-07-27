@@ -180,6 +180,8 @@ import * as SlackConversationAutocompleteComponent from '@shared/components/slac
 import * as StringItemsListComponent from '@shared/components/string-items-list.component';
 import * as ToggleHeaderComponent from '@shared/components/toggle-header.component';
 import * as ToggleSelectComponent from '@shared/components/toggle-select.component';
+import * as UnitInputComponent from '@shared/components/unit-input.component';
+import * as MaterialIconsComponent from '@shared/components/material-icons.component';
 
 import * as AddEntityDialogComponent from '@home/components/entity/add-entity-dialog.component';
 import * as EntitiesTableComponent from '@home/components/entity/entities-table.component';
@@ -480,6 +482,8 @@ class ModulesMap implements IModulesMap {
     '@shared/components/string-items-list.component': StringItemsListComponent,
     '@shared/components/toggle-header.component': ToggleHeaderComponent,
     '@shared/components/toggle-select.component': ToggleSelectComponent,
+    '@shared/components/unit-input.component': UnitInputComponent,
+    '@shared/components/material-icons.component': MaterialIconsComponent,
 
     '@home/components/entity/add-entity-dialog.component': AddEntityDialogComponent,
     '@home/components/entity/entities-table.component': EntitiesTableComponent,

@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import './../../../scss/mixins';
+
 :host {
   .mat-mdc-form-field {
     width: 100%;
@@ -28,5 +31,11 @@
     &.no-margin {
       margin: 0;
     }
+  }
+  button.mat-mdc-button-base.color-box {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 7px;
   }
 }

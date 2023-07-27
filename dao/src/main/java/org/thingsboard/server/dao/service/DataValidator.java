@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -80,6 +81,9 @@ public abstract class DataValidator<D extends BaseData<?>> {
 
     protected D validateUpdate(TenantId tenantId, D data) {
         return null;
+    }
+
+    public void validateDelete(TenantId tenantId, EntityId entityId) {
     }
 
     protected boolean isSameData(D existentData, D actualData) {
