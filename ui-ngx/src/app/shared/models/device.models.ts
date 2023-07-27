@@ -849,6 +849,7 @@ export interface PublishTelemetryCommand {
       mqtt?: string;
       mqtts?: string | Array<string>;
     };
+    sparkplug?: string;
   };
   coap: {
     coap?: string;

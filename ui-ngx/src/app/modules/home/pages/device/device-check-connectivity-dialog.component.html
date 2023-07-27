@@ -73,7 +73,7 @@
                 <div class="tb-form-panel no-padding no-border tb-tab-body">
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                    <div class="tb-install-windows" translate>device.connectivity.install-curl-windows</div>
+                    <div class="tb-install-instruction-text" translate>device.connectivity.install-curl-windows</div>
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
@@ -129,92 +129,100 @@
           </mat-tab-group>
         </ng-template>
         <ng-template [ngSwitchCase]="DeviceTransportType.MQTT">
-          <div class="tb-no-data-text" translate>device.connectivity.use-following-instructions</div>
-          <mat-tab-group [(selectedIndex)]="mqttTabIndex">
-            <mat-tab>
-              <ng-template mat-tab-label>
-                <mat-icon class="tabs-icon" svgIcon="windows"></mat-icon>
-                Windows
-              </ng-template>
-              <ng-template matTabContent>
-                <div class="tb-form-panel no-padding no-border tb-tab-body">
-                  <div class="tb-form-panel stroked">
-                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                    <div class="tb-install-windows">
-                      <ng-container *ngTemplateOutlet="seeDocumentation; context:
+          <div *ngIf="commands.mqtt.sparkplug; else mqttCommands" class="tb-form-panel stroked">
+            <ng-container
+              *ngTemplateOutlet="seeDocumentation; context:
+              {doc: {text: 'device.connectivity.sparkplug-command', href: 'https://thingsboard.io/docs/reference/mqtt-sparkplug-api/'}}">
+            </ng-container>
+          </div>
+          <ng-template #mqttCommands>
+            <div class="tb-no-data-text" translate>device.connectivity.use-following-instructions</div>
+            <mat-tab-group [(selectedIndex)]="mqttTabIndex">
+              <mat-tab>
+                <ng-template mat-tab-label>
+                  <mat-icon class="tabs-icon" svgIcon="windows"></mat-icon>
+                  Windows
+                </ng-template>
+                <ng-template matTabContent>
+                  <div class="tb-form-panel no-padding no-border tb-tab-body">
+                    <div class="tb-form-panel stroked">
+                      <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                      <div class="tb-install-instruction-text">
+                        <ng-container *ngTemplateOutlet="seeDocumentation; context:
                         {doc: {text: 'device.connectivity.install-mqtt-windows',
                         href: 'https://thingsboard.io/docs/getting-started-guides/helloworld/?connectdevice=mqtt-windows#step-2-connect-device'}}">
-                      </ng-container>
+                        </ng-container>
+                      </div>
                     </div>
-                  </div>
-                  <ng-container
-                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                    <ng-container
+                      *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
                               doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
-                  </ng-container>
-                </div>
-              </ng-template>
-            </mat-tab>
-            <mat-tab>
-              <ng-template mat-tab-label>
-                <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
-                MacOS
-              </ng-template>
-              <ng-template matTabContent>
-                <div class="tb-form-panel no-padding no-border tb-tab-body">
-                  <div class="tb-form-panel stroked">
-                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                                 [data]='createMarkDownCommand("brew install mosquitto-clients")'></tb-markdown>
+                    </ng-container>
                   </div>
-                  <ng-container
-                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                </ng-template>
+              </mat-tab>
+              <mat-tab>
+                <ng-template mat-tab-label>
+                  <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
+                  MacOS
+                </ng-template>
+                <ng-template matTabContent>
+                  <div class="tb-form-panel no-padding no-border tb-tab-body">
+                    <div class="tb-form-panel stroked">
+                      <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                      <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                                   [data]='createMarkDownCommand("brew install mosquitto-clients")'></tb-markdown>
+                    </div>
+                    <ng-container
+                      *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
                               doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
-                  </ng-container>
-                </div>
-              </ng-template>
-            </mat-tab>
-            <mat-tab>
-              <ng-template mat-tab-label>
-                <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
-                Linux
-              </ng-template>
-              <ng-template matTabContent>
-                <div class="tb-form-panel no-padding no-border tb-tab-body">
-                  <div class="tb-form-panel stroked">
-                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                                 [data]='createMarkDownCommand("sudo apt-get install curl mosquitto-clients")'></tb-markdown>
+                    </ng-container>
                   </div>
-                  <ng-container
-                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                </ng-template>
+              </mat-tab>
+              <mat-tab>
+                <ng-template mat-tab-label>
+                  <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
+                  Linux
+                </ng-template>
+                <ng-template matTabContent>
+                  <div class="tb-form-panel no-padding no-border tb-tab-body">
+                    <div class="tb-form-panel stroked">
+                      <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                      <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                                   [data]='createMarkDownCommand("sudo apt-get install curl mosquitto-clients")'></tb-markdown>
+                    </div>
+                    <ng-container
+                      *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
                               doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
-                  </ng-container>
-                </div>
-              </ng-template>
-            </mat-tab>
-            <mat-tab *ngIf="!!commands.mqtt.docker">
-              <ng-template mat-tab-label>
-                <mat-icon class="tabs-icon" svgIcon="docker"></mat-icon>
-                Docker
-              </ng-template>
-              <ng-template matTabContent>
-                <div class="tb-form-panel no-padding no-border tb-tab-body">
-                  <ng-container
-                    *ngTemplateOutlet="executeCommand; context: {cmd: {
+                    </ng-container>
+                  </div>
+                </ng-template>
+              </mat-tab>
+              <mat-tab *ngIf="!!commands.mqtt.docker">
+                <ng-template mat-tab-label>
+                  <mat-icon class="tabs-icon" svgIcon="docker"></mat-icon>
+                  Docker
+                </ng-template>
+                <ng-template matTabContent>
+                  <div class="tb-form-panel no-padding no-border tb-tab-body">
+                    <ng-container
+                      *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.docker.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.docker.mqtts,
                               doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
-                  </ng-container>
-                </div>
-              </ng-template>
-            </mat-tab>
-          </mat-tab-group>
+                    </ng-container>
+                  </div>
+                </ng-template>
+              </mat-tab>
+            </mat-tab-group>
+          </ng-template>
         </ng-template>
         <ng-template [ngSwitchCase]="DeviceTransportType.COAP">
           <div class="tb-no-data-text" translate>device.connectivity.use-following-instructions</div>
@@ -226,10 +234,14 @@
               </ng-template>
               <ng-template matTabContent>
                 <div class="tb-form-panel no-padding no-border tb-tab-body">
-                  <div class="tb-form-panel stroked">
+                  <div class="tb-form-panel stroked" *ngIf="commands.coap.coaps !== 'Check documentation'">
                     <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                                 [data]='installCoap'></tb-markdown>
+                    <div class="tb-install-instruction-text">
+                      <ng-container *ngTemplateOutlet="seeDocumentation; context:
+                        {doc: {text: 'device.connectivity.install-coap-client',
+                        href: 'https://thingsboard.io/docs/user-guide/ssl/coap-access-token/'}}">
+                      </ng-container>
+                    </div>
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
@@ -247,10 +259,14 @@
               </ng-template>
               <ng-template matTabContent>
                 <div class="tb-form-panel no-padding no-border tb-tab-body">
-                  <div class="tb-form-panel stroked">
+                  <div class="tb-form-panel stroked" *ngIf="commands.coap.coaps !== 'Check documentation'">
                     <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                                 [data]='installCoap'></tb-markdown>
+                    <div class="tb-install-instruction-text">
+                      <ng-container *ngTemplateOutlet="seeDocumentation; context:
+                        {doc: {text: 'device.connectivity.install-coap-client',
+                        href: 'https://thingsboard.io/docs/user-guide/ssl/coap-access-token/'}}">
+                      </ng-container>
+                    </div>
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {

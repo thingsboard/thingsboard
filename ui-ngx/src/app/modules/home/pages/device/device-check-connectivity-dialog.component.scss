@@ -73,7 +73,8 @@
   }
 
   .tb-form-table-body {
-    max-height: 88px;
+    max-height: 108px;
+    min-height: 108px;
     overflow-y: auto;
     scrollbar-gutter: stable;
 
@@ -88,7 +89,7 @@
     }
   }
 
-  .tb-install-windows {
+  .tb-install-instruction-text {
     min-height: 42px;
   }
 
