@@ -320,14 +320,12 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         try {
             if (cause instanceof IOException) {
                 if (log.isDebugEnabled()) {
-                    log.debug("[{}][{}][{}] IOException: ", client.getClientConfig().getClientId(), client.getClientConfig().getUsername() , ctx.channel().remoteAddress(),
-                            cause);
-                } else if (log.isInfoEnabled()) {
-                    log.info("[{}][{}][{}] IOException: {}", client.getClientConfig().getClientId(), client.getClientConfig().getUsername() , ctx.channel().remoteAddress(),
-                            cause.getMessage());
+                    log.debug("[{}] IOException: ", client.getClientConfig().getOwnerId(), cause);
+                } else {
+                    log.info("[{}] IOException: {}", client.getClientConfig().getOwnerId(), cause.getMessage());
                 }
             } else {
-                log.warn("exceptionCaught", cause);
+                log.warn("[{}] exceptionCaught", client.getClientConfig().getOwnerId(), cause);
             }
         } finally {
             ReferenceCountUtil.release(cause);

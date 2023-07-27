@@ -122,6 +122,7 @@ public class MqttIntegrationTest {
 
     private MqttClient initClient() throws Exception {
         MqttClientConfig config = new MqttClientConfig();
+        config.setOwnerId("MqttIntegrationTest");
         config.setTimeoutSeconds(KEEPALIVE_TIMEOUT_SECONDS);
         config.setReconnectDelay(RECONNECT_DELAY_SECONDS);
         MqttClient client = MqttClient.create(config, null, handlerExecutor);

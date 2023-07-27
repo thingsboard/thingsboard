@@ -476,8 +476,13 @@ public class MqttClientTest extends AbstractContainerTest {
         return getMqttClient(deviceCredentials.getCredentialsId(), listener);
     }
 
+    private String getOwnerId() {
+        return "Tenant[" + device.getTenantId().getId() + "]MqttClientTestDevice[" + device.getId().getId() + "]";
+    }
+
     private MqttClient getMqttClient(String username, MqttMessageListener listener) throws InterruptedException, ExecutionException {
         MqttClientConfig clientConfig = new MqttClientConfig();
+        clientConfig.setOwnerId(getOwnerId());
         clientConfig.setClientId("MQTT client from test");
         clientConfig.setUsername(username);
         MqttClient mqttClient = MqttClient.create(clientConfig, listener, handlerExecutor);
