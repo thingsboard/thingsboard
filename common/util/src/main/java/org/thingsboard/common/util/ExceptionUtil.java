@@ -38,15 +38,15 @@ public class ExceptionUtil {
     }
 
     public static Exception lookupExceptionInCause(Throwable source, Class<? extends Exception>... clazzes) {
-        if (source == null) {
-            return null;
-        }
-        for (Class<?> clazz : clazzes) {
-            if (clazz.isAssignableFrom(source.getClass())) {
-                return (Exception) source;
+        while (source != null) {
+            for (Class<? extends Exception> clazz : clazzes) {
+                if (clazz.isAssignableFrom(source.getClass())) {
+                    return (Exception) source;
+                }
             }
+            source = source.getCause();
         }
-        return lookupExceptionInCause(source.getCause(), clazzes);
+        return null;
     }
 
     public static String toString(Exception e, EntityId componentId, boolean stackTraceEnabled) {
