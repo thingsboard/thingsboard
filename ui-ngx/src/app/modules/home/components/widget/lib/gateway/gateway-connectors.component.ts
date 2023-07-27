@@ -39,7 +39,6 @@ import { DialogService } from '@core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { deepClone } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { tap } from 'rxjs/operators';
 
 
 export interface gatewayConnector {
@@ -434,6 +433,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const wasEnabled = this.activeConnectors.includes(attribute.key);
     const scopeOld = wasEnabled ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
     const scopeNew = !wasEnabled ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
+    attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
     const tasks = [this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [{
       key: 'active_connectors',
       value: this.activeConnectors
@@ -442,6 +442,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       value: this.inactiveConnectors
     }]), this.attributeService.deleteEntityAttributes(this.device, scopeOld, [attribute]),
       this.attributeService.saveEntityAttributes(this.device, scopeNew, [attribute])];
+    console.log(attribute)
     if (wasEnabled) {
       const index = this.activeConnectors.indexOf(attribute.key);
       this.activeConnectors.splice(index, 1);
