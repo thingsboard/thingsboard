@@ -21,14 +21,14 @@ import {
   Directive,
   ElementRef,
   forwardRef,
-  Input,
+  Input, OnChanges,
   OnDestroy, OnInit,
-  QueryList,
+  QueryList, SimpleChanges,
   ViewEncapsulation
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, combineLatest, Observable, Subject } from 'rxjs';
 import { map, share, startWith, takeUntil } from 'rxjs/operators';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
@@ -73,7 +73,7 @@ export class ImageCardsSelectOptionDirective {
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class ImageCardsSelectComponent implements ControlValueAccessor, OnInit, AfterContentInit, OnDestroy {
+export class ImageCardsSelectComponent implements ControlValueAccessor, OnInit, OnChanges, AfterContentInit, OnDestroy {
 
   @ContentChildren(ImageCardsSelectOptionDirective) imageCardsSelectOptions: QueryList<ImageCardsSelectOptionDirective>;
 
@@ -107,18 +107,31 @@ export class ImageCardsSelectComponent implements ControlValueAccessor, OnInit, 
 
   private _destroyed = new Subject<void>();
 
+  private _colsChanged = new BehaviorSubject<void>(null);
+
   constructor(private breakpointObserver: BreakpointObserver) {
     this.valueFormControl = new UntypedFormControl('');
   }
 
   ngOnInit(): void {
     const gridColumns = this.breakpointObserver.isMatched(MediaBreakpoints['lt-md']) ? this.colsLtMd : this.cols;
-    this.cols$ = this.breakpointObserver
-      .observe(MediaBreakpoints['lt-md']).pipe(
-        map((state) => state.matches ? this.colsLtMd : this.cols),
+    this.cols$ = combineLatest({state: this.breakpointObserver
+      .observe(MediaBreakpoints['lt-md']), colsChanged: this._colsChanged.asObservable()}).pipe(
+        map((data) => data.state.matches ? this.colsLtMd : this.cols),
         startWith(gridColumns),
         share()
       );
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (['cols', 'colsLtMd'].includes(propName)) {
+          this._colsChanged.next(null);
+        }
+      }
+    }
   }
 
   ngAfterContentInit(): void {

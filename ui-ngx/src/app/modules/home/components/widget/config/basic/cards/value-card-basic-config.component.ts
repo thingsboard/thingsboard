@@ -74,6 +74,16 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
 
   datePreviewFn = this._datePreviewFn.bind(this);
 
+  get dateEnabled(): boolean {
+    const layout: ValueCardLayout = this.valueCardWidgetConfigForm.get('layout').value;
+    return ![ValueCardLayout.vertical, ValueCardLayout.simplified].includes(layout);
+  }
+
+  get iconEnabled(): boolean {
+    const layout: ValueCardLayout = this.valueCardWidgetConfigForm.get('layout').value;
+    return layout !== ValueCardLayout.simplified;
+  }
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private cd: ChangeDetectorRef,

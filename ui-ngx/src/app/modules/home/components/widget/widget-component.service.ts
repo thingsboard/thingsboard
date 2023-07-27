@@ -546,6 +546,9 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.previewHeight)) {
         result.typeParameters.previewHeight = '70%';
       }
+      if (isUndefined(result.typeParameters.absoluteHeader)) {
+        result.typeParameters.absoluteHeader = false;
+      }
       if (isFunction(widgetTypeInstance.actionSources)) {
         result.actionSources = widgetTypeInstance.actionSources();
       } else {

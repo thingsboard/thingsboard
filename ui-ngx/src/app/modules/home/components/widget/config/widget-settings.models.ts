@@ -276,6 +276,14 @@ export enum BackgroundType {
   color = 'color'
 }
 
+export const backgroundTypeTranslations = new Map<BackgroundType, string>(
+  [
+    [BackgroundType.image, 'widgets.background.background-type-image'],
+    [BackgroundType.imageUrl, 'widgets.background.background-type-image-url'],
+    [BackgroundType.color, 'widgets.background.background-type-color']
+  ]
+);
+
 export interface OverlaySettings {
   enabled: boolean;
   color: string;
@@ -313,11 +321,13 @@ export const backgroundStyle = (background: BackgroundSettings): ComponentStyle 
     };
   } else {
     const imageUrl = background.type === BackgroundType.image ? background.imageBase64 : background.imageUrl;
-    return {
-      background: `url(${imageUrl}) no-repeat`,
-      backgroundSize: 'cover',
-      backgroundPosition: '50% 50%'
-    };
+    if (imageUrl) {
+      return {
+        background: `url(${imageUrl}) no-repeat 50% 50% / cover`
+      };
+    } else {
+      return {};
+    }
   }
 };
 
