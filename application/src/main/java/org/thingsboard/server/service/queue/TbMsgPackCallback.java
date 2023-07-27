@@ -17,7 +17,8 @@ package org.thingsboard.server.service.queue;
 
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
+import org.thingsboard.common.util.ExceptionUtil;
+import org.thingsboard.server.common.data.exception.AbstractRateLimitException;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
@@ -71,8 +72,7 @@ public class TbMsgPackCallback implements TbMsgCallback {
     
     @Override
     public void onFailure(RuleEngineException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof TbRateLimitsException || cause instanceof ApiUsageLimitsExceededException) {
+        if (ExceptionUtil.lookupExceptionInCause(e, AbstractRateLimitException.class) != null) {
             onRateLimit(e);
             return;
         }
