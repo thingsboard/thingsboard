@@ -122,4 +122,10 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
             statsService.unregisterClientGroup(groupId);
         }
     }
+
+    @Override
+    public boolean isLongPollingSupported() {
+        return true;
+    }
+
 }

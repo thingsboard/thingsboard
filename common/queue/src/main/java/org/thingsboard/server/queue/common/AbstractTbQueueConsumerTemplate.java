@@ -103,7 +103,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
             consumerLock.unlock();
         }
 
-        if (records.isEmpty()) { return sleepAndReturnEmpty(startNanos, durationInMillis); }
+        if (records.isEmpty() && !isLongPollingSupported()) {
+            return sleepAndReturnEmpty(startNanos, durationInMillis);
+        }
 
         return decodeRecords(records);
     }
@@ -188,5 +190,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     abstract protected void doCommit();
 
     abstract protected void doUnsubscribe();
+
+    protected boolean isLongPollingSupported() {
+        return false;
+    }
 
 }
