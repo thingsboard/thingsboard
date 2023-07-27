@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -206,9 +207,27 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     @Override
+    public void deleteOutboundRelations(TenantId tenantId, EntityId entity, RelationTypeGroup relationTypeGroup) {
+        try {
+            relationRepository.deleteByFromIdAndFromTypeAndRelationTypeGroupIn(entity.getId(), entity.getEntityType().name(), Collections.singletonList(relationTypeGroup.name()));
+        } catch (ConcurrencyFailureException e) {
+            log.debug("Concurrency exception while deleting relations [{}]", entity, e);
+        }
+    }
+
+    @Override
     public void deleteInboundRelations(TenantId tenantId, EntityId entity) {
         try {
             relationRepository.deleteByToIdAndToTypeAndRelationTypeGroupIn(entity.getId(), entity.getEntityType().name(), ALL_TYPE_GROUP_NAMES);
+        } catch (ConcurrencyFailureException e) {
+            log.debug("Concurrency exception while deleting relations [{}]", entity, e);
+        }
+    }
+
+    @Override
+    public void deleteInboundRelations(TenantId tenantId, EntityId entity, RelationTypeGroup relationTypeGroup) {
+        try {
+            relationRepository.deleteByToIdAndToTypeAndRelationTypeGroupIn(entity.getId(), entity.getEntityType().name(), Collections.singletonList(relationTypeGroup.name()));
         } catch (ConcurrencyFailureException e) {
             log.debug("Concurrency exception while deleting relations [{}]", entity, e);
         }
