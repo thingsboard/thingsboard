@@ -223,9 +223,9 @@ public class DefaultTbClusterService implements TbClusterService {
         if (isRuleChainTransform && isQueueTransform) {
             tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueName);
         } else if (isRuleChainTransform) {
-            tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId);
+            tbMsg = TbMsg.transformMsgRuleChainId(tbMsg, targetRuleChainId);
         } else if (isQueueTransform) {
-            tbMsg = TbMsg.transformMsg(tbMsg, targetQueueName);
+            tbMsg = TbMsg.transformMsgQueueName(tbMsg, targetQueueName);
         }
         return tbMsg;
     }

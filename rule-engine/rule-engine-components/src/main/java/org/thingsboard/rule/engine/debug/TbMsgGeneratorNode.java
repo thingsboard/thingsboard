@@ -107,7 +107,7 @@ public class TbMsgGeneratorNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         log.trace("onMsg, config {}, msg {}", config, msg);
-        if (initialized.get() && msg.getType().equals(TbMsgType.GENERATOR_NODE_SELF_MSG.name()) && msg.getId().equals(nextTickId)) {
+        if (initialized.get() && msg.checkType(TbMsgType.GENERATOR_NODE_SELF_MSG) && msg.getId().equals(nextTickId)) {
             TbStopWatch sw = TbStopWatch.create();
             withCallback(generate(ctx, msg),
                     m -> {
@@ -146,7 +146,7 @@ public class TbMsgGeneratorNode implements TbNode {
     private ListenableFuture<TbMsg> generate(TbContext ctx, TbMsg msg) {
         log.trace("generate, config {}", config);
         if (prevMsg == null) {
-            prevMsg = ctx.newMsg(config.getQueueName(), "", originatorId, msg.getCustomerId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+            prevMsg = ctx.newMsg(config.getQueueName(), TbMsg.EMPTY_STRING, originatorId, msg.getCustomerId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         }
         if (initialized.get()) {
             ctx.logJsEvalRequest();

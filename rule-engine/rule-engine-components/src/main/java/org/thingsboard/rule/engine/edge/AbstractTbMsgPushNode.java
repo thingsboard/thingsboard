@@ -67,7 +67,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             return;
         }
         if (isSupportedOriginator(msg.getOriginator().getEntityType())) {
-            if (isSupportedMsgType(msg.getType())) {
+            if (isSupportedMsgType(msg)) {
                 processMsg(ctx, msg);
             } else {
                 String errMsg = String.format("Unsupported msg type %s", msg.getType());
@@ -82,13 +82,12 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     }
 
     protected S buildEvent(TbMsg msg, TbContext ctx) {
-        String msgType = msg.getType();
-        if (ALARM.name().equals(msgType)) {
+        if (msg.checkType(ALARM)) {
             EdgeEventActionType actionType = getAlarmActionType(msg);
             return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
         } else {
             Map<String, String> metadata = msg.getMetaData().getData();
-            EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msgType, metadata);
+            EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msg);
             Map<String, Object> entityBody = new HashMap<>();
             JsonNode dataJson = JacksonUtil.toJsonNode(msg.getData());
             switch (actionType) {
@@ -158,45 +157,31 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         return scope;
     }
 
-    protected EdgeEventActionType getEdgeEventActionTypeByMsgType(String msgType, Map<String, String> metadata) {
+    protected EdgeEventActionType getEdgeEventActionTypeByMsgType(TbMsg msg) {
         EdgeEventActionType actionType;
-        if (POST_TELEMETRY_REQUEST.name().equals(msgType)
-                || TIMESERIES_UPDATED.name().equals(msgType)) {
+        if (msg.checkTypeOneOf(POST_TELEMETRY_REQUEST, TIMESERIES_UPDATED)) {
             actionType = EdgeEventActionType.TIMESERIES_UPDATED;
-        } else if (ATTRIBUTES_UPDATED.name().equals(msgType)) {
+        } else if (msg.checkType(ATTRIBUTES_UPDATED)) {
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
-        } else if (POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
+        } else if (msg.checkType(POST_ATTRIBUTES_REQUEST)) {
             actionType = EdgeEventActionType.POST_ATTRIBUTES;
-        } else if (ATTRIBUTES_DELETED.name().equals(msgType)) {
+        } else if (msg.checkType(ATTRIBUTES_DELETED)) {
             actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
-        } else if (CONNECT_EVENT.name().equals(msgType)
-                || DISCONNECT_EVENT.name().equals(msgType)
-                || ACTIVITY_EVENT.name().equals(msgType)
-                || INACTIVITY_EVENT.name().equals(msgType)) {
-            String scope = metadata.get(SCOPE);
-            if ( StringUtils.isEmpty(scope)) {
-                actionType = EdgeEventActionType.TIMESERIES_UPDATED;
-            } else {
-                actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
-            }
+        } else if (msg.checkTypeOneOf(CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT)) {
+            String scope = msg.getMetaData().getValue(SCOPE);
+            actionType = StringUtils.isEmpty(scope) ?
+                    EdgeEventActionType.TIMESERIES_UPDATED : EdgeEventActionType.ATTRIBUTES_UPDATED;
         } else {
-            log.warn("Unsupported msg type [{}]", msgType);
-            throw new IllegalArgumentException("Unsupported msg type: " + msgType);
+            String type = msg.getType();
+            log.warn("Unsupported msg type [{}]", type);
+            throw new IllegalArgumentException("Unsupported msg type: " + type);
         }
         return actionType;
     }
 
-    protected boolean isSupportedMsgType(String msgType) {
-        return POST_TELEMETRY_REQUEST.name().equals(msgType)
-                || POST_ATTRIBUTES_REQUEST.name().equals(msgType)
-                || ATTRIBUTES_UPDATED.name().equals(msgType)
-                || ATTRIBUTES_DELETED.name().equals(msgType)
-                || TIMESERIES_UPDATED.name().equals(msgType)
-                || ALARM.name().equals(msgType)
-                || CONNECT_EVENT.name().equals(msgType)
-                || DISCONNECT_EVENT.name().equals(msgType)
-                || ACTIVITY_EVENT.name().equals(msgType)
-                || INACTIVITY_EVENT.name().equals(msgType);
+    protected boolean isSupportedMsgType(TbMsg msg) {
+        return msg.checkTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED,
+                ATTRIBUTES_DELETED, TIMESERIES_UPDATED, ALARM, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT);
     }
 
     protected boolean isSupportedOriginator(EntityType entityType) {

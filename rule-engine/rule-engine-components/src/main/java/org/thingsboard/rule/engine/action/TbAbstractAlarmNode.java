@@ -24,10 +24,10 @@ import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -79,7 +79,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
             if (previousDetails != null) {
                 TbMsgMetaData metaData = msg.getMetaData().copy();
                 metaData.putValue(PREV_ALARM_DETAILS, JacksonUtil.toString(previousDetails));
-                dummyMsg = TbMsg.transformMsg(msg, metaData);
+                dummyMsg = TbMsg.transformMsgMetadata(msg, metaData);
             }
             return scriptEngine.executeJsonAsync(dummyMsg);
         } catch (Exception e) {

@@ -83,7 +83,7 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
             case DATA:
                 return TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataNode));
             case METADATA:
-                return TbMsg.transformMsg(msg, msgMetaData);
+                return TbMsg.transformMsgMetadata(msg, msgMetaData);
             default:
                 log.debug("Unexpected FetchTo value: {}. Allowed values: {}", fetchTo, FetchTo.values());
                 return msg;

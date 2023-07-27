@@ -70,7 +70,7 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         try {
-            validateType(msg.getType());
+            validateType(msg);
             TbEmail email = getEmail(msg);
             var tbMsg = ackIfNeeded(ctx, msg);
             withCallback(ctx.getMailExecutor().executeAsync(() -> {
@@ -100,8 +100,9 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
         return email;
     }
 
-    private void validateType(String type) {
-        if (!TbMsgType.SEND_EMAIL.name().equals(type)) {
+    private void validateType(TbMsg msg) {
+        if (!msg.checkType(TbMsgType.SEND_EMAIL)) {
+            String type = msg.getType();
             log.warn("Not expected msg type [{}] for SendEmail Node", type);
             throw new IllegalStateException("Not expected msg type " + type + " for SendEmail Node");
         }

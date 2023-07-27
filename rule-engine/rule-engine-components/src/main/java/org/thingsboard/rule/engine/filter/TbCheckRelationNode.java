@@ -118,11 +118,11 @@ public class TbCheckRelationNode implements TbVersionedNode {
                 throw new TbNodeException("property to update: '" + DIRECTION_PROPERTY_NAME + "' doesn't exists in configuration!");
             }
             String direction = newConfigObjectNode.get(DIRECTION_PROPERTY_NAME).asText();
-            if ("TO".equals(direction)) {
+            if (EntitySearchDirection.TO.name().equals(direction)) {
                 newConfigObjectNode.put(DIRECTION_PROPERTY_NAME, EntitySearchDirection.FROM.name());
                 return new TbPair<>(true, newConfigObjectNode);
             }
-            if ("FROM".equals(direction)) {
+            if (EntitySearchDirection.FROM.name().equals(direction)) {
                 newConfigObjectNode.put(DIRECTION_PROPERTY_NAME, EntitySearchDirection.TO.name());
                 return new TbPair<>(true, newConfigObjectNode);
             }

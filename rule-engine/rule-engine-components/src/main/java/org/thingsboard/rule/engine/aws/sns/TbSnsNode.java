@@ -105,13 +105,13 @@ public class TbSnsNode extends TbAbstractExternalNode {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(MESSAGE_ID, result.getMessageId());
         metaData.putValue(REQUEST_ID, result.getSdkResponseMetadata().getRequestId());
-        return TbMsg.transformMsg(origMsg, metaData);
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return TbMsg.transformMsg(origMsg, metaData);
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     @Override

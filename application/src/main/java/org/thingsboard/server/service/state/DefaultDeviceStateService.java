@@ -36,7 +36,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.EntityType;
@@ -102,6 +101,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.DataConstants.SCOPE;
+import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 /**
  * Created by ashvayka on 01.05.18.
@@ -575,7 +577,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
             future = Futures.transform(tsData, extractDeviceStateData(device), deviceStateExecutor);
         } else {
-            ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
+            ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
             future = Futures.transform(attrData, extractDeviceStateData(device), deviceStateExecutor);
         }
         return transformInactivityTimeout(future);
@@ -586,7 +588,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             if (!persistToTelemetry || deviceStateData.getState().getInactivityTimeout() != defaultInactivityTimeoutMs) {
                 return future; //fail fast
             }
-            var attributesFuture = attributesService.find(TenantId.SYS_TENANT_ID, deviceStateData.getDeviceId(), DataConstants.SERVER_SCOPE, INACTIVITY_TIMEOUT);
+            var attributesFuture = attributesService.find(TenantId.SYS_TENANT_ID, deviceStateData.getDeviceId(), SERVER_SCOPE, INACTIVITY_TIMEOUT);
             return Futures.transform(attributesFuture, attributes -> {
                 attributes.flatMap(KvEntry::getLongValue).ifPresent((inactivityTimeout) -> {
                     if (inactivityTimeout > 0) {
@@ -779,7 +781,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             }
             TbMsgMetaData md = stateData.getMetaData().copy();
             if (!persistToTelemetry) {
-                md.putValue(DataConstants.SCOPE, DataConstants.SERVER_SCOPE);
+                md.putValue(SCOPE, SERVER_SCOPE);
             }
             TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getCustomerId(), md, TbMsgDataType.JSON, data);
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
@@ -795,7 +797,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
                     new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
+            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
         }
     }
 
@@ -806,7 +808,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
                     new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
+            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
         }
     }
 

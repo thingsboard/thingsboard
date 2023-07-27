@@ -101,7 +101,7 @@ public class TbGetTelemetryNode implements TbNode {
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
                 DonAsynchron.withCallback(list, data -> {
                     var metaData = updateMetadata(data, msg, keys);
-                    ctx.tellSuccess(TbMsg.transformMsg(msg, metaData));
+                    ctx.tellSuccess(TbMsg.transformMsgMetadata(msg, metaData));
                 }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);

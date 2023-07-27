@@ -119,13 +119,13 @@ public class TbPubSubNode extends TbAbstractExternalNode {
     private TbMsg processPublishResult(TbMsg origMsg, String messageId) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(MESSAGE_ID, messageId);
-        return TbMsg.transformMsg(origMsg, metaData);
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return TbMsg.transformMsg(origMsg, metaData);
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     private Publisher initPubSubClient() throws IOException {

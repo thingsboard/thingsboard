@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
@@ -54,6 +53,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_ACK;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_CLEAR;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_DELETE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_ASSIGNED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_UNASSIGNED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
 class DeviceState {
@@ -136,24 +147,24 @@ class DeviceState {
             latestValues = fetchLatestValues(ctx, deviceId);
         }
         boolean stateChanged = false;
-        if (msg.getType().equals(TbMsgType.POST_TELEMETRY_REQUEST.name())) {
+        if (msg.checkType(POST_TELEMETRY_REQUEST)) {
             stateChanged = processTelemetry(ctx, msg);
-        } else if (msg.getType().equals(TbMsgType.POST_ATTRIBUTES_REQUEST.name())) {
+        } else if (msg.checkType(POST_ATTRIBUTES_REQUEST)) {
             stateChanged = processAttributesUpdateRequest(ctx, msg);
-        } else if (msg.getType().equals(TbMsgType.ACTIVITY_EVENT.name()) || msg.getType().equals(TbMsgType.INACTIVITY_EVENT.name())) {
+        } else if (msg.checkTypeOneOf(ACTIVITY_EVENT, INACTIVITY_EVENT)) {
             stateChanged = processDeviceActivityEvent(ctx, msg);
-        } else if (msg.getType().equals(TbMsgType.ATTRIBUTES_UPDATED.name())) {
+        } else if (msg.checkType(ATTRIBUTES_UPDATED)) {
             stateChanged = processAttributesUpdateNotification(ctx, msg);
-        } else if (msg.getType().equals(TbMsgType.ATTRIBUTES_DELETED.name())) {
+        } else if (msg.checkType(ATTRIBUTES_DELETED)) {
             stateChanged = processAttributesDeleteNotification(ctx, msg);
-        } else if (msg.getType().equals(TbMsgType.ALARM_CLEAR.name())) {
+        } else if (msg.checkType(ALARM_CLEAR)) {
             stateChanged = processAlarmClearNotification(ctx, msg);
-        } else if (msg.getType().equals(TbMsgType.ALARM_ACK.name())) {
+        } else if (msg.checkType(ALARM_ACK)) {
             processAlarmAckNotification(ctx, msg);
-        } else if (msg.getType().equals(TbMsgType.ALARM_DELETE.name())) {
+        } else if (msg.checkType(ALARM_DELETE)) {
             processAlarmDeleteNotification(ctx, msg);
         } else {
-            if (msg.getType().equals(TbMsgType.ENTITY_ASSIGNED.name()) || msg.getType().equals(TbMsgType.ENTITY_UNASSIGNED.name())) {
+            if (msg.checkTypeOneOf(ENTITY_ASSIGNED, ENTITY_UNASSIGNED)) {
                 dynamicPredicateValueCtx.resetCustomer();
             }
             ctx.tellSuccess(msg);

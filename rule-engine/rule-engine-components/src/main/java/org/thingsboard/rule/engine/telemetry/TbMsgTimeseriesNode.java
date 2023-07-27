@@ -82,7 +82,7 @@ public class TbMsgTimeseriesNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!msg.getType().equals(POST_TELEMETRY_REQUEST.name())) {
+        if (!msg.checkType(POST_TELEMETRY_REQUEST)) {
             ctx.tellFailure(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }

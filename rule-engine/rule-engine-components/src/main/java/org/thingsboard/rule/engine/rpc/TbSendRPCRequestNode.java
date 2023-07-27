@@ -27,13 +27,13 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -76,7 +76,7 @@ public class TbSendRPCRequestNode implements TbNode {
             ctx.tellFailure(msg, new RuntimeException("Params are not present in the message!"));
         } else {
             int requestId = json.has("requestId") ? json.get("requestId").getAsInt() : random.nextInt();
-            boolean restApiCall = msg.getType().equals(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE.name());
+            boolean restApiCall = msg.checkType(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE);
 
             tmp = msg.getMetaData().getValue("oneway");
             boolean oneway = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);

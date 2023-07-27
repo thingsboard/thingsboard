@@ -286,7 +286,7 @@ public class TbHttpClient {
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
         metaData.putValue(ERROR_BODY, response.getBody());
         headersToMetaData(response.getHeaders(), metaData::putValue);
-        return TbMsg.transformMsg(origMsg, metaData);
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     private TbMsg processException(TbMsg origMsg, Throwable e) {
@@ -298,7 +298,7 @@ public class TbHttpClient {
             metaData.putValue(STATUS_CODE, restClientResponseException.getRawStatusCode() + "");
             metaData.putValue(ERROR_BODY, restClientResponseException.getResponseBodyAsString());
         }
-        return TbMsg.transformMsg(origMsg, metaData);
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     private HttpHeaders prepareHeaders(TbMsg msg) {

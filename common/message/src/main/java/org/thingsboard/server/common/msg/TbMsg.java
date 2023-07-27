@@ -279,7 +279,7 @@ public final class TbMsg implements Serializable {
                 data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
 
-    public static TbMsg transformMsg(TbMsg tbMsg, TbMsgMetaData metadata) {
+    public static TbMsg transformMsgMetadata(TbMsg tbMsg, TbMsgMetaData metadata) {
         return new TbMsg(tbMsg.queueName, tbMsg.id, tbMsg.ts, tbMsg.type, tbMsg.originator, tbMsg.customerId, metadata.copy(), tbMsg.dataType,
                 tbMsg.data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
@@ -289,17 +289,17 @@ public final class TbMsg implements Serializable {
                 data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
 
-    public static TbMsg transformMsg(TbMsg tbMsg, CustomerId customerId) {
+    public static TbMsg transformMsgCustomerId(TbMsg tbMsg, CustomerId customerId) {
         return new TbMsg(tbMsg.queueName, tbMsg.id, tbMsg.ts, tbMsg.type, tbMsg.originator, customerId, tbMsg.metaData, tbMsg.dataType,
                 tbMsg.data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
 
-    public static TbMsg transformMsg(TbMsg tbMsg, RuleChainId ruleChainId) {
+    public static TbMsg transformMsgRuleChainId(TbMsg tbMsg, RuleChainId ruleChainId) {
         return new TbMsg(tbMsg.queueName, tbMsg.id, tbMsg.ts, tbMsg.type, tbMsg.originator, tbMsg.customerId, tbMsg.metaData, tbMsg.dataType,
                 tbMsg.data, ruleChainId, null, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
 
-    public static TbMsg transformMsg(TbMsg tbMsg, String queueName) {
+    public static TbMsg transformMsgQueueName(TbMsg tbMsg, String queueName) {
         return new TbMsg(queueName, tbMsg.id, tbMsg.ts, tbMsg.type, tbMsg.originator, tbMsg.customerId, tbMsg.metaData, tbMsg.dataType,
                 tbMsg.data, tbMsg.getRuleChainId(), null, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
@@ -467,4 +467,18 @@ public final class TbMsg implements Serializable {
         }
         return ts;
     }
+
+    public boolean checkType(TbMsgType tbMsgType) {
+        return tbMsgType != null && tbMsgType.name().equals(this.type);
+    }
+
+    public boolean checkTypeOneOf(TbMsgType... types) {
+        for (TbMsgType type : types) {
+            if (checkType(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

@@ -65,7 +65,7 @@ public class TbMsgCountNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (msg.getType().equals(TbMsgType.MSG_COUNT_SELF_MSG.name()) && msg.getId().equals(nextTickId)) {
+        if (msg.checkType(TbMsgType.MSG_COUNT_SELF_MSG) && msg.getId().equals(nextTickId)) {
             JsonObject telemetryJson = new JsonObject();
             telemetryJson.addProperty(this.telemetryPrefix + "_" + ctx.getServiceId(), messagesProcessed.longValue());
 
