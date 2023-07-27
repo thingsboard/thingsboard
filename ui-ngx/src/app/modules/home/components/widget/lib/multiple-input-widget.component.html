@@ -172,6 +172,17 @@
               </mat-error>
             </mat-form-field>
           </div>
+          <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'colorPicker'">
+            <tb-color-input fxFlex
+                            label="{{key.label}}"
+                            icon="{{key.settings.icon}}"
+                            [required]="key.settings.required"
+                            [colorClearButton]="true"
+                            [requiredText]="getErrorMessageText(key.settings, 'required')"
+                            openOnInput
+                            formControlName="{{key.formId}}">
+            </tb-color-input>
+          </div>
         </div>
       </div>
     </fieldset>

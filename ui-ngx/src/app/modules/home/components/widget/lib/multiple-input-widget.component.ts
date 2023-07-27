@@ -54,7 +54,7 @@ type FieldAlignment = 'row' | 'column';
 type MultipleInputWidgetDataKeyType = 'server' | 'shared' | 'timeseries';
 export type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
                                                   'JSON' | 'booleanCheckbox' | 'booleanSwitch' |
-                                                  'dateTime' | 'date' | 'time' | 'select';
+                                                  'dateTime' | 'date' | 'time' | 'select' | 'colorPicker';
 type MultipleInputWidgetDataKeyEditableType = 'editable' | 'disabled' | 'readonly';
 
 type ConvertGetValueFunction = (value: any, ctx: WidgetContext) => any;
