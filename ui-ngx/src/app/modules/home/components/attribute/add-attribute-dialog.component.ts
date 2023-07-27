@@ -19,16 +19,17 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { FormGroupDirective, NgForm, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { AttributeData, AttributeScope, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
+import { Observable } from 'rxjs';
 
 export interface AddAttributeDialogData {
   entityId: EntityId;
-  attributeScope: AttributeScope;
+  attributeScope: TelemetryType;
 }
 
 @Component({
@@ -43,6 +44,8 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
   attributeFormGroup: UntypedFormGroup;
 
   submitted = false;
+
+  title = '';
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -59,6 +62,8 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
       key: ['', [Validators.required, Validators.maxLength(255)]],
       value: [null, [Validators.required]]
     });
+    this.title = this.data.attributeScope === LatestTelemetry.LATEST_TELEMETRY ?
+      'attribute.add-telemetry' : 'attribute.add'
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -78,11 +83,15 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
       key: this.attributeFormGroup.get('key').value.trim(),
       value: this.attributeFormGroup.get('value').value
     };
-    this.attributeService.saveEntityAttributes(this.data.entityId,
-      this.data.attributeScope, [attribute]).subscribe(
-          () => {
-            this.dialogRef.close(true);
-          }
-    );
+    let task: Observable<any>;
+    if (this.data.attributeScope === LatestTelemetry.LATEST_TELEMETRY) {
+      task = this.attributeService.saveEntityTimeseries(this.data.entityId,
+        this.data.attributeScope, [attribute]);
+    }
+    if (this.data.attributeScope in AttributeScope) {
+      task = this.attributeService.saveEntityAttributes(this.data.entityId,
+        this.data.attributeScope as AttributeScope, [attribute]);
+    }
+    task.subscribe(() => this.dialogRef.close(true));
   }
 }

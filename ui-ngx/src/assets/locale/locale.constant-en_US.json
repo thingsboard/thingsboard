@@ -718,7 +718,8 @@
         "no-attributes-text": "No attributes found",
         "no-telemetry-text": "No telemetry found",
         "copy-key": "Copy key",
-        "copy-value": "Copy value"
+        "copy-value": "Copy value",
+        "add-telemetry": "Add telemetry"
     },
     "api-usage": {
         "api-features": "API features",
