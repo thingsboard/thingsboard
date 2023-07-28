@@ -165,7 +165,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       } else if (sortHeaderId === 'enabled') {
         return this.activeConnectors.includes(data.key) ? 1 : 0;
       }
-      console.log(data, sortHeaderId, data[sortHeaderId] || data.value[sortHeaderId]);
       return data[sortHeaderId] || data.value[sortHeaderId];
     };
 
@@ -193,7 +192,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     return (c: UntypedFormControl) => {
       const newName = c.value.trim().toLowerCase();
       const found = this.dataSource.data.find((connectorAttr) => {
-        const connectorData = typeof connectorAttr.value === 'string' ? JSON.parse(connectorAttr.value) : connectorAttr.value;
+        const connectorData = connectorAttr.value;
         return connectorData.name.toLowerCase() === newName;
       });
       if (found) {
@@ -284,15 +283,15 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   isConnectorSynced(attribute: AttributeData) {
-    const connectorData = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
+    const connectorData =  attribute.value;
     if (!connectorData.ts) return false;
     const clientIndex = this.activeData.findIndex(data => {
-      const sharedData = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+      const sharedData =  data.value;
       return sharedData.name === connectorData.name;
     })
     if (clientIndex == -1) return false;
     const sharedIndex = this.sharedAttributeData.findIndex(data => {
-      const sharedData = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+      const sharedData =  data.value;
       return sharedData.name === connectorData.name && sharedData.ts && sharedData.ts <= connectorData.ts;
     })
     return sharedIndex !== -1;
@@ -301,7 +300,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   combineData() {
     this.dataSource.data = [...this.activeData, ...this.inactiveData, ...this.sharedAttributeData].filter((item, index, self) =>
       index === self.findIndex((t) => t.key === item.key)
-    );
+    ).map(attribute=>{
+      attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
+      return attribute
+    });
   }
 
   addAttribute(): void {
@@ -331,7 +333,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (this.connectorForm.disabled) {
       this.connectorForm.enable();
     }
-    const connector = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
+    const connector = attribute.value;
     if (!connector.configuration) {
       connector.configuration = '';
     }
@@ -345,7 +347,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   isSameConnector(attribute): boolean {
     if (!this.initialConnector) return false;
-    const connector = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
+    const connector = attribute.value;
     return this.initialConnector.name === connector.name;
   }
 
@@ -364,7 +366,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   returnType(attribute) {
-    const value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
+    const value = attribute.value;
     return this.gatewayConnectorDefaultTypes.get(value.type);
   }
 
@@ -411,7 +413,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
     const params = deepClone(this.ctx.stateController.getStateParams());
     params.connector_logs = attribute;
     params.targetEntityParamName = 'connector_logs';
@@ -422,7 +423,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
     const params = deepClone(this.ctx.stateController.getStateParams());
     params.connector_rpc = attribute;
     params.targetEntityParamName = 'connector_rpc';
@@ -434,7 +434,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const wasEnabled = this.activeConnectors.includes(attribute.key);
     const scopeOld = wasEnabled ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
     const scopeNew = !wasEnabled ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
-    attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
     attribute.value.ts = new Date().getTime();
     const tasks = [this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [{
       key: 'active_connectors',
