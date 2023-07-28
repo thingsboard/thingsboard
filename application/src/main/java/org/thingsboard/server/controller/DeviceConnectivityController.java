@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.dao.device.DeviceConnectivityService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -46,7 +47,6 @@ import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PROTOCOL;
 import static org.thingsboard.server.controller.ControllerConstants.PROTOCOL_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.PEM_CERT_FILE_NAME;
 
@@ -57,6 +57,7 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.PEM_CERT_FI
 @Slf4j
 public class DeviceConnectivityController extends BaseController {
 
+    private final DeviceConnectivityService deviceConnectivityService;
     private final SystemSecurityService systemSecurityService;
 
     @ApiOperation(value = "Get commands to publish device telemetry (getDevicePublishTelemetryCommands)",
@@ -86,11 +87,11 @@ public class DeviceConnectivityController extends BaseController {
         return deviceConnectivityService.findDevicePublishTelemetryCommands(baseUrl, device);
     }
 
-    @ApiOperation(value = "Download mqtt ssl certificate using file path defined in device.connectivity properties (downloadMqttServerCertificate)", notes = "Download Mqtt server certificate." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Download server certificate using file path defined in device.connectivity properties (downloadServerCertificate)", notes = "Download server certificate.")
     @RequestMapping(value = "/device-connectivity/{protocol}/certificate/download", method = RequestMethod.GET)
     @ResponseBody
-    public ResponseEntity<org.springframework.core.io.Resource> downloadMqttServerCertificate(@ApiParam(value = PROTOCOL_PARAM_DESCRIPTION)
-                                                                                              @PathVariable(PROTOCOL) String protocol) throws ThingsboardException, IOException {
+    public ResponseEntity<org.springframework.core.io.Resource> downloadServerCertificate(@ApiParam(value = PROTOCOL_PARAM_DESCRIPTION)
+                                                                                          @PathVariable(PROTOCOL) String protocol) throws ThingsboardException, IOException {
         checkParameter(PROTOCOL, protocol);
         var pemCert =
                 checkNotNull(deviceConnectivityService.getPemCertFile(protocol), protocol + " pem cert file is not found!");
