@@ -937,8 +937,7 @@
         "search": "Search customers",
         "selected-customers": "{ count, plural, =1 {1 customer} other {# customers} } selected",
         "edges": "Customer edge instances",
-        "manage-edges": "Manage edges",
-        "assign-customer": "Assign to customer"
+        "manage-edges": "Manage edges"
     },
     "datetime": {
         "date-from": "Date from",
