@@ -4792,7 +4792,7 @@
             "datakey-value-type-date": "Date",
             "datakey-value-type-time": "Time",
             "datakey-value-type-select": "Select",
-            "datakey-value-type-color-picker": "Color Picker",
+            "datakey-value-type-color": "Color",
             "value-is-required": "Value is required",
             "ability-to-edit-attribute": "Ability to edit attribute",
             "ability-to-edit-attribute-editable": "Editable (default)",
