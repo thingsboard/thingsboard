@@ -1095,8 +1095,7 @@
     "device-configuration": "Enhedskonfiguration",
     "transport-configuration": "Transportkonfiguration",
     "wizard": {
-      "device-details": "Enhedsoplysninger",
-      "customer-to-assign-device": "Kunden skal tildele enheden"
+      "device-details": "Enhedsoplysninger"
     }
   },
   "device-profile": {

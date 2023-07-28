@@ -60,7 +60,9 @@
                          [stateController]="stateController"
                          [dashboardTimewindow]="dashboard.configuration.timewindow"
                          [widget]="widget"
-                         [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config">
+                         [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config"
+                         [previewWidth]="widgetConfig.typeParameters.previewWidth"
+                         [previewHeight]="widgetConfig.typeParameters.previewHeight">
       </tb-widget-preview>
     </div>
   </fieldset>

@@ -15,14 +15,14 @@
     limitations under the License.
 
 -->
-<div [formGroup]="keyRowFormGroup" class="tb-data-key-row">
+<div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-data-key-row">
   <mat-form-field *ngIf="hasAdditionalLatestDataKeys" class="tb-inline-field tb-source-field" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="latest">
       <mat-option [value]="false">{{ 'datakey.timeseries' | translate }}</mat-option>
       <mat-option [value]="true">{{ 'datakey.latest' | translate }}</mat-option>
     </mat-select>
   </mat-form-field>
-  <mat-form-field fxFlex class="tb-inline-field tb-key-field" subscriptSizing="dynamic">
+  <mat-form-field class="tb-inline-field tb-key-field" subscriptSizing="dynamic">
     <mat-chip-grid #chipList>
       <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue.type"
                     (removed)="removeKey()">
@@ -44,7 +44,7 @@
                           matTooltipPosition="above">timeline</mat-icon>
               </ng-container>
             </div>
-            <div class="tb-chip-label">
+            <div class="tb-chip-label tb-chip-text">
               <strong>
                 <ng-container *ngTemplateOutlet="keyName"></ng-container>
               </strong>
@@ -139,7 +139,7 @@
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>
-  <mat-form-field fxFlex class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+  <mat-form-field class="tb-inline-field tb-label-field" appearance="outline" subscriptSizing="dynamic">
     <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
   </mat-form-field>
   <div *ngIf="!hideDataKeyColor" class="tb-color-field">
@@ -148,16 +148,16 @@
     </tb-color-input>
   </div>
   <div *ngIf="!hideUnits" class="tb-units-field">
-    <tb-widget-units *ngIf="displayUnitsOrDigits"
+    <tb-unit-input *ngIf="displayUnitsOrDigits"
       formControlName="units">
-    </tb-widget-units>
+    </tb-unit-input>
   </div>
   <div *ngIf="!hideDecimals" class="tb-decimals-field">
     <mat-form-field *ngIf="displayUnitsOrDigits" appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
       <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
   </div>
-  <div class="tb-data-keys-table-row-buttons">
+  <div class="tb-form-table-row-cell-buttons">
     <button type="button"
             mat-icon-button
             (click)="editKey(true)"

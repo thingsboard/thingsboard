@@ -69,7 +69,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private static final Map<EntityType, String> entityTableMap = new HashMap<>();
     private static final Map<EntityType, String> entityNameColumns = new HashMap<>();
     private static final String SELECT_PHONE = " CASE WHEN entity.entity_type = 'TENANT' THEN (select phone from tenant where id = entity_id)" +
-            " WHEN entity.entity_type = 'CUSTOMER' THEN (select phone from customer where id = entity_id) END as phone";
+            " WHEN entity.entity_type = 'CUSTOMER' THEN (select phone from customer where id = entity_id)" +
+            " WHEN entity.entity_type = 'USER' THEN (select phone from tb_user where id = entity_id) END as phone";
     private static final String SELECT_ZIP = " CASE WHEN entity.entity_type = 'TENANT' THEN (select zip from tenant where id = entity_id)" +
             " WHEN entity.entity_type = 'CUSTOMER' THEN (select zip from customer where id = entity_id) END as zip";
     private static final String SELECT_ADDRESS_2 = " CASE WHEN entity.entity_type = 'TENANT'" +

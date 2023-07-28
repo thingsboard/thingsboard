@@ -85,7 +85,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.tenantId = tenantId;
     }
 
-    @ApiModelProperty(position = 4, value = "Title of the dashboard.")
+    @ApiModelProperty(position = 4, required = true, value = "Title of the dashboard.")
     public String getTitle() {
         return title;
     }

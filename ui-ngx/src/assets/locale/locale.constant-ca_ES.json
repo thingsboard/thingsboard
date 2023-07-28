@@ -1376,8 +1376,7 @@
         "device-configuration": "Configuració del dispositiu",
         "transport-configuration": "Configuració del transport",
         "wizard": {
-            "device-details": "Detalls del dispositiu",
-            "customer-to-assign-device": "Client al que assignar el dispositiu"
+            "device-details": "Detalls del dispositiu"
         },
         "unassign-devices-from-edge-title": "Està segur de que desitja desassignar {count, plural, =1 {1 dispositivo} other {# dispositivos} }?",
         "unassign-devices-from-edge-text": "Després de la confirmació, tots els dispositius seleccionats quedaran sense assignar i la vora no podrà accedir a ells."
@@ -4481,7 +4480,7 @@
         "created": "{{created}} creades",
         "updated": "{{updated}} actualitzades",
         "deleted": "{{deleted}} esborrades",
-        "remove-other-entities-confirm-text": "Atenció! Aquesta acció <b>esborrarà</b> permanentment <b>todas</b> les entitats actuals<br/>no presents a la versió a restaurar.<br/><br/>Escriu <b>eliminar altres entitats</b> per confirmar.",
+        "remove-other-entities-confirm-text": "Atenció! Aquesta acció <b>esborrarà</b> permanentment <b>todas</b> les entitats actuals<br/>no presents a la versió a restaurar.<br/><br/>Escriu <b>\"remove other entities\"</b> per confirmar.",
         "auto-commit-to-branch": "autopublicar a la branca <b>{{ branch }}</b>",
         "default-create-entity-version-name": "{{entityName}} actualizació",
         "sync-strategy-merge-hint": "Crea o actualitza les entitats seleccionades al repositori. Les altres entitats <b>no seran modificades</b>.",

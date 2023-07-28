@@ -38,7 +38,7 @@
                      (focus)="key.isFocused = true; focusInputElement($event)"
                      (blur)="key.isFocused = false; inputChanged(source, key)">
               <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matPrefix>
-                <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
+                <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
                 <ng-template #customToggleIcon>
                   <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
                 </ng-template>
@@ -63,7 +63,7 @@
                      (focus)="key.isFocused = true; focusInputElement($event)"
                      (blur)="key.isFocused = false; inputChanged(source, key)">
               <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matPrefix>
-                <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
+                <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
                 <ng-template #customToggleIcon>
                   <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
                 </ng-template>
@@ -99,7 +99,7 @@
                 (blur)="key.isFocused = false; inputChanged(source, key)"
               />
               <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matPrefix>
-                <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
+                <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
                 <ng-template #customToggleIcon>
                   <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
                 </ng-template>
@@ -123,7 +123,7 @@
                               [labelPosition]="key.settings.slideToggleLabelPosition"
                               (change)="inputChanged(source, key)">
               <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
-                <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
+                <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
                 <ng-template #customToggleIcon>
                   <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
                 </ng-template>
