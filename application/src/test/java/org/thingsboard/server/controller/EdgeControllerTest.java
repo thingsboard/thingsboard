@@ -602,7 +602,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Edge(), new Edge(),
                 tenantId, customerId, tenantAdminUser.getId(), tenantAdminUser.getEmail(),
-                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity, cntEntity * 2,
+                ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity, cntEntity * 2,
                 new String(), new String(), new String());
 
         List<Edge> loadedEdges = new ArrayList<>();

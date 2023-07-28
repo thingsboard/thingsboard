@@ -120,7 +120,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
         for (EntityRelation relation : ctx.getRelations()) {
             entityNotificationService.logEntityRelationAction(ctx.getTenantId(), null,
-                    relation, ctx.getUser(), ActionType.RELATION_ADD_OR_UPDATE, relation);
+                    relation, ctx.getUser(), ActionType.RELATION_ADD_OR_UPDATE, null, relation);
         }
     }
 

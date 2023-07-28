@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -42,6 +43,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,6 +88,7 @@ public class DefaultTbAlarmServiceTest {
                 .build());
         service.save(alarm, new User());
 
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.UPDATED), any());
         verify(alarmSubscriptionService, times(1)).createAlarm(any());
     }
 
@@ -93,10 +96,11 @@ public class DefaultTbAlarmServiceTest {
     public void testAck() throws ThingsboardException {
         var alarm = new Alarm();
         when(alarmSubscriptionService.acknowledgeAlarm(any(), any(), anyLong()))
-                .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).build());
+                .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).alarm(new AlarmInfo()).build());
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_ACK), any());
         verify(alarmSubscriptionService, times(1)).acknowledgeAlarm(any(), any(), anyLong());
     }
 
@@ -105,10 +109,11 @@ public class DefaultTbAlarmServiceTest {
         var alarm = new Alarm();
         alarm.setAcknowledged(true);
         when(alarmSubscriptionService.clearAlarm(any(), any(), anyLong(), any()))
-                .thenReturn(AlarmApiCallResult.builder().successful(true).cleared(true).build());
+                .thenReturn(AlarmApiCallResult.builder().successful(true).cleared(true).alarm(new AlarmInfo()).build());
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_CLEAR), any());
         verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), anyLong(), any());
     }
 
@@ -116,6 +121,7 @@ public class DefaultTbAlarmServiceTest {
     public void testDelete() {
         service.delete(new Alarm(), new User());
 
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.DELETED), any());
         verify(alarmSubscriptionService, times(1)).deleteAlarm(any(), any());
     }
 }
