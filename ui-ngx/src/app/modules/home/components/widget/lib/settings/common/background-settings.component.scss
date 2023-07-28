@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
-
-.tb-add-widget-dialog {
-  .mat-mdc-dialog-content {
-    padding: 0;
-    position: relative;
+button.mat-mdc-button-base.tb-box-button.tb-background-settings {
+  padding: 0;
+  .mat-mdc-button-persistent-ripple {
+    z-index: 2;
   }
-  @media #{$mat-gt-xs} {
-    width: 900px;
-    .mat-mdc-dialog-content {
-      height: 900px;
+  .tb-color-preview {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    &.box {
+      .tb-color-result {
+        &:after {
+          border: none;
+        }
+      }
+      .tb-color-overlay {
+        position: absolute;
+        border-radius: 3px;
+        top: 4px;
+        bottom: 4px;
+        left: 4px;
+        right: 4px;
+      }
     }
   }
 }

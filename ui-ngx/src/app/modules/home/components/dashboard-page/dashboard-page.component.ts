@@ -1177,6 +1177,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
             Widget>(AddWidgetDialogComponent, {
             disableClose: true,
             panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+            maxWidth: '95vw',
             data: {
               dashboard: this.dashboard,
               aliasController: this.dashboardCtx.aliasController,

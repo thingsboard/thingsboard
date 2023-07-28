@@ -281,6 +281,13 @@ import { DateFormatSelectComponent } from '@home/components/widget/lib/settings/
 import {
   DateFormatSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/date-format-settings-panel.component';
+import { BackgroundSettingsComponent } from '@home/components/widget/lib/settings/common/background-settings.component';
+import {
+  BackgroundSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/background-settings-panel.component';
+import {
+  ValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/value-card-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -391,7 +398,10 @@ import {
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
     DateFormatSelectComponent,
-    DateFormatSettingsPanelComponent
+    DateFormatSettingsPanelComponent,
+    BackgroundSettingsComponent,
+    BackgroundSettingsPanelComponent,
+    ValueCardWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -506,7 +516,10 @@ import {
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
     DateFormatSelectComponent,
-    DateFormatSettingsPanelComponent
+    DateFormatSettingsPanelComponent,
+    BackgroundSettingsComponent,
+    BackgroundSettingsPanelComponent,
+    ValueCardWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -575,5 +588,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
   'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent,
   'tb-doc-links-widget-settings': DocLinksWidgetSettingsComponent,
-  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent
+  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent,
+  'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent
 };

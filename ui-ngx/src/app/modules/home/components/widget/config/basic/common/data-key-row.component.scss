@@ -38,7 +38,16 @@
   }
 
   .tb-source-field {
-    width: 140px;
+    width: 120px;
+    min-width: 120px;
+  }
+
+  .tb-key-field {
+    flex: 1 1 60%;
+  }
+
+  .tb-label-field {
+    flex: 1 1 40%;
   }
 
   .tb-color-field, .tb-units-field, .tb-decimals-field {
@@ -50,9 +59,11 @@
 
   .tb-units-field {
     width: 80px;
+    min-width: 80px;
   }
 
   .tb-color-field, .tb-decimals-field {
     width: 60px;
+    min-width: 60px;
   }
 }
