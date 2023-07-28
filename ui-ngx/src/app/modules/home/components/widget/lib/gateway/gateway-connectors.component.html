@@ -58,7 +58,7 @@
         </ng-container>
         <ng-container matColumnDef="syncStatus">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
-            {{ 'gateway.connectors-table-status' | translate }}
+            {{ 'gateway.configuration' | translate }}
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
               <div
@@ -166,7 +166,7 @@
           fxFlex
           fxLayout="column"
           required
-          label="{{ 'gateway.connector-json' | translate }}"
+          label="{{ 'gateway.configuration' | translate }}"
           formControlName="configurationJson">
         </tb-json-object-edit>
         <div fxLayoutAlign="start center">
