@@ -165,7 +165,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       } else if (sortHeaderId === 'enabled') {
         return this.activeConnectors.includes(data.key) ? 1 : 0;
       }
-      console.log(data, sortHeaderId, data[sortHeaderId] || data.value[sortHeaderId]);
       return data[sortHeaderId] || data.value[sortHeaderId];
     };
 
