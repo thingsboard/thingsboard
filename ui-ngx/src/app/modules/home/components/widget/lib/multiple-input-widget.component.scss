@@ -21,7 +21,7 @@
     flex-direction: column;
 
     .tb-multiple-input-container {
-      padding: 0 8px;
+      padding: 8px 8px 0;
       flex: 1 1 100%;
       overflow-x: hidden;
       overflow-y: auto;
@@ -34,6 +34,30 @@
 
       legend {
         color: rgba(0, 0, 0, .7);
+      }
+    }
+
+    .color-picker-input {
+      height: 56px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 7px 16px 7px 12px;
+      margin: 0 10px 22px 0;
+      border: 1px solid rgba(0, 0, 0, 0.4);
+      border-radius: 6px;
+
+      .mat-icon, img {
+        margin-right: 5px;
+      }
+
+      .mat-divider-vertical {
+        height: 56px;
+        margin-top: -7px;
+        margin-bottom: -7px;
+        border-right-color: rgba(0, 0, 0, 0.4);
       }
     }
 

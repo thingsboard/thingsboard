@@ -28,7 +28,7 @@
         <div *ngFor="let key of visibleKeys(source)"
              [ngStyle]="{width: (isVerticalAlignment || changeAlignment) ? '100%' : inputWidthSettings}">
           <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'string'">
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" appearance="outline">
               <mat-label>{{key.label}}</mat-label>
               <input matInput
                      formControlName="{{key.formId}}"
@@ -50,7 +50,7 @@
           </div>
           <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'double' ||
                                           key.settings.dataKeyValueType === 'integer'">
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" appearance="outline">
               <mat-label>{{key.label}}</mat-label>
               <input matInput
                      formControlName="{{key.formId}}"
@@ -86,7 +86,7 @@
             </mat-checkbox>
           </div>
           <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'JSON'">
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" appearance="outline">
               <mat-label>{{key.label}}</mat-label>
               <input
                 matInput
@@ -134,7 +134,7 @@
           <div class="input-field mat-block date-time-input" *ngIf="(key.settings.dataKeyValueType === 'dateTime') ||
                                                     (key.settings.dataKeyValueType === 'date') ||
                                                     (key.settings.dataKeyValueType === 'time')" fxLayout="column">
-            <mat-form-field>
+            <mat-form-field appearance="outline">
               <mat-label>{{key.label}}</mat-label>
               <mat-datetimepicker-toggle [for]="datePicker" matPrefix></mat-datetimepicker-toggle>
               <mat-datetimepicker #datePicker type="{{datePickerType(key.settings.dataKeyValueType)}}"
@@ -155,7 +155,7 @@
             </mat-form-field>
           </div>
           <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'select'">
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" appearance="outline">
               <mat-label>{{key.label}}</mat-label>
               <mat-select formControlName="{{key.formId}}"
                           [required]="key.settings.required"
@@ -172,16 +172,28 @@
               </mat-error>
             </mat-form-field>
           </div>
-          <tb-color-input fxFlex class="input-field"
-                          *ngIf="key.settings.dataKeyValueType === 'color'"
-                          label="{{key.label}}"
-                          icon="{{key.settings.icon}}"
-                          [required]="key.settings.required"
-                          [colorClearButton]="true"
-                          [requiredText]="getErrorMessageText(key.settings, 'required')"
-                          openOnInput
-                          formControlName="{{key.formId}}">
-          </tb-color-input>
+
+          <div class="color-picker-input" *ngIf="key.settings.dataKeyValueType === 'color'">
+            <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
+                <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
+                <ng-template #customToggleIcon>
+                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
+                </ng-template>
+              </ng-container>
+              {{key.label}}
+            </div>
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+              <mat-divider vertical></mat-divider>
+              <tb-color-input asBoxInput
+                              [required]="key.settings.required"
+                              [requiredText]="getErrorMessageText(key.settings, 'required')"
+                              (colorChanged)="inputChanged(source, key)"
+                              openOnInput
+                              formControlName="{{key.formId}}">
+              </tb-color-input>
+            </div>
+          </div>
         </div>
       </div>
     </fieldset>

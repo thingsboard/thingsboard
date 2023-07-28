@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -91,6 +91,8 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
   @Input()
   disabled: boolean;
 
+  @Output() colorChanged: EventEmitter<any> = new EventEmitter();
+
   private modelValue: string;
 
   private propagateChange = null;
@@ -150,6 +152,7 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
     if (this.modelValue !== color) {
       this.modelValue = color;
       this.propagateChange(this.modelValue);
+      this.colorChanged.emit(color);
     }
   }
 
