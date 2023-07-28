@@ -4428,7 +4428,7 @@
         "created": "{{created}} created",
         "updated": "{{updated}} updated",
         "deleted": "{{deleted}} deleted",
-        "remove-other-entities-confirm-text": "Be careful! This will permanently <b>delete</b> <b>all</b> current entities<br/>not present in the version you want to restore.<br/><br/>Please type <b>remove other entities</b> to confirm.",
+        "remove-other-entities-confirm-text": "Be careful! This will permanently <b>delete</b> <b>all</b> current entities<br/>not present in the version you want to restore.<br/><br/>Please type <b>\"remove other entities\"</b> to confirm.",
         "auto-commit-to-branch": "auto-commit to <b>{{ branch }}</b> branch",
         "default-create-entity-version-name": "{{entityName}} update",
         "sync-strategy-merge-hint": "Creates or updates selected entities in the repository. All other repository entities are <b>not modified</b>.",
