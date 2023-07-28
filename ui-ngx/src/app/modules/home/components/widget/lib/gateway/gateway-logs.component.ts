@@ -165,7 +165,7 @@ export class GatewayLogsComponent extends PageComponent implements AfterViewInit
 
 
   updateData(sort?) {
-    if (this.ctx.defaultSubscription.data.length) {
+    if (this.ctx.defaultSubscription.data.length && this.ctx.defaultSubscription.data[0]) {
       let attrData = this.ctx.defaultSubscription.data[0].data.map(data => {
         let result =  {
           ts: data[0],
