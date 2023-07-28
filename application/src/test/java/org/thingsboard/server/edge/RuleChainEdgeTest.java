@@ -140,7 +140,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(ruleChainId, receivedRuleChainId);
     }
 
-    private void createRuleChainMetadata(RuleChain ruleChain) throws Exception {
+    private void createRuleChainMetadata(RuleChain ruleChain) {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
 
@@ -222,6 +222,6 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/ruleChain/" + savedRuleChain.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(1));
     }
 }

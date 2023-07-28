@@ -88,7 +88,7 @@ public class DefaultTbAlarmServiceTest {
                 .build());
         service.save(alarm, new User());
 
-        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.UPDATED), any());
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ADDED), any());
         verify(alarmSubscriptionService, times(1)).createAlarm(any());
     }
 
