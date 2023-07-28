@@ -27,7 +27,7 @@ export enum AuthActionTypes {
   UPDATE_LAST_PUBLIC_DASHBOARD_ID = '[Auth] Update Last Public Dashboard Id',
   UPDATE_HAS_REPOSITORY = '[Auth] Change Has Repository',
   UPDATE_OPENED_MENU_SECTION = '[Preferences] Update Opened Menu Section',
-  UPDATE_USER_SETTINGS = '[Preferences] Update user settings',
+  PUT_USER_SETTINGS = '[Preferences] Put user settings',
   DELETE_USER_SETTINGS = '[Preferences] Delete user settings',
 }
 
@@ -71,8 +71,8 @@ export class ActionPreferencesUpdateOpenedMenuSection implements Action {
   constructor(readonly payload: { path: string; opened: boolean }) {}
 }
 
-export class ActionPreferencesUpdateUserSettings implements Action {
-  readonly type = AuthActionTypes.UPDATE_USER_SETTINGS;
+export class ActionPreferencesPutUserSettings implements Action {
+  readonly type = AuthActionTypes.PUT_USER_SETTINGS;
 
   constructor(readonly payload: Partial<UserSettings>) {}
 }
@@ -85,4 +85,4 @@ export class ActionPreferencesDeleteUserSettings implements Action {
 
 export type AuthActions = ActionAuthAuthenticated | ActionAuthUnauthenticated |
   ActionAuthLoadUser | ActionAuthUpdateUserDetails | ActionAuthUpdateLastPublicDashboardId | ActionAuthUpdateHasRepository |
-  ActionPreferencesUpdateOpenedMenuSection | ActionPreferencesUpdateUserSettings | ActionPreferencesDeleteUserSettings;
+  ActionPreferencesUpdateOpenedMenuSection | ActionPreferencesPutUserSettings | ActionPreferencesDeleteUserSettings;

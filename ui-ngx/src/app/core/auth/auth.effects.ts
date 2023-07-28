@@ -40,9 +40,9 @@ export class AuthEffects {
     mergeMap(([action, state]) => this.userSettingsService.putUserSettings({ openedMenuSections: state.userSettings.openedMenuSections }))
   ), {dispatch: false});
 
-  updatedUserSettings = createEffect(() => this.actions$.pipe(
+  putUserSettings = createEffect(() => this.actions$.pipe(
     ofType(
-      AuthActionTypes.UPDATE_USER_SETTINGS,
+      AuthActionTypes.PUT_USER_SETTINGS,
     ),
     mergeMap((state) => this.userSettingsService.putUserSettings(state.payload))
   ), {dispatch: false});

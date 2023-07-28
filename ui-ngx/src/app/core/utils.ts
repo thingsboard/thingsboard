@@ -355,7 +355,9 @@ const SNAKE_CASE_REGEXP = /[A-Z]/g;
 
 export function snakeCase(name: string, separator: string): string {
   separator = separator || '_';
-  return name.replace(SNAKE_CASE_REGEXP, (letter, pos) => (pos ? separator : '') + letter.toLowerCase());
+  return name.replace(SNAKE_CASE_REGEXP, (letter, pos) => {
+    return (pos ? separator : '') + letter.toLowerCase();
+  });
 }
 
 export function getDescendantProp(obj: any, path: string): any {

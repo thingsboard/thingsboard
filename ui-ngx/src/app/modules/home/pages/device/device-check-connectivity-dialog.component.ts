@@ -40,7 +40,7 @@ import {
   NetworkTransportType,
   PublishTelemetryCommand
 } from '@shared/models/device.models';
-import { ActionPreferencesUpdateUserSettings } from '@core/auth/auth.actions';
+import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { getOS } from '@core/utils';
 
@@ -121,7 +121,7 @@ export class DeviceCheckConnectivityDialogComponent extends
 
   close(): void {
     if (this.notShowAgain && this.showDontShowAgain) {
-      this.store.dispatch(new ActionPreferencesUpdateUserSettings({ notDisplayConnectivityAfterAddDevice: true }));
+      this.store.dispatch(new ActionPreferencesPutUserSettings({ notDisplayConnectivityAfterAddDevice: true }));
       this.dialogRef.close(null);
     } else {
       this.dialogRef.close(null);
