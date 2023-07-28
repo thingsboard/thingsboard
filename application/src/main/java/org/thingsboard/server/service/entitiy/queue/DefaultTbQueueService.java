@@ -96,7 +96,9 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
     private void onQueueCreated(Queue queue) {
         for (int i = 0; i < queue.getPartitions(); i++) {
             tbQueueAdmin.createTopicIfNotExists(
-                    new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+                    new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName(),
+                    queue.getCustomProperties()
+            );
         }
 
         tbClusterService.onQueueChange(queue);
@@ -111,7 +113,9 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
                 log.info("Added [{}] new partitions to [{}] queue", currentPartitions - oldPartitions, queue.getName());
                 for (int i = oldPartitions; i < currentPartitions; i++) {
                     tbQueueAdmin.createTopicIfNotExists(
-                            new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+                            new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName(),
+                            queue.getCustomProperties()
+                    );
                 }
                 tbClusterService.onQueueChange(queue);
             } else {

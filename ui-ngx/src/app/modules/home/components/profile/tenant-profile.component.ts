@@ -74,7 +74,8 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         },
         topic: 'tb_rule_engine.main',
         additionalInfo: {
-          description: ''
+          description: '',
+          customProperties: ''
         }
       },
       {
@@ -97,7 +98,8 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
           maxPauseBetweenRetries: 5
         },
         additionalInfo: {
-          description: ''
+          description: '',
+          customProperties: ''
         }
       },
       {
@@ -120,7 +122,8 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
           maxPauseBetweenRetries: 5
         },
         additionalInfo: {
-          description: ''
+          description: '',
+          customProperties: ''
         }
       }
     ];
