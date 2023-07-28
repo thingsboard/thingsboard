@@ -1134,8 +1134,7 @@
         "device-configuration": "設備配置",
         "transport-configuration": "傳輸配置",
         "wizard": {
-            "device-details": "設備詳情",
-            "customer-to-assign-device": "客戶指定設備"
+            "device-details": "設備詳情"
         },
         "unassign-devices-from-edge-title": "您確定要解除邊緣設備 { count, plural, =1 {1 device} other {# devices} }的指定嗎？",
         "unassign-devices-from-edge-text": "確認後邊緣指定設備將解除指定及其所有相關資料將無法恢復。"
