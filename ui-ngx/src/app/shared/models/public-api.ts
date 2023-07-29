@@ -43,6 +43,7 @@ export * from './notification.models';
 export * from './websocket/notification-ws.models';
 export * from './websocket/websocket.models';
 export * from './oauth2.models';
+export * from './query/query.models
 export * from './queue.models';
 export * from './relation.models';
 export * from './resource.models';
