@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input } from '@angular/core';
+import { Component, forwardRef, HostBinding, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -35,12 +35,19 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 })
 export class ToggleSelectComponent extends _ToggleBase implements ControlValueAccessor {
 
+  @HostBinding('style.maxWidth')
+  get maxWidth() { return '100%'; }
+
   @Input()
   @coerceBoolean()
   disabled: boolean;
 
   @Input()
   appearance: ToggleHeaderAppearance = 'stroked';
+
+  @Input()
+  @coerceBoolean()
+  disablePagination = false;
 
   modelValue: any;
 
