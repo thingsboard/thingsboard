@@ -267,10 +267,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         }
         loginSysAdmin();
 
-        // 2023-06-29 17:44:36,386 [main] ERROR o.h.e.jdbc.spi.SqlExceptionHelper - ERROR: duplicate key value violates unique constraint "ts_key_id_pkey"
-        // Detail: Key (key)=(transportApiState) already exists.
-        Thread.sleep(1000);
-
         Tenant tenant = new Tenant();
         tenant.setTitle(TEST_TENANT_NAME);
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);

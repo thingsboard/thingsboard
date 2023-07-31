@@ -44,12 +44,10 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
         try {
             relationService.saveRelation(tenantId, relation);
             notificationEntityService.logEntityRelationAction(tenantId, customerId,
-                    relation, user, ActionType.RELATION_ADD_OR_UPDATE, relation);
+                    relation, user, actionType, null, relation);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, relation.getFrom(), null, customerId,
-                    actionType, user, e, relation);
-            notificationEntityService.logEntityAction(tenantId, relation.getTo(), null, customerId,
-                    actionType, user, e, relation);
+            notificationEntityService.logEntityRelationAction(tenantId, customerId,
+                    relation, user, actionType, e, relation);
             throw e;
         }
     }
@@ -62,12 +60,10 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
             if (!found) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
-            notificationEntityService.logEntityRelationAction(tenantId, customerId, relation, user, actionType, relation);
+            notificationEntityService.logEntityRelationAction(tenantId, customerId, relation, user, actionType, null, relation);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, relation.getFrom(), null, customerId,
-                    actionType, user, e, relation);
-            notificationEntityService.logEntityAction(tenantId, relation.getTo(), null, customerId,
-                    actionType, user, e, relation);
+            notificationEntityService.logEntityRelationAction(tenantId, customerId,
+                    relation, user, actionType, e, relation);
             throw e;
         }
     }

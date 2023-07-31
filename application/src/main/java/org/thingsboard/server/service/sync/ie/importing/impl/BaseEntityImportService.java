@@ -212,7 +212,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         relationService.deleteRelation(ctx.getTenantId(), existingRelation.getFrom(), existingRelation.getTo(), existingRelation.getType(), existingRelation.getTypeGroup());
                         importResult.addSendEventsCallback(() -> {
                             entityNotificationService.logEntityRelationAction(tenantId, null,
-                                    existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, existingRelation);
+                                    existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, null, existingRelation);
                         });
                     } else if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {
                         relationsMap.remove(relation);

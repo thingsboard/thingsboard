@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
@@ -205,7 +204,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
-                    .entityId(alarmId).body(JacksonUtil.toString(alarm)).build());
+                    .entityId(alarmId).entity(alarm).build());
             return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
         }
     }

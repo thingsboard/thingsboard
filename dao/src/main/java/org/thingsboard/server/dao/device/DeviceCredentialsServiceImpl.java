@@ -21,7 +21,6 @@ import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
@@ -60,9 +59,6 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
 
     @Autowired
     private DataValidator<DeviceCredentials> credentialsValidator;
-
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
 
     @TransactionalEventListener(classes = DeviceCredentialsEvictEvent.class)
     @Override
