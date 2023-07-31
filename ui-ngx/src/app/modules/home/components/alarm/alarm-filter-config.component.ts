@@ -40,10 +40,9 @@ import {
   AlarmSeverity,
   alarmSeverityTranslations
 } from '@shared/models/alarm.models';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from '@core/utils';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmFilterConfigData');
 
@@ -91,8 +90,6 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
 
   panelMode = false;
 
-  readonly separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
-
   alarmSearchStatuses = [AlarmSearchStatus.ACTIVE,
     AlarmSearchStatus.CLEARED,
     AlarmSearchStatus.ACK,
@@ -112,6 +109,8 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
   alarmFilterOverlayRef: OverlayRef;
 
   panelResult: AlarmFilterConfig = null;
+
+  entityType = EntityType;
 
   private alarmFilterConfig: AlarmFilterConfig;
 
@@ -190,7 +189,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
       $event.stopPropagation();
     }
     const config = new OverlayConfig({
-      panelClass: 'tb-filter-panel',
+      panelClass: ['tb-filter-panel', 'tb-scroll'],
       backdropClass: 'cdk-overlay-transparent-backdrop',
       hasBackdrop: true,
       maxHeight: '80vh',
@@ -253,40 +252,6 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
           this.propagateChange(this.alarmFilterConfig);
         }
       }
-    }
-  }
-
-  public alarmTypeList(): string[] {
-    return this.alarmFilterConfigForm.get('typeList').value;
-  }
-
-  public removeAlarmType(type: string): void {
-    const types: string[] = this.alarmFilterConfigForm.get('typeList').value;
-    const index = types.indexOf(type);
-    if (index >= 0) {
-      types.splice(index, 1);
-      this.alarmFilterConfigForm.get('typeList').setValue(types);
-      this.alarmFilterConfigForm.get('typeList').markAsDirty();
-    }
-  }
-
-  public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.chipInput.inputElement;
-    const value = event.value;
-
-    let types: string[] = this.alarmFilterConfigForm.get('typeList').value;
-
-    if ((value || '').trim()) {
-      if (!types) {
-        types = [];
-      }
-      types.push(value.trim());
-      this.alarmFilterConfigForm.get('typeList').setValue(types);
-      this.alarmFilterConfigForm.get('typeList').markAsDirty();
-    }
-
-    if (input) {
-      input.value = '';
     }
   }
 
