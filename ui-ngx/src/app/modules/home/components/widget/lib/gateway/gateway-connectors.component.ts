@@ -39,6 +39,10 @@ import { DialogService } from '@core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { deepClone } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { DatasourceType, widgetType } from '@shared/models/widget.models';
+import { UtilsService } from '@core/services/utils.service';
+import { EntityType } from '@shared/models/entity-type.models';
 
 
 export interface gatewayConnector {
@@ -88,7 +92,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   dataSource: MatTableDataSource<AttributeData>;
 
-  displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'actions'];
+  displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'errors', 'actions'];
 
   gatewayConnectorDefaultTypes = GatewayConnectorDefaultTypesTranslates;
 
@@ -123,6 +127,19 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   initialConnector: gatewayConnector;
 
+  subscriptionOptions: WidgetSubscriptionOptions = {
+    callbacks: {
+      onDataUpdated: () => this.ctx.ngZone.run(() => {
+        this.onDataUpdated();
+      }),
+      onDataUpdateError: (subscription, e) => this.ctx.ngZone.run(() => {
+        this.onDataUpdateError(e);
+      })
+    }
+  };
+
+  subscription: IWidgetSubscription;
+
   constructor(protected router: Router,
               protected store: Store<AppState>,
               protected fb: FormBuilder,
@@ -132,6 +149,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
               protected dialogService: DialogService,
               private telemetryWsService: TelemetryWebsocketService,
               private zone: NgZone,
+              private utils: UtilsService,
               private cd: ChangeDetectorRef,
               public dialog: MatDialog) {
     super(store);
@@ -270,6 +288,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.attributeDataSource.loadAttributes(this.device, AttributeScope.CLIENT_SCOPE, this.pageLink, reload).subscribe(data => {
       this.activeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.combineData();
+      this.generateSubscription();
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
       this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
@@ -279,7 +298,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.inactiveData = data.data.filter(value => this.inactiveConnectors.includes(value.key));
       this.combineData();
     });
-
   }
 
   isConnectorSynced(attribute: AttributeData) {
@@ -457,4 +475,43 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     });
   }
 
+  onDataUpdateError(e: any) {
+    const exceptionData = this.utils.parseException(e);
+    let errorText = exceptionData.name;
+    if (exceptionData.message) {
+      errorText += ': ' + exceptionData.message;
+    }
+    console.error(errorText);
+  }
+
+  onDataUpdated() {
+    this.cd.detectChanges();
+  }
+
+  generateSubscription() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    if (this.device) {
+      const subscriptionInfo = [{
+        type: DatasourceType.entity,
+        entityType: EntityType.DEVICE,
+        entityId: this.device.id,
+        entityName: "Gateway",
+        timeseries: []
+      }];
+      this.dataSource.data.forEach(value => {
+        subscriptionInfo[0].timeseries.push({name: `${value.key}_ERRORS_COUNT`, label: `${value.key}_ERRORS_COUNT`})
+      })
+      this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.latest, subscriptionInfo,this.subscriptionOptions, false, true).subscribe(subscription => {
+        this.subscription = subscription;
+      });
+    }
+  }
+
+  getErrorsCount(attribute) {
+    const connectorName = attribute.key;
+    const connector = this.subscription.data.find(data=>data && data.dataKey.name === `${connectorName}_ERRORS_COUNT`);
+    return (connector && this.activeConnectors.includes(connectorName))? connector.data[0][1]: 'inactive';
+  }
 }

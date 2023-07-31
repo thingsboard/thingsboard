@@ -69,6 +69,20 @@
               }">{{isConnectorSynced(attribute)?'sync' : 'out of sync'}}</div>
           </mat-cell>
         </ng-container>
+        <ng-container matColumnDef="errors">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
+            {{ 'gateway.connectors-table-status' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
+            <span class="dot"
+                  matTooltip="{{getErrorsCount(attribute)}}"
+                  matTooltipPosition="above"
+                  [ngClass]="{
+            'hasErrors': +getErrorsCount(attribute) > 0,
+            'noErrors': +getErrorsCount(attribute) == 0 || getErrorsCount(attribute) == ''
+            }"></span>
+          </mat-cell>
+        </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
           <mat-header-cell *matHeaderCellDef
                            [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px'}">

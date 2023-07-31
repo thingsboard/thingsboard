@@ -90,6 +90,22 @@
   mat-row {
     cursor: pointer;
   }
+
+  .dot {
+    height: 25px;
+    width: 25px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .hasErrors {
+    background-color: rgb(203, 37, 48);
+  }
+
+  .noErrors {
+    background-color: rgb(25, 128, 56);
+  }
 }
 
 :host ::ng-deep tb-json-object-edit > div {
