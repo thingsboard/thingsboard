@@ -128,7 +128,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
       };
     } else {
       this.modelValue = {
-        entityType: value?.entityType ? value.entityType : this.defaultEntityType,
+        entityType: this.defaultEntityType,
         id: null
       };
     }
