@@ -160,7 +160,8 @@ public class AlarmControllerTest extends AbstractControllerTest {
         foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundAlarm, customerDevice, tenantId,
-                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ACK, 1, 1, 2);
+                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ACK, 1, 1, 1);
+        Mockito.reset(tbClusterService, auditLogService);
 
         alarm = updatedAlarm;
         alarm.setCleared(true);
@@ -173,7 +174,8 @@ public class AlarmControllerTest extends AbstractControllerTest {
         foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundAlarm, customerDevice, tenantId,
-                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_CLEAR, 1, 1, 2);
+                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_CLEAR, 1, 1, 1);
+        Mockito.reset(tbClusterService, auditLogService);
 
         alarm = updatedAlarm;
         alarm.setAssigneeId(tenantAdminUserId);
@@ -186,7 +188,8 @@ public class AlarmControllerTest extends AbstractControllerTest {
         foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundAlarm, customerDevice, tenantId,
-                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ASSIGNED, 1, 1, 2);
+                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ASSIGNED, 1, 1, 1);
+        Mockito.reset(tbClusterService, auditLogService);
 
         alarm = updatedAlarm;
         alarm.setAssigneeId(null);
@@ -199,7 +202,8 @@ public class AlarmControllerTest extends AbstractControllerTest {
         foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundAlarm, customerDevice, tenantId,
-                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_UNASSIGNED, 1, 1, 2);
+                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_UNASSIGNED, 1, 1, 1);
+        Mockito.reset(tbClusterService, auditLogService);
 
     }
 

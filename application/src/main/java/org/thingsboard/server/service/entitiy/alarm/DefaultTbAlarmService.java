@@ -81,8 +81,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } else if (newAssignee == null && curAssignee != null) {
                 resultAlarm = unassign(alarm, alarm.getAssignTs(), user);
             }
-            notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), resultAlarm,
-                    resultAlarm.getCustomerId(), actionType, user);
+            if (result.isModified()) {
+                notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), resultAlarm,
+                        resultAlarm.getCustomerId(), actionType, user);
+            }
             return new Alarm(resultAlarm);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM), alarm, actionType, user, e);
