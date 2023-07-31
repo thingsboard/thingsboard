@@ -21,7 +21,7 @@
     flex-direction: column;
 
     .tb-multiple-input-container {
-      padding: 0 8px;
+      padding: 8px 8px 0;
       flex: 1 1 100%;
       overflow-x: hidden;
       overflow-y: auto;
@@ -34,6 +34,28 @@
 
       legend {
         color: rgba(0, 0, 0, .7);
+      }
+    }
+
+    .tb-multiple-input-layout {
+      display: flex;
+      flex-direction: row;
+      align-items: start;
+    }
+
+    .color-picker-input {
+      padding: 7px 16px 7px 12px;
+      margin: 0 10px 22px 0;
+      border-color: rgba(0, 0, 0, 0.4);
+
+      .label-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
+
+      .mat-icon, img {
+        margin-right: 5px;
       }
     }
 
@@ -60,6 +82,30 @@
 
     .vertical-alignment {
       flex-direction: column;
+    }
+
+    &--buttons-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: end;
+      &__button {
+        max-height: 50px;
+        margin-right:20px;
+      }
+    }
+
+    &--errors-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      &__error {
+        text-align: center;
+        font-size: 18px;
+        color: #a0a0a0;
+      }
     }
   }
 }
