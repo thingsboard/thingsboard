@@ -23,7 +23,7 @@
     <fieldset *ngFor="let source of sources" [ngClass]="{'fields-group': settings.showGroupTitle}">
       <legend class="group-title" *ngIf="settings.showGroupTitle">{{ getGroupTitle(source.datasource) }}
       </legend>
-      <div fxLayout="row" class="layout-wrap"
+      <div class="tb-multiple-input-layout layout-wrap"
            [ngClass]="{'vertical-alignment': isVerticalAlignment || changeAlignment}">
         <div *ngFor="let key of visibleKeys(source)"
              [ngStyle]="{width: (isVerticalAlignment || changeAlignment) ? '100%' : inputWidthSettings}">
@@ -173,8 +173,8 @@
             </mat-form-field>
           </div>
 
-          <div class="color-picker-input" *ngIf="key.settings.dataKeyValueType === 'color'">
-            <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+          <div class="tb-form-row space-between color-picker-input" *ngIf="key.settings.dataKeyValueType === 'color'">
+            <div class="label-container">
               <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
                 <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
                 <ng-template #customToggleIcon>
@@ -183,40 +183,35 @@
               </ng-container>
               {{key.label}}
             </div>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-              <tb-color-input asBoxInput
-                              [required]="key.settings.required"
-                              [requiredText]="getErrorMessageText(key.settings, 'required')"
-                              (colorChanged)="inputChanged(source, key)"
-                              openOnInput
-                              formControlName="{{key.formId}}">
-              </tb-color-input>
-            </div>
+            <tb-color-input asBoxInput
+                            [required]="key.settings.required"
+                            [requiredText]="getErrorMessageText(key.settings, 'required')"
+                            openOnInput
+                            formControlName="{{key.formId}}">
+            </tb-color-input>
           </div>
         </div>
       </div>
     </fieldset>
   </div>
-  <div class="mat-padding" fxLayout="row" fxLayoutAlign="end center"
+  <div class="mat-padding tb-multiple-input--buttons-container"
        *ngIf="entityDetected && isAllParametersValid && settings.showActionButtons">
     <button mat-button color="primary" type="button"
-            (click)="discardAll()" style="max-height: 50px; margin-right:20px;"
+            (click)="discardAll()" class="tb-multiple-input--buttons-container__button"
             [disabled]="!multipleInputFormGroup.dirty">
       {{ resetButtonLabel }}
     </button>
     <button mat-button mat-raised-button color="primary" type="submit"
-            style="max-height: 50px; margin-right:20px;"
+            class="tb-multiple-input--buttons-container__button"
             [disabled]="!multipleInputFormGroup.dirty || multipleInputFormGroup.invalid">
       {{ saveButtonLabel }}
     </button>
   </div>
-  <div class="tb-multiple-input__errors" fxLayout="column" fxLayoutAlign="center center" style="height: 100%;"
-       *ngIf="(!entityDetected || !isAllParametersValid) && datasourceDetected">
-    <div style="text-align: center; font-size: 18px; color: #a0a0a0;" [fxHide]="entityDetected">
+  <div class="tb-multiple-input__errors" *ngIf="(!entityDetected || !isAllParametersValid) && datasourceDetected">
+    <div class="tb-multiple-input__error" [fxHide]="entityDetected">
       {{ 'widgets.input-widgets.no-entity-selected' | translate }}
     </div>
-    <div style="text-align: center; font-size: 18px; color: #a0a0a0;"
-         [fxShow]="entityDetected && !isAllParametersValid">
+    <div class="tb-multiple-input__error" [fxShow]="entityDetected && !isAllParametersValid">
       {{ 'widgets.input-widgets.not-allowed-entity' | translate }}
     </div>
   </div>

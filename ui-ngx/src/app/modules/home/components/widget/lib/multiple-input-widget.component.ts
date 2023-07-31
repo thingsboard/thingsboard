@@ -390,6 +390,12 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               }
             });
           }
+        } else if (key.settings.dataKeyValueType === 'color') {
+          formControl.valueChanges.pipe(
+            takeUntil(this.destroy$)
+          ).subscribe(() => {
+            this.inputChanged(source, key);
+          });
         }
         this.multipleInputFormGroup.addControl(key.formId, formControl);
       }
