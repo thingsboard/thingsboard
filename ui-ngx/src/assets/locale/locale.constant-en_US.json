@@ -10,6 +10,9 @@
         "permission-denied": "Permission Denied",
         "permission-denied-text": "You don't have permission to perform this operation!"
     },
+    "account": {
+        "account": "Account"
+    },
     "action": {
         "activate": "Activate",
         "suspend": "Suspend",
