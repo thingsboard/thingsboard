@@ -511,7 +511,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   getErrorsCount(attribute) {
     const connectorName = attribute.key;
-    const connector = this.subscription.data.find(data=>data && data.dataKey.name === `${connectorName}_ERRORS_COUNT`);
+    const connector = this.subscription && this.subscription.data.find(data=>data && data.dataKey.name === `${connectorName}_ERRORS_COUNT`);
     return (connector && this.activeConnectors.includes(connectorName))? connector.data[0][1]: 'inactive';
   }
 }
