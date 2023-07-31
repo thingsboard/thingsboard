@@ -39,6 +39,8 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
 
   hideCurrentTabs = false;
 
+  replaceUrl = false;
+
   tabs$: Observable<Array<MenuSection>>;
 
   constructor(protected store: Store<AppState>,
@@ -65,6 +67,10 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
         mergeMap(() => this.menuService.menuSections().pipe(take(1))),
         map((sections) => this.buildTabs(this.activatedRoute, sections))
       );
+    }
+
+    if (this.activatedRoute.snapshot.data.replaceUrl) {
+      this.replaceUrl = true;
     }
 
     this.activatedRoute.data.subscribe(

@@ -14,12 +14,15 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { Authority } from '@shared/models/authority.enum';
 import { securityRoutes } from '@home/pages/security/security-routing.module';
 import { profileRoutes } from '@home/pages/profile/profile-routing.module';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 const routes: Routes = [
   {
@@ -31,7 +34,10 @@ const routes: Routes = [
         label: 'account.account',
         icon: 'account_circle'
       },
-      useChildrenRoutesForTabs: true
+      useChildrenRoutesForTabs: true,
+    },
+    resolve: {
+      replaceUrl: () => getCurrentAuthState(inject(Store<AppState>)).forceFullscreen
     },
     children: [
       {

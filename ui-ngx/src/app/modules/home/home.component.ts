@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
@@ -27,10 +27,10 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import screenfull from 'screenfull';
 import { MatSidenav } from '@angular/material/sidenav';
 import { AuthState } from '@core/auth/auth.models';
+import { WINDOW } from '@core/services/window.service';
 import { instanceOfSearchableComponent, ISearchableComponent } from '@home/models/searchable-component.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'tb-home',
@@ -65,8 +65,8 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   hideLoadingBar = false;
 
   constructor(protected store: Store<AppState>,
+              @Inject(WINDOW) private window: Window,
               private activeComponentService: ActiveComponentService,
-              private router: Router,
               public breakpointObserver: BreakpointObserver) {
     super(store);
   }
@@ -120,8 +120,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   goBack() {
-    const dashboardId = this.authState.userDetails.additionalInfo.defaultDashboardId;
-    this.router.navigate(['dashboard', dashboardId]).then(() => {});
+    this.window.history.back();
   }
 
   activeComponentChanged(activeComponent: any) {
