@@ -95,17 +95,17 @@
       }
     }
 
-    &__errors {
+    &--errors-container {
       height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-    }
-    &__error {
-      text-align: center;
-      font-size: 18px;
-      color: #a0a0a0;
+      &__error {
+        text-align: center;
+        font-size: 18px;
+        color: #a0a0a0;
+      }
     }
   }
 }

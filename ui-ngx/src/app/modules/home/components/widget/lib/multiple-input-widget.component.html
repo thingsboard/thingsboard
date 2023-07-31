@@ -207,11 +207,11 @@
       {{ saveButtonLabel }}
     </button>
   </div>
-  <div class="tb-multiple-input__errors" *ngIf="(!entityDetected || !isAllParametersValid) && datasourceDetected">
-    <div class="tb-multiple-input__error" [fxHide]="entityDetected">
+  <div class="tb-multiple-input--errors-container" *ngIf="(!entityDetected || !isAllParametersValid) && datasourceDetected">
+    <div class="tb-multiple-input--errors-container__error" [fxHide]="entityDetected">
       {{ 'widgets.input-widgets.no-entity-selected' | translate }}
     </div>
-    <div class="tb-multiple-input__error" [fxShow]="entityDetected && !isAllParametersValid">
+    <div class="tb-multiple-input--errors-container__error" [fxShow]="entityDetected && !isAllParametersValid">
       {{ 'widgets.input-widgets.not-allowed-entity' | translate }}
     </div>
   </div>
