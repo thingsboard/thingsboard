@@ -16,8 +16,8 @@
 
 -->
 <form style="height: calc(100% - 7px)" fxLayout="column">
-  <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="15px" fxFlex class="connector-container">
-    <mat-card fxLayout="column" fxFlex.lt-md style="overflow: auto;">
+  <div fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px" fxFlex class="connector-container">
+    <mat-card fxLayout="column" fxFlex.lt-lg style="overflow: auto; min-height: 35vh">
       <mat-toolbar class="mat-mdc-table-toolbar">
         <h2>{{ 'gateway.connectors' | translate }}</h2>
         <span fxFlex></span>
@@ -148,7 +148,7 @@
       <mat-divider></mat-divider>
     </mat-card>
     <div [formGroup]="connectorForm" fxLayout="column">
-      <mat-card fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="15px" fxLayoutGap.lt-md="5px">
+      <mat-card fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px" fxLayoutGap.lt-lg="5px">
         <mat-form-field class="mat-block tb-value-type">
           <mat-label>{{ 'gateway.connectors-table-name' | translate }}</mat-label>
           <input matInput formControlName="name" #nameInput/>
