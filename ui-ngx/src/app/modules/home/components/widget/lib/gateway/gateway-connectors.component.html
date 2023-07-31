@@ -75,7 +75,7 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
             <span class="dot"
-                  matTooltip="{{getErrorsCount(attribute)}}"
+                  matTooltip="{{ 'Errors: '+ getErrorsCount(attribute)}}"
                   matTooltipPosition="above"
                   [ngClass]="{
             'hasErrors': +getErrorsCount(attribute) > 0,
