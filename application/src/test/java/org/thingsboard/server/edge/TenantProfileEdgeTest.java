@@ -31,12 +31,11 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
         loginSysAdmin();
 
         // save current values into tmp to revert after test
-        TenantProfile edgeTenantProfile = doGet("/api/tenantProfile/" + savedTenant.getTenantProfileId().getId(), TenantProfile.class);
-        TenantProfile tmp = edgeTenantProfile;
+        TenantProfile edgeTenantProfile = doGet("/api/tenantProfile/" + tenantProfileId.getId(), TenantProfile.class);
 
         // updated edge tenant profile
-        edgeTenantProfile.setName("Tenant Profile Edge");
-        edgeTenantProfile.setDescription("Updated tenant profile Edge");
+        edgeTenantProfile.setName("Tenant Profile Edge Test");
+        edgeTenantProfile.setDescription("Updated tenant profile Edge Test");
         edgeImitator.expectMessageAmount(1);
         edgeTenantProfile = doPost("/api/tenantProfile", edgeTenantProfile, TenantProfile.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
@@ -47,11 +46,7 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(edgeTenantProfile.getUuidId().getMostSignificantBits(), tenantProfileUpdateMsg.getIdMSB());
         Assert.assertEquals(edgeTenantProfile.getUuidId().getLeastSignificantBits(), tenantProfileUpdateMsg.getIdLSB());
         Assert.assertEquals(edgeTenantProfile.getDescription(), tenantProfileUpdateMsg.getDescription());
-        Assert.assertEquals("Updated tenant profile Edge", tenantProfileUpdateMsg.getDescription());
-        Assert.assertEquals("Tenant Profile Edge", tenantProfileUpdateMsg.getName());
-
-        // revert back to default values
-        edgeTenantProfile = doPost("/api/tenantProfile", tmp, TenantProfile.class);
-        Assert.assertEquals(edgeTenantProfile, tmp);
+        Assert.assertEquals("Updated tenant profile Edge Test", tenantProfileUpdateMsg.getDescription());
+        Assert.assertEquals("Tenant Profile Edge Test", tenantProfileUpdateMsg.getName());
     }
 }

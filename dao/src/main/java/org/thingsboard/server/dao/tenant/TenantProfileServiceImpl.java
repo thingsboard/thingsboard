@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -131,7 +132,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         }
         deleteEntityRelations(tenantId, tenantProfileId);
         publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, isDefault));
-        publishDeleteEvent(TenantId.SYS_TENANT_ID, tenantProfileId, null);
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID).entityId(tenantProfileId).build());
     }
 
     @Override

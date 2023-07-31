@@ -35,11 +35,10 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         loginSysAdmin();
 
         // save current value into tmp to revert after test
-        Tenant tmp = doGet("/api/tenant/" + tenantId, Tenant.class);
+        Tenant savedTenant = doGet("/api/tenant/" + tenantId, Tenant.class);
 
         // updated edge tenant
-        savedTenant.setTitle("TenantEdgeTest title");
-        savedTenant.setRegion("Test Region");
+        savedTenant.setTitle("Updated Title for Tenant Edge Test");
         edgeImitator.expectMessageAmount(1);
         savedTenant = doPost("/api/tenant", savedTenant, Tenant.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
@@ -50,31 +49,19 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedTenant.getUuidId().getMostSignificantBits(), tenantUpdateMsg.getIdMSB());
         Assert.assertEquals(savedTenant.getUuidId().getLeastSignificantBits(), tenantUpdateMsg.getIdLSB());
         Assert.assertEquals(savedTenant.getTitle(), tenantUpdateMsg.getTitle());
-        Assert.assertEquals("TenantEdgeTest title", tenantUpdateMsg.getTitle());
+        Assert.assertEquals("Updated Title for Tenant Edge Test", tenantUpdateMsg.getTitle());
         Assert.assertEquals(savedTenant.getTenantProfileId(), new TenantProfileId
                 (new UUID(tenantUpdateMsg.getProfileIdMSB(), tenantUpdateMsg.getProfileIdLSB())));
 
-        // revert back to default values
-        savedTenant = doPost("/api/tenant", tmp, Tenant.class);
-        Assert.assertEquals(savedTenant, tmp);
-    }
-
-    @Test
-    public void whenTenantChangeTenantProfileId_thenNotifyEdgeToUpdateTenantAndTenantProfile() throws Exception {
-        loginSysAdmin();
-
-        // save current value into tmp to revert after test
-        Tenant tmp = doGet("/api/tenant/" + tenantId, Tenant.class);
-
-        // updated edge tenant
+        //change tenant profile for tenant
         TenantProfile tenantProfile = createTenantProfile();
         savedTenant.setTenantProfileId(tenantProfile.getId());
         edgeImitator.expectMessageAmount(1);
         savedTenant = doPost("/api/tenant", savedTenant, Tenant.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof TenantUpdateMsg);
-        TenantUpdateMsg tenantUpdateMsg = (TenantUpdateMsg) latestMessage;
+        tenantUpdateMsg = (TenantUpdateMsg) latestMessage;
         // tenant update
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantUpdateMsg.getMsgType());
         Assert.assertEquals(savedTenant.getUuidId().getMostSignificantBits(), tenantUpdateMsg.getIdMSB());
@@ -82,10 +69,6 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedTenant.getTitle(), tenantUpdateMsg.getTitle());
         Assert.assertEquals(savedTenant.getTenantProfileId(), new TenantProfileId
                 (new UUID(tenantUpdateMsg.getProfileIdMSB(), tenantUpdateMsg.getProfileIdLSB())));
-
-        // revert back to default values
-        savedTenant = doPost("/api/tenant", tmp, Tenant.class);
-        Assert.assertEquals(savedTenant, tmp);
     }
 
     private TenantProfile createTenantProfile() {
