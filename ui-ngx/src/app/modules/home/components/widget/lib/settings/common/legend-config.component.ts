@@ -15,7 +15,7 @@
 ///
 
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { isDefined } from '@core/utils';
 import {
   LegendConfig,
@@ -30,7 +30,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'tb-legend-config',
   templateUrl: './legend-config.component.html',
-  styleUrls: [],
+  styleUrls: ['./../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -62,12 +62,8 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
     this.legendConfigForm = this.fb.group({
       direction: [null, []],
       position: [null, []],
-      sortDataKeys: [null, []],
-      showMin: [null, []],
-      showMax: [null, []],
-      showAvg: [null, []],
-      showTotal: [null, []],
-      showLatest: [null, []]
+      showValues: [[], []],
+      sortDataKeys: [null, []]
     });
     this.legendSettingsFormDirectionChanges$ = this.legendConfigForm.get('direction').valueChanges
       .subscribe((direction: LegendDirection) => {
@@ -121,18 +117,49 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
       this.legendConfigForm.patchValue({
         direction: legendConfig.direction,
         position: legendConfig.position,
-        sortDataKeys: isDefined(legendConfig.sortDataKeys) ? legendConfig.sortDataKeys : false,
-        showMin: isDefined(legendConfig.showMin) ? legendConfig.showMin : false,
-        showMax: isDefined(legendConfig.showMax) ? legendConfig.showMax : false,
-        showAvg: isDefined(legendConfig.showAvg) ? legendConfig.showAvg : false,
-        showTotal: isDefined(legendConfig.showTotal) ? legendConfig.showTotal : false,
-        showLatest: isDefined(legendConfig.showLatest) ? legendConfig.showLatest : false
+        showValues: this.getShowValues(legendConfig),
+        sortDataKeys: isDefined(legendConfig.sortDataKeys) ? legendConfig.sortDataKeys : false
       }, {emitEvent: false});
     }
     this.onDirectionChanged(legendConfig.direction);
   }
 
   private legendConfigUpdated() {
-    this.propagateChange(this.legendConfigForm.value);
+    const configValue = this.legendConfigForm.value;
+    const legendConfig: Partial<LegendConfig> = {
+      direction: configValue.direction,
+      position: configValue.position,
+      sortDataKeys: configValue.sortDataKeys
+    };
+    this.setShowValues(configValue.showValues, legendConfig);
+    this.propagateChange(legendConfig);
+  }
+
+  private getShowValues(legendConfig: LegendConfig): string[] {
+    const showValues: string[] = [];
+    if (isDefined(legendConfig.showMin) && legendConfig.showMin) {
+      showValues.push('min');
+    }
+    if (isDefined(legendConfig.showMax) && legendConfig.showMax) {
+      showValues.push('max');
+    }
+    if (isDefined(legendConfig.showAvg) && legendConfig.showAvg) {
+      showValues.push('average');
+    }
+    if (isDefined(legendConfig.showTotal) && legendConfig.showTotal) {
+      showValues.push('total');
+    }
+    if (isDefined(legendConfig.showLatest) && legendConfig.showLatest) {
+      showValues.push('latest');
+    }
+    return showValues;
+  }
+
+  private setShowValues(showValues: string[], legendConfig: Partial<LegendConfig>) {
+    legendConfig.showMin = showValues.includes('min');
+    legendConfig.showMax = showValues.includes('max');
+    legendConfig.showAvg = showValues.includes('average');
+    legendConfig.showTotal = showValues.includes('total');
+    legendConfig.showLatest = showValues.includes('latest');
   }
 }

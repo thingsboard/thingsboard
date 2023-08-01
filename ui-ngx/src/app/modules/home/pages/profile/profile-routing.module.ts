@@ -40,7 +40,7 @@ export class UserProfileResolver implements Resolve<User> {
   }
 }
 
-export const ProfileRoutes: Routes = [
+export const profileRoutes: Routes = [
   {
     path: 'profile',
     component: ProfileComponent,

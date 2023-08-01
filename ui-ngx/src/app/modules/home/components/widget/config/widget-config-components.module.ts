@@ -29,7 +29,6 @@ import { FilterSelectComponent } from '@home/components/filter/filter-select.com
 import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
 import { WidgetSettingsComponent } from '@home/components/widget/config/widget-settings.component';
 import { TimewindowConfigPanelComponent } from '@home/components/widget/config/timewindow-config-panel.component';
-import { WidgetUnitsComponent } from '@home/components/widget/config/widget-units.component';
 
 @NgModule({
   declarations:
@@ -44,7 +43,6 @@ import { WidgetUnitsComponent } from '@home/components/widget/config/widget-unit
       EntityAliasSelectComponent,
       FilterSelectComponent,
       TimewindowConfigPanelComponent,
-      WidgetUnitsComponent,
       WidgetSettingsComponent
     ],
   imports: [
@@ -63,7 +61,6 @@ import { WidgetUnitsComponent } from '@home/components/widget/config/widget-unit
     EntityAliasSelectComponent,
     FilterSelectComponent,
     TimewindowConfigPanelComponent,
-    WidgetUnitsComponent,
     WidgetSettingsComponent
   ]
 })

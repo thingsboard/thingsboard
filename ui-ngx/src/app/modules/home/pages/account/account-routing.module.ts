@@ -14,16 +14,18 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { Authority } from '@shared/models/authority.enum';
-import { SecurityRoutes, UserTwoFAProvidersResolver } from '@home/pages/security/security-routing.module';
+import { securityRoutes } from '@home/pages/security/security-routing.module';
+import { profileRoutes } from '@home/pages/profile/profile-routing.module';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 import {
-  NotificationUserSettingsResolver,
   NotificationUserSettingsRoutes
 } from '@home/pages/notification/settings/notification-settings-routing.modules';
-import { ProfileRoutes, UserProfileResolver } from '@home/pages/profile/profile-routing.module';
 
 const routes: Routes = [
   {
@@ -34,7 +36,11 @@ const routes: Routes = [
       breadcrumb: {
         label: 'account.account',
         icon: 'account_circle'
-      }
+      },
+      useChildrenRoutesForTabs: true,
+    },
+    resolve: {
+      replaceUrl: () => getCurrentAuthState(inject(Store<AppState>)).forceFullscreen
     },
     children: [
       {
@@ -45,8 +51,8 @@ const routes: Routes = [
           redirectTo: '/account/profile',
         }
       },
-      ...ProfileRoutes,
-      ...SecurityRoutes,
+      ...profileRoutes,
+      ...securityRoutes,
       ...NotificationUserSettingsRoutes
     ]
   }
@@ -54,11 +60,6 @@ const routes: Routes = [
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-  providers: [
-    UserProfileResolver,
-    UserTwoFAProvidersResolver,
-    NotificationUserSettingsResolver
-  ]
+  exports: [RouterModule]
 })
 export class AccountRoutingModule { }

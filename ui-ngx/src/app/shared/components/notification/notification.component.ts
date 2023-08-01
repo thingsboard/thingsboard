@@ -139,7 +139,7 @@ export class NotificationComponent implements OnInit {
   }
 
   notificationColor(): string {
-    if (this.notification.type === NotificationType.ALARM) {
+    if (this.notification.type === NotificationType.ALARM && !this.notification.info.cleared) {
       return AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity);
     }
     return 'transparent';

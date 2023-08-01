@@ -19,7 +19,6 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { AggregationType, ComparisonDuration, Timewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { AlarmSearchStatus, AlarmSeverity } from '@shared/models/alarm.models';
 import { DataKeyType } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import * as moment_ from 'moment';
@@ -40,6 +39,7 @@ import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { isEmptyStr } from '@core/utils';
+import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -57,7 +57,6 @@ export interface WidgetTypeTemplate {
 export interface WidgetTypeData {
   name: string;
   icon: string;
-  isMdiIcon?: boolean;
   configHelpLinkId: string;
   template: WidgetTypeTemplate;
 }
@@ -94,7 +93,6 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
         name: 'widget.rpc',
         icon: 'mdi:developer-board',
         configHelpLinkId: 'widgetsConfigRpc',
-        isMdiIcon: true,
         template: {
           bundleAlias: 'gpio_widgets',
           alias: 'basic_gpio_control'
@@ -182,6 +180,9 @@ export interface WidgetTypeParameters {
   warnOnPageDataOverflow?: boolean;
   ignoreDataUpdateOnIntervalTick?: boolean;
   processNoDataByWidget?: boolean;
+  previewWidth?: string;
+  previewHeight?: string;
+  absoluteHeader?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
@@ -316,6 +317,11 @@ export interface DataKey extends KeyInfo {
   isAdditional?: boolean;
   origDataKeyIndex?: number;
   _hash?: number;
+}
+
+export enum DataKeyConfigMode {
+  general = 'general',
+  advanced = 'advanced'
 }
 
 export enum DatasourceType {
@@ -632,6 +638,7 @@ export interface WidgetConfig {
   backgroundColor?: string;
   padding?: string;
   margin?: string;
+  borderRadius?: string;
   widgetStyle?: {[klass: string]: any};
   widgetCss?: string;
   titleStyle?: {[klass: string]: any};
@@ -700,6 +707,7 @@ export interface IWidgetSettingsComponent {
   aliasController: IAliasController;
   dashboard: Dashboard;
   widget: Widget;
+  widgetConfig: WidgetConfigComponentData;
   functionScopeVariables: string[];
   settings: WidgetSettings;
   settingsChanged: Observable<WidgetSettings>;
@@ -730,6 +738,17 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   dashboard: Dashboard;
 
   widget: Widget;
+
+  widgetConfigValue: WidgetConfigComponentData;
+
+  set widgetConfig(value: WidgetConfigComponentData) {
+    this.widgetConfigValue = value;
+    this.onWidgetConfigSet(value);
+  }
+
+  get widgetConfig(): WidgetConfigComponentData {
+    return this.widgetConfigValue;
+  }
 
   functionScopeVariables: string[];
 
@@ -840,6 +859,9 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
 
   protected defaultSettings(): WidgetSettings {
     return {};
+  }
+
+  protected onWidgetConfigSet(widgetConfig: WidgetConfigComponentData) {
   }
 
 }

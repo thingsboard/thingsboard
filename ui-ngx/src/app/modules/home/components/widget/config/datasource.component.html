@@ -38,6 +38,7 @@
                                  datasourceFormGroup.get('type').value === datasourceType.alarmCount ? datasourceFormGroup.get('type').value : ''">
       <tb-alarm-filter-config *ngIf="datasourceFormGroup.get('type').value === datasourceType.alarmCount"
                               propagatedFilter="false"
+                              [initialAlarmFilterConfig]="{ statusList: [alarmSearchStatus.ACTIVE] }"
                               style="height: 56px; margin-bottom: 22px;"
                               formControlName="alarmFilterConfig"></tb-alarm-filter-config>
       <tb-entity-autocomplete *ngIf="datasourceFormGroup.get('type').value === datasourceType.device"

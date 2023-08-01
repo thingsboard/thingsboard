@@ -48,6 +48,8 @@ export interface NotificationInfo {
   alarmStatus?: AlarmStatus;
   alarmType?: string;
   stateEntityId?: EntityId;
+  acknowledged?: boolean;
+  cleared?: boolean;
 }
 
 export interface NotificationRequest extends Omit<BaseData<NotificationRequestId>, 'label'> {
@@ -114,7 +116,7 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
   triggerType: TriggerType;
   triggerConfig: NotificationRuleTriggerConfig;
   recipientsConfig: NotificationRuleRecipientConfig;
-  additionalConfig: {description: string};
+  additionalConfig?: {description: string};
 }
 
 export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig &

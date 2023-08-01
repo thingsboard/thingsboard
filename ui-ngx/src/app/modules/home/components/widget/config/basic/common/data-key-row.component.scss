@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 .tb-data-key-row {
-  height: 38px;
-  display: flex;
-  flex-direction: row;
-  gap: 12px;
-  padding-left: 12px;
-
   .mat-mdc-form-field.tb-inline-field.tb-key-field {
     .mat-mdc-text-field-wrapper:not(.mdc-text-field--outlined) {
       .mat-mdc-form-field-infix {
@@ -43,11 +37,33 @@
     }
   }
 
+  .tb-source-field {
+    width: 120px;
+    min-width: 120px;
+  }
+
+  .tb-key-field {
+    flex: 1 1 60%;
+  }
+
+  .tb-label-field {
+    flex: 1 1 40%;
+  }
+
   .tb-color-field, .tb-units-field, .tb-decimals-field {
-    width: 60px;
     display: flex;
     flex-direction: row;
     place-content: center;
     align-items: center;
+  }
+
+  .tb-units-field {
+    width: 80px;
+    min-width: 80px;
+  }
+
+  .tb-color-field, .tb-decimals-field {
+    width: 60px;
+    min-width: 60px;
   }
 }

@@ -96,6 +96,7 @@ zk:
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
   # Name of the directory in zookeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
+  recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:60000}"
 
 cluster:
   stats:
@@ -249,7 +250,8 @@ cassandra:
     concurrent_limit: "${CASSANDRA_QUERY_CONCURRENT_LIMIT:1000}"
     permit_max_wait_time: "${PERMIT_MAX_WAIT_TIME:120000}"
     dispatcher_threads: "${CASSANDRA_QUERY_DISPATCHER_THREADS:2}"
-    callback_threads: "${CASSANDRA_QUERY_CALLBACK_THREADS:4}"
+    callback_threads: "${CASSANDRA_QUERY_CALLBACK_THREADS:4}" # Buffered rate executor (read, write), for managing I/O rate. See "nosql-*-callback" threads in JMX
+    result_processing_threads: "${CASSANDRA_QUERY_RESULT_PROCESSING_THREADS:50}" # Result set transformer and processing. See "cassandra-callback" threads in JMX
     poll_ms: "${CASSANDRA_QUERY_POLL_MS:50}"
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
     # set all data types values except target to null for the same ts on save
@@ -393,6 +395,10 @@ actors:
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
+    external:
+      # Force acknowledgement of the incoming message for external rule nodes to decrease processing latency.
+      # Enqueue the result of external node processing as a separate message to the rule engine.
+      force_ack: "${ACTORS_RULE_EXTERNAL_NODE_FORCE_ACK:false}"
   rpc:
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
     sequential: "${ACTORS_RPC_SEQUENTIAL:false}"
@@ -493,6 +499,9 @@ cache:
     entityCount:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
       maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+    resourceInfo:
+      timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_INFO_TTL:1440}"
+      maxSize: "${CACHE_SPECS_RESOURCE_INFO_MAX_SIZE:100000}"
 
   # deliberately placed outside 'specs' group above
   notificationRules:
@@ -977,6 +986,35 @@ transport:
   stats:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
+
+# Device connectivity properties to publish telemetry
+device:
+  connectivity:
+    http:
+      enabled: "${DEVICE_CONNECTIVITY_HTTP_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_HTTP_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_HTTP_PORT:8080}"
+    https:
+      enabled: "${DEVICE_CONNECTIVITY_HTTPS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_HTTPS_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_HTTPS_PORT:443}"
+    mqtt:
+      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_MQTT_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_MQTT_PORT:1883}"
+    mqtts:
+      enabled: "${DEVICE_CONNECTIVITY_MQTTS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_MQTTS_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_MQTTS_PORT:8883}"
+      pem_cert_file: "${DEVICE_CONNECTIVITY_MQTT_SSL_PEM_CERT:mqttserver.pem}"
+    coap:
+      enabled: "${DEVICE_CONNECTIVITY_COAP_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_COAP_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_COAP_PORT:5683}"
+    coaps:
+      enabled: "${DEVICE_CONNECTIVITY_COAPS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_COAPS_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_COAPS_PORT:5684}"
 
 # Edges parameters
 edges:

@@ -535,6 +535,7 @@ public class ModelConstants {
      */
     public static final String EDGE_EVENT_TABLE_NAME = "edge_event";
     public static final String EDGE_EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String EDGE_EVENT_SEQUENTIAL_ID_PROPERTY = "seq_id";
     public static final String EDGE_EVENT_EDGE_ID_PROPERTY = "edge_id";
     public static final String EDGE_EVENT_TYPE_PROPERTY = "edge_event_type";
     public static final String EDGE_EVENT_ACTION_PROPERTY = "edge_event_action";

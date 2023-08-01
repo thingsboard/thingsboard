@@ -65,15 +65,15 @@
               <span *ngIf="!hideDataKeyLabel && key.label !== key.name">{{key.label}}</span>
             </div>
             <div *ngIf="!hideDataKeyLabel && key.label !== key.name" class="tb-chip-separator">: </div>
-            <div class="tb-chip-label">
+            <div class="tb-chip-label tb-chip-text">
               <strong>
                 <ng-container *ngTemplateOutlet="keyName; context:{key: key}"></ng-container>
               </strong>
             </div>
           </div>
           <div *ngIf="!hideDataKeyColor" style="padding: 3px;">
-            <div class="tb-color-preview small box" (click)="showColorPicker(key)">
-              <div class="tb-color-result" [ngStyle]="{background: key.color}"></div>
+            <div #keyColorButton class="tb-color-preview small box" (click)="openColorPickerPopup(key, $event, keyColorButton)">
+              <div class="tb-color-result" [style]="{background: key.color}"></div>
             </div>
           </div>
           <button *ngIf="!disabled"
