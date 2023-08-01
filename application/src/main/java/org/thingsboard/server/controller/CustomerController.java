@@ -17,6 +17,8 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -32,15 +34,20 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 import org.thingsboard.server.service.entitiy.customer.TbCustomerService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -64,6 +71,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class CustomerController extends BaseController {
 
     private final TbCustomerService tbCustomerService;
+    private final TbAlarmService tbAlarmService;
 
     public static final String IS_PUBLIC = "isPublic";
     public static final String CUSTOMER_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the customer is owned by the same tenant. " +
@@ -149,6 +157,24 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.DELETE);
+        TenantId tenantId = getTenantId();
+        PageLink pl = new PageLink(100);
+        boolean hasNext = true;
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
+
+        while (hasNext) {
+            PageData<User> customerUsers = userService.findCustomerUsers(tenantId, customerId, pl);
+            for (User user : customerUsers.getData()) {
+                ListenableFuture<Void> future = tbAlarmService.unassignUserAlarms(tenantId, user, System.currentTimeMillis());
+                futures.add(future);
+            }
+            hasNext = customerUsers.hasNext();
+            if (hasNext) {
+                pl = pl.nextPageLink();
+            }
+        }
+        ListenableFuture<List<Void>> allFutures = Futures.allAsList(futures);
+        Futures.getChecked(allFutures, ThingsboardException.class);
         tbCustomerService.delete(customer, getCurrentUser());
     }
 

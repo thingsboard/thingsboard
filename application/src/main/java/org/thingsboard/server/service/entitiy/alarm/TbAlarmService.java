@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -38,7 +39,7 @@ public interface TbAlarmService {
 
     AlarmInfo unassign(Alarm alarm, long unassignTs, User user) throws ThingsboardException;
 
-    void unassignUserAlarms(TenantId tenantId, User user, long unassignTs);
+    ListenableFuture<Void> unassignUserAlarms(TenantId tenantId, User user, long unassignTs);
 
     Boolean delete(Alarm alarm, User user);
 }

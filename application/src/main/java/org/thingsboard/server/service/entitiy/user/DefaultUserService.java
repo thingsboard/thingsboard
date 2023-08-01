@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.entitiy.user;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -82,7 +84,8 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
         UserId userId = tbUser.getId();
 
         try {
-            tbAlarmService.unassignUserAlarms(tbUser.getTenantId(), tbUser, System.currentTimeMillis());
+            ListenableFuture<Void> future = tbAlarmService.unassignUserAlarms(tbUser.getTenantId(), tbUser, System.currentTimeMillis());
+            Futures.getChecked(future, ThingsboardException.class);
             userService.deleteUser(tenantId, userId);
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, userId, tbUser,
                     user, ActionType.DELETED, true, null, customerId.toString());

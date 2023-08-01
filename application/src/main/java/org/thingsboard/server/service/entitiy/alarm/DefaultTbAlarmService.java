@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +40,11 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @Service
 @AllArgsConstructor
@@ -216,35 +217,44 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public void unassignUserAlarms(TenantId tenantId, User user, long unassignTs) {
+    public ListenableFuture<Void> unassignUserAlarms(TenantId tenantId, User user, long unassignTs) {
         AlarmQueryV2 alarmQuery = AlarmQueryV2.builder().assigneeId(user.getId()).pageLink(new TimePageLink(Integer.MAX_VALUE)).build();
-        try {
-            List<AlarmInfo> alarms = alarmService.findAlarmsV2(tenantId, alarmQuery).get(30, TimeUnit.SECONDS).getData();
-            for (AlarmInfo alarm : alarms) {
-                AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, alarm.getId(), getOrDefault(unassignTs));
-                if (!result.isSuccessful()) {
-                    continue;
-                }
-                if (result.isModified()) {
-                    AlarmComment alarmComment = AlarmComment.builder()
-                            .alarmId(alarm.getId())
-                            .type(AlarmCommentType.SYSTEM)
-                            .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was unassigned because user %s - was deleted",
-                                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
-                                    .put("userId", user.getId().toString())
-                                    .put("subtype", "ASSIGN"))
-                            .build();
-                    try {
-                        alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
-                    } catch (ThingsboardException e) {
-                        log.error("Failed to save alarm comment", e);
-                    }
-                    notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_UNASSIGNED, user);
+        ListenableFuture<PageData<AlarmInfo>> foundUserAlarmsFuture = alarmService.findAlarmsV2(tenantId, alarmQuery);
+        FutureCallback<PageData<AlarmInfo>> callback = new FutureCallback<>() {
+            public void onSuccess(PageData<AlarmInfo> alarmsData) {
+                for (AlarmInfo alarm : alarmsData.getData()) {
+                    unassignUserAlarm(tenantId, user, unassignTs, alarm);
                 }
             }
 
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            throw new RuntimeException(e);
+            public void onFailure(Throwable t) {
+                log.error("Cannot get alarms for user {}", user.getId(), t);
+            }
+        };
+        Futures.addCallback(foundUserAlarmsFuture, callback, dbExecutor);
+        return Futures.transform(foundUserAlarmsFuture, alarms -> null, dbExecutor);
+    }
+
+    private void unassignUserAlarm(TenantId tenantId, User user, long unassignTs, AlarmInfo alarm) {
+        AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, alarm.getId(), getOrDefault(unassignTs));
+        if (!result.isSuccessful()) {
+            return;
+        }
+        if (result.isModified()) {
+            AlarmComment alarmComment = AlarmComment.builder()
+                    .alarmId(alarm.getId())
+                    .type(AlarmCommentType.SYSTEM)
+                    .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was unassigned because user %s - was deleted",
+                                    (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
+                            .put("userId", user.getId().toString())
+                            .put("subtype", "ASSIGN"))
+                    .build();
+            try {
+                alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
+            } catch (ThingsboardException e) {
+                log.error("Failed to save alarm comment", e);
+            }
+            notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_UNASSIGNED, user);
         }
     }
 

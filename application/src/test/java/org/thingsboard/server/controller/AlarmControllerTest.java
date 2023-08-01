@@ -626,6 +626,58 @@ public class AlarmControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testUnassignAlarmOnCustomerRemoving() throws Exception {
+        createDifferentTenantCustomer();
+        loginDifferentTenant();
+
+        User user = new User();
+        user.setAuthority(Authority.CUSTOMER_USER);
+        user.setTenantId(tenantId);
+        user.setCustomerId(differentTenantCustomerId);
+        user.setEmail("customerForAssign@thingsboard.org");
+        User savedUser = createUser(user, "password");
+
+        Device device = createDevice("Different customer device", "default", "differentTenantTest");
+
+        Device assignedDevice = doPost("/api/customer/" + differentTenantCustomerId.getId()
+                + "/device/" + device.getId().getId(), Device.class);
+        Assert.assertEquals(differentTenantCustomerId, assignedDevice.getCustomerId());
+
+        Alarm alarm = Alarm.builder()
+                .type(TEST_ALARM_TYPE)
+                .tenantId(savedDifferentTenant.getId())
+                .customerId(differentTenantCustomerId)
+                .originator(device.getId())
+                .severity(AlarmSeverity.MAJOR)
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        alarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(alarm);
+
+        Mockito.reset(tbClusterService, auditLogService);
+        long beforeAssignmentTs = System.currentTimeMillis();
+
+        doPost("/api/alarm/" + alarm.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+
+        beforeAssignmentTs = System.currentTimeMillis();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        doDelete("/api/customer/" + differentTenantCustomerId.getId()).andExpect(status().isOk());
+
+        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertNull(foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+    }
+
+    @Test
     public void testFindAlarmsViaCustomerUser() throws Exception {
         loginCustomerUser();
 
