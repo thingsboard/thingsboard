@@ -11,7 +11,8 @@
         "permission-denied-text": "You don't have permission to perform this operation!"
     },
     "account": {
-        "account": "Account"
+        "account": "Account",
+        "notification-settings": "Notification settings"
     },
     "action": {
         "activate": "Activate",
@@ -3220,11 +3221,6 @@
     },
     "profiles": {
         "profiles": "Profiles"
-    },
-    "account": {
-        "account": "Account",
-        "personal-info": "Personal info",
-        "notification-settings": "Notification settings"
     },
     "security": {
         "security": "Security",
