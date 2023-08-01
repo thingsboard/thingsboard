@@ -103,4 +103,18 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
         return stopped;
     }
 
+    @Override
+    public void onQueueDelete() {
+    }
+
+    @Override
+    public boolean isDeleted() {
+        return false;
+    }
+
+    @Override
+    public List<String> getFullTopicNames() {
+        return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+    }
+
 }

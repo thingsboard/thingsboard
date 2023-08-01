@@ -44,6 +44,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     protected volatile Set<TopicPartitionInfo> partitions;
     protected final ReentrantLock consumerLock = new ReentrantLock(); //NonfairSync
     final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
+    protected volatile boolean deleted = false;
 
     @Getter
     private final String topic;
@@ -94,7 +95,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                 partitions = subscribeQueue.poll();
             }
             if (!subscribed) {
-                List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+                List<String> topicNames = getFullTopicNames();
                 doSubscribe(topicNames);
                 subscribed = true;
             }
@@ -190,6 +191,21 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     abstract protected void doCommit();
 
     abstract protected void doUnsubscribe();
+
+    @Override
+    public void onQueueDelete() {
+        deleted = true;
+    }
+
+    @Override
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    @Override
+    public List<String> getFullTopicNames() {
+        return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+    }
 
     protected boolean isLongPollingSupported() {
         return false;

@@ -36,4 +36,10 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     boolean isStopped();
 
+    void onQueueDelete();
+
+    boolean isDeleted();
+
+    List<String> getFullTopicNames();
+
 }
