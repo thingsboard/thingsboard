@@ -360,7 +360,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           this.cellActionDescriptors.push({
             name: this.translate.instant('rulenode.test-with-this-message', {test: this.translate.instant(this.testButtonLabel)}),
             icon: 'bug_report',
-            isEnabled: (entity) => entity.body.type === 'IN',
+            isEnabled: (entity) => entity.body.type === 'IN' || entity.body.error !== undefined,
             onAction: ($event, entity) => {
               this.debugEventSelected.next(entity.body);
             }

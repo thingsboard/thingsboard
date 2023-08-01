@@ -1134,8 +1134,7 @@
         "device-configuration": "設備配置",
         "transport-configuration": "傳輸配置",
         "wizard": {
-            "device-details": "設備詳情",
-            "customer-to-assign-device": "客戶指定設備"
+            "device-details": "設備詳情"
         },
         "unassign-devices-from-edge-title": "您確定要解除邊緣設備 { count, plural, =1 {1 device} other {# devices} }的指定嗎？",
         "unassign-devices-from-edge-text": "確認後邊緣指定設備將解除指定及其所有相關資料將無法恢復。"
@@ -3338,7 +3337,7 @@
         "created": "{{created}}已創建",
         "updated": "{{updated}}已更新",
         "deleted": "{{deleted}} 已刪除",
-        "remove-other-entities-confirm-text": "小心！這將永久刪除您要恢復的版本中不存在的所有當前實體。請鍵入刪除其他實體進行確認。",
+        "remove-other-entities-confirm-text": "小心！這將永久刪除所有在您要恢復的版本中不存在的當前實體。請輸入 \"remove other entities\" 進行確認。",
         "auto-commit-to-branch": "自動提交到{{ branch }}分支",
         "default-create-entity-version-name": "{{entityName}} 更新",
         "sync-strategy-merge-hint": "在存儲庫中創建或更新選定實體。所有其他存儲實體都不會被修改。",

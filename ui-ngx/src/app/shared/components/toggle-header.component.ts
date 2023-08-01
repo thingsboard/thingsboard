@@ -15,18 +15,22 @@
 ///
 
 import {
+  AfterContentChecked,
   AfterContentInit,
+  AfterViewInit,
   ChangeDetectorRef,
   Component,
   ContentChildren,
   Directive,
   ElementRef,
   EventEmitter,
+  HostBinding,
   Input,
   OnDestroy,
   OnInit,
   Output,
-  QueryList
+  QueryList,
+  ViewChild
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -36,6 +40,8 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { startWith, takeUntil } from 'rxjs/operators';
+import { Platform } from '@angular/cdk/platform';
+import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 
 export interface ToggleHeaderOption {
   name: string;
@@ -43,6 +49,8 @@ export interface ToggleHeaderOption {
 }
 
 export type ToggleHeaderAppearance = 'fill' | 'fill-invert' | 'stroked';
+
+export type ScrollDirection = 'after' | 'before';
 
 @Directive(
   {
@@ -72,7 +80,7 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
   @Input()
   options: ToggleHeaderOption[] = [];
 
-  private _destroyed = new Subject<void>();
+  protected _destroyed = new Subject<void>();
 
   protected constructor(protected store: Store<AppState>) {
     super(store);
@@ -109,7 +117,34 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
   templateUrl: './toggle-header.component.html',
   styleUrls: ['./toggle-header.component.scss']
 })
-export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterContentInit, OnDestroy {
+export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterViewInit, AfterContentInit, AfterContentChecked, OnDestroy {
+
+  @ViewChild('toggleGroup', {static: false})
+  toggleGroup: ElementRef<HTMLElement>;
+
+  @ViewChild(MatButtonToggleGroup, {static: false})
+  buttonToggleGroup: MatButtonToggleGroup;
+
+  @ViewChild('toggleGroupContainer', {static: false})
+  toggleGroupContainer: ElementRef<HTMLElement>;
+
+  @HostBinding('class.tb-toggle-header-pagination-controls-enabled')
+  private showPaginationControls = false;
+
+  private toggleGroupResize$: ResizeObserver;
+
+  leftPaginationEnabled = false;
+  rightPaginationEnabled = false;
+
+  private _scrollDistance = 0;
+  private _scrollDistanceChanged: boolean;
+
+  get scrollDistance(): number {
+    return this._scrollDistance;
+  }
+  set scrollDistance(value: number) {
+    this._scrollTo(value);
+  }
 
   @Input()
   value: any;
@@ -119,6 +154,10 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterC
 
   @Input()
   name: string;
+
+  @Input()
+  @coerceBoolean()
+  disablePagination = false;
 
   @Input()
   @coerceBoolean()
@@ -141,6 +180,7 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterC
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
+              private platform: Platform,
               private breakpointObserver: BreakpointObserver) {
     super(store);
   }
@@ -154,9 +194,142 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterC
           this.cd.markForCheck();
         }
       );
+    if (!this.disablePagination) {
+      this.valueChange.pipe(takeUntil(this._destroyed)).subscribe(() => {
+        this.scrollToToggleOptionValue();
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.toggleGroupResize$) {
+      this.toggleGroupResize$.disconnect();
+    }
+    super.ngOnDestroy();
+  }
+
+  ngAfterViewInit() {
+    if (!this.disablePagination && !this.useSelectOnMdLg) {
+      this.toggleGroupResize$ = new ResizeObserver(() => {
+        this.updatePagination();
+      });
+      this.toggleGroupResize$.observe(this.toggleGroupContainer.nativeElement);
+    }
+  }
+
+  ngAfterContentChecked() {
+    if (this._scrollDistanceChanged) {
+      this.updateToggleHeaderScrollPosition();
+      this._scrollDistanceChanged = false;
+      this.cd.markForCheck();
+    }
   }
 
   trackByHeaderOption(index: number, option: ToggleHeaderOption){
     return option.value;
+  }
+
+  handlePaginatorClick(direction: ScrollDirection, $event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.scrollHeader(direction);
+  }
+
+  handlePaginatorTouchStart(direction: ScrollDirection, $event: Event) {
+    if (direction === 'before' && !this.leftPaginationEnabled ||
+        direction === 'after' && !this.rightPaginationEnabled) {
+      $event.preventDefault();
+    }
+  }
+
+  private scrollHeader(direction: ScrollDirection) {
+    const viewLength = this.toggleGroup.nativeElement.offsetWidth;
+    // Move the scroll distance one-third the length of the tab list's viewport.
+    const scrollAmount = ((direction === 'before' ? -1 : 1) * viewLength) / 3;
+    return this._scrollTo(this._scrollDistance + scrollAmount);
+  }
+
+  private scrollToToggleOptionValue() {
+    if (this.buttonToggleGroup && this.buttonToggleGroup.selected) {
+      const selectedToggleButton = this.buttonToggleGroup.selected as MatButtonToggle;
+      const viewLength = this.toggleGroupContainer.nativeElement.offsetWidth;
+      const {offsetLeft, offsetWidth} = (selectedToggleButton._buttonElement.nativeElement.offsetParent as HTMLElement);
+      const labelBeforePos = offsetLeft; // this.toggleGroup.nativeElement.offsetWidth - offsetLeft;
+      const labelAfterPos = labelBeforePos + offsetWidth;
+      const beforeVisiblePos = this.scrollDistance;
+      const afterVisiblePos = this.scrollDistance + viewLength;
+      if (labelBeforePos < beforeVisiblePos) {
+        this.scrollDistance -= beforeVisiblePos - labelBeforePos;
+      } else if (labelAfterPos > afterVisiblePos) {
+        this.scrollDistance += Math.min(
+          labelAfterPos - afterVisiblePos,
+          labelBeforePos - beforeVisiblePos,
+        );
+      }
+    }
+  }
+
+  private updatePagination() {
+    this.checkPaginationEnabled();
+    this.checkPaginationControls();
+    this.updateToggleHeaderScrollPosition();
+  }
+
+  private checkPaginationEnabled() {
+    if (this.toggleGroupContainer) {
+      const isEnabled = this.toggleGroup.nativeElement.scrollWidth > this.toggleGroupContainer.nativeElement.offsetWidth;
+      if (isEnabled !== this.showPaginationControls) {
+        if (!isEnabled) {
+          this.scrollDistance = 0;
+        } else {
+          setTimeout(() => {
+            this.scrollToToggleOptionValue();
+          }, 0);
+        }
+        this.cd.markForCheck();
+        this.showPaginationControls = isEnabled;
+      }
+    } else {
+      this.showPaginationControls = false;
+    }
+  }
+
+  private checkPaginationControls() {
+    if (!this.showPaginationControls) {
+      this.leftPaginationEnabled = this.rightPaginationEnabled = false;
+    } else {
+      // Check if the pagination arrows should be activated.
+      this.leftPaginationEnabled = this.scrollDistance > 0;
+      this.rightPaginationEnabled = this.scrollDistance < this.getMaxScrollDistance();
+      this.cd.markForCheck();
+    }
+  }
+
+  private getMaxScrollDistance(): number {
+    const lengthOfToggleGroup = this.toggleGroup.nativeElement.scrollWidth;
+    const viewLength = this.toggleGroupContainer.nativeElement.offsetWidth;
+    return lengthOfToggleGroup - viewLength || 0;
+  }
+
+  private _scrollTo(position: number) {
+    if (!this.showPaginationControls) {
+      return {maxScrollDistance: 0, distance: 0};
+    } else {
+      const maxScrollDistance = this.getMaxScrollDistance();
+      this._scrollDistance = Math.max(0, Math.min(maxScrollDistance, position));
+      this._scrollDistanceChanged = true;
+      this.checkPaginationControls();
+      return {maxScrollDistance, distance: this._scrollDistance};
+    }
+  }
+
+  private updateToggleHeaderScrollPosition() {
+    const scrollDistance = this.scrollDistance;
+    const translateX = -scrollDistance;
+    this.toggleGroup.nativeElement.style.transform = `translateX(${Math.round(translateX)}px)`;
+    if (this.platform.TRIDENT || this.platform.EDGE) {
+      this.toggleGroupContainer.nativeElement.scrollLeft = 0;
+    }
   }
 }

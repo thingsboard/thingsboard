@@ -21,9 +21,9 @@
     position: relative;
   }
   @media #{$mat-gt-xs} {
-    width: 1200px;
+    width: 900px;
     .mat-mdc-dialog-content {
-      height: 600px;
+      height: 900px;
     }
   }
 }

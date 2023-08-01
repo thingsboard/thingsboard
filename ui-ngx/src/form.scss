@@ -330,24 +330,6 @@
     gap: 12px;
     padding-bottom: 12px;
 
-    .tb-form-table-header {
-      height: 48px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-      display: flex;
-      flex-direction: row;
-      place-content: center flex-start;
-      align-items: center;
-      gap: 12px;
-      padding-left: 12px;
-      &-cell {
-        font-weight: 400;
-        font-size: 14px;
-        line-height: 20px;
-        letter-spacing: 0.2px;
-        color: rgba(0, 0, 0, 0.54);
-      }
-    }
-
     .tb-form-table-body {
       display: flex;
       flex-direction: column;
@@ -359,17 +341,40 @@
     }
   }
 
-  .tb-form-table-row {
-    height: 38px;
+  .tb-form-table-header, .tb-form-table-row {
     display: flex;
     flex-direction: row;
     gap: 12px;
     padding-left: 12px;
+    place-content: center flex-start;
+    align-items: center;
+    &-cell {
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.2px;
+    }
+  }
+
+  .tb-form-table-header {
+    height: 48px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    &-cell {
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
+
+  .tb-form-table-row {
+    height: 38px;
 
     &.tb-draggable {
       gap: 0;
       padding-left: 0;
       background: #fff;
+    }
+
+    &-cell {
+      color: rgba(0, 0, 0, 0.87);
     }
 
     &-cell-buttons {
@@ -411,10 +416,6 @@
       right: 0;
       bottom: 0;
       background: #305680;
-      -webkit-mask-image: url(/assets/home/no_data_folder_bg.svg);
-      -webkit-mask-repeat: no-repeat;
-      -webkit-mask-size: contain;
-      -webkit-mask-position: center;
       mask-image: url(/assets/home/no_data_folder_bg.svg);
       mask-repeat: no-repeat;
       mask-size: contain;
