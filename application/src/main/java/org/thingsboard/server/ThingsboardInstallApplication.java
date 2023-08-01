@@ -37,8 +37,10 @@ import java.util.Arrays;
         "org.thingsboard.server.springfox"
 })
 public class ThingsboardInstallApplication {
-
+//git test
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";
+
+    //test
     private static final String DEFAULT_SPRING_CONFIG_PARAM = SPRING_CONFIG_NAME_KEY + "=" + "thingsboard";
 
     public static void main(String[] args) {
