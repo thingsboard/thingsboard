@@ -39,6 +39,3 @@ export const notificationUserSettingsRoutes: Routes = [
     }
   }
 ];
-
-@NgModule({})
-export class NotificationSettingsRoutingModules { }
