@@ -1325,13 +1325,7 @@
         "device-configuration": "Configuración del dispositivo",
         "transport-configuration": "Configuración del transporte",
         "wizard": {
-            "device-wizard": "Asistente de dispositivo",
-            "device-details": "Detalles del dispositivo",
-            "new-device-profile": "Crear un nuevo perfil de dispositivo",
-            "existing-device-profile": "Seleccionar un perfil existente",
-            "specific-configuration": "Configuración específica",
-            "customer-to-assign-device": "Cliente al que asignar el dispositivo",
-            "add-credentials": "Añadir credencial"
+            "device-details": "Detalles del dispositivo"
         },
         "unassign-devices-from-edge-title": "¿Está seguro de que desea desasignar {count, plural, =1 {1 dispositivo} other {# dispositivos} }?",
         "unassign-devices-from-edge-text": "Después de la confirmación, todos los dispositivos seleccionados quedarán sin asignar y el Edge no podrá acceder a ellos."
@@ -1398,8 +1392,6 @@
         "delete": "Borrar perfil de dispositivo",
         "copyId": "Copiar ID de perfil",
         "name-max-length": "El nombre debe ser menor de 256",
-        "new-device-profile-name": "Nombre de perfil",
-        "new-device-profile-name-required": "Se requiere nombre de perfil.",
         "name": "Nombre",
         "name-required": "Se requiere nombre.",
         "type": "Tipo de perfil",
@@ -3914,7 +3906,7 @@
         "created": "{{created}} creadas",
         "updated": "{{updated}} actualizadas",
         "deleted": "{{deleted}} borradas",
-        "remove-other-entities-confirm-text": "Atención! Esta acción <b>borrará</b> permanentemente <b>todas</b> las entidades actuales<br/>no presentes en la versión a restaurar.<br/><br/>Escribe <b>remove other entities</b> para confirmar.",
+        "remove-other-entities-confirm-text": "Atención! Esta acción <b>borrará</b> permanentemente <b>todas</b> las entidades actuales<br/>no presentes en la versión a restaurar.<br/><br/>Escribe <b>\"remove other entities\"</b> para confirmar.",
         "auto-commit-to-branch": "auto-publicar a la rama <b>{{ branch }}</b>",
         "default-create-entity-version-name": "{{entityName}} actualización",
         "sync-strategy-merge-hint": "Crea o actualiza las entidades seleccionadas en el repositorio. Las demás entidades <b>no serán modificadas</b>.",

@@ -111,8 +111,7 @@ export class MenuService {
         name: 'tenant-profile.tenant-profiles',
         type: 'link',
         path: '/tenantProfiles',
-        icon: 'mdi:alpha-t-box',
-        isMdiIcon: true
+        icon: 'mdi:alpha-t-box'
       },
       {
         id: 'resources',
@@ -133,8 +132,7 @@ export class MenuService {
             name: 'resource.resources-library',
             type: 'link',
             path: '/resources/resources-library',
-            icon: 'mdi:rhombus-split',
-            isMdiIcon: true
+            icon: 'mdi:rhombus-split'
           }
         ]
       },
@@ -180,7 +178,6 @@ export class MenuService {
         type: 'link',
         path: '/notification',
         icon: 'mdi:message-badge',
-        isMdiIcon: true,
         pages: [
           {
             id: 'notification_inbox',
@@ -212,8 +209,7 @@ export class MenuService {
             fullName: 'notification.notification-templates',
             type: 'link',
             path: '/notification/templates',
-            icon: 'mdi:message-draw',
-            isMdiIcon: true
+            icon: 'mdi:message-draw'
           },
           {
             id: 'notification_rules',
@@ -221,8 +217,7 @@ export class MenuService {
             fullName: 'notification.notification-rules',
             type: 'link',
             path: '/notification/rules',
-            icon: 'mdi:message-cog',
-            isMdiIcon: true
+            icon: 'mdi:message-cog'
           }
         ]
       },
@@ -254,8 +249,7 @@ export class MenuService {
             fullName: 'admin.notifications-settings',
             type: 'link',
             path: '/settings/notifications',
-            icon: 'mdi:message-badge',
-            isMdiIcon: true
+            icon: 'mdi:message-badge'
           },
           {
             id: 'queues',
@@ -286,16 +280,14 @@ export class MenuService {
             name: 'admin.2fa.2fa',
             type: 'link',
             path: '/security-settings/2fa',
-            icon: 'mdi:two-factor-authentication',
-            isMdiIcon: true
+            icon: 'mdi:two-factor-authentication'
           },
           {
             id: 'oauth2',
             name: 'admin.oauth2.oauth2',
             type: 'link',
             path: '/security-settings/oauth2',
-            icon: 'mdi:shield-account',
-            isMdiIcon: true
+            icon: 'mdi:shield-account'
           }
         ]
       }
@@ -317,7 +309,6 @@ export class MenuService {
           {
             name: 'tenant-profile.tenant-profiles',
             icon: 'mdi:alpha-t-box',
-            isMdiIcon: true,
             path: '/tenantProfiles'
           },
         ]
@@ -363,7 +354,6 @@ export class MenuService {
           {
             name: 'admin.2fa.2fa',
             icon: 'mdi:two-factor-authentication',
-            isMdiIcon: true,
             path: '/settings/2fa'
           },
           {
@@ -397,8 +387,7 @@ export class MenuService {
         name: 'alarm.alarms',
         type: 'link',
         path: '/alarms',
-        icon: 'mdi:alert-outline',
-        isMdiIcon: true
+        icon: 'mdi:alert-outline'
       },
       {
         id: 'dashboards',
@@ -449,16 +438,14 @@ export class MenuService {
             name: 'device-profile.device-profiles',
             type: 'link',
             path: '/profiles/deviceProfiles',
-            icon: 'mdi:alpha-d-box',
-            isMdiIcon: true
+            icon: 'mdi:alpha-d-box'
           },
           {
             id: 'asset_profiles',
             name: 'asset-profile.asset-profiles',
             type: 'link',
             path: '/profiles/assetProfiles',
-            icon: 'mdi:alpha-a-box',
-            isMdiIcon: true
+            icon: 'mdi:alpha-a-box'
           }
         ]
       },
@@ -549,8 +536,7 @@ export class MenuService {
             name: 'resource.resources-library',
             type: 'link',
             path: '/resources/resources-library',
-            icon: 'mdi:rhombus-split',
-            isMdiIcon: true
+            icon: 'mdi:rhombus-split'
           }
         ]
       },
@@ -596,7 +582,6 @@ export class MenuService {
         type: 'link',
         path: '/notification',
         icon: 'mdi:message-badge',
-        isMdiIcon: true,
         pages: [
           {
             id: 'notification_inbox',
@@ -628,8 +613,7 @@ export class MenuService {
             fullName: 'notification.notification-templates',
             type: 'link',
             path: '/notification/templates',
-            icon: 'mdi:message-draw',
-            isMdiIcon: true
+            icon: 'mdi:message-draw'
           },
           {
             id: 'notification_rules',
@@ -637,8 +621,7 @@ export class MenuService {
             fullName: 'notification.notification-rules',
             type: 'link',
             path: '/notification/rules',
-            icon: 'mdi:message-cog',
-            isMdiIcon: true
+            icon: 'mdi:message-cog'
           }
         ]
       },
@@ -670,8 +653,7 @@ export class MenuService {
             fullName: 'admin.notifications-settings',
             type: 'link',
             path: '/settings/notifications',
-            icon: 'mdi:message-badge',
-            isMdiIcon: true
+            icon: 'mdi:message-badge'
           },
           {
             id: 'repository_settings',
@@ -745,7 +727,6 @@ export class MenuService {
           {
             name: 'asset-profile.asset-profiles',
             icon: 'mdi:alpha-a-box',
-            isMdiIcon: true,
             path: '/profiles/assetProfiles'
           }
         ]
@@ -761,7 +742,6 @@ export class MenuService {
           {
             name: 'device-profile.device-profiles',
             icon: 'mdi:alpha-d-box',
-            isMdiIcon: true,
             path: '/profiles/deviceProfiles'
           },
           {
@@ -886,8 +866,7 @@ export class MenuService {
         name: 'alarm.alarms',
         type: 'link',
         path: '/alarms',
-        icon: 'mdi:alert-outline',
-        isMdiIcon: true
+        icon: 'mdi:alert-outline'
       },
       {
         id: 'dashboards',
@@ -974,7 +953,6 @@ export class MenuService {
         type: 'link',
         path: '/notification',
         icon: 'mdi:message-badge',
-        isMdiIcon: true,
         pages: [
           {
             id: 'notification_inbox',

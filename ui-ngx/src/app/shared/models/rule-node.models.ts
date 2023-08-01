@@ -26,6 +26,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
+import { DebugRuleNodeEventBody } from '@shared/models/event.models';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
@@ -71,10 +73,14 @@ export interface RuleNodeConfigurationDescriptor {
 export interface IRuleNodeConfigurationComponent {
   ruleNodeId: string;
   ruleChainId: string;
+  hasScript: boolean;
+  testScriptLabel?: string;
+  changeScript?: EventEmitter<void>;
   ruleChainType: RuleChainType;
   configuration: RuleNodeConfiguration;
   configurationChanged: Observable<RuleNodeConfiguration>;
   validate();
+  testScript? (debugEventBody?: DebugRuleNodeEventBody);
   [key: string]: any;
 }
 
@@ -86,6 +92,8 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
   ruleNodeId: string;
 
   ruleChainId: string;
+
+  hasScript: boolean = false;
 
   ruleChainType: RuleChainType;
 
@@ -499,3 +507,4 @@ export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): str
   }
   return 'ruleEngine';
 }
+

@@ -81,7 +81,7 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
         (rule) => this.translate.instant(TriggerTypeTranslationMap.get(rule.triggerType)) || '',
         () => ({}), true),
       new EntityTableColumn<NotificationRule>('additionalConfig.description', 'notification.description', '30%',
-        (target) => target.additionalConfig.description || '',
+        (target) => target.additionalConfig?.description || '',
         () => ({}), false)
     );
   }

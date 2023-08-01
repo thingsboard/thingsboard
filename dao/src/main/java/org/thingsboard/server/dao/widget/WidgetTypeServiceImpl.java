@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
@@ -37,6 +38,7 @@ import java.util.Optional;
 public class WidgetTypeServiceImpl implements WidgetTypeService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+    public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
     public static final String INCORRECT_BUNDLE_ALIAS = "Incorrect bundleAlias ";
     @Autowired
     private WidgetTypeDao widgetTypeDao;
@@ -94,6 +96,14 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validateString(bundleAlias, INCORRECT_BUNDLE_ALIAS + bundleAlias);
         return widgetTypeDao.findWidgetTypesInfosByTenantIdAndBundleAlias(tenantId.getId(), bundleAlias);
+    }
+
+    @Override
+    public List<WidgetTypeDetails> findWidgetTypesInfosByTenantIdAndResourceId(TenantId tenantId, TbResourceId tbResourceId) {
+        log.trace("Executing findWidgetTypesInfosByTenantIdAndResourceId, tenantId [{}], tbResourceId [{}]", tenantId, tbResourceId);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(tbResourceId, INCORRECT_RESOURCE_ID + tbResourceId);
+        return widgetTypeDao.findWidgetTypesInfosByTenantIdAndResourceId(tenantId.getId(), tbResourceId.getId());
     }
 
     @Override

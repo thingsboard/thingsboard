@@ -15,13 +15,17 @@
     limitations under the License.
 
 -->
-<mat-select fxFlex
-            class="tb-rule-chain-select"
-            [required]="required"
-            [disabled]="disabled"
-            [(ngModel)]="ruleChainId"
-            (ngModelChange)="ruleChainIdChanged()">
-  <mat-option *ngFor="let ruleChain of ruleChains$ | async" [value]="ruleChain.id.id">
-    {{ruleChain.name}}
-  </mat-option>
-</mat-select>
+<mat-form-field class="tb-rule-select" subscriptSizing="dynamic">
+  <mat-icon matPrefix>settings_ethernet</mat-icon>
+  <mat-select fxFlex
+              class="tb-rule-chain-select"
+              hideSingleSelectionIndicator="false"
+              [required]="required"
+              [disabled]="disabled"
+              [(ngModel)]="ruleChainId"
+              (ngModelChange)="ruleChainIdChanged()">
+    <mat-option *ngFor="let ruleChain of ruleChains$ | async" [value]="ruleChain.id.id">
+      {{ruleChain.name}}
+    </mat-option>
+  </mat-select>
+</mat-form-field>

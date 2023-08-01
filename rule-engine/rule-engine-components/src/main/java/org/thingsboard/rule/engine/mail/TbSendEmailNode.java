@@ -22,10 +22,10 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbEmail;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -47,7 +47,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         configDirective = "tbExternalNodeSendEmailConfig",
         icon = "send"
 )
-public class TbSendEmailNode implements TbNode {
+public class TbSendEmailNode extends TbAbstractExternalNode {
 
     private static final String MAIL_PROP = "mail.";
     static final String SEND_EMAIL_TYPE = "SEND_EMAIL";
@@ -56,8 +56,9 @@ public class TbSendEmailNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        super.init(ctx);
+        this.config = TbNodeUtils.convert(configuration, TbSendEmailNodeConfiguration.class);
         try {
-            this.config = TbNodeUtils.convert(configuration, TbSendEmailNodeConfiguration.class);
             if (!this.config.isUseSystemSmtpSettings()) {
                 mailSender = createMailSender();
             }
@@ -71,12 +72,13 @@ public class TbSendEmailNode implements TbNode {
         try {
             validateType(msg.getType());
             TbEmail email = getEmail(msg);
+            var tbMsg = ackIfNeeded(ctx, msg);
             withCallback(ctx.getMailExecutor().executeAsync(() -> {
-                        sendEmail(ctx, msg, email);
+                        sendEmail(ctx, tbMsg, email);
                         return null;
                     }),
-                    ok -> ctx.tellSuccess(msg),
-                    fail -> ctx.tellFailure(msg, fail));
+                    ok -> tellSuccess(ctx, tbMsg),
+                    fail -> tellFailure(ctx, tbMsg, fail));
         } catch (Exception ex) {
             ctx.tellFailure(msg, ex);
         }

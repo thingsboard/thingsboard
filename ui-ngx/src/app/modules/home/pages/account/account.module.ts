@@ -15,16 +15,13 @@
 ///
 
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { SharedModule } from '@shared/shared.module';
 import { AccountRoutingModule } from '@home/pages/account/account-routing.module';
+import { CommonModule } from '@angular/common';
 
 @NgModule({
-  declarations: [
-  ],
+  declarations: [ ],
   imports: [
     CommonModule,
-    SharedModule,
     AccountRoutingModule
   ]
 })
