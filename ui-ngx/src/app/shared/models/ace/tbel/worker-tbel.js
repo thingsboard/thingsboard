@@ -5229,10 +5229,6 @@ var JSHINT = (function() {
     var a = [], p;
 
     while (!state.tokens.next.reach && state.tokens.next.id !== "(end)") {
-      if (state.tokens.next.value === "switch") {
-        warning("E067", state.tokens.next, "switch");
-        break;
-      }
       if (state.tokens.next.id === ";") {
         p = peek();
 
@@ -9219,7 +9215,7 @@ var JSHINT = (function() {
         statements(0);
       }
 
-      if (state.tokens.next.id !== "(end)"&& state.tokens.next.value !== "switch") {
+      if (state.tokens.next.id !== "(end)") {
         quit("E041", state.tokens.curr);
       }
 
@@ -11270,8 +11266,7 @@ var errors = {
   E064: "Super call may only be used within class method bodies.",
   E065: "Functions defined outside of strict mode with non-simple parameter lists may not " +
     "enable strict mode.",
-  E066: "Asynchronous iteration is only available with for-of loops.",
-  E067: "Expected an 'if/else' and instead saw 'switch'. TBEL does not support the 'switch' statement."
+  E066: "Asynchronous iteration is only available with for-of loops."
 };
 
 var warnings = {
