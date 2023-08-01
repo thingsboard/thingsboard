@@ -20,8 +20,10 @@
     <tb-toggle-select *ngIf="!hideToggleHeader && widgetConfigMode === widgetConfigModes.advanced"
                       appearance="fill" [options]="headerOptions" [(ngModel)]="selectedOption">
     </tb-toggle-select>
-    <ng-content select=".tb-widget-config-header-prefix"></ng-content>
-    <ng-content select=".tb-widget-config-header-suffix"></ng-content>
+    <div class="tb-widget-config-header-components">
+      <ng-content select=".tb-widget-config-header-prefix"></ng-content>
+      <ng-content select=".tb-widget-config-header-suffix"></ng-content>
+    </div>
   </div>
   <div *ngIf="widgetConfigMode === widgetConfigModes.advanced; else basicMode" class="tb-widget-config-content">
     <div *ngIf="widgetType !== widgetTypes.static" [fxShow]="selectedOption === 'data'" class="mat-content">
@@ -48,18 +50,18 @@
             <input matInput formControlName="titleTooltip" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
-        <div class="tb-form-row space-between">
+        <div class="tb-form-row space-between column-xs">
           <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
             {{ 'widget-config.display-icon' | translate }}
           </mat-slide-toggle>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="iconSize">
+            </mat-form-field>
             <tb-material-icon-select asBoxInput
                                      [color]="widgetSettings.get('iconColor').value"
               formControlName="titleIcon">
             </tb-material-icon-select>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <input matInput formControlName="iconSize">
-            </mat-form-field>
             <tb-color-input asBoxInput
                             formControlName="iconColor">
             </tb-color-input>
@@ -247,7 +249,7 @@
     </div>
     <div *ngIf="displayLimits" class="tb-form-panel" [formGroup]="widgetSettings">
       <div class="tb-form-panel-title" translate>widget-config.limits</div>
-      <div class="tb-form-row space-between">
+      <div class="tb-form-row space-between column-xs">
         <div translate>widget-config.data-page-size</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="pageSize" type="number" min="1" step="1">
@@ -258,19 +260,19 @@
   <ng-template #appearance>
     <div *ngIf="displayAppearanceDataSettings" class="tb-form-panel" [formGroup]="widgetSettings">
       <div class="tb-form-panel-title" translate>widget-config.data-settings</div>
-      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between">
+      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between column-xs">
         <div translate>widget-config.units</div>
         <tb-unit-input
           formControlName="units">
         </tb-unit-input>
       </div>
-      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between">
+      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between column-xs">
         <div translate>widget-config.decimals</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
       </div>
-      <div *ngIf="displayNoDataDisplayMessageConfig" class="tb-form-row">
+      <div *ngIf="displayNoDataDisplayMessageConfig" class="tb-form-row column-xs">
         <div class="fixed-title-width" translate>widget-config.no-data-display-message</div>
         <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="noDataDisplayMessage" placeholder="{{ 'widget-config.set-message' | translate }}">

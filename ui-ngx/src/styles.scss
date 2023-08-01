@@ -625,8 +625,35 @@ mat-label {
         color: white;
       }
     }
-    .mat-mdc-select-value, .mat-mdc-select-arrow {
+    .mat-mdc-select-value, .mat-mdc-select-arrow, .mat-mdc-select-arrow:after {
       color: white;
+    }
+    .mat-mdc-text-field-wrapper {
+      &.mdc-text-field--outlined {
+        &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(.mdc-text-field--invalid) {
+          &:not(:hover) {
+            .mdc-notched-outline {
+              .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+                border-color: white;
+              }
+            }
+          }
+          &:hover {
+            .mdc-notched-outline {
+              .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+                border-color: rgba(255, 255, 255, 0.87);
+              }
+            }
+          }
+        }
+        &:not(.mdc-text-field--disabled).mdc-text-field--focused {
+          .mdc-notched-outline {
+            .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+              border-color: rgba(255, 255, 255, 0.67);
+            }
+          }
+        }
+      }
     }
   }
 

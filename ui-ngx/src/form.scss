@@ -16,6 +16,15 @@
 
 @import './scss/constants';
 
+@mixin form-row-column($breakpoint) {
+  @media #{$breakpoint} {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 12px 12px 16px;
+  }
+}
+
 .tb-default, .tb-dark {
   .tb-form-panel {
     box-shadow: 0 0 10px 6px rgba(11, 17, 51, 0.04);
@@ -27,6 +36,10 @@
     color: rgba(0, 0, 0, 0.87);
     letter-spacing: 0.15px;
     position: relative;
+    @media #{$mat-xs} {
+      padding: 12px;
+      gap: 8px;
+    }
     &.no-padding-bottom {
       padding-bottom: 0;
     }
@@ -52,7 +65,6 @@
       > .mat-expansion-panel {
         padding: 16px;
         .mat-expansion-panel-header {
-          height: 32px;
           .mat-slide {
             margin: 0;
           }
@@ -66,6 +78,7 @@
           overflow: visible;
         }
         > .mat-expansion-panel-header {
+          height: fit-content;
           user-select: none;
           font-weight: 500;
           font-size: 16px;
@@ -98,6 +111,10 @@
             flex-direction: column;
             gap: 16px;
             padding: 16px 0 0 !important;
+            @media #{$mat-xs} {
+              padding: 12px 0 0 !important;
+              gap: 8px;
+            }
           }
         }
         .tb-json-object-panel, .tb-css-content-panel {
@@ -139,6 +156,14 @@
     padding: 7px 7px 7px 16px;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 6px;
+    &.column {
+      &-xs {
+        @include form-row-column($mat-xs)
+      }
+      &-lt-md {
+        @include form-row-column($mat-lt-md)
+      }
+    }
     &.no-border {
       border: none;
       border-radius: 0;
@@ -360,12 +385,14 @@
   }
 
   .tb-form-table-row {
-    height: 38px;
     display: flex;
     flex-direction: row;
-    gap: 12px;
-    padding-left: 12px;
-
+    gap: 8px;
+    padding-left: 8px;
+    @media #{$mat-gt-md} {
+      gap: 12px;
+      padding-left: 12px;
+    }
     &.tb-draggable {
       gap: 0;
       padding-left: 0;
@@ -376,12 +403,7 @@
       display: flex;
       flex-direction: row;
       button.mat-mdc-icon-button.mat-mdc-button-base {
-        padding: 7px;
-        width: 38px;
-        height: 38px;
-        .mat-icon {
-          color: rgba(0, 0, 0, 0.38);
-        }
+        color: rgba(0, 0, 0, 0.38);
         &.tb-hidden {
           visibility: hidden;
         }
@@ -434,26 +456,32 @@
     }
   }
 
-  button.mat-mdc-button-base.tb-box-button {
+  button.mat-mdc-button-base.tb-box-button, .tb-form-table-row-cell-buttons button.mat-mdc-icon-button.mat-mdc-button-base {
     width: 40px;
     min-width: 40px;
     height: 40px;
-    padding: 7px;
+    padding: 8px;
+    &.mat-mdc-outlined-button {
+      padding: 7px;
+    }
     .mat-mdc-button-touch-target {
       width: 40px;
       height: 40px;
-    }
-    &:not(:disabled) {
-      color: rgba(0, 0, 0, 0.54);
-    }
-    &:disabled {
-      color: rgba(0, 0, 0, 0.12);
     }
     > .mat-icon {
       width: 24px;
       height: 24px;
       font-size: 24px;
       margin: 0;
+    }
+  }
+
+  button.mat-mdc-button-base.tb-box-button {
+    &:not(:disabled) {
+      color: rgba(0, 0, 0, 0.54);
+    }
+    &:disabled {
+      color: rgba(0, 0, 0, 0.12);
     }
   }
 }

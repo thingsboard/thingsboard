@@ -17,6 +17,9 @@
   min-width: 48px;
   margin: 8px 0;
   max-width: 100%;
+  &.no-margin {
+    margin: 0;
+  }
   .mdc-button {
     max-width: 100%;
   }

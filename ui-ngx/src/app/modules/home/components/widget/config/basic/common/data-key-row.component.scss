@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../../../../../../../../scss/constants';
+
 .tb-data-key-row {
   .mat-mdc-form-field.tb-inline-field.tb-key-field {
     .mat-mdc-text-field-wrapper:not(.mdc-text-field--outlined) {
+      padding-left: 8px;
+      padding-right: 0;
       .mat-mdc-form-field-infix {
         padding-top: 0;
         padding-bottom: 6px;
@@ -38,16 +43,21 @@
   }
 
   .tb-source-field {
-    width: 120px;
-    min-width: 120px;
+    width: 108px;
+    min-width: 108px;
   }
 
   .tb-key-field {
-    flex: 1 1 60%;
+    flex: 1;
+    min-width: 150px;
+    @media #{$mat-gt-sm} {
+      flex: 1 1 60%;
+    }
   }
 
   .tb-label-field {
     flex: 1 1 40%;
+    min-width: 100px;
   }
 
   .tb-color-field, .tb-units-field, .tb-decimals-field {
@@ -62,8 +72,20 @@
     min-width: 80px;
   }
 
-  .tb-color-field, .tb-decimals-field {
+  .tb-color-field {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .tb-decimals-field {
     width: 60px;
     min-width: 60px;
+  }
+
+  .tb-label-field, .tb-units-field, .tb-color-field, .tb-decimals-field {
+    display: none;
+    @media #{$mat-gt-sm} {
+      display: block;
+    }
   }
 }

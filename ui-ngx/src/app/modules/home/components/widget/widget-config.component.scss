@@ -20,16 +20,36 @@
 .tb-widget-config {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   .tb-widget-config-header {
-    padding: 24px 24px 8px;
-    height: 56px;
+    padding: 24px 24px 0;
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    gap: 12px;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    @media #{$mat-gt-sm} {
+      gap: 0;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tb-widget-config-header-components {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
   }
   .tb-widget-config-content {
+    & > .mat-content {
+      padding-top: 8px;
+      @media #{$mat-xs} {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+    }
     flex: 1;
     overflow: auto;
     & > div {
@@ -39,6 +59,9 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+      @media #{$mat-xs} {
+        gap: 8px;
+      }
     }
   }
   .tb-basic-mode-directive-error {
