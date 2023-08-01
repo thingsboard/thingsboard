@@ -85,20 +85,12 @@
                 'attribute.selected-telemetry' : 'attribute.selected-attributes') | translate:{count: dataSource.selection.selected.length} }}
         </span>
         <span fxFlex></span>
-        <button [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)"
+        <button [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope) || attributeScope === latestTelemetryTypes.LATEST_TELEMETRY"
                 class="button-widget-action"
                 mat-icon-button [disabled]="isLoading$ | async"
                 matTooltip="{{ 'action.delete' | translate }}"
                 matTooltipPosition="above"
-                (click)="deleteAttributes($event)">
-          <mat-icon>delete</mat-icon>
-        </button>
-        <button [fxShow]="attributeScope === latestTelemetryTypes.LATEST_TELEMETRY"
-                class="button-widget-action"
-                mat-icon-button [disabled]="isLoading$ | async"
-                matTooltip="{{ 'action.delete' | translate }}"
-                matTooltipPosition="above"
-                (click)="deleteTimeseries($event)">
+                (click)="deleteTelemetry($event)">
           <mat-icon>delete</mat-icon>
         </button>
         <button mat-raised-button color="accent"

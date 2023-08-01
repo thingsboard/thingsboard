@@ -438,14 +438,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
           deleteLatest = false;
         }
         if (strategy === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE) {
-          rewriteLatestIfDeleted = componentRef.instance.rewriteLatestIfDeleted;
+          rewriteLatestIfDeleted = componentRef.instance.getRewriteLatestFormControl().value;
           startTs = deleteTimeseries[0].lastUpdateTs;
           endTs = startTs + 1;
         }
         if (strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD) {
-          startTs = componentRef.instance.startDateTime.getTime();
-          endTs = componentRef.instance.endDateTime.getTime();
-          rewriteLatestIfDeleted = componentRef.instance.rewriteLatestIfDeleted;
+          startTs = componentRef.instance.getStartDateTimeFormControl().value.getTime();
+          endTs = componentRef.instance.getEndDateTimeFormControl().value.getTime();
+          rewriteLatestIfDeleted = componentRef.instance.getRewriteLatestFormControl().value;
         }
         this.attributeService.deleteEntityTimeseries(this.entityIdValue, deleteTimeseries, deleteAllDataForKeys,
           startTs, endTs, rewriteLatestIfDeleted, deleteLatest).subscribe(() => this.reloadAttributes());
@@ -474,6 +474,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
           );
         }
       });
+    }
+  }
+
+  deleteTelemetry($event: Event) {
+    if (this.attributeScope === this.latestTelemetryTypes.LATEST_TELEMETRY) {
+      this.deleteTimeseries($event);
+    } else {
+      this.deleteAttributes($event);
     }
   }
 
