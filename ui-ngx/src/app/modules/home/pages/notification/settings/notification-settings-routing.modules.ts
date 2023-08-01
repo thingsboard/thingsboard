@@ -36,7 +36,7 @@ export class NotificationUserSettingsResolver implements Resolve<any> {
   }
 }
 
-export const NotificationUserSettingsRoutes: Routes = [
+export const notificationUserSettingsRoutes: Routes = [
   {
     path: 'notificationSettings',
     component: NotificationSettingsComponent,
