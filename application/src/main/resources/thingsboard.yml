@@ -987,6 +987,35 @@ transport:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
 
+# Device connectivity properties to publish telemetry
+device:
+  connectivity:
+    http:
+      enabled: "${DEVICE_CONNECTIVITY_HTTP_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_HTTP_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_HTTP_PORT:8080}"
+    https:
+      enabled: "${DEVICE_CONNECTIVITY_HTTPS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_HTTPS_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_HTTPS_PORT:443}"
+    mqtt:
+      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_MQTT_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_MQTT_PORT:1883}"
+    mqtts:
+      enabled: "${DEVICE_CONNECTIVITY_MQTTS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_MQTTS_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_MQTTS_PORT:8883}"
+      pem_cert_file: "${DEVICE_CONNECTIVITY_MQTT_SSL_PEM_CERT:mqttserver.pem}"
+    coap:
+      enabled: "${DEVICE_CONNECTIVITY_COAP_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_COAP_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_COAP_PORT:5683}"
+    coaps:
+      enabled: "${DEVICE_CONNECTIVITY_COAPS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_COAPS_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_COAPS_PORT:5684}"
+
 # Edges parameters
 edges:
   enabled: "${EDGES_ENABLED:true}"

@@ -66,8 +66,6 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
 
     protected final Map<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
     protected final Map<String, TbelScript> scriptMap = new ConcurrentHashMap<>();
-    private final String tbelSwitch = "switch";
-    private final String tbelSwitchErrorMsg =  "TBEL does not support the 'switch'.";
     protected Cache<String, Serializable> compiledScriptsCache;
 
     private SandboxedParserConfiguration parserConfig;
@@ -183,11 +181,6 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
                     lock.unlock();
                 }
                 return scriptId;
-            } catch (CompileException ce) {
-                if ( ce.getExpr() != null && new String(ce.getExpr()).contains(tbelSwitch)) {
-                    ce = new CompileException(tbelSwitchErrorMsg, ce.getExpr(), ce.getCursor(), ce.getCause());
-                }
-                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, ce);
             } catch (Exception e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
             }
