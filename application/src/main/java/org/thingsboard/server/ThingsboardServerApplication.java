@@ -47,5 +47,4 @@ public class ThingsboardServerApplication {
     }
 }
 
-// git test?
 // git test
