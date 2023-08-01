@@ -14,27 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Resolve, RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
-import { Injectable, NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { NotificationSettingsComponent } from '@home/pages/notification/settings/notification-settings.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { Observable } from 'rxjs';
 import { NotificationService } from '@core/http/notification.service';
-
-@Injectable()
-export class NotificationUserSettingsResolver implements Resolve<any> {
-
-  constructor(private store: Store<AppState>,
-              private notificationService: NotificationService) {
-  }
-
-  resolve(): Observable<any> {
-    return this.notificationService.getNotificationUserSettings();
-  }
-}
 
 export const notificationUserSettingsRoutes: Routes = [
   {
@@ -50,21 +35,10 @@ export const notificationUserSettingsRoutes: Routes = [
       }
     },
     resolve: {
-      userSettings: NotificationUserSettingsResolver
+      userSettings: () => inject(NotificationService).getNotificationUserSettings()
     }
   }
 ];
 
-const routes: Routes = [
-  {
-    path: 'notificationSettings',
-    redirectTo: '/account/notificationSettings'
-  }
-];
-
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-  providers: [NotificationUserSettingsResolver]
-})
+@NgModule({})
 export class NotificationSettingsRoutingModules { }
