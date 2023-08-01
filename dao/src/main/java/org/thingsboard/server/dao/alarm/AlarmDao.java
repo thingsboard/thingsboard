@@ -98,6 +98,6 @@ public interface AlarmDao extends Dao<Alarm> {
 
     long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
 
-    List<EntitySubtype> findTenantAlarmTypesAsync(UUID tenantId);
+    List<EntitySubtype> findTenantAlarmTypes(UUID tenantId);
 
 }

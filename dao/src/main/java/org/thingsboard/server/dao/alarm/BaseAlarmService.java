@@ -401,7 +401,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Arra
         log.trace("Executing findAlarmTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return cache.getAndPutInTransaction(tenantId, () ->
-                alarmDao.findTenantAlarmTypesAsync(tenantId.getId()).stream()
+                alarmDao.findTenantAlarmTypes(tenantId.getId()).stream()
                         .sorted(Comparator.comparing(EntitySubtype::getType))
                         .collect(Collectors.toCollection(ArrayList::new)), false);
     }

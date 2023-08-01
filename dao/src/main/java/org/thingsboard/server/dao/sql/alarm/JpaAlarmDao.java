@@ -370,7 +370,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public List<EntitySubtype> findTenantAlarmTypesAsync(UUID tenantId) {
+    public List<EntitySubtype> findTenantAlarmTypes(UUID tenantId) {
         return convertTenantEntityTypesToDto(tenantId, EntityType.ALARM, alarmRepository.findTenantAlarmTypes(tenantId));
     }
 
