@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.server.service.rpc;
 
-import lombok.Data;
-import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
+import java.util.Arrays;
 
-import java.util.concurrent.ScheduledFuture;
+public enum RpcSubmitStrategy {
 
-/**
- * @author Andrew Shvayka
- */
-@Data
-public class ToDeviceRpcRequestMetadata {
-    private final ToDeviceRpcRequestActorMsg msg;
-    private final boolean sent;
-    private int retries;
-    private boolean delivered;
-    private ScheduledFuture<?> awaitRpcResponseFuture;
+    BURST, SEQUENTIAL_ON_ACK_FROM_DEVICE, SEQUENTIAL_ON_RESPONSE_FROM_DEVICE;
+
+    public static RpcSubmitStrategy parse(String strategyStr) {
+        return Arrays.stream(RpcSubmitStrategy.values())
+                .filter(strategy -> strategy.name().equalsIgnoreCase(strategyStr))
+                .findFirst()
+                .orElse(BURST);
+    }
 }

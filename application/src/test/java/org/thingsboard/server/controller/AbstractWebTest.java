@@ -65,6 +65,7 @@ import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.device.DeviceActor;
 import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
 import org.thingsboard.server.actors.device.SessionInfo;
+import org.thingsboard.server.actors.device.ToDeviceRpcRequestMetadata;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -988,6 +989,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Awaitility.await("Device actor received subscription command from the transport").atMost(5, TimeUnit.SECONDS).until(() -> {
             log.warn("device {}, subscriptions.size() == {}", deviceId, subscriptions.size());
             return subscriptions.size() == subscriptionCount;
+        });
+    }
+
+    protected void awaitForDeviceActorToProcessAllRpcResponses(DeviceId deviceId) {
+        DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
+        Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap = (Map<Integer, ToDeviceRpcRequestMetadata>) ReflectionTestUtils.getField(processor, "toDeviceRpcPendingMap");
+        Awaitility.await("Device actor pending map is empty").atMost(5, TimeUnit.SECONDS).until(() -> {
+            log.warn("device {}, toDeviceRpcPendingMap.size() == {}", deviceId, toDeviceRpcPendingMap.size());
+            return toDeviceRpcPendingMap.isEmpty();
         });
     }
 

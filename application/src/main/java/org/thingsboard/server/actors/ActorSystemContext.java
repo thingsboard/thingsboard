@@ -115,7 +115,6 @@ import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.ConcurrentHashMap;
@@ -528,9 +527,13 @@ public class ActorSystemContext {
     @Getter
     private String debugPerTenantLimitsConfiguration;
 
-    @Value("${actors.rpc.sequential:false}")
+    @Value("${actors.rpc.submit_strategy:BURST}")
     @Getter
-    private boolean rpcSequential;
+    private String rpcSubmitStrategy;
+
+    @Value("${actors.rpc.response_timeout_ms:60000}")
+    @Getter
+    private long rpcResponseTimeout;
 
     @Value("${actors.rpc.max_retries:5}")
     @Getter
