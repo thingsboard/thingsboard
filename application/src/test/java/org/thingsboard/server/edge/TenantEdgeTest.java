@@ -15,16 +15,17 @@
  */
 package org.thingsboard.server.edge;
 
-import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @DaoSqlTest
@@ -39,12 +40,15 @@ public class TenantEdgeTest extends AbstractEdgeTest {
 
         // updated edge tenant
         savedTenant.setTitle("Updated Title for Tenant Edge Test");
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(2); // expect tenant and tenant profile update msg
         savedTenant = doPost("/api/tenant", savedTenant, Tenant.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof TenantUpdateMsg);
-        TenantUpdateMsg tenantUpdateMsg = (TenantUpdateMsg) latestMessage;
+        Optional<TenantUpdateMsg> tenantUpdateMsgOpt = edgeImitator.findMessageByType(TenantUpdateMsg.class);
+        Assert.assertTrue(tenantUpdateMsgOpt.isPresent());
+        TenantUpdateMsg tenantUpdateMsg = tenantUpdateMsgOpt.get();
+        Optional<TenantProfileUpdateMsg> tenantProfileUpdateMsgOpt = edgeImitator.findMessageByType(TenantProfileUpdateMsg.class);
+        Assert.assertTrue(tenantProfileUpdateMsgOpt.isPresent());
+        TenantProfileUpdateMsg tenantProfileUpdateMsg = tenantProfileUpdateMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantUpdateMsg.getMsgType());
         Assert.assertEquals(savedTenant.getUuidId().getMostSignificantBits(), tenantUpdateMsg.getIdMSB());
         Assert.assertEquals(savedTenant.getUuidId().getLeastSignificantBits(), tenantUpdateMsg.getIdLSB());
@@ -52,16 +56,21 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals("Updated Title for Tenant Edge Test", tenantUpdateMsg.getTitle());
         Assert.assertEquals(savedTenant.getTenantProfileId(), new TenantProfileId
                 (new UUID(tenantUpdateMsg.getProfileIdMSB(), tenantUpdateMsg.getProfileIdLSB())));
+        Assert.assertEquals(savedTenant.getTenantProfileId(), new TenantProfileId
+                (new UUID(tenantProfileUpdateMsg.getIdMSB(), tenantProfileUpdateMsg.getIdLSB())));
 
         //change tenant profile for tenant
         TenantProfile tenantProfile = createTenantProfile();
         savedTenant.setTenantProfileId(tenantProfile.getId());
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(2); // expect tenant and tenant profile update msg
         savedTenant = doPost("/api/tenant", savedTenant, Tenant.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof TenantUpdateMsg);
-        tenantUpdateMsg = (TenantUpdateMsg) latestMessage;
+        tenantUpdateMsgOpt = edgeImitator.findMessageByType(TenantUpdateMsg.class);
+        Assert.assertTrue(tenantUpdateMsgOpt.isPresent());
+        tenantUpdateMsg = tenantUpdateMsgOpt.get();
+        tenantProfileUpdateMsgOpt = edgeImitator.findMessageByType(TenantProfileUpdateMsg.class);
+        Assert.assertTrue(tenantProfileUpdateMsgOpt.isPresent());
+        tenantProfileUpdateMsg = tenantProfileUpdateMsgOpt.get();
         // tenant update
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantUpdateMsg.getMsgType());
         Assert.assertEquals(savedTenant.getUuidId().getMostSignificantBits(), tenantUpdateMsg.getIdMSB());
@@ -69,6 +78,8 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedTenant.getTitle(), tenantUpdateMsg.getTitle());
         Assert.assertEquals(savedTenant.getTenantProfileId(), new TenantProfileId
                 (new UUID(tenantUpdateMsg.getProfileIdMSB(), tenantUpdateMsg.getProfileIdLSB())));
+        Assert.assertEquals(savedTenant.getTenantProfileId(), new TenantProfileId
+                (new UUID(tenantProfileUpdateMsg.getIdMSB(), tenantProfileUpdateMsg.getIdLSB())));
     }
 
     private TenantProfile createTenantProfile() {
