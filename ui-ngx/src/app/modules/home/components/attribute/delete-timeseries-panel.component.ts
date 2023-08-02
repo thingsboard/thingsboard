@@ -14,13 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, InjectionToken, OnInit } from '@angular/core';
+import { Component, Inject, InjectionToken, OnDestroy, OnInit } from '@angular/core';
 import { OverlayRef } from '@angular/cdk/overlay';
 import {
   TimeseriesDeleteStrategy,
   timeseriesDeleteStrategyTranslations
 } from '@shared/models/telemetry/telemetry.models';
 import { MINUTE } from '@shared/models/time/time.models';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 export const DELETE_TIMESERIES_PANEL_DATA = new InjectionToken<any>('DeleteTimeseriesPanelData');
 
@@ -28,22 +31,23 @@ export interface DeleteTimeseriesPanelData {
   isMultipleDeletion: boolean;
 }
 
+export interface DeleteTimeseriesPanelResult {
+  strategy: TimeseriesDeleteStrategy;
+  startDateTime: Date;
+  endDateTime: Date;
+  rewriteLatest: boolean;
+}
+
 @Component({
   selector: 'tb-delete-timeseries-panel',
   templateUrl: './delete-timeseries-panel.component.html',
   styleUrls: ['./delete-timeseries-panel.component.scss']
 })
-export class DeleteTimeseriesPanelComponent implements OnInit {
+export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
 
-  strategy: string = TimeseriesDeleteStrategy.DELETE_ALL_DATA;
+  deleteTimeseriesFormGroup: FormGroup;
 
-  result: string = null;
-
-  startDateTime: Date;
-
-  endDateTime: Date;
-
-  rewriteLatestIfDeleted: boolean = true;
+  result: DeleteTimeseriesPanelResult = null;
 
   strategiesTranslationsMap = timeseriesDeleteStrategyTranslations;
 
@@ -52,24 +56,60 @@ export class DeleteTimeseriesPanelComponent implements OnInit {
     TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE
   ];
 
+  private destroy$ = new Subject<void>();
+
   constructor(@Inject(DELETE_TIMESERIES_PANEL_DATA) public data: DeleteTimeseriesPanelData,
-              public overlayRef: OverlayRef) { }
+              public overlayRef: OverlayRef,
+              public fb: FormBuilder) { }
 
   ngOnInit(): void {
-    let today = new Date();
-    this.startDateTime = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
-    this.endDateTime = today;
+    const today = new Date();
     if (this.data.isMultipleDeletion) {
       this.strategiesTranslationsMap = new Map(Array.from(this.strategiesTranslationsMap.entries())
         .filter(([strategy]) => {
           return this.multipleDeletionStrategies.includes(strategy);
       }))
     }
+    this.deleteTimeseriesFormGroup = this.fb.group({
+      strategy: [TimeseriesDeleteStrategy.DELETE_ALL_DATA],
+      startDateTime: [
+        { value: new Date(today.getFullYear(), today.getMonth() - 1, today.getDate()), disabled: true },
+        [Validators.required]
+      ],
+      endDateTime: [{ value: today, disabled: true }, [Validators.required]],
+      rewriteLatest: [true]
+    })
+    this.deleteTimeseriesFormGroup.get('strategy').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value === TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD) {
+        this.deleteTimeseriesFormGroup.get('startDateTime').enable({onlySelf: true, emitEvent: false});
+        this.deleteTimeseriesFormGroup.get('endDateTime').enable({onlySelf: true, emitEvent: false});
+      } else {
+        this.deleteTimeseriesFormGroup.get('startDateTime').disable({onlySelf: true, emitEvent: false});
+        this.deleteTimeseriesFormGroup.get('endDateTime').disable({onlySelf: true, emitEvent: false});
+      }
+    })
+    this.deleteTimeseriesFormGroup.get('startDateTime').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => this.onStartDateTimeChange(value));
+    this.deleteTimeseriesFormGroup.get('endDateTime').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => this.onEndDateTimeChange(value));
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   delete(): void {
-    this.result = this.strategy;
-    this.overlayRef.dispose();
+    if (this.deleteTimeseriesFormGroup.valid) {
+      this.result = this.deleteTimeseriesFormGroup.value;
+      this.overlayRef.dispose();
+    } else {
+      this.deleteTimeseriesFormGroup.markAllAsTouched();
+    }
   }
 
   cancel(): void {
@@ -77,28 +117,36 @@ export class DeleteTimeseriesPanelComponent implements OnInit {
   }
 
   isPeriodStrategy(): boolean {
-    return this.strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD;
+    return this.deleteTimeseriesFormGroup.get('strategy').value === TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD;
   }
 
   isDeleteLatestStrategy(): boolean {
-    return this.strategy === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE;
+    return this.deleteTimeseriesFormGroup.get('strategy').value === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE;
   }
 
   onStartDateTimeChange(newStartDateTime: Date) {
-    const endDateTimeTs = this.endDateTime.getTime();
-    if (newStartDateTime.getTime() >= endDateTimeTs) {
-      this.startDateTime = new Date(endDateTimeTs - MINUTE);
-    } else {
-      this.startDateTime = newStartDateTime;
+    if (newStartDateTime) {
+      const endDateTimeTs = this.deleteTimeseriesFormGroup.get('endDateTime').value.getTime();
+      if (newStartDateTime.getTime() >= endDateTimeTs) {
+        this.deleteTimeseriesFormGroup.get('startDateTime')
+          .patchValue(new Date(endDateTimeTs - MINUTE), {onlySelf: true, emitEvent: false});
+      } else {
+        this.deleteTimeseriesFormGroup.get('startDateTime')
+          .patchValue(newStartDateTime, {onlySelf: true, emitEvent: false});
+      }
     }
   }
 
   onEndDateTimeChange(newEndDateTime: Date) {
-    const startDateTimeTs = this.startDateTime.getTime();
-    if (newEndDateTime.getTime() <= startDateTimeTs) {
-      this.endDateTime = new Date(startDateTimeTs + MINUTE);
-    } else {
-      this.endDateTime = newEndDateTime;
+    if (newEndDateTime) {
+      const startDateTimeTs = this.deleteTimeseriesFormGroup.get('startDateTime').value.getTime();
+      if (newEndDateTime.getTime() <= startDateTimeTs) {
+        this.deleteTimeseriesFormGroup.get('endDateTime')
+          .patchValue(new Date(startDateTimeTs + MINUTE), {onlySelf: true, emitEvent: false});
+      } else {
+        this.deleteTimeseriesFormGroup.get('endDateTime')
+          .patchValue(newEndDateTime, {onlySelf: true, emitEvent: false});
+      }
     }
   }
 }

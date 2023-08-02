@@ -16,20 +16,20 @@
 
 -->
 
-<div class="mat-elevation-z1" style="max-width: 488px">
+<form [formGroup]="deleteTimeseriesFormGroup" style="max-width: 488px">
   <mat-toolbar>
     <h2>{{ "attribute.delete-timeseries.delete-strategy" | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
-            (click)="cancel()"
-            type="button">
+            type="button"
+            (click)="cancel()">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
   <div style="padding: 16px; min-height: 188px">
     <mat-form-field fxFlex class="mat-block">
       <mat-label translate>attribute.delete-timeseries.strategy</mat-label>
-      <mat-select [(ngModel)]="strategy">
+      <mat-select formControlName="strategy">
         <mat-option *ngFor="let strategy of strategiesTranslationsMap.keys()" [value]="strategy">
           {{ strategiesTranslationsMap.get(strategy) | translate }}
         </mat-option>
@@ -41,36 +41,34 @@
           <mat-label translate>attribute.delete-timeseries.start-time</mat-label>
           <mat-datetimepicker-toggle [for]="startDateTimePicker" matPrefix></mat-datetimepicker-toggle>
           <mat-datetimepicker #startDateTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
-          <input required matInput [(ngModel)]="startDateTime" [matDatetimepicker]="startDateTimePicker"
-                 (ngModelChange)="onStartDateTimeChange($event)">
+          <input required matInput formControlName="startDateTime" [matDatetimepicker]="startDateTimePicker">
         </mat-form-field>
         <mat-form-field class="mat-block">
           <mat-label translate>attribute.delete-timeseries.ends-on</mat-label>
           <mat-datetimepicker-toggle [for]="endDatePicker" matPrefix></mat-datetimepicker-toggle>
           <mat-datetimepicker #endDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
-          <input required matInput [(ngModel)]="endDateTime" [matDatetimepicker]="endDatePicker"
-                 (ngModelChange)="onEndDateTimeChange($event)">
+          <input required matInput formControlName="endDateTime" [matDatetimepicker]="endDatePicker">
         </mat-form-field>
       </div>
     </div>
     <div *ngIf="isPeriodStrategy() || isDeleteLatestStrategy()">
-      <mat-slide-toggle [(ngModel)]="rewriteLatestIfDeleted">
+      <mat-slide-toggle formControlName="rewriteLatest">
         {{ "attribute.delete-timeseries.rewrite-latest-value" | translate }}
       </mat-slide-toggle>
     </div>
   </div>
-  <div fxLayout="row" class="tb-panel-actions">
-    <span fxFlex></span>
-    <button mat-button color="primary"
-            type="button"
-            (click)="cancel()" cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-button mat-raised-button color="primary"
-            type="submit"
-            (click)="delete()">
-      {{ 'action.apply' | translate }}
-    </button>
-  </div>
+</form>
+<div fxLayout="row" class="tb-panel-actions">
+  <span fxFlex></span>
+  <button mat-button color="primary"
+          type="button"
+          (click)="cancel()" cdkFocusInitial>
+    {{ 'action.cancel' | translate }}
+  </button>
+  <button mat-button mat-raised-button color="primary"
+          type="button"
+          (click)="delete()"
+          [disabled]="deleteTimeseriesFormGroup.invalid">
+    {{ 'action.apply' | translate }}
+  </button>
 </div>
-

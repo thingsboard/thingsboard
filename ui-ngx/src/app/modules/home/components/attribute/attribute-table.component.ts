@@ -104,6 +104,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   isClientSideTelemetryTypeMap = isClientSideTelemetryType;
 
   latestTelemetryTypes = LatestTelemetry;
+  attributeScopeTypes = AttributeScope;
 
   mode: 'default' | 'widget' = 'default';
 
@@ -423,29 +424,29 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       this.viewContainerRef, injector));
     componentRef.onDestroy(() => {
       if (componentRef.instance.result !== null) {
-        const strategy = componentRef.instance.result;
+        const result = componentRef.instance.result;
         const deleteTimeseries = attribute ? [attribute]: this.dataSource.selection.selected;
         let deleteAllDataForKeys = false;
         let rewriteLatestIfDeleted = false;
         let startTs = null;
         let endTs = null;
         let deleteLatest = true;
-        if (strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA) {
+        if (result.strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA) {
           deleteAllDataForKeys = true;
         }
-        if (strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE) {
+        if (result.strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE) {
           deleteAllDataForKeys = true;
           deleteLatest = false;
         }
-        if (strategy === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE) {
-          rewriteLatestIfDeleted = componentRef.instance.rewriteLatestIfDeleted;
+        if (result.strategy === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE) {
+          rewriteLatestIfDeleted = result.rewriteLatest;
           startTs = deleteTimeseries[0].lastUpdateTs;
           endTs = startTs + 1;
         }
-        if (strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD) {
-          startTs = componentRef.instance.startDateTime.getTime();
-          endTs = componentRef.instance.endDateTime.getTime();
-          rewriteLatestIfDeleted = componentRef.instance.rewriteLatestIfDeleted;
+        if (result.strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD) {
+          startTs = result.startDateTime.getTime();
+          endTs = result.endDateTime.getTime();
+          rewriteLatestIfDeleted = result.rewriteLatest;
         }
         this.attributeService.deleteEntityTimeseries(this.entityIdValue, deleteTimeseries, deleteAllDataForKeys,
           startTs, endTs, rewriteLatestIfDeleted, deleteLatest).subscribe(() => this.reloadAttributes());
@@ -474,6 +475,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
           );
         }
       });
+    }
+  }
+
+  deleteTelemetry($event: Event) {
+    if (this.attributeScope === this.latestTelemetryTypes.LATEST_TELEMETRY) {
+      this.deleteTimeseries($event);
+    } else {
+      this.deleteAttributes($event);
     }
   }
 
