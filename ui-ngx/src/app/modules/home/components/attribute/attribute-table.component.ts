@@ -100,6 +100,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   isClientSideTelemetryTypeMap = isClientSideTelemetryType;
 
   latestTelemetryTypes = LatestTelemetry;
+  attributeScopeTypes = AttributeScope;
 
   mode: 'default' | 'widget' = 'default';
 
