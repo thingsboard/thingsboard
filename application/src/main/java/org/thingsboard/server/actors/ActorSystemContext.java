@@ -531,7 +531,7 @@ public class ActorSystemContext {
     @Getter
     private String rpcSubmitStrategy;
 
-    @Value("${actors.rpc.response_timeout_ms:60000}")
+    @Value("${actors.rpc.response_timeout_ms:30000}")
     @Getter
     private long rpcResponseTimeout;
 
