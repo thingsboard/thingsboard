@@ -16,12 +16,11 @@
 :host {
   z-index: 10;
   background: #F3F6FA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   .tb-preview-dashboard {
-    position: absolute;
-    top: 15%;
-    bottom: 15%;
-    left: 0;
-    right: 0;
+    position: relative;
   }
   .tb-preview-panel {
     position: absolute;

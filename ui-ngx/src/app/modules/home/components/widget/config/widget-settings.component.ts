@@ -44,6 +44,7 @@ import { widgetSettingsComponentsMap } from '@home/components/widget/lib/setting
 import { Dashboard } from '@shared/models/dashboard.models';
 import { WidgetService } from '@core/http/widget.service';
 import { IAliasController } from '@core/api/widget-api.models';
+import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
 @Component({
   selector: 'tb-widget-settings',
@@ -72,6 +73,9 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
 
   @Input()
   widget: Widget;
+
+  @Input()
+  widgetConfig: WidgetConfigComponentData;
 
   private settingsDirective: string;
 
@@ -124,6 +128,11 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
         if (propName === 'aliasController') {
           if (this.definedSettingsComponent) {
             this.definedSettingsComponent.aliasController = this.aliasController;
+          }
+        }
+        if (propName === 'widgetConfig') {
+          if (this.definedSettingsComponent) {
+            this.definedSettingsComponent.widgetConfig = this.widgetConfig;
           }
         }
       }
@@ -214,6 +223,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
         this.definedSettingsComponent.aliasController = this.aliasController;
         this.definedSettingsComponent.dashboard = this.dashboard;
         this.definedSettingsComponent.widget = this.widget;
+        this.definedSettingsComponent.widgetConfig = this.widgetConfig;
         this.definedSettingsComponent.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
         this.changeSubscription = this.definedSettingsComponent.settingsChanged.subscribe((settings) => {
           this.updateModel(settings);

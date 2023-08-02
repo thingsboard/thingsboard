@@ -235,15 +235,34 @@ public class BaseRelationService implements RelationService {
 
     @Transactional
     @Override
+    public void deleteEntityCommonRelations(TenantId tenantId, EntityId entityId) {
+        deleteEntityRelations(tenantId, entityId, RelationTypeGroup.COMMON);
+    }
+
+    @Transactional
+    @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
+        deleteEntityRelations(tenantId, entityId, null);
+    }
+
+    @Transactional
+    public void deleteEntityRelations(TenantId tenantId, EntityId entityId, RelationTypeGroup relationTypeGroup) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
         validate(entityId);
-        List<EntityRelation> inboundRelations = new ArrayList<>(relationDao.findAllByTo(tenantId, entityId));
-        List<EntityRelation> outboundRelations = new ArrayList<>(relationDao.findAllByFrom(tenantId, entityId));
+        List<EntityRelation> inboundRelations = relationTypeGroup == null
+                    ? relationDao.findAllByTo(tenantId, entityId)
+                    : relationDao.findAllByTo(tenantId, entityId, relationTypeGroup);
+        List<EntityRelation> outboundRelations = relationTypeGroup == null
+                    ? relationDao.findAllByFrom(tenantId, entityId)
+                    : relationDao.findAllByFrom(tenantId, entityId, relationTypeGroup);
 
         if (!inboundRelations.isEmpty()) {
             try {
-                relationDao.deleteInboundRelations(tenantId, entityId);
+                if (relationTypeGroup == null) {
+                    relationDao.deleteInboundRelations(tenantId, entityId);
+                } else {
+                    relationDao.deleteInboundRelations(tenantId, entityId, relationTypeGroup);
+                }
             } catch (ConcurrencyFailureException e) {
                 log.debug("Concurrency exception while deleting relations [{}]", inboundRelations, e);
             }
@@ -254,7 +273,11 @@ public class BaseRelationService implements RelationService {
         }
 
         if (!outboundRelations.isEmpty()) {
-            relationDao.deleteOutboundRelations(tenantId, entityId);
+            if (relationTypeGroup == null) {
+                relationDao.deleteOutboundRelations(tenantId, entityId);
+            } else {
+                relationDao.deleteOutboundRelations(tenantId, entityId, relationTypeGroup);
+            }
 
             for (EntityRelation relation : outboundRelations) {
                 eventPublisher.publishEvent(EntityRelationEvent.from(relation));

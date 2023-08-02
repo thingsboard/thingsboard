@@ -132,6 +132,31 @@ public class RelationServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testDeleteEntityCommonRelations() {
+        AssetId parentId = new AssetId(Uuids.timeBased());
+        AssetId childId = new AssetId(Uuids.timeBased());
+        AssetId subChildId = new AssetId(Uuids.timeBased());
+
+        EntityRelation relationA = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationB = new EntityRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE);
+        EntityRelation relationC = new EntityRelation(parentId, childId, EntityRelation.MANAGES_TYPE, RelationTypeGroup.EDGE);
+        EntityRelation relationD = new EntityRelation(childId, subChildId, EntityRelation.MANAGES_TYPE, RelationTypeGroup.EDGE);
+
+        saveRelation(relationA);
+        saveRelation(relationB);
+        saveRelation(relationC);
+        saveRelation(relationD);
+
+        relationService.deleteEntityCommonRelations(SYSTEM_TENANT_ID, childId);
+
+        Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
+        Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
+
+        Assert.assertTrue(relationService.checkRelation(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.MANAGES_TYPE, RelationTypeGroup.EDGE));
+        Assert.assertTrue(relationService.checkRelation(SYSTEM_TENANT_ID, childId, subChildId, EntityRelation.MANAGES_TYPE, RelationTypeGroup.EDGE));
+    }
+
+    @Test
     public void testFindFrom() throws ExecutionException, InterruptedException {
         AssetId parentA = new AssetId(Uuids.timeBased());
         AssetId parentB = new AssetId(Uuids.timeBased());

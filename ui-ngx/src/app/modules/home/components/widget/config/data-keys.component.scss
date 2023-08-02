@@ -49,7 +49,7 @@
       padding: 3px;
       height: 24px;
       cursor: move;
-      mat-icon {
+      .mat-icon {
         pointer-events: none;
       }
     }
@@ -65,9 +65,11 @@
         font-weight: normal;
         font-size: 14px;
         line-height: 20px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        &.tb-chip-text {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
         .mat-icon.tb-datakey-icon {
           margin-right: 4px;
           margin-left: 4px;
