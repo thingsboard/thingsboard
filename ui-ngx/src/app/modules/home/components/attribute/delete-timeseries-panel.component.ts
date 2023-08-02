@@ -21,13 +21,21 @@ import {
   timeseriesDeleteStrategyTranslations
 } from '@shared/models/telemetry/telemetry.models';
 import { MINUTE } from '@shared/models/time/time.models';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { AbstractControl, FormBuilder, FormGroup } from '@angular/forms';
+import { Subject, Subscription } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 export const DELETE_TIMESERIES_PANEL_DATA = new InjectionToken<any>('DeleteTimeseriesPanelData');
 
 export interface DeleteTimeseriesPanelData {
   isMultipleDeletion: boolean;
+}
+
+export interface DeleteTimeseriesPanelResult {
+  strategy: TimeseriesDeleteStrategy;
+  startDateTime: Date;
+  endDateTime: Date;
+  rewriteLatest: boolean;
 }
 
 @Component({
@@ -37,13 +45,13 @@ export interface DeleteTimeseriesPanelData {
 })
 export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
 
-  deleteTimeseriesFormGroup: UntypedFormGroup;
+  deleteTimeseriesFormGroup: FormGroup;
 
   startDateTimeSubscription: Subscription;
 
   endDateTimeSubscription: Subscription;
 
-  result: string = null;
+  result: DeleteTimeseriesPanelResult = null;
 
   strategiesTranslationsMap = timeseriesDeleteStrategyTranslations;
 
@@ -52,9 +60,11 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
     TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE
   ];
 
+  private destroy$ = new Subject<void>();
+
   constructor(@Inject(DELETE_TIMESERIES_PANEL_DATA) public data: DeleteTimeseriesPanelData,
               public overlayRef: OverlayRef,
-              public fb: UntypedFormBuilder) { }
+              public fb: FormBuilder) { }
 
   ngOnInit(): void {
     const today = new Date();
@@ -70,23 +80,21 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
       endDateTime: [today],
       rewriteLatest: [true]
     })
-    this.startDateTimeSubscription = this.getStartDateTimeFormControl().valueChanges.subscribe(
-      value => this.onStartDateTimeChange(value)
-    )
-    this.endDateTimeSubscription = this.getEndDateTimeFormControl().valueChanges.subscribe(
-      value => this.onEndDateTimeChange(value)
-    )
+    this.startDateTimeSubscription = this.getStartDateTimeFormControl().valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => this.onStartDateTimeChange(value));
+    this.endDateTimeSubscription = this.getEndDateTimeFormControl().valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => this.onEndDateTimeChange(value));
   }
 
   ngOnDestroy(): void {
-    this.startDateTimeSubscription.unsubscribe();
-    this.startDateTimeSubscription = null;
-    this.endDateTimeSubscription.unsubscribe();
-    this.endDateTimeSubscription = null;
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   delete(): void {
-    this.result = this.getStrategyFormControl().value;
+    this.result = this.deleteTimeseriesFormGroup.value;
     this.overlayRef.dispose();
   }
 
@@ -112,10 +120,6 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
 
   getEndDateTimeFormControl(): AbstractControl {
     return this.deleteTimeseriesFormGroup.get('endDateTime');
-  }
-
-  getRewriteLatestFormControl(): AbstractControl {
-    return this.deleteTimeseriesFormGroup.get('rewriteLatest');
   }
 
   onStartDateTimeChange(newStartDateTime: Date) {

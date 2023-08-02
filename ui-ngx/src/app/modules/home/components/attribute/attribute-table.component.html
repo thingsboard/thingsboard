@@ -85,7 +85,7 @@
                 'attribute.selected-telemetry' : 'attribute.selected-attributes') | translate:{count: dataSource.selection.selected.length} }}
         </span>
         <span fxFlex></span>
-        <button [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope) || attributeScope === latestTelemetryTypes.LATEST_TELEMETRY"
+        <button [fxShow]="attributeScope !== attributeScopeTypes.CLIENT_SCOPE"
                 class="button-widget-action"
                 mat-icon-button [disabled]="isLoading$ | async"
                 matTooltip="{{ 'action.delete' | translate }}"
