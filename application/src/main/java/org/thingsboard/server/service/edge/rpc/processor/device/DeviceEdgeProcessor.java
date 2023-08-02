@@ -71,6 +71,8 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         log.trace("[{}] executing processDeviceMsgFromEdge [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
         DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
         try {
+            edgeSynchronizationManager.getSync().set(true);
+
             switch (deviceUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -93,6 +95,8 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
             } else {
                 return Futures.immediateFailedFuture(e);
             }
+        } finally {
+            edgeSynchronizationManager.getSync().remove();
         }
     }
 
