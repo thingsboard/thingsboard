@@ -16,13 +16,13 @@
 
 -->
 
-<form class="mat-elevation-z1" [formGroup]="deleteTimeseriesFormGroup" (ngSubmit)="delete()" style="max-width: 488px">
+<form [formGroup]="deleteTimeseriesFormGroup" style="max-width: 488px">
   <mat-toolbar>
     <h2>{{ "attribute.delete-timeseries.delete-strategy" | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
-            (click)="cancel()"
-            type="button">
+            type="button"
+            (click)="cancel()">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
@@ -41,13 +41,13 @@
           <mat-label translate>attribute.delete-timeseries.start-time</mat-label>
           <mat-datetimepicker-toggle [for]="startDateTimePicker" matPrefix></mat-datetimepicker-toggle>
           <mat-datetimepicker #startDateTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
-          <input matInput formControlName="startDateTime" [matDatetimepicker]="startDateTimePicker">
+          <input required matInput formControlName="startDateTime" [matDatetimepicker]="startDateTimePicker">
         </mat-form-field>
         <mat-form-field class="mat-block">
           <mat-label translate>attribute.delete-timeseries.ends-on</mat-label>
           <mat-datetimepicker-toggle [for]="endDatePicker" matPrefix></mat-datetimepicker-toggle>
           <mat-datetimepicker #endDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
-          <input matInput formControlName="endDateTime" [matDatetimepicker]="endDatePicker">
+          <input required matInput formControlName="endDateTime" [matDatetimepicker]="endDatePicker">
         </mat-form-field>
       </div>
     </div>
@@ -57,18 +57,18 @@
       </mat-slide-toggle>
     </div>
   </div>
-  <div fxLayout="row" class="tb-panel-actions">
-    <span fxFlex></span>
-    <button mat-button color="primary"
-            type="button"
-            (click)="cancel()" cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="isPeriodStrategy() && (!getStartDateTimeFormControl().value || !getEndDateTimeFormControl().value)">
-      {{ 'action.apply' | translate }}
-    </button>
-  </div>
 </form>
-
+<div fxLayout="row" class="tb-panel-actions">
+  <span fxFlex></span>
+  <button mat-button color="primary"
+          type="button"
+          (click)="cancel()" cdkFocusInitial>
+    {{ 'action.cancel' | translate }}
+  </button>
+  <button mat-button mat-raised-button color="primary"
+          type="button"
+          (click)="delete()"
+          [disabled]="deleteTimeseriesFormGroup.invalid">
+    {{ 'action.apply' | translate }}
+  </button>
+</div>
