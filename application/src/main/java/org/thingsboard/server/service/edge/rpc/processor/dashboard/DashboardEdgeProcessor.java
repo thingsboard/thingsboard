@@ -67,8 +67,4 @@ public class DashboardEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
-
-    public ListenableFuture<Void> processDashboardNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotification(tenantId, edgeNotificationMsg);
-    }
 }

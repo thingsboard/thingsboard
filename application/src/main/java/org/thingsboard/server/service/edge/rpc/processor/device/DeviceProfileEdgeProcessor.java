@@ -63,8 +63,4 @@ public class DeviceProfileEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
-
-    public ListenableFuture<Void> processDeviceProfileNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
-    }
 }

@@ -67,8 +67,4 @@ public class EntityViewEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
-
-    public ListenableFuture<Void> processEntityViewNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotification(tenantId, edgeNotificationMsg);
-    }
 }

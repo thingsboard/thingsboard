@@ -63,9 +63,4 @@ public class AssetProfileEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
-
-    public ListenableFuture<Void> processAssetProfileNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
-    }
-
 }

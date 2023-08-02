@@ -77,7 +77,7 @@ public class EdgeEventSourcingListener {
         if (!isValidEdgeEventEntity(event.getEntity())) {
             return;
         }
-        log.trace("[{}] SaveEntityEvent called: {}", event.getEntityId().getEntityType(), event);
+        log.trace("[{}][{}] SaveEntityEvent called: {}", event.getTenantId(), event.getEntityId().getEntityType(), event);
         EdgeEventActionType action = Boolean.TRUE.equals(event.getAdded()) ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
                 null, null, action);
@@ -88,7 +88,7 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("[{}] DeleteEntityEvent called: {}", event.getEntityId().getEntityType(), event);
+        log.trace("[{}][{}] DeleteEntityEvent called: {}", event.getTenantId(), event.getEntityId().getEntityType(), event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                 JacksonUtil.toString(event.getEntity()), null, EdgeEventActionType.DELETED);
     }
@@ -98,7 +98,7 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("[{}] ActionEntityEvent called: {}", event.getEntityId().getEntityType(), event);
+        log.trace("[{}][{}] ActionEntityEvent called: {}", event.getTenantId(), event.getEntityId().getEntityType(), event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                 event.getBody(), null, edgeTypeByActionType(event.getActionType()));
     }
@@ -110,14 +110,14 @@ public class EdgeEventSourcingListener {
         }
         EntityRelation relation = event.getRelation();
         if (relation == null) {
-            log.trace("skipping ActionRelationEvent event in case relation is null: {}", event);
+            log.trace("[{}] skipping ActionRelationEvent event in case relation is null: {}", event.getTenantId(), event);
             return;
         }
         if (!RelationTypeGroup.COMMON.equals(relation.getTypeGroup())) {
-            log.trace("skipping ActionRelationEvent event in case NOT COMMON relation type group: {}", event);
+            log.trace("[{}] skipping ActionRelationEvent event in case NOT COMMON relation type group: {}", event.getTenantId(), event);
             return;
         }
-        log.trace("ActionRelationEvent called: {}", event);
+        log.trace("[{}] ActionRelationEvent called: {}", event.getTenantId(), event);
         tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
                 JacksonUtil.toString(relation), EdgeEventType.RELATION, edgeTypeByActionType(event.getActionType()));
     }

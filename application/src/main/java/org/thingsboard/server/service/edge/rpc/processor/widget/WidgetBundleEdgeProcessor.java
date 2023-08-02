@@ -63,8 +63,4 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
-
-    public ListenableFuture<Void> processWidgetsBundleNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
-    }
 }
