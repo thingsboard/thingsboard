@@ -55,8 +55,8 @@ public class EdgeSyncCursor {
             fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
             fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
             fetchers.add(new AssetProfilesEdgeEventFetcher(ctx.getAssetProfileService()));
-            fetchers.add(new TenantProfilesEdgeEventFetcher(ctx.getTenantService(), ctx.getTenantProfileService()));
             fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
+            fetchers.add(new TenantProfilesEdgeEventFetcher(ctx.getTenantService(), ctx.getTenantProfileService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
             Customer publicCustomer = ctx.getCustomerService().findOrCreatePublicCustomer(edge.getTenantId());
             fetchers.add(new CustomerEdgeEventFetcher(publicCustomer.getId()));

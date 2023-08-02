@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -27,7 +26,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class TenantMsgConstructor {
 
-    public TenantUpdateMsg constructTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant, TenantProfileUpdateMsg tenantProfileUpdateMsg) {
+    public TenantUpdateMsg constructTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant) {
         TenantUpdateMsg.Builder builder = TenantUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(tenant.getId().getId().getMostSignificantBits())
@@ -35,8 +34,7 @@ public class TenantMsgConstructor {
                 .setTitle(tenant.getTitle())
                 .setProfileIdMSB(tenant.getTenantProfileId().getId().getMostSignificantBits())
                 .setProfileIdLSB(tenant.getTenantProfileId().getId().getLeastSignificantBits())
-                .setRegion(tenant.getRegion())
-                .setTenantProfileUpdateMsg(tenantProfileUpdateMsg);
+                .setRegion(tenant.getRegion());
         if (tenant.getCountry() != null) {
             builder.setCountry(tenant.getCountry());
         }

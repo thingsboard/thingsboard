@@ -400,7 +400,6 @@ message TenantUpdateMsg {
   optional string phone = 14;
   optional string email = 15;
   optional string additionalInfo = 16;
-  optional TenantProfileUpdateMsg tenantProfileUpdateMsg = 17;
 }
 
 message TenantProfileUpdateMsg {
