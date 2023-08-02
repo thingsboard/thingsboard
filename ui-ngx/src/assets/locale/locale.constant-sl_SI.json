@@ -913,8 +913,7 @@
     "device-configuration": "Device configuration",
     "transport-configuration": "Transport configuration",
     "wizard": {
-      "device-details": "Device details",
-      "customer-to-assign-device": "Customer to assign the device"
+      "device-details": "Device details"
     }
   },
   "device-profile": {

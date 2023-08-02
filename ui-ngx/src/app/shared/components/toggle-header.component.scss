@@ -17,8 +17,34 @@
 @import "../../../theme";
 @import "../../../scss/constants";
 
+:host {
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: min-content minmax(auto, 1fr) min-content;
+  .tb-toggle-header-pagination-button {
+    display: none;
+  }
+  &.tb-toggle-header-pagination-controls-enabled {
+    .tb-toggle-header-pagination-button {
+      display: block;
+    }
+  }
+  .tb-toggle-container {
+    display: inline-grid;
+    grid-column: 2;
+    overflow: hidden;
+    &.tb-disable-pagination {
+      overflow: visible;
+    }
+  }
+  .tb-toggle-header {
+    transition: transform 500ms cubic-bezier(0.35, 0, 0.25, 1);
+  }
+}
+
 :host ::ng-deep {
   .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+    overflow: visible;
     width: 100%;
     border-radius: 100px;
     height: 32px;
@@ -151,9 +177,6 @@
       font-size: 12px;
       line-height: 16px;
       letter-spacing: 0.25px;
-    }
-    .mat-mdc-select-value {
-      color: rgba(0, 0, 0, 0.38);
     }
     .mat-mdc-select-arrow-wrapper {
       height: 12px;

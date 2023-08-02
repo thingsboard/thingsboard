@@ -306,10 +306,7 @@ pre.tb-highlight {
 
 .tb-fullscreen {
   position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
+  inset: 0 !important;
 }
 
 .tb-fullscreen-parent {
@@ -628,8 +625,35 @@ mat-label {
         color: white;
       }
     }
-    .mat-mdc-select-value, .mat-mdc-select-arrow {
+    .mat-mdc-select-value, .mat-mdc-select-arrow, .mat-mdc-select-arrow:after {
       color: white;
+    }
+    .mat-mdc-text-field-wrapper {
+      &.mdc-text-field--outlined {
+        &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(.mdc-text-field--invalid) {
+          &:not(:hover) {
+            .mdc-notched-outline {
+              .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+                border-color: white;
+              }
+            }
+          }
+          &:hover {
+            .mdc-notched-outline {
+              .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+                border-color: rgba(255, 255, 255, 0.87);
+              }
+            }
+          }
+        }
+        &:not(.mdc-text-field--disabled).mdc-text-field--focused {
+          .mdc-notched-outline {
+            .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+              border-color: rgba(255, 255, 255, 0.67);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -983,10 +1007,7 @@ mat-label {
       min-width: 100%;
       max-width: none !important;
       position: absolute !important;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      inset: 0;
       .mat-mdc-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
@@ -1004,10 +1025,7 @@ mat-label {
       min-width: 100%;
       max-width: none !important;
       position: absolute !important;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      inset: 0;
       .mat-mdc-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
@@ -1022,10 +1040,7 @@ mat-label {
 
   .tb-absolute-fill {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: 0;
   }
 
   .tb-layout-fill {
@@ -1037,10 +1052,7 @@ mat-label {
 
   .tb-progress-cover {
     position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    inset: 0;
     z-index: 6;
     background-color: #eee;
     opacity: 1;

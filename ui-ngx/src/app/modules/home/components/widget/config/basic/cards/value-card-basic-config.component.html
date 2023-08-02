@@ -55,7 +55,7 @@
         </tb-color-settings>
       </div>
     </div>
-    <div class="tb-form-row">
+    <div [fxShow]="iconEnabled" class="tb-form-row">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
         {{ 'widgets.value-card.icon' | translate }}
       </mat-slide-toggle>
@@ -87,18 +87,38 @@
         </tb-color-settings>
       </div>
     </div>
-  </div>
-  <div class="tb-form-row">
-    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showDate">
-      {{ 'widgets.value-card.date' | translate }}
-    </mat-slide-toggle>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <tb-date-format-select fxFlex formControlName="dateFormat"></tb-date-format-select>
-      <tb-font-settings formControlName="dateFont"
-                        [previewText]="datePreviewFn">
-      </tb-font-settings>
-      <tb-color-settings formControlName="dateColor">
-      </tb-color-settings>
+    <div [fxShow]="dateEnabled" class="tb-form-row">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showDate">
+        {{ 'widgets.value-card.date' | translate }}
+      </mat-slide-toggle>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <tb-date-format-select fxFlex formControlName="dateFormat"></tb-date-format-select>
+        <tb-font-settings formControlName="dateFont"
+                          [previewText]="datePreviewFn">
+        </tb-font-settings>
+        <tb-color-settings formControlName="dateColor">
+        </tb-color-settings>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widget-config.show-card-buttons</div>
+      <mat-chip-listbox multiple formControlName="cardButtons">
+        <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-border-radius' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
     </div>
   </div>
+  <tb-widget-actions-panel
+    formControlName="actions">
+  </tb-widget-actions-panel>
 </ng-container>

@@ -117,7 +117,7 @@
             min-height: 32px;
             padding: 6px;
             line-height: 20px;
-            mat-icon {
+            .mat-icon {
               width: 20px;
               min-width: 20px;
               height: 20px;
@@ -216,7 +216,7 @@
       cursor: pointer;
       box-sizing: border-box;
 
-      mat-icon{
+      .mat-icon{
         width: 16px;
         min-width: 16px;
         height: 16px;
