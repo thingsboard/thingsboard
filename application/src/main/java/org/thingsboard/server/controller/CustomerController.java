@@ -157,24 +157,6 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.DELETE);
-        TenantId tenantId = getTenantId();
-        PageLink pl = new PageLink(100);
-        boolean hasNext = true;
-        List<ListenableFuture<Void>> futures = new ArrayList<>();
-
-        while (hasNext) {
-            PageData<User> customerUsers = userService.findCustomerUsers(tenantId, customerId, pl);
-            for (User user : customerUsers.getData()) {
-                ListenableFuture<Void> future = tbAlarmService.unassignUserAlarms(tenantId, user, System.currentTimeMillis());
-                futures.add(future);
-            }
-            hasNext = customerUsers.hasNext();
-            if (hasNext) {
-                pl = pl.nextPageLink();
-            }
-        }
-        ListenableFuture<List<Void>> allFutures = Futures.allAsList(futures);
-        Futures.getChecked(allFutures, ThingsboardException.class);
         tbCustomerService.delete(customer, getCurrentUser());
     }
 

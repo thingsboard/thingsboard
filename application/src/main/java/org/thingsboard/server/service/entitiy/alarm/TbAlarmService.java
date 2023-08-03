@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 
 public interface TbAlarmService {
@@ -38,8 +36,6 @@ public interface TbAlarmService {
     AlarmInfo assign(Alarm alarm, UserId assigneeId, long assignTs, User user) throws ThingsboardException;
 
     AlarmInfo unassign(Alarm alarm, long unassignTs, User user) throws ThingsboardException;
-
-    ListenableFuture<Void> unassignUserAlarms(TenantId tenantId, User user, long unassignTs);
 
     Boolean delete(Alarm alarm, User user);
 }

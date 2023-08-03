@@ -286,6 +286,12 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
+    public List<Alarm> findAlarmByAssigneeId(UUID key) {
+        List<AlarmEntity> assignedAlarms = alarmRepository.findAlarmByAssigneeId(key);
+        return DaoUtil.convertDataList(assignedAlarms);
+    }
+
+    @Override
     public void createEntityAlarmRecord(EntityAlarm entityAlarm) {
         log.debug("Saving entity {}", entityAlarm);
         entityAlarmRepository.save(new EntityAlarmEntity(entityAlarm));

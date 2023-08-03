@@ -25,9 +25,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmModificationRequest;
@@ -84,6 +87,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private final TenantService tenantService;
     private final AlarmDao alarmDao;
+    private final AlarmCommentDao alarmCommentDao;
     private final EntityService entityService;
     private final DataValidator<Alarm> alarmDataValidator;
 
@@ -309,6 +313,28 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
+    public void unassignUserAlarms(TenantId tenantId, UserId userId, long unassignTs) {
+        List<Alarm> alarms = findAlarmsByAssigneeId(userId);
+        for (Alarm alarm : alarms) {
+            AlarmApiCallResult result = unassignAlarm(alarm.getTenantId(), alarm.getId(), unassignTs);
+            if (!result.isSuccessful()) {
+                continue;
+            }
+            if (result.isModified()) {
+                AlarmComment alarmComment = AlarmComment.builder()
+                        .alarmId(alarm.getId())
+                        .type(AlarmCommentType.SYSTEM)
+                        .comment(JacksonUtil.newObjectNode()
+                                .put("text", "Alarm was unassigned because assigned user was deleted!")
+                                .put("userId", userId.toString())
+                                .put("subtype", "ASSIGN"))
+                        .build();
+                alarmCommentDao.save(tenantId, alarmComment);
+            }
+        }
+    }
+
+    @Override
     public Alarm findAlarmById(TenantId tenantId, AlarmId alarmId) {
         log.trace("Executing findAlarmById [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
@@ -486,6 +512,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (request.getEndTs() == 0L) {
             request.setEndTs(request.getStartTs());
         }
+    }
+
+    private List<Alarm> findAlarmsByAssigneeId(UserId userId) {
+        log.trace("Executing findAlarmsByAssigneeId [{}]", userId);
+        validateId(userId, "Incorrect alarmId " + userId);
+        return alarmDao.findAlarmByAssigneeId(userId.getId());
     }
 
 }
