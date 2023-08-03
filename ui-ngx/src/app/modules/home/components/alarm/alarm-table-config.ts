@@ -26,17 +26,17 @@ import { DatePipe } from '@angular/common';
 import { Direction } from '@shared/models/page/sort-order';
 import { MatDialog } from '@angular/material/dialog';
 import { TimePageLink } from '@shared/models/page/page-link';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
   AlarmInfo,
-  AlarmQuery,
   AlarmQueryV2,
   AlarmSearchStatus,
   alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmsMode,
+  AlarmStatus,
   alarmStatusTranslations
 } from '@app/shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
@@ -46,7 +46,7 @@ import {
   AlarmDetailsDialogComponent,
   AlarmDetailsDialogData
 } from '@home/components/alarm/alarm-details-dialog.component';
-import { DAY, forAllTimeInterval, historyInterval } from '@shared/models/time/time.models';
+import { forAllTimeInterval } from '@shared/models/time/time.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -93,7 +93,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
     this.pageMode = pageMode;
     this.defaultTimewindowInterval = forAllTimeInterval();
     this.detailsPanelEnabled = false;
-    this.selectionEnabled = false;
+    this.selectionEnabled = true;
     this.searchEnabled = true;
     this.addEnabled = false;
     this.entitiesDeleteEnabled = false;
@@ -155,6 +155,23 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         onAction: ($event, entity) => this.showAlarmDetails(entity)
       }
     );
+
+    this.groupActionDescriptors.push(
+      {
+        name: this.translate.instant('alarm.acknowledge'),
+        icon: 'done',
+        isEnabled: true,
+        onAction: ($event, entities) => this.ackAlarms($event, entities)
+      }
+    )
+    this.groupActionDescriptors.push(
+      {
+        name: this.translate.instant('alarm.clear'),
+        icon: 'clear',
+        isEnabled: true,
+        onAction: ($event, entities) => this.clearAlarms($event, entities)
+      }
+    )
   }
 
   fetchAlarms(pageLink: TimePageLink): Observable<PageData<AlarmInfo>> {
@@ -292,6 +309,70 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         this.updateData()
       }
     });
+  }
+
+  ackAlarms($event: Event, alarms: Array<AlarmInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const unacknowledgedAlarms = alarms.filter(alarm => {
+      return alarm.status === AlarmStatus.CLEARED_UNACK || alarm.status === AlarmStatus.ACTIVE_UNACK;
+    })
+    if (!unacknowledgedAlarms.length) {
+      this.dialogService.alert(this.translate.instant('alarm.selected-alarms', {count: alarms.length}),
+        this.translate.instant('alarm.selected-alarms-are-acknowledged')).subscribe();
+    } else {
+      const title = this.translate.instant('alarm.aknowledge-alarms-title', {count: unacknowledgedAlarms.length});
+      const content = this.translate.instant('alarm.aknowledge-alarms-text', {count: unacknowledgedAlarms.length});
+      this.dialogService.confirm(
+        title,
+        content,
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes')
+      ).subscribe((res) => {
+        if (res) {
+          const tasks: Observable<void>[] = [];
+          for (const alarm of unacknowledgedAlarms) {
+            tasks.push(this.alarmService.ackAlarm(alarm.id.id));
+          }
+          forkJoin(tasks).subscribe(() => {
+            this.updateData();
+          });
+        }
+      });
+    }
+  }
+
+  clearAlarms($event: Event, alarms: Array<AlarmInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const activeAlarms = alarms.filter(alarm => {
+      return alarm.status === AlarmStatus.ACTIVE_ACK || alarm.status === AlarmStatus.ACTIVE_UNACK;
+    })
+    if (!activeAlarms.length) {
+      this.dialogService.alert(this.translate.instant('alarm.selected-alarms', {count: alarms.length}),
+        this.translate.instant('alarm.selected-alarms-are-cleared')).subscribe();
+    } else {
+      const title = this.translate.instant('alarm.clear-alarms-title', {count: activeAlarms.length});
+      const content = this.translate.instant('alarm.clear-alarms-text', {count: activeAlarms.length});
+      this.dialogService.confirm(
+        title,
+        content,
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes')
+      ).subscribe((res) => {
+        if (res) {
+          const tasks: Observable<void>[] = [];
+          for (const alarm of activeAlarms) {
+            tasks.push(this.alarmService.clearAlarm(alarm.id.id));
+          }
+          forkJoin(tasks).subscribe(() => {
+            this.updateData();
+          });
+        }
+      });
+    }
   }
 
 }
