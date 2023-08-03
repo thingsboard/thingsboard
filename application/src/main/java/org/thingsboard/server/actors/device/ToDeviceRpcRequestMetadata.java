@@ -18,8 +18,6 @@ package org.thingsboard.server.actors.device;
 import lombok.Data;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 
-import java.util.concurrent.ScheduledFuture;
-
 /**
  * @author Andrew Shvayka
  */
@@ -29,5 +27,4 @@ public class ToDeviceRpcRequestMetadata {
     private final boolean sent;
     private int retries;
     private boolean delivered;
-    private ScheduledFuture<?> awaitRpcResponseFuture;
 }
