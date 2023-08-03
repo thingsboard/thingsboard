@@ -54,6 +54,7 @@ import static org.mockito.Mockito.verify;
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
+        "queue.rule-engine.stats.enabled=false"
 })
 @Slf4j
 @DaoSqlTest
