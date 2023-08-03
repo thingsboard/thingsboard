@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.geo;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -64,11 +63,6 @@ import org.thingsboard.server.common.msg.TbMsg;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeGpsGeofencingConfig")
 public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofencingFilterNodeConfiguration> {
-
-    @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        super.init(ctx, configuration);
-    }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
