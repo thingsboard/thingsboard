@@ -13,27 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../../../../../../../../scss/constants';
+
 .tb-form-table-header-cell {
   &.tb-source-header {
-    width: 120px;
-    min-width: 120px;
+    width: 108px;
+    min-width: 108px;
   }
   &.tb-key-header {
-    flex: 1 1 60%;
+    flex: 1;
+    min-width: 150px;
+    @media #{$mat-gt-sm} {
+      flex: 1 1 60%;
+    }
   }
   &.tb-label-header {
     flex: 1 1 40%;
+    min-width: 100px;
   }
   &.tb-units-header {
     width: 80px;
     min-width: 80px;
   }
-  &.tb-color-header, &.tb-decimals-header {
+  &.tb-color-header {
+    width: 40px;
+    min-width: 40px;
+  }
+  &.tb-decimals-header {
     width: 60px;
     min-width: 60px;
   }
   &.tb-actions-header {
-    width: 114px;
-    min-width: 114px;
+    width: 40px;
+    min-width: 40px;
+    @media #{$mat-gt-md} {
+      width: 120px;
+      min-width: 120px;
+    }
+  }
+  &.tb-label-header, &.tb-units-header, &.tb-color-header, &.tb-decimals-header {
+    display: none;
+    @media #{$mat-gt-sm} {
+      display: block;
+    }
+  }
+}
+
+.tb-form-table-body {
+  tb-data-key-row {
+    overflow: hidden;
   }
 }

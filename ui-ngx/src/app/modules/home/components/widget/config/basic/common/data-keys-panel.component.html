@@ -42,7 +42,8 @@
                          (keyRemoved)="removeKey($index)">
         </tb-data-key-row>
         <div class="tb-form-table-row-cell-buttons">
-          <button mat-icon-button
+          <button fxHide.lt-lg
+                  mat-icon-button
                   type="button"
                   cdkDragHandle
                   [ngClass]="{'tb-hidden': !dragEnabled}"

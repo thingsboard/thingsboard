@@ -35,7 +35,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -160,8 +160,19 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   disablePagination = false;
 
   @Input()
+  selectMediaBreakpoint = 'md-lg';
+
+  @Input()
   @coerceBoolean()
-  useSelectOnMdLg = true;
+  set useSelectOnMdLg(value: boolean) {
+    if (value) {
+      this.selectMediaBreakpoint = 'md-lg';
+    } else {
+      if (this.selectMediaBreakpoint === 'md-lg') {
+        this.selectMediaBreakpoint = '';
+      }
+    }
+  }
 
   @Input()
   @coerceBoolean()
@@ -174,7 +185,14 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   @coerceBoolean()
   disabled = false;
 
-  isMdLg: boolean;
+  get isMdLg(): boolean {
+    return !this.ignoreMdLgSize && this.isMdLgValue;
+  }
+
+  private isMdLgValue: boolean;
+  private useSelectSubject = new BehaviorSubject(false);
+
+  useSelect$ = this.useSelectSubject.asObservable();
 
   private observeBreakpointSubscription: Subscription;
 
@@ -186,11 +204,19 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   }
 
   ngOnInit() {
-    this.isMdLg = this.breakpointObserver.isMatched(MediaBreakpoints['md-lg']);
+    const mediaBreakpoints = [MediaBreakpoints['md-lg']];
+    if (this.selectMediaBreakpoint && this.selectMediaBreakpoint !== 'md-lg') {
+      mediaBreakpoints.push(MediaBreakpoints[this.selectMediaBreakpoint]);
+    }
     this.observeBreakpointSubscription = this.breakpointObserver
-      .observe(MediaBreakpoints['md-lg'])
+      .observe(mediaBreakpoints)
       .subscribe((state: BreakpointState) => {
-          this.isMdLg = state.matches;
+          this.isMdLgValue = state.breakpoints[MediaBreakpoints['md-lg']];
+          if (this.selectMediaBreakpoint) {
+            this.useSelectSubject.next(state.breakpoints[MediaBreakpoints[this.selectMediaBreakpoint]]);
+          } else {
+            this.useSelectSubject.next(false);
+          }
           this.cd.markForCheck();
         }
       );
@@ -202,18 +228,21 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   }
 
   ngOnDestroy() {
-    if (this.toggleGroupResize$) {
-      this.toggleGroupResize$.disconnect();
-    }
+    this.stopObservePagination();
     super.ngOnDestroy();
   }
 
   ngAfterViewInit() {
-    if (!this.disablePagination && !this.useSelectOnMdLg) {
-      this.toggleGroupResize$ = new ResizeObserver(() => {
-        this.updatePagination();
+    if (!this.disablePagination) {
+      this.useSelect$.pipe(takeUntil(this._destroyed)).subscribe((useSelect) => {
+        if (useSelect) {
+          this.removePagination();
+        } else {
+          setTimeout(() => {
+            this.startObservePagination();
+          }, 0);
+        }
       });
-      this.toggleGroupResize$.observe(this.toggleGroupContainer.nativeElement);
     }
   }
 
@@ -240,6 +269,25 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
     if (direction === 'before' && !this.leftPaginationEnabled ||
         direction === 'after' && !this.rightPaginationEnabled) {
       $event.preventDefault();
+    }
+  }
+
+  private startObservePagination() {
+    this.toggleGroupResize$ = new ResizeObserver(() => {
+      this.updatePagination();
+    });
+    this.toggleGroupResize$.observe(this.toggleGroupContainer.nativeElement);
+  }
+
+  private removePagination() {
+    this.stopObservePagination();
+    this.showPaginationControls = false;
+  }
+
+  private stopObservePagination() {
+    if (this.toggleGroupResize$) {
+      this.toggleGroupResize$.disconnect();
+      this.toggleGroupResize$ = null;
     }
   }
 
