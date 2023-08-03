@@ -157,10 +157,10 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     future = edgeProcessor.processEdgeNotification(tenantId, edgeNotificationMsg);
                     break;
                 case ASSET:
-                    future = assetProcessor.processAssetNotification(tenantId, edgeNotificationMsg);
+                    future = assetProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                     break;
                 case DEVICE:
-                    future = deviceProcessor.processDeviceNotification(tenantId, edgeNotificationMsg);
+                    future = deviceProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                     break;
                 case ENTITY_VIEW:
                     future = entityViewProcessor.processEntityNotification(tenantId, edgeNotificationMsg);

@@ -54,7 +54,6 @@ import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -311,9 +310,5 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addDeviceCredentialsRequestMsg(deviceCredentialsRequestMsg);
         return builder.build();
-    }
-
-    public ListenableFuture<Void> processDeviceNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotification(tenantId, edgeNotificationMsg);
     }
 }
