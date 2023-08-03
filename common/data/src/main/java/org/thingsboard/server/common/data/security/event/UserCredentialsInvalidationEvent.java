@@ -18,8 +18,9 @@ package org.thingsboard.server.common.data.security.event;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.UserId;
 
-@EqualsAndHashCode(callSuper = true)
-public class UserCredentialsInvalidationEvent extends UserAuthDataChangedEvent {
+@EqualsAndHashCode
+public class UserCredentialsInvalidationEvent implements UserAuthDataChangedEvent {
+
     private final UserId userId;
     private final long ts;
 
