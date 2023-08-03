@@ -111,13 +111,9 @@ public class TbDeviceProfileNode implements TbNode {
         if (msg.checkType(TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG)) {
             scheduleAlarmHarvesting(ctx, msg);
             harvestAlarms(ctx, System.currentTimeMillis());
-            return;
-        }
-        if (msg.checkType(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG)) {
+        } else if (msg.checkType(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG)) {
             updateProfile(ctx, new DeviceProfileId(UUID.fromString(msg.getData())));
-            return;
-        }
-        if (msg.checkType(TbMsgType.DEVICE_UPDATE_SELF_MSG)) {
+        } else if (msg.checkType(TbMsgType.DEVICE_UPDATE_SELF_MSG)) {
             JsonNode data = JacksonUtil.toJsonNode(msg.getData());
             DeviceId deviceId = new DeviceId(UUID.fromString(data.get("deviceId").asText()));
             if (data.has("profileId")) {
@@ -125,30 +121,28 @@ public class TbDeviceProfileNode implements TbNode {
             } else {
                 removeDeviceState(deviceId);
             }
-            return;
-        }
-        if (EntityType.DEVICE.equals(originatorType)) {
-            DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
-            if (msg.checkType(TbMsgType.ENTITY_UPDATED)) {
-                invalidateDeviceProfileCache(deviceId, msg.getData());
-                ctx.tellSuccess(msg);
-                return;
-            }
-            if (msg.checkType(TbMsgType.ENTITY_DELETED)) {
-                removeDeviceState(deviceId);
-                ctx.tellSuccess(msg);
-                return;
-            }
-            DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null, false);
-            if (deviceState == null) {
-                log.info("Device was not found! Most probably device [" + deviceId + "] has been removed from the database. Acknowledging msg.");
-                ctx.ack(msg);
+        } else {
+            if (EntityType.DEVICE.equals(originatorType)) {
+                DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
+                if (msg.checkType(TbMsgType.ENTITY_UPDATED)) {
+                    invalidateDeviceProfileCache(deviceId, msg.getData());
+                    ctx.tellSuccess(msg);
+                } else if (msg.checkType(TbMsgType.ENTITY_DELETED)) {
+                    removeDeviceState(deviceId);
+                    ctx.tellSuccess(msg);
+                } else {
+                    DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null, false);
+                    if (deviceState != null) {
+                        deviceState.process(ctx, msg);
+                    } else {
+                        log.info("Device was not found! Most probably device [" + deviceId + "] has been removed from the database. Acknowledging msg.");
+                        ctx.ack(msg);
+                    }
+                }
             } else {
-                deviceState.process(ctx, msg);
+                ctx.tellSuccess(msg);
             }
-            return;
         }
-        ctx.tellSuccess(msg);
     }
 
     @Override

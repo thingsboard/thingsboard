@@ -225,7 +225,9 @@ public interface TbContext {
 
     TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId);
 
-    // TODO: Does this changes the message?
+    @Deprecated(since = "3.5.2", forRemoval = true)
+    TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
+
     TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, TbMsgType actionMsgType);
 
     TbMsg attributesUpdatedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes);
