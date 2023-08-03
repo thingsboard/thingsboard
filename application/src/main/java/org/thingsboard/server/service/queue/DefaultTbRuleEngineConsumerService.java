@@ -103,6 +103,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private boolean statsEnabled;
     @Value("${queue.rule-engine.prometheus-stats.enabled:false}")
     boolean prometheusStatsEnabled;
+    @Value("${queue.rule-engine.topic-deletion-delay:30}")
+    private int topicDeletionDelay;
 
     private final StatsFactory statsFactory;
     private final TbRuleEngineSubmitStrategyFactory submitStrategyFactory;
@@ -495,29 +497,27 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private void processQueueDeletion(Queue queue, TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer) {
-        long startTs = System.currentTimeMillis();
-        long timeout = TimeUnit.SECONDS.toMillis(30);
+        long finishTs = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(topicDeletionDelay);
         try {
             int n = 0;
-            while ((System.currentTimeMillis() - startTs <= timeout)) {
+            while (System.currentTimeMillis() <= finishTs) {
                 List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs = consumer.poll(queue.getPollInterval());
-                if (!msgs.isEmpty()) {
-                    for (TbProtoQueueMsg<ToRuleEngineMsg> msg : msgs) {
-                        try {
-                            MsgProtos.TbMsgProto tbMsgProto = MsgProtos.TbMsgProto.parseFrom(msg.getValue().getTbMsg().toByteArray());
-                            EntityId originator = EntityIdFactory.getByTypeAndUuid(tbMsgProto.getEntityType(), new UUID(tbMsgProto.getEntityIdMSB(), tbMsgProto.getEntityIdLSB()));
-
-                            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, queue.getName(), TenantId.SYS_TENANT_ID, originator);
-                            producerProvider.getRuleEngineMsgProducer().send(tpi, msg, null);
-                            n++;
-                        } catch (Throwable e) {
-                            log.debug("Failed to move message to system {}: {}", consumer.getTopic(), msg, e);
-                        }
-                    }
-                    consumer.commit();
-                } else {
-                    break;
+                if (msgs.isEmpty()) {
+                    continue;
                 }
+                for (TbProtoQueueMsg<ToRuleEngineMsg> msg : msgs) {
+                    try {
+                        MsgProtos.TbMsgProto tbMsgProto = MsgProtos.TbMsgProto.parseFrom(msg.getValue().getTbMsg().toByteArray());
+                        EntityId originator = EntityIdFactory.getByTypeAndUuid(tbMsgProto.getEntityType(), new UUID(tbMsgProto.getEntityIdMSB(), tbMsgProto.getEntityIdLSB()));
+
+                        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, queue.getName(), TenantId.SYS_TENANT_ID, originator);
+                        producerProvider.getRuleEngineMsgProducer().send(tpi, msg, null);
+                        n++;
+                    } catch (Throwable e) {
+                        log.debug("Failed to move message to system {}: {}", consumer.getTopic(), msg, e);
+                    }
+                }
+                consumer.commit();
             }
             if (n > 0) {
                 log.info("Moved {} messages from {} to system {}", n, consumer.getFullTopicNames(), consumer.getTopic());

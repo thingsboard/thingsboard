@@ -31,6 +31,7 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     private volatile Set<TopicPartitionInfo> partitions;
     private volatile boolean stopped;
     private volatile boolean subscribed;
+    private volatile boolean deleted;
 
     public InMemoryTbQueueConsumer(InMemoryStorage storage, String topic) {
         this.storage = storage;
@@ -105,11 +106,12 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
 
     @Override
     public void onQueueDelete() {
+        deleted = true;
     }
 
     @Override
     public boolean isDeleted() {
-        return false;
+        return deleted;
     }
 
     @Override
