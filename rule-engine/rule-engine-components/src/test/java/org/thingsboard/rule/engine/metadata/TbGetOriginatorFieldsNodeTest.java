@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -100,8 +101,8 @@ public class TbGetOriginatorFieldsNodeTest {
                 "name", "originatorName",
                 "type", "originatorType"));
         assertThat(config.isIgnoreNullStrings()).isEqualTo(false);
-        assertThat(config.getFetchTo()).isEqualTo(FetchTo.METADATA);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
+        assertThat(config.getFetchTo()).isEqualTo(TbMsgSource.METADATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.METADATA);
     }
 
     @Test
@@ -112,7 +113,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "title", "originatorTitle",
                 "country", "originatorCountry"));
         config.setIgnoreNullStrings(true);
-        config.setFetchTo(FetchTo.DATA);
+        config.setFetchTo(TbMsgSource.DATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
@@ -125,14 +126,14 @@ public class TbGetOriginatorFieldsNodeTest {
                 "title", "originatorTitle",
                 "country", "originatorCountry"));
         assertThat(config.isIgnoreNullStrings()).isEqualTo(true);
-        assertThat(config.getFetchTo()).isEqualTo(FetchTo.DATA);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.DATA);
+        assertThat(config.getFetchTo()).isEqualTo(TbMsgSource.DATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.DATA);
     }
 
     @Test
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
-        node.fetchTo = FetchTo.DATA;
+        node.fetchTo = TbMsgSource.DATA;
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
 
         // WHEN
@@ -156,10 +157,10 @@ public class TbGetOriginatorFieldsNodeTest {
                 "type", "originatorType",
                 "label", "originatorLabel"));
         config.setIgnoreNullStrings(true);
-        config.setFetchTo(FetchTo.DATA);
+        config.setFetchTo(TbMsgSource.DATA);
 
         node.config = config;
-        node.fetchTo = FetchTo.DATA;
+        node.fetchTo = TbMsgSource.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
@@ -198,10 +199,10 @@ public class TbGetOriginatorFieldsNodeTest {
                 "type", "originatorType",
                 "label", "originatorLabel"));
         config.setIgnoreNullStrings(true);
-        config.setFetchTo(FetchTo.DATA);
+        config.setFetchTo(TbMsgSource.DATA);
 
         node.config = config;
-        node.fetchTo = FetchTo.DATA;
+        node.fetchTo = TbMsgSource.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
@@ -239,10 +240,10 @@ public class TbGetOriginatorFieldsNodeTest {
                 "type", "originatorType",
                 "label", "originatorLabel"));
         config.setIgnoreNullStrings(true);
-        config.setFetchTo(FetchTo.METADATA);
+        config.setFetchTo(TbMsgSource.METADATA);
 
         node.config = config;
-        node.fetchTo = FetchTo.METADATA;
+        node.fetchTo = TbMsgSource.METADATA;
         var msgMetaData = new TbMsgMetaData(Map.of(
                 "testKey1", "testValue1",
                 "testKey2", "123"));
@@ -287,10 +288,10 @@ public class TbGetOriginatorFieldsNodeTest {
                 "type", "originatorType",
                 "label", "originatorLabel"));
         config.setIgnoreNullStrings(false);
-        config.setFetchTo(FetchTo.METADATA);
+        config.setFetchTo(TbMsgSource.METADATA);
 
         node.config = config;
-        node.fetchTo = FetchTo.METADATA;
+        node.fetchTo = TbMsgSource.METADATA;
         var msgMetaData = new TbMsgMetaData(Map.of(
                 "testKey1", "testValue1",
                 "testKey2", "123"));
@@ -345,10 +346,10 @@ public class TbGetOriginatorFieldsNodeTest {
                 "type", "originatorType",
                 "label", "originatorLabel"));
         config.setIgnoreNullStrings(false);
-        config.setFetchTo(FetchTo.METADATA);
+        config.setFetchTo(TbMsgSource.METADATA);
 
         node.config = config;
-        node.fetchTo = FetchTo.METADATA;
+        node.fetchTo = TbMsgSource.METADATA;
         var msgMetaData = new TbMsgMetaData(Map.of(
                 "testKey1", "testValue1",
                 "testKey2", "123"));

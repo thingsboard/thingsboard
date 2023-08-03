@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
-import org.thingsboard.rule.engine.metadata.FetchTo;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -144,7 +144,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
-        configuration1.setFetchTo(FetchTo.METADATA);
+        configuration1.setFetchTo(TbMsgSource.METADATA);
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
         ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
@@ -154,7 +154,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
-        configuration2.setFetchTo(FetchTo.METADATA);
+        configuration2.setFetchTo(TbMsgSource.METADATA);
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 
@@ -250,7 +250,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
-        configuration1.setFetchTo(FetchTo.METADATA);
+        configuration1.setFetchTo(TbMsgSource.METADATA);
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
         ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
@@ -284,7 +284,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
-        configuration2.setFetchTo(FetchTo.METADATA);
+        configuration2.setFetchTo(TbMsgSource.METADATA);
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 

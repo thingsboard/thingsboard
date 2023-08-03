@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -67,8 +68,8 @@ public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGet
                 upgradeRuleNodesWithOldPropertyToUseFetchTo(
                         oldConfiguration,
                         "addToMetadata",
-                        FetchTo.METADATA.name(),
-                        FetchTo.DATA.name()) :
+                        TbMsgSource.METADATA.name(),
+                        TbMsgSource.DATA.name()) :
                 new TbPair<>(false, oldConfiguration);
     }
 

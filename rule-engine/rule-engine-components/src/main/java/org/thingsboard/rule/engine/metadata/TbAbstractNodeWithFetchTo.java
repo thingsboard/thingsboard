@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbVersionedNode;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
@@ -39,7 +40,7 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     protected final static String FETCH_TO_PROPERTY_NAME = "fetchTo";
 
     protected C config;
-    protected FetchTo fetchTo;
+    protected TbMsgSource fetchTo;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -71,9 +72,9 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     }
 
     protected void enrichMessage(ObjectNode msgData, TbMsgMetaData metaData, KvEntry kvEntry, String targetKey) {
-        if (FetchTo.DATA.equals(fetchTo)) {
+        if (TbMsgSource.DATA.equals(fetchTo)) {
             JacksonUtil.addKvEntry(msgData, kvEntry, targetKey);
-        } else if (FetchTo.METADATA.equals(fetchTo)) {
+        } else if (TbMsgSource.METADATA.equals(fetchTo)) {
             metaData.putValue(targetKey, kvEntry.getValueAsString());
         }
     }
@@ -85,7 +86,7 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
             case METADATA:
                 return TbMsg.transformMsgMetadata(msg, msgMetaData);
             default:
-                log.debug("Unexpected FetchTo value: {}. Allowed values: {}", fetchTo, FetchTo.values());
+                log.debug("Unexpected FetchTo value: {}. Allowed values: {}", fetchTo, TbMsgSource.values());
                 return msg;
         }
     }

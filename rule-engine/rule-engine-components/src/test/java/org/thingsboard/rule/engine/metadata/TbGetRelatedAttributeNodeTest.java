@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.data.RelationsQuery;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
@@ -156,7 +157,7 @@ public class TbGetRelatedAttributeNodeTest {
         assertThat(nodeConfig).isEqualTo(config);
         assertThat(nodeConfig.getDataMapping()).isEqualTo(Map.of("serialNumber", "sn"));
         assertThat(nodeConfig.getDataToFetch()).isEqualTo(DataToFetch.ATTRIBUTES);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.METADATA);
 
         var relationsQuery = new RelationsQuery();
         var relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
@@ -175,7 +176,7 @@ public class TbGetRelatedAttributeNodeTest {
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
         config.setDataToFetch(DataToFetch.LATEST_TELEMETRY);
-        config.setFetchTo(FetchTo.DATA);
+        config.setFetchTo(TbMsgSource.DATA);
 
         var relationsQuery = new RelationsQuery();
         var relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
@@ -198,7 +199,7 @@ public class TbGetRelatedAttributeNodeTest {
                 "sourceAttr3", "targetKey3"
         ));
         assertThat(nodeConfig.getDataToFetch()).isEqualTo(DataToFetch.LATEST_TELEMETRY);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.DATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.DATA);
         assertThat(nodeConfig.getRelationsQuery()).isEqualTo(relationsQuery);
     }
 
@@ -221,7 +222,7 @@ public class TbGetRelatedAttributeNodeTest {
     @Test
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
-        node.fetchTo = FetchTo.DATA;
+        node.fetchTo = TbMsgSource.DATA;
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
 
         // WHEN
@@ -235,7 +236,7 @@ public class TbGetRelatedAttributeNodeTest {
     @Test
     public void givenDidNotFindEntity_whenOnMsg_thenShouldTellFailure() {
         // GIVEN
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.ATTRIBUTES, DUMMY_DEVICE_ORIGINATOR);
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.ATTRIBUTES, DUMMY_DEVICE_ORIGINATOR);
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -271,7 +272,7 @@ public class TbGetRelatedAttributeNodeTest {
         var customer = new Customer(new CustomerId(UUID.randomUUID()));
         var user = new User(new UserId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.ATTRIBUTES, customer.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.ATTRIBUTES, customer.getId());
 
         entityRelation.setFrom(customer.getId());
         entityRelation.setTo(user.getId());
@@ -322,7 +323,7 @@ public class TbGetRelatedAttributeNodeTest {
         var firstCustomer = new Customer(new CustomerId(UUID.randomUUID()));
         var secondCustomer = new Customer(new CustomerId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.ATTRIBUTES, firstCustomer.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.ATTRIBUTES, firstCustomer.getId());
 
         entityRelation.setFrom(firstCustomer.getId());
         entityRelation.setTo(secondCustomer.getId());
@@ -373,7 +374,7 @@ public class TbGetRelatedAttributeNodeTest {
         var dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
         var entityView = new EntityView(new EntityViewId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.LATEST_TELEMETRY, dashboard.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.LATEST_TELEMETRY, dashboard.getId());
 
         entityRelation.setFrom(dashboard.getId());
         entityRelation.setTo(entityView.getId());
@@ -424,7 +425,7 @@ public class TbGetRelatedAttributeNodeTest {
         var tenant = new Tenant(new TenantId(UUID.randomUUID()));
         var device = new Device(new DeviceId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.LATEST_TELEMETRY, tenant.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.LATEST_TELEMETRY, tenant.getId());
 
         entityRelation.setFrom(tenant.getId());
         entityRelation.setTo(device.getId());
@@ -477,7 +478,7 @@ public class TbGetRelatedAttributeNodeTest {
         device.setName("Device Name");
         var asset = new Asset(new AssetId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.FIELDS, asset.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.FIELDS, asset.getId());
 
         entityRelation.setFrom(asset.getId());
         entityRelation.setTo(device.getId());
@@ -517,7 +518,7 @@ public class TbGetRelatedAttributeNodeTest {
         device.setName("Device Name");
         var asset = new Asset(new AssetId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.FIELDS, asset.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.FIELDS, asset.getId());
 
         entityRelation.setFrom(asset.getId());
         entityRelation.setTo(device.getId());
@@ -567,7 +568,7 @@ public class TbGetRelatedAttributeNodeTest {
         Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
     }
 
-    private void prepareMsgAndConfig(FetchTo fetchTo, DataToFetch dataToFetch, EntityId originator) {
+    private void prepareMsgAndConfig(TbMsgSource fetchTo, DataToFetch dataToFetch, EntityId originator) {
 
         config.setDataToFetch(dataToFetch);
         config.setFetchTo(fetchTo);

@@ -28,6 +28,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -83,13 +84,13 @@ public class TbFetchDeviceCredentialsNodeTest {
     @Test
     void givenDefaultConfig_whenInit_thenOK() {
         assertThat(node.config).isEqualTo(config);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.METADATA);
     }
 
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         var defaultConfig = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getFetchTo()).isEqualTo(FetchTo.METADATA);
+        assertThat(defaultConfig.getFetchTo()).isEqualTo(TbMsgSource.METADATA);
     }
 
     @Test

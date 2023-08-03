@@ -32,6 +32,7 @@ import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -161,7 +162,7 @@ public class TbGetCustomerAttributeNodeTest {
         assertThat(node.config).isEqualTo(config);
         assertThat(config.getDataMapping()).isEqualTo(Map.of("alarmThreshold", "threshold"));
         assertThat(config.getDataToFetch()).isEqualTo(DataToFetch.ATTRIBUTES);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.METADATA);
     }
 
     @Test
@@ -172,7 +173,7 @@ public class TbGetCustomerAttributeNodeTest {
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
         config.setDataToFetch(DataToFetch.LATEST_TELEMETRY);
-        config.setFetchTo(FetchTo.DATA);
+        config.setFetchTo(TbMsgSource.DATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
@@ -185,7 +186,7 @@ public class TbGetCustomerAttributeNodeTest {
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
         assertThat(config.getDataToFetch()).isEqualTo(DataToFetch.LATEST_TELEMETRY);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.DATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.DATA);
     }
 
     @Test
@@ -207,7 +208,7 @@ public class TbGetCustomerAttributeNodeTest {
     @Test
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
-        node.fetchTo = FetchTo.DATA;
+        node.fetchTo = TbMsgSource.DATA;
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
 
         // WHEN
@@ -261,7 +262,7 @@ public class TbGetCustomerAttributeNodeTest {
         var device = new Device(new DeviceId(UUID.randomUUID()));
         device.setCustomerId(CUSTOMER_ID);
 
-        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.ATTRIBUTES, device.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.ATTRIBUTES, device.getId());
 
         List<AttributeKvEntry> attributesList = List.of(
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey1", "sourceValue1"), 1L),
@@ -308,7 +309,7 @@ public class TbGetCustomerAttributeNodeTest {
         var user = new User(new UserId(UUID.randomUUID()));
         user.setCustomerId(CUSTOMER_ID);
 
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.ATTRIBUTES, user.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.ATTRIBUTES, user.getId());
 
         List<AttributeKvEntry> attributesList = List.of(
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey1", "sourceValue1"), 1L),
@@ -354,7 +355,7 @@ public class TbGetCustomerAttributeNodeTest {
         // GIVEN
         var customer = new Customer(new CustomerId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.LATEST_TELEMETRY, customer.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.LATEST_TELEMETRY, customer.getId());
 
         List<TsKvEntry> timeseriesList = List.of(
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey1", "sourceValue1")),
@@ -398,7 +399,7 @@ public class TbGetCustomerAttributeNodeTest {
         var asset = new Asset(new AssetId(UUID.randomUUID()));
         asset.setCustomerId(new CustomerId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.LATEST_TELEMETRY, asset.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.LATEST_TELEMETRY, asset.getId());
 
         List<TsKvEntry> timeseriesList = List.of(
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey1", "sourceValue1")),
@@ -450,7 +451,7 @@ public class TbGetCustomerAttributeNodeTest {
         Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
     }
 
-    private void prepareMsgAndConfig(FetchTo fetchTo, DataToFetch dataToFetch, EntityId originator) {
+    private void prepareMsgAndConfig(TbMsgSource fetchTo, DataToFetch dataToFetch, EntityId originator) {
         config.setDataMapping(Map.of(
                 "sourceKey1", "targetKey1",
                 "${metaDataPattern1}", "$[messageBodyPattern1]",

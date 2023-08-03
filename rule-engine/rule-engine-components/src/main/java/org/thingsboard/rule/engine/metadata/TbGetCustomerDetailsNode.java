@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
@@ -112,8 +113,8 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
                 upgradeRuleNodesWithOldPropertyToUseFetchTo(
                         oldConfiguration,
                         "addToMetadata",
-                        FetchTo.METADATA.name(),
-                        FetchTo.DATA.name()) :
+                        TbMsgSource.METADATA.name(),
+                        TbMsgSource.DATA.name()) :
                 new TbPair<>(false, oldConfiguration);
     }
 

@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.ContactBasedEntityDetails;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -133,14 +134,14 @@ public class TbGetCustomerDetailsNodeTest {
     @Test
     public void givenDefaultConfig_whenInit_thenOK() {
         assertThat(config.getDetailsList()).isEqualTo(Collections.emptyList());
-        assertThat(config.getFetchTo()).isEqualTo(FetchTo.DATA);
+        assertThat(config.getFetchTo()).isEqualTo(TbMsgSource.DATA);
     }
 
     @Test
     public void givenCustomConfig_whenInit_thenOK() throws TbNodeException {
         // GIVEN
         config.setDetailsList(List.of(ContactBasedEntityDetails.ID, ContactBasedEntityDetails.PHONE));
-        config.setFetchTo(FetchTo.METADATA);
+        config.setFetchTo(TbMsgSource.METADATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN
@@ -149,14 +150,14 @@ public class TbGetCustomerDetailsNodeTest {
         // THEN
         assertThat(node.config).isEqualTo(config);
         assertThat(config.getDetailsList()).isEqualTo(List.of(ContactBasedEntityDetails.ID, ContactBasedEntityDetails.PHONE));
-        assertThat(config.getFetchTo()).isEqualTo(FetchTo.METADATA);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
+        assertThat(config.getFetchTo()).isEqualTo(TbMsgSource.METADATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.METADATA);
     }
 
     @Test
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
-        node.fetchTo = FetchTo.DATA;
+        node.fetchTo = TbMsgSource.DATA;
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
 
         // WHEN
@@ -174,7 +175,7 @@ public class TbGetCustomerDetailsNodeTest {
         device.setId(new DeviceId(UUID.randomUUID()));
         device.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.values()), device.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, List.of(ContactBasedEntityDetails.values()), device.getId());
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(deviceServiceMock.findDeviceByIdAsync(eq(TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
@@ -216,7 +217,7 @@ public class TbGetCustomerDetailsNodeTest {
         asset.setId(new AssetId(UUID.randomUUID()));
         asset.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.METADATA, List.of(ContactBasedEntityDetails.ID, ContactBasedEntityDetails.TITLE, ContactBasedEntityDetails.PHONE), asset.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, List.of(ContactBasedEntityDetails.ID, ContactBasedEntityDetails.TITLE, ContactBasedEntityDetails.PHONE), asset.getId());
 
         when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
         when(assetServiceMock.findAssetByIdAsync(eq(TENANT_ID), eq(asset.getId()))).thenReturn(Futures.immediateFuture(asset));
@@ -254,7 +255,7 @@ public class TbGetCustomerDetailsNodeTest {
         user.setId(new UserId(UUID.randomUUID()));
         user.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), user.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), user.getId());
 
         when(ctxMock.getUserService()).thenReturn(userServiceMock);
         when(userServiceMock.findUserByIdAsync(eq(TENANT_ID), eq(user.getId()))).thenReturn(Futures.immediateFuture(user));
@@ -283,7 +284,7 @@ public class TbGetCustomerDetailsNodeTest {
         edge.setId(new EdgeId(UUID.randomUUID()));
         edge.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), edge.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), edge.getId());
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -315,7 +316,7 @@ public class TbGetCustomerDetailsNodeTest {
         edge.setId(new EdgeId(UUID.randomUUID()));
         edge.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), edge.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), edge.getId());
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -344,7 +345,7 @@ public class TbGetCustomerDetailsNodeTest {
         device.setId(new DeviceId(UUID.randomUUID()));
         device.setName("Thermostat");
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), device.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, List.of(ContactBasedEntityDetails.ZIP, ContactBasedEntityDetails.ADDRESS, ContactBasedEntityDetails.ADDRESS2), device.getId());
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -382,7 +383,7 @@ public class TbGetCustomerDetailsNodeTest {
         device.setId(new DeviceId(UUID.randomUUID()));
         device.setCustomerId(customer.getId());
 
-        prepareMsgAndConfig(FetchTo.DATA, List.of(ContactBasedEntityDetails.ADDITIONAL_INFO), device.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, List.of(ContactBasedEntityDetails.ADDITIONAL_INFO), device.getId());
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(deviceServiceMock.findDeviceByIdAsync(eq(TENANT_ID), eq(device.getId()))).thenReturn(Futures.immediateFuture(device));
@@ -410,7 +411,7 @@ public class TbGetCustomerDetailsNodeTest {
         var dashboard = new Dashboard();
         dashboard.setId(new DashboardId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, List.of(ContactBasedEntityDetails.STATE), dashboard.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, List.of(ContactBasedEntityDetails.STATE), dashboard.getId());
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -443,7 +444,7 @@ public class TbGetCustomerDetailsNodeTest {
         Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
     }
 
-    private void prepareMsgAndConfig(FetchTo fetchTo, List<ContactBasedEntityDetails> detailsList, EntityId originator) {
+    private void prepareMsgAndConfig(TbMsgSource fetchTo, List<ContactBasedEntityDetails> detailsList, EntityId originator) {
         config.setDetailsList(detailsList);
         config.setFetchTo(fetchTo);
 
