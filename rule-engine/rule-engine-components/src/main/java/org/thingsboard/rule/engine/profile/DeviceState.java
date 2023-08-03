@@ -147,24 +147,24 @@ class DeviceState {
             latestValues = fetchLatestValues(ctx, deviceId);
         }
         boolean stateChanged = false;
-        if (msg.checkType(POST_TELEMETRY_REQUEST)) {
+        if (msg.isTypeOf(POST_TELEMETRY_REQUEST)) {
             stateChanged = processTelemetry(ctx, msg);
-        } else if (msg.checkType(POST_ATTRIBUTES_REQUEST)) {
+        } else if (msg.isTypeOf(POST_ATTRIBUTES_REQUEST)) {
             stateChanged = processAttributesUpdateRequest(ctx, msg);
-        } else if (msg.checkTypeOneOf(ACTIVITY_EVENT, INACTIVITY_EVENT)) {
+        } else if (msg.isTypeOneOf(ACTIVITY_EVENT, INACTIVITY_EVENT)) {
             stateChanged = processDeviceActivityEvent(ctx, msg);
-        } else if (msg.checkType(ATTRIBUTES_UPDATED)) {
+        } else if (msg.isTypeOf(ATTRIBUTES_UPDATED)) {
             stateChanged = processAttributesUpdateNotification(ctx, msg);
-        } else if (msg.checkType(ATTRIBUTES_DELETED)) {
+        } else if (msg.isTypeOf(ATTRIBUTES_DELETED)) {
             stateChanged = processAttributesDeleteNotification(ctx, msg);
-        } else if (msg.checkType(ALARM_CLEAR)) {
+        } else if (msg.isTypeOf(ALARM_CLEAR)) {
             stateChanged = processAlarmClearNotification(ctx, msg);
-        } else if (msg.checkType(ALARM_ACK)) {
+        } else if (msg.isTypeOf(ALARM_ACK)) {
             processAlarmAckNotification(ctx, msg);
-        } else if (msg.checkType(ALARM_DELETE)) {
+        } else if (msg.isTypeOf(ALARM_DELETE)) {
             processAlarmDeleteNotification(ctx, msg);
         } else {
-            if (msg.checkTypeOneOf(ENTITY_ASSIGNED, ENTITY_UNASSIGNED)) {
+            if (msg.isTypeOneOf(ENTITY_ASSIGNED, ENTITY_UNASSIGNED)) {
                 dynamicPredicateValueCtx.resetCustomer();
             }
             ctx.tellSuccess(msg);

@@ -65,7 +65,7 @@ public class TbMsgAttributesNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!msg.checkType(POST_ATTRIBUTES_REQUEST)) {
+        if (!msg.isTypeOf(POST_ATTRIBUTES_REQUEST)) {
             ctx.tellFailure(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }

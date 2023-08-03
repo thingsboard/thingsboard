@@ -82,7 +82,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     }
 
     protected S buildEvent(TbMsg msg, TbContext ctx) {
-        if (msg.checkType(ALARM)) {
+        if (msg.isTypeOf(ALARM)) {
             EdgeEventActionType actionType = getAlarmActionType(msg);
             return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
         } else {
@@ -159,15 +159,15 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
 
     protected EdgeEventActionType getEdgeEventActionTypeByMsgType(TbMsg msg) {
         EdgeEventActionType actionType;
-        if (msg.checkTypeOneOf(POST_TELEMETRY_REQUEST, TIMESERIES_UPDATED)) {
+        if (msg.isTypeOneOf(POST_TELEMETRY_REQUEST, TIMESERIES_UPDATED)) {
             actionType = EdgeEventActionType.TIMESERIES_UPDATED;
-        } else if (msg.checkType(ATTRIBUTES_UPDATED)) {
+        } else if (msg.isTypeOf(ATTRIBUTES_UPDATED)) {
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
-        } else if (msg.checkType(POST_ATTRIBUTES_REQUEST)) {
+        } else if (msg.isTypeOf(POST_ATTRIBUTES_REQUEST)) {
             actionType = EdgeEventActionType.POST_ATTRIBUTES;
-        } else if (msg.checkType(ATTRIBUTES_DELETED)) {
+        } else if (msg.isTypeOf(ATTRIBUTES_DELETED)) {
             actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
-        } else if (msg.checkTypeOneOf(CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT)) {
+        } else if (msg.isTypeOneOf(CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT)) {
             String scope = msg.getMetaData().getValue(SCOPE);
             actionType = StringUtils.isEmpty(scope) ?
                     EdgeEventActionType.TIMESERIES_UPDATED : EdgeEventActionType.ATTRIBUTES_UPDATED;
@@ -180,7 +180,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     }
 
     protected boolean isSupportedMsgType(TbMsg msg) {
-        return msg.checkTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED,
+        return msg.isTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED,
                 ATTRIBUTES_DELETED, TIMESERIES_UPDATED, ALARM, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT);
     }
 

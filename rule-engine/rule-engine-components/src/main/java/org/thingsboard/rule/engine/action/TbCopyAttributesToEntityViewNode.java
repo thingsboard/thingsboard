@@ -75,11 +75,11 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (msg.checkTypeOneOf(ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED,
+        if (msg.isTypeOneOf(ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED,
                 ACTIVITY_EVENT, INACTIVITY_EVENT, POST_ATTRIBUTES_REQUEST)) {
             if (!msg.getMetaData().getData().isEmpty()) {
                 long now = System.currentTimeMillis();
-                String scope = msg.checkType(POST_ATTRIBUTES_REQUEST) ?
+                String scope = msg.isTypeOf(POST_ATTRIBUTES_REQUEST) ?
                         DataConstants.CLIENT_SCOPE : msg.getMetaData().getValue(DataConstants.SCOPE);
 
                 ListenableFuture<List<EntityView>> entityViewsFuture =
@@ -91,7 +91,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                 long startTime = entityView.getStartTimeMs();
                                 long endTime = entityView.getEndTimeMs();
                                 if ((endTime != 0 && endTime > now && startTime < now) || (endTime == 0 && startTime < now)) {
-                                    if (msg.checkType(ATTRIBUTES_DELETED)) {
+                                    if (msg.isTypeOf(ATTRIBUTES_DELETED)) {
                                         List<String> attributes = new ArrayList<>();
                                         for (JsonElement element : JsonParser.parseString(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray()) {
                                             if (element.isJsonPrimitive()) {

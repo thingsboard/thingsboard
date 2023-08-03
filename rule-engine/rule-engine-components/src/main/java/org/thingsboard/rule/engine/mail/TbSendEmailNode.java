@@ -101,7 +101,7 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
     }
 
     private void validateType(TbMsg msg) {
-        if (!msg.checkType(TbMsgType.SEND_EMAIL)) {
+        if (!msg.isTypeOf(TbMsgType.SEND_EMAIL)) {
             String type = msg.getType();
             log.warn("Not expected msg type [{}] for SendEmail Node", type);
             throw new IllegalStateException("Not expected msg type " + type + " for SendEmail Node");

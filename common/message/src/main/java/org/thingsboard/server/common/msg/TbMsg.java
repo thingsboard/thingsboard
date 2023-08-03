@@ -468,13 +468,13 @@ public final class TbMsg implements Serializable {
         return ts;
     }
 
-    public boolean checkType(TbMsgType tbMsgType) {
+    public boolean isTypeOf(TbMsgType tbMsgType) {
         return tbMsgType != null && tbMsgType.name().equals(this.type);
     }
 
-    public boolean checkTypeOneOf(TbMsgType... types) {
+    public boolean isTypeOneOf(TbMsgType... types) {
         for (TbMsgType type : types) {
-            if (checkType(type)) {
+            if (isTypeOf(type)) {
                 return true;
             }
         }

@@ -107,7 +107,7 @@ public class TbMsgGeneratorNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         log.trace("onMsg, config {}, msg {}", config, msg);
-        if (initialized.get() && msg.checkType(TbMsgType.GENERATOR_NODE_SELF_MSG) && msg.getId().equals(nextTickId)) {
+        if (initialized.get() && msg.isTypeOf(TbMsgType.GENERATOR_NODE_SELF_MSG) && msg.getId().equals(nextTickId)) {
             TbStopWatch sw = TbStopWatch.create();
             withCallback(generate(ctx, msg),
                     m -> {

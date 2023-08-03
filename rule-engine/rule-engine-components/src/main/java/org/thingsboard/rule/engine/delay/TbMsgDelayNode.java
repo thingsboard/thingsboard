@@ -61,7 +61,7 @@ public class TbMsgDelayNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (msg.checkType(TbMsgType.DELAY_TIMEOUT_SELF_MSG)) {
+        if (msg.isTypeOf(TbMsgType.DELAY_TIMEOUT_SELF_MSG)) {
             TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
             if (pendingMsg != null) {
                 ctx.enqueueForTellNext(

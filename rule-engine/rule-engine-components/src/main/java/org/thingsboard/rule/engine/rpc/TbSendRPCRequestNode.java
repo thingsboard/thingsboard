@@ -76,7 +76,7 @@ public class TbSendRPCRequestNode implements TbNode {
             ctx.tellFailure(msg, new RuntimeException("Params are not present in the message!"));
         } else {
             int requestId = json.has("requestId") ? json.get("requestId").getAsInt() : random.nextInt();
-            boolean restApiCall = msg.checkType(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE);
+            boolean restApiCall = msg.isTypeOf(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE);
 
             tmp = msg.getMetaData().getValue("oneway");
             boolean oneway = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);

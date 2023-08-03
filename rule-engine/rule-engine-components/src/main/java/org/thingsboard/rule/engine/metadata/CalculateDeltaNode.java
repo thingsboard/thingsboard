@@ -75,7 +75,7 @@ public class CalculateDeltaNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!msg.checkType(TbMsgType.POST_TELEMETRY_REQUEST)) {
+        if (!msg.isTypeOf(TbMsgType.POST_TELEMETRY_REQUEST)) {
             ctx.tellNext(msg, TbNodeConnectionType.OTHER);
             return;
         }

@@ -108,12 +108,12 @@ public class TbDeviceProfileNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         EntityType originatorType = msg.getOriginator().getEntityType();
-        if (msg.checkType(TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG)) {
+        if (msg.isTypeOf(TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG)) {
             scheduleAlarmHarvesting(ctx, msg);
             harvestAlarms(ctx, System.currentTimeMillis());
-        } else if (msg.checkType(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG)) {
+        } else if (msg.isTypeOf(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG)) {
             updateProfile(ctx, new DeviceProfileId(UUID.fromString(msg.getData())));
-        } else if (msg.checkType(TbMsgType.DEVICE_UPDATE_SELF_MSG)) {
+        } else if (msg.isTypeOf(TbMsgType.DEVICE_UPDATE_SELF_MSG)) {
             JsonNode data = JacksonUtil.toJsonNode(msg.getData());
             DeviceId deviceId = new DeviceId(UUID.fromString(data.get("deviceId").asText()));
             if (data.has("profileId")) {
@@ -124,10 +124,10 @@ public class TbDeviceProfileNode implements TbNode {
         } else {
             if (EntityType.DEVICE.equals(originatorType)) {
                 DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
-                if (msg.checkType(TbMsgType.ENTITY_UPDATED)) {
+                if (msg.isTypeOf(TbMsgType.ENTITY_UPDATED)) {
                     invalidateDeviceProfileCache(deviceId, msg.getData());
                     ctx.tellSuccess(msg);
-                } else if (msg.checkType(TbMsgType.ENTITY_DELETED)) {
+                } else if (msg.isTypeOf(TbMsgType.ENTITY_DELETED)) {
                     removeDeviceState(deviceId);
                     ctx.tellSuccess(msg);
                 } else {

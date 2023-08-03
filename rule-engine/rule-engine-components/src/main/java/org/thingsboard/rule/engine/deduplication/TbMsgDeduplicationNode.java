@@ -80,7 +80,7 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        if (msg.checkType(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG)) {
+        if (msg.isTypeOf(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG)) {
             processDeduplication(ctx, msg.getOriginator());
         } else {
             processOnRegularMsg(ctx, msg);
