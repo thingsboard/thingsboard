@@ -20,7 +20,7 @@
   <div class="tb-form-panel">
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
       <div class="tb-form-panel-title" translate>widgets.background.background</div>
-      <tb-toggle-select formControlName="type" fxFlex>
+      <tb-toggle-select formControlName="type" fxFlex selectMediaBreakpoint="xs">
         <tb-toggle-option *ngFor="let type of backgroundTypes"
                           [value]="type">
           {{ backgroundTypeTranslationsMap.get(type) | translate }}

@@ -94,7 +94,7 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
   }
 
   applyColorSettings() {
-    const backgroundSettings = this.backgroundSettingsFormGroup.value;
+    const backgroundSettings = this.backgroundSettingsFormGroup.getRawValue();
     this.backgroundSettingsApplied.emit(backgroundSettings);
   }
 

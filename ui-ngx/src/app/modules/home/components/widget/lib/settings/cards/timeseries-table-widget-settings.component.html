@@ -59,7 +59,7 @@
     <mat-slide-toggle class="mat-slide"  formControlName="displayPagination">
       {{ 'widgets.table.display-pagination' | translate }}
     </mat-slide-toggle>
-    <div class="tb-form-row space-between">
+    <div class="tb-form-row space-between column-xs">
       <div translate>widgets.table.default-page-size</div>
       <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput formControlName="defaultPageSize" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -78,8 +78,8 @@
       {{ 'widgets.table.hide-empty-lines' | translate }}
     </mat-slide-toggle>
     <mat-expansion-panel class="tb-settings" [expanded]="timeseriesTableWidgetSettingsForm.get('useRowStyleFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title fxFlex="60">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="useRowStyleFunction" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.table.use-row-style-function' | translate }}
