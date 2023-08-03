@@ -44,6 +44,8 @@ import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from '@core/utils';
+import { Subscription } from 'rxjs';
+import { UtilsService } from '@core/services/utils.service';
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmFilterConfigData');
 
@@ -114,6 +116,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
   panelResult: AlarmFilterConfig = null;
 
   private alarmFilterConfig: AlarmFilterConfig;
+  private resizeWindows: Subscription;
 
   private propagateChange = (_: any) => {};
 
@@ -125,6 +128,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
               private translate: TranslateService,
               private overlay: Overlay,
               private nativeElement: ElementRef,
+              private utils: UtilsService,
               private viewContainerRef: ViewContainerRef) {
   }
 
@@ -213,6 +217,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
     });
     this.alarmFilterOverlayRef.attach(new TemplatePortal(this.alarmFilterPanel,
       this.viewContainerRef));
+    this.resizeWindows = this.utils.updateOverlayMaxHeigth(this.alarmFilterOverlayRef);
   }
 
   cancel() {
@@ -220,6 +225,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
     if (this.overlayRef) {
       this.overlayRef.dispose();
     } else {
+      this.resizeWindows.unsubscribe();
       this.alarmFilterOverlayRef.dispose();
     }
   }
@@ -233,6 +239,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
     if (this.overlayRef) {
       this.overlayRef.dispose();
     } else {
+      this.resizeWindows.unsubscribe();
       this.alarmFilterOverlayRef.dispose();
     }
   }
