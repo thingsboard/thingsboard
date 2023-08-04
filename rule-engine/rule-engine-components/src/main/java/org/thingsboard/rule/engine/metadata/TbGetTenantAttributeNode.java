@@ -37,7 +37,8 @@ import org.thingsboard.server.common.data.util.TbPair;
         version = 1,
         nodeDescription = "Adds message originator tenant attributes or latest telemetry into message or message metadata",
         nodeDetails = "Useful when you need to retrieve some common configuration or threshold set " +
-                "that is stored as tenant attributes or telemetry data and use it for further message processing.",
+                "that is stored as tenant attributes or telemetry data and use it for further message processing.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeTenantAttributesConfig")
 public class TbGetTenantAttributeNode extends TbAbstractGetEntityDataNode<TenantId> {
