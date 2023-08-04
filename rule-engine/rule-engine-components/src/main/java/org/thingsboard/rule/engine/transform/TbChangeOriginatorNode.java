@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -74,14 +73,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
             if (newOriginator == null || newOriginator.isNullUid()) {
                 return Futures.immediateFailedFuture(new NoSuchElementException("Failed to find new originator!"));
             }
-            return Futures.immediateFuture(
-                    Collections.singletonList(
-                            ctx.transformMsg(
-                                    msg,
-                                    msg.getType(),
-                                    newOriginator,
-                                    msg.getMetaData(),
-                                    msg.getData())));
+            return Futures.immediateFuture(List.of(ctx.transformMsgOriginator(msg, newOriginator)));
         }, ctx.getDbCallbackExecutor());
     }
 

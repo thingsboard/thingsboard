@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesFieldsAsyncLoader;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -77,9 +78,9 @@ public abstract class TbAbstractGetMappedDataNode<T extends EntityId, C extends 
         for (var entry : targetKeysToSourceValuesMap.entrySet()) {
             var targetKeyName = entry.getKey();
             var sourceFieldValue = entry.getValue();
-            if (FetchTo.DATA.equals(fetchTo)) {
+            if (TbMsgSource.DATA.equals(fetchTo)) {
                 msgDataAsJsonNode.put(targetKeyName, sourceFieldValue);
-            } else if (FetchTo.METADATA.equals(fetchTo)) {
+            } else if (TbMsgSource.METADATA.equals(fetchTo)) {
                 msgMetaData.putValue(targetKeyName, sourceFieldValue);
             }
         }

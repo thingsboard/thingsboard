@@ -1325,8 +1325,7 @@
         "device-configuration": "Configuración del dispositivo",
         "transport-configuration": "Configuración del transporte",
         "wizard": {
-            "device-details": "Detalles del dispositivo",
-            "customer-to-assign-device": "Cliente al que asignar el dispositivo"
+            "device-details": "Detalles del dispositivo"
         },
         "unassign-devices-from-edge-title": "¿Está seguro de que desea desasignar {count, plural, =1 {1 dispositivo} other {# dispositivos} }?",
         "unassign-devices-from-edge-text": "Después de la confirmación, todos los dispositivos seleccionados quedarán sin asignar y el Edge no podrá acceder a ellos."
@@ -2603,7 +2602,6 @@
         "browse-files": "Navegar ficheros"
     },
     "image-input": {
-        "drop-image-or": "Arrastrar y soltar una imagen o",
         "drop-images-or": "Arrastrar y soltar imagenes o",
         "no-images": "No hay imágenes seleccionadas",
         "images": "imágenes"
@@ -3907,7 +3905,7 @@
         "created": "{{created}} creadas",
         "updated": "{{updated}} actualizadas",
         "deleted": "{{deleted}} borradas",
-        "remove-other-entities-confirm-text": "Atención! Esta acción <b>borrará</b> permanentemente <b>todas</b> las entidades actuales<br/>no presentes en la versión a restaurar.<br/><br/>Escribe <b>remove other entities</b> para confirmar.",
+        "remove-other-entities-confirm-text": "Atención! Esta acción <b>borrará</b> permanentemente <b>todas</b> las entidades actuales<br/>no presentes en la versión a restaurar.<br/><br/>Escribe <b>\"remove other entities\"</b> para confirmar.",
         "auto-commit-to-branch": "auto-publicar a la rama <b>{{ branch }}</b>",
         "default-create-entity-version-name": "{{entityName}} actualización",
         "sync-strategy-merge-hint": "Crea o actualiza las entidades seleccionadas en el repositorio. Las demás entidades <b>no serán modificadas</b>.",

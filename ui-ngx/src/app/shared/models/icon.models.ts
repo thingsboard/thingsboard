@@ -56,8 +56,15 @@ export const svgIcons: {[key: string]: string} = {
     '</svg>'
 };
 
+export const svgIconsUrl: { [key: string]: string } = {
+  windows: '/assets/windows.svg',
+  macos: '/assets/macos.svg',
+  linux: '/assets/linux.svg',
+  docker: '/assets/docker.svg'
+};
+
 const svgIconNamespaces: string[] = ['mdi'];
-const svgIconNames = Object.keys(svgIcons);
+const svgIconNames = [...Object.keys(svgIcons), ...Object.keys(svgIconsUrl)];
 
 export const splitIconName = (iconName: string): [string, string] => {
   if (!iconName) {

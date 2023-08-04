@@ -16,6 +16,21 @@
 
 @import './scss/constants';
 
+@mixin form-row-column($breakpoint) {
+  @media #{$breakpoint} {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 12px 12px 16px;
+    .mat-mdc-form-field, tb-unit-input {
+      width: auto;
+      &.medium-width {
+        width: auto;
+      }
+    }
+  }
+}
+
 .tb-default, .tb-dark {
   .tb-form-panel {
     box-shadow: 0 0 10px 6px rgba(11, 17, 51, 0.04);
@@ -27,6 +42,10 @@
     color: rgba(0, 0, 0, 0.87);
     letter-spacing: 0.15px;
     position: relative;
+    @media #{$mat-xs} {
+      padding: 12px;
+      gap: 8px;
+    }
     &.no-padding-bottom {
       padding-bottom: 0;
     }
@@ -52,7 +71,6 @@
       > .mat-expansion-panel {
         padding: 16px;
         .mat-expansion-panel-header {
-          height: 32px;
           .mat-slide {
             margin: 0;
           }
@@ -66,21 +84,13 @@
           overflow: visible;
         }
         > .mat-expansion-panel-header {
+          height: fit-content;
           user-select: none;
           font-weight: 500;
           font-size: 16px;
           line-height: 24px;
           letter-spacing: 0.25px;
           padding: 0;
-          .mat-content {
-            flex: 0;
-            white-space: nowrap;
-          }
-          &.fill-width {
-            .mat-content {
-              flex: 1;
-            }
-          }
           &:hover {
             background: none;
           }
@@ -98,6 +108,10 @@
             flex-direction: column;
             gap: 16px;
             padding: 16px 0 0 !important;
+            @media #{$mat-xs} {
+              padding: 12px 0 0 !important;
+              gap: 8px;
+            }
           }
         }
         .tb-json-object-panel, .tb-css-content-panel {
@@ -139,6 +153,14 @@
     padding: 7px 7px 7px 16px;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 6px;
+    &.column {
+      &-xs {
+        @include form-row-column($mat-xs)
+      }
+      &-lt-md {
+        @include form-row-column($mat-lt-md)
+      }
+    }
     &.no-border {
       border: none;
       border-radius: 0;
@@ -157,22 +179,20 @@
       margin-top: -7px;
       margin-bottom: -7px;
     }
-    .mat-mdc-form-field {
+    .mat-mdc-form-field, tb-unit-input {
       width: 106px;
       &.medium-width {
         width: 220px;
       }
-      @media #{$mat-xs} {
+      &.flex {
+        flex: 1;
         width: auto;
-        &.medium-width {
-          width: auto;
-        }
       }
     }
     .fixed-title-width {
       min-width: 200px;
       @media #{$mat-xs} {
-        min-width: 0;
+        min-width: fit-content;
       }
     }
     .mat-slide:only-child {
@@ -330,24 +350,6 @@
     gap: 12px;
     padding-bottom: 12px;
 
-    .tb-form-table-header {
-      height: 48px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-      display: flex;
-      flex-direction: row;
-      place-content: center flex-start;
-      align-items: center;
-      gap: 12px;
-      padding-left: 12px;
-      &-cell {
-        font-weight: 400;
-        font-size: 14px;
-        line-height: 20px;
-        letter-spacing: 0.2px;
-        color: rgba(0, 0, 0, 0.54);
-      }
-    }
-
     .tb-form-table-body {
       display: flex;
       flex-direction: column;
@@ -359,29 +361,49 @@
     }
   }
 
-  .tb-form-table-row {
-    height: 38px;
+  .tb-form-table-header, .tb-form-table-row {
     display: flex;
     flex-direction: row;
-    gap: 12px;
-    padding-left: 12px;
+    gap: 8px;
+    padding-left: 8px;
+    place-content: center flex-start;
+    align-items: center;
+    @media #{$mat-gt-md} {
+      gap: 12px;
+      padding-left: 12px;
+    }
+    &-cell {
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.2px;
+    }
+  }
 
+  .tb-form-table-header {
+    height: 48px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    &-cell {
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
+
+  .tb-form-table-row {
     &.tb-draggable {
       gap: 0;
       padding-left: 0;
       background: #fff;
     }
 
+    &-cell {
+      color: rgba(0, 0, 0, 0.87);
+    }
+
     &-cell-buttons {
       display: flex;
       flex-direction: row;
       button.mat-mdc-icon-button.mat-mdc-button-base {
-        padding: 7px;
-        width: 38px;
-        height: 38px;
-        .mat-icon {
-          color: rgba(0, 0, 0, 0.38);
-        }
+        color: rgba(0, 0, 0, 0.38);
         &.tb-hidden {
           visibility: hidden;
         }
@@ -411,10 +433,6 @@
       right: 0;
       bottom: 0;
       background: #305680;
-      -webkit-mask-image: url(/assets/home/no_data_folder_bg.svg);
-      -webkit-mask-repeat: no-repeat;
-      -webkit-mask-size: contain;
-      -webkit-mask-position: center;
       mask-image: url(/assets/home/no_data_folder_bg.svg);
       mask-repeat: no-repeat;
       mask-size: contain;
@@ -434,26 +452,32 @@
     }
   }
 
-  button.mat-mdc-button-base.tb-box-button {
+  button.mat-mdc-button-base.tb-box-button, .tb-form-table-row-cell-buttons button.mat-mdc-icon-button.mat-mdc-button-base {
     width: 40px;
     min-width: 40px;
     height: 40px;
-    padding: 7px;
+    padding: 8px;
+    &.mat-mdc-outlined-button {
+      padding: 7px;
+    }
     .mat-mdc-button-touch-target {
       width: 40px;
       height: 40px;
-    }
-    &:not(:disabled) {
-      color: rgba(0, 0, 0, 0.54);
-    }
-    &:disabled {
-      color: rgba(0, 0, 0, 0.12);
     }
     > .mat-icon {
       width: 24px;
       height: 24px;
       font-size: 24px;
       margin: 0;
+    }
+  }
+
+  button.mat-mdc-button-base.tb-box-button {
+    &:not(:disabled) {
+      color: rgba(0, 0, 0, 0.54);
+    }
+    &:disabled {
+      color: rgba(0, 0, 0, 0.12);
     }
   }
 }

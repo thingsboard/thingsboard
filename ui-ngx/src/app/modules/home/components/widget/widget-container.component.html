@@ -19,7 +19,6 @@
      [fullscreenBackgroundStyle]="dashboardStyle"
      [fullscreenBackgroundImage]="backgroundImage"
      (fullscreenChanged)="onFullscreenChanged($event)"
-     fxLayout="column"
      class="tb-widget"
      [ngClass]="{
                 'tb-highlighted': isHighlighted(widget),
@@ -32,8 +31,11 @@
      (mousedown)="onMouseDown($event)"
      (click)="onClicked($event)"
      (contextmenu)="onContextMenu($event)">
-  <div *ngIf="!!widgetComponent.widgetContext?.inited" fxLayout="row" fxLayoutAlign="space-between start">
-    <div class="tb-widget-title" fxLayout="column" fxLayoutAlign="center start" *ngIf="widget.showWidgetTitlePanel">
+  <div *ngIf="!!widgetComponent.widgetContext?.inited"
+       class="tb-widget-header"
+       [class]="{'tb-widget-header-absolute': widgetComponent.widgetContext?.absoluteHeader}">
+    <div *ngIf="widget.showWidgetTitlePanel"
+         class="tb-widget-title">
               <span *ngIf="widget.showTitle"
                     [ngClass]="{'single-row': widget.hasTimewindow}"
                     [ngStyle]="widget.titleStyle"
@@ -57,9 +59,7 @@
     </div>
     <div *ngIf="widget.showWidgetActions"
          class="tb-widget-actions"
-         [ngClass]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel&&(widget.showTitle||widget.hasAggregation))}"
-         fxLayout="row"
-         fxLayoutAlign="start center"
+         [class]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel&&(widget.showTitle||widget.hasAggregation))}"
          (mousedown)="$event.stopPropagation()">
       <button mat-icon-button *ngFor="let action of widget.customHeaderActions"
               [fxShow]="!isEdit"
@@ -105,9 +105,8 @@
       </button>
     </div>
   </div>
-  <div fxFlex fxLayout="column" class="tb-widget-content" [ngClass]="{'tb-no-interaction': disableWidgetInteraction}">
-    <tb-widget fxFlex
-               #widgetComponent
+  <div class="tb-widget-content" [ngClass]="{'tb-no-interaction': disableWidgetInteraction}">
+    <tb-widget #widgetComponent
                [dashboardWidget]="widget"
                [isEdit]="isEdit"
                [isMobile]="isMobile">

@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.device;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-public final class TbRelationTypes {
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-    public static String SUCCESS = "Success";
-    public static String FAILURE = "Failure";
+import java.util.Map;
 
+@Configuration
+@ConfigurationProperties(prefix = "device")
+@Data
+public class DeviceConnectivityConfiguration {
+    private Map<String, DeviceConnectivityInfo> connectivity;
+
+    public boolean isEnabled(String protocol) {
+        var info = connectivity.get(protocol);
+        return info != null && info.isEnabled();
+    }
 }

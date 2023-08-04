@@ -82,7 +82,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
         UserId userId = tbUser.getId();
 
         try {
-            tbAlarmService.unassignUserAlarms(tenantId, tbUser, System.currentTimeMillis());
+            tbAlarmService.unassignUserAlarms(tbUser.getTenantId(), tbUser, System.currentTimeMillis());
             userService.deleteUser(tenantId, userId);
             notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, userId, tbUser,
                     user, ActionType.DELETED, true, null, customerId.toString());
