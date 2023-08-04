@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.tenant;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -28,7 +27,6 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
@@ -55,9 +53,5 @@ public class TenantEdgeProcessor extends BaseEdgeProcessor {
             }
         }
         return downlinkMsg;
-    }
-
-    public ListenableFuture<Void> processTenantNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
     }
 }

@@ -210,10 +210,10 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     future = relationProcessor.processRelationNotification(tenantId, edgeNotificationMsg);
                     break;
                 case TENANT:
-                    future = tenantEdgeProcessor.processTenantNotification(tenantId, edgeNotificationMsg);
+                    future = tenantEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                     break;
                 case TENANT_PROFILE:
-                    future = tenantProfileEdgeProcessor.processTenantProfileNotification(tenantId, edgeNotificationMsg);
+                    future = tenantProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                     break;
                 default:
                     log.warn("Edge event type [{}] is not designed to be pushed to edge", type);
