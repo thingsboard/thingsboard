@@ -64,7 +64,11 @@ public interface RelationDao {
 
     void deleteOutboundRelations(TenantId tenantId, EntityId entity);
 
+    void deleteOutboundRelations(TenantId tenantId, EntityId entity, RelationTypeGroup relationTypeGroup);
+
     void deleteInboundRelations(TenantId tenantId, EntityId entity);
+
+    void deleteInboundRelations(TenantId tenantId, EntityId entity, RelationTypeGroup relationTypeGroup);
 
     ListenableFuture<Boolean> deleteOutboundRelationsAsync(TenantId tenantId, EntityId entity);
 

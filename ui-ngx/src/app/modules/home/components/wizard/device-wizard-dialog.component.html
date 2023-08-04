@@ -60,6 +60,7 @@
           <tb-device-profile-autocomplete
             required
             addNewProfile
+            showCreateNewButton
             selectDefaultProfile
             formControlName="deviceProfileId"
             (deviceProfileChanged)="deviceProfileChanged($event)">
@@ -75,8 +76,7 @@
           </div>
           <tb-entity-autocomplete
             formControlName="customerId"
-            useFullEntityId
-            labelText="device.wizard.customer-to-assign-device"
+            labelText="device.assign-to-customer"
             [entityType]="entityType.CUSTOMER">
           </tb-entity-autocomplete>
           <mat-form-field class="mat-block" subscriptSizing="dynamic">

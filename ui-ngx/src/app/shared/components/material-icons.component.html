@@ -39,7 +39,7 @@
                 matTooltip="{{ icon.displayName }}"
                 matTooltipPosition="above"
                 type="button">
-          <mat-icon>{{icon.name}}</mat-icon>
+          <tb-icon matButtonIcon>{{icon.name}}</tb-icon>
         </button>
         <button *ngIf="icon.name !== selectedIcon"
                 class="tb-select-icon-button"
@@ -48,7 +48,7 @@
                 matTooltip="{{ icon.displayName }}"
                 matTooltipPosition="above"
                 type="button">
-          <mat-icon>{{icon.name}}</mat-icon>
+          <tb-icon matButtonIcon>{{icon.name}}</tb-icon>
         </button>
       </ng-container>
     </div>

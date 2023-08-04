@@ -19,13 +19,13 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by ashvayka on 21.02.17.
@@ -34,9 +34,12 @@ public abstract class CassandraAbstractAsyncDao extends CassandraAbstractDao {
 
     protected ExecutorService readResultsProcessingExecutor;
 
+    @Value("${cassandra.query.result_processing_threads:50}")
+    private int threadPoolSize;
+
     @PostConstruct
     public void startExecutor() {
-        readResultsProcessingExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("cassandra-callback"));
+        readResultsProcessingExecutor = ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "cassandra-callback");
     }
 
     @PreDestroy
