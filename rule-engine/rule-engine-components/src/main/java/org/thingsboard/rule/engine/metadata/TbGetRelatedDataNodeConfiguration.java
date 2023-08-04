@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.data.RelationsQuery;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
@@ -38,7 +39,7 @@ public class TbGetRelatedDataNodeConfiguration extends TbGetEntityDataNodeConfig
         dataMapping.putIfAbsent("serialNumber", "sn");
         configuration.setDataMapping(dataMapping);
         configuration.setDataToFetch(DataToFetch.ATTRIBUTES);
-        configuration.setFetchTo(FetchTo.METADATA);
+        configuration.setFetchTo(TbMsgSource.METADATA);
 
         var relationsQuery = new RelationsQuery();
         var relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());

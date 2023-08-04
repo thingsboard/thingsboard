@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -27,6 +28,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -66,7 +68,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
+        var msgDataAsObjectNode = TbMsgSource.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(
                 findEntityIdAsync(ctx, msg),
                 entityId -> safePutAttributes(ctx, msg, msgDataAsObjectNode, entityId),
@@ -74,6 +76,20 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     protected abstract ListenableFuture<T> findEntityIdAsync(TbContext ctx, TbMsg msg);
+
+    protected TbPair<Boolean, JsonNode> upgradeRuleNodesWithOldPropertyToUseFetchTo(
+            JsonNode oldConfiguration,
+            String oldProperty,
+            String ifTrue,
+            String ifFalse
+    ) throws TbNodeException {
+        var newConfigObjectNode = (ObjectNode) oldConfiguration;
+        if (!newConfigObjectNode.has(oldProperty)) {
+            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, TbMsgSource.METADATA.name());
+            return new TbPair<>(true, newConfigObjectNode);
+        }
+        return upgradeConfigurationToUseFetchTo(oldProperty, ifTrue, ifFalse, newConfigObjectNode);
+    }
 
     private void safePutAttributes(TbContext ctx, TbMsg msg, ObjectNode msgDataNode, T entityId) {
         Set<TbPair<String, List<String>>> failuresPairSet = ConcurrentHashMap.newKeySet();
@@ -150,7 +166,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     private TsKvEntry getValueWithTs(TsKvEntry tsKvEntry) {
-        var mapper = FetchTo.DATA.equals(fetchTo) ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
+        var mapper = TbMsgSource.DATA.equals(fetchTo) ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
         var value = JacksonUtil.newObjectNode(mapper);
         value.put(TS, tsKvEntry.getTs());
         JacksonUtil.addKvEntry(value, tsKvEntry, VALUE, mapper);

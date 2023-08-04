@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -56,26 +57,26 @@ public class TbMsgToEmailNodeTest {
     private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Test
-    public void msgCanBeConverted() throws IOException {
+    public void msgCanBeConverted() {
         initWithScript();
         metaData.putValue("username", "oreo");
         metaData.putValue("userEmail", "user@email.io");
         metaData.putValue("name", "temp");
         metaData.putValue("passed", "5");
         metaData.putValue("count", "100");
-        TbMsg msg = TbMsg.newMsg( "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
 
         emailNode.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<TbMsgType> typeCaptor = ArgumentCaptor.forClass(TbMsgType.class);
         ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
         verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
 
-        assertEquals("SEND_EMAIL", typeCaptor.getValue());
+        assertEquals(TbMsgType.SEND_EMAIL, typeCaptor.getValue());
         assertEquals(originator, originatorCaptor.getValue());
         assertEquals("oreo", metadataCaptor.getValue().getValue("username"));
         assertNotSame(metaData, metadataCaptor.getValue());
