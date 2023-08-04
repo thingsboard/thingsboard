@@ -558,8 +558,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         template.setBody("Body: " + templateParams);
         template.setThemeColor("ff0000");
         var button = new MicrosoftTeamsDeliveryMethodNotificationTemplate.Button();
-        button.setName("Button: " + templateParams);
-        button.setUri("https://" + templateParams);
+        button.setEnabled(true);
+        button.setText("Button: " + templateParams);
+        button.setLink("https://" + templateParams);
         template.setButton(button);
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setName("Notification to Teams");

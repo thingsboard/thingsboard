@@ -17,27 +17,36 @@ package org.thingsboard.server.service.notification.channels;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDeliveryMethodNotificationTemplate.Button.LinkType;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class MicrosoftTeamsNotificationChannel implements NotificationChannel<MicrosoftTeamsNotificationTargetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate> {
+
+    private final SystemSecurityService systemSecurityService;
 
     @Setter
     private RestTemplate restTemplate = new RestTemplateBuilder()
@@ -47,11 +56,6 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
 
     @Override
     public void sendNotification(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
-        if (StringUtils.isNotEmpty(processedTemplate.getCustomMessageCardJson())) {
-            restTemplate.postForEntity(targetConfig.getWebhookUrl(), processedTemplate.getCustomMessageCardJson(), String.class);
-            return;
-        }
-
         Message message = new Message();
         message.setThemeColor(Strings.emptyToNull(processedTemplate.getThemeColor()));
         if (StringUtils.isEmpty(processedTemplate.getSubject())) {
@@ -63,14 +67,42 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
             section.setActivitySubtitle(processedTemplate.getBody());
             message.setSections(List.of(section));
         }
-        if (processedTemplate.getButton() != null) {
-            var button = processedTemplate.getButton();
-            Message.ActionCard actionCard = new Message.ActionCard();
-            actionCard.setType("OpenUri");
-            actionCard.setName(button.getName());
-            var target = new Message.ActionCard.Target("default", button.getUri());
-            actionCard.setTargets(List.of(target));
-            message.setPotentialAction(List.of(actionCard));
+        var button = processedTemplate.getButton();
+        if (button != null && button.isEnabled()) {
+            String uri;
+            if (button.getLinkType() == LinkType.DASHBOARD) {
+                String state = null;
+                if (button.isSetEntityIdInState() || StringUtils.isNotEmpty(button.getDashboardState())) {
+                    ObjectNode stateObject = JacksonUtil.newObjectNode();
+                    if (button.isSetEntityIdInState()) {
+                        stateObject.putObject("params")
+                                .set("entityId", Optional.ofNullable(ctx.getRequest().getInfo())
+                                        .map(NotificationInfo::getStateEntityId)
+                                        .map(JacksonUtil::valueToTree)
+                                        .orElse(null));
+                    } else {
+                        stateObject.putObject("params");
+                    }
+                    if (StringUtils.isNotEmpty(button.getDashboardState())) {
+                        stateObject.put("id", button.getDashboardState());
+                    }
+                    state = Base64.encodeBase64String(JacksonUtil.OBJECT_MAPPER.writeValueAsBytes(List.of(stateObject)));
+                }
+                uri = systemSecurityService.getBaseUrl(ctx.getTenantId(), null, null) + "/dashboards/" + button.getDashboardId();
+                if (state != null) {
+                    uri += "?state=" + state;
+                }
+            } else {
+                uri = button.getLink();
+            }
+            if (StringUtils.isNotBlank(uri) && button.getText() != null) {
+                Message.ActionCard actionCard = new Message.ActionCard();
+                actionCard.setType("OpenUri");
+                actionCard.setName(button.getText());
+                var target = new Message.ActionCard.Target("default", uri);
+                actionCard.setTargets(List.of(target));
+                message.setPotentialAction(List.of(actionCard));
+            }
         }
 
         restTemplate.postForEntity(targetConfig.getWebhookUrl(), message, String.class);

@@ -22,6 +22,7 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -33,16 +34,13 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
     private String themeColor;
     private Button button;
 
-    private String customMessageCardJson;
-
     private final List<TemplatableValue> templatableValues = List.of(
             TemplatableValue.of(this::getBody, this::setBody),
             TemplatableValue.of(this::getSubject, this::setSubject),
-            TemplatableValue.of(() -> button != null ? button.getName() : null,
-                    processed -> {if (button != null) button.setName(processed);}),
-            TemplatableValue.of(() -> button != null ? button.getUri() : null,
-                    processed -> {if (button != null) button.setUri(processed);}),
-            TemplatableValue.of(this::getCustomMessageCardJson, this::setCustomMessageCardJson)
+            TemplatableValue.of(() -> button != null ? button.getText() : null,
+                    processed -> { if (button != null) button.setText(processed); }),
+            TemplatableValue.of(() -> button != null ? button.getLink() : null,
+                    processed -> { if (button != null) button.setLink(processed); })
     );
 
     public MicrosoftTeamsDeliveryMethodNotificationTemplate(MicrosoftTeamsDeliveryMethodNotificationTemplate other) {
@@ -50,7 +48,6 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
         this.subject = other.subject;
         this.themeColor = other.themeColor;
         this.button = other.button != null ? new Button(other.button) : null;
-        this.customMessageCardJson = other.customMessageCardJson;
     }
 
     @Override
@@ -66,12 +63,27 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
     @Data
     @NoArgsConstructor
     public static class Button {
-        private String name;
-        private String uri;
+        private boolean enabled;
+        private String text;
+        private LinkType linkType;
+        private String link;
+
+        private UUID dashboardId;
+        private String dashboardState;
+        private boolean setEntityIdInState;
 
         public Button(Button other) {
-            this.name = other.name;
-            this.uri = other.uri;
+            this.enabled = other.enabled;
+            this.text = other.text;
+            this.linkType = other.linkType;
+            this.link = other.link;
+            this.dashboardId = other.dashboardId;
+            this.dashboardState = other.dashboardState;
+            this.setEntityIdInState = other.setEntityIdInState;
+        }
+
+        public enum LinkType {
+            LINK, DASHBOARD
         }
     }
 
