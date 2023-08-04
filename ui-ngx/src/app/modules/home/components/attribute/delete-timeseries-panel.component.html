@@ -16,47 +16,41 @@
 
 -->
 
-<form [formGroup]="deleteTimeseriesFormGroup" style="max-width: 488px">
-  <mat-toolbar>
-    <h2>{{ "attribute.delete-timeseries.delete-strategy" | translate }}</h2>
-    <span fxFlex></span>
-    <button mat-icon-button
-            type="button"
-            (click)="cancel()">
-      <mat-icon class="material-icons">close</mat-icon>
-    </button>
-  </mat-toolbar>
-  <div style="padding: 16px; min-height: 188px">
-    <mat-form-field fxFlex class="mat-block">
-      <mat-label translate>attribute.delete-timeseries.strategy</mat-label>
-      <mat-select formControlName="strategy">
-        <mat-option *ngFor="let strategy of strategiesTranslationsMap.keys()" [value]="strategy">
-          {{ strategiesTranslationsMap.get(strategy) | translate }}
-        </mat-option>
-      </mat-select>
+<mat-toolbar>
+  <h2>{{ "attribute.delete-timeseries.delete-strategy" | translate }}</h2>
+  <span fxFlex></span>
+  <button mat-icon-button
+          type="button"
+          (click)="cancel()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<form [formGroup]="deleteTimeseriesFormGroup" class="mat-content mat-padding tb-form-settings">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>attribute.delete-timeseries.strategy</mat-label>
+    <mat-select formControlName="strategy">
+      <mat-option *ngFor="let strategy of strategiesTranslationsMap.keys()" [value]="strategy">
+        {{ strategiesTranslationsMap.get(strategy) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <div *ngIf="isPeriodStrategy()" class="tb-select-interval">
+    <mat-form-field class="mat-block" subscriptSizing="dynamic">
+      <mat-label translate>attribute.delete-timeseries.start-time</mat-label>
+      <mat-datetimepicker-toggle [for]="startDateTimePicker" matPrefix></mat-datetimepicker-toggle>
+      <mat-datetimepicker #startDateTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+      <input required matInput formControlName="startDateTime" [matDatetimepicker]="startDateTimePicker">
     </mat-form-field>
-    <div *ngIf="isPeriodStrategy()">
-      <div fxLayout="row" fxLayoutGap="22px" fxLayout.xs="column" fxLayoutGap.xs="8px">
-        <mat-form-field class="mat-block">
-          <mat-label translate>attribute.delete-timeseries.start-time</mat-label>
-          <mat-datetimepicker-toggle [for]="startDateTimePicker" matPrefix></mat-datetimepicker-toggle>
-          <mat-datetimepicker #startDateTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
-          <input required matInput formControlName="startDateTime" [matDatetimepicker]="startDateTimePicker">
-        </mat-form-field>
-        <mat-form-field class="mat-block">
-          <mat-label translate>attribute.delete-timeseries.ends-on</mat-label>
-          <mat-datetimepicker-toggle [for]="endDatePicker" matPrefix></mat-datetimepicker-toggle>
-          <mat-datetimepicker #endDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
-          <input required matInput formControlName="endDateTime" [matDatetimepicker]="endDatePicker">
-        </mat-form-field>
-      </div>
-    </div>
-    <div *ngIf="isPeriodStrategy() || isDeleteLatestStrategy()">
-      <mat-slide-toggle formControlName="rewriteLatest">
-        {{ "attribute.delete-timeseries.rewrite-latest-value" | translate }}
-      </mat-slide-toggle>
-    </div>
+    <mat-form-field class="mat-block" subscriptSizing="dynamic">
+      <mat-label translate>attribute.delete-timeseries.ends-on</mat-label>
+      <mat-datetimepicker-toggle [for]="endDatePicker" matPrefix></mat-datetimepicker-toggle>
+      <mat-datetimepicker #endDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+      <input required matInput formControlName="endDateTime" [matDatetimepicker]="endDatePicker">
+    </mat-form-field>
   </div>
+  <mat-slide-toggle class="tb-slide-toggle" formControlName="rewriteLatest" *ngIf="isPeriodStrategy() || isDeleteLatestStrategy()">
+    {{ "attribute.delete-timeseries.rewrite-latest-value" | translate }}
+  </mat-slide-toggle>
 </form>
 <div fxLayout="row" class="tb-panel-actions">
   <span fxFlex></span>

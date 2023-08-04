@@ -51,34 +51,33 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
 
   strategiesTranslationsMap = timeseriesDeleteStrategyTranslations;
 
-  multipleDeletionStrategies = [
+  private multipleDeletionStrategies = new Set<TimeseriesDeleteStrategy>([
     TimeseriesDeleteStrategy.DELETE_ALL_DATA,
     TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE
-  ];
+  ]);
 
   private destroy$ = new Subject<void>();
 
-  constructor(@Inject(DELETE_TIMESERIES_PANEL_DATA) public data: DeleteTimeseriesPanelData,
-              public overlayRef: OverlayRef,
-              public fb: FormBuilder) { }
+  constructor(@Inject(DELETE_TIMESERIES_PANEL_DATA) private data: DeleteTimeseriesPanelData,
+              private overlayRef: OverlayRef,
+              private fb: FormBuilder) { }
 
   ngOnInit(): void {
     const today = new Date();
     if (this.data.isMultipleDeletion) {
-      this.strategiesTranslationsMap = new Map(Array.from(this.strategiesTranslationsMap.entries())
-        .filter(([strategy]) => {
-          return this.multipleDeletionStrategies.includes(strategy);
-      }))
+      this.strategiesTranslationsMap = new Map(Array.from(this.strategiesTranslationsMap)
+        .filter(([strategy]) => this.multipleDeletionStrategies.has(strategy)))
     }
     this.deleteTimeseriesFormGroup = this.fb.group({
       strategy: [TimeseriesDeleteStrategy.DELETE_ALL_DATA],
       startDateTime: [
         { value: new Date(today.getFullYear(), today.getMonth() - 1, today.getDate()), disabled: true },
-        [Validators.required]
+        Validators.required
       ],
-      endDateTime: [{ value: today, disabled: true }, [Validators.required]],
+      endDateTime: [{ value: today, disabled: true }, Validators.required],
       rewriteLatest: [true]
     })
+
     this.deleteTimeseriesFormGroup.get('strategy').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => {
@@ -124,7 +123,7 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
     return this.deleteTimeseriesFormGroup.get('strategy').value === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE;
   }
 
-  onStartDateTimeChange(newStartDateTime: Date) {
+  private onStartDateTimeChange(newStartDateTime: Date) {
     if (newStartDateTime) {
       const endDateTimeTs = this.deleteTimeseriesFormGroup.get('endDateTime').value.getTime();
       if (newStartDateTime.getTime() >= endDateTimeTs) {
@@ -137,7 +136,7 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
     }
   }
 
-  onEndDateTimeChange(newEndDateTime: Date) {
+  private onEndDateTimeChange(newEndDateTime: Date) {
     if (newEndDateTime) {
       const startDateTimeTs = this.deleteTimeseriesFormGroup.get('startDateTime').value.getTime();
       if (newEndDateTime.getTime() <= startDateTimeTs) {

@@ -198,7 +198,7 @@
               <span [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)">
                 <mat-icon>edit</mat-icon>
               </span>
-              <button mat-icon-button [fxShow]="attributeScope === latestTelemetryTypes.LATEST_TELEMETRY"
+              <button mat-icon-button *ngIf="attributeScope === latestTelemetryTypes.LATEST_TELEMETRY"
                       (click)="deleteTimeseries($event, attribute)">
                 <mat-icon>delete</mat-icon>
               </button>

@@ -53,8 +53,16 @@ export class AttributeService {
                                 startTs?: number, endTs?: number, rewriteLatestIfDeleted = false, deleteLatest = true,
                                 config?: RequestConfig): Observable<any> {
     const keys = timeseries.map(attribute => encodeURIComponent(attribute.key)).join(',');
-    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete` +
-      `?keys=${keys}&deleteAllDataForKeys=${deleteAllDataForKeys}&rewriteLatestIfDeleted=${rewriteLatestIfDeleted}&deleteLatest=${deleteLatest}`;
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete?keys=${keys}`;
+    if (isDefinedAndNotNull(deleteAllDataForKeys)) {
+      url += `&deleteAllDataForKeys=${deleteAllDataForKeys}`;
+    }
+    if (isDefinedAndNotNull(rewriteLatestIfDeleted)) {
+      url += `&rewriteLatestIfDeleted=${rewriteLatestIfDeleted}`;
+    }
+    if (isDefinedAndNotNull(deleteLatest)) {
+      url += `&deleteLatest=${deleteLatest}`;
+    }
     if (isDefinedAndNotNull(startTs)) {
       url += `&startTs=${startTs}`;
     }

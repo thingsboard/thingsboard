@@ -38,7 +38,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { fromEvent, merge, Observable } from 'rxjs';
+import { fromEvent, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
@@ -48,7 +48,8 @@ import {
   isClientSideTelemetryType,
   LatestTelemetry,
   TelemetryType,
-  telemetryTypeTranslations, TimeseriesDeleteStrategy,
+  telemetryTypeTranslations,
+  TimeseriesDeleteStrategy,
   toTelemetryType
 } from '@shared/models/telemetry/telemetry.models';
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
@@ -88,7 +89,8 @@ import { hidePageSizePixelValue } from '@shared/models/constants';
 import { ResizeObserver } from '@juggle/resize-observer';
 import {
   DELETE_TIMESERIES_PANEL_DATA,
-  DeleteTimeseriesPanelComponent, DeleteTimeseriesPanelData
+  DeleteTimeseriesPanelComponent,
+  DeleteTimeseriesPanelData
 } from '@home/components/attribute/delete-timeseries-panel.component';
 
 
@@ -383,15 +385,19 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     });
   }
 
-  deleteTimeseries($event: Event, attribute?: AttributeData) {
+  deleteTimeseries($event: Event, telemetry?: AttributeData) {
     if ($event) {
       $event.stopPropagation();
     }
-    const isMultipleDeletion = isUndefinedOrNull(attribute) && this.dataSource.selection.selected.length > 1;
+    const isMultipleDeletion = isUndefinedOrNull(telemetry) && this.dataSource.selection.selected.length > 1;
     const target = $event.target || $event.srcElement || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
+    const config = new OverlayConfig({
+      panelClass: 'tb-filter-panel',
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: true,
+      maxWidth: 488,
+      width: '100%'
+    });
     const connectedPosition: ConnectedPosition = {
       originX: 'start',
       originY: 'top',
@@ -400,8 +406,6 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     };
     config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
       .withPositions([connectedPosition]);
-    config.maxWidth = '488px';
-    config.width = '100%';
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
       overlayRef.dispose();
@@ -411,7 +415,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       {
         provide: DELETE_TIMESERIES_PANEL_DATA,
         useValue: {
-          isMultipleDeletion: isMultipleDeletion
+          isMultipleDeletion
         } as DeleteTimeseriesPanelData
       },
       {
@@ -425,31 +429,34 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     componentRef.onDestroy(() => {
       if (componentRef.instance.result !== null) {
         const result = componentRef.instance.result;
-        const deleteTimeseries = attribute ? [attribute]: this.dataSource.selection.selected;
+        const deleteTimeseries = telemetry ? [telemetry]: this.dataSource.selection.selected;
         let deleteAllDataForKeys = false;
         let rewriteLatestIfDeleted = false;
         let startTs = null;
         let endTs = null;
         let deleteLatest = true;
-        if (result.strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA) {
-          deleteAllDataForKeys = true;
-        }
-        if (result.strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE) {
-          deleteAllDataForKeys = true;
-          deleteLatest = false;
-        }
-        if (result.strategy === TimeseriesDeleteStrategy.DELETE_LATEST_VALUE) {
-          rewriteLatestIfDeleted = result.rewriteLatest;
-          startTs = deleteTimeseries[0].lastUpdateTs;
-          endTs = startTs + 1;
-        }
-        if (result.strategy === TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD) {
-          startTs = result.startDateTime.getTime();
-          endTs = result.endDateTime.getTime();
-          rewriteLatestIfDeleted = result.rewriteLatest;
+        switch (result.strategy) {
+          case TimeseriesDeleteStrategy.DELETE_ALL_DATA:
+            deleteAllDataForKeys = true;
+            break;
+          case TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE:
+            deleteAllDataForKeys = true;
+            deleteLatest = false;
+            break;
+          case TimeseriesDeleteStrategy.DELETE_LATEST_VALUE:
+            rewriteLatestIfDeleted = result.rewriteLatest;
+            startTs = deleteTimeseries[0].lastUpdateTs;
+            endTs = startTs + 1;
+            break;
+          case TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD:
+            startTs = result.startDateTime.getTime();
+            endTs = result.endDateTime.getTime();
+            rewriteLatestIfDeleted = result.rewriteLatest;
+            break;
         }
         this.attributeService.deleteEntityTimeseries(this.entityIdValue, deleteTimeseries, deleteAllDataForKeys,
-          startTs, endTs, rewriteLatestIfDeleted, deleteLatest).subscribe(() => this.reloadAttributes());
+                                                      startTs, endTs, rewriteLatestIfDeleted, deleteLatest)
+          .subscribe(() => this.reloadAttributes());
       }
     });
   }
