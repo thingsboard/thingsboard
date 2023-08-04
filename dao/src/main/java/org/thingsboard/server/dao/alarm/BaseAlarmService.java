@@ -321,15 +321,17 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                 continue;
             }
             if (result.isModified()) {
-                AlarmComment alarmComment = AlarmComment.builder()
-                        .alarmId(alarm.getId())
-                        .type(AlarmCommentType.SYSTEM)
-                        .comment(JacksonUtil.newObjectNode()
-                                .put("text", "Alarm was unassigned because assigned user was deleted!")
-                                .put("userId", userId.toString())
-                                .put("subtype", "ASSIGN"))
-                        .build();
-                alarmCommentDao.save(tenantId, alarmComment);
+                try {
+                    AlarmComment alarmComment = AlarmComment.builder()
+                            .alarmId(alarm.getId())
+                            .type(AlarmCommentType.SYSTEM)
+                            .comment(JacksonUtil.newObjectNode()
+                                    .put("text", "Alarm was unassigned because assigned user was deleted!")
+                                    .put("userId", userId.toString())
+                                    .put("subtype", "ASSIGN"))
+                            .build();
+                    alarmCommentDao.save(tenantId, alarmComment);
+                } catch (Exception ignored) {}
             }
         }
     }
