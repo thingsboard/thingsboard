@@ -96,13 +96,14 @@ export class DialogService {
     return dialogRef.afterClosed();
   }
 
-  colorPicker(color: string): Observable<string> {
+  colorPicker(color: string, colorClearButton = false): Observable<string> {
     return this.dialog.open<ColorPickerDialogComponent, ColorPickerDialogData, string>(ColorPickerDialogComponent,
       {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
-          color
+          color,
+          colorClearButton
         },
         autoFocus: false
     }).afterClosed();

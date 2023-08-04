@@ -20,7 +20,7 @@ import {
   compareDateFormats,
   dateFormats,
   DateFormatSettings
-} from '@home/components/widget/config/widget-settings.models';
+} from '@shared/models/widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { MatButton } from '@angular/material/button';
