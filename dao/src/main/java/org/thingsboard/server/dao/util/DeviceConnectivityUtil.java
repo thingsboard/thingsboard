@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -30,6 +31,7 @@ public class DeviceConnectivityUtil {
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
+    public static final String GATEWAY = "gateway";
     public static final String PEM_CERT_FILE_NAME = "tb-server-chain.pem";
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
@@ -75,6 +77,53 @@ public class DeviceConnectivityUtil {
                 return null;
         }
         command.append(" -m " + JSON_EXAMPLE_PAYLOAD);
+        return command.toString();
+    }
+
+    public static String getGatewayLaunchCommand(String os, String host, String port, DeviceCredentials deviceCredentials) {
+        String gatewayVolumePathPrefix = "~/.tb-gateway";
+        if (WINDOWS.equals(os)) {
+            gatewayVolumePathPrefix = "%HOMEPATH%/tb-gateway";
+        }
+
+        String gatewayContainerName = "tbGateway" + StringUtils.capitalize(host.replace(".", ""));
+
+        StringBuilder command = new StringBuilder(DOCKER_RUN);
+        command.append("-v {gatewayVolumePathPrefix}/logs:/thingsboard_gateway/logs".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append(" -v {gatewayVolumePathPrefix}/extensions:/thingsboard_gateway/extensions".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append(" -v {gatewayVolumePathPrefix}/config:/thingsboard_gateway/config".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append(" --name ").append(gatewayContainerName);
+        command.append(" -e host=").append(host);
+        command.append(" -e port=").append(port);
+
+        switch(deviceCredentials.getCredentialsType()) {
+            case ACCESS_TOKEN:
+                command.append(" -e accessToken=").append(deviceCredentials.getCredentialsId());
+                break;
+            case MQTT_BASIC:
+                BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
+                        BasicMqttCredentials.class);
+                if (credentials != null) {
+                    if (credentials.getClientId() != null) {
+                        command.append(" -e clientId=").append(credentials.getClientId());
+                    }
+                    if (credentials.getUserName() != null) {
+                        command.append(" -e username=").append(credentials.getUserName());
+                    }
+                    if (credentials.getPassword() != null) {
+                        command.append(" -e password=").append(credentials.getPassword());
+                    }
+                } else {
+                    return null;
+                }
+                break;
+            default:
+                return null;
+        }
+
+        command.append(" --restart always");
+        command.append(" thingsboard/tb-gateway");
+
         return command.toString();
     }
 
