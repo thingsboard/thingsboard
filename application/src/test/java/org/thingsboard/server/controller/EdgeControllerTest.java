@@ -64,6 +64,7 @@ import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -83,6 +84,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
+        "queue.rule-engine.stats.enabled=false"
 })
 @ContextConfiguration(classes = {EdgeControllerTest.Config.class})
 @DaoSqlTest
@@ -911,6 +913,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popTenantMsg(edgeImitator.getDownlinkMsgs(), tenantId));
         Assert.assertTrue(popTenantProfileMsg(edgeImitator.getDownlinkMsgs(), tenantProfileId)); // from tenant update msg
         Assert.assertTrue(popTenantProfileMsg(edgeImitator.getDownlinkMsgs(), tenantProfileId)); // from tenant profile update msg
+        Assert.assertTrue(popSyncCompletedMsg(edgeImitator.getDownlinkMsgs()));
     }
 
     private boolean popQueueMsg(List<AbstractMessage> messages, UpdateMsgType msgType, String name) {
@@ -1066,6 +1069,16 @@ public class EdgeControllerTest extends AbstractControllerTest {
                     messages.remove(message);
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean popSyncCompletedMsg(List<AbstractMessage> messages) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof SyncCompletedMsg) {
+                messages.remove(message);
+                return true;
             }
         }
         return false;

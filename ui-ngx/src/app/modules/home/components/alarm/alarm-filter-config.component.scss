@@ -15,10 +15,23 @@
  */
 :host {
   display: block;
-  overflow: hidden;
+  overflow: scroll;
   max-width: 100%;
   .mdc-button {
     max-width: 100%;
+  }
+
+  .filters-row-mobile {
+    flex-direction: column;
+    align-items: start;
+    border: none;
+    padding: 0;
+  }
+  .filters-title-mobile {
+    font-size: 14px;
+  }
+  .filters-fields-width-mobile {
+    width: 100%;
   }
 }
 
@@ -30,6 +43,11 @@
     .mdc-button__label {
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+  }
+  .mat-mdc-chip {
+    .mdc-evolution-chip__cell, .mat-mdc-chip-action, .mat-mdc-chip-action-label {
+      overflow: hidden;
     }
   }
 }

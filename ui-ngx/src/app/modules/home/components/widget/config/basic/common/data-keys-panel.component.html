@@ -20,8 +20,8 @@
   <div class="tb-form-table">
     <div class="tb-form-table-header">
       <div *ngIf="hasAdditionalLatestDataKeys" class="tb-form-table-header-cell tb-source-header" translate>datakey.source</div>
-      <div class="tb-form-table-header-cell" fxFlex translate>datakey.key</div>
-      <div class="tb-form-table-header-cell" fxFlex translate>datakey.label</div>
+      <div class="tb-form-table-header-cell tb-key-header" translate>datakey.key</div>
+      <div class="tb-form-table-header-cell tb-label-header" translate>datakey.label</div>
       <div *ngIf="!hideDataKeyColor" class="tb-form-table-header-cell tb-color-header" translate>datakey.color</div>
       <div *ngIf="!hideUnits" class="tb-form-table-header-cell tb-units-header" translate>widget-config.units-short</div>
       <div *ngIf="!hideDecimals" class="tb-form-table-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
@@ -42,7 +42,8 @@
                          (keyRemoved)="removeKey($index)">
         </tb-data-key-row>
         <div class="tb-form-table-row-cell-buttons">
-          <button mat-icon-button
+          <button fxHide.lt-lg
+                  mat-icon-button
                   type="button"
                   cdkDragHandle
                   [ngClass]="{'tb-hidden': !dragEnabled}"

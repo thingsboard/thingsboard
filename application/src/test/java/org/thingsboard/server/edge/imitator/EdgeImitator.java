@@ -305,6 +305,9 @@ public class EdgeImitator {
         if (downlinkMsg.hasEdgeConfiguration()) {
             result.add(saveDownlinkMsg(downlinkMsg.getEdgeConfiguration()));
         }
+        if (downlinkMsg.hasSyncCompletedMsg()) {
+            result.add(saveDownlinkMsg(downlinkMsg.getSyncCompletedMsg()));
+        }
 
         return Futures.allAsList(result);
     }

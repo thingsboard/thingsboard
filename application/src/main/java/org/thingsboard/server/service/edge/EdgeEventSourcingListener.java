@@ -74,13 +74,17 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        if (!isValidEdgeEventEntity(event.getEntity())) {
-            return;
+        try {
+            if (!isValidEdgeEventEntity(event.getEntity())) {
+                return;
+            }
+            log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
+            EdgeEventActionType action = Boolean.TRUE.equals(event.getAdded()) ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
+            tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
+                    null, null, action);
+        } catch (Exception e) {
+            log.error("[{}] failed to process SaveEntityEvent: {}", event.getTenantId(), event);
         }
-        log.trace("[{}] SaveEntityEvent called: {}", event.getEntityId().getEntityType(), event);
-        EdgeEventActionType action = Boolean.TRUE.equals(event.getAdded()) ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
-        tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
-                null, null, action);
     }
 
     @TransactionalEventListener(fallbackExecution = true)
@@ -88,9 +92,13 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("[{}] DeleteEntityEvent called: {}", event.getEntityId().getEntityType(), event);
-        tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
-                JacksonUtil.toString(event.getEntity()), null, EdgeEventActionType.DELETED);
+        try {
+            log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
+            tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
+                    JacksonUtil.toString(event.getEntity()), null, EdgeEventActionType.DELETED);
+        } catch (Exception e) {
+            log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event);
+        }
     }
 
     @TransactionalEventListener(fallbackExecution = true)
@@ -98,9 +106,13 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        log.trace("[{}] ActionEntityEvent called: {}", event.getEntityId().getEntityType(), event);
-        tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
-                event.getBody(), null, edgeTypeByActionType(event.getActionType()));
+        try {
+            log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
+            tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
+                    event.getBody(), null, edgeTypeByActionType(event.getActionType()));
+        } catch (Exception e) {
+            log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event);
+        }
     }
 
     @TransactionalEventListener(fallbackExecution = true)
@@ -108,18 +120,22 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
-        EntityRelation relation = event.getRelation();
-        if (relation == null) {
-            log.trace("skipping ActionRelationEvent event in case relation is null: {}", event);
-            return;
+        try {
+            EntityRelation relation = event.getRelation();
+            if (relation == null) {
+                log.trace("[{}] skipping RelationActionEvent event in case relation is null: {}", event.getTenantId(), event);
+                return;
+            }
+            if (!RelationTypeGroup.COMMON.equals(relation.getTypeGroup())) {
+                log.trace("[{}] skipping RelationActionEvent event in case NOT COMMON relation type group: {}", event.getTenantId(), event);
+                return;
+            }
+            log.trace("[{}] RelationActionEvent called: {}", event.getTenantId(), event);
+            tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
+                    JacksonUtil.toString(relation), EdgeEventType.RELATION, edgeTypeByActionType(event.getActionType()));
+        } catch (Exception e) {
+            log.error("[{}] failed to process RelationActionEvent: {}", event.getTenantId(), event);
         }
-        if (!RelationTypeGroup.COMMON.equals(relation.getTypeGroup())) {
-            log.trace("skipping ActionRelationEvent event in case NOT COMMON relation type group: {}", event);
-            return;
-        }
-        log.trace("ActionRelationEvent called: {}", event);
-        tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
-                JacksonUtil.toString(relation), EdgeEventType.RELATION, edgeTypeByActionType(event.getActionType()));
     }
 
     private boolean isValidEdgeEventEntity(Object entity) {

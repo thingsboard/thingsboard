@@ -243,6 +243,7 @@ export class WidgetContext {
     formatValue
   };
 
+  $widgetElement: JQuery<HTMLElement>;
   $container: JQuery<HTMLElement>;
   $containerParent: JQuery<HTMLElement>;
   width: number;
@@ -263,6 +264,8 @@ export class WidgetContext {
   latestData?: Array<DatasourceData>;
   hiddenData?: Array<{data: DataSet}>;
   timeWindow?: WidgetTimewindow;
+
+  absoluteHeader?: boolean;
 
   hideTitlePanel = false;
 

@@ -152,6 +152,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public displayedColumns: string[] = [];
   public entityDatasource: EntityDatasource;
   public noDataDisplayMessageText: string;
+  public hasRowAction: boolean;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -279,6 +280,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.widgetActions = [this.searchAction, this.columnDisplayAction];
 
     this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
+
+    this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length || !!this.ctx.actionsApi.getActionDescriptors('rowDoubleClick').length;
 
     if (this.settings.entitiesTitle && this.settings.entitiesTitle.length) {
       this.entitiesTitlePattern = this.utils.customTranslation(this.settings.entitiesTitle, this.settings.entitiesTitle);

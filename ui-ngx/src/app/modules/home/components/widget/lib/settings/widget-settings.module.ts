@@ -266,6 +266,28 @@ import {
   QuickLinksWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/home-page/quick-links-widget-settings.component';
 import { LegendConfigComponent } from '@home/components/widget/lib/settings/common/legend-config.component';
+import {
+  ImageCardsSelectOptionDirective,
+  ImageCardsSelectComponent
+} from '@home/components/widget/lib/settings/common/image-cards-select.component';
+import { FontSettingsComponent } from '@home/components/widget/lib/settings/common/font-settings.component';
+import { FontSettingsPanelComponent } from '@home/components/widget/lib/settings/common/font-settings-panel.component';
+import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
+import {
+  ColorSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/color-settings-panel.component';
+import { CssUnitSelectComponent } from '@home/components/widget/lib/settings/common/css-unit-select.component';
+import { DateFormatSelectComponent } from '@home/components/widget/lib/settings/common/date-format-select.component';
+import {
+  DateFormatSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/date-format-settings-panel.component';
+import { BackgroundSettingsComponent } from '@home/components/widget/lib/settings/common/background-settings.component';
+import {
+  BackgroundSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/background-settings-panel.component';
+import {
+  ValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/value-card-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -367,7 +389,19 @@ import { LegendConfigComponent } from '@home/components/widget/lib/settings/comm
     RouteMapWidgetSettingsComponent,
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
-    QuickLinksWidgetSettingsComponent
+    QuickLinksWidgetSettingsComponent,
+    ImageCardsSelectOptionDirective,
+    ImageCardsSelectComponent,
+    FontSettingsComponent,
+    FontSettingsPanelComponent,
+    ColorSettingsComponent,
+    ColorSettingsPanelComponent,
+    CssUnitSelectComponent,
+    DateFormatSelectComponent,
+    DateFormatSettingsPanelComponent,
+    BackgroundSettingsComponent,
+    BackgroundSettingsPanelComponent,
+    ValueCardWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -473,7 +507,19 @@ import { LegendConfigComponent } from '@home/components/widget/lib/settings/comm
     RouteMapWidgetSettingsComponent,
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
-    QuickLinksWidgetSettingsComponent
+    QuickLinksWidgetSettingsComponent,
+    ImageCardsSelectOptionDirective,
+    ImageCardsSelectComponent,
+    FontSettingsComponent,
+    FontSettingsPanelComponent,
+    ColorSettingsComponent,
+    ColorSettingsPanelComponent,
+    CssUnitSelectComponent,
+    DateFormatSelectComponent,
+    DateFormatSettingsPanelComponent,
+    BackgroundSettingsComponent,
+    BackgroundSettingsPanelComponent,
+    ValueCardWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -542,5 +588,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
   'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent,
   'tb-doc-links-widget-settings': DocLinksWidgetSettingsComponent,
-  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent
+  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent,
+  'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent
 };
