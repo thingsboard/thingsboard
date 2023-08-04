@@ -19,13 +19,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -48,7 +46,6 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.CHECK_DOCUM
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.COAP;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.COAPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.DOCKER;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.GATEWAY;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTP;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.LINUX;
@@ -84,12 +81,6 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         DeviceTransportType transportType = deviceProfile.getTransportType();
 
         ObjectNode commands = JacksonUtil.newObjectNode();
-        if (checkIsGateway(device)) {
-            Optional.ofNullable(getMqttTransportPublishCommands(baseUrl, creds, true))
-                    .ifPresent(v -> commands.set(MQTT, v));
-            return commands;
-        }
-
         switch (transportType) {
             case DEFAULT:
                 Optional.ofNullable(getHttpTransportPublishCommands(baseUrl, creds))
@@ -120,6 +111,26 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
                 break;
             default:
                 commands.put(transportType.name(), CHECK_DOCUMENTATION);
+        }
+        return commands;
+    }
+
+    @Override
+    public JsonNode findGatewayLaunchCommands(String baseUrl, Device device) throws URISyntaxException {
+        DeviceId deviceId = device.getId();
+        log.trace("Executing findDevicePublishTelemetryCommands [{}]", deviceId);
+        validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
+
+        DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
+
+        ObjectNode commands = JacksonUtil.newObjectNode();
+        if (deviceConnectivityConfiguration.isEnabled(MQTT)) {
+            Optional.ofNullable(getGatewayDockerCommands(baseUrl, creds, MQTT))
+                    .ifPresent(v -> commands.set(MQTT, v));
+        }
+        if (deviceConnectivityConfiguration.isEnabled(MQTTS)) {
+            Optional.ofNullable(getGatewayDockerCommands(baseUrl, creds, MQTTS))
+                    .ifPresent(v -> commands.set(MQTTS, v));
         }
         return commands;
     }
@@ -159,18 +170,10 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     }
 
     private JsonNode getMqttTransportPublishCommands(String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
-        return getMqttTransportPublishCommands(baseUrl, deviceCredentials, false);
-    }
-
-    private JsonNode getMqttTransportPublishCommands(String baseUrl, DeviceCredentials deviceCredentials, boolean isGateway) throws URISyntaxException {
-        return getMqttTransportPublishCommands(baseUrl, DEFAULT_DEVICE_TELEMETRY_TOPIC, deviceCredentials, isGateway);
+        return getMqttTransportPublishCommands(baseUrl, DEFAULT_DEVICE_TELEMETRY_TOPIC, deviceCredentials);
     }
 
     private JsonNode getMqttTransportPublishCommands(String baseUrl, String topic, DeviceCredentials deviceCredentials) throws URISyntaxException {
-        return getMqttTransportPublishCommands(baseUrl, topic, deviceCredentials, false);
-    }
-
-    private JsonNode getMqttTransportPublishCommands(String baseUrl, String topic, DeviceCredentials deviceCredentials, boolean isGateway) throws URISyntaxException {
         ObjectNode mqttCommands = JacksonUtil.newObjectNode();
 
         if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
@@ -179,7 +182,6 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         }
 
         ObjectNode dockerMqttCommands = JacksonUtil.newObjectNode();
-        ObjectNode gatewayDockerMqttCommands = JacksonUtil.newObjectNode();
 
         if (deviceConnectivityConfiguration.isEnabled(MQTT)) {
             Optional.ofNullable(getMqttPublishCommand(baseUrl, topic, deviceCredentials)).
@@ -187,11 +189,6 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
             Optional.ofNullable(getDockerMqttPublishCommand(MQTT, baseUrl, topic, deviceCredentials))
                     .ifPresent(v -> dockerMqttCommands.put(MQTT, v));
-
-            if (isGateway) {
-                Optional.ofNullable(getGatewayDockerCommands(baseUrl, deviceCredentials, MQTT))
-                        .ifPresent(v -> gatewayDockerMqttCommands.set(MQTT, v));
-            }
         }
 
         if (deviceConnectivityConfiguration.isEnabled(MQTTS)) {
@@ -203,21 +200,11 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
             Optional.ofNullable(getDockerMqttPublishCommand(MQTTS, baseUrl, topic, deviceCredentials))
                     .ifPresent(v -> dockerMqttCommands.put(MQTTS, v));
-
-            if (isGateway) {
-                Optional.ofNullable(getGatewayDockerCommands(baseUrl, deviceCredentials, MQTTS))
-                        .ifPresent(v -> gatewayDockerMqttCommands.set(MQTTS, v));
-            }
         }
 
         if (!dockerMqttCommands.isEmpty()) {
             mqttCommands.set(DOCKER, dockerMqttCommands);
         }
-
-        if (!gatewayDockerMqttCommands.isEmpty()) {
-            mqttCommands.set(GATEWAY, gatewayDockerMqttCommands);
-        }
-
         return mqttCommands.isEmpty() ? null : mqttCommands;
     }
 
@@ -313,8 +300,4 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         return properties.getHost().isEmpty() ? new URI(baseUrl).getHost() : properties.getHost();
     }
 
-    private static boolean checkIsGateway(Device device) {
-        return device.getAdditionalInfo().has(DataConstants.GATEWAY_PARAMETER) &&
-                device.getAdditionalInfo().get(DataConstants.GATEWAY_PARAMETER).asBoolean();
-    }
 }
