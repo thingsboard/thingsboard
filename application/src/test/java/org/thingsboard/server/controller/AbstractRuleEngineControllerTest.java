@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -81,8 +82,8 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
         }
     }
 
-    protected Predicate<EventInfo> filterByCustomEvent() {
-        return event -> event.getBody().get("msgType").textValue().equals("CUSTOM");
+    protected Predicate<EventInfo> filterByPostTelemetryEventType() {
+        return event -> event.getBody().get("msgType").textValue().equals(TbMsgType.POST_TELEMETRY_REQUEST.name());
     }
 
 }

@@ -29,7 +29,7 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
 import { isUndefined } from '@core/utils';
-import { getLabel, setLabel } from '@home/components/widget/config/widget-settings.models';
+import { getLabel, setLabel } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-simple-card-basic-config',

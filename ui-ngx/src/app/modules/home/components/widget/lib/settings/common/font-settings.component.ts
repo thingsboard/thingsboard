@@ -16,11 +16,12 @@
 
 import { Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Font } from '@home/components/widget/config/widget-settings.models';
+import { ComponentStyle, Font } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { FontSettingsPanelComponent } from '@home/components/widget/lib/settings/common/font-settings-panel.component';
 import { isDefinedAndNotNull } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-font-settings',
@@ -41,6 +42,13 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   previewText: string | (() => string);
+
+  @Input()
+  initialPreviewStyle: ComponentStyle;
+
+  @Input()
+  @coerceBoolean()
+  clearButton = false;
 
   private modelValue: Font;
 
@@ -77,7 +85,9 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
       this.popoverService.hidePopover(trigger);
     } else {
       const ctx: any = {
-        font: this.modelValue
+        font: this.modelValue,
+        initialPreviewStyle: this.initialPreviewStyle,
+        clearButton: this.clearButton
       };
       if (isDefinedAndNotNull(this.previewText)) {
         const previewText = typeof this.previewText === 'string' ? this.previewText : this.previewText();

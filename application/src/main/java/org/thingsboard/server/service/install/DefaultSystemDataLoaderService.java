@@ -114,13 +114,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
+
 @Service
 @Profile("install")
 @Slf4j
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     public static final String CUSTOMER_CRED = "customer";
-    public static final String DEFAULT_DEVICE_TYPE = "default";
     public static final String ACTIVITY_STATE = "active";
 
     @Autowired

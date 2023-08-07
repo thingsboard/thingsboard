@@ -24,12 +24,14 @@ import java.util.List;
 
 @Data
 public class TbCheckAlarmStatusNodeConfig implements NodeConfiguration<TbCheckAlarmStatusNodeConfig> {
+
     private List<AlarmStatus> alarmStatusList;
 
     @Override
     public TbCheckAlarmStatusNodeConfig defaultConfiguration() {
-        TbCheckAlarmStatusNodeConfig config = new TbCheckAlarmStatusNodeConfig();
+        var config = new TbCheckAlarmStatusNodeConfig();
         config.setAlarmStatusList(Arrays.asList(AlarmStatus.ACTIVE_ACK, AlarmStatus.ACTIVE_UNACK));
         return config;
     }
+
 }

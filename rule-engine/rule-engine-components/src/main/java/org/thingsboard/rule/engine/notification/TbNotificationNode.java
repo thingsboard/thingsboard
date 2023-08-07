@@ -19,7 +19,6 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -77,7 +76,7 @@ public class TbNotificationNode extends TbAbstractExternalNode {
                         ctx.getNotificationCenter().processNotificationRequest(ctx.getTenantId(), notificationRequest, stats -> {
                             TbMsgMetaData metaData = tbMsg.getMetaData().copy();
                             metaData.putValue("notificationRequestResult", JacksonUtil.toString(stats));
-                            tellSuccess(ctx, TbMsg.transformMsg(tbMsg, metaData));
+                            tellSuccess(ctx, TbMsg.transformMsgMetadata(tbMsg, metaData));
                         })),
                 r -> {
                 },

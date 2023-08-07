@@ -21,7 +21,7 @@ import {
   constantColor,
   cssUnit, DateFormatSettings,
   Font, lastUpdateAgoDateFormat
-} from '@home/components/widget/config/widget-settings.models';
+} from '@shared/models/widget-settings.models';
 
 export enum ValueCardLayout {
   square = 'square',
