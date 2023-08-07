@@ -54,8 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.util.function.Predicate.not;
-
 @Service
 @RequiredArgsConstructor
 public class DefaultNotificationSettingsService implements NotificationSettingsService {
@@ -107,8 +105,8 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
     @Override
     public UserNotificationSettings getUserNotificationSettings(TenantId tenantId, User user, boolean format) {
-        UserNotificationSettings settings = Optional.ofNullable(user.getAdditionalInfo().get(USER_SETTINGS_KEY))
-                .filter(not(JsonNode::isNull))
+        UserNotificationSettings settings = Optional.ofNullable(user.getAdditionalInfo())
+                .filter(JsonNode::isObject).map(info -> info.get(USER_SETTINGS_KEY)).filter(JsonNode::isObject)
                 .map(json -> JacksonUtil.treeToValue(json, UserNotificationSettings.class))
                 .orElse(UserNotificationSettings.DEFAULT);
         if (format) {
