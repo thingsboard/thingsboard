@@ -3106,9 +3106,8 @@
         "warning": "Warning",
         "webhook-url": "Webhook URL",
         "webhook-url-required": "Webhook URL is required",
-        "channel-name": "Chanel name",
-        "channel-name-required": "Chanel name is required"
-
+        "channel-name": "Channel name",
+        "channel-name-required": "Channel name is required"
     },
     "ota-update": {
       "add": "Add package",

@@ -51,6 +51,7 @@ import org.thingsboard.server.common.data.notification.targets.slack.SlackNotifi
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDeliveryMethodNotificationTemplate.Button.LinkType;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
@@ -560,6 +561,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         var button = new MicrosoftTeamsDeliveryMethodNotificationTemplate.Button();
         button.setEnabled(true);
         button.setText("Button: " + templateParams);
+        button.setLinkType(LinkType.LINK);
         button.setLink("https://" + templateParams);
         template.setButton(button);
         NotificationTemplate notificationTemplate = new NotificationTemplate();
@@ -578,7 +580,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                 .templateId(notificationTemplate.getId())
                 .targets(List.of(target.getUuidId()))
                 .info(EntityActionNotificationInfo.builder()
-                        .entityId(new DeviceId(UUID.randomUUID())) // to test templatization
+                        .entityId(new DeviceId(UUID.randomUUID()))
                         .actionType(ActionType.ADDED)
                         .userId(tenantAdminUserId.getId())
                         .build())

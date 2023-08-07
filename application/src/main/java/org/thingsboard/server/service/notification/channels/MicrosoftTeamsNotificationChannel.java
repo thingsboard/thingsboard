@@ -88,7 +88,11 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
                     }
                     state = Base64.encodeBase64String(JacksonUtil.OBJECT_MAPPER.writeValueAsBytes(List.of(stateObject)));
                 }
-                uri = systemSecurityService.getBaseUrl(ctx.getTenantId(), null, null) + "/dashboards/" + button.getDashboardId();
+                String baseUrl = systemSecurityService.getBaseUrl(ctx.getTenantId(), null, null);
+                if (StringUtils.isEmpty(baseUrl)) {
+                    throw new IllegalStateException("Failed to determine base url to construct dashboard link");
+                }
+                uri = baseUrl + "/dashboards/" + button.getDashboardId();
                 if (state != null) {
                     uri += "?state=" + state;
                 }
