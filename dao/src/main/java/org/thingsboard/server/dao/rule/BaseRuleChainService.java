@@ -114,10 +114,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             if (ruleChain.getId() == null) {
                 entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
             }
-            if (RuleChainType.EDGE.equals(savedRuleChain.getType())) {
-                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
-                        .entityId(savedRuleChain.getId()).added(ruleChain.getId() == null).build());
-            }
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
+                    .entity(savedRuleChain).entityId(savedRuleChain.getId()).added(ruleChain.getId() == null).build());
             return savedRuleChain;
         } catch (Exception e) {
             checkConstraintViolation(e, "rule_chain_external_id_unq_key", "Rule Chain with such external id already exists!");
@@ -263,9 +261,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
         }
-        if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(ruleChain.getId()).build());
-        }
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain).entityId(ruleChain.getId()).build());
 
         return RuleChainUpdateResult.successful(updatedRuleNodes);
     }
@@ -428,7 +424,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                             if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
                                 throw new DataValidationException("Can't delete rule chain that is root for edge [" + edge.getName() + "]. Please assign another root rule chain first to the edge!");
                             }
-                            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(ruleChainId).edgeId(edge.getId()).build());
                         }
                         if (pageData.hasNext()) {
                             pageLink = pageLink.nextPageLink();
@@ -740,6 +735,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         try {
             entityCountService.publishCountEntityEvictEvent(tenantId, EntityType.RULE_CHAIN);
             ruleChainDao.removeById(tenantId, ruleChainId.getId());
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(ruleChainId).build());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_rule_chain_device_profile")) {

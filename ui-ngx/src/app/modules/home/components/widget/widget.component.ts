@@ -409,6 +409,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     elem.classList.add(this.widgetContext.widgetNamespace);
     this.widgetType = this.widgetInfo.widgetTypeFunction;
     this.typeParameters = this.widgetInfo.typeParameters;
+    this.widgetContext.absoluteHeader = this.typeParameters.absoluteHeader;
 
     if (!this.widgetType) {
       this.widgetTypeInstance = {};

@@ -71,6 +71,7 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -328,14 +329,13 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         if (deviceCredentials != null) {
             deviceCredentialsService.deleteDeviceCredentials(tenantId, deviceCredentials);
         }
-        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, deviceId);
         deleteEntityRelations(tenantId, deviceId);
 
         deviceDao.removeById(tenantId, deviceId.getId());
 
         publishEvictEvent(deviceCacheEvictEvent);
         countService.publishCountEntityEvictEvent(tenantId, EntityType.DEVICE);
-        publishDeleteEvent(tenantId, deviceId, relatedEdgeIds);
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(deviceId).build());
     }
 
     @Override

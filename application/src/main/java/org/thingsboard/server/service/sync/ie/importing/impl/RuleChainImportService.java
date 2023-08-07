@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -128,14 +127,12 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     }
 
     @Override
-    protected void onEntitySaved(User user, RuleChain savedRuleChain, RuleChain oldRuleChain) throws ThingsboardException {
+    protected void onEntitySaved(User user, RuleChain savedRuleChain, RuleChain oldRuleChain) {
         entityActionService.logEntityAction(user, savedRuleChain.getId(), savedRuleChain, null,
                 oldRuleChain == null ? ActionType.ADDED : ActionType.UPDATED, null);
         if (savedRuleChain.getType() == RuleChainType.CORE) {
             clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedRuleChain.getId(),
                     oldRuleChain == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-        } else if (savedRuleChain.getType() == RuleChainType.EDGE && oldRuleChain != null) {
-            entityActionService.sendEntityNotificationMsgToEdge(user.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
         }
     }
 

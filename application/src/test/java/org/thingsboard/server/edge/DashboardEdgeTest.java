@@ -87,11 +87,11 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedDashboard.getUuidId().getMostSignificantBits(), dashboardUpdateMsg.getIdMSB());
         Assert.assertEquals(savedDashboard.getUuidId().getLeastSignificantBits(), dashboardUpdateMsg.getIdLSB());
 
-        // delete dashboard - no messages expected
+        // delete dashboard - message expected, it was sent to all edges
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/dashboard/" + savedDashboard.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(1));
 
         // create dashboard #2 and assign to edge
         edgeImitator.expectMessageAmount(1);

@@ -45,7 +45,8 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
         }
         try {
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment));
-            notificationEntityService.logAlarmComment(alarm, savedAlarmComment, actionType, user);
+            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), actionType, user, savedAlarmComment);
+
             return savedAlarmComment;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(alarm.getTenantId(), emptyId(EntityType.ALARM), alarm, actionType, user, e, alarmComment);
@@ -62,7 +63,7 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
                     String.format("User %s deleted his comment",
                             (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName())));
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.saveAlarmComment(alarm.getTenantId(), alarmComment));
-            notificationEntityService.logAlarmComment(alarm, savedAlarmComment, ActionType.DELETED_COMMENT, user);
+            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), ActionType.DELETED_COMMENT, user, savedAlarmComment);
         } else {
             throw new ThingsboardException("System comment could not be deleted", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }

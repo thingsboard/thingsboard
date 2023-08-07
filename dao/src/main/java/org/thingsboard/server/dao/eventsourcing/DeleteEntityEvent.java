@@ -23,9 +23,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 @Builder
 @Data
-public class DeleteEntityEvent {
+public class DeleteEntityEvent<T> {
     private final TenantId tenantId;
     private final EntityId entityId;
     private final EdgeId edgeId;
-    private final String body;
+    private final T entity;
 }

@@ -35,7 +35,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -133,9 +132,4 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
         }
         return downlinkMsg;
     }
-
-    public ListenableFuture<Void> processAssetProfileNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
-    }
-
 }

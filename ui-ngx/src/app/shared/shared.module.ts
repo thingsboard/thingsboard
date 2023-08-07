@@ -197,6 +197,7 @@ import { ToggleSelectComponent } from '@shared/components/toggle-select.componen
 import { UnitInputComponent } from '@shared/components/unit-input.component';
 import { MaterialIconsComponent } from '@shared/components/material-icons.component';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
+import { TbIconComponent } from '@shared/components/icon.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -373,7 +374,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToggleSelectComponent,
     UnitInputComponent,
     MaterialIconsComponent,
-    RuleChainSelectComponent
+    RuleChainSelectComponent,
+    TbIconComponent
   ],
   imports: [
     CommonModule,
@@ -606,7 +608,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToggleSelectComponent,
     UnitInputComponent,
     MaterialIconsComponent,
-    RuleChainSelectComponent
+    RuleChainSelectComponent,
+    TbIconComponent
   ]
 })
 export class SharedModule { }

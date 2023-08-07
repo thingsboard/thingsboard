@@ -56,25 +56,28 @@
 </ng-template>
 <ng-template #alarmFilter>
   <div class="tb-form-panel no-padding no-border" [formGroup]="alarmFilterConfigForm">
-    <div class="tb-form-row space-between">
-      <div class="fixed-title-width" translate>alarm.alarm-status-list</div>
+    <div class="tb-form-row space-between" ngClass.xs="filters-row-mobile">
+      <div class="fixed-title-width" ngClass.xs="filters-title-mobile" translate>alarm.alarm-status-list</div>
       <mat-chip-listbox multiple formControlName="statusList">
         <mat-chip-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
           {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
         </mat-chip-option>
       </mat-chip-listbox>
     </div>
-    <div class="tb-form-row space-between">
-      <div class="fixed-title-width" translate>alarm.alarm-severity-list</div>
+    <div class="tb-form-row space-between" ngClass.xs="filters-row-mobile">
+      <div class="fixed-title-width" ngClass.xs="filters-title-mobile" translate>alarm.alarm-severity-list</div>
       <mat-chip-listbox multiple formControlName="severityList">
         <mat-chip-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
           {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
         </mat-chip-option>
       </mat-chip-listbox>
     </div>
-    <div class="tb-form-row">
-      <div class="fixed-title-width" translate>alarm.alarm-type-list</div>
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-chips">
+    <div class="tb-form-row" ngClass.xs="filters-row-mobile">
+      <div class="fixed-title-width" ngClass.xs="filters-title-mobile" translate>alarm.alarm-type-list</div>
+      <mat-form-field fxFlex appearance="outline"
+                      subscriptSizing="dynamic"
+                      class="tb-chips"
+                      ngClass.xs="filters-fields-width-mobile">
         <mat-chip-grid #alarmTypeChipList formControlName="typeList">
           <mat-chip-row *ngFor="let type of alarmTypeList()"
                         [removable]="true" (removed)="removeAlarmType(type)">
@@ -89,9 +92,10 @@
         </mat-chip-grid>
       </mat-form-field>
     </div>
-    <div class="tb-form-row">
-      <div class="fixed-title-width" translate>alarm.assignee</div>
+    <div class="tb-form-row" ngClass.xs="filters-row-mobile">
+      <div class="fixed-title-width" ngClass.xs="filters-title-mobile" translate>alarm.assignee</div>
       <tb-alarm-assignee-select fxFlex inline="true"
+                                ngClass.xs="filters-fields-width-mobile"
                                 [userMode]="userMode"
         formControlName="assigneeId">
       </tb-alarm-assignee-select>

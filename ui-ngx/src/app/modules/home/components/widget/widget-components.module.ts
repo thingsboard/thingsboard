@@ -43,6 +43,7 @@ import { HomePageWidgetsModule } from '@home/components/widget/lib/home-page/hom
 import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { FlotWidgetComponent } from '@home/components/widget/lib/flot-widget.component';
 import { LegendComponent } from '@home/components/widget/lib/legend.component';
+import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/value-card-widget.component';
 
 @NgModule({
   declarations:
@@ -66,7 +67,8 @@ import { LegendComponent } from '@home/components/widget/lib/legend.component';
       MarkdownWidgetComponent,
       SelectEntityDialogComponent,
       LegendComponent,
-      FlotWidgetComponent
+      FlotWidgetComponent,
+      ValueCardWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -94,7 +96,8 @@ import { LegendComponent } from '@home/components/widget/lib/legend.component';
         QrCodeWidgetComponent,
         MarkdownWidgetComponent,
         LegendComponent,
-        FlotWidgetComponent
+        FlotWidgetComponent,
+        ValueCardWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

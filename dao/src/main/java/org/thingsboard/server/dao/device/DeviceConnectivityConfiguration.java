@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.eventsourcing;
+package org.thingsboard.server.dao.device;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
+import java.util.Map;
+
+@Configuration
+@ConfigurationProperties(prefix = "device")
 @Data
-public class ActionRelationEvent {
-    private final TenantId tenantId;
-    private final String body;
-    private final ActionType actionType;
+public class DeviceConnectivityConfiguration {
+    private Map<String, DeviceConnectivityInfo> connectivity;
+
+    public boolean isEnabled(String protocol) {
+        var info = connectivity.get(protocol);
+        return info != null && info.isEnabled();
+    }
 }

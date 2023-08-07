@@ -14,12 +14,22 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilder } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { searchUnits, Unit, unitBySymbol, units } from '@shared/models/unit.models';
-import { map, mergeMap, startWith, tap } from 'rxjs/operators';
+import {
+  Component,
+  ElementRef,
+  forwardRef,
+  HostBinding,
+  Input,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Observable, of, shareReplay, switchMap } from 'rxjs';
+import { getUnits, searchUnits, Unit, unitBySymbol } from '@shared/models/unit.models';
+import { map, mergeMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { ResourcesService } from '@core/services/resources.service';
 
 @Component({
   selector: 'tb-unit-input',
@@ -36,6 +46,8 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class UnitInputComponent implements ControlValueAccessor, OnInit {
 
+  @HostBinding('style.display') get hostDisplay() {return 'flex';};
+
   unitsFormControl: FormControl;
 
   modelValue: string | null;
@@ -51,13 +63,12 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
 
   private dirty = false;
 
-  private translatedUnits: Array<Unit> = units.map(u => ({symbol: u.symbol,
-    name: this.translate.instant(u.name),
-    tags: u.tags}));
+  private fetchUnits$: Observable<Array<Unit>> = null;
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder,
+  constructor(private fb: FormBuilder,
+              private resourcesService: ResourcesService,
               private translate: TranslateService) {
   }
 
@@ -68,22 +79,22 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
         tap(value => {
           this.updateView(value);
         }),
-        startWith<string | Unit>(''),
         map(value => (value as Unit)?.symbol ? (value as Unit).symbol : (value ? value as string : '')),
-        mergeMap(symbol => this.fetchUnits(symbol) )
+        mergeMap(symbol => this.fetchUnits(symbol))
       );
   }
 
   writeValue(symbol?: string): void {
     this.searchText = '';
     this.modelValue = symbol;
-    let res: Unit | string = null;
-    if (symbol) {
-      const unit = unitBySymbol(symbol);
-      res = unit ? unit : symbol;
-    }
-    this.unitsFormControl.patchValue(res, {emitEvent: false});
-    this.dirty = true;
+    of(symbol).pipe(
+      switchMap(value => value
+        ? this.unitsConstant().pipe(map(units => unitBySymbol(units, value) ?? value))
+        : of(null))
+    ).subscribe(result => {
+      this.unitsFormControl.patchValue(result, {emitEvent: false});
+      this.dirty = true;
+    });
   }
 
   onFocus() {
@@ -114,12 +125,9 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
 
   fetchUnits(searchText?: string): Observable<Array<Unit | string>> {
     this.searchText = searchText;
-    const result = searchUnits(this.translatedUnits, searchText);
-    if (result.length) {
-      return of(result);
-    } else {
-      return of([]);
-    }
+    return this.unitsConstant().pipe(
+      map(unit => searchUnits(unit, searchText))
+    );
   }
 
   registerOnChange(fn: any): void {
@@ -144,5 +152,19 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
       this.unitInput.nativeElement.blur();
       this.unitInput.nativeElement.focus();
     }, 0);
+  }
+
+  private unitsConstant(): Observable<Array<Unit>> {
+    if (this.fetchUnits$ === null) {
+      this.fetchUnits$ = getUnits(this.resourcesService).pipe(
+        map(units => units.map(u => ({
+          symbol: u.symbol,
+          name: this.translate.instant(u.name),
+          tags: u.tags
+        }))),
+        shareReplay(1)
+      );
+    }
+    return this.fetchUnits$;
   }
 }

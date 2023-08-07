@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
@@ -95,9 +94,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public AlarmApiCallResult updateAlarm(AlarmUpdateRequest request) {
         validateAlarmRequest(request);
-        var result = withPropagated(alarmDao.updateAlarm(request));
-        if (result.isModified()) {
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId())
+        AlarmApiCallResult result = withPropagated(alarmDao.updateAlarm(request));
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId()).entity(result)
                     .entityId(result.getAlarm().getId()).build());
         }
         return result;
@@ -122,24 +121,30 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (!result.isSuccessful() && !alarmCreationEnabled) {
             throw new ApiUsageLimitsExceededException("Alarms creation is disabled");
         }
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId())
-                .entityId(result.getAlarm().getId()).added(true).build());
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId())
+                    .entityId(result.getAlarm().getId()).added(true).build());
+        }
         return withPropagated(result);
     }
 
     @Override
     public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
         var result = withPropagated(alarmDao.acknowledgeAlarm(tenantId, alarmId, ackTs));
-        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
-                .actionType(ActionType.ALARM_ACK).build());
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                    .actionType(ActionType.ALARM_ACK).build());
+        }
         return result;
     }
 
     @Override
     public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details) {
         var result = withPropagated(alarmDao.clearAlarm(tenantId, alarmId, clearTs, details));
-        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
-                .actionType(ActionType.ALARM_CLEAR).build());
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                    .actionType(ActionType.ALARM_CLEAR).build());
+        }
         return result;
     }
 
@@ -207,7 +212,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
-                    .entityId(alarmId).body(JacksonUtil.toString(alarm)).build());
+                    .entityId(alarmId).entity(alarm).build());
             return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
         }
     }
@@ -321,16 +326,20 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTime) {
         var result = withPropagated(alarmDao.assignAlarm(tenantId, alarmId, assigneeId, assignTime));
-        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
-                .actionType(ActionType.ALARM_ASSIGNED).build());
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                    .actionType(ActionType.ALARM_ASSIGNED).build());
+        }
         return result;
     }
 
     @Override
     public AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long unassignTime) {
         var result = withPropagated(alarmDao.unassignAlarm(tenantId, alarmId, unassignTime));
-        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
-                .actionType(ActionType.ALARM_UNASSIGNED).build());
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                    .actionType(ActionType.ALARM_UNASSIGNED).build());
+        }
         return result;
     }
 

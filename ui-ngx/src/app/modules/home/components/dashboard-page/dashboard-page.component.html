@@ -25,8 +25,7 @@
                           [toolbarOpened]="toolbarOpened" (triggerClick)="openToolbar()">
       <div class="tb-dashboard-action-panels" fxLayout="column" fxLayout.gt-sm="row"
            fxLayoutAlign="center stretch" fxLayoutAlign.gt-sm="space-between center">
-        <div class="tb-dashboard-action-panel" fxFlex="auto" fxLayout="row-reverse" [fxHide]="isMobileApp && !isEdit"
-             fxLayoutAlign.gt-sm="end center" fxLayoutAlign="space-between center" fxLayoutGap.lt-lg="6px" fxLayoutGap.gt-md="12px">
+        <div class="tb-dashboard-action-panel tb-left-panel" [fxHide]="isMobileApp && !isEdit">
           <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.gt-sm displayUserInfo="true">
           </tb-user-menu>
           <ng-container *ngIf="isEdit">
@@ -74,8 +73,7 @@
           <img *ngIf="showDashboardLogo()" [src]="dashboardLogo"
                aria-label="dashboard_logo" class="dashboard_logo"/>
         </div>
-        <div class="tb-dashboard-action-panel" fxFlex="1 0 auto" fxLayout="row-reverse"
-             fxLayoutAlign.gt-sm="start center" fxLayoutAlign="space-between center" fxLayoutGap.lt-lg="6px" fxLayoutGap.gt-md="12px">
+        <div class="tb-dashboard-action-panel">
           <button [fxShow]="showCloseToolbar()" mat-icon-button class="close-action"
                   matTooltip="{{ 'dashboard.close-toolbar' | translate }}"
                   matTooltipPosition="below"
@@ -235,8 +233,21 @@
               </tb-timewindow>
             </ng-container>
           </ng-template>
-          <button [fxShow]="isEdit" mat-stroked-button (click)="addWidget($event)">
-            <mat-icon>add</mat-icon>{{ 'dashboard.add-widget-button-text' | translate }}</button>
+          <ng-container *ngIf="isEdit">
+            <button fxHide.gt-xs mat-icon-button
+                    matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="addWidget($event)">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button fxHide.lt-sm mat-stroked-button
+                    matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="addWidget($event)">
+              <mat-icon>add</mat-icon>
+              {{ 'dashboard.add-widget-button-text' | translate }}
+            </button>
+          </ng-container>
           <tb-filters-edit [fxShow]="!isEdit && displayFilters()"
                            tooltipPosition="below"
                            [aliasController]="dashboardCtx.aliasController">
@@ -360,7 +371,7 @@
                           [isReadOnly]="true"
                           (closeDetails)="onEditWidgetClosed()">
           <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <tb-toggle-select *ngIf="tbEditWidget.hasBasicMode" appearance="fill-invert" [(ngModel)]="tbEditWidget.widgetConfigMode">
+            <tb-toggle-select *ngIf="tbEditWidget.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs" [(ngModel)]="tbEditWidget.widgetConfigMode">
               <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
               <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
             </tb-toggle-select>
