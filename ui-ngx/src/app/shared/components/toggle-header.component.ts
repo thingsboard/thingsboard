@@ -16,7 +16,7 @@
 
 import {
   AfterContentChecked,
-  AfterContentInit,
+  AfterContentInit, AfterViewChecked,
   AfterViewInit,
   ChangeDetectorRef,
   Component,
@@ -35,7 +35,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -117,7 +117,8 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
   templateUrl: './toggle-header.component.html',
   styleUrls: ['./toggle-header.component.scss']
 })
-export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterViewInit, AfterContentInit, AfterContentChecked, OnDestroy {
+export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterViewInit, AfterContentInit,
+  AfterContentChecked, AfterViewChecked, OnDestroy {
 
   @ViewChild('toggleGroup', {static: false})
   toggleGroup: ElementRef<HTMLElement>;
@@ -130,6 +131,7 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
 
   @HostBinding('class.tb-toggle-header-pagination-controls-enabled')
   private showPaginationControls = false;
+  private _showPaginationControlsChanged = false;
 
   private toggleGroupResize$: ResizeObserver;
 
@@ -160,8 +162,19 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   disablePagination = false;
 
   @Input()
+  selectMediaBreakpoint = 'md-lg';
+
+  @Input()
   @coerceBoolean()
-  useSelectOnMdLg = true;
+  set useSelectOnMdLg(value: boolean) {
+    if (value) {
+      this.selectMediaBreakpoint = 'md-lg';
+    } else {
+      if (this.selectMediaBreakpoint === 'md-lg') {
+        this.selectMediaBreakpoint = '';
+      }
+    }
+  }
 
   @Input()
   @coerceBoolean()
@@ -174,7 +187,14 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   @coerceBoolean()
   disabled = false;
 
-  isMdLg: boolean;
+  get isMdLg(): boolean {
+    return !this.ignoreMdLgSize && this.isMdLgValue;
+  }
+
+  private isMdLgValue: boolean;
+  private useSelectSubject = new BehaviorSubject(false);
+
+  useSelect$ = this.useSelectSubject.asObservable();
 
   private observeBreakpointSubscription: Subscription;
 
@@ -186,11 +206,19 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   }
 
   ngOnInit() {
-    this.isMdLg = this.breakpointObserver.isMatched(MediaBreakpoints['md-lg']);
+    const mediaBreakpoints = [MediaBreakpoints['md-lg']];
+    if (this.selectMediaBreakpoint && this.selectMediaBreakpoint !== 'md-lg') {
+      mediaBreakpoints.push(MediaBreakpoints[this.selectMediaBreakpoint]);
+    }
     this.observeBreakpointSubscription = this.breakpointObserver
-      .observe(MediaBreakpoints['md-lg'])
+      .observe(mediaBreakpoints)
       .subscribe((state: BreakpointState) => {
-          this.isMdLg = state.matches;
+          this.isMdLgValue = state.breakpoints[MediaBreakpoints['md-lg']];
+          if (this.selectMediaBreakpoint) {
+            this.useSelectSubject.next(state.breakpoints[MediaBreakpoints[this.selectMediaBreakpoint]]);
+          } else {
+            this.useSelectSubject.next(false);
+          }
           this.cd.markForCheck();
         }
       );
@@ -202,18 +230,21 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   }
 
   ngOnDestroy() {
-    if (this.toggleGroupResize$) {
-      this.toggleGroupResize$.disconnect();
-    }
+    this.stopObservePagination();
     super.ngOnDestroy();
   }
 
   ngAfterViewInit() {
-    if (!this.disablePagination && !this.useSelectOnMdLg) {
-      this.toggleGroupResize$ = new ResizeObserver(() => {
-        this.updatePagination();
+    if (!this.disablePagination) {
+      this.useSelect$.pipe(takeUntil(this._destroyed)).subscribe((useSelect) => {
+        if (useSelect) {
+          this.removePagination();
+        } else {
+          setTimeout(() => {
+            this.startObservePagination();
+          }, 0);
+        }
       });
-      this.toggleGroupResize$.observe(this.toggleGroupContainer.nativeElement);
     }
   }
 
@@ -221,6 +252,14 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
     if (this._scrollDistanceChanged) {
       this.updateToggleHeaderScrollPosition();
       this._scrollDistanceChanged = false;
+      this.cd.markForCheck();
+    }
+  }
+
+  ngAfterViewChecked() {
+    if (this._showPaginationControlsChanged) {
+      this.scrollToToggleOptionValue();
+      this._showPaginationControlsChanged = false;
       this.cd.markForCheck();
     }
   }
@@ -243,6 +282,25 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
     }
   }
 
+  private startObservePagination() {
+    this.toggleGroupResize$ = new ResizeObserver(() => {
+      this.updatePagination();
+    });
+    this.toggleGroupResize$.observe(this.toggleGroupContainer.nativeElement);
+  }
+
+  private removePagination() {
+    this.stopObservePagination();
+    this.showPaginationControls = false;
+  }
+
+  private stopObservePagination() {
+    if (this.toggleGroupResize$) {
+      this.toggleGroupResize$.disconnect();
+      this.toggleGroupResize$ = null;
+    }
+  }
+
   private scrollHeader(direction: ScrollDirection) {
     const viewLength = this.toggleGroup.nativeElement.offsetWidth;
     // Move the scroll distance one-third the length of the tab list's viewport.
@@ -253,10 +311,13 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   private scrollToToggleOptionValue() {
     if (this.buttonToggleGroup && this.buttonToggleGroup.selected) {
       const selectedToggleButton = this.buttonToggleGroup.selected as MatButtonToggle;
+      const index = this.options.findIndex(o => o.value === selectedToggleButton.value);
+      const isLast = index === this.options.length - 1;
+      const isFirst = index === 0;
       const viewLength = this.toggleGroupContainer.nativeElement.offsetWidth;
       const {offsetLeft, offsetWidth} = (selectedToggleButton._buttonElement.nativeElement.offsetParent as HTMLElement);
-      const labelBeforePos = offsetLeft; // this.toggleGroup.nativeElement.offsetWidth - offsetLeft;
-      const labelAfterPos = labelBeforePos + offsetWidth;
+      const labelBeforePos = isFirst ? 0 : offsetLeft;
+      const labelAfterPos = isLast ? this.toggleGroup.nativeElement.scrollWidth : labelBeforePos + offsetWidth;
       const beforeVisiblePos = this.scrollDistance;
       const afterVisiblePos = this.scrollDistance + viewLength;
       if (labelBeforePos < beforeVisiblePos) {
@@ -283,9 +344,7 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
         if (!isEnabled) {
           this.scrollDistance = 0;
         } else {
-          setTimeout(() => {
-            this.scrollToToggleOptionValue();
-          }, 0);
+          this._showPaginationControlsChanged = true;
         }
         this.cd.markForCheck();
         this.showPaginationControls = isEnabled;
@@ -325,11 +384,13 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   }
 
   private updateToggleHeaderScrollPosition() {
-    const scrollDistance = this.scrollDistance;
-    const translateX = -scrollDistance;
-    this.toggleGroup.nativeElement.style.transform = `translateX(${Math.round(translateX)}px)`;
-    if (this.platform.TRIDENT || this.platform.EDGE) {
-      this.toggleGroupContainer.nativeElement.scrollLeft = 0;
+    if (this.toggleGroupContainer) {
+      const scrollDistance = this.scrollDistance;
+      const translateX = -scrollDistance;
+      this.toggleGroup.nativeElement.style.transform = `translateX(${Math.round(translateX)}px)`;
+      if (this.platform.TRIDENT || this.platform.EDGE) {
+        this.toggleGroupContainer.nativeElement.scrollLeft = 0;
+      }
     }
   }
 }

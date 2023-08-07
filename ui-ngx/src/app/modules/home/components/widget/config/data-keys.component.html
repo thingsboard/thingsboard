@@ -47,7 +47,7 @@
             <mat-icon class="tb-mat-18">drag_indicator</mat-icon>
           </div>
           <div class="tb-chip-labels">
-            <div class="tb-chip-label">
+            <div class="tb-chip-label tb-chip-text tb-chip-icon">
               <ng-container *ngIf="isEntityDatasource">
                 <mat-icon class="tb-mat-18 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.alarm"
                           matTooltip="{{'datakey.alarm' | translate }}"
@@ -71,7 +71,7 @@
               </strong>
             </div>
           </div>
-          <div *ngIf="!hideDataKeyColor" style="padding: 3px;">
+          <div *ngIf="!hideDataKeyColor" fxHide.xs style="padding: 3px;">
             <div #keyColorButton class="tb-color-preview small box" (click)="openColorPickerPopup(key, $event, keyColorButton)">
               <div class="tb-color-result" [style]="{background: key.color}"></div>
             </div>

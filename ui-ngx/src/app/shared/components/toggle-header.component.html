@@ -16,13 +16,14 @@
 
 -->
 <button mat-icon-button
+        type="button"
         [disabled]="!leftPaginationEnabled"
         (click)="handlePaginatorClick('before', $event)"
         (touchstart)="handlePaginatorTouchStart('before', $event)"
-        class="tb-toggle-header-pagination-button" [class]="{'tb-mat-32': (ignoreMdLgSize || !isMdLg), 'tb-mat-24': !ignoreMdLgSize && isMdLg}">
+        class="tb-toggle-header-pagination-button" [class]="{'tb-mat-32': !isMdLg, 'tb-mat-24': isMdLg}">
   <mat-icon>chevron_left</mat-icon>
 </button>
-<div #toggleGroupContainer class="tb-toggle-container" [class]="{'tb-disable-pagination': disablePagination}" *ngIf="!isMdLg || !useSelectOnMdLg; else select" >
+<div #toggleGroupContainer class="tb-toggle-container" [class]="{'tb-disable-pagination': disablePagination}" *ngIf="(useSelect$ | async) === false; else select" >
   <mat-button-toggle-group #toggleGroup
                            class="tb-toggle-header"
                            [ngClass]="{'tb-fill': (appearance === 'fill' || appearance === 'fill-invert'),
@@ -34,10 +35,11 @@
   </mat-button-toggle-group>
 </div>
 <button mat-icon-button
+        type="button"
         [disabled]="!rightPaginationEnabled"
         (click)="handlePaginatorClick('after', $event)"
         (touchstart)="handlePaginatorTouchStart('after', $event)"
-        class="tb-toggle-header-pagination-button" [class]="{'tb-mat-32': (ignoreMdLgSize || !isMdLg), 'tb-mat-24': !ignoreMdLgSize && isMdLg}">
+        class="tb-toggle-header-pagination-button" [class]="{'tb-mat-32': !isMdLg, 'tb-mat-24': isMdLg}">
   <mat-icon>chevron_right</mat-icon>
 </button>
 <ng-template #select>

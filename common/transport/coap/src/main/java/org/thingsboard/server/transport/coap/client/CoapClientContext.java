@@ -18,7 +18,7 @@ package org.thingsboard.server.transport.coap.client;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.transport.coap.CoapSessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -33,7 +33,7 @@ public interface CoapClientContext {
 
     AtomicInteger getNotificationCounterByToken(String token);
 
-    TbCoapClientState getOrCreateClient(SessionMsgType type, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) throws AdaptorException;
+    TbCoapClientState getOrCreateClient(CoapSessionMsgType type, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) throws AdaptorException;
 
     TransportProtos.SessionInfoProto getNewSyncSession(TbCoapClientState clientState);
 

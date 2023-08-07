@@ -191,7 +191,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   get hideToolbar(): boolean {
-    return (this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit;
+    return ((this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit) || (this.isEditingWidget || this.isAddingWidget);
   }
 
   @Input()
