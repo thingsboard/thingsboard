@@ -94,11 +94,11 @@ public class EntityViewEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(entityViewUpdateMsg.getIdMSB(), savedEntityView.getUuidId().getMostSignificantBits());
         Assert.assertEquals(entityViewUpdateMsg.getIdLSB(), savedEntityView.getUuidId().getLeastSignificantBits());
 
-        // delete entity view - no messages expected
+        // delete entity view - message expected, it was sent to all edges
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/entityView/" + savedEntityView.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(1));
 
         // create entity view #2 and assign to edge
         edgeImitator.expectMessageAmount(1);

@@ -68,8 +68,8 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         otaPackageStateService.update(savedDeviceProfile,
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getFirmwareId(), savedDeviceProfile.getFirmwareId()),
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getSoftwareId(), savedDeviceProfile.getSoftwareId()));
-        entityNotificationService.notifyCreateOrUpdateOrDelete(savedDeviceProfile.getTenantId(), null,
-                savedDeviceProfile.getId(), savedDeviceProfile, user, oldDeviceProfile == null ? ActionType.ADDED : ActionType.UPDATED, true, null);
+        entityNotificationService.logEntityAction(savedDeviceProfile.getTenantId(), savedDeviceProfile.getId(), savedDeviceProfile,
+                null, oldDeviceProfile == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
 
     @Override

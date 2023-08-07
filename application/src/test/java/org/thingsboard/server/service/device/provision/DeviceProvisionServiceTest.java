@@ -71,8 +71,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-;
-
 @Slf4j
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = DeviceProvisionServiceImpl.class)
