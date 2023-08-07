@@ -927,7 +927,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         ).subscribe((res) => {
           if (res) {
             if (res) {
-              const tasks: Observable<void>[] = [];
+              const tasks: Observable<AlarmInfo>[] = [];
               for (const alarmId of alarmIds) {
                 tasks.push(this.alarmService.ackAlarm(alarmId));
               }
@@ -983,7 +983,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         ).subscribe((res) => {
           if (res) {
             if (res) {
-              const tasks: Observable<void>[] = [];
+              const tasks: Observable<AlarmInfo>[] = [];
               for (const alarmId of alarmIds) {
                 tasks.push(this.alarmService.clearAlarm(alarmId));
               }
