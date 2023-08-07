@@ -15,6 +15,7 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -62,7 +63,7 @@ export class WidgetComponentAction {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WidgetContainerComponent extends PageComponent implements OnInit, OnDestroy {
+export class WidgetContainerComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostBinding('class')
   widgetContainerClass = 'tb-widget-container';
@@ -129,6 +130,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
       cssParser.cssPreviewNamespace = this.cssClass;
       cssParser.createStyleElement(this.cssClass, cssString);
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.widget.widgetContext.$widgetElement = $(this.tbWidgetElement.nativeElement);
   }
 
   ngOnDestroy(): void {

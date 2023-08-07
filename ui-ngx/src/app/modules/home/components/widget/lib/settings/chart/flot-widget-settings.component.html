@@ -61,14 +61,13 @@
         <input matInput formControlName="thresholdsLineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div class="tb-form-row space-between same-padding">
+    <div class="tb-form-row space-between">
       <div>{{ 'widgets.chart.default-font' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="fontSize" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
           <span matSuffix>px</span>
         </mat-form-field>
-        <mat-divider vertical></mat-divider>
         <tb-color-input asBoxInput
                         formControlName="fontColor">
         </tb-color-input>
@@ -78,8 +77,8 @@
   <div *ngIf="chartType === 'graph' || chartType === 'bar'" class="tb-form-panel tb-slide-toggle">
     <div class="tb-form-panel-title" translate>widget-config.legend</div>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('showLegend').value">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title fxFlex="60">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widget-config.legend' | translate }}
@@ -120,8 +119,8 @@
       <div class="tb-form-panel stroked tb-slide-toggle">
         <div class="tb-form-panel-title" translate>widgets.chart.ticks</div>
         <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('yaxis.showLabels').value">
-          <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-            <mat-panel-title fxFlex="60">
+          <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-panel-title>
               <mat-slide-toggle class="mat-slide" formControlName="showLabels" (click)="$event.stopPropagation()"
                                 fxLayoutAlign="center">
                 {{ 'widgets.chart.ticks' | translate }}
@@ -132,14 +131,11 @@
             </mat-panel-description>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
-            <div class="tb-form-row space-between same-padding">
+            <div class="tb-form-row space-between">
               <div>{{ 'widget-config.color' | translate }}</div>
-              <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-                <mat-divider vertical></mat-divider>
-                <tb-color-input asBoxInput
-                                formControlName="color">
-                </tb-color-input>
-              </div>
+              <tb-color-input asBoxInput
+                              formControlName="color">
+              </tb-color-input>
             </div>
             <div class="tb-form-row space-between">
               <div translate>widget-config.decimals-short</div>
@@ -175,8 +171,8 @@
       <div class="tb-form-panel stroked tb-slide-toggle">
         <div class="tb-form-panel-title" translate>widgets.chart.ticks</div>
         <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('xaxis.showLabels').value">
-          <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-            <mat-panel-title fxFlex="60">
+          <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-panel-title>
               <mat-slide-toggle class="mat-slide" formControlName="showLabels" (click)="$event.stopPropagation()"
                                 fxLayoutAlign="center">
                 {{ 'widgets.chart.ticks' | translate }}
@@ -187,14 +183,11 @@
             </mat-panel-description>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
-            <div class="tb-form-row space-between same-padding">
+            <div class="tb-form-row space-between">
               <div>{{ 'widget-config.color' | translate }}</div>
-              <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-                <mat-divider vertical></mat-divider>
-                <tb-color-input asBoxInput
-                                formControlName="color">
-                </tb-color-input>
-              </div>
+              <tb-color-input asBoxInput
+                              formControlName="color">
+              </tb-color-input>
             </div>
           </ng-template>
         </mat-expansion-panel>
@@ -213,43 +206,36 @@
         {{ 'widgets.chart.horizontal-grid-lines' | translate }}
       </mat-slide-toggle>
     </div>
-    <div class="tb-form-row space-between same-padding">
+    <div class="tb-form-row space-between">
       <div>{{ 'widgets.chart.grid-lines-color' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-        <mat-divider vertical></mat-divider>
-        <tb-color-input asBoxInput
-                        formControlName="tickColor">
-        </tb-color-input>
-      </div>
+      <tb-color-input asBoxInput
+                      formControlName="tickColor">
+      </tb-color-input>
     </div>
-    <div class="tb-form-row space-between same-padding">
+    <div class="tb-form-row space-between">
       <div>{{ 'widgets.chart.border' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="outlineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
           <span matSuffix>px</span>
         </mat-form-field>
-        <mat-divider vertical></mat-divider>
         <tb-color-input asBoxInput
                         formControlName="color">
         </tb-color-input>
       </div>
     </div>
-    <div class="tb-form-row space-between same-padding">
+    <div class="tb-form-row space-between">
       <div>{{ 'widgets.chart.background-color' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-        <mat-divider vertical></mat-divider>
-        <tb-color-input asBoxInput
-                        formControlName="backgroundColor">
-        </tb-color-input>
-      </div>
+      <tb-color-input asBoxInput
+                      formControlName="backgroundColor">
+      </tb-color-input>
     </div>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <div class="tb-form-panel-title" translate>widgets.chart.tooltip</div>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('showTooltip').value">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title fxFlex="60">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.chart.tooltip' | translate }}
@@ -288,8 +274,8 @@
   <div *ngIf="chartType === 'graph' || chartType === 'bar'" class="tb-form-panel tb-slide-toggle">
     <div class="tb-form-panel-title" translate>widgets.chart.comparison-settings</div>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('comparisonEnabled').value">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title fxFlex="60">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="comparisonEnabled" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.chart.enable-comparison' | translate }}
@@ -364,8 +350,8 @@
   <div *ngIf="chartType === 'graph' || chartType === 'bar'" class="tb-form-panel tb-slide-toggle">
     <div class="tb-form-panel-title" translate>widgets.chart.custom-legend-settings</div>
     <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('customLegendEnabled').value">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title fxFlex="60">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="customLegendEnabled" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.chart.enable-custom-legend' | translate }}

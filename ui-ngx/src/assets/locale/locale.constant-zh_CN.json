@@ -1221,8 +1221,7 @@
         "device-configuration": "设备配置",
         "transport-configuration": "传输配置",
         "wizard": {
-            "device-details": "设备详细信息",
-            "customer-to-assign-device": "客户分配设备"
+            "device-details": "设备详细信息"
         },
         "unassign-devices-from-edge-title": "确定要取消分配  { count, plural, =1 {1 个设备} other {# 个设备} } 吗？",
         "unassign-devices-from-edge-text": "确认后,设备将被取消分配，边缘将无法访问。"
@@ -2460,7 +2459,6 @@
         "browse-files": "浏览文件"
     },
     "image-input": {
-        "drop-image-or": "拖拽图片或",
         "drop-images-or": "拖拽图片或",
         "no-images": "没有图片",
         "images": "图片"
@@ -3488,7 +3486,7 @@
         "created": "{{created}} 创建",
         "updated": "{{updated}} 更新",
         "deleted": "{{deleted}} 删除",
-        "remove-other-entities-confirm-text": "请注意！在还原版本中不存在的当前实体<br/> 将被永久 <b>删除</b>。<br/><br/>请输入 <b>remove other entities</b> 进行确认。",
+        "remove-other-entities-confirm-text": "请注意！在还原版本中不存在的当前实体<br/> 将被永久 <b>删除</b>。<br/><br/>请输入 <b>\"remove other entities\"</b> 进行确认。",
         "auto-commit-to-branch": "自动提交到 <b>{{ branch }}</b> 分支",
         "default-create-entity-version-name": "{{entityName}} 更新",
         "sync-strategy-merge-hint": "创建或更新选定的实体，仓库其他实体均<b>不修改</b>。",

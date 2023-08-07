@@ -15,13 +15,14 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="outline" class="tb-inline-field" subscriptSizing="dynamic">
+<mat-form-field fxFlex appearance="outline" class="tb-inline-field tb-suffix-show-on-hover" subscriptSizing="dynamic" style="width: 100%;">
   <input matInput #unitInput [formControl]="unitsFormControl"
          placeholder="{{ 'widget-config.set' | translate }}"
          (focusin)="onFocus()"
          [matAutocomplete]="unitsAutocomplete">
   <button *ngIf="unitsFormControl.value && !disabled"
           type="button"
+          class="tb-icon-24"
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>

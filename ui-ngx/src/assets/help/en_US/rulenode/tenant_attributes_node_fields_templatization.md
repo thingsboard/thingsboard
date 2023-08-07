@@ -11,8 +11,8 @@ Let's assume that tenant manage two type of devices: `temperature` and `humidity
 Additionally, let's assume that tenant configured the thresholds settings for each device type.
 Threshold settings stored as an attributes on a tenant level:
 
-- *temperature_min_threshold* and *temperature_max_threshold* for temperature sensor with values set to *10* and *30* accordingly.
-- *humidity_min_threshold* and *humidity_max_threshold* for humidity sensor with values set to *70* and *85* accordingly.
+- *temperatureMinThreshold* and *temperatureMaxThreshold* for temperature sensor with values set to *10* and *30* accordingly.
+- *humidityMinThreshold* and *humidityMaxThreshold* for humidity sensor with values set to *70* and *85* accordingly.
 
 Each message received from device includes `deviceType` property in the message metadata
 with either `temperature` or `humidity` value according to the sensor type.
@@ -73,8 +73,8 @@ Rule node configuration set to fetch data to the message metadata. In the follow
     "deviceType": "temperature",
     "deviceName": "TH-001",
     "ts": "1685379440000",
-    "min_threshold": "10",
-    "max_threshold": "30"
+    "minThreshold": "10",
+    "maxThreshold": "30"
   }
 }
 ```
@@ -92,8 +92,8 @@ Rule node configuration set to fetch data to the message metadata. In the follow
     "deviceType": "humidity",
     "deviceName": "HM-001",
     "ts": "1685379440000",
-    "min_threshold": "70",
-    "max_threshold": "85"
+    "minThreshold": "70",
+    "maxThreshold": "85"
   }
 }
 ```

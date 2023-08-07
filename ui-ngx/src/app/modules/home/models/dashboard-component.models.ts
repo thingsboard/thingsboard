@@ -33,6 +33,7 @@ import { IAliasController, IStateController } from '@app/core/api/widget-api.mod
 import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { ComponentStyle, textStyle } from '@shared/models/widget-settings.models';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -334,11 +335,11 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   customTranslatedTitle: string;
   titleTooltip: string;
   showTitle: boolean;
-  titleStyle: {[klass: string]: any};
+  titleStyle: ComponentStyle;
 
   titleIcon: string;
   showTitleIcon: boolean;
-  titleIconStyle: {[klass: string]: any};
+  titleIconStyle: ComponentStyle;
 
   dropShadow: boolean;
   enableFullscreen: boolean;
@@ -351,7 +352,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   onlyHistoryTimewindow: boolean;
 
-  style: {[klass: string]: any};
+  style: ComponentStyle;
 
   showWidgetTitlePanel: boolean;
   showWidgetActions: boolean;
@@ -437,8 +438,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       && this.widgetContext.widgetTitleTooltip.length ? this.widgetContext.widgetTitleTooltip : this.widget.config.titleTooltip;
     this.titleTooltip = this.dashboard.utils.customTranslation(this.titleTooltip, this.titleTooltip);
     this.showTitle = isDefined(this.widget.config.showTitle) ? this.widget.config.showTitle : true;
-    this.titleStyle = this.widget.config.titleStyle ? this.widget.config.titleStyle : {};
-
+    this.titleStyle = {...(this.widget.config.titleStyle || {}), ...textStyle(this.widget.config.titleFont, '24px', '0.01em')};
+    if (this.widget.config.titleColor) {
+      this.titleStyle.color = this.widget.config.titleColor;
+    }
     this.titleIcon = isDefined(this.widget.config.titleIcon) ? this.widget.config.titleIcon : '';
     this.showTitleIcon = isDefined(this.widget.config.showTitleIcon) ? this.widget.config.showTitleIcon : false;
     this.titleIconStyle = {};
@@ -446,7 +449,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       this.titleIconStyle.color = this.widget.config.iconColor;
     }
     if (this.widget.config.iconSize) {
+      this.titleIconStyle.width = this.widget.config.iconSize;
+      this.titleIconStyle.height = this.widget.config.iconSize;
       this.titleIconStyle.fontSize = this.widget.config.iconSize;
+      this.titleIconStyle.lineHeight = this.widget.config.iconSize;
     }
 
     this.dropShadow = isDefined(this.widget.config.dropShadow) ? this.widget.config.dropShadow : true;

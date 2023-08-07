@@ -13,6 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import './scss/constants';
+
+@mixin form-row-column($breakpoint) {
+  @media #{$breakpoint} {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 7px 12px 16px;
+    .mat-mdc-form-field, tb-unit-input {
+      width: auto;
+      &.medium-width {
+        width: auto;
+      }
+    }
+  }
+}
+
 .tb-default, .tb-dark {
   .tb-form-panel {
     box-shadow: 0 0 10px 6px rgba(11, 17, 51, 0.04);
@@ -24,6 +42,10 @@
     color: rgba(0, 0, 0, 0.87);
     letter-spacing: 0.15px;
     position: relative;
+    @media #{$mat-xs} {
+      padding: 12px;
+      gap: 8px;
+    }
     &.no-padding-bottom {
       padding-bottom: 0;
     }
@@ -49,7 +71,6 @@
       > .mat-expansion-panel {
         padding: 16px;
         .mat-expansion-panel-header {
-          height: 32px;
           .mat-slide {
             margin: 0;
           }
@@ -63,20 +84,13 @@
           overflow: visible;
         }
         > .mat-expansion-panel-header {
+          height: fit-content;
+          user-select: none;
           font-weight: 500;
           font-size: 16px;
           line-height: 24px;
           letter-spacing: 0.25px;
           padding: 0;
-          .mat-content {
-            flex: 0;
-            white-space: nowrap;
-          }
-          &.fill-width {
-            .mat-content {
-              flex: 1;
-            }
-          }
           &:hover {
             background: none;
           }
@@ -94,6 +108,10 @@
             flex-direction: column;
             gap: 16px;
             padding: 16px 0 0 !important;
+            @media #{$mat-xs} {
+              padding: 12px 0 0 !important;
+              gap: 8px;
+            }
           }
         }
         .tb-json-object-panel, .tb-css-content-panel {
@@ -128,16 +146,28 @@
   }
   .tb-form-row {
     height: 100%;
-    padding-top: 7px;
-    padding-bottom: 7px;
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 16px;
-    padding-left: 16px;
-    padding-right: 12px;
+    padding: 7px 7px 7px 16px;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 6px;
+    &.column {
+      &-xs {
+        @include form-row-column($mat-xs)
+      }
+      &-lt-md {
+        @include form-row-column($mat-lt-md)
+      }
+    }
+    &.no-border {
+      border: none;
+      border-radius: 0;
+    }
+    &.no-padding {
+      padding: 0;
+    }
     &.same-padding {
       padding-right: 16px;
     }
@@ -149,14 +179,21 @@
       margin-top: -7px;
       margin-bottom: -7px;
     }
-    .mat-mdc-form-field {
+    .mat-mdc-form-field, tb-unit-input {
       width: 106px;
       &.medium-width {
         width: 220px;
       }
+      &.flex {
+        flex: 1;
+        width: auto;
+      }
     }
     .fixed-title-width {
       min-width: 200px;
+      @media #{$mat-xs} {
+        min-width: fit-content;
+      }
     }
     .mat-slide:only-child {
       margin: 8px 0;
@@ -177,6 +214,13 @@
         opacity: 0;
       }
     }
+    &:not(.mat-mdc-form-field-has-icon-prefix) {
+      .mat-mdc-text-field-wrapper {
+        &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
+          padding-left: 12px;
+        }
+      }
+    }
     &:not(.mat-mdc-form-field-has-icon-suffix) {
       .mat-mdc-text-field-wrapper {
         &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
@@ -186,8 +230,7 @@
     }
     .mat-mdc-text-field-wrapper {
       &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
-        padding-left: 12px;
-        &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(:hover) {
+        &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(.mdc-text-field--invalid):not(:hover) {
           .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
             border-color: rgba(0, 0, 0, 0.12);
           }
@@ -203,7 +246,7 @@
             line-height: 20px;
           }
         }
-        .mat-mdc-form-field-icon-suffix {
+        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix {
           height: 40px;
           font-size: 14px;
           line-height: 40px;
@@ -217,6 +260,19 @@
               width: 20px;
               height: 20px;
               font-size: 20px;
+            }
+            .mat-mdc-button-touch-target {
+              width: 40px;
+              height: 40px;
+            }
+            &.tb-icon-24 {
+              width: 24px;
+              height: 24px;
+              padding: 0;
+              .mat-mdc-button-touch-target {
+                width: 24px;
+                height: 24px;
+              }
             }
           }
           > .mat-icon {
@@ -268,6 +324,22 @@
         }
       }
     }
+    &.tb-suffix-show-on-hover {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-icon-suffix {
+          padding: 0;
+          display: none;
+        }
+      }
+      &:hover {
+        .mat-mdc-text-field-wrapper {
+          .mat-mdc-form-field-icon-suffix {
+            display: flex;
+            align-items: center;
+          }
+        }
+      }
+    }
   }
 
   .tb-form-table {
@@ -278,24 +350,6 @@
     gap: 12px;
     padding-bottom: 12px;
 
-    .tb-form-table-header {
-      height: 48px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-      display: flex;
-      flex-direction: row;
-      place-content: center flex-start;
-      align-items: center;
-      gap: 12px;
-      padding-left: 12px;
-      &-cell {
-        font-weight: 400;
-        font-size: 14px;
-        line-height: 20px;
-        letter-spacing: 0.2px;
-        color: rgba(0, 0, 0, 0.54);
-      }
-    }
-
     .tb-form-table-body {
       display: flex;
       flex-direction: column;
@@ -305,35 +359,125 @@
     .tb-prompt {
       height: 38px;
     }
+  }
 
-    .tb-form-table-row {
-      height: 38px;
-      display: flex;
-      flex-direction: row;
+  .tb-form-table-header, .tb-form-table-row {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    padding-left: 8px;
+    place-content: center flex-start;
+    align-items: center;
+    @media #{$mat-gt-md} {
       gap: 12px;
       padding-left: 12px;
+    }
+    &-cell {
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.2px;
+    }
+  }
 
-      &.tb-draggable {
-        gap: 0;
-        padding-left: 0;
-        background: #fff;
-      }
+  .tb-form-table-header {
+    height: 48px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    &-cell {
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
 
-      &-cell-buttons {
-        display: flex;
-        flex-direction: row;
-        button.mat-mdc-icon-button.mat-mdc-button-base {
-          padding: 7px;
-          width: 38px;
-          height: 38px;
-          .mat-icon {
-            color: rgba(0, 0, 0, 0.38);
-          }
-          &.tb-hidden {
-            visibility: hidden;
-          }
+  .tb-form-table-row {
+    &.tb-draggable {
+      gap: 0;
+      padding-left: 0;
+      background: #fff;
+    }
+
+    &-cell {
+      color: rgba(0, 0, 0, 0.87);
+    }
+
+    &-cell-buttons {
+      display: flex;
+      flex-direction: row;
+      button.mat-mdc-icon-button.mat-mdc-button-base {
+        color: rgba(0, 0, 0, 0.38);
+        &.tb-hidden {
+          visibility: hidden;
         }
       }
+    }
+  }
+
+  .tb-no-data-available {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tb-no-data-bg {
+    margin: 10px;
+    position: relative;
+    flex: 1;
+    width: 100%;
+    max-height: 100px;
+    &:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #305680;
+      mask-image: url(/assets/home/no_data_folder_bg.svg);
+      mask-repeat: no-repeat;
+      mask-size: contain;
+      mask-position: center;
+    }
+  }
+
+  .tb-no-data-text {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.54);
+    @media #{$mat-md-lg} {
+      font-size: 12px;
+      line-height: 16px;
+    }
+  }
+
+  button.mat-mdc-button-base.tb-box-button, .tb-form-table-row-cell-buttons button.mat-mdc-icon-button.mat-mdc-button-base {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 8px;
+    &.mat-mdc-outlined-button {
+      padding: 7px;
+    }
+    .mat-mdc-button-touch-target {
+      width: 40px;
+      height: 40px;
+    }
+    > .mat-icon {
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
+      margin: 0;
+    }
+  }
+
+  button.mat-mdc-button-base.tb-box-button {
+    &:not(:disabled) {
+      color: rgba(0, 0, 0, 0.54);
+    }
+    &:disabled {
+      color: rgba(0, 0, 0, 0.12);
     }
   }
 }

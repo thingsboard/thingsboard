@@ -32,8 +32,8 @@
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('showLines').value">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title fxFlex="60">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showLines" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.chart.show-line' | translate }}
@@ -65,8 +65,8 @@
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('showPoints').value">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title fxFlex="60">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showPoints" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.chart.show-points' | translate }}
@@ -235,14 +235,11 @@
             <input matInput formControlName="comparisonValuesLabel" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
-        <div class="tb-form-row space-between same-padding">
+        <div class="tb-form-row space-between">
           <div>{{ 'widgets.chart.comparison-line-color' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <mat-divider vertical></mat-divider>
-            <tb-color-input asBoxInput
-                            formControlName="color">
-            </tb-color-input>
-          </div>
+          <tb-color-input asBoxInput
+                          formControlName="color">
+          </tb-color-input>
         </div>
       </ng-template>
     </mat-expansion-panel>

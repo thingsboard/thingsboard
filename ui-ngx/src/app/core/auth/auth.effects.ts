@@ -39,4 +39,18 @@ export class AuthEffects {
     withLatestFrom(this.store.pipe(select(selectAuthState))),
     mergeMap(([action, state]) => this.userSettingsService.putUserSettings({ openedMenuSections: state.userSettings.openedMenuSections }))
   ), {dispatch: false});
+
+  putUserSettings = createEffect(() => this.actions$.pipe(
+    ofType(
+      AuthActionTypes.PUT_USER_SETTINGS,
+    ),
+    mergeMap((state) => this.userSettingsService.putUserSettings(state.payload))
+  ), {dispatch: false});
+
+  deleteUserSettings = createEffect(() => this.actions$.pipe(
+    ofType(
+      AuthActionTypes.DELETE_USER_SETTINGS,
+    ),
+    mergeMap((state) => this.userSettingsService.deleteUserSettings(state.payload))
+  ), {dispatch: false});
 }

@@ -19,7 +19,7 @@
 
 <div class="control-component">
   <indicator-component class="indicator-component"
-                       [colorType]="presentations[selectedPresentation]"
+                       [colorType]="presentations[presentationControl.value]"
                        [color]="control.value">
   </indicator-component>
   <div class="hue-alpha-range">
@@ -29,7 +29,12 @@
 </div>
 
 <div class="color-input-block">
-  <div class="color-input" [ngSwitch]="presentations[selectedPresentation]">
+  <mat-select class="presentation-select" [formControl]="presentationControl">
+    <mat-option [value]="0">HEX</mat-option>
+    <mat-option [value]="1">RGBA</mat-option>
+    <mat-option [value]="2">HSLA</mat-option>
+  </mat-select>
+  <div class="color-input" [ngSwitch]="presentations[presentationControl.value]">
     <rgba-input-component *ngSwitchCase="'rgba'" label
                           [(color)]="control.value" [(hue)]="control.hue"></rgba-input-component>
     <hsla-input-component *ngSwitchCase="'hsla'" label
@@ -37,5 +42,8 @@
     <hex-input-component *ngSwitchCase="'hex'" label prefix="#" [(color)]="control.value"
                          [(hue)]="control.hue"></hex-input-component>
   </div>
-  <div class="type-btn" (click)="changePresentation()"></div>
+</div>
+
+<div class="color-presets-block">
+  <color-presets-component class="color-presets-component" columns="11" [colorPresets]="colorPresets" [(color)]="control.value" [(hue)]="control.hue"></color-presets-component>
 </div>

@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -32,6 +33,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.common.data.query.EntityKeyType.TIME_SERIES;
 
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "sql.attributes.value_no_xss_validation=true",
+        "sql.ts.value_no_xss_validation=true"
+})
 public class TelemetryControllerTest extends AbstractControllerTest {
 
     @Test
@@ -130,6 +135,18 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         timeseries = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries?keys=data&startTs={startTs}&endTs={endTs}", ObjectNode.class, startTs, endTs);
 
         Assert.assertTrue(timeseries.isEmpty());
+    }
+
+    @Test
+    public void testValueConstraintValidator() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        String correctRequestBody = "{\"data\": \"value\"}";
+        doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SHARED_SCOPE", correctRequestBody, String.class, status().isOk());
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", correctRequestBody, String.class, status().isOk());
+        String invalidRequestBody = "{\"data\": \"<object data=\\\"data:text/html,<script>alert(document)</script>\\\"></object>\"}";
+        doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SHARED_SCOPE", invalidRequestBody, String.class, status().isBadRequest());
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody, String.class, status().isBadRequest());
     }
 
     private Device createDevice() throws Exception {

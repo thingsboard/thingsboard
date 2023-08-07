@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -49,34 +50,30 @@ import static org.mockito.Mockito.when;
 
 class TbAssetTypeSwitchNodeTest {
 
-    TenantId tenantId;
-    AssetId assetId;
-    AssetId assetIdDeleted;
-    AssetProfile assetProfile;
-    TbContext ctx;
-    TbAssetTypeSwitchNode node;
-    EmptyNodeConfiguration config;
-    TbMsgCallback callback;
-    RuleEngineAssetProfileCache assetProfileCache;
+    private AssetId assetId;
+    private AssetId assetIdDeleted;
+    private TbContext ctx;
+    private TbAssetTypeSwitchNode node;
+    private TbMsgCallback callback;
 
     @BeforeEach
     void setUp() throws TbNodeException {
-        tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = new TenantId(UUID.randomUUID());
         assetId = new AssetId(UUID.randomUUID());
         assetIdDeleted = new AssetId(UUID.randomUUID());
 
-        assetProfile = new AssetProfile();
+        AssetProfile assetProfile = new AssetProfile();
         assetProfile.setTenantId(tenantId);
         assetProfile.setName("TestAssetProfile");
 
         //node
-        config = new EmptyNodeConfiguration();
+        EmptyNodeConfiguration config = new EmptyNodeConfiguration();
         node = new TbAssetTypeSwitchNode();
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         //init mock
         ctx = mock(TbContext.class);
-        assetProfileCache = mock(RuleEngineAssetProfileCache.class);
+        RuleEngineAssetProfileCache assetProfileCache = mock(RuleEngineAssetProfileCache.class);
         callback = mock(TbMsgCallback.class);
 
         when(ctx.getTenantId()).thenReturn(tenantId);
@@ -121,6 +118,7 @@ class TbAssetTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId) {
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(), "{}", callback);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, callback);
     }
+
 }

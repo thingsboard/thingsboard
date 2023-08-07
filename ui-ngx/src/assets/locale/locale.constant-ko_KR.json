@@ -913,8 +913,7 @@
         "device-configuration": "장치 설정",
         "transport-configuration": "전송 설정",
         "wizard": {
-            "device-details": "장치 상세 정보",
-            "customer-to-assign-device": "장치에 할당할 커스터머"
+            "device-details": "장치 상세 정보"
         }
     },
     "device-profile": {

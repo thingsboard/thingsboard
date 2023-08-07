@@ -1053,8 +1053,7 @@
         "device-configuration": "Configuration du dipositif",
         "transport-configuration": "Configuration du transport",
         "wizard": {
-            "device-details": "Détails du dispositif",
-            "customer-to-assign-device": "Client auquel assigner le dispositif"
+            "device-details": "Détails du dispositif"
         }
     },
     "device-profile": {

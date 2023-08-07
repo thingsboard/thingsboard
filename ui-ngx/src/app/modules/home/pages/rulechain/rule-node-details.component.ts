@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -54,6 +54,12 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
 
   @Input()
   isAdd = false;
+
+  @Output()
+  initRuleNode = new EventEmitter<void>();
+
+  @Output()
+  changeScript = new EventEmitter<void>();
 
   ruleNodeType = RuleNodeType;
   entityType = EntityType;
