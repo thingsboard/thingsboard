@@ -48,8 +48,10 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.COAPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.DOCKER;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTP;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.LINUX;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.WINDOWS;
 
 @Service("DeviceConnectivityDaoService")
 @Slf4j
@@ -109,6 +111,26 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
                 break;
             default:
                 commands.put(transportType.name(), CHECK_DOCUMENTATION);
+        }
+        return commands;
+    }
+
+    @Override
+    public JsonNode findGatewayLaunchCommands(String baseUrl, Device device) throws URISyntaxException {
+        DeviceId deviceId = device.getId();
+        log.trace("Executing findDevicePublishTelemetryCommands [{}]", deviceId);
+        validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
+
+        DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
+
+        ObjectNode commands = JacksonUtil.newObjectNode();
+        if (deviceConnectivityConfiguration.isEnabled(MQTT)) {
+            Optional.ofNullable(getGatewayDockerCommands(baseUrl, creds, MQTT))
+                    .ifPresent(v -> commands.set(MQTT, v));
+        }
+        if (deviceConnectivityConfiguration.isEnabled(MQTTS)) {
+            Optional.ofNullable(getGatewayDockerCommands(baseUrl, creds, MQTTS))
+                    .ifPresent(v -> commands.set(MQTTS, v));
         }
         return commands;
     }
@@ -208,6 +230,18 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         return null;
     }
 
+    private JsonNode getGatewayDockerCommands(String baseUrl, DeviceCredentials deviceCredentials, String mqttType) throws URISyntaxException {
+        ObjectNode dockerLaunchCommands = JacksonUtil.newObjectNode();
+        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(mqttType);
+        String mqttHost = getHost(baseUrl, properties);
+        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(LINUX, mqttHost, mqttPort, deviceCredentials))
+                .ifPresent(v -> dockerLaunchCommands.put(LINUX, v));
+        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(WINDOWS, mqttHost, mqttPort, deviceCredentials))
+                .ifPresent(v -> dockerLaunchCommands.put(WINDOWS, v));
+        return dockerLaunchCommands.isEmpty() ? null : dockerLaunchCommands;
+    }
+
     private String getDockerMqttPublishCommand(String protocol, String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
         String mqttHost = getHost(baseUrl, properties);
@@ -265,4 +299,5 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String getHost(String baseUrl, DeviceConnectivityInfo properties) throws URISyntaxException {
         return properties.getHost().isEmpty() ? new URI(baseUrl).getHost() : properties.getHost();
     }
+
 }
