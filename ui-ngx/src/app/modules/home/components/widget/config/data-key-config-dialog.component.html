@@ -20,7 +20,7 @@
     <h2>{{ 'datakey.configuration' | translate }}</h2>
     <span fxFlex></span>
     <tb-toggle-select *ngIf="hasAdvanced"
-                      appearance="fill-invert" [options]="dataKeyConfigHeaderOptions"
+                      appearance="fill-invert" selectMediaBreakpoint="xs" [options]="dataKeyConfigHeaderOptions"
                       [(ngModel)]="dataKeyConfigMode" [ngModelOptions]="{ standalone: true }">
     </tb-toggle-select>
     <button mat-icon-button

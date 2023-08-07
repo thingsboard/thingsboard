@@ -29,10 +29,12 @@
       display: block;
     }
   }
-  .tb-toggle-container {
+  .tb-toggle-container, .tb-toggle-header-select {
     display: inline-grid;
     grid-column: 2;
     overflow: hidden;
+  }
+  .tb-toggle-container {
     &.tb-disable-pagination {
       overflow: visible;
     }

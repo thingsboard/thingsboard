@@ -44,29 +44,27 @@
                 [cdkDropListDisabled]="dragDisabled"
                 formArrayName="datasources">
         <mat-list-item *ngFor="let datasourceControl of datasourcesControls; trackBy: trackByDatasource; let $index = index;"
-                       class="tb-datasource-list-item tb-draggable" [ngClass]="{'bordered': !singleDatasource}" cdkDrag
+                       class="tb-datasource-list-item tb-draggable" cdkDrag
                        [cdkDragDisabled]="dragDisabled">
-          <div fxFlex fxLayout="row" fxLayoutAlign="start start">
-            <div *ngIf="!singleDatasource" fxLayout="row" fxLayoutAlign="center center" style="width: 42px; height: 56px;">
+          <div class="tb-datasource-row">
+            <div *ngIf="!singleDatasource" class="tb-datasource-index-container">
               <div class="tb-datasource-index">{{$index + 1}}</div>
             </div>
-            <div class="tb-datasource-params" fxFlex>
-              <div fxFlex
-                   fxLayout="row"
-                   fxLayoutAlign="start">
-                <tb-datasource fxFlex
-                               [formControl]="datasourceControl">
+            <div class="tb-datasource-params">
+              <div class="tb-datasource-item">
+                <tb-datasource [formControl]="datasourceControl">
                 </tb-datasource>
-                <div *ngIf="!singleDatasource && !disabled" fxLayout="row" fxLayoutAlign="center center" style="height: 56px;">
-                  <button type="button"
-                          mat-icon-button color="primary"
+                <div *ngIf="!singleDatasource && !disabled" class="tb-datasource-buttons">
+                  <button class="tb-box-button" type="button"
+                          mat-icon-button
                           (click)="removeDatasource($index)"
                           matTooltip="{{ 'widget-config.remove-datasource' | translate }}"
                           matTooltipPosition="above">
                     <mat-icon>delete</mat-icon>
                   </button>
                   <button *ngIf="!dragDisabled"
-                          mat-icon-button color="primary"
+                          class="tb-box-button"
+                          mat-icon-button
                           type="button"
                           cdkDragHandle
                           matTooltip="{{ 'action.drag' | translate }}"

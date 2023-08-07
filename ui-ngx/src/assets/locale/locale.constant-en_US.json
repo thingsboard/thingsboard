@@ -74,7 +74,8 @@
         "reset": "Reset",
         "show-more": "Show more",
         "dont-show-again": "Do not show again",
-        "see-documentation": "See documentation"
+        "see-documentation": "See documentation",
+        "clear": "Clear"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -2698,8 +2699,10 @@
         "browse-files": "Browse files"
     },
     "image-input": {
-        "drop-image-or": "Drag and drop an image or",
         "drop-images-or": "Drag and drop an images or",
+        "drag-and-drop": "Drag & Drop",
+        "or": "or",
+        "browse": "Browse",
         "no-images": "No images selected",
         "images": "images"
     },

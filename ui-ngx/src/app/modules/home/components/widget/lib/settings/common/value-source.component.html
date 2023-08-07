@@ -17,7 +17,7 @@
 -->
 <ng-container [formGroup]="valueSourceFormGroup">
   <div style="display: flex;">
-    <tb-toggle-select formControlName="valueSource" style="min-width: 300px;">
+    <tb-toggle-select formControlName="valueSource" style="width: 300px;" selectMediaBreakpoint="xs">
       <tb-toggle-option [value]="'predefinedValue'">
         {{ 'widgets.value-source.predefined-value' | translate }}
       </tb-toggle-option>
@@ -32,7 +32,7 @@
       <input matInput formControlName="value" type="number" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
   </div>
-  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-form-row space-between">
+  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-form-row space-between column-xs">
     <div translate>widgets.value-source.source-entity-alias</div>
     <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
       <input matInput type="text" placeholder="{{ 'widget-config.set' | translate }}"
@@ -54,7 +54,7 @@
       </mat-autocomplete>
     </mat-form-field>
   </div>
-  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-form-row space-between">
+  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-form-row space-between column-xs">
     <div translate>widgets.value-source.source-entity-attribute</div>
     <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
       <input matInput type="text" placeholder="{{ 'widget-config.set' | translate }}"
