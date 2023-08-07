@@ -74,7 +74,8 @@
         "reset": "Reset",
         "show-more": "Show more",
         "dont-show-again": "Do not show again",
-        "see-documentation": "See documentation"
+        "see-documentation": "See documentation",
+        "clear": "Clear"
     },
     "aggregation": {
         "aggregation": "Aggregation",

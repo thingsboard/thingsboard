@@ -34,7 +34,7 @@ import {
   DateFormatSettings,
   getLabel,
   setLabel
-} from '@home/components/widget/config/widget-settings.models';
+} from '@shared/models/widget-settings.models';
 import {
   valueCardDefaultSettings,
   ValueCardLayout,

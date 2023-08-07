@@ -30,7 +30,7 @@ import {
   DateFormatProcessor,
   DateFormatSettings,
   getLabel
-} from '@home/components/widget/config/widget-settings.models';
+} from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-value-card-widget-settings',
