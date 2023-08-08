@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -94,7 +95,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
         try {
             Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(dashboard);
-            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, dashboardId, null,
+            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, dashboardId, null,
                     getActionTbMsgMetaData(edge, null), TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, dashboardId, tbMsg, new TbQueueCallback() {
                 @Override

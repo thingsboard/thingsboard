@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.dao.asset.BaseAssetService;
@@ -104,7 +105,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
         try {
             Asset asset = assetService.findAssetById(tenantId, assetId);
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(asset);
-            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, assetId, asset.getCustomerId(),
+            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, assetId, asset.getCustomerId(),
                     getActionTbMsgMetaData(edge, asset.getCustomerId()), TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, assetId, tbMsg, new TbQueueCallback() {
                 @Override

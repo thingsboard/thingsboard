@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -86,7 +87,7 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
         try {
             AssetProfile assetProfile = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(assetProfile);
-            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, assetProfileId, getTbMsgMetaData(edge),
+            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, assetProfileId, getTbMsgMetaData(edge),
                     TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, assetProfileId, tbMsg, new TbQueueCallback() {
                 @Override

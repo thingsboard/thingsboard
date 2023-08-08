@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -87,7 +88,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
         try {
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(tenantId, deviceProfileId);
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(deviceProfile);
-            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceProfileId, getTbMsgMetaData(edge),
+            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, deviceProfileId, getTbMsgMetaData(edge),
                     TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceProfileId, tbMsg, new TbQueueCallback() {
                 @Override

@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -102,7 +103,7 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor {
         try {
             EntityView entityView = entityViewService.findEntityViewById(tenantId, entityViewId);
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(entityView);
-            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, entityViewId, entityView.getCustomerId(),
+            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, entityViewId, entityView.getCustomerId(),
                     getActionTbMsgMetaData(edge, entityView.getCustomerId()), TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, entityViewId, tbMsg, new TbQueueCallback() {
                 @Override
