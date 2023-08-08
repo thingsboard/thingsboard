@@ -99,19 +99,22 @@ DECLARE
     p RECORD;
     partition_end_ts BIGINT;
 BEGIN
-    FOR p IN SELECT DISTINCT (created_time - created_time % partition_size_ms) AS partition_ts FROM old_edge_event
-             WHERE created_time >= start_time_ms AND created_time < end_time_ms
-        LOOP
-            partition_end_ts = p.partition_ts + partition_size_ms;
-            RAISE NOTICE '[edge_event] Partition to create : [%-%]', p.partition_ts, partition_end_ts;
-            EXECUTE format('CREATE TABLE IF NOT EXISTS edge_event_%s PARTITION OF edge_event ' ||
-                           'FOR VALUES FROM ( %s ) TO ( %s )', p.partition_ts, p.partition_ts, partition_end_ts);
-        END LOOP;
-
-    INSERT INTO edge_event (id, created_time, edge_id, edge_event_type, edge_event_uid, entity_id, edge_event_action, body, tenant_id, ts)
-    SELECT id, created_time, edge_id, edge_event_type, edge_event_uid, entity_id, edge_event_action, body, tenant_id, ts
-    FROM old_edge_event
-    WHERE created_time >= start_time_ms AND created_time < end_time_ms;
+    IF (SELECT exists(SELECT FROM pg_tables WHERE tablename = 'old_edge_event')) THEN
+        FOR p IN SELECT DISTINCT (created_time - created_time % partition_size_ms) AS partition_ts FROM old_edge_event
+                 WHERE created_time >= start_time_ms AND created_time < end_time_ms
+            LOOP
+                partition_end_ts = p.partition_ts + partition_size_ms;
+                RAISE NOTICE '[edge_event] Partition to create : [%-%]', p.partition_ts, partition_end_ts;
+                EXECUTE format('CREATE TABLE IF NOT EXISTS edge_event_%s PARTITION OF edge_event ' ||
+                               'FOR VALUES FROM ( %s ) TO ( %s )', p.partition_ts, p.partition_ts, partition_end_ts);
+            END LOOP;
+        INSERT INTO edge_event (id, created_time, edge_id, edge_event_type, edge_event_uid, entity_id, edge_event_action, body, tenant_id, ts)
+        SELECT id, created_time, edge_id, edge_event_type, edge_event_uid, entity_id, edge_event_action, body, tenant_id, ts
+        FROM old_edge_event
+        WHERE created_time >= start_time_ms AND created_time < end_time_ms;
+    ELSE
+       RAISE NOTICE 'Table old_edge_event does not exists, skipping migration';
+    END IF;
 END;
 $$;
 -- EDGE EVENTS MIGRATION END

@@ -260,7 +260,7 @@ public class EntityServiceTest extends AbstractServiceTest {
             user.setAuthority(Authority.TENANT_ADMIN);
             user.setEmail(StringUtils.randomAlphabetic(10) + "@gmail.com");
             user.setPhone(StringUtils.randomNumeric(10));
-            user = userService.saveUser(user);
+            user = userService.saveUser(tenantId, user);
             users.add(user);
             createRelation(tenantId, "Contains", tenantId, user.getId());
         }

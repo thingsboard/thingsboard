@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
@@ -107,9 +106,6 @@ public class WidgetTypeController extends AutoCommitController {
             }
         }
 
-        sendEntityNotificationMsg(getTenantId(), savedWidgetTypeDetails.getId(),
-                widgetTypeDetails.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
-
         return checkNotNull(savedWidgetTypeDetails);
     }
 
@@ -133,8 +129,6 @@ public class WidgetTypeController extends AutoCommitController {
                 autoCommit(currentUser, widgetsBundle.getId());
             }
         }
-
-        sendEntityNotificationMsg(getTenantId(), widgetTypeId, EdgeEventActionType.DELETED);
     }
 
     @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypes)",
