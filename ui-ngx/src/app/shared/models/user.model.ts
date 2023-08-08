@@ -54,6 +54,7 @@ export interface AuthUser {
   customerId: string;
   isPublic: boolean;
   authority: Authority;
+  phone: string;
 }
 
 export interface UserEmailInfo {
