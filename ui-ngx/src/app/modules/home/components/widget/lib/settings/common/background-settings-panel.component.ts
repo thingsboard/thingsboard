@@ -22,7 +22,7 @@ import {
   BackgroundSettings,
   BackgroundType,
   backgroundTypeTranslations, ComponentStyle
-} from '@home/components/widget/config/widget-settings.models';
+} from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -94,7 +94,7 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
   }
 
   applyColorSettings() {
-    const backgroundSettings = this.backgroundSettingsFormGroup.value;
+    const backgroundSettings = this.backgroundSettingsFormGroup.getRawValue();
     this.backgroundSettingsApplied.emit(backgroundSettings);
   }
 

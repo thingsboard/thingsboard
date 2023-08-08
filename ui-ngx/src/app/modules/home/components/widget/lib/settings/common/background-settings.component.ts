@@ -22,7 +22,7 @@ import {
   BackgroundType,
   ComponentStyle,
   overlayStyle
-} from '@home/components/widget/config/widget-settings.models';
+} from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {

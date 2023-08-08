@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.metadata;
+package org.thingsboard.server.common.data;
 
-public enum FetchTo {
+import org.junit.jupiter.api.Test;
 
-    DATA,
-    METADATA
+import static org.assertj.core.api.Assertions.assertThat;
+
+class EntityTypeTest {
+
+    // backward-compatibility test
+    @Test
+    void getNormalNameTest() {
+        assertThat(EntityType.ENTITY_VIEW.getNormalName()).isEqualTo("Entity View");
+    }
 
 }

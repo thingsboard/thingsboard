@@ -59,8 +59,8 @@
   </div>
   <div [fxShow]="timeseriesTableLatestKeySettingsForm.get('show').value" class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="timeseriesTableLatestKeySettingsForm.get('useCellStyleFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title fxFlex="60">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="useCellStyleFunction" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.table.use-cell-style-function' | translate }}
@@ -83,8 +83,8 @@
   </div>
   <div [fxShow]="timeseriesTableLatestKeySettingsForm.get('show').value" class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="timeseriesTableLatestKeySettingsForm.get('useCellContentFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title fxFlex="60">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="useCellContentFunction" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.table.use-cell-content-function' | translate }}

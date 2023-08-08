@@ -19,6 +19,14 @@
   <div class="tb-color-picker-title" translate>color.color</div>
   <tb-color-picker [formControl]="colorPickerControl"></tb-color-picker>
   <div class="tb-color-picker-panel-buttons">
+    <button *ngIf="colorClearButton"
+            mat-button
+            color="primary"
+            type="button"
+            (click)="clearColor()"
+            [disabled]="!colorPickerControl.value">
+      {{ 'action.clear' | translate }}
+    </button>
     <button mat-raised-button
             color="primary"
             type="button"

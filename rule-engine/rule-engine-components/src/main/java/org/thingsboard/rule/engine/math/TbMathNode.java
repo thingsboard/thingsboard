@@ -248,7 +248,7 @@ public class TbMathNode implements TbNode {
         } else {
             md.putValue(mathResultKey, Double.toString(toDoubleValue(mathResultDef, result)));
         }
-        return TbMsg.transformMsg(msg, md);
+        return TbMsg.transformMsgMetadata(msg, md);
     }
 
     private double calculateResult(List<TbMathArgumentValue> args) {
