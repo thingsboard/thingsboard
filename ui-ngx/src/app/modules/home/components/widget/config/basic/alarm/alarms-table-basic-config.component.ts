@@ -23,7 +23,10 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { isUndefined } from '@core/utils';
-import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
+import {
+  getTimewindowConfig,
+  setTimewindowConfig
+} from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
   selector: 'tb-alarms-table-basic-config',
@@ -74,9 +77,7 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
-    this.widgetConfig.config.useDashboardTimewindow = config.timewindowConfig.useDashboardTimewindow;
-    this.widgetConfig.config.displayTimewindow = config.timewindowConfig.displayTimewindow;
-    this.widgetConfig.config.timewindow = config.timewindowConfig.timewindow;
+    setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.alarmFilterConfig = config.alarmFilterConfig;
     this.widgetConfig.config.alarmSource = config.datasources[0];
     this.setColumns(config.columns, this.widgetConfig.config.alarmSource);

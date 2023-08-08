@@ -153,10 +153,10 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
     $event.stopPropagation();
     this.dialogs.colorPicker(this.colorFormGroup.get('color').value,
       this.colorClearButton).subscribe(
-      (color) => {
-        if (color) {
+      (result) => {
+        if (!result?.canceled) {
           this.colorFormGroup.patchValue(
-            {color}, {emitEvent: true}
+            {color: result?.color}, {emitEvent: true}
           );
           this.cd.markForCheck();
         }

@@ -33,7 +33,7 @@ import { IAliasController, IStateController } from '@app/core/api/widget-api.mod
 import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { ComponentStyle, textStyle } from '@shared/models/widget-settings.models';
+import { ComponentStyle, iconStyle, textStyle } from '@shared/models/widget-settings.models';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -331,8 +331,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   margin: string;
   borderRadius: string;
 
-  title: string;
-  customTranslatedTitle: string;
+  title$: Observable<string>;
   titleTooltip: string;
   showTitle: boolean;
   titleStyle: ComponentStyle;
@@ -431,30 +430,23 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.margin = this.widget.config.margin || '0px';
     this.borderRadius = this.widget.config.borderRadius;
 
-    this.title = isDefined(this.widgetContext.widgetTitle)
+    const title = isDefined(this.widgetContext.widgetTitle)
       && this.widgetContext.widgetTitle.length ? this.widgetContext.widgetTitle : this.widget.config.title;
-    this.customTranslatedTitle = this.dashboard.utils.customTranslation(this.title, this.title);
+    this.title$ = this.widgetContext.registerLabelPattern('widgetTitle', title);
     this.titleTooltip = isDefined(this.widgetContext.widgetTitleTooltip)
       && this.widgetContext.widgetTitleTooltip.length ? this.widgetContext.widgetTitleTooltip : this.widget.config.titleTooltip;
     this.titleTooltip = this.dashboard.utils.customTranslation(this.titleTooltip, this.titleTooltip);
     this.showTitle = isDefined(this.widget.config.showTitle) ? this.widget.config.showTitle : true;
-    this.titleStyle = {...(this.widget.config.titleStyle || {}), ...textStyle(this.widget.config.titleFont, '24px', '0.01em')};
+    this.titleStyle = {...(this.widget.config.titleStyle || {}), ...textStyle(this.widget.config.titleFont, 'normal')};
     if (this.widget.config.titleColor) {
       this.titleStyle.color = this.widget.config.titleColor;
     }
     this.titleIcon = isDefined(this.widget.config.titleIcon) ? this.widget.config.titleIcon : '';
     this.showTitleIcon = isDefined(this.widget.config.showTitleIcon) ? this.widget.config.showTitleIcon : false;
-    this.titleIconStyle = {};
+    this.titleIconStyle = this.widget.config.iconSize ? iconStyle(this.widget.config.iconSize) : {};
     if (this.widget.config.iconColor) {
       this.titleIconStyle.color = this.widget.config.iconColor;
     }
-    if (this.widget.config.iconSize) {
-      this.titleIconStyle.width = this.widget.config.iconSize;
-      this.titleIconStyle.height = this.widget.config.iconSize;
-      this.titleIconStyle.fontSize = this.widget.config.iconSize;
-      this.titleIconStyle.lineHeight = this.widget.config.iconSize;
-    }
-
     this.dropShadow = isDefined(this.widget.config.dropShadow) ? this.widget.config.dropShadow : true;
     this.enableFullscreen = isDefined(this.widget.config.enableFullscreen) ? this.widget.config.enableFullscreen : true;
 
@@ -497,14 +489,22 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     this.showWidgetActions = !this.widgetContext.hideTitlePanel;
 
-    this.updateCustomHeaderActions();
+    this.updateParamsFromData();
     this.widgetActions = this.widgetContext.widgetActions ? this.widgetContext.widgetActions : [];
     if (detectChanges) {
       this.widgetContext.detectContainerChanges();
     }
   }
 
-  updateCustomHeaderActions(detectChanges = false) {
+  updateParamsFromData(detectChanges = false) {
+    this.widgetContext.updateLabelPatterns();
+    const update = this.updateCustomHeaderActions();
+    if (update && detectChanges) {
+      this.widgetContext.detectContainerChanges();
+    }
+  }
+
+  private updateCustomHeaderActions(): boolean {
     let customHeaderActions: Array<WidgetHeaderAction>;
     if (this.widgetContext.customHeaderActions) {
       let data: FormattedData[] = [];
@@ -517,10 +517,9 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     }
     if (!isEqual(this.customHeaderActions, customHeaderActions)) {
       this.customHeaderActions = customHeaderActions;
-      if (detectChanges) {
-        this.widgetContext.detectContainerChanges();
-      }
+      return true;
     }
+    return false;
   }
 
   private filterCustomHeaderAction(action: WidgetHeaderAction, data: FormattedData[]): boolean {

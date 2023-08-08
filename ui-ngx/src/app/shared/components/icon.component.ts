@@ -120,7 +120,7 @@ export class TbIconComponent extends _TbIconBase
     this._contentChanges = this.contentObserver.observe(this._iconNameContent.nativeElement)
       .subscribe(() => {
        const content = this.viewValue;
-        if (content && this.icon !== content) {
+        if (this.icon !== content) {
           this.icon = content;
           this._updateIcon();
         }
