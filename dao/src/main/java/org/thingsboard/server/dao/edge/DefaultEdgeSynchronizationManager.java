@@ -13,35 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.dao.edge;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
-@Getter
-public enum EdgeEventType {
-    DASHBOARD(false),
-    ASSET(false),
-    DEVICE(false),
-    DEVICE_PROFILE(true),
-    ASSET_PROFILE(true),
-    ENTITY_VIEW(false),
-    ALARM(false),
-    RULE_CHAIN(false),
-    RULE_CHAIN_METADATA(false),
-    EDGE(false),
-    USER(true),
-    CUSTOMER(true),
-    RELATION(true),
-    TENANT(true),
-    WIDGETS_BUNDLE(true),
-    WIDGET_TYPE(true),
-    ADMIN_SETTINGS(true),
-    OTA_PACKAGE(true),
-    QUEUE(true);
+@Component
+@Slf4j
+public class DefaultEdgeSynchronizationManager implements EdgeSynchronizationManager {
 
-    private final boolean allEdgesRelated;
+    @Getter
+    private final ThreadLocal<Boolean> sync = new ThreadLocal<>();
 
-    EdgeEventType(boolean allEdgesRelated) {
-        this.allEdgesRelated = allEdgesRelated;
+    @Override
+    public boolean isSync() {
+        Boolean sync = this.sync.get();
+        return sync != null && sync;
     }
 }

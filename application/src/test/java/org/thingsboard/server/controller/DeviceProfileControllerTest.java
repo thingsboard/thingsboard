@@ -498,7 +498,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new DeviceProfile(), new DeviceProfile(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity);
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity);
         Mockito.reset(tbClusterService, auditLogService);
 
         List<DeviceProfile> loadedDeviceProfiles = new ArrayList<>();
@@ -527,7 +527,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(loadedDeviceProfiles.get(0), loadedDeviceProfiles.get(0),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity, cntEntity, loadedDeviceProfiles.get(0).getId().getId().toString());
+                ActionType.DELETED, cntEntity, cntEntity, cntEntity, loadedDeviceProfiles.get(0).getId().getId().toString());
 
         pageLink = new PageLink(17);
         pageData = doGetTypedWithPageLink("/api/deviceProfiles?",

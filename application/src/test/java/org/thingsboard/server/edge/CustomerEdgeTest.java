@@ -20,12 +20,15 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -74,13 +77,19 @@ public class CustomerEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedCustomer.getTitle(), customerUpdateMsg.getTitle());
 
         // delete customer
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(2);
         doDelete("/api/customer/" + savedCustomer.getUuidId())
                 .andExpect(status().isOk());
         Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof CustomerUpdateMsg);
-        customerUpdateMsg = (CustomerUpdateMsg) latestMessage;
+        edgeConfigurationOpt = edgeImitator.findMessageByType(EdgeConfiguration.class);
+        Assert.assertTrue(edgeConfigurationOpt.isPresent());
+        edgeConfiguration = edgeConfigurationOpt.get();
+        Assert.assertEquals(
+                new CustomerId(EntityId.NULL_UUID),
+                new CustomerId(new UUID(edgeConfiguration.getCustomerIdMSB(), edgeConfiguration.getCustomerIdLSB())));
+        customerUpdateOpt = edgeImitator.findMessageByType(CustomerUpdateMsg.class);
+        Assert.assertTrue(customerUpdateOpt.isPresent());
+        customerUpdateMsg = customerUpdateOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, customerUpdateMsg.getMsgType());
         Assert.assertEquals(customerUpdateMsg.getIdMSB(), savedCustomer.getUuidId().getMostSignificantBits());
         Assert.assertEquals(customerUpdateMsg.getIdLSB(), savedCustomer.getUuidId().getLeastSignificantBits());
