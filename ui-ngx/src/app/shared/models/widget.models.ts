@@ -40,7 +40,7 @@ import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { isEmptyStr } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { ComponentStyle, Font } from '@shared/models/widget-settings.models';
+import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -183,7 +183,7 @@ export interface WidgetTypeParameters {
   processNoDataByWidget?: boolean;
   previewWidth?: string;
   previewHeight?: string;
-  absoluteHeader?: boolean;
+  embedTitlePanel?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
@@ -633,6 +633,7 @@ export interface WidgetConfig {
   useDashboardTimewindow?: boolean;
   displayTimewindow?: boolean;
   timewindow?: Timewindow;
+  timewindowStyle?: TimewindowStyle;
   desktopHide?: boolean;
   mobileHide?: boolean;
   mobileHeight?: number;

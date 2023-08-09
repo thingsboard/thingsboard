@@ -320,7 +320,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         entityId: this.entityIdValue,
-        attributeScope: this.attributeScope as AttributeScope
+        attributeScope: this.attributeScope
       }
     }).afterClosed().subscribe(
       (res) => {

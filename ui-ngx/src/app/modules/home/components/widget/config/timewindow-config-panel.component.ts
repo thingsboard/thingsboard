@@ -22,11 +22,13 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isDefined } from '@core/utils';
+import { TimewindowStyle } from '@shared/models/widget-settings.models';
 
 export interface TimewindowConfigData {
   useDashboardTimewindow: boolean;
   displayTimewindow: boolean;
   timewindow: Timewindow;
+  timewindowStyle: TimewindowStyle;
 }
 
 export const getTimewindowConfig = (config: WidgetConfig): TimewindowConfigData => ({
@@ -34,8 +36,16 @@ export const getTimewindowConfig = (config: WidgetConfig): TimewindowConfigData 
       config.useDashboardTimewindow : true,
     displayTimewindow: isDefined(config.displayTimewindow) ?
       config.displayTimewindow : true,
-    timewindow: config.timewindow
+    timewindow: config.timewindow,
+    timewindowStyle: config.timewindowStyle
   });
+
+export const setTimewindowConfig = (config: WidgetConfig, data: TimewindowConfigData): void => {
+  config.useDashboardTimewindow = data.useDashboardTimewindow;
+  config.displayTimewindow = data.displayTimewindow;
+  config.timewindow = data.timewindow;
+  config.timewindowStyle = data.timewindowStyle;
+};
 
 @Component({
   selector: 'tb-timewindow-config-panel',
@@ -78,12 +88,16 @@ export class TimewindowConfigPanelComponent implements ControlValueAccessor, OnI
     this.timewindowConfig = this.fb.group({
       useDashboardTimewindow: [null, []],
       displayTimewindow: [null, []],
-      timewindow: [null, []]
+      timewindow: [null, []],
+      timewindowStyle: [null, []]
     });
     this.timewindowConfig.valueChanges.subscribe(
       (val) => this.propagateChange(val)
     );
     this.timewindowConfig.get('useDashboardTimewindow').valueChanges.subscribe(() => {
+      this.updateTimewindowConfigEnabledState();
+    });
+    this.timewindowConfig.get('displayTimewindow').valueChanges.subscribe(() => {
       this.updateTimewindowConfigEnabledState();
     });
   }
@@ -112,12 +126,19 @@ export class TimewindowConfigPanelComponent implements ControlValueAccessor, OnI
 
   private updateTimewindowConfigEnabledState() {
     const useDashboardTimewindow: boolean = this.timewindowConfig.get('useDashboardTimewindow').value;
+    const displayTimewindow: boolean = this.timewindowConfig.get('displayTimewindow').value;
     if (useDashboardTimewindow) {
       this.timewindowConfig.get('displayTimewindow').disable({emitEvent: false});
       this.timewindowConfig.get('timewindow').disable({emitEvent: false});
+      this.timewindowConfig.get('timewindowStyle').disable({emitEvent: false});
     } else {
       this.timewindowConfig.get('displayTimewindow').enable({emitEvent: false});
       this.timewindowConfig.get('timewindow').enable({emitEvent: false});
+      if (displayTimewindow) {
+        this.timewindowConfig.get('timewindowStyle').enable({emitEvent: false});
+      } else {
+        this.timewindowConfig.get('timewindowStyle').disable({emitEvent: false});
+      }
     }
   }
 

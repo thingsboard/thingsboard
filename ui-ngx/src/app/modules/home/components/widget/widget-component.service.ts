@@ -227,7 +227,7 @@ export class WidgetComponentService {
   }
 
   public clearWidgetInfo(widgetInfo: WidgetInfo, bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): void {
-    this.dynamicComponentFactoryService.destroyDynamicComponentFactory(widgetInfo.componentFactory);
+    this.dynamicComponentFactoryService.destroyDynamicComponent(widgetInfo.componentType);
     this.widgetService.deleteWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem);
   }
 
@@ -362,13 +362,14 @@ export class WidgetComponentService {
             return of(resolvedModules);
           } else {
             this.registerWidgetSettingsForms(widgetInfo, resolvedModules.factories);
-            return this.dynamicComponentFactoryService.createDynamicComponentFactory(
+            return this.dynamicComponentFactoryService.createDynamicComponent(
               class DynamicWidgetComponentInstance extends DynamicWidgetComponent {},
               widgetInfo.templateHtml,
               resolvedModules.modules
             ).pipe(
-              map((factory) => {
-                widgetInfo.componentFactory = factory;
+              map((componentData) => {
+                widgetInfo.componentType = componentData.componentType;
+                widgetInfo.componentModuleRef = componentData.componentModuleRef;
                 return null;
               }),
               catchError(e => {
@@ -546,8 +547,8 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.previewHeight)) {
         result.typeParameters.previewHeight = '70%';
       }
-      if (isUndefined(result.typeParameters.absoluteHeader)) {
-        result.typeParameters.absoluteHeader = false;
+      if (isUndefined(result.typeParameters.embedTitlePanel)) {
+        result.typeParameters.embedTitlePanel = false;
       }
       if (isFunction(widgetTypeInstance.actionSources)) {
         result.actionSources = widgetTypeInstance.actionSources();

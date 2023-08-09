@@ -727,6 +727,8 @@
         "no-telemetry-text": "No telemetry found",
         "copy-key": "Copy key",
         "copy-value": "Copy value",
+        "add-telemetry": "Add telemetry",
+        "copy-value": "Copy value",
         "delete-timeseries": {
             "start-time": "Start time",
             "ends-on": "Ends on",
@@ -3914,7 +3916,15 @@
         "interval": "Interval",
         "just-now": "Just now",
         "just-now-lower": "just now",
-        "ago": "ago"
+        "ago": "ago",
+        "style": "Timewindow style",
+        "icon": "Icon",
+        "icon-position": "Icon position",
+        "icon-position-left": "Left",
+        "icon-position-right": "Right",
+        "font": "Font",
+        "color": "Color",
+        "preview": "Preview"
     },
     "unit": {
         "millimeter": "Millimeter",
@@ -5811,7 +5821,8 @@
             "font-weight-lighter": "Lighter",
             "color": "Color",
             "shadow-color": "Shadow color",
-            "preview": "Preview"
+            "preview": "Preview",
+            "line-height": "Line height"
         },
         "home": {
             "no-data-available": "No data available"
