@@ -477,8 +477,9 @@ export class LabelVariablePattern {
 
   update() {
     let label = this.pattern;
-    if (this.hasVariables && this.ctx.defaultSubscription?.datasources?.length) {
-      label = createLabelFromDatasource(this.ctx.defaultSubscription.datasources[0], label);
+    const datasource = this.ctx.defaultSubscription?.firstDatasource;
+    if (this.hasVariables && datasource) {
+      label = createLabelFromDatasource(datasource, label);
     }
     if (this.labelSubject.value !== label) {
       this.labelSubject.next(label);
