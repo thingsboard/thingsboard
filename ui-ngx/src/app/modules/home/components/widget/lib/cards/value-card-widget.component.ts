@@ -107,7 +107,7 @@ export class ValueCardWidgetComponent implements OnInit {
 
     this.showLabel = this.settings.showLabel;
     const label = getLabel(this.ctx.datasources);
-    this.label$ = this.ctx.registerLabelPattern('valueCardLabel', label);
+    this.label$ = this.ctx.registerLabelPattern(label, this.label$);
     this.labelStyle = textStyle(this.settings.labelFont, '0.25px');
     this.labelColor =  ColorProcessor.fromSettings(this.settings.labelColor);
     this.valueStyle = textStyle(this.settings.valueFont,  '0.13px');

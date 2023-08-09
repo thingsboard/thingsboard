@@ -432,7 +432,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     const title = isDefined(this.widgetContext.widgetTitle)
       && this.widgetContext.widgetTitle.length ? this.widgetContext.widgetTitle : this.widget.config.title;
-    this.title$ = this.widgetContext.registerLabelPattern('widgetTitle', title);
+    this.title$ = this.widgetContext.registerLabelPattern(title, this.title$);
     this.titleTooltip = isDefined(this.widgetContext.widgetTitleTooltip)
       && this.widgetContext.widgetTitleTooltip.length ? this.widgetContext.widgetTitleTooltip : this.widget.config.titleTooltip;
     this.titleTooltip = this.dashboard.utils.customTranslation(this.titleTooltip, this.titleTooltip);

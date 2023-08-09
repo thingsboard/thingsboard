@@ -202,7 +202,7 @@ export class WidgetContext {
   subscriptions: {[id: string]: IWidgetSubscription} = {};
   defaultSubscription: IWidgetSubscription = null;
 
-  labelPatterns: {[id: string]: LabelVariablePattern} = {};
+  labelPatterns = new Map<Observable<string>, LabelVariablePattern>();
 
   timewindowFunctions: TimewindowFunctions = {
     onUpdateTimewindow: (startTimeMs, endTimeMs, interval) => {
@@ -316,20 +316,20 @@ export class WidgetContext {
     });
   }
 
-  registerLabelPattern(id: string, label: string): Observable<string> {
-    let labelPattern = this.labelPatterns[id];
+  registerLabelPattern(label: string, label$: Observable<string>): Observable<string> {
+    let labelPattern = label$ ? this.labelPatterns.get(label$) : null;
     if (labelPattern) {
       labelPattern.setupPattern(label);
     } else {
       labelPattern = new LabelVariablePattern(label, this);
-      this.labelPatterns[id] = labelPattern;
+      this.labelPatterns.set(labelPattern.label$, labelPattern);
     }
     return labelPattern.label$;
   }
 
   updateLabelPatterns() {
-    for (const key of Object.keys(this.labelPatterns)) {
-      this.labelPatterns[key].update();
+    for (const labelPattern of this.labelPatterns.values()) {
+      labelPattern.update();
     }
   }
 
@@ -428,10 +428,10 @@ export class WidgetContext {
   }
 
   destroy() {
-    for (const key of Object.keys(this.labelPatterns)) {
-      this.labelPatterns[key].destroy();
+    for (const labelPattern of this.labelPatterns.values()) {
+      labelPattern.destroy();
     }
-    this.labelPatterns = {};
+    this.labelPatterns.clear();
     this.destroyed = true;
   }
 

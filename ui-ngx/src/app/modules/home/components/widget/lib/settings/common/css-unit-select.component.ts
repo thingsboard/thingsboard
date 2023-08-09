@@ -67,9 +67,9 @@ export class CssUnitSelectComponent implements OnInit, ControlValueAccessor {
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.cssUnitFormControl.disable();
+      this.cssUnitFormControl.disable({emitEvent: false});
     } else {
-      this.cssUnitFormControl.enable();
+      this.cssUnitFormControl.enable({emitEvent: false});
     }
   }
 
