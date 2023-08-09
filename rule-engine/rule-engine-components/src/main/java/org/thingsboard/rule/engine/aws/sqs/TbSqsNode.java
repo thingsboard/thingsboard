@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -93,14 +92,14 @@ public class TbSqsNode extends TbAbstractExternalNode {
         var tbMsg = ackIfNeeded(ctx, msg);
         withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
-                t -> tellFailure(ctx, processException(ctx, tbMsg, t), t));
+                t -> tellFailure(ctx, processException(tbMsg, t), t));
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
-        return ctx.getExternalCallExecutor().executeAsync(() -> publishMessage(ctx, msg));
+        return ctx.getExternalCallExecutor().executeAsync(() -> publishMessage(msg));
     }
 
-    private TbMsg publishMessage(TbContext ctx, TbMsg msg) {
+    private TbMsg publishMessage(TbMsg msg) {
         String queueUrl = TbNodeUtils.processPattern(this.config.getQueueUrlPattern(), msg);
         SendMessageRequest sendMsgRequest =  new SendMessageRequest();
         sendMsgRequest.withQueueUrl(queueUrl);
@@ -119,10 +118,10 @@ public class TbSqsNode extends TbAbstractExternalNode {
             sendMsgRequest.withMessageGroupId(msg.getOriginator().toString());
         }
         SendMessageResult result = this.sqsClient.sendMessage(sendMsgRequest);
-        return processSendMessageResult(ctx, msg, result);
+        return processSendMessageResult(msg, result);
     }
 
-    private TbMsg processSendMessageResult(TbContext ctx, TbMsg origMsg, SendMessageResult result) {
+    private TbMsg processSendMessageResult(TbMsg origMsg, SendMessageResult result) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(MESSAGE_ID, result.getMessageId());
         metaData.putValue(REQUEST_ID, result.getSdkResponseMetadata().getRequestId());
@@ -135,13 +134,13 @@ public class TbSqsNode extends TbAbstractExternalNode {
         if (!StringUtils.isEmpty(result.getSequenceNumber())) {
             metaData.putValue(SEQUENCE_NUMBER, result.getSequenceNumber());
         }
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
+    private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     @Override

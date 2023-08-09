@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -43,6 +44,9 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -104,6 +108,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         try {
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
             publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
+                    .entityId(saved.getId()).added(entityView.getId() == null).build());
             return saved;
         } catch (Exception t) {
             checkConstraintViolation(t,
@@ -305,6 +311,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         EntityView entityView = entityViewDao.findById(tenantId, entityViewId.getId());
         entityViewDao.removeById(tenantId, entityViewId.getId());
         publishEvictEvent(new EntityViewEvictEvent(entityView.getTenantId(), entityView.getId(), entityView.getEntityId(), null, entityView.getName(), null));
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(entityViewId).build());
     }
 
     @Override
@@ -337,7 +344,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             throw new DataValidationException("Can't assign entityView to edge from different tenant!");
         }
 
-        Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
+        boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
                 EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
         if (!relationExists) {
             throw new DataValidationException("Can't assign entity view to edge because related device/asset doesn't assigned to edge!");
@@ -349,6 +356,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to create entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
+                .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return entityView;
     }
 
@@ -365,6 +374,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to delete entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
+                .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return entityView;
     }
 

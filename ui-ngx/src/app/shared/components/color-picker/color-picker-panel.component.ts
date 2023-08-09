@@ -20,6 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormControl } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-color-picker-panel',
@@ -32,6 +33,10 @@ export class ColorPickerPanelComponent extends PageComponent implements OnInit {
 
   @Input()
   color: string;
+
+  @Input()
+  @coerceBoolean()
+  colorClearButton = false;
 
   @Input()
   popover: TbPopoverComponent<ColorPickerPanelComponent>;
@@ -51,5 +56,9 @@ export class ColorPickerPanelComponent extends PageComponent implements OnInit {
 
   selectColor() {
     this.colorSelected.emit(this.colorPickerControl.value);
+  }
+
+  clearColor() {
+    this.colorSelected.emit(null);
   }
 }

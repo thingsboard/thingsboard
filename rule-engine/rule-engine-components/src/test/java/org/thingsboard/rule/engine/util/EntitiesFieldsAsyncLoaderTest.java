@@ -16,8 +16,6 @@
 package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -25,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -61,7 +60,6 @@ import org.thingsboard.server.dao.user.UserService;
 import java.util.EnumSet;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -75,21 +73,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class EntitiesFieldsAsyncLoaderTest {
 
-    private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
-        @Override
-        public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
-            try {
-                return Futures.immediateFuture(task.call());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public void execute(@NotNull Runnable command) {
-            command.run();
-        }
-    };
+    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
     private static EnumSet<EntityType> SUPPORTED_ENTITY_TYPES;
     private static UUID RANDOM_UUID;
     private static TenantId TENANT_ID;

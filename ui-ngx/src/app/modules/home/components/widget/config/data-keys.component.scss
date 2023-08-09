@@ -70,6 +70,9 @@
           text-overflow: ellipsis;
           white-space: nowrap;
         }
+        &.tb-chip-icon {
+          min-width: 24px;
+        }
         .mat-icon.tb-datakey-icon {
           margin-right: 4px;
           margin-left: 4px;

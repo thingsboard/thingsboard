@@ -43,6 +43,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -170,7 +171,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         testBroadcastEntityStateChangeEventTime(foundEntityView.getId(), tenantId, 1);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundEntityView, foundEntityView,
                 tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ADDED, ActionType.ADDED, 1, 0, 1);
+                ActionType.ADDED, 1, 1, 1);
         Mockito.reset(tbClusterService, auditLogService);
 
         savedView.setName("New test entity view");
@@ -183,7 +184,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         testBroadcastEntityStateChangeEventTime(foundEntityView.getId(), tenantId, 1);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundEntityView, foundEntityView,
                 tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UPDATED, ActionType.UPDATED, 1, 1, 5);
+                ActionType.UPDATED, 1, 1, 5);
 
         doGet("/api/tenant/entityViews?entityViewName=" + name)
                 .andExpect(status().isNotFound())
@@ -247,13 +248,13 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         doDelete("/api/entityView/" + entityIdStr)
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedView, savedView.getId(), savedView.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventOneTime(savedView, savedView.getId(), savedView.getId(),
                 tenantId, view.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
                 ActionType.DELETED, entityIdStr);
 
         doGet("/api/entityView/" + entityIdStr)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Entity view",entityIdStr))));
+                .andExpect(statusReason(containsString(msgErrorNoFound(EntityType.ENTITY_VIEW.getNormalName(), entityIdStr))));
     }
 
     @Test
@@ -286,7 +287,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         testBroadcastEntityStateChangeEventTime(savedView.getId(), tenantId, 1);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(savedView, savedView,
                 tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UPDATED, ActionType.UPDATED, 1, 1, 5);
+                ActionType.UPDATED, 1, 1, 5);
         Mockito.reset(tbClusterService, auditLogService);
 
         EntityView assignedView = doPost(
@@ -298,9 +299,9 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         assertEquals(savedCustomer.getId(), foundView.getCustomerId());
 
         testBroadcastEntityStateChangeEventNever(foundView.getId());
-        testNotifyEntityAllOneTime(foundView, foundView.getId(), foundView.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(foundView, foundView.getId(), foundView.getId(),
                 tenantId, foundView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ASSIGNED_TO_CUSTOMER,
+                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED,
                 foundView.getId().getId().toString(), foundView.getCustomerId().getId().toString(), savedCustomer.getTitle());
 
         EntityView unAssignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
@@ -310,9 +311,9 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
 
         testBroadcastEntityStateChangeEventNever(foundView.getId());
-        testNotifyEntityAllOneTime(unAssignedView, savedView.getId(), savedView.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(unAssignedView, savedView.getId(), savedView.getId(),
                 tenantId, savedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UNASSIGNED_FROM_CUSTOMER,
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED,
                 assignedView.getId().getId().toString(), savedView.getCustomerId().getId().toString(), savedCustomer.getTitle());
     }
 
@@ -328,9 +329,9 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         Assert.assertTrue(publicCustomer.isPublic());
 
         testBroadcastEntityStateChangeEventNever(assignedView.getId());
-        testNotifyEntityAllOneTime(assignedView, assignedView.getId(), assignedView.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(assignedView, assignedView.getId(), assignedView.getId(),
                 tenantId, assignedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ASSIGNED_TO_CUSTOMER,
+                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED,
                 assignedView.getId().getId().toString(), assignedView.getCustomerId().getId().toString(), publicCustomer.getTitle());
 
         EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
@@ -343,9 +344,9 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
 
         testBroadcastEntityStateChangeEventNever(foundView.getId());
-        testNotifyEntityAllOneTime(unAssignedView, unAssignedView.getId(), unAssignedView.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(unAssignedView, unAssignedView.getId(), unAssignedView.getId(),
                 tenantId, publicCustomer.getId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UNASSIGNED_FROM_CUSTOMER,
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED,
                 unAssignedView.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
     }
 
@@ -425,11 +426,11 @@ public class EntityViewControllerTest extends AbstractControllerTest {
 
         testNotifyEntityBroadcastEntityStateChangeEventMany(new EntityView(), new EntityView(),
                 tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ADDED, ActionType.ADDED, cntEntity, 0, cntEntity*2, 0);
+                ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity * 2, 0);
 
         testNotifyEntityBroadcastEntityStateChangeEventMany(new EntityView(), new EntityView(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity,
+                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED, cntEntity, cntEntity,
                 cntEntity*2, 3);
     }
 
@@ -464,7 +465,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         testBroadcastEntityStateChangeEventNever(loadedNamesOfView1.get(0).getId());
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new EntityView(), new EntityView(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UNASSIGNED_FROM_CUSTOMER, cntEntity, cntEntity, 3);
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED, cntEntity, cntEntity, 3);
 
         PageData<EntityView> pageData = doGetTypedWithPageLink(urlTemplate, PAGE_DATA_ENTITY_VIEW_TYPE_REF,
                 new PageLink(4, 0, name1));

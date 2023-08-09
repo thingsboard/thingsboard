@@ -40,9 +40,20 @@
         </mat-slide-toggle>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>widget-config.title</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
-            <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
+          <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+            <tb-font-settings formControlName="titleFont"
+                              clearButton
+                              [previewText]="widgetSettings.get('title').value"
+                              [initialPreviewStyle]="widgetSettings.get('titleStyle').value">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="titleColor">
+            </tb-color-input>
+          </div>
         </div>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>widget-config.title-tooltip</div>
@@ -63,6 +74,7 @@
               formControlName="titleIcon">
             </tb-material-icon-select>
             <tb-color-input asBoxInput
+                            colorClearButton
                             formControlName="iconColor">
             </tb-color-input>
           </div>
@@ -88,12 +100,14 @@
         <div class="tb-form-row space-between">
           <div>{{ 'widget-config.text-color' | translate }}</div>
           <tb-color-input asBoxInput
+                          colorClearButton
                           formControlName="color">
           </tb-color-input>
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'widget-config.background-color' | translate }}</div>
           <tb-color-input asBoxInput
+                          colorClearButton
                           formControlName="backgroundColor">
           </tb-color-input>
         </div>

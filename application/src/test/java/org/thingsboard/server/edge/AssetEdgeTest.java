@@ -82,11 +82,11 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedAsset.getUuidId().getMostSignificantBits(), assetUpdateMsg.getIdMSB());
         Assert.assertEquals(savedAsset.getUuidId().getLeastSignificantBits(), assetUpdateMsg.getIdLSB());
 
-        // delete asset - no messages expected
+        // delete asset - message expected, it was sent to all edges
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/asset/" + savedAsset.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(1));
 
         // create asset #2 and assign to edge
         edgeImitator.expectMessageAmount(2);
@@ -94,7 +94,6 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         doPost("/api/edge/" + edge.getUuidId()
                 + "/asset/" + savedAsset.getUuidId(), Asset.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
         assetUpdateMsgOpt = edgeImitator.findMessageByType(AssetUpdateMsg.class);
         Assert.assertTrue(assetUpdateMsgOpt.isPresent());
         assetUpdateMsg = assetUpdateMsgOpt.get();

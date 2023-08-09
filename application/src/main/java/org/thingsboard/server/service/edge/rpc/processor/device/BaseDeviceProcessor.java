@@ -97,7 +97,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 deviceCredentials.setCredentialsId(StringUtils.randomAlphanumeric(20));
                 deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
             }
-            tbClusterService.onDeviceUpdated(savedDevice, created ? null : device, false);
+            tbClusterService.onDeviceUpdated(savedDevice, created ? null : device);
         } finally {
             deviceCreationLock.unlock();
         }
@@ -113,6 +113,8 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 log.debug("Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
                         device.getName(), deviceCredentialsUpdateMsg.getCredentialsId(), deviceCredentialsUpdateMsg.getCredentialsValue());
                 try {
+                    edgeSynchronizationManager.getSync().set(true);
+
                     DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
                     deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
                     deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
@@ -123,6 +125,8 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                     log.error("Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]",
                             device.getName(), deviceCredentialsUpdateMsg, e);
                     throw new RuntimeException(e);
+                } finally {
+                    edgeSynchronizationManager.getSync().remove();
                 }
             } else {
                 log.warn("Can't find device by id [{}], deviceCredentialsUpdateMsg [{}]", deviceId, deviceCredentialsUpdateMsg);

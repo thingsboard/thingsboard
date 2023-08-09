@@ -19,6 +19,9 @@ import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
+import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -33,6 +36,7 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -81,7 +85,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/ruleChain/" + savedRuleChain.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(5));
     }
 
     @Test
@@ -136,24 +140,30 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(ruleChainId, receivedRuleChainId);
     }
 
-    private void createRuleChainMetadata(RuleChain ruleChain) throws Exception {
+    private void createRuleChainMetadata(RuleChain ruleChain) {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
 
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
-        ruleNode1.setType("type1");
-        ruleNode1.setConfiguration(JacksonUtil.toJsonNode("\"key1\": \"val1\""));
+        ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
+        TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
+        configuration.setFetchTo(TbMsgSource.METADATA);
+        configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
+        ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
-        ruleNode2.setType("type2");
-        ruleNode2.setConfiguration(JacksonUtil.toJsonNode("\"key2\": \"val2\""));
+        ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
+        ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
-        ruleNode3.setType("type3");
-        ruleNode3.setConfiguration(JacksonUtil.toJsonNode("\"key3\": \"val3\""));
+        ruleNode3.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode3.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
+        ruleNode3.setConfiguration(JacksonUtil.valueToTree(configuration));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(ruleNode1);
@@ -172,11 +182,12 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
     @Test
     public void testSetRootRuleChain() throws Exception {
         // create rule chain
-        edgeImitator.expectMessageAmount(1);
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("Edge New Root Rule Chain");
         ruleChain.setType(RuleChainType.EDGE);
         RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+
+        edgeImitator.expectMessageAmount(1);
         doPost("/api/edge/" + edge.getUuidId()
                 + "/ruleChain/" + savedRuleChain.getUuidId(), RuleChain.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
@@ -211,6 +222,6 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/ruleChain/" + savedRuleChain.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(1));
     }
 }

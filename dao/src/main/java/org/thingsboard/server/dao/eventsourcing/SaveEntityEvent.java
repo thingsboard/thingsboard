@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.eventsourcing;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-public final class TbRelationTypes {
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    public static String SUCCESS = "Success";
-    public static String FAILURE = "Failure";
-
+@Builder
+@Data
+public class SaveEntityEvent<T> {
+    private final TenantId tenantId;
+    private final T entity;
+    private final EntityId entityId;
+    private final Boolean added;
 }
