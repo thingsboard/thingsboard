@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -40,7 +41,7 @@ public abstract class TbAbstractGetEntityDataNode<T extends EntityId> extends Tb
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
+        var msgDataAsObjectNode = TbMsgSource.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(findEntityAsync(ctx, msg.getOriginator()),
                 entityId -> processDataAndTell(ctx, msg, entityId, msgDataAsObjectNode),
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
@@ -89,7 +90,7 @@ public abstract class TbAbstractGetEntityDataNode<T extends EntityId> extends Tb
         } else {
             throw new TbNodeException("property to update: '" + OLD_DATA_TO_FETCH_PROPERTY_NAME + "' has unexpected value: " + value + ". Allowed values: true or false!");
         }
-        newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, FetchTo.METADATA.name());
+        newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, TbMsgSource.METADATA.name());
         return new TbPair<>(true, newConfigObjectNode);
     }
 

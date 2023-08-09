@@ -21,7 +21,13 @@
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
-    padding: 12px 12px 12px 16px;
+    padding: 12px 7px 12px 16px;
+    .mat-mdc-form-field, tb-unit-input {
+      width: auto;
+      &.medium-width {
+        width: auto;
+      }
+    }
   }
 }
 
@@ -85,15 +91,6 @@
           line-height: 24px;
           letter-spacing: 0.25px;
           padding: 0;
-          .mat-content {
-            flex: 0;
-            white-space: nowrap;
-          }
-          &.fill-width {
-            .mat-content {
-              flex: 1;
-            }
-          }
           &:hover {
             background: none;
           }
@@ -182,22 +179,20 @@
       margin-top: -7px;
       margin-bottom: -7px;
     }
-    .mat-mdc-form-field {
+    .mat-mdc-form-field, tb-unit-input {
       width: 106px;
       &.medium-width {
         width: 220px;
       }
-      @media #{$mat-xs} {
+      &.flex {
+        flex: 1;
         width: auto;
-        &.medium-width {
-          width: auto;
-        }
       }
     }
     .fixed-title-width {
       min-width: 200px;
       @media #{$mat-xs} {
-        min-width: 0;
+        min-width: fit-content;
       }
     }
     .mat-slide:only-child {

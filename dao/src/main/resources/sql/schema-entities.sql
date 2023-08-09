@@ -826,7 +826,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     targets VARCHAR(10000) NOT NULL,
     template_id UUID,
     template VARCHAR(10000000),
-    info VARCHAR(1000),
+    info VARCHAR(1000000),
     additional_config VARCHAR(1000),
     originator_entity_id UUID,
     originator_entity_type VARCHAR(32),

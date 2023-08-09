@@ -24,27 +24,28 @@ Additionally let's imagine that devices periodically publishes other telemetry m
 - `speed` - current speed value.
 - `direction` - compass direction in which the device is moving.
 - `acceleration` - how quickly the speed of the device is changing.
-- `fuel_level` - current fuel level.
-- `battery_level` - current battery level.
-- `parked_location` - precise location where the device is parked.
-- `parked_duration` - current park duration value.
-- `parked_time` - timestamp when the device was parked.
+- `fuelLevel` - current fuel level.
+- `batteryLevel` - current battery level.
+- `parkedLocation` - precise location where the device is parked.
+- `parkedDuration` - current park duration value.
+- `parkedTime` - timestamp when the device was parked.
 
-Let's imagine that we need to make some historical analysis by fetching 3 latest telemetry readings for the keys listed below if the `event` value is set to *motion*: 
+Let's imagine that we need to make some historical analysis by fetching 3 latest telemetry readings in the range from 1 hour ago to 1 millisecond ago.  
+If the `event` value is set to *motion* we need to fetch data for keys:
 
 - `speed` 
 - `direction` 
 - `acceleration`
-- `fuel_level`
-- `battery_level`
+- `fuelLevel`
+- `batteryLevel`
 
-Otherwise, if the `event` value is set to *parked* value we need to fetch 3 latest telemetry readings for the following data keys: 
+Otherwise, if the `event` value is set to *parked* value we need to fetch data for keys: 
 
-- `parked_location`
-- `parked_duration`
-- `parked_time`
-- `fuel_level`
-- `battery_level`
+- `parkedLocation`
+- `parkedDuration`
+- `parkedTime`
+- `fuelLevel`
+- `batteryLevel`
 
 Imagine that you created a script node that depending on the `event` value adds to the message metadata appropriate keyToFetch fields.
 
@@ -83,9 +84,9 @@ Imagine that you created a script node that depending on the `event` value adds 
     "deviceName": "GPS-001",
     "deviceType": "GPS Tracker",
     "ts": "1685379440000",
-    "keyToFetch1": "parked_location",
-    "keyToFetch2": "parked_duration",
-    "keyToFetch3": "parked_time"
+    "keyToFetch1": "parkedLocation",
+    "keyToFetch2": "parkedDuration",
+    "keyToFetch3": "parkedTime"
   }
 }
 ```
@@ -96,8 +97,6 @@ In order to fetch the additional telemetry key values to make some historical an
 
 ![image](${helpBaseUrl}/help/images/rulenode/examples/originator-telemetry-ft.png)
 
-![image](${helpBaseUrl}/help/images/rulenode/examples/originator-telemetry-ft-2.png)
-
 <br>
 
 Rule node configuration is set to retrieve the telemetry from the fetch interval with configurable query parameters that you can check above. 
@@ -106,11 +105,11 @@ So let's imagine that 3 latest values for the keys that we are going to fetch ar
 - `speed` - 5.2, 15.7, 30.2 (mph).
 - `direction` - N(North), NE(North-East), E(East).
 - `acceleration` - 2.2, 2.4, 2.5 (m/s²).
-- `fuel_level` - 61.5, 57.4, 55.6 (%).
-- `battery_level` - 88.1, 87.8, 87.2 (%).
-- `parked_location` - dr5rtwceb (geohash). Same value for 3 latest data readings.
-- `parked_duration` - 6300000, 7300000, 8300000 (ms).
-- `parked_time` - 1685339240000 (ms). Same value for 3 latest data readings.
+- `fuelLevel` - 61.5, 57.4, 55.6 (%).
+- `batteryLevel` - 88.1, 87.8, 87.2 (%).
+- `parkedLocation` - dr5rtwceb (geohash). Same value for 3 latest data readings.
+- `parkedDuration` - 6300000, 7300000, 8300000 (ms).
+- `parkedTime` - 1685339240000 (ms). Same value for 3 latest data readings.
 
 In the following way:
 
@@ -133,8 +132,8 @@ In the following way:
     "speed": "[{\"ts\":1685476840000,\"value\":5.2},{\"ts\":1685477840000,\"value\":15.7},{\"ts\":1685478840000,\"value\":30.2}]",
     "direction": "[{\"ts\":1685476840000,\"value\":\"N\"},{\"ts\":1685477840000,\"value\":\"NE\"},{\"ts\":1685478840000,\"value\":\"N\"}]",
     "acceleration": "[{\"ts\":1685476840000,\"value\":2.2},{\"ts\":1685477840000,\"value\":2.4},{\"ts\":1685478840000,\"value\":2.5}]",
-    "fuel_level": "[{\"ts\":1685476840000,\"value\":61.5},{\"ts\":1685477840000,\"value\":57.4},{\"ts\":1685478840000,\"value\":55.6}]",
-    "battery_level": "[{\"ts\":1685476840000,\"value\":88.1},{\"ts\":1685477840000,\"value\":87.8},{\"ts\":1685478840000,\"value\":87.2}]"
+    "fuelLevel": "[{\"ts\":1685476840000,\"value\":61.5},{\"ts\":1685477840000,\"value\":57.4},{\"ts\":1685478840000,\"value\":55.6}]",
+    "batteryLevel": "[{\"ts\":1685476840000,\"value\":88.1},{\"ts\":1685477840000,\"value\":87.8},{\"ts\":1685478840000,\"value\":87.2}]"
   }
 }
 ```
@@ -154,14 +153,14 @@ In the following way:
     "deviceName": "GPS-001",
     "deviceType": "GPS Tracker",
     "ts": "1685379440000",
-    "keyToFetch1": "parked_location",
-    "keyToFetch2": "parked_duration",
-    "keyToFetch3": "parked_time",
-    "parked_location": "[{\"ts\":1685376840000,\"value\":\"dr5rtwceb\"},{\"ts\":1685377840000,\"value\":\"dr5rtwceb\"},{\"ts\":1685378840000,\"value\":\"dr5rtwceb\"}]",
-    "parked_duration": "[{\"ts\":1685376840000,\"value\":6300000},{\"ts\":1685377840000,\"value\":7300000},{\"ts\":1685378840000,\"value\":8300000}]",
-    "parked_time": "[{\"ts\":1685376840000,\"value\":1685376840000},{\"ts\":1685377840000,\"value\":1685377840000},{\"ts\":1685378840000,\"value\":1685378840000}]",
-    "fuel_level": "[{\"ts\":1685376840000,\"value\":61.5},{\"ts\":1685377840000,\"value\":57.4},{\"ts\":1685378840000,\"value\":55.6}]",
-    "battery_level": "[{\"ts\":1685376840000,\"value\":88.1},{\"ts\":1685377840000,\"value\":87.8},{\"ts\":1685378840000,\"value\":87.2}]"
+    "keyToFetch1": "parkedLocation",
+    "keyToFetch2": "parkedDuration",
+    "keyToFetch3": "parkedTime",
+    "parkedLocation": "[{\"ts\":1685376840000,\"value\":\"dr5rtwceb\"},{\"ts\":1685377840000,\"value\":\"dr5rtwceb\"},{\"ts\":1685378840000,\"value\":\"dr5rtwceb\"}]",
+    "parkedDuration": "[{\"ts\":1685376840000,\"value\":6300000},{\"ts\":1685377840000,\"value\":7300000},{\"ts\":1685378840000,\"value\":8300000}]",
+    "parkedTime": "[{\"ts\":1685376840000,\"value\":1685376840000},{\"ts\":1685377840000,\"value\":1685377840000},{\"ts\":1685378840000,\"value\":1685378840000}]",
+    "fuelLevel": "[{\"ts\":1685376840000,\"value\":61.5},{\"ts\":1685377840000,\"value\":57.4},{\"ts\":1685378840000,\"value\":55.6}]",
+    "batteryLevel": "[{\"ts\":1685376840000,\"value\":88.1},{\"ts\":1685377840000,\"value\":87.8},{\"ts\":1685378840000,\"value\":87.2}]"
   }
 }
 ```
@@ -210,9 +209,9 @@ In the following way:
     "deviceName": "GPS-001",
     "deviceType": "GPS Tracker",
     "ts": "1685379440000",
-    "keyToFetch1": "parked_location",
-    "keyToFetch2": "parked_duration",
-    "keyToFetch3": "parked_time",
+    "keyToFetch1": "parkedLocation",
+    "keyToFetch2": "parkedDuration",
+    "keyToFetch3": "parkedTime",
     "dynamicIntervalStart": "1685375840000"
   }
 }
@@ -223,7 +222,7 @@ In the following way:
 In order to fetch the data using dynamic interval we need enable *Use dynamic interval* option in the rule node configuration and specify the templates for the *Interval start* and *Interval end*: 
 
 
-![image](${helpBaseUrl}/help/images/rulenode/examples/originator-telemetry-ft-3.png)
+![image](${helpBaseUrl}/help/images/rulenode/examples/originator-telemetry-ft-2.png)
 
 <br>
 
@@ -250,8 +249,8 @@ In the following way:
     "speed": "[{\"ts\":1685476840000,\"value\":5.2},{\"ts\":1685477840000,\"value\":15.7},{\"ts\":1685478840000,\"value\":30.2}]",
     "direction": "[{\"ts\":1685476840000,\"value\":\"N\"},{\"ts\":1685477840000,\"value\":\"NE\"},{\"ts\":1685478840000,\"value\":\"N\"}]",
     "acceleration": "[{\"ts\":1685476840000,\"value\":2.2},{\"ts\":1685477840000,\"value\":2.4},{\"ts\":1685478840000,\"value\":2.5}]",
-    "fuel_level": "[{\"ts\":1685476840000,\"value\":61.5},{\"ts\":1685477840000,\"value\":57.4},{\"ts\":1685478840000,\"value\":55.6}]",
-    "battery_level": "[{\"ts\":1685476840000,\"value\":88.1},{\"ts\":1685477840000,\"value\":87.8},{\"ts\":1685478840000,\"value\":87.2}]"
+    "fuelLevel": "[{\"ts\":1685476840000,\"value\":61.5},{\"ts\":1685477840000,\"value\":57.4},{\"ts\":1685478840000,\"value\":55.6}]",
+    "batteryLevel": "[{\"ts\":1685476840000,\"value\":88.1},{\"ts\":1685477840000,\"value\":87.8},{\"ts\":1685478840000,\"value\":87.2}]"
   }
 }
 ```
@@ -271,15 +270,15 @@ In the following way:
     "deviceName": "GPS-001",
     "deviceType": "GPS Tracker",
     "ts": "1685379440000",
-    "keyToFetch1": "parked_location",
-    "keyToFetch2": "parked_duration",
-    "keyToFetch3": "parked_time",
+    "keyToFetch1": "parkedLocation",
+    "keyToFetch2": "parkedDuration",
+    "keyToFetch3": "parkedTime",
     "dynamicIntervalStart": "1685375840000",
-    "parked_location": "[{\"ts\":1685376840000,\"value\":\"dr5rtwceb\"},{\"ts\":1685377840000,\"value\":\"dr5rtwceb\"},{\"ts\":1685378840000,\"value\":\"dr5rtwceb\"}]",
-    "parked_duration": "[{\"ts\":1685376840000,\"value\":6300000},{\"ts\":1685377840000,\"value\":7300000},{\"ts\":1685378840000,\"value\":8300000}]",
-    "parked_time": "[{\"ts\":1685376840000,\"value\":1685376840000},{\"ts\":1685377840000,\"value\":1685377840000},{\"ts\":1685378840000,\"value\":1685378840000}]",
-    "fuel_level": "[{\"ts\":1685376840000,\"value\":61.5},{\"ts\":1685377840000,\"value\":57.4},{\"ts\":1685378840000,\"value\":55.6}]",
-    "battery_level": "[{\"ts\":1685376840000,\"value\":88.1},{\"ts\":1685377840000,\"value\":87.8},{\"ts\":1685378840000,\"value\":87.2}]"
+    "parkedLocation": "[{\"ts\":1685376840000,\"value\":\"dr5rtwceb\"},{\"ts\":1685377840000,\"value\":\"dr5rtwceb\"},{\"ts\":1685378840000,\"value\":\"dr5rtwceb\"}]",
+    "parkedDuration": "[{\"ts\":1685376840000,\"value\":6300000},{\"ts\":1685377840000,\"value\":7300000},{\"ts\":1685378840000,\"value\":8300000}]",
+    "parkedTime": "[{\"ts\":1685376840000,\"value\":1685376840000},{\"ts\":1685377840000,\"value\":1685377840000},{\"ts\":1685378840000,\"value\":1685378840000}]",
+    "fuelLevel": "[{\"ts\":1685376840000,\"value\":61.5},{\"ts\":1685377840000,\"value\":57.4},{\"ts\":1685378840000,\"value\":55.6}]",
+    "batteryLevel": "[{\"ts\":1685376840000,\"value\":88.1},{\"ts\":1685377840000,\"value\":87.8},{\"ts\":1685378840000,\"value\":87.2}]"
   }
 }
 ```

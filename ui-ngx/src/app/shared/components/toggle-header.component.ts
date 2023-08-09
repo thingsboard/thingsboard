@@ -16,7 +16,7 @@
 
 import {
   AfterContentChecked,
-  AfterContentInit,
+  AfterContentInit, AfterViewChecked,
   AfterViewInit,
   ChangeDetectorRef,
   Component,
@@ -117,7 +117,8 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
   templateUrl: './toggle-header.component.html',
   styleUrls: ['./toggle-header.component.scss']
 })
-export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterViewInit, AfterContentInit, AfterContentChecked, OnDestroy {
+export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterViewInit, AfterContentInit,
+  AfterContentChecked, AfterViewChecked, OnDestroy {
 
   @ViewChild('toggleGroup', {static: false})
   toggleGroup: ElementRef<HTMLElement>;
@@ -130,6 +131,7 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
 
   @HostBinding('class.tb-toggle-header-pagination-controls-enabled')
   private showPaginationControls = false;
+  private _showPaginationControlsChanged = false;
 
   private toggleGroupResize$: ResizeObserver;
 
@@ -254,6 +256,14 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
     }
   }
 
+  ngAfterViewChecked() {
+    if (this._showPaginationControlsChanged) {
+      this.scrollToToggleOptionValue();
+      this._showPaginationControlsChanged = false;
+      this.cd.markForCheck();
+    }
+  }
+
   trackByHeaderOption(index: number, option: ToggleHeaderOption){
     return option.value;
   }
@@ -301,10 +311,13 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   private scrollToToggleOptionValue() {
     if (this.buttonToggleGroup && this.buttonToggleGroup.selected) {
       const selectedToggleButton = this.buttonToggleGroup.selected as MatButtonToggle;
+      const index = this.options.findIndex(o => o.value === selectedToggleButton.value);
+      const isLast = index === this.options.length - 1;
+      const isFirst = index === 0;
       const viewLength = this.toggleGroupContainer.nativeElement.offsetWidth;
       const {offsetLeft, offsetWidth} = (selectedToggleButton._buttonElement.nativeElement.offsetParent as HTMLElement);
-      const labelBeforePos = offsetLeft; // this.toggleGroup.nativeElement.offsetWidth - offsetLeft;
-      const labelAfterPos = labelBeforePos + offsetWidth;
+      const labelBeforePos = isFirst ? 0 : offsetLeft;
+      const labelAfterPos = isLast ? this.toggleGroup.nativeElement.scrollWidth : labelBeforePos + offsetWidth;
       const beforeVisiblePos = this.scrollDistance;
       const afterVisiblePos = this.scrollDistance + viewLength;
       if (labelBeforePos < beforeVisiblePos) {
@@ -331,9 +344,7 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
         if (!isEnabled) {
           this.scrollDistance = 0;
         } else {
-          setTimeout(() => {
-            this.scrollToToggleOptionValue();
-          }, 0);
+          this._showPaginationControlsChanged = true;
         }
         this.cd.markForCheck();
         this.showPaginationControls = isEnabled;
@@ -373,11 +384,13 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   }
 
   private updateToggleHeaderScrollPosition() {
-    const scrollDistance = this.scrollDistance;
-    const translateX = -scrollDistance;
-    this.toggleGroup.nativeElement.style.transform = `translateX(${Math.round(translateX)}px)`;
-    if (this.platform.TRIDENT || this.platform.EDGE) {
-      this.toggleGroupContainer.nativeElement.scrollLeft = 0;
+    if (this.toggleGroupContainer) {
+      const scrollDistance = this.scrollDistance;
+      const translateX = -scrollDistance;
+      this.toggleGroup.nativeElement.style.transform = `translateX(${Math.round(translateX)}px)`;
+      if (this.platform.TRIDENT || this.platform.EDGE) {
+        this.toggleGroupContainer.nativeElement.scrollLeft = 0;
+      }
     }
   }
 }

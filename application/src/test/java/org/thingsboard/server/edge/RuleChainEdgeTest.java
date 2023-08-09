@@ -19,9 +19,9 @@ import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.metadata.FetchTo;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -149,7 +149,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
-        configuration.setFetchTo(FetchTo.METADATA);
+        configuration.setFetchTo(TbMsgSource.METADATA);
         configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration));
 

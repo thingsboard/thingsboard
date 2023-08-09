@@ -16,13 +16,12 @@
 package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.data.DeviceRelationsQuery;
 import org.thingsboard.server.common.data.Device;
@@ -37,7 +36,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -51,21 +49,7 @@ public class EntitiesRelatedDeviceIdAsyncLoaderTest {
 
     private static final EntityId DUMMY_ORIGINATOR = new DeviceId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
-    private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
-        @Override
-        public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
-            try {
-                return Futures.immediateFuture(task.call());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public void execute(@NotNull Runnable command) {
-            command.run();
-        }
-    };
+    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
     @Mock
     private TbContext ctxMock;
     @Mock
