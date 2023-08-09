@@ -59,6 +59,7 @@ import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
@@ -107,29 +108,10 @@ public abstract class AbstractServiceTest {
                 .data(JacksonUtil.toString(readFromResource("TestJsonData.json")))
                 .build();
     }
-//
-//    private ComponentDescriptor getOrCreateDescriptor(ComponentScope scope, ComponentType type, String clazz, String configurationDescriptorResource) throws IOException {
-//        return getOrCreateDescriptor(scope, type, clazz, configurationDescriptorResource, null);
-//    }
-//
-//    private ComponentDescriptor getOrCreateDescriptor(ComponentScope scope, ComponentType type, String clazz, String configurationDescriptorResource, String actions) throws IOException {
-//        ComponentDescriptor descriptor = componentDescriptorService.findByClazz(clazz);
-//        if (descriptor == null) {
-//            descriptor = new ComponentDescriptor();
-//            descriptor.setName("test");
-//            descriptor.setClazz(clazz);
-//            descriptor.setScope(scope);
-//            descriptor.setType(type);
-//            descriptor.setActions(actions);
-//            descriptor.setConfigurationDescriptor(readFromResource(configurationDescriptorResource));
-//            componentDescriptorService.saveComponent(descriptor);
-//        }
-//        return descriptor;
-//    }
 
     public JsonNode readFromResource(String resourceName) throws IOException {
         try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resourceName)){
-            return JacksonUtil.fromBytes(is.readAllBytes());
+            return JacksonUtil.fromBytes(Objects.requireNonNull(is).readAllBytes());
         }
     }
 

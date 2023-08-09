@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -391,6 +392,14 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         return edgeDao.findEdgesByTenantIdAndEntityId(tenantId.getId(), entityId.getId(), entityId.getEntityType(), pageLink);
     }
 
+    @Override
+    public PageData<Edge> findEdgesByTenantProfileId(TenantProfileId tenantProfileId, PageLink pageLink) {
+        log.trace("Executing findEdgesByTenantProfileId, tenantProfileId [{}], pageLink [{}]", tenantProfileId, pageLink);
+        Validator.validateId(tenantProfileId, "Incorrect tenantProfileId " + tenantProfileId);
+        validatePageLink(pageLink);
+        return edgeDao.findEdgesByTenantProfileId(tenantProfileId.getId(), pageLink);
+    }
+
     private PaginatedRemover<TenantId, Edge> tenantEdgesRemover =
             new PaginatedRemover<TenantId, Edge>() {
 
@@ -466,7 +475,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                     return convertToEdgeIds(findEdgesByTenantIdAndCustomerId(tenantId, userById.getCustomerId(), pageLink));
                 }
             case TENANT_PROFILE:
-                return convertToEdgeIds(findEdgesByTenantProfile(tenantId, entityId));
+                return convertToEdgeIds(findEdgesByTenantProfileId(new TenantProfileId(entityId.getId()), pageLink));
             default:
                 log.warn("[{}] Unsupported entity type {}", tenantId, entityId.getEntityType());
                 return createEmptyEdgeIdPageData();
@@ -535,24 +544,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             }
         } while (pageData != null && pageData.hasNext());
         return result;
-    }
-
-    protected PageData<Edge> findEdgesByTenantProfile(TenantId tenantId, EntityId entityId) {
-        PageData<Edge> edgeIds = new PageData<>();
-        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            PageDataIterable<Tenant> tenants = new PageDataIterable<>(
-                    link -> tenantService.findTenants(link), DEFAULT_PAGE_SIZE);
-            for (Tenant tenant : tenants) {
-                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-                if (tenant.getTenantProfileId().equals(entityId)) {
-                    do {
-                        edgeIds = findEdgesByTenantId(tenant.getId(), pageLink);
-                        pageLink = pageLink.nextPageLink();
-                    } while (edgeIds.hasNext());
-                }
-            }
-        }
-        return edgeIds;
     }
 
     @Override
