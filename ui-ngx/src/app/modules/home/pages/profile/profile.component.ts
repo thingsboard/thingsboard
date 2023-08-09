@@ -97,7 +97,6 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
           } }));
         this.store.dispatch(new ActionAuthUpdateAuthUser({ authUser:  {...this.authUser, ...{
               sub: user.email,
-              phone: user.phone,
               firstName: user.firstName,
               lastName: user.lastName,
             }}}));
