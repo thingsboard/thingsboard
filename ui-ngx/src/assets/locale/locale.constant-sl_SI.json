@@ -409,6 +409,7 @@
     "latest-telemetry": "Najnovejša telemetrija",
     "attributes-scope": "Obseg atributov entitete",
     "scope-telemetry": "Telemetrija",
+    "scope-latest-telemetry": "Najnovejša telemetrija",
     "scope-client": "Atributi odjemalca",
     "scope-server": "Atributi strežnika",
     "scope-shared": "Skupni atributi",

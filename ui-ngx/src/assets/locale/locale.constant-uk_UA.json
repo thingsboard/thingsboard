@@ -343,6 +343,7 @@
         "latest-telemetry": "Остання телеметрія",
         "attributes-scope": "Область видимості атрибутів",
         "scope-telemetry": "Телеметрія",
+        "scope-latest-telemetry": "Остання телеметрія",
         "scope-client": "Клієнтські атрибути",
         "scope-server": "Серверні атрибути",
         "scope-shared": "Спільні атрибути",

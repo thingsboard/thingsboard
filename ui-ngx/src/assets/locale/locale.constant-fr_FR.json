@@ -460,6 +460,7 @@
         "prev-widget": "Widget précédent",
         "scope-client": "Attributs du client",
         "scope-telemetry": "Télémétrie",
+        "scope-latest-telemetry": "Dernière télémétrie",
         "scope-server": "Attributs du serveur",
         "scope-shared": "Attributs partagés",
         "selected-attributes": "{count, plural, =1 {1 attribut} other {# attributs} } sélectionnés",

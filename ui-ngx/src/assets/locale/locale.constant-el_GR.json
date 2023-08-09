@@ -292,6 +292,7 @@
     "latest-telemetry": "Τελευταία τηλεμετρία",
     "attributes-scope": "Πεδίο εφαρμογής Χαρακτηριστικών Οντότητας",
     "scope-telemetry": "Τηλεμετρία",
+    "scope-latest-telemetry": "Τελευταία τηλεμετρία",
     "scope-client": "Χαρακτηριστικά Client",
     "scope-server": "Χαρακτηριστικά Server",
     "scope-shared": "Κοινόχρηστα Χαρακτηριστικά",

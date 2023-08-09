@@ -591,6 +591,7 @@
         "latest-telemetry": "最新遥测数据",
         "attributes-scope": "设备属性范围",
         "scope-telemetry": "遥测",
+        "scope-latest-telemetry": "最新遥测数据",
         "scope-client": "客户端属性",
         "scope-server": "服务端属性",
         "scope-shared": "共享属性",

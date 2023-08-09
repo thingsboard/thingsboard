@@ -700,6 +700,7 @@
         "no-latest-telemetry": "No latest telemetry",
         "attributes-scope": "Entity attributes scope",
         "scope-telemetry": "Telemetry",
+        "scope-latest-telemetry": "Latest telemetry",
         "scope-client": "Client attributes",
         "scope-server": "Server attributes",
         "scope-shared": "Shared attributes",

@@ -454,6 +454,7 @@
     "latest-telemetry": "Seneste telemetri",
     "attributes-scope": "Omfang af entitetsattributter",
     "scope-telemetry": "Telemetri",
+    "scope-latest-telemetry": "Seneste telemetri",
     "scope-client": "Klientattributter",
     "scope-server": "Serverattributter",
     "scope-shared": "Delte attributter",

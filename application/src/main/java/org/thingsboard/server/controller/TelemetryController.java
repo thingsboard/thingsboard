@@ -462,7 +462,9 @@ public class TelemetryController extends BaseController {
             notes = "Delete time-series for selected entity based on entity id, entity type and keys." +
                     " Use 'deleteAllDataForKeys' to delete all time-series data." +
                     " Use 'startTs' and 'endTs' to specify time-range instead. " +
-                    " Use 'rewriteLatestIfDeleted' to rewrite latest value (stored in separate table for performance) after deletion of the time range. " +
+                    " Use 'deleteLatest' to delete latest value (stored in separate table for performance) if the value's timestamp matches the time-range. " +
+                    " Use 'rewriteLatestIfDeleted' to rewrite latest value (stored in separate table for performance) if the value's timestamp matches the time-range and 'deleteLatest' param is true." +
+                    " The replacement value will be fetched from the 'time-series' table, and its timestamp will be the most recent one before the defined time-range. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
@@ -486,10 +488,10 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "startTs", required = false) Long startTs,
             @ApiParam(value = "A long value representing the end timestamp of removal time range in milliseconds.")
             @RequestParam(name = "endTs", required = false) Long endTs,
-            @ApiParam(value = "If the parameter is set to true, the latest telemetry will be rewritten in case that current latest value was removed, otherwise, in case that parameter is set to false the new latest value will not set.")
-            @RequestParam(name = "rewriteLatestIfDeleted", defaultValue = "false") boolean rewriteLatestIfDeleted,
             @ApiParam(value = "If the parameter is set to true, the latest telemetry can be removed, otherwise, in case that parameter is set to false the latest value will not removed.")
-            @RequestParam(name = "deleteLatest", required = false, defaultValue = "true") boolean deleteLatest) throws ThingsboardException {
+            @RequestParam(name = "deleteLatest", required = false, defaultValue = "true") boolean deleteLatest,
+            @ApiParam(value = "If the parameter is set to true, the latest telemetry will be rewritten in case that current latest value was removed, otherwise, in case that parameter is set to false the new latest value will not set.")
+            @RequestParam(name = "rewriteLatestIfDeleted", defaultValue = "false") boolean rewriteLatestIfDeleted) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return deleteTimeseries(entityId, keysStr, deleteAllDataForKeys, startTs, endTs, rewriteLatestIfDeleted, deleteLatest);
     }
