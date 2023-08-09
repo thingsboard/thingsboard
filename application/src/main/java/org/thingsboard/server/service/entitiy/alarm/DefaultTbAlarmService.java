@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -33,9 +34,11 @@ import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
@@ -47,6 +50,9 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Autowired
     protected TbAlarmCommentService alarmCommentService;
+
+    @Autowired
+    protected UserService userService;
 
     @Override
     public Alarm save(Alarm alarm, User user) throws ThingsboardException {
@@ -217,45 +223,53 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public void unassignUserAlarms(TenantId tenantId, User user, long unassignTs) {
-        AlarmQueryV2 alarmQuery = AlarmQueryV2.builder().assigneeId(user.getId()).pageLink(new TimePageLink(Integer.MAX_VALUE)).build();
-        try {
-            List<AlarmInfo> alarms = alarmService.findAlarmsV2(tenantId, alarmQuery).get(30, TimeUnit.SECONDS).getData();
-            for (AlarmInfo alarm : alarms) {
-                AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, alarm.getId(), getOrDefault(unassignTs));
-                if (!result.isSuccessful()) {
-                    continue;
-                }
-                if (result.isModified()) {
-                    AlarmComment alarmComment = AlarmComment.builder()
-                            .alarmId(alarm.getId())
-                            .type(AlarmCommentType.SYSTEM)
-                            .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was unassigned because user %s - was deleted",
-                                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
-                                    .put("userId", user.getId().toString())
-                                    .put("subtype", "ASSIGN"))
-                            .build();
-                    try {
-                        alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
-                    } catch (ThingsboardException e) {
-                        log.error("Failed to save alarm comment", e);
-                    }
-                    notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), result.getAlarm(),
-                            alarm.getCustomerId(), ActionType.ALARM_UNASSIGNED, user);
-                }
-            }
-
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
     public Boolean delete(Alarm alarm, User user) {
         TenantId tenantId = alarm.getTenantId();
         notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
                 ActionType.DELETED, user);
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
+    }
+
+    @TransactionalEventListener
+    public void unassignDeletedUserAlarms(UserId userId) {
+        List<Alarm> alarms = alarmService.findAlarmsByAssigneeId(userId);
+        for (Alarm alarm : alarms) {
+            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), System.currentTimeMillis());
+            if (!result.isSuccessful()) {
+                continue;
+            }
+            if (result.isModified()) {
+                try {
+                    AlarmComment alarmComment = AlarmComment.builder()
+                            .alarmId(alarm.getId())
+                            .type(AlarmCommentType.SYSTEM)
+                            .comment(JacksonUtil.newObjectNode()
+                                    .put("text", String.format("Alarm was unassigned because user with id %s - was deleted",
+                                            userId.toString()))
+                                    .put("userId", userId.toString())
+                                    .put("subtype", "ASSIGN"))
+                            .build();
+                    alarmCommentService.saveAlarmComment(alarm, alarmComment, null);
+                } catch (ThingsboardException e) {
+                    log.error("Failed to save alarm comment", e);
+                }
+                notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), result.getAlarm(),
+                        alarm.getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
+            }
+        }
+    }
+
+    @TransactionalEventListener(fallbackExecution = true)
+    public void handleEvent(DeleteEntityEvent<?> event) {
+        try {
+            log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
+            EntityId entityId = event.getEntityId();
+            if (EntityType.USER.equals(entityId.getEntityType())) {
+                unassignDeletedUserAlarms((UserId) entityId);
+            }
+        } catch (Exception e) {
+            log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event);
+        }
     }
 
     private static long getOrDefault(long ts) {
