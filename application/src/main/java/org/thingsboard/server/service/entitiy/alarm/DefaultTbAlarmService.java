@@ -230,8 +230,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }
 
-    @TransactionalEventListener
-    public void unassignDeletedUserAlarms(UserId userId) {
+    private void unassignDeletedUserAlarms(UserId userId) {
         List<Alarm> alarms = alarmService.findAlarmsByAssigneeId(userId);
         for (Alarm alarm : alarms) {
             AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), System.currentTimeMillis());
