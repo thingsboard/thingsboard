@@ -307,6 +307,10 @@
       }
     }
     &.tb-chips {
+      &.flex {
+        flex: 1;
+        width: auto;
+      }
       .mat-mdc-text-field-wrapper {
         &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
           .mat-mdc-form-field-infix {
@@ -357,7 +361,7 @@
     }
 
     .tb-prompt {
-      height: 38px;
+      height: 40px;
     }
   }
 
@@ -366,11 +370,19 @@
     flex-direction: row;
     gap: 8px;
     padding-left: 8px;
+    padding-right: 8px;
     place-content: center flex-start;
     align-items: center;
+    &.no-padding-right {
+      padding-right: 0;
+    }
     @media #{$mat-gt-md} {
       gap: 12px;
       padding-left: 12px;
+      padding-right: 12px;
+      &.no-padding-right {
+        padding-right: 0;
+      }
     }
     &-cell {
       font-weight: 400;

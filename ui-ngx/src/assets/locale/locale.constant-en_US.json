@@ -2031,6 +2031,7 @@
         "entity-types": "Entity types",
         "entity-type-list": "Entity type list",
         "any-entity": "Any entity",
+        "add-entity-type": "Add entity type",
         "enter-entity-type": "Enter entity type",
         "no-entities-matching": "No entities matching '{{entity}}' were found.",
         "no-entity-types-matching": "No entity types matching '{{entityType}}' were found.",
