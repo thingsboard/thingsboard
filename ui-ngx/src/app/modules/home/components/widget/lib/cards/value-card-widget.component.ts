@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, TemplateRef } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { DatePipe } from '@angular/common';
@@ -31,6 +31,7 @@ import {
 } from '@shared/models/widget-settings.models';
 import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } from './value-card-widget.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'tb-value-card-widget',
@@ -46,6 +47,9 @@ export class ValueCardWidgetComponent implements OnInit {
   @Input()
   ctx: WidgetContext;
 
+  @Input()
+  widgetTitlePanel: TemplateRef<any>;
+
   layout: ValueCardLayout;
   showIcon = true;
   icon = '';
@@ -53,7 +57,7 @@ export class ValueCardWidgetComponent implements OnInit {
   iconColor: ColorProcessor;
 
   showLabel = true;
-  label = '';
+  label$: Observable<string>;
   labelStyle: ComponentStyle = {};
   labelColor: ColorProcessor;
 
@@ -102,15 +106,16 @@ export class ValueCardWidgetComponent implements OnInit {
     this.iconColor = ColorProcessor.fromSettings(this.settings.iconColor);
 
     this.showLabel = this.settings.showLabel;
-    this.label = getLabel(this.ctx.datasources);
-    this.labelStyle = textStyle(this.settings.labelFont, '1.5', '0.25px');
+    const label = getLabel(this.ctx.datasources);
+    this.label$ = this.ctx.registerLabelPattern(label, this.label$);
+    this.labelStyle = textStyle(this.settings.labelFont, '0.25px');
     this.labelColor =  ColorProcessor.fromSettings(this.settings.labelColor);
-    this.valueStyle = textStyle(this.settings.valueFont,  '100%', '0.13px');
+    this.valueStyle = textStyle(this.settings.valueFont,  '0.13px');
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showDate = this.settings.showDate;
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
-    this.dateStyle = textStyle(this.settings.dateFont,  '1.33', '0.25px');
+    this.dateStyle = textStyle(this.settings.dateFont,  '0.25px');
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
     this.backgroundStyle = backgroundStyle(this.settings.background);

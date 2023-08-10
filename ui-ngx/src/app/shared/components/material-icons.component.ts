@@ -36,6 +36,7 @@ import { ResourcesService } from '@core/services/resources.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-material-icons',
@@ -51,6 +52,10 @@ export class MaterialIconsComponent extends PageComponent implements OnInit {
 
   @Input()
   selectedIcon: string;
+
+  @Input()
+  @coerceBoolean()
+  iconClearButton = false;
 
   @Input()
   popover: TbPopoverComponent<MaterialIconsComponent>;
@@ -121,6 +126,10 @@ export class MaterialIconsComponent extends PageComponent implements OnInit {
 
   selectIcon(icon: MaterialIcon) {
     this.iconSelected.emit(icon.name);
+  }
+
+  clearIcon() {
+    this.iconSelected.emit(null);
   }
 
   private calculatePanelSize(iconsRowSize: number, iconRows = 4) {

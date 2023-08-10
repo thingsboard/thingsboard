@@ -24,15 +24,24 @@
     max-width: 100%;
   }
   section.tb-timewindow {
-    min-height: 32px;
     padding: 0 8px;
+    &.no-padding {
+      padding: 0;
+    }
+    line-height: 32px;
+    pointer-events: all;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    place-content: center flex-start;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
 
-    span {
+    .tb-timewindow-label {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      pointer-events: all;
-      cursor: pointer;
     }
 
     .timezone-abbr {

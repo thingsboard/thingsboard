@@ -57,6 +57,8 @@ public class TbUtils {
                 List.class)));
         parserConfig.addImport("decodeToJson", new MethodStub(TbUtils.class.getMethod("decodeToJson",
                 ExecutionContext.class, List.class)));
+        parserConfig.addImport("decodeToJson", new MethodStub(TbUtils.class.getMethod("decodeToJson",
+                ExecutionContext.class, String.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
                 ExecutionContext.class, String.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
@@ -173,6 +175,9 @@ public class TbUtils {
 
     public static Object decodeToJson(ExecutionContext ctx, List<Byte> bytesList) throws IOException {
         return TbJson.parse(ctx, bytesToString(bytesList));
+    }
+    public static Object decodeToJson(ExecutionContext ctx, String jsonStr) throws IOException {
+        return TbJson.parse(ctx, jsonStr);
     }
 
     public static String bytesToString(List<Byte> bytesList) {

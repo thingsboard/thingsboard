@@ -27,14 +27,19 @@
     <mat-slide-toggle class="mat-slide" formControlName="displayTimewindow">
       {{ 'widget-config.display-timewindow' | translate }}
     </mat-slide-toggle>
-    <tb-timewindow asButton="true"
-                   strokedButton
-                   noMargin
-                   isEdit="true"
-                   alwaysDisplayTypePrefix
-                   [historyOnly]="onlyHistoryTimewindow"
-                   quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
-                   aggregation="{{ widgetType === widgetTypes.timeseries }}"
-                   formControlName="timewindow"></tb-timewindow>
+    <div fxFlex fxLayout="row" fxLayoutAlign="space-between center">
+      <tb-timewindow asButton="true"
+                     strokedButton
+                     noMargin
+                     isEdit="true"
+                     alwaysDisplayTypePrefix
+                     [historyOnly]="onlyHistoryTimewindow"
+                     quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
+                     aggregation="{{ widgetType === widgetTypes.timeseries }}"
+                     formControlName="timewindow"></tb-timewindow>
+      <tb-timewindow-style formControlName="timewindowStyle"
+                           [previewValue]="timewindowConfig.get('timewindow').value">
+      </tb-timewindow-style>
+    </div>
   </div>
 </div>

@@ -15,15 +15,11 @@
     limitations under the License.
 
 -->
-<div mat-dialog-content>
-  <button class="tb-close-button"
-          mat-icon-button
-          (click)="cancel()"
-          type="button">
-    <mat-icon>close</mat-icon>
-  </button>
-  <tb-material-icons [selectedIcon]="selectedIcon"
-                     [iconClearButton]="iconClearButton"
-                     (iconSelected)="selectIcon($event)">
-  </tb-material-icons>
-</div>
+<button type="button"
+        mat-stroked-button
+        class="tb-box-button"
+        [disabled]="disabled"
+        #matButton
+        (click)="openTimewindowStylePopup($event, matButton)">
+  <tb-icon matButtonIcon>format_paint</tb-icon>
+</button>
