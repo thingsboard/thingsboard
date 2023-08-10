@@ -76,7 +76,10 @@ public enum TbMsgType {
     DEVICE_UPDATE_SELF_MSG(null, true),
     DEDUPLICATION_TIMEOUT_SELF_MSG(null, true),
     DELAY_TIMEOUT_SELF_MSG(null, true),
-    MSG_COUNT_SELF_MSG(null, true);
+    MSG_COUNT_SELF_MSG(null, true),
+
+    // Custom or N/A type:
+    CUSTOM_OR_NA_TYPE(null, false, true);
 
     public static final List<String> NODE_CONNECTIONS = EnumSet.allOf(TbMsgType.class).stream()
             .filter(tbMsgType -> !tbMsgType.isTellSelfOnly())
@@ -90,26 +93,32 @@ public enum TbMsgType {
     @Getter
     private final boolean tellSelfOnly;
 
+    @Getter
+    private final boolean customType;
+
+    TbMsgType(String ruleNodeConnection, boolean tellSelfOnly, boolean customType) {
+        this.ruleNodeConnection = ruleNodeConnection;
+        this.tellSelfOnly = tellSelfOnly;
+        this.customType = customType;
+    }
+
     TbMsgType(String ruleNodeConnection, boolean tellSelfOnly) {
         this.ruleNodeConnection = ruleNodeConnection;
         this.tellSelfOnly = tellSelfOnly;
+        this.customType = false;
     }
 
     TbMsgType(String ruleNodeConnection) {
         this.ruleNodeConnection = ruleNodeConnection;
         this.tellSelfOnly = false;
+        this.customType = false;
     }
 
-    public static String getRuleNodeConnectionOrElseOther(String msgType) {
-        if (msgType == null) {
+    public static String getRuleNodeConnectionOrElseOther(TbMsgType msgType) {
+        if (msgType == null || msgType.isCustomType() || msgType.isTellSelfOnly()) {
             return TbNodeConnectionType.OTHER;
-        } else {
-            return Arrays.stream(TbMsgType.values())
-                    .filter(type -> type.name().equals(msgType))
-                    .findFirst()
-                    .map(TbMsgType::getRuleNodeConnection)
-                    .orElse(TbNodeConnectionType.OTHER);
         }
+        return Objects.requireNonNullElse(msgType.getRuleNodeConnection(), TbNodeConnectionType.OTHER);
     }
 
 }

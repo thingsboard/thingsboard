@@ -52,6 +52,7 @@ public final class TbMsg implements Serializable {
     private final UUID id;
     private final long ts;
     private final String type;
+    private final TbMsgType internalType;
     private final EntityId originator;
     private final CustomerId customerId;
     private final TbMsgMetaData metaData;
@@ -117,7 +118,7 @@ public final class TbMsg implements Serializable {
     }
 
     public static TbMsg newMsg(String queueName, TbMsgType type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
-        return new TbMsg(queueName, UUID.randomUUID(), System.currentTimeMillis(), type.name(), originator, customerId,
+        return new TbMsg(queueName, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId,
                 metaData.copy(), TbMsgDataType.JSON, data, ruleChainId, ruleNodeId, null, TbMsgCallback.EMPTY);
     }
 
@@ -126,7 +127,7 @@ public final class TbMsg implements Serializable {
     }
 
     public static TbMsg newMsg(TbMsgType type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
-        return new TbMsg(null, UUID.randomUUID(), System.currentTimeMillis(), type.name(), originator, customerId,
+        return new TbMsg(null, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId,
                 metaData.copy(), TbMsgDataType.JSON, data, null, null, null, TbMsgCallback.EMPTY);
     }
 
@@ -205,12 +206,12 @@ public final class TbMsg implements Serializable {
     }
 
     public static TbMsg newMsg(String queueName, TbMsgType type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
-        return new TbMsg(queueName, UUID.randomUUID(), System.currentTimeMillis(), type.name(), originator, customerId,
+        return new TbMsg(queueName, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId,
                 metaData.copy(), TbMsgDataType.JSON, data, null, null, null, TbMsgCallback.EMPTY);
     }
 
     public static TbMsg newMsg(TbMsgType type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, TbMsgDataType dataType, String data) {
-        return new TbMsg(null, UUID.randomUUID(), System.currentTimeMillis(), type.name(), originator, customerId,
+        return new TbMsg(null, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId,
                 metaData.copy(), dataType, data, null, null, null, TbMsgCallback.EMPTY);
     }
 
@@ -255,17 +256,17 @@ public final class TbMsg implements Serializable {
     }
 
     public static TbMsg newMsg(TbMsgType type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
-        return new TbMsg(null, UUID.randomUUID(), System.currentTimeMillis(), type.name(), originator, null,
+        return new TbMsg(null, UUID.randomUUID(), System.currentTimeMillis(), type, originator, null,
                 metaData.copy(), dataType, data, ruleChainId, ruleNodeId, null, TbMsgCallback.EMPTY);
     }
 
     public static TbMsg newMsg(TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data, TbMsgCallback callback) {
-        return new TbMsg(null, UUID.randomUUID(), System.currentTimeMillis(), type.name(), originator, null,
+        return new TbMsg(null, UUID.randomUUID(), System.currentTimeMillis(), type, originator, null,
                 metaData.copy(), TbMsgDataType.JSON, data, null, null, null, callback);
     }
 
     public static TbMsg transformMsg(TbMsg tbMsg, TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(tbMsg.queueName, tbMsg.id, tbMsg.ts, type.name(), originator, tbMsg.customerId, metaData.copy(), tbMsg.dataType,
+        return new TbMsg(tbMsg.queueName, tbMsg.id, tbMsg.ts, type, originator, tbMsg.customerId, metaData.copy(), tbMsg.dataType,
                 data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ctx.copy(), tbMsg.callback);
     }
 
@@ -315,6 +316,36 @@ public final class TbMsg implements Serializable {
                 tbMsg.getDataType(), tbMsg.getData(), ruleChainId, ruleNodeId, tbMsg.ctx.copy(), TbMsgCallback.EMPTY);
     }
 
+    private TbMsg(String queueName, UUID id, long ts, TbMsgType internalType, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
+                  RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgProcessingCtx ctx, TbMsgCallback callback) {
+        this.id = id;
+        this.queueName = queueName;
+        if (ts > 0) {
+            this.ts = ts;
+        } else {
+            this.ts = System.currentTimeMillis();
+        }
+        this.internalType = internalType;
+        this.type = internalType.name();
+        this.originator = originator;
+        if (customerId == null || customerId.isNullUid()) {
+            if (originator != null && originator.getEntityType() == EntityType.CUSTOMER) {
+                this.customerId = (CustomerId) originator;
+            } else {
+                this.customerId = null;
+            }
+        } else {
+            this.customerId = customerId;
+        }
+        this.metaData = metaData;
+        this.dataType = dataType;
+        this.data = data;
+        this.ruleChainId = ruleChainId;
+        this.ruleNodeId = ruleNodeId;
+        this.ctx = ctx != null ? ctx : new TbMsgProcessingCtx();
+        this.callback = Objects.requireNonNullElse(callback, TbMsgCallback.EMPTY);
+    }
+
     private TbMsg(String queueName, UUID id, long ts, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
                   RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgProcessingCtx ctx, TbMsgCallback callback) {
         this.id = id;
@@ -325,6 +356,7 @@ public final class TbMsg implements Serializable {
             this.ts = System.currentTimeMillis();
         }
         this.type = type;
+        this.internalType = getInternalType();
         this.originator = originator;
         if (customerId == null || customerId.isNullUid()) {
             if (originator != null && originator.getEntityType() == EntityType.CUSTOMER) {
@@ -468,8 +500,19 @@ public final class TbMsg implements Serializable {
         return ts;
     }
 
+    public TbMsgType getInternalType() {
+        if (internalType != null) {
+            return internalType;
+        }
+        try {
+            return TbMsgType.valueOf(type);
+        } catch (IllegalArgumentException e) {
+            return TbMsgType.CUSTOM_OR_NA_TYPE;
+        }
+    }
+
     public boolean isTypeOf(TbMsgType tbMsgType) {
-        return tbMsgType != null && tbMsgType.name().equals(this.type);
+        return tbMsgType != null && tbMsgType.equals(getInternalType());
     }
 
     public boolean isTypeOneOf(TbMsgType... types) {
