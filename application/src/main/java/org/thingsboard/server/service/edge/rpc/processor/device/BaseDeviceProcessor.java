@@ -57,13 +57,13 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 device = new Device();
                 device.setTenantId(tenantId);
                 device.setCreatedTime(Uuids.unixTimestamp(deviceId.getId()));
-                Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
-                if (deviceByName != null) {
-                    deviceName = deviceName + "_" + StringUtils.randomAlphabetic(15);
-                    log.warn("Device with name {} already exists. Renaming device name to {}",
-                            deviceUpdateMsg.getName(), deviceName);
-                    deviceNameUpdated = true;
-                }
+            }
+            Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
+            if (deviceByName != null && !deviceByName.getId().equals(deviceId)) {
+                deviceName = deviceName + "_" + StringUtils.randomAlphabetic(15);
+                log.warn("Device with name {} already exists. Renaming device name to {}",
+                        deviceUpdateMsg.getName(), deviceName);
+                deviceNameUpdated = true;
             }
             device.setName(deviceName);
             device.setType(deviceUpdateMsg.getType());

@@ -47,13 +47,13 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
                 entityView = new EntityView();
                 entityView.setTenantId(tenantId);
                 entityView.setCreatedTime(Uuids.unixTimestamp(entityViewId.getId()));
-                EntityView entityViewByName = entityViewService.findEntityViewByTenantIdAndName(tenantId, entityViewName);
-                if (entityViewByName != null) {
-                    entityViewName = entityViewName + "_" + StringUtils.randomAlphanumeric(15);
-                    log.warn("Entity view with name {} already exists. Renaming entity view name to {}",
-                            entityViewUpdateMsg.getName(), entityViewName);
-                    entityViewNameUpdated = true;
-                }
+            }
+            EntityView entityViewByName = entityViewService.findEntityViewByTenantIdAndName(tenantId, entityViewName);
+            if (entityViewByName != null && !entityViewByName.getId().equals(entityViewId)) {
+                entityViewName = entityViewName + "_" + StringUtils.randomAlphanumeric(15);
+                log.warn("Entity view with name {} already exists. Renaming entity view name to {}",
+                        entityViewUpdateMsg.getName(), entityViewName);
+                entityViewNameUpdated = true;
             }
             entityView.setName(entityViewName);
             entityView.setType(entityViewUpdateMsg.getType());
