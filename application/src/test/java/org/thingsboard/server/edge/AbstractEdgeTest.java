@@ -129,7 +129,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(25);
+        edgeImitator.expectMessageAmount(24);
         edgeImitator.connect();
 
         requestEdgeRuleChainMetadata();
@@ -263,7 +263,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // 1 from tenant fetcher
         validateTenant();
 
-        // 2 messages - 1 from tenant fetcher and 1 from tenant profile fetcher
+        // 1 from tenant profile fetcher
         validateTenantProfile();
 
         // 1 message sync completed
@@ -288,10 +288,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private void validateTenantProfile() throws Exception {
-        List<TenantProfileUpdateMsg> tenantProfileUpdateMsgList = edgeImitator.findAllMessagesByType(TenantProfileUpdateMsg.class);
-        Assert.assertFalse(tenantProfileUpdateMsgList.isEmpty());
-        Assert.assertEquals(2, tenantProfileUpdateMsgList.size());
-        TenantProfileUpdateMsg tenantProfileUpdateMsg = tenantProfileUpdateMsgList.get(0);
+        Optional<TenantProfileUpdateMsg> tenantProfileUpdateMsgOpt = edgeImitator.findMessageByType(TenantProfileUpdateMsg.class);
+        Assert.assertTrue(tenantProfileUpdateMsgOpt.isPresent());
+        TenantProfileUpdateMsg tenantProfileUpdateMsg = tenantProfileUpdateMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantProfileUpdateMsg.getMsgType());
         UUID tenantProfileUUID = new UUID(tenantProfileUpdateMsg.getIdMSB(), tenantProfileUpdateMsg.getIdLSB());
         Tenant tenant = doGet("/api/tenant/" + tenantId.getId(), Tenant.class);

@@ -81,7 +81,7 @@ public abstract class AbstractServiceTest {
 
     @Before
     public void beforeAbstractService() {
-        tenantId = createTenant();
+        tenantId = createTenant().getId();
     }
 
     @After
@@ -154,12 +154,12 @@ public abstract class AbstractServiceTest {
         return assetProfile;
     }
 
-    public TenantId createTenant() {
+    public Tenant createTenant() {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant " + UUID.randomUUID());
         Tenant savedTenant = tenantService.saveTenant(tenant);
         assertNotNull(savedTenant);
-        return savedTenant.getId();
+        return savedTenant;
     }
 
     protected Edge constructEdge(TenantId tenantId, String name, String type) {
