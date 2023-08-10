@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
-import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
@@ -50,9 +49,6 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Autowired
     protected TbAlarmCommentService alarmCommentService;
-
-    @Autowired
-    protected UserService userService;
 
     @Override
     public Alarm save(Alarm alarm, User user) throws ThingsboardException {
