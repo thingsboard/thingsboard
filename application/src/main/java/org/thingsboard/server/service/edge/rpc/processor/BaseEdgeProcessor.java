@@ -63,6 +63,7 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
@@ -86,6 +87,8 @@ import org.thingsboard.server.service.edge.rpc.constructor.OtaPackageMsgConstruc
 import org.thingsboard.server.service.edge.rpc.constructor.QueueMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RelationMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.TenantMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.TenantProfileMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetTypeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConstructor;
@@ -141,6 +144,9 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected TenantService tenantService;
+
+    @Autowired
+    protected TenantProfileService tenantProfileService;
 
     @Autowired
     protected EdgeService edgeService;
@@ -235,6 +241,12 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected AssetProfileMsgConstructor assetProfileMsgConstructor;
+
+    @Autowired
+    protected TenantMsgConstructor tenantMsgConstructor;
+
+    @Autowired
+    protected TenantProfileMsgConstructor tenantProfileMsgConstructor;
 
     @Autowired
     protected WidgetsBundleMsgConstructor widgetsBundleMsgConstructor;

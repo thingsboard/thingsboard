@@ -33,6 +33,7 @@ public enum EdgeEventType {
     CUSTOMER(true),
     RELATION(true),
     TENANT(true),
+    TENANT_PROFILE(true),
     WIDGETS_BUNDLE(true),
     WIDGET_TYPE(true),
     ADMIN_SETTINGS(true),

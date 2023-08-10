@@ -204,7 +204,7 @@ public class UserServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, users.size());
         Assert.assertEquals(tenantAdminUser, users.get(0));
 
-        TenantId secondTenantId = createTenant();
+        TenantId secondTenantId = createTenant().getId();
 
         List<User> tenantAdmins = new ArrayList<>();
         for (int i = 0; i < 124; i++) {
