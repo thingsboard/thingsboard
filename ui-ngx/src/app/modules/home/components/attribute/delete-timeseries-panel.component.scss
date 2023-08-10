@@ -13,12 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+@import '../../../../../scss/constants';
 
-public interface DeleteTsKvQuery extends TsKvQuery {
+:host {
+  width: 100%;
 
-    Boolean getRewriteLatestIfDeleted();
+  .mat-toolbar {
+    background: none;
+  }
 
-    Boolean getDeleteLatest();
+  .tb-form-settings {
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 0;
+  }
 
+  .tb-select-interval {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    @media #{$mat-xs} {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+
+  .tb-slide-toggle {
+    margin-bottom: 8px;
+  }
 }

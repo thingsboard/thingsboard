@@ -699,6 +699,7 @@
         "latest-telemetry": "Latest telemetry",
         "no-latest-telemetry": "No latest telemetry",
         "attributes-scope": "Entity attributes scope",
+        "scope-telemetry": "Telemetry",
         "scope-latest-telemetry": "Latest telemetry",
         "scope-client": "Client attributes",
         "scope-server": "Server attributes",
@@ -726,7 +727,19 @@
         "no-telemetry-text": "No telemetry found",
         "copy-key": "Copy key",
         "copy-value": "Copy value",
-        "add-telemetry": "Add telemetry"
+        "add-telemetry": "Add telemetry",
+        "copy-value": "Copy value",
+        "delete-timeseries": {
+            "start-time": "Start time",
+            "ends-on": "Ends on",
+            "strategy": "Strategy",
+            "delete-strategy": "Delete strategy",
+            "all-data": "Delete all data",
+            "all-data-except-latest-value": "Delete all data except latest value",
+            "latest-value": "Delete latest value",
+            "all-data-for-time-period": "Delete all data for time period",
+            "rewrite-latest-value": "Rewrite latest value"
+        }
     },
     "api-usage": {
         "api-features": "API features",

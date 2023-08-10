@@ -445,6 +445,7 @@
     "attributes": "Öznitelikler",
     "latest-telemetry": "Son telemetri",
     "attributes-scope": "Varlık öznitelik kapsamı",
+    "scope-telemetry": "telemetri",
     "scope-latest-telemetry": "Son telemetri",
     "scope-client": "İstemci öznitelikler",
     "scope-server": "Sunucu öznitelikler",
