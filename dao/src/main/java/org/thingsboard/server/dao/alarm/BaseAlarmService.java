@@ -88,7 +88,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private final TenantService tenantService;
     private final AlarmDao alarmDao;
-    private final AlarmCommentDao alarmCommentDao;
     private final EntityService entityService;
     private final DataValidator<Alarm> alarmDataValidator;
 
