@@ -202,10 +202,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private initializeConfig() {
 
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
-      const titlePatternText = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
-      this.ctx.widgetTitle = createLabelFromDatasource(this.datasources[0], titlePatternText);
-    } else {
-      this.ctx.widgetTitle = this.ctx.widgetConfig.title;
+      this.ctx.widgetTitle = this.settings.widgetTitle;
     }
 
     this.settings.groupTitle = this.settings.groupTitle || '${entityName}';

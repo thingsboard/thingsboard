@@ -15,7 +15,7 @@
 ///
 
 import { PageComponent } from '@shared/components/page.component';
-import { Directive, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Directive, Injector, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { IDynamicWidgetComponent, WidgetContext } from '@home/models/widget-component.models';
@@ -67,7 +67,8 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
               @TbInject(UntypedFormBuilder) public fb: UntypedFormBuilder,
               @TbInject(Injector) public readonly $injector: Injector,
               @TbInject('widgetContext') public readonly ctx: WidgetContext,
-              @TbInject('errorMessages') public readonly errorMessages: string[]) {
+              @TbInject('errorMessages') public readonly errorMessages: string[],
+              @TbInject('widgetTitlePanel') public readonly widgetTitlePanel: TemplateRef<any>) {
     super(store);
     this.ctx.$injector = $injector;
     this.ctx.deviceService = $injector.get(DeviceService);

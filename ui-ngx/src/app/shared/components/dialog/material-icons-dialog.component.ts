@@ -23,6 +23,12 @@ import { DialogComponent } from '@shared/components/dialog.component';
 
 export interface MaterialIconsDialogData {
   icon: string;
+  iconClearButton: boolean;
+}
+
+export interface MaterialIconsDialogResult {
+  icon?: string;
+  canceled?: boolean;
 }
 
 @Component({
@@ -31,24 +37,26 @@ export interface MaterialIconsDialogData {
   providers: [],
   styleUrls: ['./material-icons-dialog.component.scss']
 })
-export class MaterialIconsDialogComponent extends DialogComponent<MaterialIconsDialogComponent, string> {
+export class MaterialIconsDialogComponent extends DialogComponent<MaterialIconsDialogComponent, MaterialIconsDialogResult> {
 
   selectedIcon: string;
+  iconClearButton: boolean;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: MaterialIconsDialogData,
-              public dialogRef: MatDialogRef<MaterialIconsDialogComponent, string>) {
+              public dialogRef: MatDialogRef<MaterialIconsDialogComponent, MaterialIconsDialogResult>) {
     super(store, router, dialogRef);
     this.selectedIcon = data.icon;
+    this.iconClearButton = data.iconClearButton;
   }
 
   selectIcon(icon: string) {
-    this.dialogRef.close(icon);
+    this.dialogRef.close({icon});
   }
 
   cancel(): void {
-    this.dialogRef.close(null);
+    this.dialogRef.close({canceled: true});
   }
 
 }

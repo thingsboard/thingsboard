@@ -37,13 +37,6 @@ div.tb-widget {
     flex-direction: row;
     place-content: flex-start space-between;
     align-items: flex-start;
-    &-absolute {
-      position: absolute;
-      top: 0;
-      right: 0;
-      left: 0;
-      z-index: 1;
-    }
   }
 
   .tb-widget-title {
@@ -59,23 +52,24 @@ div.tb-widget {
     tb-timewindow {
       font-size: 14px;
       opacity: .85;
-      margin: 0;
+    }
+
+    .title-row {
+      display: flex;
+      flex-direction: row;
+      place-content: center flex-start;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
     }
 
     .title {
-      width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
       line-height: 24px;
-      letter-spacing: .01em;
+      letter-spacing: normal;
       margin: 0;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-
-      &.single-row{
-        -webkit-line-clamp: 1;
-      }
     }
   }
 

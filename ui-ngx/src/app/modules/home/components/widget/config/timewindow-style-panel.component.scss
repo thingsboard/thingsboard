@@ -13,57 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-material-icons-panel {
+
+@import '../../../../../../scss/constants';
+
+.tb-timewindow-style-panel {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  align-items: center;
-  .tb-material-icons-title {
+  @media #{$mat-gt-xs} {
+    min-width: 320px;
+  }
+  .tb-timewindow-style-title {
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.87);
   }
-  .tb-material-icons-title, .tb-material-icons-search, .tb-material-icons-show-more {
-    width: 100%;
-  }
-  .tb-material-icons-viewport {
-    min-height: 144px;
-  }
-  .tb-material-icons-row {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
-  }
-  .tb-material-icons-row + .tb-material-icons-row {
-    margin-top: 12px;
-  }
-  .tb-no-data-available {
-    min-height: 144px;
-  }
-  button.mat-mdc-button-base.tb-select-icon-button {
-    width: 36px;
-    min-width: 36px;
-    height: 36px;
-    padding: 6px;
-    &:not(.mat-primary) {
-      color: rgba(0, 0, 0, 0.54);
+  .tb-form-row {
+    .fixed-title-width {
+      min-width: 120px;
     }
-    > .mat-icon {
-      width: 24px;
-      height: 24px;
-      font-size: 24px;
-      margin: 0;
+    &.timewindow-preview {
+      align-items: flex-start;
+      tb-timewindow {
+        font-size: 14px;
+        opacity: .85;
+      }
     }
   }
-  .tb-material-icons-panel-buttons {
-    height: 40px;
+  .tb-timewindow-style-panel-buttons {
+    height: 60px;
     display: flex;
     flex-direction: row;
     gap: 16px;
-    align-items: flex-start;
-    align-self: flex-start;
+    justify-content: flex-end;
+    align-items: flex-end;
   }
 }

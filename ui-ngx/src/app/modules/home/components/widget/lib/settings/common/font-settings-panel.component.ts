@@ -101,7 +101,8 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
         sizeUnit: [(this.font?.sizeUnit || 'px'), []],
         family: [this.font?.family, []],
         weight: [this.font?.weight, []],
-        style: [this.font?.style, []]
+        style: [this.font?.style, []],
+        lineHeight: [this.font?.lineHeight, []]
       }
     );
     this.updatePreviewStyle(this.font);
@@ -146,7 +147,7 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   }
 
   private updatePreviewStyle(font: Font) {
-    this.previewStyle = {...(this.initialPreviewStyle || {}), ...textStyle(font, '1')};
+    this.previewStyle = {...(this.initialPreviewStyle || {}), ...textStyle(font)};
   }
 
 }

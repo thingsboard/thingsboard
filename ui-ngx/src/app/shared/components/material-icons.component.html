@@ -62,4 +62,13 @@
       <div class="tb-no-data-text">{{ 'icon.no-icons-found' | translate:{iconSearch: searchIconControl.value} }}</div>
     </div>
   </ng-container>
+  <div *ngIf="iconClearButton" class="tb-material-icons-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="clearIcon()"
+            [disabled]="!selectedIcon">
+      {{ 'action.clear' | translate }}
+    </button>
+  </div>
 </div>

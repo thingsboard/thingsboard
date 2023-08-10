@@ -90,9 +90,9 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.dateFormatFormControl.disable();
+      this.dateFormatFormControl.disable({emitEvent: false});
     } else {
-      this.dateFormatFormControl.enable();
+      this.dateFormatFormControl.enable({emitEvent: false});
     }
   }
 

@@ -369,7 +369,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.dataSettings.addControl('timewindowConfig', this.fb.control({
         useDashboardTimewindow: true,
         displayTimewindow: true,
-        timewindow: null
+        timewindow: null,
+        timewindowStyle: null
       }));
       if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
@@ -517,7 +518,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           useDashboardTimewindow,
           displayTimewindow: isDefined(config.displayTimewindow) ?
             config.displayTimewindow : true,
-          timewindow: config.timewindow
+          timewindow: config.timewindow,
+          timewindowStyle: config.timewindowStyle
         }, {emitEvent: false});
       }
       if (this.modelValue.isDataEnabled) {
