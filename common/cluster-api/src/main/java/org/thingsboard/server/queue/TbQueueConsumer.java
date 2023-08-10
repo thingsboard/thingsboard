@@ -38,7 +38,7 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     void onQueueDelete();
 
-    boolean isDeleted();
+    boolean isQueueDeleted();
 
     List<String> getFullTopicNames();
 

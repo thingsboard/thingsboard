@@ -121,7 +121,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final ConcurrentMap<QueueKey, TbRuleEngineConsumerStats> consumerStats = new ConcurrentHashMap<>();
     private final ConcurrentMap<QueueKey, TbTopicWithConsumerPerPartition> topicsConsumerPerPartition = new ConcurrentHashMap<>();
     final ExecutorService submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-submit"));
-    final ScheduledExecutorService repartitionExecutor = Executors.newScheduledThreadPool(2, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition"));
+    final ScheduledExecutorService repartitionExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition"));
 
     public DefaultTbRuleEngineConsumerService(TbRuleEngineProcessingStrategyFactory processingStrategyFactory,
                                               TbRuleEngineSubmitStrategyFactory submitStrategyFactory,
@@ -274,7 +274,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     void consumerLoop(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, org.thingsboard.server.common.data.queue.Queue configuration, TbRuleEngineConsumerStats stats, String threadSuffix) {
         updateCurrentThreadName(threadSuffix);
-        while (!stopped && !consumer.isStopped() && !consumer.isDeleted()) {
+        while (!stopped && !consumer.isStopped() && !consumer.isQueueDeleted()) {
             try {
                 List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs = consumer.poll(configuration.getPollInterval());
                 if (msgs.isEmpty()) {
@@ -325,7 +325,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             }
         }
 
-        if (consumer.isDeleted()) {
+        if (consumer.isQueueDeleted()) {
             processQueueDeletion(configuration, consumer);
         }
         log.info("TB Rule Engine Consumer stopped.");

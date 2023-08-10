@@ -176,6 +176,10 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
             }
         }
 
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] Handling profile queue config update: creating queues {}, updating {}, deleting {}. Affected tenants: {}",
+                    newTenantProfile.getUuidId(), toCreate, toUpdate, toRemove, tenantIds);
+        }
         tenantIds.forEach(tenantId -> {
             toCreate.forEach(key -> saveQueue(new Queue(tenantId, newQueues.get(key))));
 

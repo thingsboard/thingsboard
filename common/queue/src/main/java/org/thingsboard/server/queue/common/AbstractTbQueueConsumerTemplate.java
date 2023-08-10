@@ -44,7 +44,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     protected volatile Set<TopicPartitionInfo> partitions;
     protected final ReentrantLock consumerLock = new ReentrantLock(); //NonfairSync
     final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
-    protected volatile boolean deleted = false;
+    protected volatile boolean queueDeleted = false;
 
     @Getter
     private final String topic;
@@ -194,12 +194,11 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
 
     @Override
     public void onQueueDelete() {
-        deleted = true;
+        queueDeleted = true;
     }
 
-    @Override
-    public boolean isDeleted() {
-        return deleted;
+    public boolean isQueueDeleted() {
+        return queueDeleted;
     }
 
     @Override
