@@ -25,10 +25,22 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.EnumMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 public final class EdgeUtils {
+
+    private static final EnumMap<EntityType, EdgeEventType> entityTypeEdgeEventTypeEnumMap;
+
+    static {
+        entityTypeEdgeEventTypeEnumMap = new EnumMap<>(EntityType.class);
+        for (EdgeEventType edgeEventType : EdgeEventType.values()) {
+            if (edgeEventType.getEntityType() != null) {
+                entityTypeEdgeEventTypeEnumMap.put(edgeEventType.getEntityType(), edgeEventType);
+            }
+        }
+    }
 
     private static final int STACK_TRACE_LIMIT = 10;
 
@@ -36,6 +48,10 @@ public final class EdgeUtils {
 
     public static int nextPositiveInt() {
         return ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
+    }
+
+    public static EdgeEventType getEdgeEventTypeByEntityType(EntityType entityType) {
+        return entityTypeEdgeEventTypeEnumMap.get(entityType);
     }
 
     public static EdgeEvent constructEdgeEvent(TenantId tenantId,
