@@ -246,7 +246,8 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     @Override
     @Transactional
-    public void deleteUser(TenantId tenantId, UserId userId) {
+    public void deleteUser(TenantId tenantId, User user) {
+        UserId userId = user.getId();
         log.trace("Executing deleteUser [{}]", userId);
         validateId(userId, INCORRECT_USER_ID + userId);
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
@@ -258,7 +259,8 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         countService.publishCountEntityEvictEvent(tenantId, EntityType.USER);
         eventPublisher.publishEvent(DeleteEntityEvent.builder()
                 .tenantId(tenantId)
-                .entityId(userId).build());
+                .entityId(userId)
+                .entity(user).build());
     }
 
     @Override
@@ -443,7 +445,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
         @Override
         protected void removeEntity(TenantId tenantId, User entity) {
-            deleteUser(tenantId, new UserId(entity.getUuidId()));
+            deleteUser(tenantId, entity);
         }
     };
 
@@ -456,7 +458,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
         @Override
         protected void removeEntity(TenantId tenantId, User entity) {
-            deleteUser(tenantId, new UserId(entity.getUuidId()));
+            deleteUser(tenantId, entity);
         }
     };
 

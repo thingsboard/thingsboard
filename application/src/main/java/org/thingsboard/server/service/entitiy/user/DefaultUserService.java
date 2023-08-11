@@ -64,7 +64,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                 try {
                     mailService.sendActivationEmail(activateUrl, email);
                 } catch (ThingsboardException e) {
-                    userService.deleteUser(tenantId, savedUser.getId());
+                    userService.deleteUser(tenantId, savedUser);
                     throw e;
                 }
             }
@@ -82,7 +82,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
         UserId userId = tbUser.getId();
 
         try {
-            userService.deleteUser(tenantId, userId);
+            userService.deleteUser(tenantId, tbUser);
             notificationEntityService.logEntityAction(tenantId, userId, tbUser, customerId, actionType, user, customerId.toString());
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER),

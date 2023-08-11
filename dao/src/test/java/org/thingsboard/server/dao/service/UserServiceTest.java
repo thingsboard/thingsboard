@@ -135,7 +135,7 @@ public class UserServiceTest extends AbstractServiceTest {
         Assert.assertEquals("Joe", savedUser.getFirstName());
         Assert.assertEquals("Downs", savedUser.getLastName());
 
-        userService.deleteUser(tenantId, savedUser.getId());
+        userService.deleteUser(tenantId, savedUser);
     }
 
     @Test
@@ -188,7 +188,7 @@ public class UserServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(foundUser);
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, foundUser.getId());
         Assert.assertNotNull(userCredentials);
-        userService.deleteUser(tenantId, foundUser.getId());
+        userService.deleteUser(tenantId, foundUser);
         userCredentials = userService.findUserCredentialsByUserId(tenantId, foundUser.getId());
         foundUser = userService.findUserById(tenantId, foundUser.getId());
         Assert.assertNull(foundUser);
@@ -301,7 +301,7 @@ public class UserServiceTest extends AbstractServiceTest {
         Assert.assertEquals(tenantAdminsEmail2, loadedTenantAdminsEmail2);
 
         for (User user : loadedTenantAdminsEmail1) {
-            userService.deleteUser(tenantId, user.getId());
+            userService.deleteUser(tenantId, user);
         }
 
         pageLink = new PageLink(4, 0, email1);
@@ -310,7 +310,7 @@ public class UserServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, pageData.getData().size());
 
         for (User user : loadedTenantAdminsEmail2) {
-            userService.deleteUser(tenantId, user.getId());
+            userService.deleteUser(tenantId, user);
         }
 
         pageLink = new PageLink(4, 0, email2);
@@ -440,7 +440,7 @@ public class UserServiceTest extends AbstractServiceTest {
         Assert.assertEquals(customerUsersEmail2, loadedCustomerUsersEmail2);
 
         for (User user : loadedCustomerUsersEmail1) {
-            userService.deleteUser(tenantId, user.getId());
+            userService.deleteUser(tenantId, user);
         }
 
         pageLink = new PageLink(4, 0, email1);
@@ -449,7 +449,7 @@ public class UserServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, pageData.getData().size());
 
         for (User user : loadedCustomerUsersEmail2) {
-            userService.deleteUser(tenantId, user.getId());
+            userService.deleteUser(tenantId, user);
         }
 
         pageLink = new PageLink(4, 0, email2);

@@ -30,7 +30,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 import java.util.List;
 
 public interface UserService extends EntityDaoService {
-	
+
 	User findUserById(TenantId tenantId, UserId userId);
 
 	ListenableFuture<User> findUserByIdAsync(TenantId tenantId, UserId userId);
@@ -42,22 +42,22 @@ public interface UserService extends EntityDaoService {
 	User saveUser(TenantId tenantId, User user);
 
 	UserCredentials findUserCredentialsByUserId(TenantId tenantId, UserId userId);
-	
+
 	UserCredentials findUserCredentialsByActivateToken(TenantId tenantId, String activateToken);
 
 	UserCredentials findUserCredentialsByResetToken(TenantId tenantId, String resetToken);
 
 	UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials);
-	
+
 	UserCredentials activateUserCredentials(TenantId tenantId, String activateToken, String password);
-	
+
 	UserCredentials requestPasswordReset(TenantId tenantId, String email);
 
     UserCredentials requestExpiredPasswordReset(TenantId tenantId, UserCredentialsId userCredentialsId);
 
     UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
-    void deleteUser(TenantId tenantId, UserId userId);
+    void deleteUser(TenantId tenantId, User user);
 
     PageData<User> findUsersByTenantId(TenantId tenantId, PageLink pageLink);
 
