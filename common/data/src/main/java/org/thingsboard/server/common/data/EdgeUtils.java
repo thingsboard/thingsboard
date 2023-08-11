@@ -36,45 +36,11 @@ public final class EdgeUtils {
     }
 
     public static EdgeEventType getEdgeEventTypeByEntityType(EntityType entityType) {
-        switch (entityType) {
-            case EDGE:
-                return EdgeEventType.EDGE;
-            case DEVICE:
-                return EdgeEventType.DEVICE;
-            case DEVICE_PROFILE:
-                return EdgeEventType.DEVICE_PROFILE;
-            case ASSET:
-                return EdgeEventType.ASSET;
-            case ASSET_PROFILE:
-                return EdgeEventType.ASSET_PROFILE;
-            case ENTITY_VIEW:
-                return EdgeEventType.ENTITY_VIEW;
-            case DASHBOARD:
-                return EdgeEventType.DASHBOARD;
-            case USER:
-                return EdgeEventType.USER;
-            case RULE_CHAIN:
-                return EdgeEventType.RULE_CHAIN;
-            case ALARM:
-                return EdgeEventType.ALARM;
-            case TENANT:
-                return EdgeEventType.TENANT;
-            case CUSTOMER:
-                return EdgeEventType.CUSTOMER;
-            case WIDGETS_BUNDLE:
-                return EdgeEventType.WIDGETS_BUNDLE;
-            case WIDGET_TYPE:
-                return EdgeEventType.WIDGET_TYPE;
-            case OTA_PACKAGE:
-                return EdgeEventType.OTA_PACKAGE;
-            case QUEUE:
-                return EdgeEventType.QUEUE;
-            case TENANT_PROFILE:
-                return EdgeEventType.TENANT_PROFILE;
-            default:
-                log.warn("Unsupported entity type [{}]", entityType);
-                return null;
+        EdgeEventType edgeEventType = entityType.getEdgeEventType();
+        if (edgeEventType == null) {
+            log.warn("Unsupported entity type [{}]", entityType);
         }
+        return edgeEventType;
     }
 
     public static int nextPositiveInt() {
