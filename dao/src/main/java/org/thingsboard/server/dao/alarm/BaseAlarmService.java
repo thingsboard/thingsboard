@@ -385,10 +385,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public List<Alarm> findAlarmsByAssigneeId(UserId userId) {
-        log.trace("Executing findAlarmsByAssigneeId [{}]", userId);
+    public List<AlarmId> findAlarmIdsByAssigneeId(UserId userId) {
+        log.trace("Executing findAlarmIdsByAssigneeId [{}]", userId);
         validateId(userId, "Incorrect alarmId " + userId);
-        return alarmDao.findAlarmByAssigneeId(userId.getId());
+        return alarmDao.findAlarmIdsByAssigneeId(userId.getId());
     }
 
     @Override

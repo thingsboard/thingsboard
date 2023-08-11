@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -226,22 +227,23 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }
 
-    private void unassignDeletedUserAlarms(UserId userId) {
-        List<Alarm> alarms = alarmService.findAlarmsByAssigneeId(userId);
-        for (Alarm alarm : alarms) {
-            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), System.currentTimeMillis());
+    private void unassignDeletedUserAlarms(User user) {
+        List<AlarmId> alarmIds = alarmService.findAlarmIdsByAssigneeId(user.getId());
+        for (AlarmId alarmId : alarmIds) {
+            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(user.getTenantId(), alarmId, System.currentTimeMillis());
+            Alarm alarm = result.getAlarm();
             if (!result.isSuccessful()) {
                 continue;
             }
             if (result.isModified()) {
                 try {
                     AlarmComment alarmComment = AlarmComment.builder()
-                            .alarmId(alarm.getId())
+                            .alarmId(alarmId)
                             .type(AlarmCommentType.SYSTEM)
                             .comment(JacksonUtil.newObjectNode()
                                     .put("text", String.format("Alarm was unassigned because user with id %s - was deleted",
-                                            userId.toString()))
-                                    .put("userId", userId.toString())
+                                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
+                                    .put("userId", user.getId().toString())
                                     .put("subtype", "ASSIGN"))
                             .build();
                     alarmCommentService.saveAlarmComment(alarm, alarmComment, null);
@@ -260,7 +262,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
             EntityId entityId = event.getEntityId();
             if (EntityType.USER.equals(entityId.getEntityType())) {
-                unassignDeletedUserAlarms((UserId) entityId);
+                unassignDeletedUserAlarms((User) event.getEntity());
             }
         } catch (Exception e) {
             log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event);
