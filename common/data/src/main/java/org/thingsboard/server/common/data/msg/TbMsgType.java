@@ -78,7 +78,7 @@ public enum TbMsgType {
     MSG_COUNT_SELF_MSG(null, true),
 
     // Custom or N/A type:
-    CUSTOM_OR_NA_TYPE(null, false);
+    NA(null, false);
 
     public static final List<String> NODE_CONNECTIONS = EnumSet.allOf(TbMsgType.class).stream()
             .filter(tbMsgType -> !tbMsgType.isTellSelfOnly())
