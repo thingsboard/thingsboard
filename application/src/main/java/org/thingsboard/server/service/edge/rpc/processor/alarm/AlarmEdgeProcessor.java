@@ -73,7 +73,7 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
                     if (alarm == null) {
                         return Futures.immediateFuture(null);
                     }
-                    EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(alarm.getOriginator().getEntityType());
+                    EdgeEventType type = EdgeEventType.getEdgeEventTypeByEntityType(alarm.getOriginator().getEntityType());
                     if (type == null) {
                         return Futures.immediateFuture(null);
                     }

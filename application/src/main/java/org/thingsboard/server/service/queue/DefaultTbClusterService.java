@@ -29,7 +29,6 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasRuleEngineProfile;
@@ -481,7 +480,7 @@ public class DefaultTbClusterService implements TbClusterService {
         }
         if (type == null) {
             if (entityId != null) {
-                type = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
+                type = EdgeEventType.getEdgeEventTypeByEntityType(entityId.getEntityType());
             } else {
                 log.trace("[{}] entity id and type are null. Ignoring this notification", tenantId);
                 return;
