@@ -16,11 +16,10 @@
 package org.thingsboard.server.common.data.msg;
 
 import lombok.Getter;
+import org.thingsboard.server.common.data.StringUtils;
 
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public enum TbMsgType {
@@ -79,12 +78,12 @@ public enum TbMsgType {
     MSG_COUNT_SELF_MSG(null, true),
 
     // Custom or N/A type:
-    CUSTOM_OR_NA_TYPE(null, false, true);
+    CUSTOM_OR_NA_TYPE(null, false);
 
     public static final List<String> NODE_CONNECTIONS = EnumSet.allOf(TbMsgType.class).stream()
             .filter(tbMsgType -> !tbMsgType.isTellSelfOnly())
             .map(TbMsgType::getRuleNodeConnection)
-            .filter(Objects::nonNull)
+            .filter(connection -> !TbNodeConnectionType.OTHER.equals(connection))
             .collect(Collectors.toUnmodifiableList());
 
     @Getter
@@ -93,32 +92,13 @@ public enum TbMsgType {
     @Getter
     private final boolean tellSelfOnly;
 
-    @Getter
-    private final boolean customType;
-
-    TbMsgType(String ruleNodeConnection, boolean tellSelfOnly, boolean customType) {
-        this.ruleNodeConnection = ruleNodeConnection;
-        this.tellSelfOnly = tellSelfOnly;
-        this.customType = customType;
-    }
-
     TbMsgType(String ruleNodeConnection, boolean tellSelfOnly) {
-        this.ruleNodeConnection = ruleNodeConnection;
+        this.ruleNodeConnection = StringUtils.isNotEmpty(ruleNodeConnection) ? ruleNodeConnection : TbNodeConnectionType.OTHER;
         this.tellSelfOnly = tellSelfOnly;
-        this.customType = false;
     }
 
     TbMsgType(String ruleNodeConnection) {
-        this.ruleNodeConnection = ruleNodeConnection;
-        this.tellSelfOnly = false;
-        this.customType = false;
-    }
-
-    public static String getRuleNodeConnectionOrElseOther(TbMsgType msgType) {
-        if (msgType == null || msgType.isCustomType() || msgType.isTellSelfOnly()) {
-            return TbNodeConnectionType.OTHER;
-        }
-        return Objects.requireNonNullElse(msgType.getRuleNodeConnection(), TbNodeConnectionType.OTHER);
+        this(ruleNodeConnection, false);
     }
 
 }

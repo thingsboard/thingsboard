@@ -63,38 +63,24 @@ class TbMsgTypeTest {
         var tbMsgTypes = TbMsgType.values();
         for (var type : tbMsgTypes) {
             if (typesWithNullRuleNodeConnection.contains(type)) {
-                assertThat(type.getRuleNodeConnection()).isNull();
+                assertThat(type.getRuleNodeConnection()).isEqualTo(TbNodeConnectionType.OTHER);
             } else {
-                assertThat(type.getRuleNodeConnection()).isNotNull();
+                assertThat(type.getRuleNodeConnection()).isNotEqualTo(TbNodeConnectionType.OTHER);
             }
         }
     }
 
     @Test
     void getRuleNodeConnectionOrElseOtherTest() {
-        assertThat(TbMsgType.getRuleNodeConnectionOrElseOther(null))
-                .isEqualTo(TbNodeConnectionType.OTHER);
         var tbMsgTypes = TbMsgType.values();
         for (var type : tbMsgTypes) {
             if (typesWithNullRuleNodeConnection.contains(type)) {
-                assertThat(TbMsgType.getRuleNodeConnectionOrElseOther(type))
+                assertThat(type.getRuleNodeConnection())
                         .isEqualTo(TbNodeConnectionType.OTHER);
             } else {
-                assertThat(TbMsgType.getRuleNodeConnectionOrElseOther(type)).isNotNull()
+                assertThat(type.getRuleNodeConnection()).isNotNull()
                         .isNotEqualTo(TbNodeConnectionType.OTHER);
             }
-        }
-    }
-
-    @Test
-    void getCustomTypeTest() {
-        var tbMsgTypes = TbMsgType.values();
-        for (var type : tbMsgTypes) {
-            if (type.equals(CUSTOM_OR_NA_TYPE)) {
-                assertThat(type.isCustomType()).isTrue();
-                continue;
-            }
-            assertThat(type.isCustomType()).isFalse();
         }
     }
 
