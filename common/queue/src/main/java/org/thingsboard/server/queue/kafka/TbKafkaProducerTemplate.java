@@ -30,6 +30,9 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,10 +56,14 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
 
     private final Set<TopicPartitionInfo> topics;
 
+    @Getter
+    private final String clientId;
+
     @Builder
     private TbKafkaProducerTemplate(TbKafkaSettings settings, String defaultTopic, String clientId, TbQueueAdmin admin) {
         Properties props = settings.toProducerProps();
 
+        this.clientId = Objects.requireNonNull(clientId, "Kafka producer client.id is null");
         if (!StringUtils.isEmpty(clientId)) {
             props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
         }
@@ -72,6 +79,22 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
     public void init() {
     }
 
+    void addAnalyticHeaders(List<Header> headers) {
+        headers.add(new RecordHeader("_producerId", getClientId().getBytes(StandardCharsets.UTF_8)));
+        headers.add(new RecordHeader("_threadName", Thread.currentThread().getName().getBytes(StandardCharsets.UTF_8)));
+        if (log.isTraceEnabled()) {
+            try {
+                StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+                int maxlevel = Math.min(stackTrace.length, 10);
+                for (int i = 2; i < maxlevel; i++) { // ignore two levels: getStackTrace and addAnalyticHeaders
+                    headers.add(new RecordHeader("_stackTrace" + i, stackTrace[i].toString().getBytes(StandardCharsets.UTF_8)));
+                }
+            } catch (Throwable t) {
+                log.trace("Failed to add stacktrace headers in Kafka producer {}", getClientId(), t);
+            }
+        }
+    }
+
     @Override
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
         try {
@@ -79,7 +102,10 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
             String key = msg.getKey().toString();
             byte[] data = msg.getData();
             ProducerRecord<String, byte[]> record;
-            Iterable<Header> headers = msg.getHeaders().getData().entrySet().stream().map(e -> new RecordHeader(e.getKey(), e.getValue())).collect(Collectors.toList());
+            List<Header> headers = msg.getHeaders().getData().entrySet().stream().map(e -> new RecordHeader(e.getKey(), e.getValue())).collect(Collectors.toList());
+            if (log.isDebugEnabled()) {
+                addAnalyticHeaders(headers);
+            }
             record = new ProducerRecord<>(tpi.getFullTopicName(), null, key, data, headers);
             producer.send(record, (metadata, exception) -> {
                 if (exception == null) {

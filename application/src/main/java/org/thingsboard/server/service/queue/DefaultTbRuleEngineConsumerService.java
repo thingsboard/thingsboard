@@ -363,7 +363,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 callback.onSuccess();
             }
         } catch (Exception e) {
-            callback.onFailure(new RuleEngineException(e.getMessage()));
+            callback.onFailure(new RuleEngineException(e.getMessage(), e));
         }
     }
 
