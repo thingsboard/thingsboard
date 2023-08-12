@@ -484,7 +484,7 @@ public final class TbMsg implements Serializable {
     }
 
     public boolean isTypeOf(TbMsgType tbMsgType) {
-        return tbMsgType != null && tbMsgType.equals(getInternalType());
+        return internalType.equals(tbMsgType);
     }
 
     public boolean isTypeOneOf(TbMsgType... types) {
