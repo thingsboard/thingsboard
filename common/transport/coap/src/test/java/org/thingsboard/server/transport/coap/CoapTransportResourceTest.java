@@ -18,11 +18,10 @@ package org.thingsboard.server.transport.coap;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.OptionSet;
 import org.eclipse.californium.core.coap.Request;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.thingsboard.server.coapserver.CoapServerService;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.session.FeatureType;
@@ -31,6 +30,7 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.coap.client.CoapClientContext;
 
 import java.util.Random;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -69,259 +69,77 @@ class CoapTransportResourceTest {
         coapTransportResource = new CoapTransportResource(ctxMock, coapServerServiceMock, V1);
     }
 
-    // accessToken based tests
-
-    @Test
-    void givenPostTelemetryAccessTokenRequest_whenGetFeatureType_thenFeatureTypeTelemetry() {
-        // GIVEN
-        var request = toAccessTokenRequest(CoAP.Code.POST, TELEMETRY);
-
-        // WHEN
+    @ParameterizedTest
+    @MethodSource("provideRequestAndFeatureType")
+    void givenRequest_whenGetFeatureType_thenReturnedExpectedFeatureType(Request request, FeatureType expectedFeatureType) {
         var featureTypeOptional = coapTransportResource.getFeatureType(request);
 
-        // THEN
         assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.TELEMETRY, featureTypeOptional.get(), "Feature type is invalid");
+        assertEquals(expectedFeatureType, featureTypeOptional.get(), "Feature type is invalid");
     }
 
-    @Test
-    void givenPostAttributesAccessTokenRequest_whenGetFeatureType_thenFeatureTypeAttributes() {
-        // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.POST, ATTRIBUTES);
-
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.ATTRIBUTES, featureTypeOptional.get(), "Feature type is invalid");
+    static Stream<Arguments> provideRequestAndFeatureType() {
+        return Stream.of(
+                // accessToken based tests
+                Arguments.of(toAccessTokenRequest(CoAP.Code.POST, TELEMETRY), FeatureType.TELEMETRY),
+                Arguments.of(toAccessTokenRequest(CoAP.Code.POST, ATTRIBUTES), FeatureType.ATTRIBUTES),
+                Arguments.of(toGetAttributesAccessTokenRequest(), FeatureType.ATTRIBUTES),
+                Arguments.of(toAccessTokenRequest(CoAP.Code.GET, ATTRIBUTES), FeatureType.ATTRIBUTES),
+                Arguments.of(toAccessTokenRequest(CoAP.Code.GET, RPC), FeatureType.RPC),
+                Arguments.of(toRpcResponseAccessTokenRequest(), FeatureType.RPC),
+                Arguments.of(toAccessTokenRequest(CoAP.Code.POST, RPC), FeatureType.RPC),
+                Arguments.of(toAccessTokenRequest(CoAP.Code.POST, CLAIM), FeatureType.CLAIM),
+                // certificate based tests
+                Arguments.of(toCertificateRequest(CoAP.Code.POST, TELEMETRY), FeatureType.TELEMETRY),
+                Arguments.of(toCertificateRequest(CoAP.Code.POST, ATTRIBUTES), FeatureType.ATTRIBUTES),
+                Arguments.of(toGetAttributesCertificateRequest(), FeatureType.ATTRIBUTES),
+                Arguments.of(toCertificateRequest(CoAP.Code.GET, ATTRIBUTES), FeatureType.ATTRIBUTES),
+                Arguments.of(toCertificateRequest(CoAP.Code.GET, RPC), FeatureType.RPC),
+                Arguments.of(toRpcResponseCertificateRequest(), FeatureType.RPC),
+                Arguments.of(toCertificateRequest(CoAP.Code.POST, RPC), FeatureType.RPC),
+                Arguments.of(toCertificateRequest(CoAP.Code.POST, CLAIM), FeatureType.CLAIM),
+                // provision request
+                Arguments.of(toProvisionRequest(), FeatureType.PROVISION)
+        );
     }
 
-    @Test
-    void givenGetAttributesAccessTokenRequest_whenGetFeatureType_thenFeatureTypeAttributes() {
-        // GIVEN
-        Request request = toGetAttributesAccessTokenRequest();
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.ATTRIBUTES, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenSubscribeForAttributesUpdatesAccessTokenRequest_whenGetFeatureType_thenFeatureTypeAttributes() {
-        // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.GET, ATTRIBUTES);
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.ATTRIBUTES, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenSubscribeForRpcUpdatesAccessTokenRequest_whenGetFeatureType_thenFeatureTypeRpc() {
-        // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.GET, RPC);
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.RPC, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenRpcResponseAccessTokenRequest_whenGetFeatureType_thenFeatureTypeRpc() {
-        // GIVEN
-        Request request = toRpcResponseAccessTokenRequest();
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.RPC, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenClientSideRpcAccessTokenRequest_whenGetFeatureType_thenFeatureTypeRpc() {
-        // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.POST, RPC);
-        // WHEN
-        var featureTypeOptional  = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.RPC, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenClaimingAccessTokenRequest_whenGetFeatureType_thenFeatureTypeClaim() {
-        // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.POST, CLAIM);
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.CLAIM, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    // certificate based tests
-
-    @Test
-    void givenPostTelemetryCertificateRequest_whenGetFeatureType_thenFeatureTypeTelemetry() {
-        // GIVEN
-        var request = toCertificateRequest(CoAP.Code.POST, TELEMETRY);
-
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.TELEMETRY, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenPostAttributesCertificateRequest_whenGetFeatureType_thenFeatureTypeAttributes() {
-        // GIVEN
-        var request = toCertificateRequest(CoAP.Code.POST, ATTRIBUTES);
-
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.ATTRIBUTES, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenGetAttributesCertificateRequest_whenGetFeatureType_thenFeatureTypeAttributes() {
-        // GIVEN
-        var request = toGetAttributesCertificateRequest();
-
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.ATTRIBUTES, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenSubscribeForAttributesUpdatesCertificateRequest_whenGetFeatureType_thenFeatureTypeAttributes() {
-        // GIVEN
-        var request = toCertificateRequest(CoAP.Code.GET, ATTRIBUTES);
-
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.ATTRIBUTES, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenSubscribeForRpcUpdatesCertificateRequest_whenGetFeatureType_thenFeatureTypeRpc() {
-        // GIVEN
-        var request = toCertificateRequest(CoAP.Code.GET, RPC);
-
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.RPC, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenRpcResponseCertificateRequest_whenGetFeatureType_thenFeatureTypeRpc() {
-        // GIVEN
-        Request request = toRpcResponseCertificateRequest();
-
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.RPC, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenClientSideRpcCertificateRequest_whenGetFeatureType_thenFeatureTypeRpc() {
-        // GIVEN
-        Request request = toCertificateRequest(CoAP.Code.POST, RPC);
-
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.RPC, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    @Test
-    void givenClaimingCertificateRequest_whenGetFeatureType_thenFeatureTypeClaim() {
-        // GIVEN
-        Request request = toCertificateRequest(CoAP.Code.POST, CLAIM);
-
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.CLAIM, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    // provision request
-
-    @Test
-    void givenProvisionRequest_whenGetFeatureType_thenFeatureTypeProvision() {
-        // GIVEN
-        Request request = toCertificateRequest(CoAP.Code.POST, PROVISION);
-        // WHEN
-        var featureTypeOptional = coapTransportResource.getFeatureType(request);
-
-        // THEN
-        assertTrue(featureTypeOptional.isPresent(), "Optional<FeatureType> is empty");
-        assertEquals(FeatureType.PROVISION, featureTypeOptional.get(), "Feature type is invalid");
-    }
-
-    private Request toAccessTokenRequest(CoAP.Code method, String featureType) {
+    private static Request toAccessTokenRequest(CoAP.Code method, String featureType) {
         return getAccessTokenRequest(method, featureType, null, null);
     }
 
-    private Request toGetAttributesAccessTokenRequest() {
+    private static Request toGetAttributesAccessTokenRequest() {
         return getAccessTokenRequest(CoAP.Code.GET, CoapTransportResourceTest.ATTRIBUTES, null, CoapTransportResourceTest.GET_ATTRIBUTES_URI_QUERY);
     }
 
-    private Request toRpcResponseAccessTokenRequest() {
+    private static Request toRpcResponseAccessTokenRequest() {
         return getAccessTokenRequest(CoAP.Code.POST, CoapTransportResourceTest.RPC, RANDOM.nextInt(100), null);
     }
 
-    private Request toCertificateRequest(CoAP.Code method, String featureType) {
+    private static Request toCertificateRequest(CoAP.Code method, String featureType) {
         return getCertificateRequest(method, featureType, null, null);
     }
 
-    private Request toGetAttributesCertificateRequest() {
+    private static Request toGetAttributesCertificateRequest() {
         return getCertificateRequest(CoAP.Code.GET, CoapTransportResourceTest.ATTRIBUTES, null, CoapTransportResourceTest.GET_ATTRIBUTES_URI_QUERY);
     }
 
-    private Request toRpcResponseCertificateRequest() {
+    private static Request toRpcResponseCertificateRequest() {
         return getCertificateRequest(CoAP.Code.POST, CoapTransportResourceTest.RPC, RANDOM.nextInt(100), null);
     }
 
-    private Request getAccessTokenRequest(CoAP.Code method, String featureType, Integer requestId, String uriQuery) {
+    private static Request getAccessTokenRequest(CoAP.Code method, String featureType, Integer requestId, String uriQuery) {
         return getRequest(method, featureType, false, requestId, uriQuery);
     }
 
-    private Request getCertificateRequest(CoAP.Code method, String featureType, Integer requestId, String uriQuery) {
+    private static Request getCertificateRequest(CoAP.Code method, String featureType, Integer requestId, String uriQuery) {
         return getRequest(method, featureType, true, requestId, uriQuery);
     }
 
-    private Request getRequest(CoAP.Code method, String featureType, boolean dtls, Integer requestId, String uriQuery) {
+    private static Request toProvisionRequest() {
+        return getRequest(CoAP.Code.POST, PROVISION, true, null, null);
+    }
+
+    private static Request getRequest(CoAP.Code method, String featureType, boolean dtls, Integer requestId, String uriQuery) {
         var request = new Request(method);
         var options = new OptionSet();
         options.addUriPath(API);
