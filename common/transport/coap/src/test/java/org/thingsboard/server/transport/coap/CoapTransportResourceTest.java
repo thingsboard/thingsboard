@@ -18,7 +18,9 @@ package org.thingsboard.server.transport.coap;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.OptionSet;
 import org.eclipse.californium.core.coap.Request;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.coapserver.CoapServerService;
@@ -48,10 +50,10 @@ class CoapTransportResourceTest {
 
     private static final Random RANDOM = new Random();
 
-    private CoapTransportResource coapTransportResource;
+    private static CoapTransportResource coapTransportResource;
 
-    @BeforeEach
-    void setUp() {
+    @BeforeAll
+    static void setUp() {
 
         var ctxMock = mock(CoapTransportContext.class);
         var coapServerServiceMock = mock(CoapServerService.class);
@@ -67,16 +69,12 @@ class CoapTransportResourceTest {
         coapTransportResource = new CoapTransportResource(ctxMock, coapServerServiceMock, V1);
     }
 
-    @AfterEach
-    void tearDown() {
-    }
-
     // accessToken based tests
 
     @Test
     void givenPostTelemetryAccessTokenRequest_whenGetFeatureType_thenFeatureTypeTelemetry() {
         // GIVEN
-        var request = toAccessTokenRequest(CoAP.Code.POST, StringUtils.randomAlphanumeric(20), TELEMETRY);
+        var request = toAccessTokenRequest(CoAP.Code.POST, TELEMETRY);
 
         // WHEN
         var featureTypeOptional = coapTransportResource.getFeatureType(request);
@@ -89,7 +87,7 @@ class CoapTransportResourceTest {
     @Test
     void givenPostAttributesAccessTokenRequest_whenGetFeatureType_thenFeatureTypeAttributes() {
         // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.POST, StringUtils.randomAlphanumeric(20), ATTRIBUTES);
+        Request request = toAccessTokenRequest(CoAP.Code.POST, ATTRIBUTES);
 
         // WHEN
         var featureTypeOptional = coapTransportResource.getFeatureType(request);
@@ -102,7 +100,7 @@ class CoapTransportResourceTest {
     @Test
     void givenGetAttributesAccessTokenRequest_whenGetFeatureType_thenFeatureTypeAttributes() {
         // GIVEN
-        Request request = toGetAttributesAccessTokenRequest(StringUtils.randomAlphanumeric(20));
+        Request request = toGetAttributesAccessTokenRequest();
         // WHEN
         var featureTypeOptional = coapTransportResource.getFeatureType(request);
 
@@ -114,7 +112,7 @@ class CoapTransportResourceTest {
     @Test
     void givenSubscribeForAttributesUpdatesAccessTokenRequest_whenGetFeatureType_thenFeatureTypeAttributes() {
         // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.GET, StringUtils.randomAlphanumeric(20), ATTRIBUTES);
+        Request request = toAccessTokenRequest(CoAP.Code.GET, ATTRIBUTES);
         // WHEN
         var featureTypeOptional = coapTransportResource.getFeatureType(request);
 
@@ -126,7 +124,7 @@ class CoapTransportResourceTest {
     @Test
     void givenSubscribeForRpcUpdatesAccessTokenRequest_whenGetFeatureType_thenFeatureTypeRpc() {
         // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.GET, StringUtils.randomAlphanumeric(20), RPC);
+        Request request = toAccessTokenRequest(CoAP.Code.GET, RPC);
         // WHEN
         var featureTypeOptional = coapTransportResource.getFeatureType(request);
 
@@ -138,7 +136,7 @@ class CoapTransportResourceTest {
     @Test
     void givenRpcResponseAccessTokenRequest_whenGetFeatureType_thenFeatureTypeRpc() {
         // GIVEN
-        Request request = toRpcResponseAccessTokenRequest(StringUtils.randomAlphanumeric(20), RANDOM.nextInt(100));
+        Request request = toRpcResponseAccessTokenRequest();
         // WHEN
         var featureTypeOptional = coapTransportResource.getFeatureType(request);
 
@@ -150,7 +148,7 @@ class CoapTransportResourceTest {
     @Test
     void givenClientSideRpcAccessTokenRequest_whenGetFeatureType_thenFeatureTypeRpc() {
         // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.POST, StringUtils.randomAlphanumeric(20), RPC);
+        Request request = toAccessTokenRequest(CoAP.Code.POST, RPC);
         // WHEN
         var featureTypeOptional  = coapTransportResource.getFeatureType(request);
 
@@ -162,7 +160,7 @@ class CoapTransportResourceTest {
     @Test
     void givenClaimingAccessTokenRequest_whenGetFeatureType_thenFeatureTypeClaim() {
         // GIVEN
-        Request request = toAccessTokenRequest(CoAP.Code.POST, StringUtils.randomAlphanumeric(20), CLAIM);
+        Request request = toAccessTokenRequest(CoAP.Code.POST, CLAIM);
         // WHEN
         var featureTypeOptional = coapTransportResource.getFeatureType(request);
 
@@ -241,7 +239,7 @@ class CoapTransportResourceTest {
     @Test
     void givenRpcResponseCertificateRequest_whenGetFeatureType_thenFeatureTypeRpc() {
         // GIVEN
-        Request request = toRpcResponseCertificateRequest(RANDOM.nextInt(100));
+        Request request = toRpcResponseCertificateRequest();
 
         // WHEN
         var featureTypeOptional = coapTransportResource.getFeatureType(request);
@@ -291,16 +289,16 @@ class CoapTransportResourceTest {
         assertEquals(FeatureType.PROVISION, featureTypeOptional.get(), "Feature type is invalid");
     }
 
-    private Request toAccessTokenRequest(CoAP.Code method, String accessToken, String featureType) {
-        return getAccessTokenRequest(method, accessToken, featureType, null, null);
+    private Request toAccessTokenRequest(CoAP.Code method, String featureType) {
+        return getAccessTokenRequest(method, featureType, null, null);
     }
 
-    private Request toGetAttributesAccessTokenRequest(String accessToken) {
-        return getAccessTokenRequest(CoAP.Code.GET, accessToken, CoapTransportResourceTest.ATTRIBUTES, null, CoapTransportResourceTest.GET_ATTRIBUTES_URI_QUERY);
+    private Request toGetAttributesAccessTokenRequest() {
+        return getAccessTokenRequest(CoAP.Code.GET, CoapTransportResourceTest.ATTRIBUTES, null, CoapTransportResourceTest.GET_ATTRIBUTES_URI_QUERY);
     }
 
-    private Request toRpcResponseAccessTokenRequest(String accessToken, Integer requestId) {
-        return getAccessTokenRequest(CoAP.Code.POST, accessToken, CoapTransportResourceTest.RPC, requestId, null);
+    private Request toRpcResponseAccessTokenRequest() {
+        return getAccessTokenRequest(CoAP.Code.POST, CoapTransportResourceTest.RPC, RANDOM.nextInt(100), null);
     }
 
     private Request toCertificateRequest(CoAP.Code method, String featureType) {
@@ -311,32 +309,26 @@ class CoapTransportResourceTest {
         return getCertificateRequest(CoAP.Code.GET, CoapTransportResourceTest.ATTRIBUTES, null, CoapTransportResourceTest.GET_ATTRIBUTES_URI_QUERY);
     }
 
-    private Request toRpcResponseCertificateRequest(Integer requestId) {
-        return getCertificateRequest(CoAP.Code.POST, CoapTransportResourceTest.RPC, requestId, null);
+    private Request toRpcResponseCertificateRequest() {
+        return getCertificateRequest(CoAP.Code.POST, CoapTransportResourceTest.RPC, RANDOM.nextInt(100), null);
     }
 
-    private Request getAccessTokenRequest(CoAP.Code method, String accessToken, String featureType, Integer requestId, String uriQuery) {
-        var request = new Request(method);
-        var options = new OptionSet();
-        options.addUriPath(API);
-        options.addUriPath(V1);
-        options.addUriPath(accessToken);
-        options.addUriPath(featureType);
-        if (requestId != null) {
-            options.addUriPath(String.valueOf(requestId));
-        }
-        if (uriQuery != null) {
-            options.setUriQuery(uriQuery);
-        }
-        request.setOptions(options);
-        return request;
+    private Request getAccessTokenRequest(CoAP.Code method, String featureType, Integer requestId, String uriQuery) {
+        return getRequest(method, featureType, false, requestId, uriQuery);
     }
 
     private Request getCertificateRequest(CoAP.Code method, String featureType, Integer requestId, String uriQuery) {
+        return getRequest(method, featureType, true, requestId, uriQuery);
+    }
+
+    private Request getRequest(CoAP.Code method, String featureType, boolean dtls, Integer requestId, String uriQuery) {
         var request = new Request(method);
         var options = new OptionSet();
         options.addUriPath(API);
         options.addUriPath(V1);
+        if (!dtls) {
+            options.addUriPath(StringUtils.randomAlphanumeric(20));
+        }
         options.addUriPath(featureType);
         if (requestId != null) {
             options.addUriPath(String.valueOf(requestId));
@@ -347,6 +339,5 @@ class CoapTransportResourceTest {
         request.setOptions(options);
         return request;
     }
-
 
 }
