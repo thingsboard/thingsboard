@@ -57,7 +57,7 @@
         <div [fxShow]="displaySearchMode()" fxFlex fxLayout="row" class="tb-dark">
           <mat-form-field fxFlex class="tb-appearance-transparent">
             <input #searchInput matInput
-                   [(ngModel)]="searchText"
+                   [formControl]="textSearch"
                    placeholder="{{ 'common.enter-search' | translate }}"/>
           </mat-form-field>
         </div>
