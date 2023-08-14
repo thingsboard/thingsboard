@@ -60,29 +60,13 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
   @Input()
   requiredText: string;
 
-  private colorClearButtonValue: boolean;
-  get colorClearButton(): boolean {
-    return this.colorClearButtonValue;
-  }
   @Input()
-  set colorClearButton(value: boolean) {
-    const newVal = coerceBooleanProperty(value);
-    if (this.colorClearButtonValue !== newVal) {
-      this.colorClearButtonValue = newVal;
-    }
-  }
+  @coerceBoolean()
+  colorClearButton = false;
 
-  private openOnInputValue: boolean;
-  get openOnInput(): boolean {
-    return this.openOnInputValue;
-  }
   @Input()
-  set openOnInput(value: boolean) {
-    const newVal = coerceBooleanProperty(value);
-    if (this.openOnInputValue !== newVal) {
-      this.openOnInputValue = newVal;
-    }
-  }
+  @coerceBoolean()
+  openOnInput = false;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -167,11 +151,12 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
 
   showColorPicker($event: MouseEvent) {
     $event.stopPropagation();
-    this.dialogs.colorPicker(this.colorFormGroup.get('color').value).subscribe(
-      (color) => {
-        if (color) {
+    this.dialogs.colorPicker(this.colorFormGroup.get('color').value,
+      this.colorClearButton).subscribe(
+      (result) => {
+        if (!result?.canceled) {
           this.colorFormGroup.patchValue(
-            {color}, {emitEvent: true}
+            {color: result?.color}, {emitEvent: true}
           );
           this.cd.markForCheck();
         }
@@ -190,7 +175,8 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
       const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, ColorPickerPanelComponent, 'left', true, null,
         {
-          color: this.colorFormGroup.get('color').value
+          color: this.colorFormGroup.get('color').value,
+          colorClearButton: this.colorClearButton
         },
         {},
         {}, {}, true);

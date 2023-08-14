@@ -27,6 +27,7 @@ import org.mvel2.SandboxedParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.execution.ExecutionHashMap;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -346,6 +347,24 @@ public class TbUtilsTest {
         List <Byte> doubleVaList = Bytes.asList(doubleValByte);
         Assert.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBytesToDouble(doubleVaList, 0)));
         Assert.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseBytesToDouble(doubleVaList, 0, false)));
+    }
+
+    @Test
+    public void parseBytesDecodeToJson() throws IOException {
+        String expectedStr = "{\"hello\": \"world\"}";
+        ExecutionHashMap<String, Object> expectedJson = new ExecutionHashMap<>(1, ctx);
+        expectedJson.put("hello", "world");
+        List<Byte> expectedBytes = TbUtils.stringToBytes(ctx, expectedStr);
+        Object actualJson =  TbUtils.decodeToJson(ctx, expectedBytes);
+        Assert.assertEquals(expectedJson,actualJson);
+    }
+    @Test
+    public void parseStringDecodeToJson() throws IOException {
+        String expectedStr = "{\"hello\": \"world\"}";
+        ExecutionHashMap<String, Object> expectedJson = new ExecutionHashMap<>(1, ctx);
+        expectedJson.put("hello", "world");
+        Object actualJson =  TbUtils.decodeToJson(ctx, expectedStr);
+        Assert.assertEquals(expectedJson,actualJson);
     }
 
     private static List<Byte> toList(byte[] data) {

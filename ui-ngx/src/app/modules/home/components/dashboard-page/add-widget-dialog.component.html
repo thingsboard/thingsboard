@@ -17,14 +17,17 @@
 -->
 <form class="tb-add-widget-dialog" [formGroup]="widgetFormGroup">
   <mat-toolbar color="primary">
-    <h2 translate>widget.add</h2>
-    <span fxFlex>: {{data.widgetInfo.widgetName}}</span>
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-      <tb-toggle-select *ngIf="hasBasicMode" appearance="fill-invert" [(ngModel)]="widgetConfigMode" [ngModelOptions]="{standalone: true}">
-        <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
-      </tb-toggle-select>
-      <div [tb-help]="helpLinkIdForWidgetType()"></div>
+    <div class="tb-add-widget-toolbar">
+      <h2>{{'widget.add' | translate}}:</h2>
+      <span fxFlex>{{data.widgetInfo.widgetName}}</span>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap.gt-xs="16px" style="min-width: fit-content;">
+        <tb-toggle-select *ngIf="hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs"
+                          [(ngModel)]="widgetConfigMode" [ngModelOptions]="{standalone: true}">
+          <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
+          <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
+        </tb-toggle-select>
+        <div [tb-help]="helpLinkIdForWidgetType()"></div>
+      </div>
     </div>
     <button mat-icon-button
             (click)="cancel()"

@@ -212,6 +212,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.advancedSettings = this.fb.group({});
     this.widgetSettings = this.fb.group({
       title: [null, []],
+      titleFont: [null, []],
+      titleColor: [null, []],
       showTitleIcon: [null, []],
       titleIcon: [null, []],
       iconColor: [null, []],
@@ -367,7 +369,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.dataSettings.addControl('timewindowConfig', this.fb.control({
         useDashboardTimewindow: true,
         displayTimewindow: true,
-        timewindow: null
+        timewindow: null,
+        timewindowStyle: null
       }));
       if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
@@ -473,6 +476,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       const displayWidgetTitle = isDefined(config.showTitle) ? config.showTitle : false;
       this.widgetSettings.patchValue({
           title: config.title,
+          titleFont: config.titleFont,
+          titleColor: config.titleColor,
           showTitleIcon: isDefined(config.showTitleIcon) && displayWidgetTitle ? config.showTitleIcon : false,
           titleIcon: isDefined(config.titleIcon) ? config.titleIcon : '',
           iconColor: isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)',
@@ -513,7 +518,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           useDashboardTimewindow,
           displayTimewindow: isDefined(config.displayTimewindow) ?
             config.displayTimewindow : true,
-          timewindow: config.timewindow
+          timewindow: config.timewindow,
+          timewindowStyle: config.timewindowStyle
         }, {emitEvent: false});
       }
       if (this.modelValue.isDataEnabled) {
@@ -580,11 +586,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     const showTitleIcon: boolean = this.widgetSettings.get('showTitleIcon').value;
     if (showTitle) {
       this.widgetSettings.get('title').enable({emitEvent: false});
+      this.widgetSettings.get('titleFont').enable({emitEvent: false});
+      this.widgetSettings.get('titleColor').enable({emitEvent: false});
       this.widgetSettings.get('titleTooltip').enable({emitEvent: false});
       this.widgetSettings.get('titleStyle').enable({emitEvent: false});
       this.widgetSettings.get('showTitleIcon').enable({emitEvent: false});
     } else {
       this.widgetSettings.get('title').disable({emitEvent: false});
+      this.widgetSettings.get('titleFont').disable({emitEvent: false});
+      this.widgetSettings.get('titleColor').disable({emitEvent: false});
       this.widgetSettings.get('titleTooltip').disable({emitEvent: false});
       this.widgetSettings.get('titleStyle').disable({emitEvent: false});
       this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});

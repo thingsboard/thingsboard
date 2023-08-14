@@ -18,9 +18,6 @@ package org.thingsboard.server.service.sync.ie.importing.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.sync.ie.WidgetsBundleExportData;
@@ -89,12 +86,6 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
     @Override
     protected boolean compare(EntitiesImportCtx ctx, WidgetsBundleExportData exportData, WidgetsBundle prepared, WidgetsBundle existing) {
         return true;
-    }
-
-    @Override
-    protected void onEntitySaved(User user, WidgetsBundle savedWidgetsBundle, WidgetsBundle oldWidgetsBundle) throws ThingsboardException {
-        entityNotificationService.notifySendMsgToEdgeService(user.getTenantId(), savedWidgetsBundle.getId(),
-                oldWidgetsBundle == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
     }
 
     @Override

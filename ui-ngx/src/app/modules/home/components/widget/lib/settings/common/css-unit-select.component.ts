@@ -16,7 +16,8 @@
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
-import { cssUnit, cssUnits } from '@home/components/widget/config/widget-settings.models';
+import { cssUnit, cssUnits } from '@shared/models/widget-settings.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-css-unit-select',
@@ -34,6 +35,10 @@ export class CssUnitSelectComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  allowEmpty = false;
 
   cssUnitsList = cssUnits;
 
@@ -62,9 +67,9 @@ export class CssUnitSelectComponent implements OnInit, ControlValueAccessor {
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.cssUnitFormControl.disable();
+      this.cssUnitFormControl.disable({emitEvent: false});
     } else {
-      this.cssUnitFormControl.enable();
+      this.cssUnitFormControl.enable({emitEvent: false});
     }
   }
 

@@ -36,7 +36,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.EntityType;
@@ -51,6 +50,8 @@ import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -63,7 +64,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -102,10 +102,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.ACTIVITY_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.CONNECT_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.DISCONNECT_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 /**
@@ -229,7 +226,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         long ts = System.currentTimeMillis();
         stateData.getState().setLastConnectTime(ts);
         save(deviceId, LAST_CONNECT_TIME, ts);
-        pushRuleEngineMessage(stateData, CONNECT_EVENT);
+        pushRuleEngineMessage(stateData, TbMsgType.CONNECT_EVENT);
         checkAndUpdateState(deviceId, stateData);
 
     }
@@ -271,7 +268,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         long ts = System.currentTimeMillis();
         stateData.getState().setLastDisconnectTime(ts);
         save(deviceId, LAST_DISCONNECT_TIME, ts);
-        pushRuleEngineMessage(stateData, DISCONNECT_EVENT);
+        pushRuleEngineMessage(stateData, TbMsgType.DISCONNECT_EVENT);
     }
 
     @Override
@@ -533,7 +530,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     private void onDeviceActivityStatusChange(DeviceId deviceId, boolean active, DeviceStateData stateData) {
         save(deviceId, ACTIVITY_STATE, active);
-        pushRuleEngineMessage(stateData, active ? ACTIVITY_EVENT : INACTIVITY_EVENT);
+        pushRuleEngineMessage(stateData, active ? TbMsgType.ACTIVITY_EVENT : TbMsgType.INACTIVITY_EVENT);
         TbMsgMetaData metaData = stateData.getMetaData();
         notificationRuleProcessor.process(DeviceActivityTrigger.builder()
                 .tenantId(stateData.getTenantId()).customerId(stateData.getCustomerId())
@@ -580,7 +577,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
             future = Futures.transform(tsData, extractDeviceStateData(device), deviceStateExecutor);
         } else {
-            ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
+            ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
             future = Futures.transform(attrData, extractDeviceStateData(device), deviceStateExecutor);
         }
         return transformInactivityTimeout(future);
@@ -771,11 +768,11 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         return defaultValue;
     }
 
-    private void pushRuleEngineMessage(DeviceStateData stateData, String msgType) {
+    private void pushRuleEngineMessage(DeviceStateData stateData, TbMsgType msgType) {
         DeviceState state = stateData.getState();
         try {
             String data;
-            if (msgType.equals(CONNECT_EVENT)) {
+            if (msgType.equals(TbMsgType.CONNECT_EVENT)) {
                 ObjectNode stateNode = JacksonUtil.convertValue(state, ObjectNode.class);
                 stateNode.remove(ACTIVITY_STATE);
                 data = JacksonUtil.toString(stateNode);
@@ -784,7 +781,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             }
             TbMsgMetaData md = stateData.getMetaData().copy();
             if (!persistToTelemetry) {
-                md.putValue(DataConstants.SCOPE, SERVER_SCOPE);
+                md.putValue(SCOPE, SERVER_SCOPE);
             }
             TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getCustomerId(), md, TbMsgDataType.JSON, data);
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
@@ -800,7 +797,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
                     new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
+            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
         }
     }
 
@@ -811,7 +808,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
                     new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
+            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
         }
     }
 

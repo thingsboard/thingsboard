@@ -27,14 +27,17 @@ import {
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
+import {
+  getTimewindowConfig,
+  setTimewindowConfig
+} from '@home/components/widget/config/timewindow-config-panel.component';
 import { formatValue, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import {
   DateFormatProcessor,
   DateFormatSettings,
   getLabel,
   setLabel
-} from '@home/components/widget/config/widget-settings.models';
+} from '@shared/models/widget-settings.models';
 import {
   valueCardDefaultSettings,
   ValueCardLayout,
@@ -73,6 +76,16 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
   valuePreviewFn = this._valuePreviewFn.bind(this);
 
   datePreviewFn = this._datePreviewFn.bind(this);
+
+  get dateEnabled(): boolean {
+    const layout: ValueCardLayout = this.valueCardWidgetConfigForm.get('layout').value;
+    return ![ValueCardLayout.vertical, ValueCardLayout.simplified].includes(layout);
+  }
+
+  get iconEnabled(): boolean {
+    const layout: ValueCardLayout = this.valueCardWidgetConfigForm.get('layout').value;
+    return layout !== ValueCardLayout.simplified;
+  }
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -135,9 +148,7 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
-    this.widgetConfig.config.useDashboardTimewindow = config.timewindowConfig.useDashboardTimewindow;
-    this.widgetConfig.config.displayTimewindow = config.timewindowConfig.displayTimewindow;
-    this.widgetConfig.config.timewindow = config.timewindowConfig.timewindow;
+    setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.datasources = config.datasources;
 
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};

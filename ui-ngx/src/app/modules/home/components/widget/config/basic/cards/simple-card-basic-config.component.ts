@@ -27,9 +27,12 @@ import {
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
+import {
+  getTimewindowConfig,
+  setTimewindowConfig
+} from '@home/components/widget/config/timewindow-config-panel.component';
 import { isUndefined } from '@core/utils';
-import { getLabel, setLabel } from '@home/components/widget/config/widget-settings.models';
+import { getLabel, setLabel } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-simple-card-basic-config',
@@ -80,9 +83,7 @@ export class SimpleCardBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
-    this.widgetConfig.config.useDashboardTimewindow = config.timewindowConfig.useDashboardTimewindow;
-    this.widgetConfig.config.displayTimewindow = config.timewindowConfig.displayTimewindow;
-    this.widgetConfig.config.timewindow = config.timewindowConfig.timewindow;
+    setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.datasources = config.datasources;
     setLabel(config.label, this.widgetConfig.config.datasources);
     this.widgetConfig.config.actions = config.actions;

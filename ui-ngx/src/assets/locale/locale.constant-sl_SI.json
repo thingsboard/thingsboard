@@ -408,6 +408,7 @@
     "attributes": "Lastnosti",
     "latest-telemetry": "Najnovejša telemetrija",
     "attributes-scope": "Obseg atributov entitete",
+    "scope-telemetry": "Telemetrija",
     "scope-latest-telemetry": "Najnovejša telemetrija",
     "scope-client": "Atributi odjemalca",
     "scope-server": "Atributi strežnika",
@@ -913,8 +914,7 @@
     "device-configuration": "Device configuration",
     "transport-configuration": "Transport configuration",
     "wizard": {
-      "device-details": "Device details",
-      "customer-to-assign-device": "Customer to assign the device"
+      "device-details": "Device details"
     }
   },
   "device-profile": {

@@ -60,6 +60,7 @@ export interface Font {
   family: string;
   weight: fontWeight;
   style: fontStyle;
+  lineHeight: string;
 }
 
 export enum ColorType {
@@ -88,6 +89,22 @@ export interface ColorSettings {
   rangeList?: ColorRange[];
   colorFunction?: string;
 }
+
+export interface TimewindowStyle {
+  showIcon: boolean;
+  icon: string;
+  iconSize: string;
+  iconPosition: 'left' | 'right';
+  font?: Font;
+  color?: string;
+}
+
+export const defaultTimewindowStyle: TimewindowStyle = {
+  showIcon: true,
+  icon: 'query_builder',
+  iconSize: '24px',
+  iconPosition: 'left'
+};
 
 export const constantColor = (color: string): ColorSettings => ({
   type: ColorType.constant,
@@ -276,6 +293,14 @@ export enum BackgroundType {
   color = 'color'
 }
 
+export const backgroundTypeTranslations = new Map<BackgroundType, string>(
+  [
+    [BackgroundType.image, 'widgets.background.background-type-image'],
+    [BackgroundType.imageUrl, 'widgets.background.background-type-image-url'],
+    [BackgroundType.color, 'widgets.background.background-type-color']
+  ]
+);
+
 export interface OverlaySettings {
   enabled: boolean;
   color: string;
@@ -290,21 +315,43 @@ export interface BackgroundSettings {
   overlay: OverlaySettings;
 }
 
-export const iconStyle = (size: number, sizeUnit: cssUnit): ComponentStyle => {
-  const iconSize = size + sizeUnit;
+export const iconStyle = (size: number | string, sizeUnit: cssUnit = 'px'): ComponentStyle => {
+  const iconSize = typeof size === 'number' ? size + sizeUnit : size;
   return {
     width: iconSize,
+    minWidth: iconSize,
     height: iconSize,
     fontSize: iconSize,
     lineHeight: iconSize
   };
 };
 
-export const textStyle = (font: Font, lineHeight = '1.5', letterSpacing = '0.25px'): ComponentStyle => ({
-  font: font.style + ' normal ' + font.weight + ' ' + (font.size+font.sizeUnit) + '/' + lineHeight + ' ' + font.family +
-    (font.family !== 'Roboto' ? ', Roboto' : ''),
-  letterSpacing
-});
+export const textStyle = (font?: Font, letterSpacing = 'normal'): ComponentStyle => {
+  const style: ComponentStyle = {
+    letterSpacing
+  };
+  if (font?.style) {
+    style.fontStyle = font.style;
+  }
+  if (font?.weight) {
+    style.fontWeight = font.weight;
+  }
+  if (font?.lineHeight) {
+    style.lineHeight = font.lineHeight;
+  }
+  if (font?.size) {
+    style.fontSize = (font.size + (font.sizeUnit || 'px'));
+  }
+  if (font?.family) {
+    style.fontFamily = font.family +
+      (font.family !== 'Roboto' ? ', Roboto' : '');
+  }
+  return style;
+};
+
+export const isFontSet = (font: Font): boolean => (!!font && !!font.style && !!font.weight && !!font.size && !!font.family);
+
+export const isFontPartiallySet = (font: Font): boolean => (!!font && (!!font.style || !!font.weight || !!font.size || !!font.family));
 
 export const backgroundStyle = (background: BackgroundSettings): ComponentStyle => {
   if (background.type === BackgroundType.color) {
@@ -313,11 +360,13 @@ export const backgroundStyle = (background: BackgroundSettings): ComponentStyle 
     };
   } else {
     const imageUrl = background.type === BackgroundType.image ? background.imageBase64 : background.imageUrl;
-    return {
-      background: `url(${imageUrl}) no-repeat`,
-      backgroundSize: 'cover',
-      backgroundPosition: '50% 50%'
-    };
+    if (imageUrl) {
+      return {
+        background: `url(${imageUrl}) no-repeat 50% 50% / cover`
+      };
+    } else {
+      return {};
+    }
   }
 };
 

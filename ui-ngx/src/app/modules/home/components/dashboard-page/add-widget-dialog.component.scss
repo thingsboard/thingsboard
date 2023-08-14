@@ -21,9 +21,18 @@
     position: relative;
   }
   @media #{$mat-gt-xs} {
-    width: 1200px;
+    width: 900px;
     .mat-mdc-dialog-content {
-      height: 600px;
+      height: 900px;
     }
+  }
+  .tb-add-widget-toolbar {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: row;
+    place-content: center flex-start;
+    align-items: center;
+    gap: 8px;
   }
 }

@@ -34,7 +34,7 @@
         </div>
         <span fxFlex></span>
         <button mat-icon-button
-                *ngIf="!isClientSideTelemetryTypeMap.get(attributeScope)"
+                *ngIf="attributeScope !== attributeScopeTypes.CLIENT_SCOPE"
                 [disabled]="isLoading$ | async"
                 (click)="addAttribute($event)"
                 matTooltip="{{ 'action.add' | translate }}"
@@ -85,12 +85,12 @@
                 'attribute.selected-telemetry' : 'attribute.selected-attributes') | translate:{count: dataSource.selection.selected.length} }}
         </span>
         <span fxFlex></span>
-        <button [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)"
+        <button [fxShow]="attributeScope !== attributeScopeTypes.CLIENT_SCOPE"
                 class="button-widget-action"
                 mat-icon-button [disabled]="isLoading$ | async"
                 matTooltip="{{ 'action.delete' | translate }}"
                 matTooltipPosition="above"
-                (click)="deleteAttributes($event)">
+                (click)="deleteTelemetry($event)">
           <mat-icon>delete</mat-icon>
         </button>
         <button mat-raised-button color="accent"
@@ -198,6 +198,10 @@
               <span [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)">
                 <mat-icon>edit</mat-icon>
               </span>
+              <button mat-icon-button *ngIf="attributeScope === latestTelemetryTypes.LATEST_TELEMETRY"
+                      (click)="deleteTimeseries($event, attribute)">
+                <mat-icon>delete</mat-icon>
+              </button>
             </div>
           </mat-cell>
         </ng-container>

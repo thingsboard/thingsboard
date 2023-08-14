@@ -25,7 +25,6 @@ import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttConnectResult;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -41,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.net.ssl.SSLException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -58,7 +58,7 @@ import java.util.concurrent.TimeoutException;
 )
 public class TbMqttNode extends TbAbstractExternalNode {
 
-    private static final Charset UTF8 = Charset.forName("UTF-8");
+    private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     private static final String ERROR = "error";
 
@@ -86,16 +86,16 @@ public class TbMqttNode extends TbAbstractExternalNode {
                             if (future.isSuccess()) {
                                 tellSuccess(ctx, tbMsg);
                             } else {
-                                tellFailure(ctx, processException(ctx, tbMsg, future.cause()), future.cause());
+                                tellFailure(ctx, processException(tbMsg, future.cause()), future.cause());
                             }
                         }
                 );
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
+    private TbMsg processException(TbMsg origMsg, Throwable e) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     @Override
@@ -105,8 +105,13 @@ public class TbMqttNode extends TbAbstractExternalNode {
         }
     }
 
+    String getOwnerId(TbContext ctx) {
+        return "Tenant[" + ctx.getTenantId().getId() + "]RuleNode[" + ctx.getSelf().getId().getId() + "]";
+    }
+
     protected MqttClient initClient(TbContext ctx) throws Exception {
         MqttClientConfig config = new MqttClientConfig(getSslContext());
+        config.setOwnerId(getOwnerId(ctx));
         if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {
             config.setClientId(this.mqttNodeConfiguration.isAppendClientIdSuffix() ?
                     this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() : this.mqttNodeConfiguration.getClientId());
@@ -114,7 +119,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 
         prepareMqttClientConfig(config);
-        MqttClient client = MqttClient.create(config, null);
+        MqttClient client = MqttClient.create(config, null, ctx.getExternalCallExecutor());
         client.setEventLoop(ctx.getSharedEventLoop());
         Future<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
         MqttConnectResult result;

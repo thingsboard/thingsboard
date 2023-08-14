@@ -15,20 +15,20 @@
     limitations under the License.
 
 -->
-<div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-data-key-row">
+<div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-data-key-row no-padding-right">
   <mat-form-field *ngIf="hasAdditionalLatestDataKeys" class="tb-inline-field tb-source-field" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="latest">
       <mat-option [value]="false">{{ 'datakey.timeseries' | translate }}</mat-option>
       <mat-option [value]="true">{{ 'datakey.latest' | translate }}</mat-option>
     </mat-select>
   </mat-form-field>
-  <mat-form-field fxFlex class="tb-inline-field tb-key-field" subscriptSizing="dynamic">
+  <mat-form-field class="tb-inline-field tb-key-field" subscriptSizing="dynamic">
     <mat-chip-grid #chipList>
       <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue.type"
                     (removed)="removeKey()">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="4px" class="tb-attribute-chip">
           <div class="tb-chip-labels">
-            <div class="tb-chip-label">
+            <div class="tb-chip-label tb-chip-text tb-chip-icon">
               <ng-container *ngIf="isEntityDatasource">
                 <mat-icon class="tb-mat-18 tb-datakey-icon" *ngIf="modelValue.type === dataKeyTypes.alarm"
                           matTooltip="{{'datakey.alarm' | translate }}"
@@ -44,7 +44,7 @@
                           matTooltipPosition="above">timeline</mat-icon>
               </ng-container>
             </div>
-            <div class="tb-chip-label">
+            <div class="tb-chip-label tb-chip-text">
               <strong>
                 <ng-container *ngTemplateOutlet="keyName"></ng-container>
               </strong>
@@ -139,7 +139,7 @@
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>
-  <mat-form-field fxFlex class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+  <mat-form-field class="tb-inline-field tb-label-field" appearance="outline" subscriptSizing="dynamic">
     <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
   </mat-form-field>
   <div *ngIf="!hideDataKeyColor" class="tb-color-field">
@@ -158,7 +158,8 @@
     </mat-form-field>
   </div>
   <div class="tb-form-table-row-cell-buttons">
-    <button type="button"
+    <button fxHide.lt-lg
+            type="button"
             mat-icon-button
             (click)="editKey(true)"
             [matTooltip]="keySettingsTitle"

@@ -32,10 +32,10 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasRuleEngineProfile;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -178,15 +178,8 @@ public class DefaultTbClusterService implements TbClusterService {
                 return;
             }
         } else {
-            if (entityId.getEntityType().equals(EntityType.DEVICE)) {
-                tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceId(entityId.getId())));
-            } else if (entityId.getEntityType().equals(EntityType.DEVICE_PROFILE)) {
-                tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
-            } else if (entityId.getEntityType().equals(EntityType.ASSET)) {
-                tbMsg = transformMsg(tbMsg, assetProfileCache.get(tenantId, new AssetId(entityId.getId())));
-            } else if (entityId.getEntityType().equals(EntityType.ASSET_PROFILE)) {
-                tbMsg = transformMsg(tbMsg, assetProfileCache.get(tenantId, new AssetProfileId(entityId.getId())));
-            }
+            HasRuleEngineProfile ruleEngineProfile = getRuleEngineProfileForEntityOrElseNull(tenantId, entityId);
+            tbMsg = transformMsg(tbMsg, ruleEngineProfile);
         }
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, entityId);
         log.trace("PUSHING msg: {} to:{}", tbMsg, tpi);
@@ -198,34 +191,33 @@ public class DefaultTbClusterService implements TbClusterService {
         toRuleEngineMsgs.incrementAndGet();
     }
 
-    private TbMsg transformMsg(TbMsg tbMsg, DeviceProfile deviceProfile) {
-        if (deviceProfile != null) {
-            RuleChainId targetRuleChainId = deviceProfile.getDefaultRuleChainId();
-            String targetQueueName = deviceProfile.getDefaultQueueName();
-            tbMsg = transformMsg(tbMsg, targetRuleChainId, targetQueueName);
+    private HasRuleEngineProfile getRuleEngineProfileForEntityOrElseNull(TenantId tenantId, EntityId entityId) {
+        if (entityId.getEntityType().equals(EntityType.DEVICE)) {
+            return deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
+        } else if (entityId.getEntityType().equals(EntityType.DEVICE_PROFILE)) {
+            return deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId()));
+        } else if (entityId.getEntityType().equals(EntityType.ASSET)) {
+            return assetProfileCache.get(tenantId, new AssetId(entityId.getId()));
+        } else if (entityId.getEntityType().equals(EntityType.ASSET_PROFILE)) {
+            return assetProfileCache.get(tenantId, new AssetProfileId(entityId.getId()));
         }
-        return tbMsg;
+        return null;
     }
+    private TbMsg transformMsg(TbMsg tbMsg, HasRuleEngineProfile ruleEngineProfile) {
+        if (ruleEngineProfile != null) {
+            RuleChainId targetRuleChainId = ruleEngineProfile.getDefaultRuleChainId();
+            String targetQueueName = ruleEngineProfile.getDefaultQueueName();
 
-    private TbMsg transformMsg(TbMsg tbMsg, AssetProfile assetProfile) {
-        if (assetProfile != null) {
-            RuleChainId targetRuleChainId = assetProfile.getDefaultRuleChainId();
-            String targetQueueName = assetProfile.getDefaultQueueName();
-            tbMsg = transformMsg(tbMsg, targetRuleChainId, targetQueueName);
-        }
-        return tbMsg;
-    }
+            boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
+            boolean isQueueTransform = targetQueueName != null && !targetQueueName.equals(tbMsg.getQueueName());
 
-    private TbMsg transformMsg(TbMsg tbMsg, RuleChainId targetRuleChainId, String targetQueueName) {
-        boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
-        boolean isQueueTransform = targetQueueName != null && !targetQueueName.equals(tbMsg.getQueueName());
-
-        if (isRuleChainTransform && isQueueTransform) {
-            tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueName);
-        } else if (isRuleChainTransform) {
-            tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId);
-        } else if (isQueueTransform) {
-            tbMsg = TbMsg.transformMsg(tbMsg, targetQueueName);
+            if (isRuleChainTransform && isQueueTransform) {
+                tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueName);
+            } else if (isRuleChainTransform) {
+                tbMsg = TbMsg.transformMsgRuleChainId(tbMsg, targetRuleChainId);
+            } else if (isQueueTransform) {
+                tbMsg = TbMsg.transformMsgQueueName(tbMsg, targetQueueName);
+            }
         }
         return tbMsg;
     }
@@ -466,11 +458,6 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void onDeviceUpdated(Device device, Device old) {
-        onDeviceUpdated(device, old, true);
-    }
-
-    @Override
-    public void onDeviceUpdated(Device device, Device old, boolean notifyEdge) {
         var created = old == null;
         broadcastEntityChangeToTransport(device.getTenantId(), device.getId(), device, null);
         if (old != null) {
@@ -485,9 +472,6 @@ public class DefaultTbClusterService implements TbClusterService {
         broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
         sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
         otaPackageStateService.update(device, old);
-        if (!created && notifyEdge) {
-            sendNotificationMsgToEdge(device.getTenantId(), null, device.getId(), null, null, EdgeEventActionType.UPDATED);
-        }
     }
 
     @Override

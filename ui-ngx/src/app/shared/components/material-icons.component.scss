@@ -58,4 +58,12 @@
       margin: 0;
     }
   }
+  .tb-material-icons-panel-buttons {
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: flex-start;
+    align-self: flex-start;
+  }
 }

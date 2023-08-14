@@ -19,7 +19,6 @@
      [fullscreenBackgroundStyle]="dashboardStyle"
      [fullscreenBackgroundImage]="backgroundImage"
      (fullscreenChanged)="onFullscreenChanged($event)"
-     fxLayout="column"
      class="tb-widget"
      [ngClass]="{
                 'tb-highlighted': isHighlighted(widget),
@@ -32,34 +31,14 @@
      (mousedown)="onMouseDown($event)"
      (click)="onClicked($event)"
      (contextmenu)="onContextMenu($event)">
-  <div *ngIf="!!widgetComponent.widgetContext?.inited" fxLayout="row" fxLayoutAlign="space-between start">
-    <div class="tb-widget-title" fxLayout="column" fxLayoutAlign="center start" *ngIf="widget.showWidgetTitlePanel">
-              <span *ngIf="widget.showTitle"
-                    [ngClass]="{'single-row': widget.hasTimewindow}"
-                    [ngStyle]="widget.titleStyle"
-                    [matTooltip]="widget.titleTooltip"
-                    matTooltipClass="tb-tooltip-multiline"
-                    matTooltipPosition="above"
-                    class="mat-subtitle-1 title">
-                <tb-icon *ngIf="widget.showTitleIcon" [ngStyle]="widget.titleIconStyle">{{widget.titleIcon}}</tb-icon>
-                {{widget.customTranslatedTitle}}
-              </span>
-      <tb-timewindow *ngIf="widget.hasTimewindow"
-                     aggregation="{{widget.hasAggregation}}"
-                     quickIntervalOnly="{{widget.onlyQuickInterval}}"
-                     historyOnly="{{widget.onlyHistoryTimewindow}}"
-                     alwaysDisplayTypePrefix
-                     timezone="true"
-                     [isEdit]="isEdit"
-                     [(ngModel)]="widgetComponent.widget.config.timewindow"
-                     (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
-      </tb-timewindow>
-    </div>
+  <div *ngIf="!!widgetComponent.widgetContext?.inited"
+       class="tb-widget-header">
+    <ng-container *ngIf="!widgetComponent.widgetContext?.embedTitlePanel">
+      <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+    </ng-container>
     <div *ngIf="widget.showWidgetActions"
          class="tb-widget-actions"
-         [ngClass]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel&&(widget.showTitle||widget.hasAggregation))}"
-         fxLayout="row"
-         fxLayoutAlign="start center"
+         [class]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel && !widgetComponent.widgetContext?.embedTitlePanel && (widget.showTitle||widget.hasAggregation))}"
          (mousedown)="$event.stopPropagation()">
       <button mat-icon-button *ngFor="let action of widget.customHeaderActions"
               [fxShow]="!isEdit"
@@ -105,12 +84,40 @@
       </button>
     </div>
   </div>
-  <div fxFlex fxLayout="column" class="tb-widget-content" [ngClass]="{'tb-no-interaction': disableWidgetInteraction}">
-    <tb-widget fxFlex
-               #widgetComponent
+  <div class="tb-widget-content" [ngClass]="{'tb-no-interaction': disableWidgetInteraction}">
+    <tb-widget #widgetComponent
                [dashboardWidget]="widget"
                [isEdit]="isEdit"
-               [isMobile]="isMobile">
+               [isMobile]="isMobile"
+               [widgetTitlePanel]="widgetTitlePanel">
     </tb-widget>
   </div>
 </div>
+<ng-template #widgetTitlePanel>
+  <div *ngIf="widget.showWidgetTitlePanel"
+       class="tb-widget-title">
+              <div *ngIf="widget.showTitle"
+                    [matTooltip]="widget.titleTooltip"
+                    matTooltipClass="tb-tooltip-multiline"
+                    matTooltipPosition="above"
+                    class="title-row">
+                <tb-icon *ngIf="widget.showTitleIcon" [style]="widget.titleIconStyle">{{widget.titleIcon}}</tb-icon>
+                <div class="mat-subtitle-1 title" [style]="widget.titleStyle">
+                  {{widget.title$ | async}}
+                </div>
+              </div>
+    <tb-timewindow *ngIf="widget.hasTimewindow"
+                   aggregation="{{widget.hasAggregation}}"
+                   quickIntervalOnly="{{widget.onlyQuickInterval}}"
+                   historyOnly="{{widget.onlyHistoryTimewindow}}"
+                   alwaysDisplayTypePrefix
+                   timezone="true"
+                   noMargin
+                   noPadding
+                   [isEdit]="isEdit"
+                   [timewindowStyle]="widgetComponent.widget.config.timewindowStyle"
+                   [(ngModel)]="widgetComponent.widget.config.timewindow"
+                   (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
+    </tb-timewindow>
+  </div>
+</ng-template>

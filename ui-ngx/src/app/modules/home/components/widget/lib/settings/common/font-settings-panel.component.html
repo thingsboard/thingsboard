@@ -51,7 +51,9 @@
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.font-weight</div>
     <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
-      <mat-select formControlName="weight">
+      <mat-select formControlName="weight" placeholder="{{ 'widget-config.set' | translate }}">
+        <mat-option [value]="null">
+        </mat-option>
         <mat-option *ngFor="let weight of fontWeightsList" [value]="weight">
           {{ fontWeightTranslationsMap.has(weight) ? (fontWeightTranslationsMap.get(weight) | translate) : weight }}
         </mat-option>
@@ -61,11 +63,19 @@
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.font-style</div>
     <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
-      <mat-select formControlName="style">
+      <mat-select formControlName="style" placeholder="{{ 'widget-config.set' | translate }}">
+        <mat-option [value]="null">
+        </mat-option>
         <mat-option *ngFor="let style of fontStylesList" [value]="style">
           {{ fontStyleTranslationsMap.get(style) | translate }}
         </mat-option>
       </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="tb-form-row no-border no-padding">
+    <div class="fixed-title-width" translate>widgets.widget-font.line-height</div>
+    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="lineHeight" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
   </div>
   <mat-divider></mat-divider>
@@ -74,6 +84,14 @@
     <div class="preview-text" fxFlex [style]="previewStyle">{{ previewText }}</div>
   </div>
   <div class="tb-font-settings-panel-buttons">
+    <button *ngIf="clearButton"
+            mat-button
+            type="button"
+            (click)="clearFont()"
+            [disabled]="clearDisabled()">
+      {{ 'action.clear' | translate }}
+    </button>
+    <span *ngIf="clearButton" fxFlex></span>
     <button mat-button
             color="primary"
             type="button"

@@ -37,16 +37,7 @@ import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/wi
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  createLabelFromDatasource,
-  deepClone,
-  hashCode,
-  isDefined,
-  isDefinedAndNotNull,
-  isNumber,
-  isObject,
-  isUndefined
-} from '@core/utils';
+import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isNumber, isObject, isUndefined } from '@core/utils';
 import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -194,8 +185,6 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private subscription: IWidgetSubscription;
   private widgetResize$: ResizeObserver;
 
-  private alarmsTitlePattern: string;
-
   private displayActivity = false;
   private displayDetails = true;
   public allowAcknowledgment = true;
@@ -322,7 +311,6 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   public onDataUpdated() {
-    this.updateTitle(true);
     this.alarmsDatasource.updateAlarms();
     this.clearCache();
     this.ctx.detectChanges();
@@ -342,12 +330,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.allowAssign = isDefined(this.settings.allowAssign) ? this.settings.allowAssign : true;
 
     if (this.settings.alarmsTitle && this.settings.alarmsTitle.length) {
-      this.alarmsTitlePattern = this.utils.customTranslation(this.settings.alarmsTitle, this.settings.alarmsTitle);
+      this.ctx.widgetTitle = this.settings.alarmsTitle;
     } else {
-      this.alarmsTitlePattern = this.translate.instant('alarm.alarms');
+      this.ctx.widgetTitle = this.translate.instant('alarm.alarms');
     }
-
-    this.updateTitle(false);
 
     this.enableSelection = isDefined(this.settings.enableSelection) ? this.settings.enableSelection : true;
     if (!this.allowAcknowledgment && !this.allowClear) {
@@ -392,16 +378,6 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);
-  }
-
-  private updateTitle(updateWidgetParams = false) {
-    const newTitle = createLabelFromDatasource(this.subscription.alarmSource, this.alarmsTitlePattern);
-    if (this.ctx.widgetTitle !== newTitle) {
-      this.ctx.widgetTitle = newTitle;
-      if (updateWidgetParams) {
-        this.ctx.updateWidgetParams();
-      }
-    }
   }
 
   private updateAlarmSource() {
@@ -585,10 +561,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       $event.stopPropagation();
     }
     const target = $event.target || $event.srcElement || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.panelClass = 'tb-filter-panel';
-    config.hasBackdrop = true;
+    const config = new OverlayConfig({
+      panelClass: 'tb-filter-panel',
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: true,
+      height: 'fit-content',
+      maxHeight: '75vh'
+    });
     const connectedPosition: ConnectedPosition = {
       originX: 'end',
       originY: 'bottom',
@@ -630,7 +609,11 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     const componentRef = overlayRef.attach(new ComponentPortal(AlarmFilterConfigComponent,
       this.viewContainerRef, injector));
+
+    const resizeWindows = this.utils.updateOverlayMaxHeigth(overlayRef, componentRef.location);
+
     componentRef.onDestroy(() => {
+      resizeWindows.unsubscribe();
       if (componentRef.instance.panelResult) {
         const result = componentRef.instance.panelResult;
         const alarmFilter = this.entityService.resolveAlarmFilter(result, false);
@@ -920,7 +903,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         ).subscribe((res) => {
           if (res) {
             if (res) {
-              const tasks: Observable<void>[] = [];
+              const tasks: Observable<AlarmInfo>[] = [];
               for (const alarmId of alarmIds) {
                 tasks.push(this.alarmService.ackAlarm(alarmId));
               }
@@ -976,7 +959,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         ).subscribe((res) => {
           if (res) {
             if (res) {
-              const tasks: Observable<void>[] = [];
+              const tasks: Observable<AlarmInfo>[] = [];
               for (const alarmId of alarmIds) {
                 tasks.push(this.alarmService.clearAlarm(alarmId));
               }

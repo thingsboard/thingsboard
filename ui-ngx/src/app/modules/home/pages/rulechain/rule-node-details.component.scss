@@ -27,10 +27,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-
-      @media #{$mat-gt-sm} {
-        margin-bottom: 24px;
-      }
+      margin-bottom: 22px;
     }
 
     @media #{$mat-gt-sm} {

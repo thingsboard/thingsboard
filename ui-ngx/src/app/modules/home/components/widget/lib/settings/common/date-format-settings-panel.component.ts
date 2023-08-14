@@ -16,7 +16,7 @@
 
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { DateFormatSettings } from '@home/components/widget/config/widget-settings.models';
+import { DateFormatSettings } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormControl, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';

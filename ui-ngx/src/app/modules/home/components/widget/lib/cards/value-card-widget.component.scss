@@ -44,6 +44,13 @@
       bottom: 12px;
       right: 12px;
     }
+    > div.tb-value-card-title-panel {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 2;
+    }
     .tb-value-card-icon-row {
       display: flex;
       flex-direction: row;

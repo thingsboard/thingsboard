@@ -445,6 +445,7 @@
     "attributes": "Öznitelikler",
     "latest-telemetry": "Son telemetri",
     "attributes-scope": "Varlık öznitelik kapsamı",
+    "scope-telemetry": "telemetri",
     "scope-latest-telemetry": "Son telemetri",
     "scope-client": "İstemci öznitelikler",
     "scope-server": "Sunucu öznitelikler",
@@ -1021,8 +1022,7 @@
     "device-configuration": "Cihaz yapılandırması",
     "transport-configuration": "Aktarım yapılandırması",
     "wizard": {
-      "device-details": "Cihaz ayrıntıları",
-      "customer-to-assign-device": "Cihazı atamak için kullanıcı grubu"
+      "device-details": "Cihaz ayrıntıları"
     },
     "unassign-devices-from-edge-title": "{ count, plural, =1 {1 cihazın} other {# cihazın} } atamasını kaldırmak istediğinizden emin misiniz?",
     "unassign-devices-from-edge-text": "Onaydan sonra, seçilen tüm cihazların ataması kaldırılacak ve uç tarafından erişilemeyecek."

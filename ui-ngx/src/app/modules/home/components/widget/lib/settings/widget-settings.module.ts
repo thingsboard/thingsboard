@@ -32,7 +32,6 @@ import {
 import {
   MarkdownWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/markdown-widget-settings.component';
-import { WidgetFontComponent } from '@home/components/widget/lib/settings/common/widget-font.component';
 import { LabelWidgetLabelComponent } from '@home/components/widget/lib/settings/cards/label-widget-label.component';
 import { LabelWidgetSettingsComponent } from '@home/components/widget/lib/settings/cards/label-widget-settings.component';
 import {
@@ -72,7 +71,6 @@ import {
 import {
   DigitalGaugeWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/gauge/digital-gauge-widget-settings.component';
-import { ValueSourceComponent } from '@home/components/widget/lib/settings/common/value-source.component';
 import { FixedColorLevelComponent } from '@home/components/widget/lib/settings/gauge/fixed-color-level.component';
 import { TickValueComponent } from '@home/components/widget/lib/settings/gauge/tick-value.component';
 import { FlotWidgetSettingsComponent } from '@home/components/widget/lib/settings/chart/flot-widget-settings.component';
@@ -265,22 +263,10 @@ import {
 import {
   QuickLinksWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/home-page/quick-links-widget-settings.component';
-import { LegendConfigComponent } from '@home/components/widget/lib/settings/common/legend-config.component';
 import {
-  ImageCardsSelectOptionDirective,
-  ImageCardsSelectComponent
-} from '@home/components/widget/lib/settings/common/image-cards-select.component';
-import { FontSettingsComponent } from '@home/components/widget/lib/settings/common/font-settings.component';
-import { FontSettingsPanelComponent } from '@home/components/widget/lib/settings/common/font-settings-panel.component';
-import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
-import {
-  ColorSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/color-settings-panel.component';
-import { CssUnitSelectComponent } from '@home/components/widget/lib/settings/common/css-unit-select.component';
-import { DateFormatSelectComponent } from '@home/components/widget/lib/settings/common/date-format-select.component';
-import {
-  DateFormatSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/date-format-settings-panel.component';
+  ValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/value-card-widget-settings.component';
+import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
 
 @NgModule({
   declarations: [
@@ -289,7 +275,6 @@ import {
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
     MarkdownWidgetSettingsComponent,
-    WidgetFontComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
     SimpleCardWidgetSettingsComponent,
@@ -305,8 +290,6 @@ import {
     AnalogueLinearGaugeWidgetSettingsComponent,
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
-    ValueSourceComponent,
-    LegendConfigComponent,
     FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,
@@ -383,20 +366,13 @@ import {
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
     QuickLinksWidgetSettingsComponent,
-    ImageCardsSelectOptionDirective,
-    ImageCardsSelectComponent,
-    FontSettingsComponent,
-    FontSettingsPanelComponent,
-    ColorSettingsComponent,
-    ColorSettingsPanelComponent,
-    CssUnitSelectComponent,
-    DateFormatSelectComponent,
-    DateFormatSettingsPanelComponent
+    ValueCardWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
-    SharedHomeComponentsModule
+    SharedHomeComponentsModule,
+    WidgetSettingsCommonModule
   ],
   exports: [
     QrCodeWidgetSettingsComponent,
@@ -404,7 +380,6 @@ import {
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
     MarkdownWidgetSettingsComponent,
-    WidgetFontComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
     SimpleCardWidgetSettingsComponent,
@@ -420,8 +395,6 @@ import {
     AnalogueLinearGaugeWidgetSettingsComponent,
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
-    ValueSourceComponent,
-    LegendConfigComponent,
     FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,
@@ -498,15 +471,7 @@ import {
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
     QuickLinksWidgetSettingsComponent,
-    ImageCardsSelectOptionDirective,
-    ImageCardsSelectComponent,
-    FontSettingsComponent,
-    FontSettingsPanelComponent,
-    ColorSettingsComponent,
-    ColorSettingsPanelComponent,
-    CssUnitSelectComponent,
-    DateFormatSelectComponent,
-    DateFormatSettingsPanelComponent
+    ValueCardWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -575,5 +540,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
   'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent,
   'tb-doc-links-widget-settings': DocLinksWidgetSettingsComponent,
-  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent
+  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent,
+  'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent
 };

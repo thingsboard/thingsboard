@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.metadata;
+package org.thingsboard.server.dao.eventsourcing;
 
-public enum FetchTo {
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    DATA,
-    METADATA
-
+@Builder
+@Data
+public class SaveEntityEvent<T> {
+    private final TenantId tenantId;
+    private final T entity;
+    private final EntityId entityId;
+    private final Boolean added;
 }

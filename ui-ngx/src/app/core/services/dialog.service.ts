@@ -21,11 +21,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
 import {
   ColorPickerDialogComponent,
-  ColorPickerDialogData
+  ColorPickerDialogData, ColorPickerDialogResult
 } from '@shared/components/dialog/color-picker-dialog.component';
 import {
   MaterialIconsDialogComponent,
-  MaterialIconsDialogData
+  MaterialIconsDialogData, MaterialIconsDialogResult
 } from '@shared/components/dialog/material-icons-dialog.component';
 import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
@@ -96,25 +96,27 @@ export class DialogService {
     return dialogRef.afterClosed();
   }
 
-  colorPicker(color: string): Observable<string> {
-    return this.dialog.open<ColorPickerDialogComponent, ColorPickerDialogData, string>(ColorPickerDialogComponent,
+  colorPicker(color: string, colorClearButton = false): Observable<ColorPickerDialogResult> {
+    return this.dialog.open<ColorPickerDialogComponent, ColorPickerDialogData, ColorPickerDialogResult>(ColorPickerDialogComponent,
       {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
-          color
+          color,
+          colorClearButton
         },
         autoFocus: false
     }).afterClosed();
   }
 
-  materialIconPicker(icon: string): Observable<string> {
-    return this.dialog.open<MaterialIconsDialogComponent, MaterialIconsDialogData, string>(MaterialIconsDialogComponent,
+  materialIconPicker(icon: string, iconClearButton = false): Observable<MaterialIconsDialogResult> {
+    return this.dialog.open<MaterialIconsDialogComponent, MaterialIconsDialogData, MaterialIconsDialogResult>(MaterialIconsDialogComponent,
       {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
-          icon
+          icon,
+          iconClearButton
         },
         autoFocus: false
       }).afterClosed();
