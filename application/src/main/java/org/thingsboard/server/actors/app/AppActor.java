@@ -47,6 +47,7 @@ import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWra
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 public class AppActor extends ContextAwareActor {
@@ -123,7 +124,11 @@ public class AppActor extends ContextAwareActor {
         try {
             if (systemContext.isTenantComponentsInitEnabled()) {
                 PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
+                Set<UUID> assignedProfiles = systemContext.getServiceInfoProvider().getAssignedTenantProfiles();
                 for (Tenant tenant : tenantIterator) {
+                    if (!assignedProfiles.isEmpty() && !assignedProfiles.contains(tenant.getTenantProfileId().getId())) {
+                        continue;
+                    }
                     log.debug("[{}] Creating tenant actor", tenant.getId());
                     getOrCreateTenantActor(tenant.getId());
                     log.debug("[{}] Tenant actor created.", tenant.getId());

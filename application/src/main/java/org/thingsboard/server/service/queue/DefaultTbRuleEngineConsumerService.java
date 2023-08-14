@@ -156,7 +156,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         super.init("tb-rule-engine-consumer", "tb-rule-engine-notifications-consumer");
         List<Queue> queues = queueService.findAllQueues();
         for (Queue configuration : queues) {
-            initConsumer(configuration);
+            initConsumer(configuration); // TODO: if this Rule Engine is assigned specific profile, don't init other consumers and properly handle queue update events
         }
     }
 

@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbTransportService;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
@@ -35,6 +36,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.SystemUtil.getCpuCount;
@@ -56,6 +59,10 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Getter
     @Value("${service.type:monolith}")
     private String serviceType;
+
+    @Getter
+    @Value("${service.rule_engine.assigned_tenant_profiles:}")
+    private Set<UUID> assignedTenantProfiles;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -111,7 +118,9 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
                 .setServiceId(serviceId)
                 .addAllServiceTypes(serviceTypes.stream().map(ServiceType::name).collect(Collectors.toList()))
                 .setSystemInfo(getCurrentSystemInfoProto());
-
+        if (CollectionsUtil.isNotEmpty(assignedTenantProfiles)) {
+            builder.addAllAssignedTenantProfiles(assignedTenantProfiles.stream().map(UUID::toString).collect(Collectors.toList()));
+        }
         return serviceInfo = builder.build();
     }
 
