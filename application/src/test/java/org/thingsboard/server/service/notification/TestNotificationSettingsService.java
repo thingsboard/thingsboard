@@ -22,7 +22,7 @@ import org.thingsboard.server.dao.notification.DefaultNotificationSettingsServic
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.user.UserSettingsService;
 
 @Service
 @Primary
@@ -31,8 +31,8 @@ public class TestNotificationSettingsService extends DefaultNotificationSettings
     public TestNotificationSettingsService(AdminSettingsService adminSettingsService,
                                            NotificationTargetService notificationTargetService,
                                            NotificationTemplateService notificationTemplateService,
-                                           UserService userService) {
-        super(adminSettingsService, notificationTargetService, notificationTemplateService, null, userService);
+                                           UserSettingsService userSettingsService) {
+        super(adminSettingsService, notificationTargetService, notificationTemplateService, null, userSettingsService);
     }
 
     @Override

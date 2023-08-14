@@ -243,7 +243,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         }
 
         if (recipient instanceof User) {
-            UserNotificationSettings settings = notificationSettingsService.getUserNotificationSettings(ctx.getTenantId(), (User) recipient, false);
+            UserNotificationSettings settings = notificationSettingsService.getUserNotificationSettings(ctx.getTenantId(), ((User) recipient).getId(), false);
             if (!settings.isEnabled(ctx.getNotificationType(), deliveryMethod)) {
                 throw new RuntimeException("User disabled " + deliveryMethod.getName() + " notifications of this type");
             }

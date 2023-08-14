@@ -448,8 +448,7 @@ public class NotificationController extends BaseController {
     @GetMapping("/notification/settings/user")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public UserNotificationSettings getUserNotificationSettings(@AuthenticationPrincipal SecurityUser user) {
-        return notificationSettingsService.getUserNotificationSettings(user.getTenantId(),
-                userService.findUserById(user.getTenantId(), user.getId()), true);
+        return notificationSettingsService.getUserNotificationSettings(user.getTenantId(), user.getId(), true);
     }
 
 }

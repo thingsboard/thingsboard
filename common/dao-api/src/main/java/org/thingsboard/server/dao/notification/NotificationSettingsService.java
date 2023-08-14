@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.notification;
 
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
@@ -29,7 +28,7 @@ public interface NotificationSettingsService {
 
     UserNotificationSettings saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings);
 
-    UserNotificationSettings getUserNotificationSettings(TenantId tenantId, User user, boolean format);
+    UserNotificationSettings getUserNotificationSettings(TenantId tenantId, UserId userId, boolean format);
 
     void createDefaultNotificationConfigs(TenantId tenantId);
 

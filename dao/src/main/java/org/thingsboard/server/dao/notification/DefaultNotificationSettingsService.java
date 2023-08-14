@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.notification;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -44,8 +41,10 @@ import org.thingsboard.server.common.data.notification.targets.platform.TenantAd
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.settings.UserSettings;
+import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.user.UserSettingsService;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -62,10 +61,9 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
     private final NotificationTargetService notificationTargetService;
     private final NotificationTemplateService notificationTemplateService;
     private final DefaultNotifications defaultNotifications;
-    private final UserService userService;
+    private final UserSettingsService userSettingsService;
 
     private static final String SETTINGS_KEY = "notifications";
-    private static final String USER_SETTINGS_KEY = "notificationSettings";
 
     @CacheEvict(cacheNames = CacheConstants.NOTIFICATION_SETTINGS_CACHE, key = "#tenantId")
     @Override
@@ -95,20 +93,23 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
     @Override
     public UserNotificationSettings saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings) {
-        User user = userService.findUserById(tenantId, userId);
-        ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(user.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
-        additionalInfo.set(USER_SETTINGS_KEY, JacksonUtil.valueToTree(settings));
-        user.setAdditionalInfo(additionalInfo);
-        userService.saveUser(user);
+        UserSettings userSettings = new UserSettings();
+        userSettings.setUserId(userId);
+        userSettings.setType(UserSettingsType.NOTIFICATIONS);
+        userSettings.setSettings(JacksonUtil.valueToTree(settings));
+        userSettingsService.saveUserSettings(tenantId, userSettings);
         return formatUserNotificationSettings(settings);
     }
 
     @Override
-    public UserNotificationSettings getUserNotificationSettings(TenantId tenantId, User user, boolean format) {
-        UserNotificationSettings settings = Optional.ofNullable(user.getAdditionalInfo())
-                .filter(JsonNode::isObject).map(info -> info.get(USER_SETTINGS_KEY)).filter(JsonNode::isObject)
-                .map(json -> JacksonUtil.treeToValue(json, UserNotificationSettings.class))
-                .orElse(UserNotificationSettings.DEFAULT);
+    public UserNotificationSettings getUserNotificationSettings(TenantId tenantId, UserId userId, boolean format) {
+        UserSettings userSettings = userSettingsService.findUserSettings(tenantId, userId, UserSettingsType.NOTIFICATIONS);
+        UserNotificationSettings settings;
+        if (userSettings != null) {
+            settings = JacksonUtil.treeToValue(userSettings.getSettings(), UserNotificationSettings.class);
+        } else {
+            settings = UserNotificationSettings.DEFAULT;
+        }
         if (format) {
             settings = formatUserNotificationSettings(settings);
         }
