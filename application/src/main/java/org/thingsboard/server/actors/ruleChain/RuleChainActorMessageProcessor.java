@@ -232,7 +232,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         } catch (RuleNodeException rne) {
             msg.getCallback().onFailure(rne);
         } catch (Exception e) {
-            msg.getCallback().onFailure(new RuleEngineException(e.getMessage()));
+            msg.getCallback().onFailure(new RuleEngineException(e.getMessage(), e));
         }
     }
 
@@ -335,7 +335,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             msg.getCallback().onFailure(rne);
         } catch (Exception e) {
             log.warn("[" + tenantId + "]" + "[" + entityId + "]" + "[" + msg.getId() + "]" + " onTellNext failure", e);
-            msg.getCallback().onFailure(new RuleEngineException("onTellNext - " + e.getMessage()));
+            msg.getCallback().onFailure(new RuleEngineException("onTellNext - " + e.getMessage(), e));
         }
     }
 

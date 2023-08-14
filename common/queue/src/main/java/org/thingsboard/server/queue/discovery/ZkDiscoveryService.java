@@ -69,7 +69,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     private Integer zkSessionTimeout;
     @Value("${zk.zk_dir}")
     private String zkDir;
-    @Value("${zk.recalculate_delay:60000}")
+    @Value("${zk.recalculate_delay:0}")
     private Long recalculateDelay;
 
     protected final ConcurrentHashMap<String, ScheduledFuture<?>> delayedTasks;

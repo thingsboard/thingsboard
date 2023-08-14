@@ -15,11 +15,27 @@
  */
 package org.thingsboard.server.common.data.exception;
 
-public class ApiUsageLimitsExceededException extends AbstractRateLimitException {
-    public ApiUsageLimitsExceededException(String message) {
+public abstract class AbstractRateLimitException extends RuntimeException {
+
+    public AbstractRateLimitException() {
+        super();
+    }
+
+    public AbstractRateLimitException(String message) {
         super(message);
     }
 
-    public ApiUsageLimitsExceededException() {
+    public AbstractRateLimitException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public AbstractRateLimitException(Throwable cause) {
+        super(cause);
+    }
+
+    protected AbstractRateLimitException(String message, Throwable cause,
+                                         boolean enableSuppression,
+                                         boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 }
