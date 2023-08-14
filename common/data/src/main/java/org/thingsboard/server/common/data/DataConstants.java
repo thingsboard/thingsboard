@@ -124,7 +124,7 @@ public class DataConstants {
 
     public static final String LAST_CONNECTED_GATEWAY = "lastConnectedGateway";
 
-    public static final String TOPIC = "topic";
+    public static final String MQTT_TOPIC = "mqttTopic";
 
     public static final String MAIN_QUEUE_NAME = "Main";
     public static final String MAIN_QUEUE_TOPIC = "tb_rule_engine.main";

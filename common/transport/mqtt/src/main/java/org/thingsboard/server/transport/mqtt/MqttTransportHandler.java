@@ -30,7 +30,6 @@ import io.netty.handler.codec.mqtt.MqttMessageBuilders;
 import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
 import io.netty.handler.codec.mqtt.MqttPubAckMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
-import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttSubAckPayload;
@@ -442,7 +441,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             Matcher fwMatcher;
             MqttTransportAdaptor payloadAdaptor = deviceSessionCtx.getPayloadAdaptor();
-            TbMsgMetaData md = createMetadataWithTopic(topicName);
+            TbMsgMetaData md = null;
+            if (deviceSessionCtx.isMqttTransportType()) {
+                md = createMetadataWithTopic(topicName);
+            }
             if (deviceSessionCtx.isDeviceAttributesTopic(topicName)) {
                 TransportProtos.PostAttributeMsg postAttributeMsg = payloadAdaptor.convertToPostAttributes(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, md, getPubAckCallback(ctx, msgId, postAttributeMsg));
@@ -530,7 +532,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private static TbMsgMetaData createMetadataWithTopic(String topicName) {
         TbMsgMetaData md = new TbMsgMetaData();
-        md.putValue(DataConstants.TOPIC, topicName);
+        md.putValue(DataConstants.MQTT_TOPIC, topicName);
         return md;
     }
 
