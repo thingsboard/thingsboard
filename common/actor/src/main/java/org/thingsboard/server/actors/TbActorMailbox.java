@@ -214,9 +214,9 @@ public final class TbActorMailbox implements TbActorCtx {
     }
 
     @Override
-    public TbActorRef getOrCreateChildActor(TbActorId actorId, Supplier<String> dispatcher, Supplier<TbActorCreator> creator) {
+    public TbActorRef getOrCreateChildActor(TbActorId actorId, Supplier<String> dispatcher, Supplier<TbActorCreator> creator, Supplier<Boolean> createCondition) {
         TbActorRef actorRef = system.getActor(actorId);
-        if (actorRef == null) {
+        if (actorRef == null && createCondition.get()) {
             return system.createChildActor(dispatcher.get(), creator.get(), selfId);
         } else {
             return actorRef;

@@ -198,14 +198,11 @@ public class AppActor extends ContextAwareActor {
     }
 
     private Optional<TbActorRef> getOrCreateTenantActor(TenantId tenantId) {
-        if (systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE) ||
-                systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
-            return Optional.of(ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
-                    () -> DefaultActorService.TENANT_DISPATCHER_NAME,
-                    () -> new TenantActor.ActorCreator(systemContext, tenantId)));
-        } else {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
+                () -> DefaultActorService.TENANT_DISPATCHER_NAME,
+                () -> new TenantActor.ActorCreator(systemContext, tenantId),
+                () -> systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE) ||
+                        systemContext.getPartitionService().isManagedByCurrentService(tenantId)));
     }
 
     private void onToEdgeSessionMsg(EdgeSessionMsg msg) {

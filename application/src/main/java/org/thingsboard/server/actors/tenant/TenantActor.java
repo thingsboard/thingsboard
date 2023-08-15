@@ -274,7 +274,8 @@ public class TenantActor extends RuleChainManagerActor {
     private TbActorRef getOrCreateDeviceActor(DeviceId deviceId) {
         return ctx.getOrCreateChildActor(new TbEntityActorId(deviceId),
                 () -> DefaultActorService.DEVICE_DISPATCHER_NAME,
-                () -> new DeviceActorCreator(systemContext, tenantId, deviceId));
+                () -> new DeviceActorCreator(systemContext, tenantId, deviceId),
+                () -> true);
     }
 
     private void onToEdgeSessionMsg(EdgeSessionMsg msg) {
