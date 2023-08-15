@@ -91,6 +91,10 @@
               </ng-template>
               <ng-template matTabContent>
                 <div class="tb-form-panel no-padding no-border tb-tab-body">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                    <div class="tb-install-instruction-text" translate>device.connectivity.install-curl-macos</div>
+                  </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'HTTP', noSec: commands.http.http,
