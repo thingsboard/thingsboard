@@ -289,7 +289,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public List<AlarmId> findAlarmIdsByAssigneeId(UUID key) {
         List<UUID> assignedAlarmIds = alarmRepository.findAlarmIdsByAssigneeId(key);
-        return assignedAlarmIds.stream().map(AlarmId::new).collect(Collectors.toList());
+        return DaoUtil.fromUUIDs(assignedAlarmIds, AlarmId::new);
     }
 
     @Override

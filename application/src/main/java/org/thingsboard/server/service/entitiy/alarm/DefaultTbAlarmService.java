@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.housekeeper.HouseKeeperService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
@@ -50,6 +51,9 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Autowired
     protected TbAlarmCommentService alarmCommentService;
+
+    @Autowired
+    private HouseKeeperService housekeeper;
 
     @Override
     public Alarm save(Alarm alarm, User user) throws ThingsboardException {
@@ -220,16 +224,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Boolean delete(Alarm alarm, User user) {
-        TenantId tenantId = alarm.getTenantId();
-        notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
-                ActionType.DELETED, user);
-        return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
-    }
-
-    private void unassignDeletedUserAlarms(User user) {
+    public List<AlarmId> unassignDeletedUserAlarms(User user) {
         List<AlarmId> alarmIds = alarmService.findAlarmIdsByAssigneeId(user.getId());
         for (AlarmId alarmId : alarmIds) {
+            log.trace("[{}] Unassigning alarm {} userId {}", user.getTenantId().getId(), alarmId.getId(), user.getId().getId());
             AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(user.getTenantId(), alarmId, System.currentTimeMillis());
             Alarm alarm = result.getAlarm();
             if (!result.isSuccessful()) {
@@ -254,19 +252,24 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                         alarm.getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
             }
         }
+        return alarmIds;
     }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(DeleteEntityEvent<?> event) {
-        try {
-            log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
-            EntityId entityId = event.getEntityId();
-            if (EntityType.USER.equals(entityId.getEntityType())) {
-                unassignDeletedUserAlarms((User) event.getEntity());
-            }
-        } catch (Exception e) {
-            log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event);
+        log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
+        EntityId entityId = event.getEntityId();
+        if (EntityType.USER.equals(entityId.getEntityType())) {
+            housekeeper.unassignDeletedUserAlarms((User) event.getEntity());
         }
+    }
+
+    @Override
+    public Boolean delete(Alarm alarm, User user) {
+        TenantId tenantId = alarm.getTenantId();
+        notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
+                ActionType.DELETED, user);
+        return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }
 
     private static long getOrDefault(long ts) {
