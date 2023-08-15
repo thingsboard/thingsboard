@@ -79,7 +79,7 @@ import java.util.stream.Collectors;
 )
 public class TbMathNode implements TbNode {
 
-    private static final ConcurrentMap<EntityId, Semaphore> semaphores = new ConcurrentReferenceHashMap<>();
+    private static final ConcurrentMap<EntityId, Semaphore> semaphores = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
     private final ThreadLocal<Expression> customExpression = new ThreadLocal<>();
 
     private TbMathNodeConfiguration config;
@@ -116,12 +116,7 @@ public class TbMathNode implements TbNode {
         }
 
         try {
-            var arguments = config.getArguments();
-            Optional<ObjectNode> msgBodyOpt = convertMsgBodyIfRequired(msg);
-            var argumentValues = Futures.allAsList(arguments.stream()
-                    .map(arg -> resolveArguments(ctx, msg, msgBodyOpt, arg)).collect(Collectors.toList()));
-            ListenableFuture<TbMsg> resultMsgFuture = Futures.transformAsync(argumentValues, args ->
-                    updateMsgAndDb(ctx, msg, msgBodyOpt, calculateResult(ctx, msg, args)), ctx.getDbCallbackExecutor());
+            ListenableFuture<TbMsg> resultMsgFuture = processMsgAsync(ctx, msg);
             DonAsynchron.withCallback(resultMsgFuture, resultMsg -> {
                 try {
                     ctx.tellSuccess(resultMsg);
@@ -140,6 +135,16 @@ public class TbMathNode implements TbNode {
             log.warn("[{}] Failed to process message: {}", originator, msg, e);
             throw e;
         }
+    }
+
+    ListenableFuture<TbMsg> processMsgAsync(TbContext ctx, TbMsg msg) {
+        var arguments = config.getArguments();
+        Optional<ObjectNode> msgBodyOpt = convertMsgBodyIfRequired(msg);
+        var argumentValues = Futures.allAsList(arguments.stream()
+                .map(arg -> resolveArguments(ctx, msg, msgBodyOpt, arg)).collect(Collectors.toList()));
+        ListenableFuture<TbMsg> resultMsgFuture = Futures.transformAsync(argumentValues, args ->
+                updateMsgAndDb(ctx, msg, msgBodyOpt, calculateResult(args)), ctx.getDbCallbackExecutor());
+        return resultMsgFuture;
     }
 
     private boolean tryAcquire(EntityId originator, Semaphore originatorSemaphore) {
@@ -248,7 +253,7 @@ public class TbMathNode implements TbNode {
         return TbMsg.transformMsg(msg, md);
     }
 
-    private double calculateResult(TbContext ctx, TbMsg msg, List<TbMathArgumentValue> args) {
+    private double calculateResult(List<TbMathArgumentValue> args) {
         switch (config.getOperation()) {
             case ADD:
                 return apply(args.get(0), args.get(1), Double::sum);
