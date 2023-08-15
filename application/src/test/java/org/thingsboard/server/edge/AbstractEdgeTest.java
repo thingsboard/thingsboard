@@ -273,6 +273,10 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // thermostat msg from device profile fetcher
         // thermostat msg from device fetcher
         // thermostat msg from creation of device
+        for (DeviceProfileUpdateMsg deviceProfileUpdateMsg : deviceProfileUpdateMsgList) {
+            System.out.println(">>>>>" + deviceProfileUpdateMsg);
+        }
+
         Assert.assertEquals(4, deviceProfileUpdateMsgList.size());
         Optional<DeviceProfileUpdateMsg> thermostatProfileUpdateMsgOpt =
                 deviceProfileUpdateMsgList.stream().filter(dfum -> THERMOSTAT_DEVICE_PROFILE_NAME.equals(dfum.getName())).findAny();
