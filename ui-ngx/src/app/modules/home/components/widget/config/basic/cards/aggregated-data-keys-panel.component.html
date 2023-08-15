@@ -28,8 +28,7 @@
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
     <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-form-table-body">
-      <div class="tb-form-table-row"
-           *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
+      <div *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
         <tb-aggregated-data-key-row fxFlex
                          [formControl]="keyControl"
                          [datasourceType]="datasourceType"

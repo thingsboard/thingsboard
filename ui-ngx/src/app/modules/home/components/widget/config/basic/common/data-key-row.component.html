@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-data-key-row no-padding-right">
+<div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-data-key-row">
   <mat-form-field *ngIf="hasAdditionalLatestDataKeys" class="tb-inline-field tb-source-field" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="latest">
       <mat-option [value]="false">{{ 'datakey.timeseries' | translate }}</mat-option>

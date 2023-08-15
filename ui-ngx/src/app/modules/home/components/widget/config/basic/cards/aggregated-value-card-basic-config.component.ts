@@ -112,6 +112,8 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     const settings: AggregatedValueCardWidgetSettings = {...aggregatedValueCardDefaultSettings, ...(configData.config.settings || {})};
+    const dataKey = getDataKey(configData.config.datasources);
+    const keyName = dataKey?.name;
     const iconSize = resolveCssSize(configData.config.iconSize);
     this.aggregatedValueCardWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
@@ -141,7 +143,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
       showChart: [settings.showChart, []],
       chartColor: [settings.chartColor, []],
 
-      values: [this.getValues(configData.config.datasources), []],
+      values: [this.getValues(configData.config.datasources, keyName), []],
 
       background: [settings.background, []],
 
@@ -257,9 +259,9 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
     }
   }
 
-  private getValues(datasources?: Datasource[]): DataKey[] {
+  private getValues(datasources: Datasource[], keyName: string): DataKey[] {
     if (datasources && datasources.length) {
-      return datasources[0].latestDataKeys || [];
+      return (datasources[0].latestDataKeys || []).filter(k => k.name === keyName);
     }
     return [];
   }

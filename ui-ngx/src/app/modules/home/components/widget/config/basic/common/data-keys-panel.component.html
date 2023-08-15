@@ -32,7 +32,7 @@
          [cdkDropListDisabled]="!dragEnabled"
          (cdkDropListDropped)="keyDrop($event)">
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
-           class="tb-form-table-row tb-draggable no-padding-right"
+           class="tb-draggable-form-table-row"
            *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
         <tb-data-key-row fxFlex
                          [formControl]="keyControl"

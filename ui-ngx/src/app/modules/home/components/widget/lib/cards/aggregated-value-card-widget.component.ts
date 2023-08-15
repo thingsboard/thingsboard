@@ -149,6 +149,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     if (this.showChart) {
       const settings = {
         shadowSize: 0,
+        enableSelection: false,
         smoothLines: false,
         grid: {
           tickColor: 'rgba(0,0,0,0.12)',

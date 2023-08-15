@@ -400,12 +400,18 @@
     }
   }
 
-  .tb-form-table-row {
-    &.tb-draggable {
-      gap: 0;
-      padding-left: 0;
-      background: #fff;
+  .tb-draggable-form-table-row {
+    background: #fff;
+    display: flex;
+    flex-direction: row;
+    place-content: center flex-start;
+    align-items: center;
+    .tb-form-table-row {
+      padding-right: 0;
     }
+  }
+
+  .tb-form-table-row {
 
     &-cell {
       color: rgba(0, 0, 0, 0.87);

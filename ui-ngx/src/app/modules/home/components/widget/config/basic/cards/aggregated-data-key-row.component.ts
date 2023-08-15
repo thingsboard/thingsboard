@@ -33,7 +33,7 @@ import {
   ComparisonResultType,
   DataKey,
   DataKeyConfigMode,
-  DatasourceType,
+  DatasourceType, Widget,
   widgetType
 } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -98,6 +98,10 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
 
   get callbacks(): DataKeysCallbacks {
     return this.widgetConfigComponent.widgetConfigCallbacks;
+  }
+
+  get widget(): Widget {
+    return this.widgetConfigComponent.widget;
   }
 
   get isEntityDatasource(): boolean {
@@ -190,7 +194,7 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
           dataKeySettingsDirective: null,
           dashboard: null,
           aliasController: null,
-          widget: null,
+          widget: this.widget,
           widgetType: widgetType.latest,
           deviceId: null,
           entityAliasId: null,
