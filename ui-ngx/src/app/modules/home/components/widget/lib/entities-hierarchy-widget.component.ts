@@ -224,7 +224,6 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
   exitFilterMode() {
     this.textSearchMode = false;
     this.textSearch.reset();
-    this.nodeEditCallbacks.clearSearch();
     this.ctx.hideTitlePanel = false;
     this.ctx.detectChanges(true);
   }

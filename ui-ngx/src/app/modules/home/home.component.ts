@@ -108,7 +108,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
       distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
       skip(1),
       takeUntil(this.destroy$)
-    ).subscribe((value) => this.searchTextUpdated(value));
+    ).subscribe(value => this.searchTextUpdated(value.trim()));
   }
 
   sidenavClicked() {
@@ -181,7 +181,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   private searchTextUpdated(searchText: string) {
     if (this.searchableComponent) {
-      this.searchableComponent.onSearchTextUpdated(searchText.trim());
+      this.searchableComponent.onSearchTextUpdated(searchText);
     }
   }
 }

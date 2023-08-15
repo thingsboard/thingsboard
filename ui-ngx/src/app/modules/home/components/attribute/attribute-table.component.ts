@@ -40,7 +40,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { merge, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, skip, startWith, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
   AttributeData,
@@ -243,9 +243,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   ngAfterViewInit() {
     this.textSearch.valueChanges.pipe(
       debounceTime(150),
-      startWith(''),
-      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
-      skip(1),
+      distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       this.paginator.pageIndex = 0;
@@ -297,10 +295,10 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     }
     this.mode = 'default';
     this.textSearchMode = false;
-    this.textSearch.reset('', {emitEvent: false});
     this.selectedWidgetsBundleAlias = null;
     this.attributeScope = this.defaultAttributeScope;
     this.pageLink.textSearch = null;
+    this.textSearch.reset();
     if (this.viewsInited) {
       this.paginator.pageIndex = 0;
       const sortable = this.sort.sortables.get('key');

@@ -36,7 +36,7 @@ import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { BehaviorSubject, merge, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
-import { catchError, debounceTime, distinctUntilChanged, map, skip, startWith, takeUntil } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { EntityVersion, VersionCreationResult, VersionLoadResult } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { MatPaginator } from '@angular/material/paginator';
@@ -183,9 +183,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   ngAfterViewInit() {
     this.textSearch.valueChanges.pipe(
       debounceTime(400),
-      startWith(''),
-      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
-      skip(1),
+      distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       this.paginator.pageIndex = 0;
@@ -379,8 +377,8 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
 
   private resetSortAndFilter(update: boolean) {
     this.textSearchMode = false;
-    this.textSearch.reset('', {emitEvent: false});
     this.pageLink.textSearch = null;
+    this.textSearch.reset();
     if (this.viewsInited) {
       this.paginator.pageIndex = 0;
       const sortable = this.sort.sortables.get('timestamp');

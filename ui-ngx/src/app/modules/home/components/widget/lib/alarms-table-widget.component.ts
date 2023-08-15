@@ -44,7 +44,7 @@ import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, forkJoin, merge, Observable, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { debounceTime, distinctUntilChanged, map, skip, startWith, take, takeUntil, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, take, takeUntil, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -297,9 +297,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   ngAfterViewInit(): void {
     this.textSearch.valueChanges.pipe(
       debounceTime(150),
-      startWith(''),
-      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
-      skip(1),
+      distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       this.resetPageIndex();

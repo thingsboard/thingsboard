@@ -37,7 +37,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { EntitiesDataSource } from '@home/models/datasource/entity-datasource';
-import { catchError, debounceTime, distinctUntilChanged, map, skip, startWith, takeUntil } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, skip, takeUntil } from 'rxjs/operators';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -60,7 +60,7 @@ import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-co
 import { calculateIntervalStartEndTime, HistoryWindowType, Timewindow } from '@shared/models/time/time.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { isDefined, isEmptyStr, isEqual, isNotEmptyStr, isUndefined } from '@core/utils';
+import { isDefined, isEqual, isNotEmptyStr, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
@@ -271,11 +271,11 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         this.pageLink.pageSize = Number(routerQueryParams.pageSize);
       }
       const textSearchParam = routerQueryParams.textSearch;
-      if (textSearchParam && !isEmptyStr(textSearchParam)) {
-        const decodedTextSearch = decodeURI(routerQueryParams.textSearch);
+      if (isNotEmptyStr(textSearchParam)) {
+        const decodedTextSearch = decodeURI(textSearchParam);
         this.textSearchMode = true;
-        this.textSearch.setValue(decodedTextSearch, { emitEvent: false });
         this.pageLink.textSearch = decodedTextSearch.trim();
+        this.textSearch.setValue(decodedTextSearch);
       }
     }
     this.dataSource = this.entitiesTableConfig.dataSource(this.dataLoaded.bind(this));
@@ -312,9 +312,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
     this.textSearch.valueChanges.pipe(
       debounceTime(150),
-      startWith(''),
-      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
-      skip(1),
+      distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),
       takeUntil(this.destroy$)
     ).subscribe(value => {
       const queryParams: PageQueryParam = {};
@@ -343,6 +341,15 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         }
         this.sort.active = params.property || this.entitiesTableConfig.defaultSortOrder.property;
         this.sort.direction = (params.direction || this.entitiesTableConfig.defaultSortOrder.direction).toLowerCase() as SortDirection;
+        const textSearchParam = params.textSearch;
+        if (isNotEmptyStr(textSearchParam)) {
+          const decodedTextSearch = decodeURI(textSearchParam);
+          this.textSearchMode = true;
+          this.pageLink.textSearch = decodedTextSearch.trim();
+          this.textSearch.setValue(decodedTextSearch);
+        } else {
+          this.pageLink.textSearch = null;
+        }
         this.updateData();
       });
     }
@@ -373,12 +380,10 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     );
     if (this.displayPagination) {
       paginatorSubscription$ = this.paginator.page.asObservable().pipe(
-        map((data) => {
-          return {
-            page: data.pageIndex === 0 ? null : data.pageIndex,
-            pageSize: data.pageSize === this.defaultPageSize ? null : data.pageSize
-          };
-        })
+        map((data) => ({
+          page: data.pageIndex === 0 ? null : data.pageIndex,
+          pageSize: data.pageSize === this.defaultPageSize ? null : data.pageSize
+        }))
       );
     }
     this.updateDataSubscription = ((this.displayPagination ? merge(sortSubscription$, paginatorSubscription$)
@@ -590,8 +595,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   resetSortAndFilter(update: boolean = true, preserveTimewindow: boolean = false) {
     this.textSearchMode = false;
-    this.textSearch.reset('', {emitEvent: false});
     this.pageLink.textSearch = null;
+    this.textSearch.reset();
     if (this.entitiesTableConfig.useTimePageLink && !preserveTimewindow) {
       this.timewindow = this.entitiesTableConfig.defaultTimewindowInterval;
     }

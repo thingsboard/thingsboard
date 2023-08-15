@@ -37,7 +37,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { EntityRelationService } from '@core/http/entity-relation.service';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, merge, Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, skip, startWith, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import {
   EntityRelation,
   EntityRelationInfo,
@@ -169,9 +169,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   ngAfterViewInit() {
     this.textSearch.valueChanges.pipe(
       debounceTime(150),
-      startWith(''),
-      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
-      skip(1),
+      distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       this.paginator.pageIndex = 0;
@@ -215,8 +213,8 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   resetSortAndFilter(update: boolean = true) {
     this.direction = EntitySearchDirection.FROM;
     this.updateColumns();
-    this.textSearch.reset('', {emitEvent: false});
     this.pageLink.textSearch = null;
+    this.textSearch.reset();
     this.paginator.pageIndex = 0;
     const sortable = this.sort.sortables.get('type');
     this.sort.active = sortable.id;
