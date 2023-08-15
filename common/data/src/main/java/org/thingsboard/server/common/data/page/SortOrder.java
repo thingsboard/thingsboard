@@ -36,6 +36,6 @@ public class SortOrder {
         ASC, DESC
     }
 
-    public static final SortOrder byCreatedTimeDesc = new SortOrder("createdTime", Direction.DESC);
+    public static final SortOrder BY_CREATED_TIME_DESC = new SortOrder("createdTime", Direction.DESC);
 
 }

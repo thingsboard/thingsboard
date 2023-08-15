@@ -298,7 +298,7 @@ public class NotificationController extends BaseController {
             if (targetType == NotificationTargetType.PLATFORM_USERS) {
                 PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(),
                         (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize, 0, null,
-                                SortOrder.byCreatedTimeDesc));
+                                SortOrder.BY_CREATED_TIME_DESC));
                 recipientsCount = (int) recipients.getTotalElements();
                 recipientsPart = recipients.getData().stream().map(r -> (NotificationRecipient) r).collect(Collectors.toList());
             } else {

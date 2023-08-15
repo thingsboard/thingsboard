@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.notification;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DefaultNotificationSettingsService implements NotificationSettingsService {
 
     private final AdminSettingsService adminSettingsService;
@@ -104,10 +106,15 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
     @Override
     public UserNotificationSettings getUserNotificationSettings(TenantId tenantId, UserId userId, boolean format) {
         UserSettings userSettings = userSettingsService.findUserSettings(tenantId, userId, UserSettingsType.NOTIFICATIONS);
-        UserNotificationSettings settings;
+        UserNotificationSettings settings = null;
         if (userSettings != null) {
-            settings = JacksonUtil.treeToValue(userSettings.getSettings(), UserNotificationSettings.class);
-        } else {
+            try {
+                settings = JacksonUtil.treeToValue(userSettings.getSettings(), UserNotificationSettings.class);
+            } catch (Exception e) {
+                log.warn("Failed to parse notification settings for user {}", userId, e);
+            }
+        }
+        if (settings == null) {
             settings = UserNotificationSettings.DEFAULT;
         }
         if (format) {
