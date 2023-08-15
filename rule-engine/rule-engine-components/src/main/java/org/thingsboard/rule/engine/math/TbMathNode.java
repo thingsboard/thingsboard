@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
@@ -44,6 +46,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -79,9 +83,8 @@ import java.util.stream.Collectors;
 )
 public class TbMathNode implements TbNode {
 
-    private static final ConcurrentMap<EntityId, Semaphore> semaphores = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final ConcurrentMap<EntityId, SemaphoreWithQueue<TbMsgTbContext>> locks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
     private final ThreadLocal<Expression> customExpression = new ThreadLocal<>();
-
     private TbMathNodeConfiguration config;
     private boolean msgBodyToJsonConversionRequired;
 
@@ -106,34 +109,58 @@ public class TbMathNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        var originator = msg.getOriginator();
-        var originatorSemaphore = semaphores.computeIfAbsent(originator, tmp -> new Semaphore(1, true));
-        boolean acquired = tryAcquire(originator, originatorSemaphore);
+        var semaphoreWithQueue = locks.computeIfAbsent(msg.getOriginator(), SemaphoreWithQueue::new);
+        semaphoreWithQueue.getQueue().add(new TbMsgTbContext(msg, ctx));
 
-        if (!acquired) {
-            ctx.tellFailure(msg, new RuntimeException("Failed to process message for originator synchronously"));
-            return;
-        }
+        tryProcessQueue(semaphoreWithQueue);
+    }
 
-        try {
-            ListenableFuture<TbMsg> resultMsgFuture = processMsgAsync(ctx, msg);
-            DonAsynchron.withCallback(resultMsgFuture, resultMsg -> {
-                try {
-                    ctx.tellSuccess(resultMsg);
-                } finally {
-                    originatorSemaphore.release();
+    void tryProcessQueue(SemaphoreWithQueue<TbMsgTbContext> lockAndQueue) {
+        final Semaphore semaphore = lockAndQueue.getSemaphore();
+        final Queue<TbMsgTbContext> queue = lockAndQueue.getQueue();
+        while (!queue.isEmpty()) {
+            // The semaphore have to be acquired before EACH poll and released before NEXT poll.
+            // Otherwise, some message will remain unprocessed in queue
+            if (!semaphore.tryAcquire()) {
+                return;
+            }
+            TbMsgTbContext tbMsgTbContext = null;
+            try {
+                tbMsgTbContext = queue.poll();
+                if (tbMsgTbContext == null) {
+                    semaphore.release();
+                    continue;
                 }
-            }, t -> {
-                try {
-                    ctx.tellFailure(msg, t);
-                } finally {
-                    originatorSemaphore.release();
+                final TbMsg msg = tbMsgTbContext.getMsg();
+                if (!msg.getCallback().isMsgValid()) {
+                    log.trace("[{}] Skipping non-valid message [{}]", lockAndQueue.getEntityId(), msg);
+                    semaphore.release();
+                    continue;
                 }
-            }, ctx.getDbCallbackExecutor());
-        } catch (Throwable e) {
-            originatorSemaphore.release();
-            log.warn("[{}] Failed to process message: {}", originator, msg, e);
-            throw e;
+                //DO PROCESSING
+                final TbContext ctx = tbMsgTbContext.getCtx();
+                final ListenableFuture<TbMsg> resultMsgFuture = processMsgAsync(ctx, msg);
+                DonAsynchron.withCallback(resultMsgFuture, resultMsg -> {
+                    try {
+                        ctx.tellSuccess(resultMsg);
+                    } finally {
+                        lockAndQueue.getSemaphore().release();
+                        tryProcessQueue(lockAndQueue);
+                    }
+                }, t -> {
+                    try {
+                        ctx.tellFailure(msg, t);
+                    } finally {
+                        lockAndQueue.getSemaphore().release();
+                        tryProcessQueue(lockAndQueue);
+                    }
+                }, ctx.getDbCallbackExecutor());
+            } catch (Throwable e) {
+                semaphore.release();
+                log.warn("[{}] Failed to process message: {}", lockAndQueue.getEntityId(), tbMsgTbContext == null ? null : tbMsgTbContext.getMsg(), e);
+                throw e;
+            }
+            break; //submitted async exact one task. next poll will try on callback
         }
     }
 
@@ -399,4 +426,20 @@ public class TbMathNode implements TbNode {
     @Override
     public void destroy() {
     }
+
+    @Data
+    @RequiredArgsConstructor
+    static public class SemaphoreWithQueue<T> {
+        final EntityId entityId;
+        final Semaphore semaphore = new Semaphore(1);
+        final Queue<T> queue = new ConcurrentLinkedQueue<>();
+    }
+
+    @Data
+    @RequiredArgsConstructor
+    static public class TbMsgTbContext {
+        final TbMsg msg;
+        final TbContext ctx;
+    }
+
 }

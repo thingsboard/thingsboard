@@ -53,6 +53,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -90,19 +92,9 @@ public class TbMathNodeTest {
 
     @BeforeEach
     public void before() {
-        dbCallbackExecutor = new AbstractListeningExecutor() {
-            @Override
-            protected int getThreadPollSize() {
-                return DB_CALLBACK_POOL_SIZE;
-            }
-        };
+        dbCallbackExecutor = new DBCallbackExecutor();
         dbCallbackExecutor.init();
-        ruleEngineDispatcherExecutor = new AbstractListeningExecutor() {
-            @Override
-            protected int getThreadPollSize() {
-                return RULE_DISPATCHER_POOL_SIZE;
-            }
-        };
+        ruleEngineDispatcherExecutor = new RuleDispatcherExecutor();
         ruleEngineDispatcherExecutor.init();
 
         lenient().when(ctx.getAttributesService()).thenReturn(attributesService);
@@ -528,21 +520,20 @@ public class TbMathNodeTest {
         EntityId originatorFast = DeviceId.fromString("c45360ff-7906-4102-a2ae-3495a86168d0");
         CountDownLatch slowProcessingLatch = new CountDownLatch(1);
 
-        List<TbMsg> slowMsgList = List.of(
-                TbMsg.newMsg("TEST", originatorSlow, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()),
-                TbMsg.newMsg("TEST", originatorSlow, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString())
-        );
-        List<TbMsg> fastMsgList = List.of(
-                TbMsg.newMsg("TEST", originatorFast, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()),
-                TbMsg.newMsg("TEST", originatorFast, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString())
-        );
+        List<TbMsg> slowMsgList = IntStream.range(0, 5)
+                .mapToObj(x -> TbMsg.newMsg("TEST", originatorSlow, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
+                .collect(Collectors.toList());
+        List<TbMsg> fastMsgList = IntStream.range(0, 2)
+                .mapToObj(x -> TbMsg.newMsg("TEST", originatorFast, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
+                .collect(Collectors.toList());
+
+        assertThat(slowMsgList.size()).as("slow msgs >= rule-dispatcher pool size").isGreaterThanOrEqualTo(RULE_DISPATCHER_POOL_SIZE);
 
         log.debug("rule-dispatcher [{}], db-callback [{}], slowMsg [{}], fastMsg [{}]", RULE_DISPATCHER_POOL_SIZE, DB_CALLBACK_POOL_SIZE, slowMsgList.size(), fastMsgList.size());
 
         willAnswer(invocation -> {
-            TbContext ctx = invocation.getArgument(0);
             TbMsg msg = invocation.getArgument(1);
-            log.debug("awaiting on slowProcessingLatch [{}]", msg);
+            log.debug("\uD83D\uDC0C processMsgAsync slow originator [{}][{}]", msg.getOriginator(), msg);
             try {
                 assertThat(slowProcessingLatch.await(30, TimeUnit.SECONDS)).as("await on slowProcessingLatch").isTrue();
             } catch (InterruptedException e) {
@@ -550,6 +541,24 @@ public class TbMathNodeTest {
             }
             return invocation.callRealMethod();
         }).given(node).processMsgAsync(eq(ctx), argThat(slowMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("\u26A1\uFE0F processMsgAsync FAST originator [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).processMsgAsync(eq(ctx), argThat(fastMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("submit slow originator onMsg [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).onMsg(eq(ctx), argThat(slowMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("submit FAST originator onMsg [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).onMsg(eq(ctx), argThat(fastMsgList::contains));
 
         // submit slow msg may block all rule engine dispatcher threads
         slowMsgList.forEach(msg -> ruleEngineDispatcherExecutor.executeAsync(() -> node.onMsg(ctx, msg)));
@@ -566,6 +575,20 @@ public class TbMathNodeTest {
         verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(fastMsgList.size() + slowMsgList.size()))).tellSuccess(any());
 
         verify(ctx, never()).tellFailure(any(), any());
+    }
+
+    static class RuleDispatcherExecutor extends AbstractListeningExecutor {
+        @Override
+        protected int getThreadPollSize() {
+            return RULE_DISPATCHER_POOL_SIZE;
+        }
+    }
+
+    static class DBCallbackExecutor extends AbstractListeningExecutor {
+        @Override
+        protected int getThreadPollSize() {
+            return DB_CALLBACK_POOL_SIZE;
+        }
     }
 
 }
