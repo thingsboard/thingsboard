@@ -13,29 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.page;
+:host {
+  .notification-type {
+    font-size: 14px;
 
-import lombok.Data;
-
-@Data
-public class SortOrder {
-
-    private final String property;
-    private final Direction direction;
-
-    public SortOrder(String property) {
-        this(property, Direction.ASC);
+    &-disabled {
+      color: rgba(0, 0, 0, 0.38)
     }
-
-    public SortOrder(String property, Direction direction) {
-        this.property = property;
-        this.direction = direction;
-    }
-
-    public static enum Direction {
-        ASC, DESC
-    }
-
-    public static final SortOrder BY_CREATED_TIME_DESC = new SortOrder("createdTime", Direction.DESC);
-
+  }
 }

@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.page;
+@import "../../../../../../scss/constants";
 
-import lombok.Data;
-
-@Data
-public class SortOrder {
-
-    private final String property;
-    private final Direction direction;
-
-    public SortOrder(String property) {
-        this(property, Direction.ASC);
+:host {
+  .mat-mdc-card.settings-card {
+    margin: 8px;
+    @media #{$mat-gt-sm} {
+      width: 60%;
     }
-
-    public SortOrder(String property, Direction direction) {
-        this.property = property;
-        this.direction = direction;
+    .mat-headline-5 {
+      margin: 0;
     }
-
-    public static enum Direction {
-        ASC, DESC
+    .notification-form {
+      height: 100%;
+      min-height: min-content;
+      max-height: min-content;
     }
-
-    public static final SortOrder BY_CREATED_TIME_DESC = new SortOrder("createdTime", Direction.DESC);
-
+    .notification-section {
+      height: 100%;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      overflow: scroll;
+      &-block {
+        min-width: 470px;
+      }
+    }
+  }
 }
