@@ -35,6 +35,6 @@ public class TbQueueTbMsgCallbackWrapper implements TbQueueCallback {
 
     @Override
     public void onFailure(Throwable t) {
-        tbMsgCallback.onFailure(new RuleEngineException(t.getMessage()));
+        tbMsgCallback.onFailure(new RuleEngineException(t.getMessage(), t));
     }
 }

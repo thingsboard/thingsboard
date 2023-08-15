@@ -39,7 +39,7 @@ public class MultipleTbMsgsCallbackWrapper implements TbMsgCallbackWrapper {
 
     @Override
     public void onFailure(Throwable t) {
-        callback.onFailure(new RuleEngineException(t.getMessage()));
+        callback.onFailure(new RuleEngineException(t.getMessage(), t));
     }
 }
 

@@ -275,7 +275,9 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     private void deleteAndRegisterFutures(TenantId tenantId, List<ListenableFuture<TsKvLatestRemovingResult>> futures, EntityId entityId, DeleteTsKvQuery query) {
         futures.add(Futures.transform(timeseriesDao.remove(tenantId, entityId, query), v -> null, MoreExecutors.directExecutor()));
-        futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
+        if (query.getDeleteLatest()) {
+            futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
+        }
     }
 
     private static void validate(EntityId entityId) {

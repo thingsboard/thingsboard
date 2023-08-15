@@ -30,6 +30,7 @@ import org.thingsboard.server.coapserver.TbCoapDtlsSessionInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
@@ -379,12 +380,16 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private Optional<FeatureType> getFeatureType(Request request) {
+    protected Optional<FeatureType> getFeatureType(Request request) {
         List<String> uriPath = request.getOptions().getUriPath();
         try {
-            if (uriPath.size() >= FEATURE_TYPE_POSITION) {
+            int size = uriPath.size();
+            if (size >= FEATURE_TYPE_POSITION) {
+                if (size == FEATURE_TYPE_POSITION && StringUtils.isNumeric(uriPath.get(size - 1))) {
+                    return Optional.of(FeatureType.valueOf(uriPath.get(FEATURE_TYPE_POSITION - 2).toUpperCase()));
+                }
                 return Optional.of(FeatureType.valueOf(uriPath.get(FEATURE_TYPE_POSITION - 1).toUpperCase()));
-            } else if (uriPath.size() >= FEATURE_TYPE_POSITION_CERTIFICATE_REQUEST) {
+            } else if (size == FEATURE_TYPE_POSITION_CERTIFICATE_REQUEST) {
                 if (uriPath.contains(DataConstants.PROVISION)) {
                     return Optional.of(FeatureType.valueOf(DataConstants.PROVISION.toUpperCase()));
                 }

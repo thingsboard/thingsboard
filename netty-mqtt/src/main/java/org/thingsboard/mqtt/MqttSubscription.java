@@ -25,7 +25,7 @@ final class MqttSubscription {
 
     private final boolean once;
 
-    private boolean called;
+    private volatile boolean called;
 
     MqttSubscription(String topic, MqttHandler handler, boolean once) {
         if (topic == null) {

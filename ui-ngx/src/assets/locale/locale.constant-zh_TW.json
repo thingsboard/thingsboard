@@ -519,6 +519,7 @@
         "attributes": "屬性",
         "latest-telemetry": "最新遙測",
         "attributes-scope": "設備屬性範圍",
+        "scope-telemetry": "遙測",
         "scope-latest-telemetry": "最新遙測",
         "scope-client": "客戶端屬性",
         "scope-server": "服務端屬性",

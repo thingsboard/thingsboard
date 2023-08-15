@@ -20,6 +20,10 @@
     min-width: 750px !important;
     max-width: 750px !important;
 
+    .mat-mdc-dialog-content {
+      padding: 8px;
+    }
+
     @media #{$mat-lt-md} {
       min-width: 100% !important;
     }

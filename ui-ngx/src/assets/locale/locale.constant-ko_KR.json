@@ -408,6 +408,7 @@
         "attributes": "속성",
         "latest-telemetry": "최근 데이터",
         "attributes-scope": "장치 속성 범위",
+        "scope-telemetry": "원격 측정",
         "scope-latest-telemetry": "최근 데이터",
         "scope-client": "클라이언트 속성",
         "scope-server": "서버 속성",

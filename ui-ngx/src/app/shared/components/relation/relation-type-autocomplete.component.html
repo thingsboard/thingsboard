@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="relationTypeFormGroup" [floatLabel]="floatLabel" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
+<mat-form-field [formGroup]="relationTypeFormGroup" [appearance]="appearance" [floatLabel]="floatLabel"
+                class="mat-block" [class]="additionalClasses" subscriptSizing="{{ subscriptSizing }}">
   <mat-label *ngIf="label">{{ label }}</mat-label>
   <input matInput type="text"
          #relationTypeInput
