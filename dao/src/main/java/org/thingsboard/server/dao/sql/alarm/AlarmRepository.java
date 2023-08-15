@@ -18,8 +18,10 @@ package org.thingsboard.server.dao.sql.alarm;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
@@ -346,6 +348,12 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Query(value = "SELECT unassign_alarm(:t_id, :a_id, :a_ts)", nativeQuery = true)
     String unassignAlarm(@Param("t_id") UUID tenantId, @Param("a_id") UUID alarmId, @Param("a_ts") long unassignTime);
 
-    @Query(value = "SELECT DISTINCT a.type FROM alarm a WHERE a.tenant_id = :tenantId LIMIT 256", nativeQuery = true)
-    List<String> findTenantAlarmTypes(@Param("tenantId") UUID tenantId);
+    @Query(value = "SELECT at.type FROM alarm_types AS at WHERE at.tenant_id = :tenantId AND LOWER(at.type) LIKE LOWER(CONCAT('%', :searchText, '%'))", nativeQuery = true)
+    Page<String> findTenantAlarmTypes(@Param("tenantId") UUID tenantId, @Param("searchText") String searchText, Pageable pageable);
+
+    @Transactional
+    @Modifying
+    @Query(value = "DELETE FROM alarm_types AS at WHERE NOT EXISTS (SELECT 1 FROM alarm AS a WHERE a.tenant_id = at.tenant_id AND a.type = at.type) AND at.tenant_id = :tenantId AND at.type IN (:types)", nativeQuery = true)
+    int deleteTypeIfNoOneAlarmExists(@Param("tenantId") UUID tenantId, @Param("types") Set<String> types);
+
 }

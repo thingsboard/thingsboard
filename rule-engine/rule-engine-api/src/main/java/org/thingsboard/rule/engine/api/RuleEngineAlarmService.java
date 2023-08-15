@@ -35,12 +35,12 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Created by ashvayka on 02.04.18.
@@ -114,5 +114,5 @@ public interface RuleEngineAlarmService {
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
-    List<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId);
+    PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink);
 }

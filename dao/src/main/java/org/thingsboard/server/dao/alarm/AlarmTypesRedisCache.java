@@ -25,12 +25,11 @@ import org.thingsboard.server.cache.TbFSTRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.id.TenantId;
-
-import java.util.ArrayList;
+import org.thingsboard.server.common.data.page.PageData;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("AlarmTypesCache")
-public class AlarmTypesRedisCache extends RedisTbTransactionalCache<TenantId, ArrayList<EntitySubtype>> {
+public class AlarmTypesRedisCache extends RedisTbTransactionalCache<TenantId, PageData<EntitySubtype>> {
 
     public AlarmTypesRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
         super(CacheConstants.ALARM_TYPES_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbFSTRedisSerializer<>());

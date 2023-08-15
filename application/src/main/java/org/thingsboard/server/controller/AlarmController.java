@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
@@ -504,8 +505,16 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/types", method = RequestMethod.GET)
     @ResponseBody
-    public List<EntitySubtype> getAlarmTypes() throws ThingsboardException, ExecutionException, InterruptedException {
-        return checkNotNull(alarmService.findAlarmTypesByTenantId(getTenantId()));
+    public PageData<EntitySubtype> getAlarmTypes(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                 @RequestParam int pageSize,
+                                                 @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                 @RequestParam int page,
+                                                 @ApiParam(value = ALARM_QUERY_TEXT_SEARCH_DESCRIPTION)
+                                                 @RequestParam(required = false) String textSearch,
+                                                 @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+                                                 @RequestParam(required = false) String sortOrder) throws ThingsboardException, ExecutionException, InterruptedException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, "type", sortOrder);
+        return checkNotNull(alarmService.findAlarmTypesByTenantId(getTenantId(), pageLink));
     }
 
 }

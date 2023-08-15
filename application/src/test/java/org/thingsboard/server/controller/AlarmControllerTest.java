@@ -47,7 +47,6 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -747,15 +746,15 @@ public class AlarmControllerTest extends AbstractControllerTest {
     public void testGetAlarmTypes() throws Exception {
         loginTenantAdmin();
 
-        Mockito.reset(tbClusterService, auditLogService);
-
         List<String> types = new ArrayList<>();
 
         for (int i = 1; i < 13; i++) {
             types.add(createAlarm(TEST_ALARM_TYPE + i).getType());
         }
 
-        List<String> foundTypes = doGetTyped("/api/alarm/types", new TypeReference<List<EntitySubtype>>() {})
+        List<String> foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
                 .stream()
                 .map(EntitySubtype::getType)
                 .collect(Collectors.toList());
@@ -764,6 +763,80 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Collections.sort(foundTypes);
 
         Assert.assertEquals(types, foundTypes);
+    }
+
+    @Test
+    public void testDeleteAlarmTypes() throws Exception {
+        loginTenantAdmin();
+
+        List<AlarmInfo> alarms = new ArrayList<>();
+
+        for (int i = 1; i < 13; i++) {
+            alarms.add(createAlarm(TEST_ALARM_TYPE + i));
+        }
+
+        Device device = new Device();
+        device.setName("Test device 2");
+        device.setCustomerId(customerId);
+        customerDevice = doPost("/api/device", device, Device.class);
+
+        for (int i = 1; i < 14; i++) {
+            alarms.add(createAlarm(TEST_ALARM_TYPE + i));
+        }
+
+        List<String> expectedTypes = alarms.stream().map(AlarmInfo::getType).distinct().sorted().collect(Collectors.toList());
+
+        List<String> foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertEquals(13, foundTypes.size());
+        Assert.assertEquals(expectedTypes, foundTypes);
+
+        for (int i = 0; i < 12; i++) {
+            doDelete("/api/alarm/" + alarms.get(i).getId()).andExpect(status().isOk());
+        }
+
+        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertEquals(13, foundTypes.size());
+        Assert.assertEquals(expectedTypes, foundTypes);
+
+        doDelete("/api/alarm/" + alarms.get(12).getId()).andExpect(status().isOk());
+
+        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertEquals(12, foundTypes.size());
+
+        for (int i = 13; i < alarms.size(); i++) {
+            doDelete("/api/alarm/" + alarms.get(i).getId()).andExpect(status().isOk());
+        }
+
+        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertTrue(foundTypes.isEmpty());
     }
 
 }

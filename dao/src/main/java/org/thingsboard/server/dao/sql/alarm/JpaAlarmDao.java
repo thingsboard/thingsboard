@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -69,6 +70,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
+import static org.thingsboard.server.dao.DaoUtil.toPageable;
 
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
@@ -370,8 +372,19 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public List<EntitySubtype> findTenantAlarmTypes(UUID tenantId) {
-        return convertTenantEntityTypesToDto(tenantId, EntityType.ALARM, alarmRepository.findTenantAlarmTypes(tenantId));
+    public PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink) {
+        Page<String> page = alarmRepository.findTenantAlarmTypes(tenantId, Objects.toString(pageLink.getTextSearch(), ""), toPageable(pageLink));
+        if (page.isEmpty()) {
+            return new PageData<>();
+        }
+
+        List<EntitySubtype> data = convertTenantEntityTypesToDto(tenantId, EntityType.ALARM, page.getContent());
+        return new PageData<>(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
+    }
+
+    @Override
+    public boolean removeAlarmTypes(UUID tenantId, Set<String> types) {
+        return alarmRepository.deleteTypeIfNoOneAlarmExists(tenantId, types) > 0;
     }
 
     private static String getPropagationTypes(AlarmPropagationInfo ap) {

@@ -122,3 +122,10 @@ ALTER TABLE resource
 UPDATE resource
     SET etag = encode(sha256(decode(resource.data, 'base64')),'hex') WHERE resource.data is not null;
 
+CREATE TABLE IF NOT EXISTS alarm_types (
+    tenant_id uuid NOT NULL,
+    type varchar(255) NOT NULL,
+    CONSTRAINT tenant_id_type_unq_key UNIQUE (tenant_id, type)
+    );
+
+INSERT INTO alarm_types (tenant_id, type) SELECT DISTINCT tenant_id, type FROM alarm ON CONFLICT (tenant_id, type) DO NOTHING;

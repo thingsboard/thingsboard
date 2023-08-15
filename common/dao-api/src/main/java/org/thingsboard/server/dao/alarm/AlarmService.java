@@ -34,13 +34,14 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 
 public interface AlarmService extends EntityDaoService {
@@ -75,6 +76,10 @@ public interface AlarmService extends EntityDaoService {
     AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long ts);
 
     AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId);
+
+    AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean deleteAlarmType);
+
+    void delAlarmTypes(TenantId tenantId, Set<String> types);
 
     /*
      *  Legacy API, before 3.5.
@@ -124,5 +129,5 @@ public interface AlarmService extends EntityDaoService {
 
     long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
 
-    List<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId);
+    PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink);
 }

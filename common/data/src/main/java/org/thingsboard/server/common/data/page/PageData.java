@@ -20,13 +20,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @ApiModel
-public class PageData<T> {
+public class PageData<T> implements Serializable {
 
     private final List<T> data;
     private final int totalPages;

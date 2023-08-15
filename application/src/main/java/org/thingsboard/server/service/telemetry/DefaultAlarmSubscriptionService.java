@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmTrigger;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
@@ -59,7 +60,6 @@ import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -238,8 +238,8 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public List<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId) {
-        return alarmService.findAlarmTypesByTenantId(tenantId);
+    public PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink) {
+        return alarmService.findAlarmTypesByTenantId(tenantId, pageLink);
     }
 
     private void onAlarmUpdated(AlarmApiCallResult result) {
