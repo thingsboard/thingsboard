@@ -187,6 +187,21 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
+    public boolean isManagedByCurrentService(TenantId tenantId) {
+        Set<UUID> assignedTenantProfiles = serviceInfoProvider.getAssignedTenantProfiles();
+        if (assignedTenantProfiles.isEmpty()) {
+            // TODO: refactor this for common servers
+            return true;
+        } else {
+            if (tenantId.isSysTenantId()) {
+                return false;
+            }
+            TenantProfileId profileId = tenantRoutingInfoService.getRoutingInfo(tenantId).getProfileId();
+            return assignedTenantProfiles.contains(profileId.getId());
+        }
+    }
+
+    @Override
     public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
         TenantId isolatedOrSystemTenantId = getIsolatedOrSystemTenantId(serviceType, tenantId);
         if (queueName == null) {

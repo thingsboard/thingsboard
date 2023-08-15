@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -272,6 +273,27 @@ public class HashPartitionServiceTest {
                     .collect(Collectors.toList());
             assertThat(allPartitions).doesNotHaveDuplicates();
         });
+    }
+
+    @Test
+    public void testIsManagedByCurrentServiceCheck() {
+        TenantProfileId isolatedProfileId = new TenantProfileId(UUID.randomUUID());
+        when(discoveryService.getAssignedTenantProfiles()).thenReturn(Set.of(isolatedProfileId.getId())); // dedicated server
+        TenantProfileId regularProfileId = new TenantProfileId(UUID.randomUUID());
+
+        TenantId isolatedTenantId = new TenantId(UUID.randomUUID());
+        when(routingInfoService.getRoutingInfo(eq(isolatedTenantId))).thenReturn(new TenantRoutingInfo(isolatedTenantId, isolatedProfileId, true));
+        TenantId regularTenantId = new TenantId(UUID.randomUUID());
+        when(routingInfoService.getRoutingInfo(eq(regularTenantId))).thenReturn(new TenantRoutingInfo(regularTenantId, regularProfileId, false));
+
+        assertThat(clusterRoutingService.isManagedByCurrentService(isolatedTenantId)).isTrue();
+        assertThat(clusterRoutingService.isManagedByCurrentService(regularTenantId)).isFalse();
+
+
+        when(discoveryService.getAssignedTenantProfiles()).thenReturn(Collections.emptySet()); // common server
+
+        assertThat(clusterRoutingService.isManagedByCurrentService(isolatedTenantId)).isTrue();
+        assertThat(clusterRoutingService.isManagedByCurrentService(regularTenantId)).isTrue();
     }
 
 }

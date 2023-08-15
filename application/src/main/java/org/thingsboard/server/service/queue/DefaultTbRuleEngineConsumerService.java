@@ -156,7 +156,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         super.init("tb-rule-engine-consumer", "tb-rule-engine-notifications-consumer");
         List<Queue> queues = queueService.findAllQueues();
         for (Queue configuration : queues) {
-            initConsumer(configuration); // TODO: if this Rule Engine is assigned specific profile, don't init other consumers and properly handle queue update events
+            if (partitionService.isManagedByCurrentService(configuration.getTenantId())) {
+                initConsumer(configuration);
+            }
         }
     }
 
@@ -183,7 +185,12 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         if (event.getServiceType().equals(getServiceType())) {
             String serviceQueue = event.getQueueKey().getQueueName();
             log.info("[{}] Subscribing to partitions: {}", serviceQueue, event.getPartitions());
-            if (!consumerConfigurations.get(event.getQueueKey()).isConsumerPerPartition()) {
+            Queue configuration = consumerConfigurations.get(event.getQueueKey());
+            if (configuration == null) {
+                log.warn("Received invalid partition change event for {} that is not managed by this service", event.getQueueKey());
+                return;
+            }
+            if (!configuration.isConsumerPerPartition()) {
                 consumers.get(event.getQueueKey()).subscribe(event.getPartitions());
             } else {
                 log.info("[{}] Subscribing consumer per partition: {}", serviceQueue, event.getPartitions());
@@ -425,32 +432,34 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     private void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg) {
         log.info("Received queue update msg: [{}]", queueUpdateMsg);
-        String queueName = queueUpdateMsg.getQueueName();
         TenantId tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
-        QueueId queueId = new QueueId(new UUID(queueUpdateMsg.getQueueIdMSB(), queueUpdateMsg.getQueueIdLSB()));
-        QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueUpdateMsg.getQueueName(), tenantId);
-        Queue queue = queueService.findQueueById(tenantId, queueId);
-        Queue oldQueue = consumerConfigurations.remove(queueKey);
-        if (oldQueue != null) {
-            if (oldQueue.isConsumerPerPartition()) {
-                TbTopicWithConsumerPerPartition consumerPerPartition = topicsConsumerPerPartition.remove(queueKey);
-                ReentrantLock lock = consumerPerPartition.getLock();
-                try {
-                    lock.lock();
-                    consumerPerPartition.getConsumers().values().forEach(TbQueueConsumer::unsubscribe);
-                } finally {
-                    lock.unlock();
+        if (partitionService.isManagedByCurrentService(tenantId)) {
+            QueueId queueId = new QueueId(new UUID(queueUpdateMsg.getQueueIdMSB(), queueUpdateMsg.getQueueIdLSB()));
+            String queueName = queueUpdateMsg.getQueueName();
+            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueName, tenantId);
+            Queue queue = queueService.findQueueById(tenantId, queueId);
+            Queue oldQueue = consumerConfigurations.remove(queueKey);
+            if (oldQueue != null) {
+                if (oldQueue.isConsumerPerPartition()) {
+                    TbTopicWithConsumerPerPartition consumerPerPartition = topicsConsumerPerPartition.remove(queueKey);
+                    ReentrantLock lock = consumerPerPartition.getLock();
+                    try {
+                        lock.lock();
+                        consumerPerPartition.getConsumers().values().forEach(TbQueueConsumer::unsubscribe);
+                    } finally {
+                        lock.unlock();
+                    }
+                } else {
+                    TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer = consumers.remove(queueKey);
+                    consumer.unsubscribe();
                 }
-            } else {
-                TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer = consumers.remove(queueKey);
-                consumer.unsubscribe();
             }
-        }
 
-        initConsumer(queue);
+            initConsumer(queue);
 
-        if (!queue.isConsumerPerPartition()) {
-            launchConsumer(consumers.get(queueKey), consumerConfigurations.get(queueKey), consumerStats.get(queueKey), queueName);
+            if (!queue.isConsumerPerPartition()) {
+                launchConsumer(consumers.get(queueKey), consumerConfigurations.get(queueKey), consumerStats.get(queueKey), queueName);
+            }
         }
 
         partitionService.updateQueue(queueUpdateMsg);

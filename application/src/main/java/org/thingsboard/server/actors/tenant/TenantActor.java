@@ -32,7 +32,6 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -83,21 +82,21 @@ public class TenantActor extends RuleChainManagerActor {
                 cantFindTenant = true;
                 log.info("[{}] Started tenant actor for missing tenant.", tenantId);
             } else {
-                TenantProfile tenantProfile = systemContext.getTenantProfileCache().get(tenant.getTenantProfileId());
-
                 isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
                 isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
                 if (isRuleEngine) {
-                    try {
-                        if (getApiUsageState().isReExecEnabled()) {
-                            log.debug("[{}] Going to init rule chains", tenantId);
-                            initRuleChains();
-                        } else {
-                            log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
+                    if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                        try {
+                            if (getApiUsageState().isReExecEnabled()) {
+                                log.debug("[{}] Going to init rule chains", tenantId);
+                                initRuleChains();
+                            } else {
+                                log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
+                            }
+                        } catch (Exception e) {
+                            log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
+                            cantFindTenant = true;
                         }
-                    } catch (Exception e) {
-                        log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
-                        cantFindTenant = true;
                     }
                 }
                 log.debug("[{}] Tenant actor started.", tenantId);

@@ -85,6 +85,9 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         } else {
             serviceTypes = Collections.singletonList(ServiceType.of(serviceType));
         }
+        if (!serviceTypes.contains(ServiceType.TB_RULE_ENGINE) || assignedTenantProfiles == null) {
+            assignedTenantProfiles = Collections.emptySet();
+        }
 
        generateNewServiceInfoWithCurrentSystemInfo();
     }
