@@ -122,18 +122,6 @@
         font: inherit;
       }
     }
-    .mat-slide {
-      margin: 0;
-      &.margin {
-        margin: 8px 0;
-      }
-      .mdc-form-field>label {
-        font-weight: 400;
-        font-size: 16px;
-        line-height: 24px;
-        margin-left: 12px;
-      }
-    }
   }
 
   .tb-form-panel-title {
@@ -197,6 +185,21 @@
     }
     .mat-slide:only-child {
       margin: 8px 0;
+    }
+  }
+
+  .tb-form-panel, .tb-form-row {
+    .mat-slide {
+      margin: 0;
+      &.margin {
+        margin: 8px 0;
+      }
+      .mdc-form-field>label {
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 24px;
+        margin-left: 12px;
+      }
     }
   }
 

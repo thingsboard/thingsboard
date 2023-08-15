@@ -1208,7 +1208,11 @@
         "delta-calculation-result-delta-absolute": "Delta (absolute)",
         "delta-calculation-result-delta-percent": "Delta (percent)",
         "source": "Source",
-        "latest": "Latest"
+        "latest": "Latest",
+        "latest-value": "Latest value",
+        "delta": "delta",
+        "percent": "percent",
+        "absolute": "absolute"
     },
     "datasource": {
         "type": "Datasource type",
@@ -3911,6 +3915,7 @@
         "icon-position-right": "Right",
         "font": "Font",
         "color": "Color",
+        "displayTypePrefix": "Display Realtime/History prefix",
         "preview": "Preview"
     },
     "unit": {
@@ -5717,6 +5722,25 @@
             "value": "Value",
             "date": "Date",
             "value-card-style": "Value card style"
+        },
+        "aggregated-value-card": {
+            "subtitle": "Subtitle",
+            "chart": "Chart",
+            "values": "Values",
+            "value-appearance": "Value appearance",
+            "position": "Position",
+            "position-center": "Center",
+            "position-right-top": "Right top",
+            "position-right-bottom": "Right bottom",
+            "position-left-top": "Left top",
+            "position-left-bottom": "Left bottom",
+            "font": "Font",
+            "color": "Color",
+            "display-up-down-arrow": "Display Up/Down arrow",
+            "add-value": "Add value",
+            "remove-value": "Remove value",
+            "no-values": "No values configured",
+            "aggregation": "Aggregation"
         },
         "table": {
             "common-table-settings": "Common Table Settings",
