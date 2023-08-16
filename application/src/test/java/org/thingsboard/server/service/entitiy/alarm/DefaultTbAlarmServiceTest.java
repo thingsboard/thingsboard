@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.housekeeper.HouseKeeperService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
@@ -74,6 +75,8 @@ public class DefaultTbAlarmServiceTest {
     protected TbClusterService tbClusterService;
     @MockBean
     private EntitiesVersionControlService vcService;
+    @MockBean
+    protected HouseKeeperService houseKeeperService;
 
     @SpyBean
     DefaultTbAlarmService service;
