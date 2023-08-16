@@ -11,7 +11,8 @@
         "permission-denied-text": "You don't have permission to perform this operation!"
     },
     "account": {
-        "account": "Account"
+        "account": "Account",
+        "notification-settings": "Notification settings"
     },
     "action": {
         "activate": "Activate",
@@ -512,6 +513,7 @@
         "severity-indeterminate": "Indeterminate",
         "acknowledge": "Acknowledge",
         "clear": "Clear",
+        "delete": "Delete",
         "search": "Search alarms",
         "selected-alarms": "{ count, plural, =1 {1 alarm} other {# alarms} } selected",
         "no-data": "No data to display",
@@ -522,10 +524,14 @@
         "aknowledge-alarms-text": "Are you sure you want to acknowledge { count, plural, =1 {1 alarm} other {# alarms} }?",
         "aknowledge-alarm-title": "Acknowledge Alarm",
         "aknowledge-alarm-text": "Are you sure you want to acknowledge Alarm?",
+        "selected-alarms-are-acknowledged": "Selected alarms are already acknowledged",
         "clear-alarms-title": "Clear { count, plural, =1 {1 alarm} other {# alarms} }",
         "clear-alarms-text": "Are you sure you want to clear { count, plural, =1 {1 alarm} other {# alarms} }?",
         "clear-alarm-title": "Clear Alarm",
         "clear-alarm-text": "Are you sure you want to clear Alarm?",
+        "delete-alarms-title": "Delete { count, plural, =1 {1 alarm} other {# alarms} }",
+        "delete-alarms-text": "Are you sure you want to delete { count, plural, =1 {1 alarm} other {# alarms} }?",
+        "selected-alarms-are-cleared": "Selected alarms are already cleared",
         "alarm-status-filter": "Alarm Status Filter",
         "alarm-filter-title": "Alarm Filter",
         "assigned": "Assigned",
@@ -699,6 +705,7 @@
         "latest-telemetry": "Latest telemetry",
         "no-latest-telemetry": "No latest telemetry",
         "attributes-scope": "Entity attributes scope",
+        "scope-telemetry": "Telemetry",
         "scope-latest-telemetry": "Latest telemetry",
         "scope-client": "Client attributes",
         "scope-server": "Server attributes",
@@ -726,7 +733,19 @@
         "no-telemetry-text": "No telemetry found",
         "copy-key": "Copy key",
         "copy-value": "Copy value",
-        "add-telemetry": "Add telemetry"
+        "add-telemetry": "Add telemetry",
+        "copy-value": "Copy value",
+        "delete-timeseries": {
+            "start-time": "Start time",
+            "ends-on": "Ends on",
+            "strategy": "Strategy",
+            "delete-strategy": "Delete strategy",
+            "all-data": "Delete all data",
+            "all-data-except-latest-value": "Delete all data except latest value",
+            "latest-value": "Delete latest value",
+            "all-data-for-time-period": "Delete all data for time period",
+            "rewrite-latest-value": "Rewrite latest value"
+        }
     },
     "api-usage": {
         "api-features": "API features",
@@ -1208,7 +1227,11 @@
         "delta-calculation-result-delta-absolute": "Delta (absolute)",
         "delta-calculation-result-delta-percent": "Delta (percent)",
         "source": "Source",
-        "latest": "Latest"
+        "latest": "Latest",
+        "latest-value": "Latest value",
+        "delta": "delta",
+        "percent": "percent",
+        "absolute": "absolute"
     },
     "datasource": {
         "type": "Datasource type",
@@ -2031,6 +2054,7 @@
         "entity-types": "Entity types",
         "entity-type-list": "Entity type list",
         "any-entity": "Any entity",
+        "add-entity-type": "Add entity type",
         "enter-entity-type": "Enter entity type",
         "no-entities-matching": "No entities matching '{{entity}}' were found.",
         "no-entity-types-matching": "No entity types matching '{{entityType}}' were found.",
@@ -3128,7 +3152,17 @@
         "updated": "Updated",
         "use-template": "Use template",
         "view-all": "View all",
-        "warning": "Warning"
+        "warning": "Warning",
+        "settings": {
+            "notification-settings": "Notification settings",
+            "reset-all": "Reset all settings",
+            "reset-all-title": "Are you sure you want to reset form?",
+            "reset-all-text": "After the confirmation, the settings form will reset to the default value and save.",
+            "type": "Type",
+            "enable-all": "Enable all",
+            "disable-all": "Disable all",
+            "delivery-not-configured": "Delivery method is not configured"
+        }
     },
     "ota-update": {
       "add": "Add package",
@@ -3325,6 +3359,7 @@
         "delete-from-relations-title": "Are you sure you want to delete { count, plural, =1 {1 relation} other {# relations} }?",
         "delete-from-relations-text": "Be careful, after the confirmation all selected relations will be removed and current entity will be unrelated from the corresponding entities.",
         "remove-relation-filter": "Remove relation filter",
+        "remove-filter": "Remove filter",
         "add-relation-filter": "Add relation filter",
         "any-relation": "Any relation",
         "relation-filters": "Relation filters",
@@ -3911,6 +3946,7 @@
         "icon-position-right": "Right",
         "font": "Font",
         "color": "Color",
+        "displayTypePrefix": "Display Realtime/History prefix",
         "preview": "Preview"
     },
     "unit": {
@@ -5717,6 +5753,25 @@
             "value": "Value",
             "date": "Date",
             "value-card-style": "Value card style"
+        },
+        "aggregated-value-card": {
+            "subtitle": "Subtitle",
+            "chart": "Chart",
+            "values": "Values",
+            "value-appearance": "Value appearance",
+            "position": "Position",
+            "position-center": "Center",
+            "position-right-top": "Right top",
+            "position-right-bottom": "Right bottom",
+            "position-left-top": "Left top",
+            "position-left-bottom": "Left bottom",
+            "font": "Font",
+            "color": "Color",
+            "display-up-down-arrow": "Display Up/Down arrow",
+            "add-value": "Add value",
+            "remove-value": "Remove value",
+            "no-values": "No values configured",
+            "aggregation": "Aggregation"
         },
         "table": {
             "common-table-settings": "Common Table Settings",

@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, Subscription, throwError } from 'rxjs';
 import { map, mergeMap, publishReplay, refCount, share } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -23,14 +23,15 @@ import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntitySubtype, EntityType } from '@shared/models/entity-type.models';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { MatChipGrid, MatChipInputEvent } from '@angular/material/chips';
 import { AssetService } from '@core/http/asset.service';
 import { DeviceService } from '@core/http/device.service';
 import { EdgeService } from '@core/http/edge.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { FloatLabelType } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-subtype-list',
@@ -46,31 +47,42 @@ import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 })
 export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
-  entitySubtypeListFormGroup: UntypedFormGroup;
+  entitySubtypeListFormGroup: FormGroup;
 
   modelValue: Array<string> | null;
 
   private requiredValue: boolean;
+
   get required(): boolean {
     return this.requiredValue;
   }
 
-  @Input() label: string;
-
   @Input()
+  @coerceBoolean()
   set required(value: boolean) {
-    const newVal = coerceBooleanProperty(value);
-    if (this.requiredValue !== newVal) {
-      this.requiredValue = newVal;
+    if (this.requiredValue !== value) {
+      this.requiredValue = value;
       this.updateValidators();
     }
   }
+
+  @Input()
+  floatLabel: FloatLabelType = 'auto';
+
+  @Input()
+  label: string;
 
   @Input()
   disabled: boolean;
 
   @Input()
   entityType: EntityType;
+
+  @Input()
+  emptyInputPlaceholder: string;
+
+  @Input()
+  filledInputPlaceholder: string;
 
   @ViewChild('entitySubtypeInput') entitySubtypeInput: ElementRef<HTMLInputElement>;
   @ViewChild('entitySubtypeAutocomplete') entitySubtypeAutocomplete: MatAutocomplete;
@@ -102,12 +114,13 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
               private deviceService: DeviceService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
-              private fb: UntypedFormBuilder) {
+              private fb: FormBuilder) {
     this.entitySubtypeListFormGroup = this.fb.group({
       entitySubtypeList: [this.entitySubtypeList, this.required ? [Validators.required] : []],
       entitySubtype: [null]
     });
   }
+
 
   updateValidators() {
     this.entitySubtypeListFormGroup.get('entitySubtypeList').setValidators(this.required ? [Validators.required] : []);
@@ -122,7 +135,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   }
 
   ngOnInit() {
-
     switch (this.entityType) {
       case EntityType.ASSET:
         this.placeholder = this.required ? this.translate.instant('asset.enter-asset-type')
@@ -164,6 +176,13 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
           this.entitySubtypes = null;
         });
         break;
+    }
+
+    if (this.emptyInputPlaceholder) {
+      this.placeholder = this.emptyInputPlaceholder;
+    }
+    if (this.filledInputPlaceholder) {
+      this.secondaryPlaceholder = this.filledInputPlaceholder;
     }
 
     this.filteredEntitySubtypeList = this.entitySubtypeListFormGroup.get('entitySubtype').valueChanges
@@ -225,13 +244,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
     }
     this.clear('');
   }
-
-  clearChipGrid() {
-    this.entitySubtypeList = [];
-    this.modelValue = null;
-    this.entitySubtypeListFormGroup.get('entitySubtypeList').patchValue([], {emitEvent: true});
-  }
-
   remove(entitySubtype: string) {
     const index = this.entitySubtypeList.indexOf(entitySubtype);
     if (index >= 0) {

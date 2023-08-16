@@ -52,8 +52,6 @@ public class EdgeSyncCursor {
             fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
             fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
             fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
-            fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
-            fetchers.add(new AssetProfilesEdgeEventFetcher(ctx.getAssetProfileService()));
             fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
             Customer publicCustomer = ctx.getCustomerService().findOrCreatePublicCustomer(edge.getTenantId());
@@ -63,6 +61,8 @@ public class EdgeSyncCursor {
                 fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
             }
         }
+        fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
+        fetchers.add(new AssetProfilesEdgeEventFetcher(ctx.getAssetProfileService()));
         fetchers.add(new DevicesEdgeEventFetcher(ctx.getDeviceService()));
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));
         fetchers.add(new EntityViewsEdgeEventFetcher(ctx.getEntityViewService()));

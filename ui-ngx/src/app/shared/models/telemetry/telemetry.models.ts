@@ -61,6 +61,13 @@ export enum TelemetryFeature {
   TIMESERIES = 'TIMESERIES'
 }
 
+export enum TimeseriesDeleteStrategy {
+  DELETE_ALL_DATA = 'DELETE_ALL_DATA',
+  DELETE_ALL_DATA_EXCEPT_LATEST_VALUE = 'DELETE_ALL_DATA_EXCEPT_LATEST_VALUE',
+  DELETE_LATEST_VALUE = 'DELETE_LATEST_VALUE',
+  DELETE_ALL_DATA_FOR_TIME_PERIOD = 'DELETE_ALL_DATA_FOR_TIME_PERIOD'
+}
+
 export type TelemetryType = LatestTelemetry | AttributeScope;
 
 export const toTelemetryType = (val: string): TelemetryType => {
@@ -73,7 +80,7 @@ export const toTelemetryType = (val: string): TelemetryType => {
 
 export const telemetryTypeTranslations = new Map<TelemetryType, string>(
   [
-    [LatestTelemetry.LATEST_TELEMETRY, 'attribute.scope-latest-telemetry'],
+    [LatestTelemetry.LATEST_TELEMETRY, 'attribute.scope-telemetry'],
     [AttributeScope.CLIENT_SCOPE, 'attribute.scope-client'],
     [AttributeScope.SERVER_SCOPE, 'attribute.scope-server'],
     [AttributeScope.SHARED_SCOPE, 'attribute.scope-shared']
@@ -88,6 +95,15 @@ export const isClientSideTelemetryType = new Map<TelemetryType, boolean>(
     [AttributeScope.SHARED_SCOPE, false]
   ]
 );
+
+export const timeseriesDeleteStrategyTranslations = new Map<TimeseriesDeleteStrategy, string>(
+  [
+    [TimeseriesDeleteStrategy.DELETE_ALL_DATA, 'attribute.delete-timeseries.all-data'],
+    [TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE, 'attribute.delete-timeseries.all-data-except-latest-value'],
+    [TimeseriesDeleteStrategy.DELETE_LATEST_VALUE, 'attribute.delete-timeseries.latest-value'],
+    [TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD, 'attribute.delete-timeseries.all-data-for-time-period']
+  ]
+)
 
 export interface AttributeData {
   lastUpdateTs?: number;

@@ -632,6 +632,7 @@
         "attributes": "Atributs",
         "latest-telemetry": "Última telemetria",
         "attributes-scope": "Abast dels atributs del dispositiu",
+        "scope-telemetry": "Telemetria",
         "scope-latest-telemetry": "Última telemetria",
         "scope-client": "Atributs del Client",
         "scope-server": "Atributs del Servidor",

@@ -85,7 +85,7 @@ message ConnectResponseMsg {
 }
 
 message SyncRequestMsg {
-  bool syncRequired = 1;
+  bool syncRequired = 1; // deprecated
   optional bool fullSync = 2;
 }
 
@@ -559,6 +559,11 @@ message UplinkMsg {
   repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13; // deprecated
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
+  repeated AssetUpdateMsg assetUpdateMsg = 16;
+  repeated DashboardUpdateMsg dashboardUpdateMsg = 17;
+  repeated EntityViewUpdateMsg entityViewUpdateMsg = 18;
+  repeated AssetProfileUpdateMsg assetProfileUpdateMsg = 19;
+  repeated DeviceProfileUpdateMsg deviceProfileUpdateMsg = 20;
 }
 
 message UplinkResponseMsg {

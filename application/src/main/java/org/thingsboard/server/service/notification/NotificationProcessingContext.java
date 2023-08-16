@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
@@ -52,6 +53,8 @@ public class NotificationProcessingContext {
     private final Set<NotificationDeliveryMethod> deliveryMethods;
     @Getter
     private final NotificationTemplate notificationTemplate;
+    @Getter
+    private final NotificationType notificationType;
 
     private final Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> templates;
     @Getter
@@ -65,6 +68,7 @@ public class NotificationProcessingContext {
         this.deliveryMethods = deliveryMethods;
         this.settings = settings;
         this.notificationTemplate = template;
+        this.notificationType = template.getNotificationType();
         this.templates = new EnumMap<>(NotificationDeliveryMethod.class);
         this.stats = new NotificationRequestStats();
         init();
