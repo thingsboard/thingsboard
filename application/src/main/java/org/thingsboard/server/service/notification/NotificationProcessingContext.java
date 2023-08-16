@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification;
 
+import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,12 +32,13 @@ import org.thingsboard.server.common.data.notification.template.HasSubject;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
-import org.thingsboard.server.common.data.util.TemplateUtils;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -57,9 +59,11 @@ public class NotificationProcessingContext {
     @Getter
     private final NotificationRequestStats stats;
 
+    private final TemplateService templateService;
+
     @Builder
     public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, Set<NotificationDeliveryMethod> deliveryMethods,
-                                           NotificationTemplate template, NotificationSettings settings) {
+                                         NotificationTemplate template, NotificationSettings settings, TemplateService templateService) {
         this.tenantId = tenantId;
         this.request = request;
         this.deliveryMethods = deliveryMethods;
@@ -67,14 +71,22 @@ public class NotificationProcessingContext {
         this.notificationTemplate = template;
         this.templates = new EnumMap<>(NotificationDeliveryMethod.class);
         this.stats = new NotificationRequestStats();
+        this.templateService = templateService;
         init();
     }
+
+    private final Map<String, Function<NotificationRecipient, String>> recipientTemplateParams = Map.of(
+            "recipientTitle", NotificationRecipient::getTitle,
+            "recipientEmail", recipient -> Strings.nullToEmpty(recipient.getEmail()),
+            "recipientFirstName", recipient -> Strings.nullToEmpty(recipient.getFirstName()),
+            "recipientLastName", recipient -> Strings.nullToEmpty(recipient.getLastName())
+    );
 
     private void init() {
         NotificationTemplateConfig templateConfig = notificationTemplate.getConfiguration();
         templateConfig.getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (template.isEnabled()) {
-                template = processTemplate(template, null); // processing template with immutable params
+                template = processTemplate(template, null, recipientTemplateParams.keySet());
                 templates.put(deliveryMethod, template);
             }
         });
@@ -91,12 +103,12 @@ public class NotificationProcessingContext {
             additionalTemplateContext = createTemplateContextForRecipient(recipient);
         }
         if (MapUtils.isNotEmpty(additionalTemplateContext) && template.containsAny(additionalTemplateContext.keySet().toArray(String[]::new))) {
-            template = processTemplate(template, additionalTemplateContext);
+            template = processTemplate(template, additionalTemplateContext, Collections.emptySet());
         }
         return template;
     }
 
-    private <T extends DeliveryMethodNotificationTemplate> T processTemplate(T template, Map<String, String> additionalTemplateContext) {
+    private <T extends DeliveryMethodNotificationTemplate> T processTemplate(T template, Map<String, String> additionalTemplateContext, Set<String> ignoredParams) {
         Map<String, String> templateContext = new HashMap<>();
         if (request.getInfo() != null) {
             templateContext.putAll(request.getInfo().getTemplateData());
@@ -104,35 +116,31 @@ public class NotificationProcessingContext {
         if (additionalTemplateContext != null) {
             templateContext.putAll(additionalTemplateContext);
         }
-        if (templateContext.isEmpty()) return template;
+        if (templateContext.isEmpty() && ignoredParams.isEmpty()) return template;
 
         template = (T) template.copy();
-        template.setBody(TemplateUtils.processTemplate(template.getBody(), templateContext));
+        template.setBody(templateService.processTemplate(tenantId, template.getBody(), templateContext, ignoredParams));
         if (template instanceof HasSubject) {
             String subject = ((HasSubject) template).getSubject();
-            ((HasSubject) template).setSubject(TemplateUtils.processTemplate(subject, templateContext));
+            ((HasSubject) template).setSubject(templateService.processTemplate(tenantId, subject, templateContext, ignoredParams));
         }
         if (template instanceof WebDeliveryMethodNotificationTemplate) {
             WebDeliveryMethodNotificationTemplate webNotificationTemplate = (WebDeliveryMethodNotificationTemplate) template;
             String buttonText = webNotificationTemplate.getButtonText();
             if (isNotEmpty(buttonText)) {
-                webNotificationTemplate.setButtonText(TemplateUtils.processTemplate(buttonText, templateContext));
+                webNotificationTemplate.setButtonText(templateService.processTemplate(tenantId, buttonText, templateContext, ignoredParams));
             }
             String buttonLink = webNotificationTemplate.getButtonLink();
             if (isNotEmpty(buttonLink)) {
-                webNotificationTemplate.setButtonLink(TemplateUtils.processTemplate(buttonLink, templateContext));
+                webNotificationTemplate.setButtonLink(templateService.processTemplate(tenantId, buttonLink, templateContext, ignoredParams));
             }
         }
         return template;
     }
 
     private Map<String, String> createTemplateContextForRecipient(NotificationRecipient recipient) {
-        return Map.of(
-                "recipientTitle", recipient.getTitle(),
-                "recipientEmail", Strings.nullToEmpty(recipient.getEmail()),
-                "recipientFirstName", Strings.nullToEmpty(recipient.getFirstName()),
-                "recipientLastName", Strings.nullToEmpty(recipient.getLastName())
-        );
+        return recipientTemplateParams.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().apply(recipient)));
     }
 
 }

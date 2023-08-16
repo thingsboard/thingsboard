@@ -16,5 +16,6 @@
 package org.thingsboard.script.api;
 
 public enum ScriptType {
-    RULE_NODE_SCRIPT
+    RULE_NODE_SCRIPT,
+    TEMPLATE_SCRIPT
 }
