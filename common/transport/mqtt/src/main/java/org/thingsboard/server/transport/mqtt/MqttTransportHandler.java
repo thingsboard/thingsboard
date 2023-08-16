@@ -137,7 +137,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private static final MqttQoS MAX_SUPPORTED_QOS_LVL = AT_LEAST_ONCE;
 
     private final UUID sessionId;
-    private final TbMsgMetaData msgMetaData = new TbMsgMetaData();
 
     protected final MqttTransportContext context;
     private final TransportService transportService;
@@ -538,9 +537,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private TbMsgMetaData getMetadata(DeviceSessionCtx ctx, String topicName) {
         if (ctx.isDeviceProfileMqttTransportType()) {
-            msgMetaData.putValue(DataConstants.MQTT_TOPIC, topicName);
+            TbMsgMetaData md = new TbMsgMetaData();
+            md.putValue(DataConstants.MQTT_TOPIC, topicName);
+            return md;
+        } else {
+            return null;
         }
-        return msgMetaData;
     }
 
     private void sendAckOrCloseSession(ChannelHandlerContext ctx, String topicName, int msgId) {
