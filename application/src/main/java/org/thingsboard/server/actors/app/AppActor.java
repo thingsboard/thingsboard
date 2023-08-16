@@ -143,13 +143,9 @@ public class AppActor extends ContextAwareActor {
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
             msg.getMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
         } else {
-            if (!deletedTenants.contains(msg.getTenantId())) {
-                getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(actor -> {
-                    actor.tell(msg);
-                }, () -> msg.getMsg().getCallback().onSuccess());
-            } else {
-                msg.getMsg().getCallback().onSuccess();
-            }
+            getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(actor -> {
+                actor.tell(msg);
+            }, () -> msg.getMsg().getCallback().onSuccess());
         }
     }
 
@@ -182,22 +178,23 @@ public class AppActor extends ContextAwareActor {
     }
 
     private void onToDeviceActorMsg(TenantAwareMsg msg, boolean priority) {
-        if (!deletedTenants.contains(msg.getTenantId())) {
-            getOrCreateTenantActor(msg.getTenantId()).ifPresent(tenantActor -> {
-                if (priority) {
-                    tenantActor.tellWithHighPriority(msg);
-                } else {
-                    tenantActor.tell(msg);
-                }
-            });
-        } else {
+        getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {
+            if (priority) {
+                tenantActor.tellWithHighPriority(msg);
+            } else {
+                tenantActor.tell(msg);
+            }
+        }, () -> {
             if (msg instanceof TransportToDeviceActorMsgWrapper) {
                 ((TransportToDeviceActorMsgWrapper) msg).getCallback().onSuccess();
             }
-        }
+        });
     }
 
     private Optional<TbActorRef> getOrCreateTenantActor(TenantId tenantId) {
+        if (deletedTenants.contains(tenantId)) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
                 () -> DefaultActorService.TENANT_DISPATCHER_NAME,
                 () -> new TenantActor.ActorCreator(systemContext, tenantId),

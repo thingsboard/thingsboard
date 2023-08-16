@@ -591,6 +591,11 @@ public class DefaultTbClusterService implements TbClusterService {
         tbTransportServices.removeAll(tbCoreServices);
         tbCoreServices.removeAll(tbRuleEngineServices);
 
+        for (String ruleEngineServiceId : tbRuleEngineServices) {
+            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngineServiceId);
+            producerProvider.getRuleEngineNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), ruleEngineMsg), null);
+            toRuleEngineNfs.incrementAndGet();
+        }
         for (String coreServiceId : tbCoreServices) {
             TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, coreServiceId);
             producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), coreMsg), null);
@@ -600,11 +605,6 @@ public class DefaultTbClusterService implements TbClusterService {
             TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportServiceId);
             producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), null);
             toTransportNfs.incrementAndGet();
-        }
-        for (String ruleEngineServiceId : tbRuleEngineServices) {
-            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngineServiceId);
-            producerProvider.getRuleEngineNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), ruleEngineMsg), null);
-            toRuleEngineNfs.incrementAndGet();
         }
     }
 }

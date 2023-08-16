@@ -104,7 +104,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Value("${queue.rule-engine.prometheus-stats.enabled:false}")
     boolean prometheusStatsEnabled;
     @Value("${queue.rule-engine.topic-deletion-delay:30}")
-    private int topicDeletionDelay;
+    private int topicDeletionDelayInSec;
 
     private final StatsFactory statsFactory;
     private final TbRuleEngineSubmitStrategyFactory submitStrategyFactory;
@@ -506,7 +506,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private void processQueueDeletion(Queue queue, TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer) {
-        long finishTs = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(topicDeletionDelay);
+        long finishTs = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(topicDeletionDelayInSec);
         try {
             int n = 0;
             while (System.currentTimeMillis() <= finishTs) {
