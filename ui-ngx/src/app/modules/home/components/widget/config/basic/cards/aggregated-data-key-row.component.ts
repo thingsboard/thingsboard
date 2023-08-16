@@ -33,7 +33,7 @@ import {
   ComparisonResultType,
   DataKey,
   DataKeyConfigMode,
-  DatasourceType, Widget,
+  DatasourceType, JsonSettingsSchema, Widget,
   widgetType
 } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -104,6 +104,14 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
     return this.widgetConfigComponent.widget;
   }
 
+  get latestDataKeySettingsSchema(): JsonSettingsSchema {
+    return this.widgetConfigComponent.modelValue?.latestDataKeySettingsSchema;
+  }
+
+  get latestDataKeySettingsDirective(): string {
+    return this.widgetConfigComponent.modelValue?.latestDataKeySettingsDirective;
+  }
+
   get isEntityDatasource(): boolean {
     return [DatasourceType.device, DatasourceType.entity].includes(this.datasourceType);
   }
@@ -124,7 +132,8 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
       units: [null, []],
       decimals: [null, []],
       font: [null, []],
-      color: [null, []]
+      color: [null, []],
+      showArrow: [null, []]
     });
     this.keyRowFormGroup.valueChanges.subscribe(
       () => this.updateModel()
@@ -172,7 +181,8 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
         units: value?.units,
         decimals: value?.decimals,
         font: settings.font,
-        color: settings.color
+        color: settings.color,
+        showArrow: settings.showArrow
       }, {emitEvent: false}
     );
     this.cd.markForCheck();
@@ -190,8 +200,8 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
         data: {
           dataKey: deepClone(this.modelValue),
           dataKeyConfigMode: DataKeyConfigMode.general,
-          dataKeySettingsSchema: null,
-          dataKeySettingsDirective: null,
+          dataKeySettingsSchema: this.latestDataKeySettingsSchema,
+          dataKeySettingsDirective: this.latestDataKeySettingsDirective,
           dashboard: null,
           aliasController: null,
           widget: this.widget,
@@ -207,6 +217,11 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
       }).afterClosed().subscribe((updatedDataKey) => {
       if (updatedDataKey) {
         this.modelValue = updatedDataKey;
+        const settings: AggregatedValueCardKeySettings = (this.modelValue.settings || {});
+        this.keyRowFormGroup.get('position').patchValue(settings.position, {emitEvent: false});
+        this.keyRowFormGroup.get('font').patchValue(settings.font, {emitEvent: false});
+        this.keyRowFormGroup.get('color').patchValue(settings.color, {emitEvent: false});
+        this.keyRowFormGroup.get('showArrow').patchValue(settings.showArrow, {emitEvent: false});
         this.keyRowFormGroup.get('units').patchValue(this.modelValue.units, {emitEvent: false});
         this.keyRowFormGroup.get('decimals').patchValue(this.modelValue.decimals, {emitEvent: false});
         this.updateModel();
@@ -220,6 +235,7 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
     this.modelValue.settings.position = value.position;
     this.modelValue.settings.font = value.font;
     this.modelValue.settings.color = value.color;
+    this.modelValue.settings.showArrow = value.showArrow;
     this.modelValue.units = value.units;
     this.modelValue.decimals = value.decimals;
     this.propagateChange(this.modelValue);

@@ -90,7 +90,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
 
   protected setupDefaults(configData: WidgetConfigComponentData) {
     this.setupDefaultDatasource(configData, [
-        { name: 'watermeter', label: 'Watermeter', type: DataKeyType.timeseries }
+        { name: 'watermeter', label: 'Watermeter', type: DataKeyType.timeseries, units: 'm³', decimals: 0 }
       ],
       createDefaultAggregatedValueLatestDataKeys('watermeter', 'm³')
     );
@@ -141,6 +141,8 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
       dateColor: [settings.dateColor, []],
 
       showChart: [settings.showChart, []],
+      chartUnits: [dataKey?.units, []],
+      chartDecimals: [dataKey?.decimals, []],
       chartColor: [settings.chartColor, []],
 
       values: [this.getValues(configData.config.datasources, keyName), []],
@@ -181,6 +183,13 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
     this.widgetConfig.config.settings.dateColor = config.dateColor;
 
     this.widgetConfig.config.settings.showChart = config.showChart;
+
+    const dataKey = getDataKey(this.widgetConfig.config.datasources);
+    if (dataKey) {
+      dataKey.units = config.chartUnits;
+      dataKey.decimals = config.chartDecimals;
+    }
+
     this.widgetConfig.config.settings.chartColor = config.chartColor;
 
     this.setValues(config.values, this.widgetConfig.config.datasources);
@@ -253,8 +262,12 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
     }
 
     if (showChart) {
+      this.aggregatedValueCardWidgetConfigForm.get('chartUnits').enable();
+      this.aggregatedValueCardWidgetConfigForm.get('chartDecimals').enable();
       this.aggregatedValueCardWidgetConfigForm.get('chartColor').enable();
     } else {
+      this.aggregatedValueCardWidgetConfigForm.get('chartUnits').disable();
+      this.aggregatedValueCardWidgetConfigForm.get('chartDecimals').disable();
       this.aggregatedValueCardWidgetConfigForm.get('chartColor').disable();
     }
   }

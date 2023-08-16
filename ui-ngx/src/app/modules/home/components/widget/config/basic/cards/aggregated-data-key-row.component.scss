@@ -49,10 +49,10 @@
 
   .tb-aggregation-field {
     flex: 1;
-    min-width: 150px;
+    min-width: 120px;
   }
 
-  .tb-units-field, .tb-decimals-field, .tb-font-field, .tb-color-field {
+  .tb-units-field, .tb-decimals-field, .tb-font-field, .tb-color-field, tb-arrow-field {
     display: flex;
     flex-direction: row;
     place-content: center;
@@ -69,14 +69,13 @@
     min-width: 60px;
   }
 
-  .tb-font-field {
+  .tb-font-field, .tb-color-field, .tb-arrow-field {
     width: 40px;
     min-width: 40px;
-  }
-
-  .tb-color-field {
-    width: 40px;
-    min-width: 40px;
+    display: none;
+    @media #{$mat-gt-xs} {
+      display: block;
+    }
   }
 
   .tb-units-field, .tb-decimals-field {

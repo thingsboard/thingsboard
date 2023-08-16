@@ -25,7 +25,7 @@
 
     &.tb-aggregation-header {
       flex: 1;
-      min-width: 150px;
+      min-width: 120px;
     }
 
     &.tb-units-header {
@@ -38,14 +38,13 @@
       min-width: 60px;
     }
 
-    &.tb-font-header {
+    &.tb-font-header, &.tb-color-header, &.tb-arrow-header {
       width: 40px;
       min-width: 40px;
-    }
-
-    &.tb-color-header {
-      width: 40px;
-      min-width: 40px;
+      display: none;
+      @media #{$mat-gt-xs} {
+        display: block;
+      }
     }
 
     &.tb-actions-header {
