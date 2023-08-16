@@ -83,7 +83,6 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile MqttTopicFilter attributesPublishTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
     private volatile MqttTopicFilter attributesSubscribeTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
     private volatile TransportPayloadType payloadType = TransportPayloadType.JSON;
-    private volatile DeviceTransportType transportType = DeviceTransportType.DEFAULT;
     private volatile Descriptors.Descriptor attributesDynamicMessageDescriptor;
     private volatile Descriptors.Descriptor telemetryDynamicMessageDescriptor;
     private volatile Descriptors.Descriptor rpcResponseDynamicMessageDescriptor;
@@ -94,8 +93,12 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile boolean sendAckOnValidationException;
 
     @Getter
+    private volatile boolean deviceProfileMqttTransportType;
+
+    @Getter
     @Setter
     private TransportPayloadType provisionPayloadType = payloadType;
+
 
     public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap, MqttTransportContext context) {
         super(sessionId, mqttQoSMap);
@@ -126,8 +129,6 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     public boolean isJsonPayloadType() {
         return payloadType.equals(TransportPayloadType.JSON);
     }
-
-    public boolean isMqttTransportType() { return DeviceTransportType.MQTT.equals(transportType); }
 
     public boolean isSendAckOnValidationException() {
         return sendAckOnValidationException;
@@ -168,7 +169,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
             MqttDeviceProfileTransportConfiguration mqttConfig = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
             TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttConfig.getTransportPayloadTypeConfiguration();
             payloadType = transportPayloadTypeConfiguration.getTransportPayloadType();
-            transportType = DeviceTransportType.MQTT;
+            deviceProfileMqttTransportType = true;
             telemetryTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceTelemetryTopic());
             attributesPublishTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesTopic());
             attributesSubscribeTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesSubscribeTopic());
