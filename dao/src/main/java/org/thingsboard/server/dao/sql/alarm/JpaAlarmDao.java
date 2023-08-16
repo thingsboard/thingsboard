@@ -66,7 +66,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
@@ -287,8 +286,9 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public List<AlarmId> findAlarmIdsByAssigneeId(UUID key) {
-        List<UUID> assignedAlarmIds = alarmRepository.findAlarmIdsByAssigneeId(key);
+    public List<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UUID userId, int limit) {
+        log.debug("[{}] findAlarmIdsByAssigneeId [{}] limit {}", tenantId, userId, limit);
+        List<UUID> assignedAlarmIds = alarmRepository.findAlarmIdsByAssigneeId(userId, PageRequest.of(0, limit));
         return DaoUtil.fromUUIDs(assignedAlarmIds, AlarmId::new);
     }
 

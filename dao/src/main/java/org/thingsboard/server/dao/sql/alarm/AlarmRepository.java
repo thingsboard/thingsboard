@@ -316,7 +316,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     AlarmInfoEntity findAlarmInfoById(@Param("tenantId") UUID tenantId, @Param("alarmId") UUID alarmId);
 
     @Query("SELECT a.id FROM AlarmEntity a WHERE a.assigneeId = :assigneeId")
-    List<UUID> findAlarmIdsByAssigneeId(@Param("assigneeId") UUID assigneeId);
+    List<UUID> findAlarmIdsByAssigneeId(@Param("assigneeId") UUID assigneeId, Pageable pageable);
 
     @Query(value = "SELECT create_or_update_active_alarm(:t_id, :c_id, :a_id, :a_created_ts, :a_o_id, :a_o_type, :a_type, :a_severity, " +
             ":a_start_ts, :a_end_ts, :a_details, :a_propagate, :a_propagate_to_owner, " +

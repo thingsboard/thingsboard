@@ -31,27 +31,27 @@ import java.util.List;
 
 public interface UserService extends EntityDaoService {
 
-	User findUserById(TenantId tenantId, UserId userId);
+    User findUserById(TenantId tenantId, UserId userId);
 
-	ListenableFuture<User> findUserByIdAsync(TenantId tenantId, UserId userId);
+    ListenableFuture<User> findUserByIdAsync(TenantId tenantId, UserId userId);
 
-	User findUserByEmail(TenantId tenantId, String email);
+    User findUserByEmail(TenantId tenantId, String email);
 
     User findUserByTenantIdAndEmail(TenantId tenantId, String email);
 
-	User saveUser(TenantId tenantId, User user);
+    User saveUser(TenantId tenantId, User user);
 
-	UserCredentials findUserCredentialsByUserId(TenantId tenantId, UserId userId);
+    UserCredentials findUserCredentialsByUserId(TenantId tenantId, UserId userId);
 
-	UserCredentials findUserCredentialsByActivateToken(TenantId tenantId, String activateToken);
+    UserCredentials findUserCredentialsByActivateToken(TenantId tenantId, String activateToken);
 
-	UserCredentials findUserCredentialsByResetToken(TenantId tenantId, String resetToken);
+    UserCredentials findUserCredentialsByResetToken(TenantId tenantId, String resetToken);
 
-	UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials);
+    UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
-	UserCredentials activateUserCredentials(TenantId tenantId, String activateToken, String password);
+    UserCredentials activateUserCredentials(TenantId tenantId, String activateToken, String password);
 
-	UserCredentials requestPasswordReset(TenantId tenantId, String email);
+    UserCredentials requestPasswordReset(TenantId tenantId, String email);
 
     UserCredentials requestExpiredPasswordReset(TenantId tenantId, UserCredentialsId userCredentialsId);
 

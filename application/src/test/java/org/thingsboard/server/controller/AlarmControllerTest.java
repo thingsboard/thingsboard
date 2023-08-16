@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -46,6 +47,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -568,10 +570,13 @@ public class AlarmControllerTest extends AbstractControllerTest {
         long beforeAssignmentTs = System.currentTimeMillis();
 
         doPost("/api/alarm/" + alarm.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
-        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+        Alarm finalAlarm = alarm;
+        var alarmObj = new Object() {
+            AlarmInfo foundAlarm = doGet("/api/alarm/info/" + finalAlarm.getId(), AlarmInfo.class);
+        };
+        Assert.assertNotNull(alarmObj.foundAlarm);
+        Assert.assertEquals(savedUser.getId(), alarmObj.foundAlarm.getAssigneeId());
+        Assert.assertTrue(alarmObj.foundAlarm.getAssignTs() >= beforeAssignmentTs);
 
         beforeAssignmentTs = System.currentTimeMillis();
 
@@ -583,10 +588,14 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         loginDifferentTenant();
 
-        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertNull(foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            alarmObj.foundAlarm = doGet("/api/alarm/info/" + finalAlarm.getId(), AlarmInfo.class);
+            return alarmObj.foundAlarm.getAssigneeId() == null;
+        });
+
+        Assert.assertNotNull(alarmObj.foundAlarm);
+        Assert.assertNull(alarmObj.foundAlarm.getAssigneeId());
+        Assert.assertTrue(alarmObj.foundAlarm.getAssignTs() >= beforeAssignmentTs);
     }
 
     @Test
@@ -617,10 +626,13 @@ public class AlarmControllerTest extends AbstractControllerTest {
         long beforeAssignmentTs = System.currentTimeMillis();
 
         doPost("/api/alarm/" + alarm.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
-        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+        Alarm finalAlarm = alarm;
+        var alarmObj = new Object() {
+            AlarmInfo foundAlarm = doGet("/api/alarm/info/" + finalAlarm.getId(), AlarmInfo.class);
+        };
+        Assert.assertNotNull(alarmObj.foundAlarm);
+        Assert.assertEquals(savedUser.getId(), alarmObj.foundAlarm.getAssigneeId());
+        Assert.assertTrue(alarmObj.foundAlarm.getAssignTs() >= beforeAssignmentTs);
 
         beforeAssignmentTs = System.currentTimeMillis();
 
@@ -628,10 +640,14 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
 
-        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertNull(foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            alarmObj.foundAlarm = doGet("/api/alarm/info/" + finalAlarm.getId(), AlarmInfo.class);
+            return alarmObj.foundAlarm.getAssigneeId() == null;
+        });
+
+        Assert.assertNotNull(alarmObj.foundAlarm);
+        Assert.assertNull(alarmObj.foundAlarm.getAssigneeId());
+        Assert.assertTrue(alarmObj.foundAlarm.getAssignTs() >= beforeAssignmentTs);
     }
 
     @Test
@@ -669,10 +685,13 @@ public class AlarmControllerTest extends AbstractControllerTest {
         long beforeAssignmentTs = System.currentTimeMillis();
 
         doPost("/api/alarm/" + alarm.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
-        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+        Alarm finalAlarm = alarm;
+        var alarmObj = new Object() {
+            AlarmInfo foundAlarm = doGet("/api/alarm/info/" + finalAlarm.getId(), AlarmInfo.class);
+        };
+        Assert.assertNotNull(alarmObj.foundAlarm);
+        Assert.assertEquals(savedUser.getId(), alarmObj.foundAlarm.getAssigneeId());
+        Assert.assertTrue(alarmObj.foundAlarm.getAssignTs() >= beforeAssignmentTs);
 
         beforeAssignmentTs = System.currentTimeMillis();
 
@@ -680,10 +699,14 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         doDelete("/api/customer/" + differentTenantCustomerId.getId()).andExpect(status().isOk());
 
-        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertNull(foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            alarmObj.foundAlarm = doGet("/api/alarm/info/" + finalAlarm.getId(), AlarmInfo.class);
+            return alarmObj.foundAlarm.getAssigneeId() == null;
+        });
+
+        Assert.assertNotNull(alarmObj.foundAlarm);
+        Assert.assertNull(alarmObj.foundAlarm.getAssigneeId());
+        Assert.assertTrue(alarmObj.foundAlarm.getAssignTs() >= beforeAssignmentTs);
     }
 
     @Test

@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.housekeeper.HouseKeeperService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -224,43 +225,50 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public List<AlarmId> unassignDeletedUserAlarms(User user) {
-        List<AlarmId> alarmIds = alarmService.findAlarmIdsByAssigneeId(user.getId());
-        for (AlarmId alarmId : alarmIds) {
-            log.trace("[{}] Unassigning alarm {} userId {}", user.getTenantId().getId(), alarmId.getId(), user.getId().getId());
-            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(user.getTenantId(), alarmId, System.currentTimeMillis());
-            Alarm alarm = result.getAlarm();
-            if (!result.isSuccessful()) {
-                continue;
-            }
-            if (result.isModified()) {
-                try {
-                    AlarmComment alarmComment = AlarmComment.builder()
-                            .alarmId(alarmId)
-                            .type(AlarmCommentType.SYSTEM)
-                            .comment(JacksonUtil.newObjectNode()
-                                    .put("text", String.format("Alarm was unassigned because user with id %s - was deleted",
-                                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
-                                    .put("userId", user.getId().toString())
-                                    .put("subtype", "ASSIGN"))
-                            .build();
-                    alarmCommentService.saveAlarmComment(alarm, alarmComment, null);
-                } catch (ThingsboardException e) {
-                    log.error("Failed to save alarm comment", e);
+    public List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, User user) {
+        List<AlarmId> totalAlarmIds = new ArrayList<>();
+        List<AlarmId> alarmIds;
+        do {
+            alarmIds = alarmService.findAlarmIdsByAssigneeId(tenantId, user.getId(), 100);
+            for (AlarmId alarmId : alarmIds) {
+                log.trace("[{}] Unassigning alarm {} userId {}", tenantId, alarmId.getId(), user.getId().getId());
+                AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(user.getTenantId(), alarmId, System.currentTimeMillis());
+                Alarm alarm = result.getAlarm();
+                if (!result.isSuccessful()) {
+                    continue;
                 }
-                notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), result.getAlarm(),
-                        alarm.getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
+                if (result.isModified()) {
+                    try {
+                        AlarmComment alarmComment = AlarmComment.builder()
+                                .alarmId(alarmId)
+                                .type(AlarmCommentType.SYSTEM)
+                                .comment(JacksonUtil.newObjectNode()
+                                        .put("text", String.format("Alarm was unassigned because user with id %s - was deleted",
+                                                (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
+                                        .put("userId", user.getId().toString())
+                                        .put("subtype", "ASSIGN"))
+                                .build();
+                        alarmCommentService.saveAlarmComment(alarm, alarmComment, null);
+                    } catch (ThingsboardException e) {
+                        log.error("Failed to save alarm comment", e);
+                    }
+                    notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), result.getAlarm(),
+                            alarm.getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
+                }
+
+                totalAlarmIds.addAll(alarmIds);
             }
         }
-        return alarmIds;
+        while (!alarmIds.isEmpty());
+        return totalAlarmIds;
     }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(DeleteEntityEvent<?> event) {
-        log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
+        log.trace("[{}] DeleteEntityEvent handler: {}", event.getTenantId(), event);
         EntityId entityId = event.getEntityId();
         if (EntityType.USER.equals(entityId.getEntityType())) {
-            housekeeper.unassignDeletedUserAlarms((User) event.getEntity());
+            housekeeper.unassignDeletedUserAlarms(event.getTenantId(), (User) event.getEntity());
         }
     }
 
