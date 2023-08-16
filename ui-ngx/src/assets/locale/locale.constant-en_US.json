@@ -3465,6 +3465,8 @@
         "description": "Description",
         "description-hint": "This text will be displayed in the Queue description instead of the selected strategy",
         "alt-description": "Submit Strategy: {{submitStrategy}}, Processing Strategy: {{processingStrategy}}",
+        "custom-properties": "Custom properties",
+        "custom-properties-hint": "Custom queue (topic) creation properties, e.g. 'retention.ms:604800000;retention.bytes:1048576000'",
         "strategies": {
             "sequential-by-originator-label": "Sequential by originator",
             "sequential-by-originator-hint": "New message for e.g. device A is not submitted until previous message for device A is acknowledged",
@@ -3532,8 +3534,8 @@
         "tenant-required": "Tenant is required",
         "search": "Search tenants",
         "selected-tenants": "{ count, plural, =1 {1 tenant} other {# tenants} } selected",
-        "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
-        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
+        "isolated-tb-rule-engine": "Use isolated ThingsBoard Rule Engine queues",
+        "isolated-tb-rule-engine-details": "Each tenant will have dedicated Rule Engine queues"
     },
     "tenant-profile": {
         "tenant-profile": "Tenant profile",

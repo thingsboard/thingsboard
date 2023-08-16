@@ -31,6 +31,7 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     private volatile Set<TopicPartitionInfo> partitions;
     private volatile boolean stopped;
     private volatile boolean subscribed;
+    private volatile boolean queueDeleted;
 
     public InMemoryTbQueueConsumer(InMemoryStorage storage, String topic) {
         this.storage = storage;
@@ -101,6 +102,21 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     @Override
     public boolean isStopped() {
         return stopped;
+    }
+
+    @Override
+    public void onQueueDelete() {
+        queueDeleted = true;
+    }
+
+    @Override
+    public boolean isQueueDeleted() {
+        return queueDeleted;
+    }
+
+    @Override
+    public List<String> getFullTopicNames() {
+        return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
     }
 
 }

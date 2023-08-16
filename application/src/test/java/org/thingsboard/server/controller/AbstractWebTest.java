@@ -57,6 +57,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.actors.DefaultTbActorSystem;
 import org.thingsboard.server.actors.TbActorId;
@@ -969,13 +970,20 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return (DeviceActorMessageProcessor) ReflectionTestUtils.getField(actor, "processor");
     }
 
-    protected void updateDefaultTenantProfile(Consumer<DefaultTenantProfileConfiguration> updater) throws ThingsboardException {
-        TenantProfile tenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
-        TenantProfileData profileData = tenantProfile.getProfileData();
-        DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
-        updater.accept(profileConfiguration);
-        tenantProfile.setProfileData(profileData);
-        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, null);
+    protected void updateDefaultTenantProfileConfig(Consumer<DefaultTenantProfileConfiguration> updater) throws ThingsboardException {
+        updateDefaultTenantProfile(tenantProfile -> {
+            TenantProfileData profileData = tenantProfile.getProfileData();
+            DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
+            updater.accept(profileConfiguration);
+            tenantProfile.setProfileData(profileData);
+        });
+    }
+
+    protected void updateDefaultTenantProfile(Consumer<TenantProfile> updater) throws ThingsboardException {
+        TenantProfile oldTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
+        TenantProfile tenantProfile = JacksonUtil.clone(oldTenantProfile);
+        updater.accept(tenantProfile);
+        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile);
     }
 
 }

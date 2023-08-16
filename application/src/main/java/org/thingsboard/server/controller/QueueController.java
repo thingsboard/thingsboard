@@ -126,7 +126,6 @@ public class QueueController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/queues", params = {"serviceType"}, method = RequestMethod.POST)
     @ResponseBody
-
     public Queue saveQueue(@ApiParam(value = "A JSON value representing the queue.")
                            @RequestBody Queue queue,
                            @ApiParam(value = QUEUE_SERVICE_TYPE_DESCRIPTION, allowableValues = QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES, required = true)
