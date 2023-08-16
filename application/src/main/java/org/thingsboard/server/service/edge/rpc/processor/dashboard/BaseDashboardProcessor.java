@@ -34,39 +34,35 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
     protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, CustomerId customerId) {
         boolean created = false;
-        dashboardCreationLock.lock();
-        try {
-            Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
-            if (dashboard == null) {
-                created = true;
-                dashboard = new Dashboard();
-                dashboard.setTenantId(tenantId);
-                dashboard.setCreatedTime(Uuids.unixTimestamp(dashboardId.getId()));
-            }
-            dashboard.setTitle(dashboardUpdateMsg.getTitle());
-            dashboard.setConfiguration(JacksonUtil.toJsonNode(dashboardUpdateMsg.getConfiguration()));
-            Set<ShortCustomerInfo> assignedCustomers = null;
-            if (dashboardUpdateMsg.hasAssignedCustomers()) {
-                assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
-                dashboard.setAssignedCustomers(assignedCustomers);
-            }
+        Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
+        if (dashboard == null) {
+            created = true;
+            dashboard = new Dashboard();
+            dashboard.setTenantId(tenantId);
+            dashboard.setCreatedTime(Uuids.unixTimestamp(dashboardId.getId()));
+        }
+        dashboard.setTitle(dashboardUpdateMsg.getTitle());
+        dashboard.setConfiguration(JacksonUtil.toJsonNode(dashboardUpdateMsg.getConfiguration()));
+        Set<ShortCustomerInfo> assignedCustomers = null;
+        if (dashboardUpdateMsg.hasAssignedCustomers()) {
+            assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {
+            });
+            dashboard.setAssignedCustomers(assignedCustomers);
+        }
 
-            dashboardValidator.validate(dashboard, Dashboard::getTenantId);
-            if (created) {
-                dashboard.setId(dashboardId);
-            }
-            Dashboard savedDashboard = dashboardService.saveDashboard(dashboard, false);
-            if (assignedCustomers != null && !assignedCustomers.isEmpty()) {
-                for (ShortCustomerInfo assignedCustomer : assignedCustomers) {
-                    if (assignedCustomer.getCustomerId().equals(customerId)) {
-                        dashboardService.assignDashboardToCustomer(tenantId, dashboardId, assignedCustomer.getCustomerId());
-                    }
+        dashboardValidator.validate(dashboard, Dashboard::getTenantId);
+        if (created) {
+            dashboard.setId(dashboardId);
+        }
+        Dashboard savedDashboard = dashboardService.saveDashboard(dashboard, false);
+        if (assignedCustomers != null && !assignedCustomers.isEmpty()) {
+            for (ShortCustomerInfo assignedCustomer : assignedCustomers) {
+                if (assignedCustomer.getCustomerId().equals(customerId)) {
+                    dashboardService.assignDashboardToCustomer(tenantId, dashboardId, assignedCustomer.getCustomerId());
                 }
-            } else {
-                unassignCustomersFromDashboard(tenantId, savedDashboard);
             }
-        } finally {
-            dashboardCreationLock.unlock();
+        } else {
+            unassignCustomersFromDashboard(tenantId, savedDashboard);
         }
         return created;
     }

@@ -105,7 +105,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", dashboard, t);
+                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", dashboard, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {

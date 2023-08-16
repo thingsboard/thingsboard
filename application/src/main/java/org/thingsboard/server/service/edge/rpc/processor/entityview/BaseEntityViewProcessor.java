@@ -38,44 +38,39 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
     protected Pair<Boolean, Boolean> saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg, CustomerId customerId) {
         boolean created = false;
         boolean entityViewNameUpdated = false;
-        entityViewCreationLock.lock();
-        try {
-            EntityView entityView = entityViewService.findEntityViewById(tenantId, entityViewId);
-            String entityViewName = entityViewUpdateMsg.getName();
-            if (entityView == null) {
-                created = true;
-                entityView = new EntityView();
-                entityView.setTenantId(tenantId);
-                entityView.setCreatedTime(Uuids.unixTimestamp(entityViewId.getId()));
-            }
-            EntityView entityViewByName = entityViewService.findEntityViewByTenantIdAndName(tenantId, entityViewName);
-            if (entityViewByName != null && !entityViewByName.getId().equals(entityViewId)) {
-                entityViewName = entityViewName + "_" + StringUtils.randomAlphanumeric(15);
-                log.warn("Entity view with name {} already exists. Renaming entity view name to {}",
-                        entityViewUpdateMsg.getName(), entityViewName);
-                entityViewNameUpdated = true;
-            }
-            entityView.setName(entityViewName);
-            entityView.setType(entityViewUpdateMsg.getType());
-            entityView.setCustomerId(customerId);
-            entityView.setAdditionalInfo(entityViewUpdateMsg.hasAdditionalInfo() ?
-                    JacksonUtil.toJsonNode(entityViewUpdateMsg.getAdditionalInfo()) : null);
-
-            UUID entityIdUUID = safeGetUUID(entityViewUpdateMsg.getEntityIdMSB(), entityViewUpdateMsg.getEntityIdLSB());
-            if (EdgeEntityType.DEVICE.equals(entityViewUpdateMsg.getEntityType())) {
-                entityView.setEntityId(entityIdUUID != null ? new DeviceId(entityIdUUID) : null);
-            } else if (EdgeEntityType.ASSET.equals(entityViewUpdateMsg.getEntityType())) {
-                entityView.setEntityId(entityIdUUID != null ? new AssetId(entityIdUUID) : null);
-            }
-
-            entityViewValidator.validate(entityView, EntityView::getTenantId);
-            if (created) {
-                entityView.setId(entityViewId);
-            }
-            entityViewService.saveEntityView(entityView, false);
-        } finally {
-            entityViewCreationLock.unlock();
+        EntityView entityView = entityViewService.findEntityViewById(tenantId, entityViewId);
+        String entityViewName = entityViewUpdateMsg.getName();
+        if (entityView == null) {
+            created = true;
+            entityView = new EntityView();
+            entityView.setTenantId(tenantId);
+            entityView.setCreatedTime(Uuids.unixTimestamp(entityViewId.getId()));
         }
+        EntityView entityViewByName = entityViewService.findEntityViewByTenantIdAndName(tenantId, entityViewName);
+        if (entityViewByName != null && !entityViewByName.getId().equals(entityViewId)) {
+            entityViewName = entityViewName + "_" + StringUtils.randomAlphanumeric(15);
+            log.warn("Entity view with name {} already exists. Renaming entity view name to {}",
+                    entityViewUpdateMsg.getName(), entityViewName);
+            entityViewNameUpdated = true;
+        }
+        entityView.setName(entityViewName);
+        entityView.setType(entityViewUpdateMsg.getType());
+        entityView.setCustomerId(customerId);
+        entityView.setAdditionalInfo(entityViewUpdateMsg.hasAdditionalInfo() ?
+                JacksonUtil.toJsonNode(entityViewUpdateMsg.getAdditionalInfo()) : null);
+
+        UUID entityIdUUID = safeGetUUID(entityViewUpdateMsg.getEntityIdMSB(), entityViewUpdateMsg.getEntityIdLSB());
+        if (EdgeEntityType.DEVICE.equals(entityViewUpdateMsg.getEntityType())) {
+            entityView.setEntityId(entityIdUUID != null ? new DeviceId(entityIdUUID) : null);
+        } else if (EdgeEntityType.ASSET.equals(entityViewUpdateMsg.getEntityType())) {
+            entityView.setEntityId(entityIdUUID != null ? new AssetId(entityIdUUID) : null);
+        }
+
+        entityViewValidator.validate(entityView, EntityView::getTenantId);
+        if (created) {
+            entityView.setId(entityViewId);
+        }
+        entityViewService.saveEntityView(entityView, false);
         return Pair.of(created, entityViewNameUpdated);
     }
 }

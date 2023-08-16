@@ -114,11 +114,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class BaseEdgeProcessor {
 
     protected static final Lock deviceCreationLock = new ReentrantLock();
-    protected static final Lock deviceProfileCreationLock = new ReentrantLock();
     protected static final Lock assetCreationLock = new ReentrantLock();
-    protected static final Lock assetProfileCreationLock = new ReentrantLock();
-    protected static final Lock dashboardCreationLock = new ReentrantLock();
-    protected static final Lock entityViewCreationLock = new ReentrantLock();
 
     protected static final int DEFAULT_PAGE_SIZE = 100;
 

@@ -115,7 +115,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", asset, t);
+                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", asset, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {

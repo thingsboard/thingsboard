@@ -65,12 +65,8 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
                     return handleUnsupportedMsgType(deviceProfileUpdateMsg.getMsgType());
             }
         } catch (DataValidationException e) {
-            if (e.getMessage().contains("limit reached")) {
-                log.warn("[{}] Number of allowed device profile violated {}", tenantId, deviceProfileUpdateMsg, e);
-                return Futures.immediateFuture(null);
-            } else {
-                return Futures.immediateFailedFuture(e);
-            }
+            log.warn("Failed to process DeviceProfileUpdateMsg from Edge [{}]", deviceProfileUpdateMsg, e);
+            return Futures.immediateFailedFuture(e);
         } finally {
             edgeSynchronizationManager.getSync().remove();
         }
@@ -98,7 +94,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", deviceProfile, t);
+                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", deviceProfile, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {

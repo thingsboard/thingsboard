@@ -124,7 +124,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
+                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {

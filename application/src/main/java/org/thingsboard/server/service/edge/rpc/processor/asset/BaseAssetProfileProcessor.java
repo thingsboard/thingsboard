@@ -33,7 +33,7 @@ public class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
     protected boolean saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg) {
         boolean created = false;
-        assetProfileCreationLock.lock();
+        assetCreationLock.lock();
         try {
             AssetProfile assetProfile = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
             String assetProfileName = assetProfileUpdateMsg.getName();
@@ -62,7 +62,7 @@ public class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             }
             assetProfileService.saveAssetProfile(assetProfile, false);
         } finally {
-            assetProfileCreationLock.unlock();
+            assetCreationLock.unlock();
         }
         return created;
     }

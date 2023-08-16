@@ -113,7 +113,7 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", entityView, t);
+                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", entityView, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
