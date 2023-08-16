@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -50,10 +51,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RuleChainImportService extends BaseEntityImportService<RuleChainId, RuleChain, RuleChainExportData> {
 
-    private static final LinkedHashSet<EntityType> HINTS = new LinkedHashSet<>(Arrays.asList(EntityType.RULE_CHAIN, EntityType.DEVICE, EntityType.ASSET));
-
     private final RuleChainService ruleChainService;
     private final RuleNodeDao ruleNodeDao;
+
+    private static final LinkedHashSet<EntityType> HINTS = new LinkedHashSet<>(Arrays.asList(EntityType.RULE_CHAIN, EntityType.DEVICE, EntityType.ASSET));
+    public static final Pattern PROCESSED_CONFIG_FIELDS_PATTERN = Pattern.compile(".*[iI]d.*");
 
     @Override
     protected void setOwner(TenantId tenantId, RuleChain ruleChain, IdProvider idProvider) {
@@ -90,7 +92,8 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
             });
         }
 
-        ruleNodes.forEach(ruleNode -> replaceIdsRecursively(ctx, idProvider, ruleNode.getConfiguration(), Collections.emptySet(), HINTS));
+        ruleNodes.forEach(ruleNode -> replaceIdsRecursively(ctx, idProvider, ruleNode.getConfiguration(),
+                Collections.emptySet(), PROCESSED_CONFIG_FIELDS_PATTERN, HINTS));
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {
                     ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternalId(ruleChainConnectionInfo.getTargetRuleChainId(), false));
