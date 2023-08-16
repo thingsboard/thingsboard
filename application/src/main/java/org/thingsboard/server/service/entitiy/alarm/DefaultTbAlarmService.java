@@ -225,14 +225,14 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, User user) {
+    public List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, User user, long unassignTs) {
         List<AlarmId> totalAlarmIds = new ArrayList<>();
         List<AlarmId> alarmIds;
         do {
             alarmIds = alarmService.findAlarmIdsByAssigneeId(tenantId, user.getId(), 100);
             for (AlarmId alarmId : alarmIds) {
                 log.trace("[{}] Unassigning alarm {} userId {}", tenantId, alarmId.getId(), user.getId().getId());
-                AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(user.getTenantId(), alarmId, System.currentTimeMillis());
+                AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(user.getTenantId(), alarmId, unassignTs);
                 Alarm alarm = result.getAlarm();
                 if (!result.isSuccessful()) {
                     continue;
@@ -268,7 +268,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         log.trace("[{}] DeleteEntityEvent handler: {}", event.getTenantId(), event);
         EntityId entityId = event.getEntityId();
         if (EntityType.USER.equals(entityId.getEntityType())) {
-            housekeeper.unassignDeletedUserAlarms(event.getTenantId(), (User) event.getEntity());
+            housekeeper.unassignDeletedUserAlarms(event.getTenantId(), (User) event.getEntity(), event.getTs());
         }
     }
 

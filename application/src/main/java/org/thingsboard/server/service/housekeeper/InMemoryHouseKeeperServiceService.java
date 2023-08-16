@@ -66,10 +66,10 @@ public class InMemoryHouseKeeperServiceService implements HouseKeeperService {
     }
 
     @Override
-    public ListenableFuture<List<AlarmId>> unassignDeletedUserAlarms(TenantId tenantId, User user) {
+    public ListenableFuture<List<AlarmId>> unassignDeletedUserAlarms(TenantId tenantId, User user, long unassignTs) {
         log.debug("[{}][{}] unassignDeletedUserAlarms submitting, pending queue size: {} ", tenantId, user.getId().getId(), queueSize.get());
         queueSize.incrementAndGet();
-        ListenableFuture<List<AlarmId>> future = executor.submit(() -> alarmService.unassignDeletedUserAlarms(tenantId, user));
+        ListenableFuture<List<AlarmId>> future = executor.submit(() -> alarmService.unassignDeletedUserAlarms(tenantId, user, unassignTs));
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(List<AlarmId> alarmIds) {
