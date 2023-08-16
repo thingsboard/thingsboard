@@ -154,6 +154,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public displayPagination = true;
   public enableStickyHeader = true;
   public enableStickyAction = true;
+  public showCellActionsMenu = true;
   public pageSizeOptions;
   public textSearchMode = false;
   public hidePageSize = false;
@@ -161,6 +162,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public sources: TimeseriesTableSource[];
   public sourceIndex: number;
   public noDataDisplayMessageText: string;
+  public hasRowAction: boolean;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -300,12 +302,14 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.ctx.widgetActions = [this.searchAction, this.columnDisplayAction];
 
     this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
+    this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length;
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
     this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : true;
+    this.showCellActionsMenu = isDefined(this.settings.showCellActionsMenu) ? this.settings.showCellActionsMenu : true;
     this.hideEmptyLines = isDefined(this.settings.hideEmptyLines) ? this.settings.hideEmptyLines : false;
     this.useEntityLabel = isDefined(this.widgetConfig.settings.useEntityLabel) ? this.widgetConfig.settings.useEntityLabel : false;
     this.showTimestamp = this.settings.showTimestamp !== false;
@@ -388,9 +392,11 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         this.sources.push(source);
       }
     }
-    this.prepareDisplayedColumn();
-    this.sources[this.sourceIndex].displayedColumns =
-      this.displayedColumns[this.sourceIndex].filter(value => value.display).map(value => value.def);
+    if (this.sources.length) {
+      this.prepareDisplayedColumn();
+      this.sources[this.sourceIndex].displayedColumns =
+        this.displayedColumns[this.sourceIndex].filter(value => value.display).map(value => value.def);
+    }
     this.updateActiveEntityInfo();
   }
 
@@ -398,48 +404,50 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
+    if (this.sources.length) {
+      const target = $event.target || $event.currentTarget;
+      const config = new OverlayConfig();
+      config.backdropClass = 'cdk-overlay-transparent-backdrop';
+      config.hasBackdrop = true;
+      const connectedPosition: ConnectedPosition = {
+        originX: 'end',
+        originY: 'bottom',
+        overlayX: 'end',
+        overlayY: 'top'
+      };
+      config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+        .withPositions([connectedPosition]);
 
-    const overlayRef = this.overlay.create(config);
-    overlayRef.backdropClick().subscribe(() => {
-      overlayRef.dispose();
-    });
-    const source = this.sources[this.sourceIndex];
+      const overlayRef = this.overlay.create(config);
+      overlayRef.backdropClick().subscribe(() => {
+        overlayRef.dispose();
+      });
+      const source = this.sources[this.sourceIndex];
 
-    this.prepareDisplayedColumn();
+      this.prepareDisplayedColumn();
 
-    const providers: StaticProvider[] = [
-      {
-        provide: DISPLAY_COLUMNS_PANEL_DATA,
-        useValue: {
-          columns: this.displayedColumns[this.sourceIndex],
-          columnsUpdated: (newColumns) => {
-            source.displayedColumns = newColumns.filter(value => value.display).map(value => value.def);
-            this.clearCache();
+      const providers: StaticProvider[] = [
+        {
+          provide: DISPLAY_COLUMNS_PANEL_DATA,
+          useValue: {
+            columns: this.displayedColumns[this.sourceIndex],
+            columnsUpdated: (newColumns) => {
+              source.displayedColumns = newColumns.filter(value => value.display).map(value => value.def);
+              this.clearCache();
+            }
           }
+        },
+        {
+          provide: OverlayRef,
+          useValue: overlayRef
         }
-      },
-      {
-        provide: OverlayRef,
-        useValue: overlayRef
-      }
-    ];
+      ];
 
-    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
-      this.viewContainerRef, injector));
-    this.ctx.detectChanges();
+      const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+      overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
+        this.viewContainerRef, injector));
+      this.ctx.detectChanges();
+    }
   }
 
   private prepareDisplayedColumn() {

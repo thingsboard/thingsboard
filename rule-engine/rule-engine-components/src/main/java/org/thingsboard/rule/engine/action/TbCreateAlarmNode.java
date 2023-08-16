@@ -66,7 +66,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         if (!this.config.isDynamicSeverity()) {
             this.notDynamicAlarmSeverity = EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity());
             if (this.notDynamicAlarmSeverity == null) {
-                throw new TbNodeException("Incorrect Alarm Severity value: " + this.config.getSeverity());
+                throw new TbNodeException("Incorrect Alarm Severity value: " + this.config.getSeverity(), true);
             }
         }
     }
@@ -120,7 +120,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         boolean buildDetails = !config.isUseMessageAlarmData() || config.isOverwriteAlarmDetails();
         if (buildDetails) {
             ctx.logJsEvalRequest();
-            asyncDetails = buildAlarmDetails(ctx, msg, null);
+            asyncDetails = buildAlarmDetails(msg, null);
         } else {
             asyncDetails = Futures.immediateFuture(null);
         }
@@ -149,7 +149,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         boolean buildDetails = !config.isUseMessageAlarmData() || config.isOverwriteAlarmDetails();
         if (buildDetails) {
             ctx.logJsEvalRequest();
-            asyncDetails = buildAlarmDetails(ctx, msg, existingAlarm.getDetails());
+            asyncDetails = buildAlarmDetails(msg, existingAlarm.getDetails());
         } else {
             asyncDetails = Futures.immediateFuture(null);
         }

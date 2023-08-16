@@ -33,7 +33,7 @@ import { HOME_COMPONENTS_MODULE_TOKEN, SHARED_HOME_COMPONENTS_MODULE_TOKEN } fro
 @Injectable()
 export class CustomDialogService {
 
-  private customModules: Array<Type<any>>
+  private customModules: Array<Type<any>>;
 
   constructor(
     private translate: TranslateService,
@@ -56,12 +56,13 @@ export class CustomDialogService {
     if (Array.isArray(this.customModules)) {
       modules.push(...this.customModules);
     }
-    return this.dynamicComponentFactoryService.createDynamicComponentFactory(
+    return this.dynamicComponentFactoryService.createDynamicComponent(
       class CustomDialogComponentInstance extends CustomDialogComponent {}, template, modules).pipe(
-      mergeMap((factory) => {
+      mergeMap((componentData) => {
           const dialogData: CustomDialogContainerData = {
             controller,
-            customComponentFactory: factory,
+            customComponentType: componentData.componentType,
+            customComponentModuleRef: componentData.componentModuleRef,
             data
           };
           let dialogConfig: MatDialogConfig = {
@@ -76,7 +77,7 @@ export class CustomDialogService {
             CustomDialogContainerComponent,
             dialogConfig).afterClosed().pipe(
             tap(() => {
-              this.dynamicComponentFactoryService.destroyDynamicComponentFactory(factory);
+              this.dynamicComponentFactoryService.destroyDynamicComponent(componentData.componentType);
             })
           );
         }

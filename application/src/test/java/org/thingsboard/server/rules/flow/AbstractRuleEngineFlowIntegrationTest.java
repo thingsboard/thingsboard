@@ -27,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
+import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -37,6 +39,8 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -137,23 +141,27 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("Simple Rule Node 1");
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
+        configuration1.setFetchTo(TbMsgSource.METADATA);
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
         ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
+        configuration2.setFetchTo(TbMsgSource.METADATA);
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 
 
         metaData.setNodes(Arrays.asList(ruleNode1, ruleNode2));
         metaData.setFirstNodeIndex(0);
-        metaData.addConnectionInfo(0, 1, "Success");
+        metaData.addConnectionInfo(0, 1, TbNodeConnectionType.SUCCESS);
         metaData = saveRuleChainMetaData(metaData);
         Assert.assertNotNull(metaData);
 
@@ -173,14 +181,14 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
         Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
-        TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
+        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, device.getId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
         // Pushing Message to the system
         actorSystem.tell(qMsg);
         Mockito.verify(tbMsgCallback, Mockito.timeout(10000)).onSuccess();
 
         PageData<EventInfo> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), 1000);
-        List<EventInfo> events = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+        List<EventInfo> events = eventsPage.getData().stream().filter(filterByPostTelemetryEventType()).collect(Collectors.toList());
         Assert.assertEquals(2, events.size());
 
         EventInfo inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst().get();
@@ -197,7 +205,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleNode lastRuleNode = metaData.getNodes().stream().filter(node -> !node.getId().equals(finalRuleChain.getFirstRuleNodeId())).findFirst().get();
 
         eventsPage = getDebugEvents(savedTenant.getId(), lastRuleNode.getId(), 1000);
-        events = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+        events = eventsPage.getData().stream().filter(filterByPostTelemetryEventType()).collect(Collectors.toList());
 
         Assert.assertEquals(2, events.size());
 
@@ -239,8 +247,10 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("Simple Rule Node 1");
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
+        configuration1.setFetchTo(TbMsgSource.METADATA);
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
         ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
@@ -257,7 +267,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         NodeConnectionInfo connection = new NodeConnectionInfo();
         connection.setFromIndex(0);
         connection.setToIndex(1);
-        connection.setType("Success");
+        connection.setType(TbNodeConnectionType.SUCCESS);
         rootMetaData.setConnections(Collections.singletonList(connection));
         rootMetaData = saveRuleChainMetaData(rootMetaData);
         Assert.assertNotNull(rootMetaData);
@@ -271,8 +281,10 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
+        configuration2.setFetchTo(TbMsgSource.METADATA);
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 
@@ -294,7 +306,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
         Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
-        TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
+        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, device.getId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
         // Pushing Message to the system
         actorSystem.tell(qMsg);
@@ -302,7 +314,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Mockito.verify(tbMsgCallback, Mockito.timeout(10000)).onSuccess();
 
         PageData<EventInfo> eventsPage = getDebugEvents(savedTenant.getId(), rootRuleChain.getFirstRuleNodeId(), 1000);
-        List<EventInfo> events = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+        List<EventInfo> events = eventsPage.getData().stream().filter(filterByPostTelemetryEventType()).collect(Collectors.toList());
 
         Assert.assertEquals(2, events.size());
 
@@ -320,7 +332,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleNode lastRuleNode = secondaryMetaData.getNodes().stream().filter(node -> !node.getId().equals(finalRuleChain.getFirstRuleNodeId())).findFirst().get();
 
         eventsPage = getDebugEvents(savedTenant.getId(), lastRuleNode.getId(), 1000);
-        events = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+        events = eventsPage.getData().stream().filter(filterByPostTelemetryEventType()).collect(Collectors.toList());
 
 
         Assert.assertEquals(2, events.size());

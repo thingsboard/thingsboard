@@ -252,10 +252,9 @@ export class AliasController implements IAliasController {
 
   private resolveDatasource(datasource: Datasource, forceFilter = false): Observable<Datasource> {
     const newDatasource = deepClone(datasource);
-    if (newDatasource.type === DatasourceType.device) {
-      newDatasource.type = DatasourceType.entity;
-    }
-    if (newDatasource.type === DatasourceType.entity || newDatasource.type === DatasourceType.entityCount
+    if (newDatasource.type === DatasourceType.entity
+      || newDatasource.type === DatasourceType.device
+      || newDatasource.type === DatasourceType.entityCount
       || newDatasource.type === DatasourceType.alarmCount) {
       if (newDatasource.filterId) {
         newDatasource.keyFilters = this.getKeyFilters(newDatasource.filterId);
@@ -263,7 +262,8 @@ export class AliasController implements IAliasController {
       if (newDatasource.type === DatasourceType.alarmCount) {
         newDatasource.alarmFilter = this.entityService.resolveAlarmFilter(newDatasource.alarmFilterConfig, false);
       }
-      if (newDatasource.deviceId) {
+      if (newDatasource.type === DatasourceType.device) {
+        newDatasource.type = DatasourceType.entity;
         newDatasource.entityFilter = singleEntityFilterFromDeviceId(newDatasource.deviceId);
         if (forceFilter) {
           return this.entityService.findSingleEntityInfoByEntityFilter(newDatasource.entityFilter,

@@ -18,7 +18,10 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -47,13 +50,22 @@ public class AlarmMsgConstructor {
         String entityName = null;
         switch (alarm.getOriginator().getEntityType()) {
             case DEVICE:
-                entityName = deviceService.findDeviceById(tenantId, new DeviceId(alarm.getOriginator().getId())).getName();
+                Device deviceById = deviceService.findDeviceById(tenantId, new DeviceId(alarm.getOriginator().getId()));
+                if (deviceById != null) {
+                    entityName = deviceById.getName();
+                }
                 break;
             case ASSET:
-                entityName = assetService.findAssetById(tenantId, new AssetId(alarm.getOriginator().getId())).getName();
+                Asset assetById = assetService.findAssetById(tenantId, new AssetId(alarm.getOriginator().getId()));
+                if (assetById != null) {
+                    entityName = assetById.getName();
+                }
                 break;
             case ENTITY_VIEW:
-                entityName = entityViewService.findEntityViewById(tenantId, new EntityViewId(alarm.getOriginator().getId())).getName();
+                EntityView entityViewById = entityViewService.findEntityViewById(tenantId, new EntityViewId(alarm.getOriginator().getId()));
+                if (entityViewById != null) {
+                    entityName = entityViewById.getName();
+                }
                 break;
         }
         AlarmUpdateMsg.Builder builder = AlarmUpdateMsg.newBuilder()

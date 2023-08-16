@@ -15,8 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="relationTypeFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
-  <mat-label *ngIf="required">{{ 'relation.relation-type' | translate }}</mat-label>
+<mat-form-field [formGroup]="relationTypeFormGroup" [appearance]="appearance" [floatLabel]="floatLabel"
+                class="mat-block" [class]="additionalClasses" subscriptSizing="{{ subscriptSizing }}">
+  <mat-label *ngIf="label">{{ label }}</mat-label>
   <input matInput type="text"
          #relationTypeInput
          formControlName="relationType"
@@ -25,7 +26,8 @@
          [required]="required"
          [matAutocomplete]="relationTypeAutocomplete">
   <button *ngIf="relationTypeFormGroup.get('relationType').value && !disabled"
-          type="button"
+          type="button" color="primary"
+          matTooltip="{{ 'relation.clear-relation-type' | translate}}"
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>

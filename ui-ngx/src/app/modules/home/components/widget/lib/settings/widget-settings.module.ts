@@ -32,7 +32,6 @@ import {
 import {
   MarkdownWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/markdown-widget-settings.component';
-import { WidgetFontComponent } from '@home/components/widget/lib/settings/common/widget-font.component';
 import { LabelWidgetLabelComponent } from '@home/components/widget/lib/settings/cards/label-widget-label.component';
 import { LabelWidgetSettingsComponent } from '@home/components/widget/lib/settings/cards/label-widget-settings.component';
 import {
@@ -72,7 +71,6 @@ import {
 import {
   DigitalGaugeWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/gauge/digital-gauge-widget-settings.component';
-import { ValueSourceComponent } from '@home/components/widget/lib/settings/common/value-source.component';
 import { FixedColorLevelComponent } from '@home/components/widget/lib/settings/gauge/fixed-color-level.component';
 import { TickValueComponent } from '@home/components/widget/lib/settings/gauge/tick-value.component';
 import { FlotWidgetSettingsComponent } from '@home/components/widget/lib/settings/chart/flot-widget-settings.component';
@@ -265,7 +263,13 @@ import {
 import {
   QuickLinksWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/home-page/quick-links-widget-settings.component';
-import { LegendConfigComponent } from '@home/components/widget/lib/settings/common/legend-config.component';
+import {
+  ValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/value-card-widget-settings.component';
+import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
+import {
+  AggregatedValueCardKeySettingsComponent
+} from '@home/components/widget/lib/settings/cards/aggregated-value-card-key-settings.component';
 
 @NgModule({
   declarations: [
@@ -274,7 +278,6 @@ import { LegendConfigComponent } from '@home/components/widget/lib/settings/comm
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
     MarkdownWidgetSettingsComponent,
-    WidgetFontComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
     SimpleCardWidgetSettingsComponent,
@@ -290,8 +293,6 @@ import { LegendConfigComponent } from '@home/components/widget/lib/settings/comm
     AnalogueLinearGaugeWidgetSettingsComponent,
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
-    ValueSourceComponent,
-    LegendConfigComponent,
     FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,
@@ -367,12 +368,15 @@ import { LegendConfigComponent } from '@home/components/widget/lib/settings/comm
     RouteMapWidgetSettingsComponent,
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
-    QuickLinksWidgetSettingsComponent
+    QuickLinksWidgetSettingsComponent,
+    ValueCardWidgetSettingsComponent,
+    AggregatedValueCardKeySettingsComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
-    SharedHomeComponentsModule
+    SharedHomeComponentsModule,
+    WidgetSettingsCommonModule
   ],
   exports: [
     QrCodeWidgetSettingsComponent,
@@ -380,7 +384,6 @@ import { LegendConfigComponent } from '@home/components/widget/lib/settings/comm
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
     MarkdownWidgetSettingsComponent,
-    WidgetFontComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
     SimpleCardWidgetSettingsComponent,
@@ -396,8 +399,6 @@ import { LegendConfigComponent } from '@home/components/widget/lib/settings/comm
     AnalogueLinearGaugeWidgetSettingsComponent,
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
-    ValueSourceComponent,
-    LegendConfigComponent,
     FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,
@@ -473,7 +474,9 @@ import { LegendConfigComponent } from '@home/components/widget/lib/settings/comm
     RouteMapWidgetSettingsComponent,
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
-    QuickLinksWidgetSettingsComponent
+    QuickLinksWidgetSettingsComponent,
+    ValueCardWidgetSettingsComponent,
+    AggregatedValueCardKeySettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -542,5 +545,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
   'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent,
   'tb-doc-links-widget-settings': DocLinksWidgetSettingsComponent,
-  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent
+  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent,
+  'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent,
+  'tb-aggregated-value-card-key-settings': AggregatedValueCardKeySettingsComponent,
 };

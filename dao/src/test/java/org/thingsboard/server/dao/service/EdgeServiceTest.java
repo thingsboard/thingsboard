@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -639,7 +640,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         ruleChainMetaData3.setNodes(Arrays.asList(ruleNode1, ruleNode2));
         ruleChainMetaData3.setFirstNodeIndex(0);
         ruleChainMetaData3.setRuleChainId(ruleChain3.getId());
-        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData3);
+        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData3, Function.identity());
 
         ruleChainService.assignRuleChainToEdge(tenantId, ruleChain3.getId(), savedEdge.getId());
 

@@ -22,6 +22,7 @@ import {
   Injector,
   Input,
   NgZone,
+  OnDestroy,
   OnInit,
   StaticProvider,
   ViewChild,
@@ -41,15 +42,7 @@ import {
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  createLabelFromDatasource,
-  deepClone,
-  hashCode,
-  isDefined,
-  isNumber,
-  isObject,
-  isUndefined
-} from '@core/utils';
+import { deepClone, hashCode, isDefined, isNumber, isObject, isUndefined } from '@core/utils';
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -78,8 +71,8 @@ import {
   getColumnDefaultVisibility,
   getColumnSelectionAvailability,
   getColumnWidth,
-  getHeaderTitle,
   getEntityValue,
+  getHeaderTitle,
   getRowStyleInfo,
   getTableCellButtonActions,
   noDataMessage,
@@ -129,7 +122,7 @@ interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   templateUrl: './entities-table-widget.component.html',
   styleUrls: ['./entities-table-widget.component.scss', './table-widget.scss']
 })
-export class EntitiesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit {
+export class EntitiesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input()
   ctx: WidgetContext;
@@ -141,6 +134,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public displayPagination = true;
   public enableStickyHeader = true;
   public enableStickyAction = true;
+  public showCellActionsMenu = true;
   public pageSizeOptions;
   public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
@@ -150,6 +144,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public displayedColumns: string[] = [];
   public entityDatasource: EntityDatasource;
   public noDataDisplayMessageText: string;
+  public hasRowAction: boolean;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -160,8 +155,6 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
   private widgetResize$: ResizeObserver;
-
-  private entitiesTitlePattern: string;
 
   private defaultPageSize = 10;
   private defaultSortOrder = 'entityName';
@@ -263,7 +256,6 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   }
 
   public onDataUpdated() {
-    this.updateTitle(true);
     this.entityDatasource.dataUpdated();
     this.clearCache();
     this.ctx.detectChanges();
@@ -278,18 +270,20 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
 
-    if (this.settings.entitiesTitle && this.settings.entitiesTitle.length) {
-      this.entitiesTitlePattern = this.utils.customTranslation(this.settings.entitiesTitle, this.settings.entitiesTitle);
-    } else {
-      this.entitiesTitlePattern = this.translate.instant('entity.entities');
-    }
+    this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length ||
+      !!this.ctx.actionsApi.getActionDescriptors('rowDoubleClick').length;
 
-    this.updateTitle(false);
+    if (this.settings.entitiesTitle && this.settings.entitiesTitle.length) {
+      this.ctx.widgetTitle = this.settings.entitiesTitle;
+    } else {
+      this.ctx.widgetTitle = this.translate.instant('entity.entities');
+    }
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
     this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : true;
+    this.showCellActionsMenu = isDefined(this.settings.showCellActionsMenu) ? this.settings.showCellActionsMenu : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
 
     this.rowStylesInfo = getRowStyleInfo(this.settings, 'entity, ctx');
@@ -311,16 +305,6 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);
-  }
-
-  private updateTitle(updateWidgetParams = false) {
-    const newTitle = createLabelFromDatasource(this.subscription.datasources[0], this.entitiesTitlePattern);
-    if (this.ctx.widgetTitle !== newTitle) {
-      this.ctx.widgetTitle = newTitle;
-      if (updateWidgetParams) {
-        this.ctx.updateWidgetParams();
-      }
-    }
   }
 
   private updateDatasources() {
@@ -492,14 +476,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       overlayRef.dispose();
     });
 
-    const columns: DisplayColumn[] = this.columns.map(column => {
-      return {
+    const columns: DisplayColumn[] = this.columns.map(column => ({
         title: column.title,
         def: column.def,
         display: this.displayedColumns.indexOf(column.def) > -1,
         selectable: this.columnSelectionAvailability[column.def]
-      };
-    });
+      }));
 
     const providers: StaticProvider[] = [
       {

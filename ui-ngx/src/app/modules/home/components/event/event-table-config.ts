@@ -21,7 +21,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { DebugEventType, Event, EventType, FilterEventBody } from '@shared/models/event.models';
+import { DebugEventType, Event, EventBody, EventType, FilterEventBody } from '@shared/models/event.models';
 import { TimePageLink } from '@shared/models/page/page-link';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -40,8 +40,9 @@ import {
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
 import { isEqual, sortObjectKeys } from '@core/utils';
+import { historyInterval, MINUTE } from '@shared/models/time/time.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ChangeDetectorRef, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, EventEmitter, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
   EVENT_FILTER_PANEL_DATA,
@@ -61,6 +62,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   set eventType(eventType: EventType | DebugEventType) {
     if (this.eventTypeValue !== eventType) {
       this.eventTypeValue = eventType;
+      this.updateCellAction();
       this.updateColumns(true);
       this.updateFilterColumns();
     }
@@ -84,11 +86,14 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private debugEventTypes: Array<DebugEventType> = null,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              public testButtonLabel?: string,
+              private debugEventSelected?: EventEmitter<EventBody>) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
     this.useTimePageLink = true;
+    this.defaultTimewindowInterval = historyInterval(MINUTE * 15);
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = false;
@@ -120,12 +125,12 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.updateColumns();
+    this.updateCellAction();
     this.updateFilterColumns();
 
     this.headerActionDescriptors.push({
       name: this.translate.instant('event.clear-filter'),
       icon: 'mdi:filter-variant-remove',
-      isMdiIcon: true,
       isEnabled: () => !isEqual(this.filterParams, {}),
       onAction: ($event) => {
         this.clearFiter($event);
@@ -176,7 +181,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   updateColumns(updateTableColumns: boolean = false): void {
     this.columns = [];
     this.columns.push(
-      new DateEntityTableColumn<Event>('createdTime', 'event.event-time', this.datePipe, '120px'),
+      new DateEntityTableColumn<Event>('createdTime', 'event.event-time', this.datePipe, '120px', 'yyyy-MM-dd HH:mm:ss.SSS'),
       new EntityTableColumn<Event>('server', 'event.server', '100px',
         (entity) => entity.body.server, entity => ({}), false));
     switch (this.eventType) {
@@ -347,6 +352,25 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     if (updateTableColumns) {
       this.getTable().columnsUpdated(true);
     }
+  }
+
+  updateCellAction() {
+    this.cellActionDescriptors = [];
+    switch (this.eventType) {
+      case DebugEventType.DEBUG_RULE_NODE:
+        if (this.testButtonLabel) {
+          this.cellActionDescriptors.push({
+            name: this.translate.instant('rulenode.test-with-this-message', {test: this.translate.instant(this.testButtonLabel)}),
+            icon: 'bug_report',
+            isEnabled: (entity) => entity.body.type === 'IN' || entity.body.error !== undefined,
+            onAction: ($event, entity) => {
+              this.debugEventSelected.next(entity.body);
+            }
+          });
+        }
+        break;
+    }
+    this.getTable()?.cellActionDescriptorsUpdated();
   }
 
   showContent($event: MouseEvent, content: string, title: string, contentType: ContentType = null, sortKeys = false): void {

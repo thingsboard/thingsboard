@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.BaseData;
@@ -30,47 +29,53 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 
+import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 public class EntitiesFieldsAsyncLoader {
 
-    public static ListenableFuture<EntityFieldsData> findAsync(TbContext ctx, EntityId original) {
-        switch (original.getEntityType()) { // TODO: use EntityServiceRegistry
+    public static ListenableFuture<EntityFieldsData> findAsync(TbContext ctx, EntityId originatorId) {
+        switch (originatorId.getEntityType()) {  // TODO: use EntityServiceRegistry
             case TENANT:
-                return getAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), (TenantId) original),
-                        EntityFieldsData::new);
+                return toEntityFieldsDataAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), (TenantId) originatorId),
+                        EntityFieldsData::new, ctx);
             case CUSTOMER:
-                return getAsync(ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), (CustomerId) original),
-                        EntityFieldsData::new);
+                return toEntityFieldsDataAsync(ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), (CustomerId) originatorId),
+                        EntityFieldsData::new, ctx);
             case USER:
-                return getAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) original),
-                        EntityFieldsData::new);
+                return toEntityFieldsDataAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) originatorId),
+                        EntityFieldsData::new, ctx);
             case ASSET:
-                return getAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) original),
-                        EntityFieldsData::new);
+                return toEntityFieldsDataAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) originatorId),
+                        EntityFieldsData::new, ctx);
             case DEVICE:
-                return getAsync(Futures.immediateFuture(ctx.getDeviceService().findDeviceById(ctx.getTenantId(), (DeviceId) original)),
-                        EntityFieldsData::new);
+                return toEntityFieldsDataAsync(Futures.immediateFuture(ctx.getDeviceService().findDeviceById(ctx.getTenantId(), (DeviceId) originatorId)),
+                        EntityFieldsData::new, ctx);
             case ALARM:
-                return getAsync(ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) original),
-                        EntityFieldsData::new);
+                return toEntityFieldsDataAsync(ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) originatorId),
+                        EntityFieldsData::new, ctx);
             case RULE_CHAIN:
-                return getAsync(ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) original),
-                        EntityFieldsData::new);
+                return toEntityFieldsDataAsync(ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) originatorId),
+                        EntityFieldsData::new, ctx);
             case ENTITY_VIEW:
-                return getAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), (EntityViewId) original),
-                        EntityFieldsData::new);
+                return toEntityFieldsDataAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), (EntityViewId) originatorId),
+                        EntityFieldsData::new, ctx);
             default:
-                return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original.getEntityType()));
+                return Futures.immediateFailedFuture(new TbNodeException("Unexpected originator EntityType: " + originatorId.getEntityType()));
         }
     }
 
-    private static <T extends BaseData> ListenableFuture<EntityFieldsData> getAsync(
-            ListenableFuture<T> future, Function<T, EntityFieldsData> converter) {
+    private static <T extends BaseData<? extends UUIDBased>> ListenableFuture<EntityFieldsData> toEntityFieldsDataAsync(
+            ListenableFuture<T> future,
+            Function<T, EntityFieldsData> converter,
+            TbContext ctx
+    ) {
         return Futures.transformAsync(future, in -> in != null ?
                 Futures.immediateFuture(converter.apply(in))
-                : Futures.immediateFailedFuture(new RuntimeException("Entity not found!")), MoreExecutors.directExecutor());
+                : Futures.immediateFailedFuture(new NoSuchElementException("Entity not found!")), ctx.getDbCallbackExecutor());
     }
+
 }

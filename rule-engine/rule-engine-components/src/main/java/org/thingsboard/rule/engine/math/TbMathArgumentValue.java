@@ -43,19 +43,18 @@ public class TbMathArgumentValue {
         throw new RuntimeException(error);
     }
 
-    public static TbMathArgumentValue fromMessageBody(TbMathArgument arg, Optional<ObjectNode> jsonNodeOpt) {
-        String key = arg.getKey();
+    public static TbMathArgumentValue fromMessageBody(TbMathArgument arg, String argKey, Optional<ObjectNode> jsonNodeOpt) {
         Double defaultValue = arg.getDefaultValue();
         if (jsonNodeOpt.isEmpty()) {
             return defaultOrThrow(defaultValue, "Message body is empty!");
         }
         var json = jsonNodeOpt.get();
-        if (!json.has(key)) {
-            return defaultOrThrow(defaultValue, "Message body has no '" + key + "'!");
+        if (!json.has(argKey)) {
+            return defaultOrThrow(defaultValue, "Message body has no '" + argKey + "'!");
         }
-        JsonNode valueNode = json.get(key);
+        JsonNode valueNode = json.get(argKey);
         if (valueNode.isNull()) {
-            return defaultOrThrow(defaultValue, "Message body has null '" + key + "'!");
+            return defaultOrThrow(defaultValue, "Message body has null '" + argKey + "'!");
         }
         double value;
         if (valueNode.isNumber()) {
@@ -69,7 +68,7 @@ public class TbMathArgumentValue {
                     throw new RuntimeException("Can't convert value '" + valueNode.asText() + "' to double!");
                 }
             } else {
-                return defaultOrThrow(defaultValue, "Message value is empty for '" + key + "'!");
+                return defaultOrThrow(defaultValue, "Message value is empty for '" + argKey + "'!");
             }
         } else {
             throw new RuntimeException("Can't convert value '" + valueNode.toString() + "' to double!");
@@ -77,15 +76,14 @@ public class TbMathArgumentValue {
         return new TbMathArgumentValue(value);
     }
 
-    public static TbMathArgumentValue fromMessageMetadata(TbMathArgument arg, TbMsgMetaData metaData) {
-        String key = arg.getKey();
+    public static TbMathArgumentValue fromMessageMetadata(TbMathArgument arg, String argKey, TbMsgMetaData metaData) {
         Double defaultValue = arg.getDefaultValue();
         if (metaData == null) {
             return defaultOrThrow(defaultValue, "Message metadata is empty!");
         }
-        var value = metaData.getValue(key);
+        var value = metaData.getValue(argKey);
         if (StringUtils.isEmpty(value)) {
-            return defaultOrThrow(defaultValue, "Message metadata has no '" + key + "'!");
+            return defaultOrThrow(defaultValue, "Message metadata has no '" + argKey + "'!");
         }
         return fromString(value);
     }

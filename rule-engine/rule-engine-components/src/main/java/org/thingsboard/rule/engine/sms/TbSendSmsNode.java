@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.sms.SmsSender;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -39,13 +40,14 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         configDirective = "tbExternalNodeSendSmsConfig",
         icon = "sms"
 )
-public class TbSendSmsNode implements TbNode {
+public class TbSendSmsNode extends TbAbstractExternalNode {
 
     private TbSendSmsNodeConfiguration config;
     private SmsSender smsSender;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        super.init(ctx);
         try {
             this.config = TbNodeUtils.convert(configuration, TbSendSmsNodeConfiguration.class);
             if (!this.config.isUseSystemSmsSettings()) {
@@ -58,15 +60,16 @@ public class TbSendSmsNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        var tbMsg = ackIfNeeded(ctx, msg);
         try {
             withCallback(ctx.getSmsExecutor().executeAsync(() -> {
-                        sendSms(ctx, msg);
+                        sendSms(ctx, tbMsg);
                         return null;
                     }),
-                    ok -> ctx.tellSuccess(msg),
-                    fail -> ctx.tellFailure(msg, fail));
+                    ok -> tellSuccess(ctx, tbMsg),
+                    fail -> tellFailure(ctx, tbMsg, fail));
         } catch (Exception ex) {
-            ctx.tellFailure(msg, ex);
+            ctx.tellFailure(tbMsg, ex);
         }
     }
 

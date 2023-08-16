@@ -25,7 +25,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -64,7 +64,7 @@ public class TbSplitArrayMsgNode implements TbNode {
             if (data.isEmpty()) {
                 ctx.ack(msg);
             } else if (data.size() == 1) {
-                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(data.get(0))));
+                ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(data.get(0))));
             } else {
                 TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(data.size(), new TbMsgCallback() {
                     @Override
@@ -77,8 +77,10 @@ public class TbSplitArrayMsgNode implements TbNode {
                         ctx.tellFailure(msg, e);
                     }
                 });
-                data.forEach(msgNode -> ctx.enqueueForTellNext(TbMsg.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(msgNode)),
-                        TbRelationTypes.SUCCESS, wrapper::onSuccess, wrapper::onFailure));
+                data.forEach(msgNode -> {
+                    TbMsg outMsg = TbMsg.transformMsgData(msg, JacksonUtil.toString(msgNode));
+                    ctx.enqueueForTellNext(outMsg, TbNodeConnectionType.SUCCESS, wrapper::onSuccess, wrapper::onFailure);
+                });
             }
         } else {
             ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Array!"));

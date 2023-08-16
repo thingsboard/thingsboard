@@ -20,7 +20,7 @@ import { finalize, share } from 'rxjs/operators';
 import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
+import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
@@ -126,20 +126,11 @@ export function isString(value: any): boolean {
   return typeof value === 'string';
 }
 
-export function isEmpty(obj: any): boolean {
-  for (const key of Object.keys(obj)) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 export function isLiteralObject(value: any) {
   return (!!value) && (value.constructor === Object);
 }
 
-export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
+export const formatValue = (value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined => {
   if (isDefinedAndNotNull(value) && isNumeric(value) &&
     (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
     let formatted: string | number = Number(value);
@@ -156,6 +147,16 @@ export function formatValue(value: any, dec?: number, units?: string, showZeroDe
     return formatted;
   } else {
     return value !== null ? value : '';
+  }
+}
+
+export const formatNumberValue = (value: any, dec?: number): number | undefined => {
+  if (isDefinedAndNotNull(value) && isNumeric(value)) {
+    let formatted: string | number = Number(value);
+    if (isDefinedAndNotNull(dec)) {
+      formatted = formatted.toFixed(dec);
+    }
+    return Number(formatted);
   }
 }
 
@@ -189,9 +190,7 @@ export function objToBase64(obj: any): string {
 }
 
 export function base64toString(b64Encoded: string): string {
-  return decodeURIComponent(atob(b64Encoded).split('').map((c) => {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
+  return decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
 }
 
 export function objToBase64URI(obj: any): string {
@@ -199,9 +198,7 @@ export function objToBase64URI(obj: any): string {
 }
 
 export function base64toObj(b64Encoded: string): any {
-  const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
+  const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
   return JSON.parse(json);
 }
 
@@ -320,9 +317,31 @@ export function extractType<T extends object>(target: any, keysOfProps: (keyof T
   return _.pick(target, keysOfProps);
 }
 
-export function isEqual(a: any, b: any): boolean {
-  return _.isEqual(a, b);
-}
+export const isEqual = (a: any, b: any): boolean => _.isEqual(a, b);
+
+export const isEmpty = (a: any): boolean => _.isEmpty(a);
+
+export const unset = (object: any, path: string | symbol): boolean => _.unset(object, path);
+
+export const isEqualIgnoreUndefined = (a: any, b: any): boolean => {
+  if (a === b) {
+    return true;
+  }
+  if (isDefinedAndNotNull(a) && isDefinedAndNotNull(b)) {
+    return isEqual(a, b);
+  } else {
+    return (isUndefinedOrNull(a) || !a) && (isUndefinedOrNull(b) || !b);
+  }
+};
+
+export const isArraysEqualIgnoreUndefined = (a: any[], b: any[]): boolean => {
+  const res = isEqualIgnoreUndefined(a, b);
+  if (!res) {
+    return (isUndefinedOrNull(a) || !a?.length) && (isUndefinedOrNull(b) || !b?.length);
+  } else {
+    return res;
+  }
+};
 
 export function mergeDeep<T>(target: T, ...sources: T[]): T {
   return _.merge(target, ...sources);
@@ -342,9 +361,7 @@ const SNAKE_CASE_REGEXP = /[A-Z]/g;
 
 export function snakeCase(name: string, separator: string): string {
   separator = separator || '_';
-  return name.replace(SNAKE_CASE_REGEXP, (letter, pos) => {
-    return (pos ? separator : '') + letter.toLowerCase();
-  });
+  return name.replace(SNAKE_CASE_REGEXP, (letter, pos) => (pos ? separator : '') + letter.toLowerCase());
 }
 
 export function getDescendantProp(obj: any, path: string): any {
@@ -368,7 +385,7 @@ export function insertVariable(pattern: string, name: string, value: any): strin
   return result;
 }
 
-export function createLabelFromDatasource(datasource: Datasource, pattern: string): string {
+export const createLabelFromDatasource = (datasource: Datasource, pattern: string): string => {
   let label = pattern;
   if (!datasource) {
     return label;
@@ -393,7 +410,9 @@ export function createLabelFromDatasource(datasource: Datasource, pattern: strin
     match = varsRegex.exec(pattern);
   }
   return label;
-}
+};
+
+export const hasDatasourceLabelsVariables = (pattern: string): boolean => varsRegex.test(pattern) !== null;
 
 export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number): FormattedData[] {
   return _(input).groupBy(el => el.datasource.entityName + el.datasource.entityType)
@@ -681,7 +700,7 @@ export function getEntityDetailsPageURL(id: string, entityType: EntityType): str
 }
 
 export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
-                                      translate: TranslateService, responseType?: string): {message: string, timeout: number} {
+                                      translate: TranslateService, responseType?: string): {message: string; timeout: number} {
   let error = null;
   let errorMessage: string;
   let timeout = 0;
@@ -763,3 +782,25 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
   }
   return label;
 }
+
+export const getOS = (): string => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  const macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos|mac_powerpc)/i;
+  const windowsPlatforms = /(win32|win64|windows|wince)/i;
+  const iosPlatforms = /(iphone|ipad|ipod|darwin|ios)/i;
+  let os = null;
+
+  if (macosPlatforms.test(userAgent)) {
+    os = 'macos';
+  } else if (iosPlatforms.test(userAgent)) {
+    os = 'ios';
+  } else if (windowsPlatforms.test(userAgent)) {
+    os = 'windows';
+  } else if (/android/.test(userAgent)) {
+    os = 'android';
+  } else if (/linux/.test(userAgent)) {
+    os = 'linux';
+  }
+
+  return os;
+};

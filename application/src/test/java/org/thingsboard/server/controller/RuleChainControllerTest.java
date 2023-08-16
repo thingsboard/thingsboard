@@ -30,6 +30,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNode;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNodeConfiguration;
+import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetRelatedDataNodeConfiguration;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -48,7 +50,6 @@ import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +60,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class RuleChainControllerTest extends AbstractControllerTest {
 
-    private IdComparator<RuleChain> idComparator = new IdComparator<>();
+    private final IdComparator<RuleChain> idComparator = new IdComparator<>();
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -130,6 +131,78 @@ public class RuleChainControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveRuleChainMetadataWithVersionedNodes() throws Exception {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName("RuleChain");
+
+        RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+        Assert.assertNotNull(savedRuleChain);
+        RuleChainId ruleChainId = savedRuleChain.getId();
+        Assert.assertNotNull(ruleChainId);
+        Assert.assertTrue(savedRuleChain.getCreatedTime() > 0);
+        Assert.assertEquals(ruleChain.getName(), savedRuleChain.getName());
+
+        var annotation = TbGetRelatedAttributeNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class);
+        String ruleNodeType = TbGetRelatedAttributeNode.class.getName();
+        int currentVersion = annotation.version();
+
+        String oldConfig = "{\"attrMapping\":{\"serialNumber\":\"sn\"}," +
+                        "\"relationsQuery\":{\"direction\":\"FROM\",\"maxLevel\":1," +
+                        "\"filters\":[{\"relationType\":\"Contains\",\"entityTypes\":[]}]," +
+                        "\"fetchLastLevelOnly\":false},\"telemetry\":false}";
+
+        TbGetRelatedDataNodeConfiguration defaultConfiguration = new TbGetRelatedDataNodeConfiguration().defaultConfiguration();
+        String newConfig = JacksonUtil.toString(defaultConfiguration);
+
+        var ruleChainMetaData = createRuleChainMetadataWithTbVersionedNodes(
+                ruleChainId,
+                ruleNodeType,
+                currentVersion,
+                oldConfig,
+                newConfig
+        );
+        var savedRuleChainMetaData = doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
+
+        Assert.assertEquals(ruleChainId, savedRuleChainMetaData.getRuleChainId());
+        Assert.assertEquals(2, savedRuleChainMetaData.getNodes().size());
+
+        for (RuleNode ruleNode : savedRuleChainMetaData.getNodes()) {
+            Assert.assertNotNull(ruleNode.getId());
+            Assert.assertEquals(currentVersion, ruleNode.getConfigurationVersion());
+            Assert.assertEquals(defaultConfiguration, JacksonUtil.treeToValue(ruleNode.getConfiguration(), defaultConfiguration.getClass()));
+        }
+    }
+
+    private RuleChainMetaData createRuleChainMetadataWithTbVersionedNodes(
+            RuleChainId ruleChainId,
+            String ruleNodeType,
+            int currentVersion,
+            String oldConfig,
+            String newConfig
+    ) {
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        ruleChainMetaData.setRuleChainId(ruleChainId);
+
+        var ruleNodeWithOldConfig = new RuleNode();
+        ruleNodeWithOldConfig.setName("Old Rule Node");
+        ruleNodeWithOldConfig.setType(ruleNodeType);
+        ruleNodeWithOldConfig.setConfiguration(JacksonUtil.toJsonNode(oldConfig));
+
+        var ruleNodeWithNewConfig = new RuleNode();
+        ruleNodeWithNewConfig.setName("New Rule Node");
+        ruleNodeWithNewConfig.setType(ruleNodeType);
+        ruleNodeWithNewConfig.setConfigurationVersion(currentVersion);
+        ruleNodeWithNewConfig.setConfiguration(JacksonUtil.toJsonNode(newConfig));
+
+        List<RuleNode> ruleNodes = new ArrayList<>();
+        ruleNodes.add(ruleNodeWithOldConfig);
+        ruleNodes.add(ruleNodeWithNewConfig);
+        ruleChainMetaData.setFirstNodeIndex(0);
+        ruleChainMetaData.setNodes(ruleNodes);
+        return ruleChainMetaData;
+    }
+
+    @Test
     public void testSaveRuleChainWithViolationOfLengthValidation() throws Exception {
 
         Mockito.reset(tbClusterService, auditLogService);
@@ -169,7 +242,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         doDelete("/api/ruleChain/" + savedRuleChain.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedRuleChain, savedRuleChain.getId(), savedRuleChain.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventOneTime(savedRuleChain, savedRuleChain.getId(), savedRuleChain.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.DELETED, savedRuleChain.getId().getId().toString());
 
@@ -184,14 +257,13 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
 
 
-        List<RuleChain> edgeRuleChains = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<RuleChain> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId() + "/ruleChains?",
                 new TypeReference<>() {
                 }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
-        edgeRuleChains.addAll(pageData.getData());
+        List<RuleChain> edgeRuleChains = new ArrayList<>(pageData.getData());
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -208,11 +280,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new RuleChain(), new RuleChain(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, ActionType.ADDED, cntEntity, 0, cntEntity * 2);
-        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new RuleChain(), new RuleChain(),
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ASSIGNED_TO_EDGE, ActionType.ASSIGNED_TO_EDGE, cntEntity, cntEntity, cntEntity * 2,
-                new String(), new String(), new String());
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity * 2);
         Mockito.reset(tbClusterService, auditLogService);
 
         List<RuleChain> loadedEdgeRuleChains = new ArrayList<>();
@@ -227,8 +295,8 @@ public class RuleChainControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edgeRuleChains, idComparator);
-        Collections.sort(loadedEdgeRuleChains, idComparator);
+        edgeRuleChains.sort(idComparator);
+        loadedEdgeRuleChains.sort(idComparator);
 
         Assert.assertEquals(edgeRuleChains, loadedEdgeRuleChains);
 

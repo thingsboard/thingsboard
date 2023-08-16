@@ -11364,7 +11364,6 @@ var warnings = {
   W086: "Expected a 'break' statement before '{a}'.",
   W087: "Forgotten 'debugger' statement?",
   W088: "Creating global 'for' variable. Should be 'for (var {a} ...'.",
-  // W288: "The syntax of function '{a}' is specific to TBEL, and is not supported by JS executor.",
   W089: "The body of a for in should be wrapped in an if statement to filter " +
     "unwanted properties from the prototype.",
   W090: "'{a}' is not a statement label.",

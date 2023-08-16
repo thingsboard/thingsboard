@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -71,7 +72,7 @@ public class AlarmCommentServiceTest extends AbstractServiceTest {
         user.setEmail("tenant@thingsboard.org");
         user.setFirstName("John");
         user.setLastName("Brown");
-        user = userService.saveUser(user);
+        user = userService.saveUser(TenantId.SYS_TENANT_ID, user);
     }
 
     @After

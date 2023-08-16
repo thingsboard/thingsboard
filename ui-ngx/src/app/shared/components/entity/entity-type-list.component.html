@@ -15,7 +15,12 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entityTypeListFormGroup" class="mat-block tb-chip-list" subscriptSizing="{{ subscriptSizing }}">
+<mat-form-field [formGroup]="entityTypeListFormGroup"
+                [appearance]="appearance"
+                class="mat-block" [class]="additionalClasses"
+                [floatLabel]="floatLabel"
+                subscriptSizing="{{ subscriptSizing }}">
+  <mat-label *ngIf="label"> {{ label }}</mat-label>
   <mat-chip-grid #chipList formControlName="entityTypeList">
     <mat-chip-row
       *ngFor="let entityType of entityTypeList"
@@ -47,6 +52,9 @@
       </span>
     </mat-option>
   </mat-autocomplete>
+  <div matSuffix>
+    <ng-content select="[matSuffix]"></ng-content>
+  </div>
   <mat-error *ngIf="entityTypeListFormGroup.get('entityTypeList').hasError('required')">
     {{ 'entity.entity-type-list-empty' | translate }}
   </mat-error>

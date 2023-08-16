@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.mvel2.CompileException;
 import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;

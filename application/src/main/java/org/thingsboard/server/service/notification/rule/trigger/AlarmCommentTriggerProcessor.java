@@ -24,9 +24,9 @@ import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.notification.info.AlarmCommentNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.notification.trigger.AlarmCommentTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmCommentNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentTrigger;
 import org.thingsboard.server.dao.entity.EntityService;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;

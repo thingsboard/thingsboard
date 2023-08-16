@@ -32,6 +32,7 @@ import { UserDashboardAction } from '@shared/models/user-settings.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
 @Injectable()
 export class DashboardResolver implements Resolve<Dashboard> {
@@ -85,6 +86,7 @@ const routes: Routes = [
       {
         path: ':dashboardId',
         component: DashboardPageComponent,
+        canDeactivate: [ConfirmOnExitGuard],
         data: {
           breadcrumb: {
             labelFunction: dashboardBreadcumbLabelFunction,

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
@@ -56,7 +58,6 @@ import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
-import org.thingsboard.server.dao.util.limits.LimitedApi;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -237,7 +238,17 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private void processForRecipient(NotificationDeliveryMethod deliveryMethod, NotificationRecipient recipient, NotificationProcessingContext ctx) throws Exception {
         if (ctx.getStats().contains(deliveryMethod, recipient.getId())) {
             throw new AlreadySentException();
+        } else {
+            ctx.getStats().reportProcessed(deliveryMethod, recipient.getId());
         }
+
+        if (recipient instanceof User) {
+            UserNotificationSettings settings = notificationSettingsService.getUserNotificationSettings(ctx.getTenantId(), ((User) recipient).getId(), false);
+            if (!settings.isEnabled(ctx.getNotificationType(), deliveryMethod)) {
+                throw new RuntimeException("User disabled " + deliveryMethod.getName() + " notifications of this type");
+            }
+        }
+
         NotificationChannel notificationChannel = channels.get(deliveryMethod);
         DeliveryMethodNotificationTemplate processedTemplate = ctx.getProcessedTemplate(deliveryMethod, recipient);
 
@@ -251,7 +262,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         Notification notification = Notification.builder()
                 .requestId(request.getId())
                 .recipientId(recipient.getId())
-                .type(ctx.getNotificationTemplate().getNotificationType())
+                .type(ctx.getNotificationType())
                 .subject(processedTemplate.getSubject())
                 .text(processedTemplate.getBody())
                 .additionalConfig(processedTemplate.getAdditionalConfig())
