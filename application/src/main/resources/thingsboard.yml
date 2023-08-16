@@ -96,7 +96,10 @@ zk:
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
   # Name of the directory in zookeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
-  recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:60000}"
+  # The recalculate_delay property recommended in a microservices architecture setup for rule-engine services.
+  # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
+  # The delay is recommended because the initialization of rule chain actors is time-consuming. Avoiding unnecessary recalculations during a restart can enhance system performance and stability.
+  recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
 
 cluster:
   stats:

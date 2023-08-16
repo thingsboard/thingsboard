@@ -22,6 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_DELETE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.NA;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DELAY_TIMEOUT_SELF_MSG;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_ASSIGNED_TO_EDGE;
@@ -51,37 +52,36 @@ class TbMsgTypeTest {
             DEVICE_UPDATE_SELF_MSG,
             DEDUPLICATION_TIMEOUT_SELF_MSG,
             DELAY_TIMEOUT_SELF_MSG,
-            MSG_COUNT_SELF_MSG
+            MSG_COUNT_SELF_MSG,
+            NA
     );
 
     // backward-compatibility tests
-    
+
     @Test
     void getRuleNodeConnectionsTest() {
         var tbMsgTypes = TbMsgType.values();
         for (var type : tbMsgTypes) {
             if (typesWithNullRuleNodeConnection.contains(type)) {
-                assertThat(type.getRuleNodeConnection()).isNull();
+                assertThat(type.getRuleNodeConnection()).isEqualTo(TbNodeConnectionType.OTHER);
             } else {
-                assertThat(type.getRuleNodeConnection()).isNotNull();
+                assertThat(type.getRuleNodeConnection()).isNotEqualTo(TbNodeConnectionType.OTHER);
             }
         }
     }
 
     @Test
     void getRuleNodeConnectionOrElseOtherTest() {
-        assertThat(TbMsgType.getRuleNodeConnectionOrElseOther(null))
-                .isEqualTo(TbNodeConnectionType.OTHER);
         var tbMsgTypes = TbMsgType.values();
         for (var type : tbMsgTypes) {
             if (typesWithNullRuleNodeConnection.contains(type)) {
-                assertThat(TbMsgType.getRuleNodeConnectionOrElseOther(type.name()))
+                assertThat(type.getRuleNodeConnection())
                         .isEqualTo(TbNodeConnectionType.OTHER);
             } else {
-                assertThat(TbMsgType.getRuleNodeConnectionOrElseOther(type.name())).isNotNull()
+                assertThat(type.getRuleNodeConnection()).isNotNull()
                         .isNotEqualTo(TbNodeConnectionType.OTHER);
             }
         }
     }
-    
+
 }

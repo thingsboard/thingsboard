@@ -445,6 +445,7 @@
         "attributes": "Atributy",
         "latest-telemetry": "Poslední telemetrie",
         "attributes-scope": "Rozsah atributů entity",
+        "scope-telemetry": "Telemetrie",
         "scope-latest-telemetry": "Poslední telemetrie",
         "scope-client": "Atributy klienta",
         "scope-server": "Atributy serveru",

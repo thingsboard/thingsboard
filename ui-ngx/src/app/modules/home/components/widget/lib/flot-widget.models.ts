@@ -132,6 +132,7 @@ export interface TbFlotYAxisSettings {
   ticksFormatter: string;
   tickDecimals: number;
   tickSize: number;
+  tickGenerator: string;
 }
 
 export interface TbFlotBaseSettings {
