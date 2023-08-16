@@ -126,6 +126,8 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         AssetProfile oldAssetProfile = null;
         if (doValidate) {
             oldAssetProfile = assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
+        } else if (assetProfile.getId() != null) {
+            oldAssetProfile = findAssetProfileById(assetProfile.getTenantId(), assetProfile.getId());
         }
         AssetProfile savedAssetProfile;
         try {

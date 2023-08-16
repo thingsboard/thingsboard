@@ -147,6 +147,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         Asset oldAsset = null;
         if (doValidate) {
             oldAsset = assetValidator.validate(asset, Asset::getTenantId);
+        } else if (asset.getId() != null) {
+            oldAsset = findAssetById(asset.getTenantId(), asset.getId());
         }
         AssetCacheEvictEvent evictEvent = new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), oldAsset != null ? oldAsset.getName() : null);
         Asset savedAsset;

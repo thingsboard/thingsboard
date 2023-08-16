@@ -163,6 +163,8 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         DeviceProfile oldDeviceProfile = null;
         if (doValidate) {
             oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
+        } else if (deviceProfile.getId() != null) {
+            oldDeviceProfile = findDeviceProfileById(deviceProfile.getTenantId(), deviceProfile.getId());
         }
         DeviceProfile savedDeviceProfile;
         try {
