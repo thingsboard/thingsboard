@@ -102,9 +102,23 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
+    public EntityView saveEntityView(EntityView entityView, boolean doValidate) {
+        return doSaveEntityView(entityView, doValidate);
+    }
+
+    @Override
     public EntityView saveEntityView(EntityView entityView) {
+        return doSaveEntityView(entityView, true);
+    }
+
+    private EntityView doSaveEntityView(EntityView entityView, boolean doValidate) {
         log.trace("Executing save entity view [{}]", entityView);
-        EntityView old = entityViewValidator.validate(entityView, EntityView::getTenantId);
+        EntityView old = null;
+        if (doValidate) {
+            old = entityViewValidator.validate(entityView, EntityView::getTenantId);
+        } else if (entityView.getId() != null) {
+            old = findEntityViewById(entityView.getTenantId(), entityView.getId());
+        }
         try {
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
             publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
