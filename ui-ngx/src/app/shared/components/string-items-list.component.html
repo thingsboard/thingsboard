@@ -54,7 +54,15 @@
       {{ 'common.not-found' | translate }}
     </mat-option>
   </mat-autocomplete>
-  <mat-hint>{{ hint }}</mat-hint>
+  <mat-hint [hidden]="!hint">
+    {{ hint }}
+  </mat-hint>
+  <mat-hint align="end" [hidden]="!matHintEnd.children.length" #matHintEnd>
+    <ng-content select="[matHintEnd]"></ng-content>
+  </mat-hint>
+  <div matSuffix>
+    <ng-content select="[matSuffix]"></ng-content>
+  </div>
   <mat-error *ngIf="stringItemsForm.get('items').hasError('required')">
     {{ requiredText }}
   </mat-error>

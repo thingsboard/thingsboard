@@ -21,7 +21,7 @@
         [disabled]="disabled"
         #matButton
         (click)="openColorSettingsPopup($event, matButton)">
-  <tb-icon matButtonIcon *ngIf="modelValue.type === colorType.function; else colorPreview">mdi:function-variant</tb-icon>
+  <tb-icon matButtonIcon *ngIf="modelValue?.type === colorType.function; else colorPreview">mdi:function-variant</tb-icon>
 </button>
 <ng-template #colorPreview>
   <div class="tb-color-preview box" [ngClass]="{'disabled': disabled}">

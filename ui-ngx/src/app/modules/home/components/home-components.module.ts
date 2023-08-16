@@ -177,6 +177,7 @@ import {
 } from '@home/components/widget/action/manage-widget-actions-dialog.component';
 import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
 import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/basic-widget-config.module';
+import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delete-timeseries-panel.component';
 
 @NgModule({
   declarations:
@@ -205,6 +206,7 @@ import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/ba
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
+      DeleteTimeseriesPanelComponent,
       AliasesEntitySelectPanelComponent,
       AliasesEntitySelectComponent,
       AliasesEntityAutocompleteComponent,

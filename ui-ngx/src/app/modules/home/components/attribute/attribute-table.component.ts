@@ -49,6 +49,7 @@ import {
   LatestTelemetry,
   TelemetryType,
   telemetryTypeTranslations,
+  TimeseriesDeleteStrategy,
   toTelemetryType
 } from '@shared/models/telemetry/telemetry.models';
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
@@ -82,10 +83,15 @@ import {
   AddWidgetToDashboardDialogComponent,
   AddWidgetToDashboardDialogData
 } from '@home/components/attribute/add-widget-to-dashboard-dialog.component';
-import { deepClone } from '@core/utils';
+import { deepClone, isUndefinedOrNull } from '@core/utils';
 import { Filters } from '@shared/models/query/query.models';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { ResizeObserver } from '@juggle/resize-observer';
+import {
+  DELETE_TIMESERIES_PANEL_DATA,
+  DeleteTimeseriesPanelComponent,
+  DeleteTimeseriesPanelData
+} from '@home/components/attribute/delete-timeseries-panel.component';
 
 
 @Component({
@@ -379,6 +385,82 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     });
   }
 
+  deleteTimeseries($event: Event, telemetry?: AttributeData) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const isMultipleDeletion = isUndefinedOrNull(telemetry) && this.dataSource.selection.selected.length > 1;
+    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const config = new OverlayConfig({
+      panelClass: 'tb-filter-panel',
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: true,
+      maxWidth: 488,
+      width: '100%'
+    });
+    const connectedPosition: ConnectedPosition = {
+      originX: 'start',
+      originY: 'top',
+      overlayX: 'end',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+
+    const providers: StaticProvider[] = [
+      {
+        provide: DELETE_TIMESERIES_PANEL_DATA,
+        useValue: {
+          isMultipleDeletion
+        } as DeleteTimeseriesPanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+    const componentRef = overlayRef.attach(new ComponentPortal(DeleteTimeseriesPanelComponent,
+      this.viewContainerRef, injector));
+    componentRef.onDestroy(() => {
+      if (componentRef.instance.result !== null) {
+        const result = componentRef.instance.result;
+        const deleteTimeseries = telemetry ? [telemetry]: this.dataSource.selection.selected;
+        let deleteAllDataForKeys = false;
+        let rewriteLatestIfDeleted = false;
+        let startTs = null;
+        let endTs = null;
+        let deleteLatest = true;
+        switch (result.strategy) {
+          case TimeseriesDeleteStrategy.DELETE_ALL_DATA:
+            deleteAllDataForKeys = true;
+            break;
+          case TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE:
+            deleteAllDataForKeys = true;
+            deleteLatest = false;
+            break;
+          case TimeseriesDeleteStrategy.DELETE_LATEST_VALUE:
+            rewriteLatestIfDeleted = result.rewriteLatest;
+            startTs = deleteTimeseries[0].lastUpdateTs;
+            endTs = startTs + 1;
+            break;
+          case TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD:
+            startTs = result.startDateTime.getTime();
+            endTs = result.endDateTime.getTime();
+            rewriteLatestIfDeleted = result.rewriteLatest;
+            break;
+        }
+        this.attributeService.deleteEntityTimeseries(this.entityIdValue, deleteTimeseries, deleteAllDataForKeys,
+                                                      startTs, endTs, rewriteLatestIfDeleted, deleteLatest)
+          .subscribe(() => this.reloadAttributes());
+      }
+    });
+  }
+
   deleteAttributes($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -400,6 +482,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
           );
         }
       });
+    }
+  }
+
+  deleteTelemetry($event: Event) {
+    if (this.attributeScope === this.latestTelemetryTypes.LATEST_TELEMETRY) {
+      this.deleteTimeseries($event);
+    } else {
+      this.deleteAttributes($event);
     }
   }
 

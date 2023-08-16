@@ -89,6 +89,11 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.historyOnlyValue;
   }
 
+  get displayTypePrefix(): boolean {
+    return isDefinedAndNotNull(this.computedTimewindowStyle?.displayTypePrefix)
+      ? this.computedTimewindowStyle?.displayTypePrefix : true;
+  }
+
   @HostBinding('class.no-margin')
   @Input()
   @coerceBoolean()
@@ -198,6 +203,7 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (propName === 'timewindowStyle') {
           this.updateTimewindowStyle();
+          this.updateDisplayValue();
         }
       }
     }
@@ -316,7 +322,7 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
 
   updateDisplayValue() {
     if (this.innerValue.selectedTab === TimewindowType.REALTIME && !this.historyOnly) {
-      this.innerValue.displayValue = this.translate.instant('timewindow.realtime') + ' - ';
+      this.innerValue.displayValue = this.displayTypePrefix ? (this.translate.instant('timewindow.realtime') + ' - ') : '';
       if (this.innerValue.realtime.realtimeType === RealtimeWindowType.INTERVAL) {
         this.innerValue.displayValue += this.translate.instant(QuickTimeIntervalTranslationMap.get(this.innerValue.realtime.quickInterval));
       } else {
@@ -324,7 +330,7 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
           this.millisecondsToTimeStringPipe.transform(this.innerValue.realtime.timewindowMs);
       }
     } else {
-      this.innerValue.displayValue = (!this.historyOnly || this.alwaysDisplayTypePrefix) ?
+      this.innerValue.displayValue = this.displayTypePrefix && (!this.historyOnly || this.alwaysDisplayTypePrefix) ?
         (this.translate.instant('timewindow.history') + ' - ') : '';
       if (this.innerValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
         this.innerValue.displayValue += this.translate.instant('timewindow.last-prefix') + ' ' +
