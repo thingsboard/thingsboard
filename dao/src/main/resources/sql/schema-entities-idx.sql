@@ -113,3 +113,5 @@ CREATE INDEX IF NOT EXISTS idx_notification_request_status ON notification_reque
 CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
 
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_created_time ON notification(recipient_id, created_time DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ';

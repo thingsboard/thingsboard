@@ -81,9 +81,10 @@ class TbMsgTypeSwitchNodeTest {
             var msg = resultMsgs.get(i);
             assertThat(msg).isNotNull();
             assertThat(msg.getType()).isNotNull();
+            assertThat(msg.getType()).isEqualTo(msg.getInternalType().name());
             assertThat(msg).isSameAs(tbMsgList.get(i));
             assertThat(resultNodeConnections.get(i))
-                    .isEqualTo(TbMsgType.getRuleNodeConnectionOrElseOther(msg.getType()));
+                    .isEqualTo(msg.getInternalType().getRuleNodeConnection());
         }
     }
 

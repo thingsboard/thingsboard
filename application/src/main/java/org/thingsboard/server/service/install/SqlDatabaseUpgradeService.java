@@ -756,6 +756,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_rule_node_type_configuration_version ON rule_node(type, configuration_version);");
                         } catch (Exception e) {
                         }
+                        try {
+                            conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ';");
+                        } catch (Exception e) {
+                        }
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005002;");
                     }

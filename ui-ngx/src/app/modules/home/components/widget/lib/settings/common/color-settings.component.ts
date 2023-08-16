@@ -99,7 +99,7 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor {
   }
 
   private updateColorStyle() {
-    if (!this.disabled) {
+    if (!this.disabled && this.modelValue) {
       let colors: string[] = [this.modelValue.color];
       if (this.modelValue.type === ColorType.range && this.modelValue.rangeList?.length) {
         const rangeColors = this.modelValue.rangeList.slice(0, Math.min(2, this.modelValue.rangeList.length)).map(r => r.color);

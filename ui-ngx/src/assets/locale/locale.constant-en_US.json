@@ -11,7 +11,8 @@
         "permission-denied-text": "You don't have permission to perform this operation!"
     },
     "account": {
-        "account": "Account"
+        "account": "Account",
+        "notification-settings": "Notification settings"
     },
     "action": {
         "activate": "Activate",
@@ -1226,7 +1227,11 @@
         "delta-calculation-result-delta-absolute": "Delta (absolute)",
         "delta-calculation-result-delta-percent": "Delta (percent)",
         "source": "Source",
-        "latest": "Latest"
+        "latest": "Latest",
+        "latest-value": "Latest value",
+        "delta": "delta",
+        "percent": "percent",
+        "absolute": "absolute"
     },
     "datasource": {
         "type": "Datasource type",
@@ -3154,7 +3159,17 @@
         "webhook-url": "Webhook URL",
         "webhook-url-required": "Webhook URL is required",
         "channel-name": "Channel name",
-        "channel-name-required": "Channel name is required"
+        "channel-name-required": "Channel name is required",
+        "settings": {
+            "notification-settings": "Notification settings",
+            "reset-all": "Reset all settings",
+            "reset-all-title": "Are you sure you want to reset form?",
+            "reset-all-text": "After the confirmation, the settings form will reset to the default value and save.",
+            "type": "Type",
+            "enable-all": "Enable all",
+            "disable-all": "Disable all",
+            "delivery-not-configured": "Delivery method is not configured"
+        }
     },
     "ota-update": {
       "add": "Add package",
@@ -3938,6 +3953,7 @@
         "icon-position-right": "Right",
         "font": "Font",
         "color": "Color",
+        "displayTypePrefix": "Display Realtime/History prefix",
         "preview": "Preview"
     },
     "unit": {
@@ -5744,6 +5760,25 @@
             "value": "Value",
             "date": "Date",
             "value-card-style": "Value card style"
+        },
+        "aggregated-value-card": {
+            "subtitle": "Subtitle",
+            "chart": "Chart",
+            "values": "Values",
+            "value-appearance": "Value appearance",
+            "position": "Position",
+            "position-center": "Center",
+            "position-right-top": "Right top",
+            "position-right-bottom": "Right bottom",
+            "position-left-top": "Left top",
+            "position-left-bottom": "Left bottom",
+            "font": "Font",
+            "color": "Color",
+            "display-up-down-arrow": "Display Up/Down arrow",
+            "add-value": "Add value",
+            "remove-value": "Remove value",
+            "no-values": "No values configured",
+            "aggregation": "Aggregation"
         },
         "table": {
             "common-table-settings": "Common Table Settings",

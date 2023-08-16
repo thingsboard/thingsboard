@@ -20,7 +20,7 @@
   <div class="mat-padding" fxLayout="column" style="gap: 16px;">
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>datakey.general</div>
-      <mat-form-field *ngIf="modelValue.type !== dataKeyTypes.function" subscriptSizing="dynamic">
+      <mat-form-field *ngIf="modelValue.type !== dataKeyTypes.function && !hideDataKeyName" subscriptSizing="dynamic">
         <mat-label>{{ 'entity.key' | translate }}</mat-label>
         <input matInput type="text" placeholder="{{ 'entity.key-name' | translate }}"
                #keyInput

@@ -112,9 +112,23 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     }
 
     @Override
+    public AssetProfile saveAssetProfile(AssetProfile assetProfile, boolean doValidate) {
+        return doSaveAssetProfile(assetProfile, doValidate);
+    }
+
+    @Override
     public AssetProfile saveAssetProfile(AssetProfile assetProfile) {
+        return doSaveAssetProfile(assetProfile, true);
+    }
+
+    private AssetProfile doSaveAssetProfile(AssetProfile assetProfile, boolean doValidate) {
         log.trace("Executing saveAssetProfile [{}]", assetProfile);
-        AssetProfile oldAssetProfile = assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
+        AssetProfile oldAssetProfile = null;
+        if (doValidate) {
+            oldAssetProfile = assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
+        } else if (assetProfile.getId() != null) {
+            oldAssetProfile = findAssetProfileById(assetProfile.getTenantId(), assetProfile.getId());
+        }
         AssetProfile savedAssetProfile;
         try {
             savedAssetProfile = assetProfileDao.saveAndFlush(assetProfile.getTenantId(), assetProfile);
