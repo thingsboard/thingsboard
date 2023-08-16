@@ -298,7 +298,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.selectedWidgetsBundleAlias = null;
     this.attributeScope = this.defaultAttributeScope;
     this.pageLink.textSearch = null;
-    this.textSearch.reset();
+    this.textSearch.reset('', {emitEvent: false});
     if (this.viewsInited) {
       this.paginator.pageIndex = 0;
       const sortable = this.sort.sortables.get('key');

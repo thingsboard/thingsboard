@@ -378,7 +378,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   private resetSortAndFilter(update: boolean) {
     this.textSearchMode = false;
     this.pageLink.textSearch = null;
-    this.textSearch.reset();
+    this.textSearch.reset('', {emitEvent: false});
     if (this.viewsInited) {
       this.paginator.pageIndex = 0;
       const sortable = this.sort.sortables.get('timestamp');

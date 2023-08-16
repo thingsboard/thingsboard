@@ -214,7 +214,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     this.direction = EntitySearchDirection.FROM;
     this.updateColumns();
     this.pageLink.textSearch = null;
-    this.textSearch.reset();
+    this.textSearch.reset('', {emitEvent: false});
     this.paginator.pageIndex = 0;
     const sortable = this.sort.sortables.get('type');
     this.sort.active = sortable.id;

@@ -275,7 +275,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         const decodedTextSearch = decodeURI(textSearchParam);
         this.textSearchMode = true;
         this.pageLink.textSearch = decodedTextSearch.trim();
-        this.textSearch.setValue(decodedTextSearch);
+        this.textSearch.setValue(decodedTextSearch, {emitEvent: false});
       }
     }
     this.dataSource = this.entitiesTableConfig.dataSource(this.dataLoaded.bind(this));
@@ -309,25 +309,24 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   ngAfterViewInit() {
-
     this.textSearch.valueChanges.pipe(
       debounceTime(150),
       distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),
       takeUntil(this.destroy$)
     ).subscribe(value => {
-      const queryParams: PageQueryParam = {};
-      if (isNotEmptyStr(value)) {
-        queryParams.textSearch = encodeURI(value);
-        this.pageLink.textSearch = value.trim();
+      if (this.pageMode) {
+        const queryParams: PageQueryParam = {
+          textSearch: isNotEmptyStr(value) ? encodeURI(value) : null,
+          page: null
+        };
+        this.updatedRouterParamsAndData(queryParams);
       } else {
-        queryParams.textSearch = null;
-        this.pageLink.textSearch = null;
+        this.pageLink.textSearch = isNotEmptyStr(value) ? value.trim() : null;
+        if (this.displayPagination) {
+          this.paginator.pageIndex = 0;
+        }
+        this.updateData();
       }
-      if (this.displayPagination) {
-        this.paginator.pageIndex = 0;
-        queryParams.page = null;
-      }
-      this.updatedRouterParamsAndData(queryParams);
     });
 
     if (this.pageMode) {
@@ -346,9 +345,11 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
           const decodedTextSearch = decodeURI(textSearchParam);
           this.textSearchMode = true;
           this.pageLink.textSearch = decodedTextSearch.trim();
-          this.textSearch.setValue(decodedTextSearch);
+          this.textSearch.setValue(decodedTextSearch, {emitEvent: false});
         } else {
+          this.textSearchMode = false;
           this.pageLink.textSearch = null;
+          this.textSearch.reset('', {emitEvent: false});
         }
         this.updateData();
       });
@@ -596,7 +597,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   resetSortAndFilter(update: boolean = true, preserveTimewindow: boolean = false) {
     this.textSearchMode = false;
     this.pageLink.textSearch = null;
-    this.textSearch.reset();
+    this.textSearch.reset('', {emitEvent: false});
     if (this.entitiesTableConfig.useTimePageLink && !preserveTimewindow) {
       this.timewindow = this.entitiesTableConfig.defaultTimewindowInterval;
     }
