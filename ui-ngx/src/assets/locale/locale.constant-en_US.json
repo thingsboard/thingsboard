@@ -3534,8 +3534,8 @@
         "tenant-required": "Tenant is required",
         "search": "Search tenants",
         "selected-tenants": "{ count, plural, =1 {1 tenant} other {# tenants} } selected",
-        "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
-        "isolated-tb-rule-engine-details": "Requires separate microservice(s) for the profile"
+        "isolated-tb-rule-engine": "Use isolated ThingsBoard Rule Engine queues",
+        "isolated-tb-rule-engine-details": "Each tenant will have its own processing queues"
     },
     "tenant-profile": {
         "tenant-profile": "Tenant profile",
