@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mail.MailOauth2Provider;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
+import javax.mail.Transport;
 import javax.mail.internet.MimeMessage;
 import java.time.Duration;
 import java.time.Instant;
@@ -78,6 +79,16 @@ public class TbMailSender extends JavaMailSenderImpl {
             setPassword(accessToken);
         }
         super.doSend(mimeMessages, originalMessages);
+    }
+
+    @SneakyThrows
+    @Override
+    public void testConnection() {
+        if (oauth2Enabled && (System.currentTimeMillis() > tokenExpires)){
+            refreshAccessToken();
+            setPassword(accessToken);
+        }
+        super.testConnection();
     }
 
     private Properties createJavaMailProperties(JsonNode jsonConfig) {
