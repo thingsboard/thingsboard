@@ -53,7 +53,7 @@
     </mat-option>
   </mat-autocomplete>
   <div matSuffix>
-    <ng-content select="[additionalButtons]"></ng-content>
+    <ng-content select="[matSuffix]"></ng-content>
   </div>
   <mat-error *ngIf="entitySubtypeListFormGroup.get('entitySubtypeList').hasError('required')">
     {{ subtypeListEmptyText | translate }}
