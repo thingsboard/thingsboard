@@ -11,7 +11,8 @@
         "permission-denied-text": "You don't have permission to perform this operation!"
     },
     "account": {
-        "account": "Account"
+        "account": "Account",
+        "notification-settings": "Notification settings"
     },
     "action": {
         "activate": "Activate",
@@ -3151,7 +3152,17 @@
         "updated": "Updated",
         "use-template": "Use template",
         "view-all": "View all",
-        "warning": "Warning"
+        "warning": "Warning",
+        "settings": {
+            "notification-settings": "Notification settings",
+            "reset-all": "Reset all settings",
+            "reset-all-title": "Are you sure you want to reset form?",
+            "reset-all-text": "After the confirmation, the settings form will reset to the default value and save.",
+            "type": "Type",
+            "enable-all": "Enable all",
+            "disable-all": "Disable all",
+            "delivery-not-configured": "Delivery method is not configured"
+        }
     },
     "ota-update": {
       "add": "Add package",
@@ -3601,6 +3612,8 @@
         "description": "Description",
         "description-hint": "This text will be displayed in the Queue description instead of the selected strategy",
         "alt-description": "Submit Strategy: {{submitStrategy}}, Processing Strategy: {{processingStrategy}}",
+        "custom-properties": "Custom properties",
+        "custom-properties-hint": "Custom queue (topic) creation properties, e.g. 'retention.ms:604800000;retention.bytes:1048576000'",
         "strategies": {
             "sequential-by-originator-label": "Sequential by originator",
             "sequential-by-originator-hint": "New message for e.g. device A is not submitted until previous message for device A is acknowledged",
@@ -3668,8 +3681,8 @@
         "tenant-required": "Tenant is required",
         "search": "Search tenants",
         "selected-tenants": "{ count, plural, =1 {1 tenant} other {# tenants} } selected",
-        "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
-        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
+        "isolated-tb-rule-engine": "Use isolated ThingsBoard Rule Engine queues",
+        "isolated-tb-rule-engine-details": "Each tenant will have dedicated Rule Engine queues"
     },
     "tenant-profile": {
         "tenant-profile": "Tenant profile",

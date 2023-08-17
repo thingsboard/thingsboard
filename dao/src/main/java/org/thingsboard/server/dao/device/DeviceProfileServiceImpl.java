@@ -143,7 +143,16 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     @Override
+    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
+        return doSaveDeviceProfile(deviceProfile, doValidate);
+    }
+
+    @Override
     public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
+        return doSaveDeviceProfile(deviceProfile, true);
+    }
+
+    private DeviceProfile doSaveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
         if (deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
             X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
@@ -151,7 +160,12 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
                 formatDeviceProfileCertificate(deviceProfile, x509Configuration);
             }
         }
-        DeviceProfile oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
+        DeviceProfile oldDeviceProfile = null;
+        if (doValidate) {
+            oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
+        } else if (deviceProfile.getId() != null) {
+            oldDeviceProfile = findDeviceProfileById(deviceProfile.getTenantId(), deviceProfile.getId());
+        }
         DeviceProfile savedDeviceProfile;
         try {
             savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
