@@ -71,6 +71,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -363,10 +364,10 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
                 "var msgType = \"POST_TELEMETRY_REQUEST\";\n" +
                 "var someUuid = \"" + someUuid + "\";\n" +
                 "return { msg: msg, metadata: metadata, msgType: msgType };");
-        generatorNode.setConfiguration(mapper.valueToTree(generatorNodeConfig));
+        generatorNode.setConfiguration(JacksonUtil.valueToTree(generatorNodeConfig));
         nodes.add(generatorNode);
         metaData.setNodes(nodes);
-        ruleChainService.saveRuleChainMetaData(tenantId1, metaData);
+        ruleChainService.saveRuleChainMetaData(tenantId1, metaData, Function.identity());
 
         EntityExportData<RuleChain> ruleChainExportData = exportEntity(tenantAdmin1, ruleChain.getId());
         EntityExportData<Customer> customerExportData = exportEntity(tenantAdmin1, customer.getId());
