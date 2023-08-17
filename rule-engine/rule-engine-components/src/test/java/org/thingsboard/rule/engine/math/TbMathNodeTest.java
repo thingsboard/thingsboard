@@ -15,20 +15,22 @@
  */
 package org.thingsboard.rule.engine.math;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.verification.Timeout;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
@@ -54,24 +56,36 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TbMathNodeTest {
 
-    private EntityId originator = new DeviceId(Uuids.timeBased());
-    private TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
+    static final int RULE_DISPATCHER_POOL_SIZE = 2;
+    static final int DB_CALLBACK_POOL_SIZE = 3;
+    private final EntityId originator = DeviceId.fromString("ccd71696-0586-422d-940e-755a41ec3b0d");
+    private final TenantId tenantId = TenantId.fromUUID(UUID.fromString("e7f46b23-0c7d-42f5-9b06-fc35ab17af8a"));
 
     @Mock
     private TbContext ctx;
@@ -81,35 +95,31 @@ public class TbMathNodeTest {
     private TimeseriesService tsService;
     @Mock
     private RuleEngineTelemetryService telemetryService;
-    private AbstractListeningExecutor dbExecutor;
+    private AbstractListeningExecutor dbCallbackExecutor;
+    private AbstractListeningExecutor ruleEngineDispatcherExecutor;
 
-    @Before
+    @BeforeEach
     public void before() {
-        dbExecutor = new AbstractListeningExecutor() {
-            @Override
-            protected int getThreadPollSize() {
-                return 3;
-            }
-        };
-        dbExecutor.init();
-        initMocks();
-    }
+        dbCallbackExecutor = new DBCallbackExecutor();
+        dbCallbackExecutor.init();
+        ruleEngineDispatcherExecutor = new RuleDispatcherExecutor();
+        ruleEngineDispatcherExecutor.init();
 
-    @After
-    public void after() {
-        dbExecutor.destroy();
-    }
-
-    private void initMocks() {
-        Mockito.reset(ctx);
-        Mockito.reset(attributesService);
-        Mockito.reset(tsService);
-        Mockito.reset(telemetryService);
         lenient().when(ctx.getAttributesService()).thenReturn(attributesService);
         lenient().when(ctx.getTelemetryService()).thenReturn(telemetryService);
         lenient().when(ctx.getTimeseriesService()).thenReturn(tsService);
         lenient().when(ctx.getTenantId()).thenReturn(tenantId);
-        lenient().when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        lenient().when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
+    }
+
+    @AfterEach
+    public void after() {
+        ruleEngineDispatcherExecutor.executor().shutdownNow();
+        dbCallbackExecutor.executor().shutdownNow();
+    }
+
+    private void initMocks() {
+        Mockito.clearInvocations(ctx, attributesService, tsService, telemetryService);
     }
 
     private TbMathNode initNode(TbRuleNodeMathFunctionType operation, TbMathResult result, TbMathArgument... arguments) {
@@ -154,10 +164,8 @@ public class TbMathNodeTest {
 
         node.onMsg(ctx, msg);
 
-        ConcurrentMap<EntityId, Semaphore> semaphores = (ConcurrentMap<EntityId, Semaphore>) ReflectionTestUtils.getField(node, "semaphores");
+        ConcurrentMap<EntityId, TbMathNode.SemaphoreWithQueue<TbMathNode.TbMsgTbContext>> semaphores = (ConcurrentMap<EntityId, TbMathNode.SemaphoreWithQueue<TbMathNode.TbMsgTbContext>>) ReflectionTestUtils.getField(node, "locks");
         Assert.assertNotNull(semaphores);
-        Semaphore originatorSemaphore = semaphores.get(originator);
-        Assert.assertNotNull(originatorSemaphore);
 
         metaData.putValue("key1", "secondMsgResult");
         metaData.putValue("key2", "argumentC");
@@ -167,7 +175,7 @@ public class TbMathNodeTest {
 
         node.onMsg(ctx, msg);
 
-        Awaitility.await("Semaphore released").atMost(5, TimeUnit.SECONDS).until(semaphores.get(originator)::tryAcquire);
+        Awaitility.await("Semaphore released").atMost(5, TimeUnit.SECONDS).until(() -> semaphores.get(originator).semaphore.tryAcquire());
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         Mockito.verify(ctx, Mockito.times(2)).tellSuccess(msgCaptor.capture());
@@ -534,4 +542,87 @@ public class TbMathNodeTest {
         });
         Assert.assertNotNull(thrown.getMessage());
     }
+
+    @Test
+    public void testExp4j_concurrent() {
+        TbMathNode node = spy(initNodeWithCustomFunction("2a+3b",
+                new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a"),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
+        ));
+        EntityId originatorSlow = DeviceId.fromString("7f01170d-6bba-419c-b95c-2b4c3ba32f30");
+        EntityId originatorFast = DeviceId.fromString("c45360ff-7906-4102-a2ae-3495a86168d0");
+        CountDownLatch slowProcessingLatch = new CountDownLatch(1);
+
+        List<TbMsg> slowMsgList = IntStream.range(0, 5)
+                .mapToObj(x -> TbMsg.newMsg("TEST", originatorSlow, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
+                .collect(Collectors.toList());
+        List<TbMsg> fastMsgList = IntStream.range(0, 2)
+                .mapToObj(x -> TbMsg.newMsg("TEST", originatorFast, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
+                .collect(Collectors.toList());
+
+        assertThat(slowMsgList.size()).as("slow msgs >= rule-dispatcher pool size").isGreaterThanOrEqualTo(RULE_DISPATCHER_POOL_SIZE);
+
+        log.debug("rule-dispatcher [{}], db-callback [{}], slowMsg [{}], fastMsg [{}]", RULE_DISPATCHER_POOL_SIZE, DB_CALLBACK_POOL_SIZE, slowMsgList.size(), fastMsgList.size());
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("\uD83D\uDC0C processMsgAsync slow originator [{}][{}]", msg.getOriginator(), msg);
+            try {
+                assertThat(slowProcessingLatch.await(30, TimeUnit.SECONDS)).as("await on slowProcessingLatch").isTrue();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return invocation.callRealMethod();
+        }).given(node).processMsgAsync(eq(ctx), argThat(slowMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("\u26A1\uFE0F processMsgAsync FAST originator [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).processMsgAsync(eq(ctx), argThat(fastMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("submit slow originator onMsg [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).onMsg(eq(ctx), argThat(slowMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("submit FAST originator onMsg [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).onMsg(eq(ctx), argThat(fastMsgList::contains));
+
+        // submit slow msg may block all rule engine dispatcher threads
+        slowMsgList.forEach(msg -> ruleEngineDispatcherExecutor.executeAsync(() -> node.onMsg(ctx, msg)));
+        // wait until dispatcher threads started with all slowMsg
+        verify(node, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).onMsg(eq(ctx), argThat(slowMsgList::contains));
+
+        // submit fast have to return immediately
+        fastMsgList.forEach(msg -> ruleEngineDispatcherExecutor.executeAsync(() -> node.onMsg(ctx, msg)));
+        // wait until all fast messages processed
+        verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(fastMsgList.size()))).tellSuccess(any());
+
+        slowProcessingLatch.countDown();
+
+        verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(fastMsgList.size() + slowMsgList.size()))).tellSuccess(any());
+
+        verify(ctx, never()).tellFailure(any(), any());
+    }
+
+    static class RuleDispatcherExecutor extends AbstractListeningExecutor {
+        @Override
+        protected int getThreadPollSize() {
+            return RULE_DISPATCHER_POOL_SIZE;
+        }
+    }
+
+    static class DBCallbackExecutor extends AbstractListeningExecutor {
+        @Override
+        protected int getThreadPollSize() {
+            return DB_CALLBACK_POOL_SIZE;
+        }
+    }
+
 }
