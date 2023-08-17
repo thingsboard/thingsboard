@@ -5761,7 +5761,8 @@
             "add-value": "Add value",
             "remove-value": "Remove value",
             "no-values": "No values configured",
-            "aggregation": "Aggregation"
+            "aggregation": "Aggregation",
+            "aggregated-value-card-style": "Aggregated value card style"
         },
         "table": {
             "common-table-settings": "Common Table Settings",

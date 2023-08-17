@@ -71,7 +71,6 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import {
-  DatasourceType,
   Widget,
   WidgetConfig,
   WidgetInfo,
@@ -415,6 +414,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.updateLayoutSizes();
     });
     this.dashboardResize$.observe(this.dashboardContainer.nativeElement);
+    if (!this.widgetEditMode && !this.readonly && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
+      this.setEditMode(true, false);
+    }
   }
 
   private init(data: DashboardPageInitData) {

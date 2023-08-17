@@ -79,7 +79,6 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   values: {[key: string]: AggregatedValueCardValue} = {};
 
   showChart = true;
-  chartColor: string;
 
   showDate = true;
   dateFormat: DateFormatProcessor;
@@ -123,7 +122,6 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     }
 
     this.showChart = this.settings.showChart;
-    this.chartColor = this.settings.chartColor;
     if (this.showChart) {
       if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {
         this.flotDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
@@ -132,7 +130,6 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
           showLines: true,
           lineWidth: 2
         } as TbFlotKeySettings;
-        this.flotDataKey.color = this.chartColor;
       }
     }
 

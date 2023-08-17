@@ -270,6 +270,9 @@ import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings
 import {
   AggregatedValueCardKeySettingsComponent
 } from '@home/components/widget/lib/settings/cards/aggregated-value-card-key-settings.component';
+import {
+  AggregatedValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/aggregated-value-card-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -370,7 +373,8 @@ import {
     DocLinksWidgetSettingsComponent,
     QuickLinksWidgetSettingsComponent,
     ValueCardWidgetSettingsComponent,
-    AggregatedValueCardKeySettingsComponent
+    AggregatedValueCardKeySettingsComponent,
+    AggregatedValueCardWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -476,7 +480,8 @@ import {
     DocLinksWidgetSettingsComponent,
     QuickLinksWidgetSettingsComponent,
     ValueCardWidgetSettingsComponent,
-    AggregatedValueCardKeySettingsComponent
+    AggregatedValueCardKeySettingsComponent,
+    AggregatedValueCardWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -548,4 +553,5 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent,
   'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent,
   'tb-aggregated-value-card-key-settings': AggregatedValueCardKeySettingsComponent,
+  'tb-aggregated-value-card-widget-settings': AggregatedValueCardWidgetSettingsComponent
 };
