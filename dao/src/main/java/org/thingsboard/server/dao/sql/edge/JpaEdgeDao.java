@@ -184,6 +184,15 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
                         DaoUtil.toPageable(pageLink)));
     }
 
+    @Override
+    public PageData<Edge> findEdgesByTenantProfileId(UUID tenantProfileId, PageLink pageLink) {
+        log.debug("Try to find edges by tenantProfileId [{}], pageLink [{}]", tenantProfileId, pageLink);
+        return DaoUtil.toPageData(
+                edgeRepository.findByTenantProfileId(
+                        tenantProfileId,
+                        DaoUtil.toPageable(pageLink)));
+    }
+
     private List<EntitySubtype> convertTenantEdgeTypesToDto(UUID tenantId, List<String> types) {
         List<EntitySubtype> list = Collections.emptyList();
         if (types != null && !types.isEmpty()) {
