@@ -141,7 +141,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
         eventPublisher.publishEvent(SaveEntityEvent.builder()
                 .tenantId(tenantId == null ? TenantId.SYS_TENANT_ID : tenantId)
-                .entity(user)
+                .entity(savedUser)
                 .entityId(savedUser.getId())
                 .added(user.getId() == null).build());
         return savedUser;

@@ -16,32 +16,38 @@
 package org.thingsboard.server.common.data.edge;
 
 import lombok.Getter;
+import org.thingsboard.server.common.data.EntityType;
 
 @Getter
 public enum EdgeEventType {
-    DASHBOARD(false),
-    ASSET(false),
-    DEVICE(false),
-    DEVICE_PROFILE(true),
-    ASSET_PROFILE(true),
-    ENTITY_VIEW(false),
-    ALARM(false),
-    RULE_CHAIN(false),
-    RULE_CHAIN_METADATA(false),
-    EDGE(false),
-    USER(true),
-    CUSTOMER(true),
-    RELATION(true),
-    TENANT(true),
-    WIDGETS_BUNDLE(true),
-    WIDGET_TYPE(true),
-    ADMIN_SETTINGS(true),
-    OTA_PACKAGE(true),
-    QUEUE(true);
+    DASHBOARD(false, EntityType.DASHBOARD),
+    ASSET(false, EntityType.ASSET),
+    DEVICE(false, EntityType.DEVICE),
+    DEVICE_PROFILE(true, EntityType.DEVICE_PROFILE),
+    ASSET_PROFILE(true, EntityType.ASSET_PROFILE),
+    ENTITY_VIEW(false, EntityType.ENTITY_VIEW),
+    ALARM(false, EntityType.ALARM),
+    RULE_CHAIN(false, EntityType.RULE_CHAIN),
+    RULE_CHAIN_METADATA(false, null),
+    EDGE(false, EntityType.EDGE),
+    USER(true, EntityType.USER),
+    CUSTOMER(true, EntityType.CUSTOMER),
+    RELATION(true, null),
+    TENANT(true, EntityType.TENANT),
+    TENANT_PROFILE(true, EntityType.TENANT_PROFILE),
+    WIDGETS_BUNDLE(true, EntityType.WIDGETS_BUNDLE),
+    WIDGET_TYPE(true, EntityType.WIDGET_TYPE),
+    ADMIN_SETTINGS(true, null),
+    OTA_PACKAGE(true, EntityType.OTA_PACKAGE),
+    QUEUE(true, EntityType.QUEUE);
 
     private final boolean allEdgesRelated;
 
-    EdgeEventType(boolean allEdgesRelated) {
+    private final EntityType entityType;
+
+
+    EdgeEventType(boolean allEdgesRelated, EntityType entityType) {
         this.allEdgesRelated = allEdgesRelated;
+        this.entityType = entityType;
     }
 }
