@@ -93,8 +93,7 @@
                 <div class="tb-form-panel no-padding no-border tb-tab-body">
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                                 [data]='createMarkDownCommand("brew install curl")'></tb-markdown>
+                    <div class="tb-install-instruction-text" translate>device.connectivity.install-curl-macos</div>
                   </div>
                   <ng-container
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
@@ -173,7 +172,7 @@
                     <div class="tb-form-panel stroked">
                       <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
                       <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                                   [data]='createMarkDownCommand("brew install mosquitto-clients")'></tb-markdown>
+                                   [data]='createMarkDownCommand("brew install mosquitto")'></tb-markdown>
                     </div>
                     <ng-container
                       *ngTemplateOutlet="executeCommand; context: {cmd: {
