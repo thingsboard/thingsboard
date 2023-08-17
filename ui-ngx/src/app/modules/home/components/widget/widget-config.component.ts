@@ -149,7 +149,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   @Input() disabled: boolean;
 
-  @Input()
   widgetConfigMode = WidgetConfigMode.advanced;
 
   widgetType: widgetType;
@@ -407,7 +406,20 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   writeValue(value: WidgetConfigComponentData): void {
     this.modelValue = value;
     this.widgetType = this.modelValue?.widgetType;
+    this.widgetConfigMode = this.modelValue?.hasBasicMode ?
+      (this.modelValue?.config?.configMode || WidgetConfigMode.advanced) : WidgetConfigMode.advanced;
     this.setupConfig(this.isAdd);
+  }
+
+  setWidgetConfigMode(widgetConfigMode: WidgetConfigMode) {
+    if (this.modelValue?.hasBasicMode && this.widgetConfigMode !== widgetConfigMode) {
+      this.widgetConfigMode = widgetConfigMode;
+      this.modelValue.config.configMode = widgetConfigMode;
+      if (this.hasBasicModeDirective) {
+        this.setupConfig();
+      }
+      this.propagateChange(this.modelValue);
+    }
   }
 
   private setupConfig(isAdd = false) {

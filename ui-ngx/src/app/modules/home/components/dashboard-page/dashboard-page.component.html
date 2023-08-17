@@ -367,7 +367,7 @@
                           [isReadOnly]="true"
                           (closeDetails)="onEditWidgetClosed()">
           <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <tb-toggle-select *ngIf="tbEditWidget.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs" [(ngModel)]="tbEditWidget.widgetConfigMode">
+            <tb-toggle-select *ngIf="tbEditWidget.widgetConfig?.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs" [(ngModel)]="tbEditWidget.widgetConfigMode">
               <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
               <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
             </tb-toggle-select>

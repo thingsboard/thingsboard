@@ -18,12 +18,12 @@
 <form [formGroup]="widgetFormGroup">
   <fieldset [disabled]="isLoading$ | async">
     <tb-widget-config
+      #widgetConfigComponent
       [aliasController]="aliasController"
       [functionsOnly]="widgetEditMode"
       [dashboard]="dashboard"
       [widget]="widget"
       [hideToggleHeader]="previewMode"
-      [widgetConfigMode]="widgetConfigMode"
       formControlName="widgetConfig">
       <div class="tb-widget-config-header-prefix">
         <button mat-button

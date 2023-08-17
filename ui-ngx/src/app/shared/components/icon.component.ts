@@ -90,7 +90,7 @@ export class TbIconComponent extends _TbIconBase
     return (this._iconNameContent?.nativeElement.textContent || '').trim();
   }
 
-  private _contentChanges: Subscription = null;
+  private _contentChanges = Subscription.EMPTY;
   private _previousFontSetClass: string[] = [];
 
   _useSvgIcon = false;
