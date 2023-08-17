@@ -50,7 +50,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -174,17 +173,6 @@ public class TbMathNode implements TbNode {
         ListenableFuture<TbMsg> resultMsgFuture = Futures.transformAsync(argumentValues, args ->
                 updateMsgAndDb(ctx, msg, msgBodyOpt, calculateResult(args)), ctx.getDbCallbackExecutor());
         return resultMsgFuture;
-    }
-
-    private boolean tryAcquire(EntityId originator, Semaphore originatorSemaphore) {
-        boolean acquired;
-        try {
-            acquired = originatorSemaphore.tryAcquire(20, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            acquired = false;
-            log.debug("[{}] Failed to acquire semaphore", originator, e);
-        }
-        return acquired;
     }
 
     private ListenableFuture<TbMsg> updateMsgAndDb(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result) {
