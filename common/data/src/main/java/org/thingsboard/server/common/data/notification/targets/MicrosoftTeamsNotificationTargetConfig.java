@@ -15,22 +15,34 @@
  */
 package org.thingsboard.server.common.data.notification.targets;
 
-public interface NotificationRecipient {
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    Object getId();
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 
-    String getTitle();
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class MicrosoftTeamsNotificationTargetConfig extends NotificationTargetConfig implements NotificationRecipient {
 
-    default String getFirstName() {
-        return null;
+    @NotBlank
+    private String webhookUrl;
+    @NotEmpty
+    private String channelName;
+
+    @Override
+    public NotificationTargetType getType() {
+        return NotificationTargetType.MICROSOFT_TEAMS;
     }
 
-    default String getLastName() {
-        return null;
+    @Override
+    public Object getId() {
+        return webhookUrl;
     }
 
-    default String getEmail() {
-        return null;
+    @Override
+    public String getTitle() {
+        return channelName;
     }
 
 }

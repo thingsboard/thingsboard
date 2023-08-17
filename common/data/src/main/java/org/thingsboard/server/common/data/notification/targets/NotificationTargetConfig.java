@@ -30,7 +30,8 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
         @Type(value = PlatformUsersNotificationTargetConfig.class, name = "PLATFORM_USERS"),
-        @Type(value = SlackNotificationTargetConfig.class, name = "SLACK")
+        @Type(value = SlackNotificationTargetConfig.class, name = "SLACK"),
+        @Type(value = MicrosoftTeamsNotificationTargetConfig.class, name = "MICROSOFT_TEAMS")
 })
 @Data
 public abstract class NotificationTargetConfig {

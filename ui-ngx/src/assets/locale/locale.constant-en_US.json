@@ -2967,6 +2967,8 @@
             "email-preview": "Email notification preview",
             "slack": "Slack",
             "slack-preview": "Slack notification preview",
+            "microsoft-teams": "Microsoft Teams",
+            "microsoft-teams-preview": "Microsoft Teams notification preview",
             "sms": "SMS",
             "sms-preview": "SMS notification preview",
             "web": "Web",
@@ -3132,6 +3134,7 @@
         "tenant-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all tenant profiles",
         "tenants-list-rule-hint": "If the field is empty, the trigger will be applied to all tenants",
         "threshold": "Threshold",
+        "theme-color": "Theme color",
         "time": "Time",
         "track-rule-node-events": "Track rule node events",
         "trigger": {
@@ -3154,6 +3157,10 @@
         "use-template": "Use template",
         "view-all": "View all",
         "warning": "Warning",
+        "webhook-url": "Webhook URL",
+        "webhook-url-required": "Webhook URL is required",
+        "channel-name": "Channel name",
+        "channel-name-required": "Channel name is required",
         "settings": {
             "notification-settings": "Notification settings",
             "reset-all": "Reset all settings",

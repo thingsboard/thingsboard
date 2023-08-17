@@ -15,13 +15,33 @@
  */
 @import "../../../../../../scss/constants";
 
-:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
+:host {
   width: 820px;
   height: 100%;
   max-width: 100%;
   max-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: min-content 4px minmax(auto, 1fr) min-content min-content;
+}
+
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
+  .mat-mdc-dialog-content {
+    grid-row: 3;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .tb-dialog-actions {
+    grid-row: 5;
+    display: flex;
+  }
+
+  .mat-divider {
+    grid-row: 4;
+  }
 
   .tb-title {
     font-size: 16px;
@@ -75,6 +95,7 @@
     .delivery-method-container {
       display: inline-flex;
       flex: 1 1 calc(50% - 8px);
+      max-width: calc(50% - 8px);
       padding: 16px 12px;
       border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 6px;
@@ -177,17 +198,28 @@
         line-height: 20px;
         overflow-x: auto;
       }
+
+      &.mini {
+        font-size: 12px;
+        line-height: 1.25;
+
+        .subject {
+          font-size: 14px;
+          line-height: 1.5;
+          padding-bottom: 4px;
+        }
+      }
     }
+  }
+
+  .tb-notification-use-template-toggle-group {
+    margin-bottom: 24px;
+    width: 320px;
   }
 }
 
 :host ::ng-deep {
   .mat-mdc-dialog-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 0 !important;
-
     .mat-stepper-horizontal {
       display: flex;
       height: 100%;
@@ -208,59 +240,13 @@
         }
       }
     }
-  }
 
-  .mat-button-toggle-group.tb-notification-use-template-toggle-group {
-    &.mat-button-toggle-group-appearance-standard {
-      border: none;
-      border-radius: 18px;
-      margin-bottom: 24px;
+    .tb-form-panel .mat-expansion-panel.tb-settings {
+      padding: 11px 16px;
 
-      .mat-button-toggle + .mat-button-toggle {
-        border-left: none;
+      & > .mat-expansion-panel-content > .mat-expansion-panel-body {
+        gap: 0;
       }
-    }
-
-    .mat-button-toggle {
-      background: rgba(0, 0, 0, 0.06);
-      height: 36px;
-      align-items: center;
-      display: flex;
-
-      .mat-button-toggle-ripple {
-        top: 2px;
-        left: 2px;
-        right: 2px;
-        bottom: 2px;
-        border-radius: 18px;
-      }
-    }
-
-    .mat-button-toggle-button {
-      color: #959595;
-    }
-
-    .mat-button-toggle-focus-overlay {
-      border-radius: 18px;
-      margin: 2px;
-    }
-
-    .mat-button-toggle-checked .mat-button-toggle-button {
-      background-color: $tb-primary-color;
-      color: #fff;
-      border-radius: 18px;
-      margin-left: 2px;
-      margin-right: 2px;
-    }
-
-    .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
-      line-height: 34px;
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
-      opacity: .01;
     }
   }
 
@@ -272,9 +258,7 @@
       }
     }
   }
-}
 
-:host ::ng-deep {
   .delivery-methods-container {
     .delivery-method-container {
       &.interact * {
