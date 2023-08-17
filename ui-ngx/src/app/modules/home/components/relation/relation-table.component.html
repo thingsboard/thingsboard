@@ -62,7 +62,7 @@
         <mat-form-field fxFlex>
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
-                 [(ngModel)]="pageLink.textSearch"
+                 [formControl]="textSearch"
                  placeholder="{{ 'common.enter-search' | translate }}"/>
         </mat-form-field>
         <button mat-icon-button (click)="exitFilterMode()"

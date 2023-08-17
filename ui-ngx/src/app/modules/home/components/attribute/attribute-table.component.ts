@@ -23,6 +23,7 @@ import {
   Injector,
   Input,
   NgZone,
+  OnDestroy,
   OnInit,
   StaticProvider,
   ViewChild,
@@ -38,8 +39,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { fromEvent, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { merge, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
   AttributeData,
@@ -92,6 +93,7 @@ import {
   DeleteTimeseriesPanelComponent,
   DeleteTimeseriesPanelData
 } from '@home/components/attribute/delete-timeseries-panel.component';
+import { FormBuilder } from '@angular/forms';
 
 
 @Component({
@@ -100,7 +102,7 @@ import {
   styleUrls: ['./attribute-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AttributeTableComponent extends PageComponent implements AfterViewInit, OnInit {
+export class AttributeTableComponent extends PageComponent implements AfterViewInit, OnInit, OnDestroy {
 
   telemetryTypeTranslationsMap = telemetryTypeTranslations;
   isClientSideTelemetryTypeMap = isClientSideTelemetryType;
@@ -185,6 +187,10 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
+  textSearch = this.fb.control('', {nonNullable: true});
+
+  private destroy$ = new Subject<void>();
+
   constructor(protected store: Store<AppState>,
               private attributeService: AttributeService,
               private telemetryWsService: TelemetryWebsocketService,
@@ -199,7 +205,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               private widgetService: WidgetService,
               private zone: NgZone,
               private cd: ChangeDetectorRef,
-              private elementRef: ElementRef) {
+              private elementRef: ElementRef,
+              private fb: FormBuilder) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
@@ -222,6 +229,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   attributeScopeChanged(attributeScope: TelemetryType) {
@@ -232,25 +241,21 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   ngAfterViewInit() {
+    this.textSearch.valueChanges.pipe(
+      debounceTime(150),
+      distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      this.paginator.pageIndex = 0;
+      this.pageLink.textSearch = value.trim();
+      this.updateData();
+    });
 
-    fromEvent(this.searchInputField.nativeElement, 'keyup')
-      .pipe(
-        debounceTime(150),
-        distinctUntilChanged(),
-        tap(() => {
-          this.paginator.pageIndex = 0;
-          this.updateData();
-        })
-      )
-      .subscribe();
+    this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
 
-    this.sort.sortChange.subscribe(() => this.paginator.pageIndex = 0);
-
-    merge(this.sort.sortChange, this.paginator.page)
-      .pipe(
-        tap(() => this.updateData())
-      )
-      .subscribe();
+    merge(this.sort.sortChange, this.paginator.page).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateData());
 
     this.viewsInited = true;
     if (this.activeValue && this.entityIdValue) {
@@ -268,7 +273,6 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   enterFilterMode() {
     this.textSearchMode = true;
-    this.pageLink.textSearch = '';
     setTimeout(() => {
       this.searchInputField.nativeElement.focus();
       this.searchInputField.nativeElement.setSelectionRange(0, 0);
@@ -277,9 +281,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   exitFilterMode() {
     this.textSearchMode = false;
-    this.pageLink.textSearch = null;
-    this.paginator.pageIndex = 0;
-    this.updateData();
+    this.textSearch.reset();
   }
 
   resetSortAndFilter(update: boolean = true) {
@@ -296,6 +298,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.selectedWidgetsBundleAlias = null;
     this.attributeScope = this.defaultAttributeScope;
     this.pageLink.textSearch = null;
+    this.textSearch.reset('', {emitEvent: false});
     if (this.viewsInited) {
       this.paginator.pageIndex = 0;
       const sortable = this.sort.sortables.get('key');
