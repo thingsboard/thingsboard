@@ -139,7 +139,9 @@ export class TbIconComponent extends _TbIconBase
   }
 
   ngOnDestroy() {
-    this._contentChanges.unsubscribe();
+    if (this._contentChanges) {
+      this._contentChanges.unsubscribe();
+    }
     this._currentIconFetch.unsubscribe();
     if (this._elementsWithExternalReferences) {
       this._elementsWithExternalReferences.clear();
