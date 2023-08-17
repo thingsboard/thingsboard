@@ -115,7 +115,7 @@ public interface AlarmService extends EntityDaoService {
 
     Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
-    PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
+    PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
     void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId);

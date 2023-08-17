@@ -125,7 +125,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         return transactionTemplate.execute(trStatus -> {
             AlarmDataPageLink pageLink = query.getPageLink();
             QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
@@ -139,11 +139,17 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             if (pageLink.isSearchPropagatedAlarms()) {
                 selectPart.append(" ea.entity_id as entity_id ");
                 fromPart.append(JOIN_ENTITY_ALARMS);
-                wherePart.append(buildPermissionsQuery(tenantId, ctx));
+                wherePart.append(buildPermissionsQuery(tenantId, customerId, ctx));
                 addAnd = true;
             } else {
                 selectPart.append(" a.originator_id as entity_id ");
+                if (customerId != null && !customerId.isNullUid()) {
+                    wherePart.append(" a.customer_id = :customerId ");
+                    ctx.addUuidParameter("customerId", customerId.getId());
+                    addAnd = true;
+                }
             }
+
             EntityDataSortOrder sortOrder = pageLink.getSortOrder();
 
             if (sortOrder != null && EntityKeyType.ALARM_FIELD.equals(sortOrder.getKey().getType()) && ASSIGNEE_KEY.equalsIgnoreCase(sortOrder.getKey().getKey())) {
@@ -415,10 +421,16 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         }
     }
 
-    private String buildPermissionsQuery(TenantId tenantId, QueryContext ctx) {
+    private String buildPermissionsQuery(TenantId tenantId, CustomerId customerId, QueryContext ctx) {
         StringBuilder permissionsQuery = new StringBuilder();
         ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
         permissionsQuery.append(" a.tenant_id = :permissions_tenant_id and ea.tenant_id = :permissions_tenant_id ");
+
+        if (customerId != null && !customerId.isNullUid()) {
+            permissionsQuery.append("and a.customer_id = :permissions_customer_id and ea.customer_id = :permissions_customer_id ");
+            ctx.addUuidParameter("permissions_customer_id", customerId.getId());
+        }
+
         return permissionsQuery.toString();
     }
 

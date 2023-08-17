@@ -215,6 +215,52 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
 
     @Query(value = "SELECT a " +
             "FROM AlarmInfoEntity a " +
+            "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
+            "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
+            "AND ea.tenantId = :tenantId " +
+            "AND ea.entityId = :affectedEntityId " +
+            "AND ea.entityType = :affectedEntityType " +
+            "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
+            "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
+            "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+            "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
+            "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
+            ,
+            countQuery = "" +
+                    "SELECT count(a) " + //alarms with relations only
+                    "FROM AlarmInfoEntity a " +
+                    "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
+                    "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
+                    "AND ea.tenantId = :tenantId " +
+                    "AND ea.entityId = :affectedEntityId " +
+                    "AND ea.entityType = :affectedEntityType " +
+                    "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
+                    "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
+                    "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+                    "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
+                    "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
+                    "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+                    "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
+    Page<AlarmInfoEntity> findCustomerAlarms(@Param("tenantId") UUID tenantId,
+                                             @Param("customerId") UUID customerId,
+                                             @Param("affectedEntityId") UUID affectedEntityId,
+                                             @Param("affectedEntityType") String affectedEntityType,
+                                             @Param("startTime") Long startTime,
+                                             @Param("endTime") Long endTime,
+                                             @Param("clearFilterEnabled") boolean clearFilterEnabled,
+                                             @Param("clearFilter") boolean clearFilter,
+                                             @Param("ackFilterEnabled") boolean ackFilterEnabled,
+                                             @Param("ackFilter") boolean ackFilter,
+                                             @Param("assigneeId") String assigneeId,
+                                             @Param("searchText") String searchText,
+                                             Pageable pageable);
+
+    @Query(value = "SELECT a " +
+            "FROM AlarmInfoEntity a " +
             "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
@@ -237,17 +283,69 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
-    Page<AlarmInfoEntity> findCustomerAlarms(@Param("tenantId") UUID tenantId,
-                                             @Param("customerId") UUID customerId,
-                                             @Param("startTime") Long startTime,
-                                             @Param("endTime") Long endTime,
-                                             @Param("clearFilterEnabled") boolean clearFilterEnabled,
-                                             @Param("clearFilter") boolean clearFilter,
-                                             @Param("ackFilterEnabled") boolean ackFilterEnabled,
-                                             @Param("ackFilter") boolean ackFilter,
-                                             @Param("assigneeId") String assigneeId,
-                                             @Param("searchText") String searchText,
-                                             Pageable pageable);
+    Page<AlarmInfoEntity> findAllCustomerAlarms(@Param("tenantId") UUID tenantId,
+                                                @Param("customerId") UUID customerId,
+                                                @Param("startTime") Long startTime,
+                                                @Param("endTime") Long endTime,
+                                                @Param("clearFilterEnabled") boolean clearFilterEnabled,
+                                                @Param("clearFilter") boolean clearFilter,
+                                                @Param("ackFilterEnabled") boolean ackFilterEnabled,
+                                                @Param("ackFilter") boolean ackFilter,
+                                                @Param("assigneeId") String assigneeId,
+                                                @Param("searchText") String searchText,
+                                                Pageable pageable);
+
+    @Query(value = "SELECT a " +
+            "FROM AlarmInfoEntity a " +
+            "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
+            "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
+            "AND ea.tenantId = :tenantId " +
+            "AND ea.entityId = :affectedEntityId " +
+            "AND ea.entityType = :affectedEntityType " +
+            "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
+            "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
+            "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
+            "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
+            "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+            "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
+            "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
+            "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
+            ,
+            countQuery = "" +
+                    "SELECT count(a) " + //alarms with relations only
+                    "FROM AlarmInfoEntity a " +
+                    "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +
+                    "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
+                    "AND ea.tenantId = :tenantId " +
+                    "AND ea.entityId = :affectedEntityId " +
+                    "AND ea.entityType = :affectedEntityType " +
+                    "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
+                    "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
+                    "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
+                    "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
+                    "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
+                    "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
+                    "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
+                    "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+                    "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
+    Page<AlarmInfoEntity> findCustomerAlarmsV2(@Param("tenantId") UUID tenantId,
+                                               @Param("customerId") UUID customerId,
+                                               @Param("affectedEntityId") UUID affectedEntityId,
+                                               @Param("affectedEntityType") String affectedEntityType,
+                                               @Param("startTime") Long startTime,
+                                               @Param("endTime") Long endTime,
+                                               @Param("alarmTypes") List<String> alarmTypes,
+                                               @Param("alarmSeverities") List<AlarmSeverity> alarmSeverities,
+                                               @Param("clearFilterEnabled") boolean clearFilterEnabled,
+                                               @Param("clearFilter") boolean clearFilter,
+                                               @Param("ackFilterEnabled") boolean ackFilterEnabled,
+                                               @Param("ackFilter") boolean ackFilter,
+                                               @Param("assigneeId") String assigneeId,
+                                               @Param("searchText") String searchText,
+                                               Pageable pageable);
 
     @Query(value = "SELECT a " +
             "FROM AlarmInfoEntity a " +
@@ -277,19 +375,19 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
                     "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
-    Page<AlarmInfoEntity> findCustomerAlarmsV2(@Param("tenantId") UUID tenantId,
-                                               @Param("customerId") UUID customerId,
-                                               @Param("startTime") Long startTime,
-                                               @Param("endTime") Long endTime,
-                                               @Param("alarmTypes") List<String> alarmTypes,
-                                               @Param("alarmSeverities") List<AlarmSeverity> alarmSeverities,
-                                               @Param("clearFilterEnabled") boolean clearFilterEnabled,
-                                               @Param("clearFilter") boolean clearFilter,
-                                               @Param("ackFilterEnabled") boolean ackFilterEnabled,
-                                               @Param("ackFilter") boolean ackFilter,
-                                               @Param("assigneeId") String assigneeId,
-                                               @Param("searchText") String searchText,
-                                               Pageable pageable);
+    Page<AlarmInfoEntity> findAllCustomerAlarmsV2(@Param("tenantId") UUID tenantId,
+                                                  @Param("customerId") UUID customerId,
+                                                  @Param("startTime") Long startTime,
+                                                  @Param("endTime") Long endTime,
+                                                  @Param("alarmTypes") List<String> alarmTypes,
+                                                  @Param("alarmSeverities") List<AlarmSeverity> alarmSeverities,
+                                                  @Param("clearFilterEnabled") boolean clearFilterEnabled,
+                                                  @Param("clearFilter") boolean clearFilter,
+                                                  @Param("ackFilterEnabled") boolean ackFilterEnabled,
+                                                  @Param("ackFilter") boolean ackFilter,
+                                                  @Param("assigneeId") String assigneeId,
+                                                  @Param("searchText") String searchText,
+                                                  Pageable pageable);
 
     @Query(value = "SELECT a.severity FROM AlarmEntity a " +
             "LEFT JOIN EntityAlarmEntity ea ON a.id = ea.alarmId " +

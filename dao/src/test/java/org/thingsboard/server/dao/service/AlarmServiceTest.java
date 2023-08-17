@@ -382,7 +382,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setAssigneeId(tenantUser.getId());
         pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "assignee")));
 
-        PageData<AlarmData> assignedAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(created.getOriginator()));
+        PageData<AlarmData> assignedAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Collections.singletonList(created.getOriginator()));
         Assert.assertNotNull(assignedAlarms.getData());
         Assert.assertEquals(1, assignedAlarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(assignedAlarms.getData().get(0)));
@@ -398,7 +398,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(tenantUser2);
         pageLink.setAssigneeId(tenantUser2.getId());
 
-        PageData<AlarmData> assignedToNonExistingUserAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(created.getOriginator()));
+        PageData<AlarmData> assignedToNonExistingUserAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Collections.singletonList(created.getOriginator()));
         Assert.assertNotNull(assignedToNonExistingUserAlarms.getData());
         Assert.assertTrue(assignedToNonExistingUserAlarms.getData().isEmpty());
 
@@ -454,10 +454,10 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
         pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
 
-        PageData<AlarmData> tenantAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Arrays.asList(tenantDevice.getId(), customerDevice.getId()));
+        PageData<AlarmData> tenantAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Arrays.asList(tenantDevice.getId(), customerDevice.getId()));
         Assert.assertEquals(2, tenantAlarms.getData().size());
 
-        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(customerDevice.getId()));
+        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, customer.getId(), toQuery(pageLink), Collections.singletonList(customerDevice.getId()));
         Assert.assertEquals(1, customerAlarms.getData().size());
         Assert.assertEquals(deviceAlarm, new AlarmInfo(customerAlarms.getData().get(0)));
 
@@ -529,7 +529,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
 
         //TEST that propagated alarms are visible on the asset level.
-        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(customerAsset.getId()));
+        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, customer.getId(), toQuery(pageLink), Collections.singletonList(customerAsset.getId()));
         Assert.assertEquals(1, customerAlarms.getData().size());
         Assert.assertEquals(customerAlarm, new AlarmInfo(customerAlarms.getData().get(0)));
     }
@@ -580,12 +580,12 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setStatusList(Collections.singletonList(AlarmSearchStatus.ACTIVE));
 
         //TEST that propagated alarms are visible on the asset level.
-        PageData<AlarmData> tenantAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(tenantId));
+        PageData<AlarmData> tenantAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, customer.getId(), toQuery(pageLink), Collections.singletonList(tenantId));
         Assert.assertEquals(1, tenantAlarms.getData().size());
         Assert.assertEquals(tenantAlarm, new AlarmInfo(tenantAlarms.getData().get(0)));
 
         //TEST that propagated alarms are visible on the asset level.
-        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(customer.getId()));
+        PageData<AlarmData> customerAlarms = alarmService.findAlarmDataByQueryForEntities(tenantId, customer.getId(), toQuery(pageLink), Collections.singletonList(customer.getId()));
         Assert.assertEquals(1, customerAlarms.getData().size());
         Assert.assertEquals(customerAlarm, new AlarmInfo(customerAlarms.getData().get(0)));
     }
@@ -682,7 +682,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
         pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
 
-        PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(childId));
+        PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Collections.singletonList(childId));
 
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
@@ -698,13 +698,13 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
         pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
 
-        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(childId));
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Collections.singletonList(childId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
 
         pageLink.setSearchPropagatedAlarms(true);
-        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(childId));
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Collections.singletonList(childId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -725,7 +725,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
         pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
 
-        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(childId));
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Collections.singletonList(childId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -741,7 +741,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
         pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
 
-        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(parentId));
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Collections.singletonList(parentId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -789,7 +789,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
         pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
 
-        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(parentId));
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Collections.singletonList(parentId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -806,7 +806,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         pageLink.setSeverityList(Arrays.asList(AlarmSeverity.CRITICAL, AlarmSeverity.WARNING));
         pageLink.setStatusList(Arrays.asList(AlarmSearchStatus.ACTIVE));
 
-        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, toQuery(pageLink), Collections.singletonList(childId));
+        alarms = alarmService.findAlarmDataByQueryForEntities(tenantId, null, toQuery(pageLink), Collections.singletonList(childId));
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));

@@ -39,6 +39,8 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.alarm.AlarmDao;
@@ -669,6 +671,97 @@ public class AlarmControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindAlarmsOnDeviceViaTenantAndCustomer() throws Exception {
+        testFindAlarmsOnDeviceViaTenantAndCustomer("/api");
+        testFindAlarmsOnDeviceViaTenantAndCustomer("/api/v2");
+    }
+
+    private void testFindAlarmsOnDeviceViaTenantAndCustomer(String alarmApiPrefix) throws Exception {
+        loginTenantAdmin();
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("Tenant Device");
+        device = doPost("/api/device", device, Device.class);
+
+        List<Alarm> createdTenantAlarms = new LinkedList<>();
+
+        final int size = 10;
+        for (int i = 0; i < size; i++) {
+            createdTenantAlarms.add(
+                    createAlarm(null, device.getId(), TEST_ALARM_TYPE + i)
+            );
+        }
+
+        var tenantResponse = doGetTyped(
+                alarmApiPrefix + "/alarm/" + EntityType.DEVICE + "/"
+                        + device.getUuidId() + "?page=0&pageSize=" + size,
+                new TypeReference<PageData<AlarmInfo>>() {
+                }
+        );
+        var foundTenantAlarmInfos = tenantResponse.getData();
+        Assert.assertNotNull("Found pageData is null", foundTenantAlarmInfos);
+        Assert.assertNotEquals(
+                "Expected alarms are not found!",
+                0, foundTenantAlarmInfos.size()
+        );
+
+        boolean allTenantMatch = createdTenantAlarms.stream()
+                .allMatch(alarm -> foundTenantAlarmInfos.stream()
+                        .map(Alarm::getType)
+                        .anyMatch(type -> alarm.getType().equals(type))
+                );
+        Assert.assertTrue("Created alarm doesn't match any found!", allTenantMatch);
+
+        device = doPost("/api/customer/" + customerId.getId()
+                + "/device/" + device.getId().getId(), Device.class);
+
+        tenantResponse = doGetTyped(
+                alarmApiPrefix + "/alarm/" + EntityType.DEVICE + "/"
+                        + device.getUuidId() + "?page=0&pageSize=" + size, new TypeReference<>() {
+                });
+
+        var foundTenantAlarmInfosAfterAssign = tenantResponse.getData();
+        allTenantMatch = createdTenantAlarms.stream()
+                .allMatch(alarm -> foundTenantAlarmInfosAfterAssign.stream()
+                        .map(Alarm::getType)
+                        .anyMatch(type -> alarm.getType().equals(type))
+                );
+        Assert.assertTrue("Created alarm doesn't match any found!", allTenantMatch);
+
+        loginCustomerUser();
+
+        List<Alarm> createdCustomerAlarms = new LinkedList<>();
+
+        for (int i = size; i < size * 2; i++) {
+            createdCustomerAlarms.add(
+                    createAlarm(customerId, device.getId(), "customer_" + TEST_ALARM_TYPE + i)
+            );
+        }
+
+        var customerResponse = doGetTyped(
+                alarmApiPrefix + "/alarm/" + EntityType.DEVICE + "/"
+                        + device.getUuidId() + "?page=0&pageSize=" + size,
+                new TypeReference<PageData<AlarmInfo>>() {
+                }
+        );
+        var foundCustomerAlarmInfos = customerResponse.getData();
+        Assert.assertNotNull("Found pageData is null", foundCustomerAlarmInfos);
+        Assert.assertEquals(createdCustomerAlarms.size(), foundCustomerAlarmInfos.size());
+
+        boolean allMatch = createdCustomerAlarms.stream()
+                .allMatch(alarm -> foundCustomerAlarmInfos.stream()
+                        .map(Alarm::getType)
+                        .anyMatch(type -> alarm.getType().equals(type))
+                );
+        Assert.assertTrue("Created alarm doesn't match any found!", allMatch);
+
+        loginTenantAdmin();
+
+        doDelete("/api/device/" + device.getId());
+    }
+
+    @Test
     public void testFindAlarmsViaDifferentCustomerUser() throws Exception {
         loginCustomerUser();
 
@@ -745,10 +838,14 @@ public class AlarmControllerTest extends AbstractControllerTest {
     }
 
     private AlarmInfo createAlarm(String type) throws Exception {
+        return createAlarm(customerId, customerDevice.getId(), type);
+    }
+
+    private AlarmInfo createAlarm(CustomerId customerId, EntityId originator, String type) throws Exception {
         Alarm alarm = Alarm.builder()
                 .tenantId(tenantId)
                 .customerId(customerId)
-                .originator(customerDevice.getId())
+                .originator(originator)
                 .severity(AlarmSeverity.CRITICAL)
                 .type(type)
                 .build();

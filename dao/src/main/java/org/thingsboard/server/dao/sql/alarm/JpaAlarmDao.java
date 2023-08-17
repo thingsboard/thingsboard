@@ -175,22 +175,43 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
         log.trace("Try to find customer alarms by status [{}] and pageLink [{}]", query.getStatus(), query.getPageLink());
+        EntityId affectedEntity = query.getAffectedEntityId();
         AlarmStatusFilter asf = AlarmStatusFilter.from(query);
-        return DaoUtil.toPageData(
-                alarmRepository.findCustomerAlarms(
-                        tenantId.getId(),
-                        customerId.getId(),
-                        query.getPageLink().getStartTime(),
-                        query.getPageLink().getEndTime(),
-                        asf.hasClearFilter(),
-                        asf.hasClearFilter() && asf.getClearFilter(),
-                        asf.hasAckFilter(),
-                        asf.hasAckFilter() && asf.getAckFilter(),
-                        DaoUtil.getStringId(query.getAssigneeId()),
-                        Objects.toString(query.getPageLink().getTextSearch(), ""),
-                        DaoUtil.toPageable(query.getPageLink())
-                )
-        );
+        if (affectedEntity != null) {
+            return DaoUtil.toPageData(
+                    alarmRepository.findCustomerAlarms(
+                            tenantId.getId(),
+                            customerId.getId(),
+                            affectedEntity.getId(),
+                            affectedEntity.getEntityType().name(),
+                            query.getPageLink().getStartTime(),
+                            query.getPageLink().getEndTime(),
+                            asf.hasClearFilter(),
+                            asf.hasClearFilter() && asf.getClearFilter(),
+                            asf.hasAckFilter(),
+                            asf.hasAckFilter() && asf.getAckFilter(),
+                            DaoUtil.getStringId(query.getAssigneeId()),
+                            Objects.toString(query.getPageLink().getTextSearch(), ""),
+                            DaoUtil.toPageable(query.getPageLink())
+                    )
+            );
+        } else {
+            return DaoUtil.toPageData(
+                    alarmRepository.findAllCustomerAlarms(
+                            tenantId.getId(),
+                            customerId.getId(),
+                            query.getPageLink().getStartTime(),
+                            query.getPageLink().getEndTime(),
+                            asf.hasClearFilter(),
+                            asf.hasClearFilter() && asf.getClearFilter(),
+                            asf.hasAckFilter(),
+                            asf.hasAckFilter() && asf.getAckFilter(),
+                            DaoUtil.getStringId(query.getAssigneeId()),
+                            Objects.toString(query.getPageLink().getTextSearch(), ""),
+                            DaoUtil.toPageable(query.getPageLink())
+                    )
+            );
+        }
     }
 
     @Override
@@ -242,31 +263,55 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query) {
         log.trace("Try to find customer alarms by query [{}] and pageLink [{}]", query, query.getPageLink());
+        EntityId affectedEntity = query.getAffectedEntityId();
         List<String> typeList = query.getTypeList() != null && !query.getTypeList().isEmpty() ? query.getTypeList() : null;
         List<AlarmSeverity> severityList = query.getSeverityList() != null && !query.getSeverityList().isEmpty() ? query.getSeverityList() : null;
         AlarmStatusFilter asf = AlarmStatusFilter.from(query.getStatusList());
-        return DaoUtil.toPageData(
-                alarmRepository.findCustomerAlarmsV2(
-                        tenantId.getId(),
-                        customerId.getId(),
-                        query.getPageLink().getStartTime(),
-                        query.getPageLink().getEndTime(),
-                        typeList,
-                        severityList,
-                        asf.hasClearFilter(),
-                        asf.hasClearFilter() && asf.getClearFilter(),
-                        asf.hasAckFilter(),
-                        asf.hasAckFilter() && asf.getAckFilter(),
-                        DaoUtil.getStringId(query.getAssigneeId()),
-                        Objects.toString(query.getPageLink().getTextSearch(), ""),
-                        DaoUtil.toPageable(query.getPageLink())
-                )
-        );
+
+        if (affectedEntity != null) {
+            return DaoUtil.toPageData(
+                    alarmRepository.findCustomerAlarmsV2(
+                            tenantId.getId(),
+                            customerId.getId(),
+                            affectedEntity.getId(),
+                            affectedEntity.getEntityType().name(),
+                            query.getPageLink().getStartTime(),
+                            query.getPageLink().getEndTime(),
+                            typeList,
+                            severityList,
+                            asf.hasClearFilter(),
+                            asf.hasClearFilter() && asf.getClearFilter(),
+                            asf.hasAckFilter(),
+                            asf.hasAckFilter() && asf.getAckFilter(),
+                            DaoUtil.getStringId(query.getAssigneeId()),
+                            Objects.toString(query.getPageLink().getTextSearch(), ""),
+                            DaoUtil.toPageable(query.getPageLink())
+                    )
+            );
+        } else {
+            return DaoUtil.toPageData(
+                    alarmRepository.findAllCustomerAlarmsV2(
+                            tenantId.getId(),
+                            customerId.getId(),
+                            query.getPageLink().getStartTime(),
+                            query.getPageLink().getEndTime(),
+                            typeList,
+                            severityList,
+                            asf.hasClearFilter(),
+                            asf.hasClearFilter() && asf.getClearFilter(),
+                            asf.hasAckFilter(),
+                            asf.hasAckFilter() && asf.getAckFilter(),
+                            DaoUtil.getStringId(query.getAssigneeId()),
+                            Objects.toString(query.getPageLink().getTextSearch(), ""),
+                            DaoUtil.toPageable(query.getPageLink())
+                    )
+            );
+        }
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
-        return alarmQueryRepository.findAlarmDataByQueryForEntities(tenantId, query, orderedEntityIds);
+    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        return alarmQueryRepository.findAlarmDataByQueryForEntities(tenantId, customerId, query, orderedEntityIds);
     }
 
     @Override

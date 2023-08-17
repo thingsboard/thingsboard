@@ -27,7 +27,7 @@ import java.util.Collection;
 
 public interface AlarmQueryRepository {
 
-    PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
+    PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
     long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
