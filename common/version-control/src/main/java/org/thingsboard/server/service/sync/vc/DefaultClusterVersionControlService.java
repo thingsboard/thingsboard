@@ -122,7 +122,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     @Value("${queue.vc.poll-interval:25}")
     private long pollDuration;
-    @Value("${queue.vc.pack-processing-timeout:60000}")
+    @Value("${queue.vc.pack-processing-timeout:180000}")
     private long packProcessingTimeout;
     @Value("${vc.git.io_pool_size:3}")
     private int ioPoolSize;
