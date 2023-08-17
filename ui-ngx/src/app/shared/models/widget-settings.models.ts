@@ -149,7 +149,7 @@ type ValueColorFunction = (value: any) => string;
 export abstract class ColorProcessor {
 
   static fromSettings(color: ColorSettings): ColorProcessor {
-    const settings = color || constantColor('rgba(0, 0, 0, 0.87)');
+    const settings = color || constantColor(null);
     switch (settings.type) {
       case ColorType.constant:
         return new ConstantColorProcessor(settings);
@@ -192,7 +192,7 @@ class RangeColorProcessor extends ColorProcessor {
     if (this.settings.rangeList?.length && isDefinedAndNotNull(value) && isNumeric(value)) {
       const num = Number(value);
       for (const range of this.settings.rangeList) {
-        if (this.constantRange(range) && range.from === num) {
+        if (RangeColorProcessor.constantRange(range) && range.from === num) {
           return range.color;
         } else if ((!isNumber(range.from) || num >= range.from) && (!isNumber(range.to) || num < range.to)) {
           return range.color;
@@ -202,7 +202,7 @@ class RangeColorProcessor extends ColorProcessor {
     return this.settings.color;
   }
 
-  private constantRange(range: ColorRange): boolean {
+  private static constantRange(range: ColorRange): boolean {
     return isNumber(range.from) && isNumber(range.to) && range.from === range.to;
   }
 }

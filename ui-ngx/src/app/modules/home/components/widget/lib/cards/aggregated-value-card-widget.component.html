@@ -28,7 +28,7 @@
 
 <ng-template #subtitleTpl>
   <div *ngIf="showSubtitle" class="tb-aggregated-value-card-subtitle"
-       [style]="subtitleStyle" [style.color]="subtitleColor.color">{{ subtitle$ | async }}</div>
+       [style]="subtitleStyle" [style.color]="subtitleColor">{{ subtitle$ | async }}</div>
 </ng-template>
 <ng-template #valuesTpl>
   <div *ngIf="showValues" class="tb-aggregated-value-card-values">
@@ -73,7 +73,7 @@
   </div>
 </ng-template>
 <ng-template #dateTpl>
-  <div *ngIf="showDate" [style]="dateStyle" [style.color]="dateColor.color" [innerHTML]="dateFormat.formatted"></div>
+  <div *ngIf="showDate" [style]="dateStyle" [style.color]="dateColor" [innerHTML]="dateFormat.formatted"></div>
 </ng-template>
 <ng-template #valueTpl let-value="value">
   <div class="tb-aggregated-value-card-value" [style]="value.style" [style.color]="value.color.color">

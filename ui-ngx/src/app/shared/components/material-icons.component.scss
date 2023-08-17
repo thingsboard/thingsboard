@@ -26,7 +26,7 @@
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.87);
   }
-  .tb-material-icons-title, .tb-material-icons-search, .tb-material-icons-show-more {
+  .tb-material-icons-title, .tb-material-icons-search {
     width: 100%;
   }
   .tb-material-icons-viewport {
@@ -64,6 +64,6 @@
     flex-direction: row;
     gap: 16px;
     align-items: flex-start;
-    align-self: flex-start;
+    align-self: stretch;
   }
 }

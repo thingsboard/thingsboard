@@ -90,7 +90,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
 
   protected setupDefaults(configData: WidgetConfigComponentData) {
     this.setupDefaultDatasource(configData, [
-        { name: 'watermeter', label: 'Watermeter', type: DataKeyType.timeseries }
+        { name: 'watermeter', label: 'Watermeter', type: DataKeyType.timeseries, color: 'rgba(0, 0, 0, 0.87)', units: 'm³', decimals: 0 }
       ],
       createDefaultAggregatedValueLatestDataKeys('watermeter', 'm³')
     );
@@ -141,7 +141,9 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
       dateColor: [settings.dateColor, []],
 
       showChart: [settings.showChart, []],
-      chartColor: [settings.chartColor, []],
+      chartUnits: [dataKey?.units, []],
+      chartDecimals: [dataKey?.decimals, []],
+      chartColor: [dataKey?.color, []],
 
       values: [this.getValues(configData.config.datasources, keyName), []],
 
@@ -181,7 +183,13 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
     this.widgetConfig.config.settings.dateColor = config.dateColor;
 
     this.widgetConfig.config.settings.showChart = config.showChart;
-    this.widgetConfig.config.settings.chartColor = config.chartColor;
+
+    const dataKey = getDataKey(this.widgetConfig.config.datasources);
+    if (dataKey) {
+      dataKey.units = config.chartUnits;
+      dataKey.decimals = config.chartDecimals;
+      dataKey.color = config.chartColor;
+    }
 
     this.setValues(config.values, this.widgetConfig.config.datasources);
 
@@ -253,8 +261,12 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
     }
 
     if (showChart) {
+      this.aggregatedValueCardWidgetConfigForm.get('chartUnits').enable();
+      this.aggregatedValueCardWidgetConfigForm.get('chartDecimals').enable();
       this.aggregatedValueCardWidgetConfigForm.get('chartColor').enable();
     } else {
+      this.aggregatedValueCardWidgetConfigForm.get('chartUnits').disable();
+      this.aggregatedValueCardWidgetConfigForm.get('chartDecimals').disable();
       this.aggregatedValueCardWidgetConfigForm.get('chartColor').disable();
     }
   }

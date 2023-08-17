@@ -36,9 +36,9 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import {
   backgroundStyle,
-  ColorProcessor,
   ComponentStyle,
-  DateFormatProcessor, getDataKey,
+  DateFormatProcessor,
+  getDataKey,
   getLatestSingleTsValue,
   overlayStyle,
   textStyle
@@ -47,7 +47,7 @@ import { DatePipe } from '@angular/common';
 import { TbFlot } from '@home/components/widget/lib/flot-widget';
 import { TbFlotKeySettings, TbFlotSettings } from '@home/components/widget/lib/flot-widget.models';
 import { DataKey } from '@shared/models/widget.models';
-import { formatNumberValue, formatValue, isDefined, isNumeric } from '@core/utils';
+import { formatNumberValue, formatValue, isDefined } from '@core/utils';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -72,19 +72,18 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   showSubtitle = true;
   subtitle$: Observable<string>;
   subtitleStyle: ComponentStyle = {};
-  subtitleColor: ColorProcessor;
+  subtitleColor: string;
 
   showValues = false;
 
   values: {[key: string]: AggregatedValueCardValue} = {};
 
   showChart = true;
-  chartColor: ColorProcessor;
 
   showDate = true;
   dateFormat: DateFormatProcessor;
   dateStyle: ComponentStyle = {};
-  dateColor: ColorProcessor;
+  dateColor: string;
 
   backgroundStyle: ComponentStyle = {};
   overlayStyle: ComponentStyle = {};
@@ -108,7 +107,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     const subtitle = this.settings.subtitle;
     this.subtitle$ = this.ctx.registerLabelPattern(subtitle, this.subtitle$);
     this.subtitleStyle = textStyle(this.settings.subtitleFont, '0.25px');
-    this.subtitleColor =  ColorProcessor.fromSettings(this.settings.subtitleColor);
+    this.subtitleColor =  this.settings.subtitleColor;
 
     const dataKey = getDataKey(this.ctx.defaultSubscription.datasources);
     if (dataKey?.name && this.ctx.defaultSubscription.firstDatasource?.latestDataKeys?.length) {
@@ -123,7 +122,6 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     }
 
     this.showChart = this.settings.showChart;
-    this.chartColor = ColorProcessor.fromSettings(this.settings.chartColor);
     if (this.showChart) {
       if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {
         this.flotDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
@@ -132,14 +130,13 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
           showLines: true,
           lineWidth: 2
         } as TbFlotKeySettings;
-        this.flotDataKey.color = this.chartColor.color;
       }
     }
 
     this.showDate = this.settings.showDate;
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
     this.dateStyle = textStyle(this.settings.dateFont,  '0.25px');
-    this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
+    this.dateColor = this.settings.dateColor;
 
     this.backgroundStyle = backgroundStyle(this.settings.background);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
@@ -188,17 +185,11 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   public onDataUpdated() {
     const tsValue = getLatestSingleTsValue(this.ctx.data);
     let ts;
-    let value;
     if (tsValue) {
       ts = tsValue[0];
-      value = tsValue[1];
     }
-    this.subtitleColor.update(value);
-    this.dateColor.update(value);
 
     if (this.showChart) {
-      this.chartColor.update(value);
-      this.flot.updateSeriesColor(this.chartColor.color);
       this.flot.update();
     }
 

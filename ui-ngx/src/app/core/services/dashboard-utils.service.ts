@@ -31,7 +31,6 @@ import {
 } from '@shared/models/dashboard.models';
 import { deepClone, isDefined, isDefinedAndNotNull, isString, isUndefined } from '@core/utils';
 import {
-  DataKey,
   Datasource,
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
@@ -482,6 +481,14 @@ export class DashboardUtilsService {
       widgetsArray.push(widget);
     }
     return widgetsArray;
+  }
+
+  public isEmptyDashboard(dashboard: Dashboard): boolean {
+    if (dashboard?.configuration?.widgets) {
+      return Object.keys(dashboard?.configuration?.widgets).length === 0;
+    } else {
+      return true;
+    }
   }
 
   public addWidgetToLayout(dashboard: Dashboard,

@@ -18,6 +18,7 @@ import { Component, forwardRef, OnDestroy } from '@angular/core';
 import { Color, ColorPickerControl } from '@iplab/ngx-color-picker';
 import { Subscription } from 'rxjs';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
+import { isString } from '@core/utils';
 
 export enum ColorType {
   hex = 'hex',
@@ -87,8 +88,9 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
   }
 
   writeValue(value: string): void {
-    this.setValue = !!value;
-    this.control.setValueFrom(value || '#fff');
+    const valid = this.isValidColorValue(value);
+    this.setValue = valid;
+    this.control.setValueFrom(valid ? value : '#fff');
     this.modelValue = value;
 
     if (this.control.initType === ColorType.hexa) {
@@ -99,6 +101,10 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
       this.control.initType = ColorType.hsla;
     }
     this.presentationControl.patchValue(this.presentations.indexOf(this.control.initType), {emitEvent: false});
+  }
+
+  private isValidColorValue(value: string): boolean {
+    return value && isString(value) && value.trim().length > 0;
   }
 
   private updateModel() {

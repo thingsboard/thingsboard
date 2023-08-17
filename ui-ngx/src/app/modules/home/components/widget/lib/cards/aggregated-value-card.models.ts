@@ -24,7 +24,6 @@ import {
   constantColor,
   DateFormatSettings,
   Font,
-  iconStyle,
   lastUpdateAgoDateFormat,
   textStyle
 } from '@shared/models/widget-settings.models';
@@ -36,13 +35,12 @@ export interface AggregatedValueCardWidgetSettings {
   showSubtitle: boolean;
   subtitle: string;
   subtitleFont: Font;
-  subtitleColor: ColorSettings;
+  subtitleColor: string;
   showDate: boolean;
   dateFormat: DateFormatSettings;
   dateFont: Font;
-  dateColor: ColorSettings;
+  dateColor: string;
   showChart: boolean;
-  chartColor: ColorSettings;
   background: BackgroundSettings;
 }
 
@@ -83,7 +81,8 @@ export interface AggregatedValueCardValue {
   downArrow: boolean;
 }
 
-export const computeAggregatedCardValue = (dataKeys: DataKey[], keyName: string, position: AggregatedValueCardKeyPosition): AggregatedValueCardValue => {
+export const computeAggregatedCardValue =
+  (dataKeys: DataKey[], keyName: string, position: AggregatedValueCardKeyPosition): AggregatedValueCardValue => {
   const key = dataKeys.find(dataKey => ( dataKey.name === keyName && (dataKey.settings?.position === position ||
                                          (!dataKey.settings?.position && position === AggregatedValueCardKeyPosition.center)) ));
   if (key) {
@@ -123,7 +122,7 @@ export const aggregatedValueCardDefaultSettings: AggregatedValueCardWidgetSettin
     weight: '400',
     lineHeight: '16px'
   },
-  subtitleColor: constantColor('rgba(0, 0, 0, 0.38)'),
+  subtitleColor: 'rgba(0, 0, 0, 0.38)',
   showDate: true,
   dateFormat: lastUpdateAgoDateFormat(),
   dateFont: {
@@ -134,9 +133,8 @@ export const aggregatedValueCardDefaultSettings: AggregatedValueCardWidgetSettin
     weight: '400',
     lineHeight: '16px'
   },
-  dateColor: constantColor('rgba(0, 0, 0, 0.38)'),
+  dateColor: 'rgba(0, 0, 0, 0.38)',
   showChart: true,
-  chartColor: constantColor('rgba(0, 0, 0, 0.87)'),
   background: {
     type: BackgroundType.color,
     color: '#fff',
@@ -164,7 +162,7 @@ export const aggregatedValueCardDefaultKeySettings: AggregatedValueCardKeySettin
 
 export const createDefaultAggregatedValueLatestDataKeys = (keyName: string, units): DataKey[] => [
     {
-      name: keyName, label: keyName, type: DataKeyType.timeseries, units, decimals: 0,
+      name: keyName, label: 'Latest', type: DataKeyType.timeseries, units, decimals: 0,
       aggregationType: AggregationType.NONE,
       settings: {
         position: AggregatedValueCardKeyPosition.center,
@@ -181,7 +179,7 @@ export const createDefaultAggregatedValueLatestDataKeys = (keyName: string, unit
       } as AggregatedValueCardKeySettings
     },
     {
-      name: keyName, label: 'Delta percent ' + keyName, type: DataKeyType.timeseries, units: '%', decimals: 0,
+      name: keyName, label: 'Delta percent', type: DataKeyType.timeseries, units: '%', decimals: 0,
       aggregationType: AggregationType.AVG,
       comparisonEnabled: true,
       timeForComparison: 'previousInterval',
@@ -210,7 +208,7 @@ export const createDefaultAggregatedValueLatestDataKeys = (keyName: string, unit
       } as AggregatedValueCardKeySettings
     },
     {
-      name: keyName, label: 'Delta absolute ' + keyName, type: DataKeyType.timeseries, units, decimals: 1,
+      name: keyName, label: 'Delta absolute', type: DataKeyType.timeseries, units, decimals: 1,
       aggregationType: AggregationType.AVG,
       comparisonEnabled: true,
       timeForComparison: 'previousInterval',
