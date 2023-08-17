@@ -493,7 +493,7 @@ cache:
       timeToLiveInMinutes: "${CACHE_SPECS_TWO_FA_VERIFICATION_CODES_TTL:60}"
       maxSize: "${CACHE_SPECS_TWO_FA_VERIFICATION_CODES_MAX_SIZE:100000}"
     versionControlTask:
-      timeToLiveInMinutes: "${CACHE_SPECS_VERSION_CONTROL_TASK_TTL:5}"
+      timeToLiveInMinutes: "${CACHE_SPECS_VERSION_CONTROL_TASK_TTL:20}"
       maxSize: "${CACHE_SPECS_VERSION_CONTROL_TASK_MAX_SIZE:100000}"
     userSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_USER_SETTINGS_TTL:1440}"
@@ -1211,8 +1211,8 @@ queue:
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
     partitions: "${TB_QUEUE_VC_PARTITIONS:10}"
     poll-interval: "${TB_QUEUE_VC_INTERVAL_MS:25}"
-    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:60000}"
-    request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:60000}"
+    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:180000}"
+    request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:180000}"
     msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:250000}"
   js:
     # JS Eval request topic
