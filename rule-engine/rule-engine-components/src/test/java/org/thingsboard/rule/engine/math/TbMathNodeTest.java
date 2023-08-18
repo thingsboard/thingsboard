@@ -18,14 +18,15 @@ package org.thingsboard.rule.engine.math;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
@@ -56,21 +57,27 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -82,7 +89,7 @@ public class TbMathNodeTest {
     private final EntityId originator = DeviceId.fromString("ccd71696-0586-422d-940e-755a41ec3b0d");
     private final TenantId tenantId = TenantId.fromUUID(UUID.fromString("e7f46b23-0c7d-42f5-9b06-fc35ab17af8a"));
 
-    @Mock
+    @Mock(lenient = true)
     private TbContext ctx;
     @Mock
     private AttributesService attributesService;
@@ -100,21 +107,17 @@ public class TbMathNodeTest {
         ruleEngineDispatcherExecutor = new RuleDispatcherExecutor();
         ruleEngineDispatcherExecutor.init();
 
-        lenient().when(ctx.getAttributesService()).thenReturn(attributesService);
-        lenient().when(ctx.getTelemetryService()).thenReturn(telemetryService);
-        lenient().when(ctx.getTimeseriesService()).thenReturn(tsService);
-        lenient().when(ctx.getTenantId()).thenReturn(tenantId);
-        lenient().when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
+        willReturn(dbCallbackExecutor).given(ctx).getDbCallbackExecutor();
+        willReturn(attributesService).given(ctx).getAttributesService();
+        willReturn(telemetryService).given(ctx).getTelemetryService();
+        willReturn(tsService).given(ctx).getTimeseriesService();
+        willReturn(tenantId).given(ctx).getTenantId();
     }
 
     @AfterEach
     public void after() {
         ruleEngineDispatcherExecutor.executor().shutdownNow();
         dbCallbackExecutor.executor().shutdownNow();
-    }
-
-    private void initMocks() {
-        Mockito.clearInvocations(ctx, attributesService, tsService, telemetryService);
     }
 
     private TbMathNode initNode(TbRuleNodeMathFunctionType operation, TbMathResult result, TbMathArgument... arguments) {
@@ -171,73 +174,39 @@ public class TbMathNodeTest {
         verify(ctx, timeout(TIMEOUT).times(2)).tellSuccess(msgCaptor.capture());
 
         List<TbMsg> resultMsgs = msgCaptor.getAllValues();
-        Assert.assertFalse(resultMsgs.isEmpty());
-        Assert.assertEquals(2, resultMsgs.size());
+        assertFalse(resultMsgs.isEmpty());
+        assertEquals(2, resultMsgs.size());
 
         for (int i = 0; i < resultMsgs.size(); i++) {
             TbMsg outMsg = resultMsgs.get(i);
-            Assert.assertNotNull(outMsg);
-            Assert.assertNotNull(outMsg.getData());
+            assertNotNull(outMsg);
+            assertNotNull(outMsg.getData());
             var resultJson = JacksonUtil.toJsonNode(outMsg.getData());
             String resultKey = i == 0 ? "firstMsgResult" : "secondMsgResult";
-            Assert.assertTrue(resultJson.has(resultKey));
-            Assert.assertEquals(i == 0 ? 10 : 17, resultJson.get(resultKey).asInt());
+            assertTrue(resultJson.has(resultKey));
+            assertEquals(i == 0 ? 10 : 17, resultJson.get(resultKey).asInt());
         }
     }
 
-    @Test
-    public void testSimpleFunctions() {
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.ADD, 2.1, 2.2, 4.3);
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.SUB, 2.1, 2.2, -0.1);
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.MULT, 2.1, 2.0, 4.2);
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.DIV, 4.2, 2.0, 2.1);
-
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.SIN, Math.toRadians(30), 0.5);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.SIN, Math.toRadians(90), 1.0);
-
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.SINH, Math.toRadians(0), 0.0);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.COSH, Math.toRadians(0), 1.0);
-
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.COS, Math.toRadians(60), 0.5);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.COS, Math.toRadians(0), 1.0);
-
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.TAN, Math.toRadians(45), 1);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.TAN, Math.toRadians(0), 0);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.TANH, 90, 1);
-
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.ACOS, 0.5, 1.05);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.ASIN, 0.5, 0.52);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.ATAN, 0.5, 0.46);
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.ATAN2, 0.5, 0.3, 1.03);
-
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.EXP, 1, 2.72);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.EXPM1, 1, 1.72);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.ABS, -1, 1);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.SQRT, 4, 2);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.CBRT, 8, 2);
-
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.GET_EXP, 4, 2);
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.HYPOT, 4, 5, 6.4);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.LOG, 4, 1.39);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.LOG10, 4, 0.6);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.LOG1P, 4, 1.61);
-
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.CEIL, 1.55, 2);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.FLOOR, 23.97, 23);
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.FLOOR_DIV, 5, 3, 1);
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.FLOOR_MOD, 6, 3, 0);
-
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.MIN, 5, 3, 3);
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.MAX, 5, 3, 5);
-        testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType.POW, 5, 3, 125);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.SIGNUM, 0.55, 1);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.RAD, 5, 0.09);
-        testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType.DEG, 5, 286.48);
+    private static Stream<Arguments> testSimpleTwoArgumentFunction() {
+        return Stream.of(
+                Arguments.of(TbRuleNodeMathFunctionType.ADD, 2.1, 2.2, 4.3),
+                Arguments.of(TbRuleNodeMathFunctionType.SUB, 2.1, 2.2, -0.1),
+                Arguments.of(TbRuleNodeMathFunctionType.MULT, 2.1, 2.0, 4.2),
+                Arguments.of(TbRuleNodeMathFunctionType.DIV, 4.2, 2.0, 2.1),
+                Arguments.of(TbRuleNodeMathFunctionType.ATAN2, 0.5, 0.3, 1.03),
+                Arguments.of(TbRuleNodeMathFunctionType.HYPOT, 4, 5, 6.4),
+                Arguments.of(TbRuleNodeMathFunctionType.FLOOR_DIV, 5, 3, 1),
+                Arguments.of(TbRuleNodeMathFunctionType.FLOOR_MOD, 6, 3, 0),
+                Arguments.of(TbRuleNodeMathFunctionType.MIN, 5, 3, 3),
+                Arguments.of(TbRuleNodeMathFunctionType.MAX, 5, 3, 5),
+                Arguments.of(TbRuleNodeMathFunctionType.POW, 5, 3, 125)
+        );
     }
 
-    private void testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType function, double arg1, double arg2, double result) {
-        initMocks();
-
+    @ParameterizedTest
+    @MethodSource
+    public void testSimpleTwoArgumentFunction(TbRuleNodeMathFunctionType function, double arg1, double arg2, double result) {
         var node = initNode(function,
                 new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a"),
@@ -252,16 +221,56 @@ public class TbMathNodeTest {
         verify(ctx, timeout(TIMEOUT).times(1)).tellSuccess(msgCaptor.capture());
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var resultJson = JacksonUtil.toJsonNode(resultMsg.getData());
-        Assert.assertTrue(resultJson.has("result"));
-        Assert.assertEquals(result, resultJson.get("result").asDouble(), 0d);
+        assertTrue(resultJson.has("result"));
+        assertEquals(result, resultJson.get("result").asDouble(), 0d);
     }
 
-    private void testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType function, double arg1, double result) {
-        initMocks();
+    private static Stream<Arguments> testSimpleOneArgumentFunction() {
+        return Stream.of(
+                Arguments.of(TbRuleNodeMathFunctionType.SIN, Math.toRadians(30), 0.5),
+                Arguments.of(TbRuleNodeMathFunctionType.SIN, Math.toRadians(90), 1.0),
 
+                Arguments.of(TbRuleNodeMathFunctionType.SINH, Math.toRadians(0), 0.0),
+                Arguments.of(TbRuleNodeMathFunctionType.COSH, Math.toRadians(0), 1.0),
+
+                Arguments.of(TbRuleNodeMathFunctionType.COS, Math.toRadians(60), 0.5),
+                Arguments.of(TbRuleNodeMathFunctionType.COS, Math.toRadians(0), 1.0),
+
+                Arguments.of(TbRuleNodeMathFunctionType.TAN, Math.toRadians(45), 1),
+                Arguments.of(TbRuleNodeMathFunctionType.TAN, Math.toRadians(0), 0),
+                Arguments.of(TbRuleNodeMathFunctionType.TANH, 90, 1),
+
+                Arguments.of(TbRuleNodeMathFunctionType.ACOS, 0.5, 1.05),
+                Arguments.of(TbRuleNodeMathFunctionType.ASIN, 0.5, 0.52),
+                Arguments.of(TbRuleNodeMathFunctionType.ATAN, 0.5, 0.46),
+
+                Arguments.of(TbRuleNodeMathFunctionType.EXP, 1, 2.72),
+                Arguments.of(TbRuleNodeMathFunctionType.EXPM1, 1, 1.72),
+                Arguments.of(TbRuleNodeMathFunctionType.ABS, -1, 1),
+                Arguments.of(TbRuleNodeMathFunctionType.SQRT, 4, 2),
+                Arguments.of(TbRuleNodeMathFunctionType.CBRT, 8, 2),
+
+                Arguments.of(TbRuleNodeMathFunctionType.GET_EXP, 4, 2),
+
+                Arguments.of(TbRuleNodeMathFunctionType.LOG, 4, 1.39),
+                Arguments.of(TbRuleNodeMathFunctionType.LOG10, 4, 0.6),
+                Arguments.of(TbRuleNodeMathFunctionType.LOG1P, 4, 1.61),
+
+                Arguments.of(TbRuleNodeMathFunctionType.CEIL, 1.55, 2),
+                Arguments.of(TbRuleNodeMathFunctionType.FLOOR, 23.97, 23),
+
+                Arguments.of(TbRuleNodeMathFunctionType.SIGNUM, 0.55, 1),
+                Arguments.of(TbRuleNodeMathFunctionType.RAD, 5, 0.09),
+                Arguments.of(TbRuleNodeMathFunctionType.DEG, 5, 286.48)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void testSimpleOneArgumentFunction(TbRuleNodeMathFunctionType function, double arg1, double result) {
         var node = initNode(function,
                 new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
@@ -272,14 +281,14 @@ public class TbMathNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
+        verify(ctx, timeout(TIMEOUT).times(1)).tellSuccess(msgCaptor.capture());
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var resultJson = JacksonUtil.toJsonNode(resultMsg.getData());
-        Assert.assertTrue(resultJson.has("result"));
-        Assert.assertEquals(result, resultJson.get("result").asDouble(), 0d);
+        assertTrue(resultJson.has("result"));
+        assertEquals(result, resultJson.get("result").asDouble(), 0d);
     }
 
     @Test
@@ -298,11 +307,11 @@ public class TbMathNodeTest {
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var resultJson = JacksonUtil.toJsonNode(resultMsg.getData());
-        Assert.assertTrue(resultJson.has("result"));
-        Assert.assertEquals(4, resultJson.get("result").asInt());
+        assertTrue(resultJson.has("result"));
+        assertEquals(4, resultJson.get("result").asInt());
     }
 
     @Test
@@ -321,12 +330,12 @@ public class TbMathNodeTest {
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
-        Assert.assertNotNull(resultMsg.getMetaData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg.getMetaData());
         var result = resultMsg.getMetaData().getValue("result");
-        Assert.assertNotNull(result);
-        Assert.assertEquals("4", result);
+        assertNotNull(result);
+        assertEquals("4", result);
     }
 
     @Test
@@ -339,10 +348,10 @@ public class TbMathNodeTest {
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().toString());
 
-        Mockito.when(attributesService.find(tenantId, originator, DataConstants.SERVER_SCOPE, "a"))
+        when(attributesService.find(tenantId, originator, DataConstants.SERVER_SCOPE, "a"))
                 .thenReturn(Futures.immediateFuture(Optional.of(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("a", 2.0)))));
 
-        Mockito.when(tsService.findLatest(tenantId, originator, "b"))
+        when(tsService.findLatest(tenantId, originator, "b"))
                 .thenReturn(Futures.immediateFuture(Optional.of(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("b", 2L)))));
 
         node.onMsg(ctx, msg);
@@ -351,11 +360,11 @@ public class TbMathNodeTest {
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var resultJson = JacksonUtil.toJsonNode(resultMsg.getData());
-        Assert.assertTrue(resultJson.has("result"));
-        Assert.assertEquals(4, resultJson.get("result").asInt());
+        assertTrue(resultJson.has("result"));
+        assertEquals(4, resultJson.get("result").asInt());
     }
 
     @Test
@@ -373,11 +382,11 @@ public class TbMathNodeTest {
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var resultJson = JacksonUtil.toJsonNode(resultMsg.getData());
-        Assert.assertTrue(resultJson.has("result"));
-        Assert.assertEquals(2.236, resultJson.get("result").asDouble(), 0.0);
+        assertTrue(resultJson.has("result"));
+        assertEquals(2.236, resultJson.get("result").asDouble(), 0.0);
     }
 
     @Test
@@ -395,11 +404,11 @@ public class TbMathNodeTest {
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var result = resultMsg.getMetaData().getValue("result");
-        Assert.assertNotNull(result);
-        Assert.assertEquals("2.236", result);
+        assertNotNull(result);
+        assertEquals("2.236", result);
     }
 
     @Test
@@ -411,7 +420,7 @@ public class TbMathNodeTest {
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
 
-        Mockito.when(telemetryService.saveAttrAndNotify(any(), any(), anyString(), anyString(), anyDouble()))
+        when(telemetryService.saveAttrAndNotify(any(), any(), anyString(), anyString(), anyDouble()))
                 .thenReturn(Futures.immediateFuture(null));
 
         node.onMsg(ctx, msg);
@@ -421,11 +430,11 @@ public class TbMathNodeTest {
         verify(telemetryService, times(1)).saveAttrAndNotify(any(), any(), anyString(), anyString(), anyDouble());
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var result = resultMsg.getMetaData().getValue("result");
-        Assert.assertNotNull(result);
-        Assert.assertEquals("2.236", result);
+        assertNotNull(result);
+        assertEquals("2.236", result);
     }
 
     @Test
@@ -436,7 +445,7 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-        Mockito.when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
+        when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
                 .thenReturn(Futures.immediateFuture(null));
 
         node.onMsg(ctx, msg);
@@ -446,11 +455,11 @@ public class TbMathNodeTest {
         verify(telemetryService, times(1)).saveAndNotify(any(), any(), any(TsKvEntry.class));
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var resultJson = JacksonUtil.toJsonNode(resultMsg.getData());
-        Assert.assertTrue(resultJson.has("result"));
-        Assert.assertEquals(2.236, resultJson.get("result").asDouble(), 0.0);
+        assertTrue(resultJson.has("result"));
+        assertEquals(2.236, resultJson.get("result").asDouble(), 0.0);
     }
 
     @Test
@@ -461,7 +470,7 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-        Mockito.when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
+        when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
                 .thenReturn(Futures.immediateFuture(null));
 
         node.onMsg(ctx, msg);
@@ -471,16 +480,16 @@ public class TbMathNodeTest {
         verify(telemetryService, times(1)).saveAndNotify(any(), any(), any(TsKvEntry.class));
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var resultMetadata = resultMsg.getMetaData().getValue("result");
         var resultData = JacksonUtil.toJsonNode(resultMsg.getData());
 
-        Assert.assertTrue(resultData.has("result"));
-        Assert.assertEquals(2.236, resultData.get("result").asDouble(), 0.0);
+        assertTrue(resultData.has("result"));
+        assertEquals(2.236, resultData.get("result").asDouble(), 0.0);
 
-        Assert.assertNotNull(resultMetadata);
-        Assert.assertEquals("2.236", resultMetadata);
+        assertNotNull(resultMetadata);
+        assertEquals("2.236", resultMetadata);
     }
 
     @Test
@@ -498,11 +507,11 @@ public class TbMathNodeTest {
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
 
         TbMsg resultMsg = msgCaptor.getValue();
-        Assert.assertNotNull(resultMsg);
-        Assert.assertNotNull(resultMsg.getData());
+        assertNotNull(resultMsg);
+        assertNotNull(resultMsg.getData());
         var result = resultMsg.getMetaData().getValue("result");
-        Assert.assertNotNull(result);
-        Assert.assertEquals("2.236", result);
+        assertNotNull(result);
+        assertEquals("2.236", result);
     }
 
     @Test
@@ -515,7 +524,7 @@ public class TbMathNodeTest {
         Throwable thrown = assertThrows(RuntimeException.class, () -> {
             node.onMsg(ctx, msg);
         });
-        Assert.assertNotNull(thrown.getMessage());
+        assertNotNull(thrown.getMessage());
     }
 
     @Test
@@ -529,7 +538,7 @@ public class TbMathNodeTest {
         Throwable thrown = assertThrows(RuntimeException.class, () -> {
             node.onMsg(ctx, msg);
         });
-        Assert.assertNotNull(thrown.getMessage());
+        assertNotNull(thrown.getMessage());
     }
 
     @Test
