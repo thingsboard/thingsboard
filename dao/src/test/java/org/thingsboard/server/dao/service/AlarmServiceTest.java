@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -358,7 +359,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         tenantUser.setEmail(TEST_TENANT_EMAIL);
         tenantUser.setFirstName(TEST_TENANT_FIRST_NAME);
         tenantUser.setLastName(TEST_TENANT_LAST_NAME);
-        tenantUser = userService.saveUser(tenantUser);
+        tenantUser = userService.saveUser(TenantId.SYS_TENANT_ID, tenantUser);
 
         Assert.assertNotNull(tenantUser);
 
@@ -392,7 +393,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         tenantUser2.setEmail(2 + TEST_TENANT_EMAIL);
         tenantUser2.setFirstName(TEST_TENANT_FIRST_NAME);
         tenantUser2.setLastName(TEST_TENANT_LAST_NAME);
-        tenantUser2 = userService.saveUser(tenantUser2);
+        tenantUser2 = userService.saveUser(TenantId.SYS_TENANT_ID, tenantUser2);
 
         Assert.assertNotNull(tenantUser2);
         pageLink.setAssigneeId(tenantUser2.getId());

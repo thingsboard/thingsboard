@@ -39,12 +39,16 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.v1.ConnectResponseMsg;
+import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -53,6 +57,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EdgeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
+import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
@@ -151,8 +156,8 @@ public final class EdgeGrpcSession implements Closeable {
                 }
                 if (connected) {
                     if (requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
-                        if (requestMsg.hasSyncRequestMsg() && requestMsg.getSyncRequestMsg().getSyncRequired()) {
-                            boolean fullSync = true;
+                        if (requestMsg.hasSyncRequestMsg()) {
+                            boolean fullSync = false;
                             if (requestMsg.getSyncRequestMsg().hasFullSync()) {
                                 fullSync = requestMsg.getSyncRequestMsg().getFullSync();
                             }
@@ -640,6 +645,10 @@ public final class EdgeGrpcSession implements Closeable {
                 return ctx.getOtaPackageEdgeProcessor().convertOtaPackageEventToDownlink(edgeEvent);
             case QUEUE:
                 return ctx.getQueueEdgeProcessor().convertQueueEventToDownlink(edgeEvent);
+            case TENANT:
+                return ctx.getTenantEdgeProcessor().convertTenantEventToDownlink(edgeEvent);
+            case TENANT_PROFILE:
+                return ctx.getTenantProfileEdgeProcessor().convertTenantProfileEventToDownlink(edgeEvent);
             default:
                 log.warn("Unsupported edge event type [{}]", edgeEvent);
                 return null;
@@ -654,6 +663,11 @@ public final class EdgeGrpcSession implements Closeable {
                     result.addAll(ctx.getTelemetryProcessor().processTelemetryMsg(edge.getTenantId(), entityData));
                 }
             }
+            if (uplinkMsg.getDeviceProfileUpdateMsgCount() > 0) {
+                for (DeviceProfileUpdateMsg deviceProfileUpdateMsg : uplinkMsg.getDeviceProfileUpdateMsgList()) {
+                    result.add(ctx.getDeviceProfileProcessor().processDeviceProfileMsgFromEdge(edge.getTenantId(), edge, deviceProfileUpdateMsg));
+                }
+            }
             if (uplinkMsg.getDeviceUpdateMsgCount() > 0) {
                 for (DeviceUpdateMsg deviceUpdateMsg : uplinkMsg.getDeviceUpdateMsgList()) {
                     result.add(ctx.getDeviceProcessor().processDeviceMsgFromEdge(edge.getTenantId(), edge, deviceUpdateMsg));
@@ -664,14 +678,34 @@ public final class EdgeGrpcSession implements Closeable {
                     result.add(ctx.getDeviceProcessor().processDeviceCredentialsMsg(edge.getTenantId(), deviceCredentialsUpdateMsg));
                 }
             }
+            if (uplinkMsg.getAssetProfileUpdateMsgCount() > 0) {
+                for (AssetProfileUpdateMsg assetProfileUpdateMsg : uplinkMsg.getAssetProfileUpdateMsgList()) {
+                    result.add(ctx.getAssetProfileProcessor().processAssetProfileMsgFromEdge(edge.getTenantId(), edge, assetProfileUpdateMsg));
+                }
+            }
+            if (uplinkMsg.getAssetUpdateMsgCount() > 0) {
+                for (AssetUpdateMsg assetUpdateMsg : uplinkMsg.getAssetUpdateMsgList()) {
+                    result.add(ctx.getAssetProcessor().processAssetMsgFromEdge(edge.getTenantId(), edge, assetUpdateMsg));
+                }
+            }
             if (uplinkMsg.getAlarmUpdateMsgCount() > 0) {
                 for (AlarmUpdateMsg alarmUpdateMsg : uplinkMsg.getAlarmUpdateMsgList()) {
                     result.add(ctx.getAlarmProcessor().processAlarmMsg(edge.getTenantId(), alarmUpdateMsg));
                 }
             }
+            if (uplinkMsg.getEntityViewUpdateMsgCount() > 0) {
+                for (EntityViewUpdateMsg entityViewUpdateMsg : uplinkMsg.getEntityViewUpdateMsgList()) {
+                    result.add(ctx.getEntityViewProcessor().processEntityViewMsgFromEdge(edge.getTenantId(), edge, entityViewUpdateMsg));
+                }
+            }
             if (uplinkMsg.getRelationUpdateMsgCount() > 0) {
                 for (RelationUpdateMsg relationUpdateMsg : uplinkMsg.getRelationUpdateMsgList()) {
                     result.add(ctx.getRelationProcessor().processRelationMsg(edge.getTenantId(), relationUpdateMsg));
+                }
+            }
+            if (uplinkMsg.getDashboardUpdateMsgCount() > 0) {
+                for (DashboardUpdateMsg dashboardUpdateMsg : uplinkMsg.getDashboardUpdateMsgList()) {
+                    result.add(ctx.getDashboardProcessor().processDashboardMsgFromEdge(edge.getTenantId(), edge, dashboardUpdateMsg));
                 }
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgCount() > 0) {

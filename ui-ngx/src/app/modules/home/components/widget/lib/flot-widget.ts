@@ -18,7 +18,8 @@
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   createLabelFromDatasource,
-  deepClone, formattedDataFormDatasourceData,
+  deepClone,
+  formattedDataFormDatasourceData,
   insertVariable,
   isDefined,
   isDefinedAndNotNull,
@@ -59,6 +60,7 @@ import { AggregationType } from '@shared/models/time/time.models';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { BehaviorSubject } from 'rxjs';
 import Timeout = NodeJS.Timeout;
 
 const moment = moment_;
@@ -130,9 +132,15 @@ export class TbFlot {
   private pieAnimationLastTime: number;
   private pieAnimationCaf: CancelAnimationFrame;
 
-  constructor(private ctx: WidgetContext, private readonly chartType: ChartType, private $flotElement?: JQuery<any>) {
+  private yMinSubject = new BehaviorSubject(-1);
+  private yMaxSubject = new BehaviorSubject(1);
+
+  yMin$ = this.yMinSubject.asObservable();
+  yMax$ = this.yMaxSubject.asObservable();
+
+  constructor(private ctx: WidgetContext, private readonly chartType: ChartType, private $flotElement?: JQuery<any>, settings?: TbFlotSettings) {
     this.chartType = this.chartType || 'line';
-    this.settings = ctx.settings as TbFlotSettings;
+    this.settings = settings || (ctx.settings as TbFlotSettings);
     this.utils = this.ctx.$injector.get(UtilsService);
     this.enableSelection = isDefined(this.settings.enableSelection) ? this.settings.enableSelection : true;
     this.selectionMode = this.enableSelection ? 'x' : null;
@@ -208,6 +216,12 @@ export class TbFlot {
           this.yaxis.tickSize = this.settings.yaxis.tickSize;
         } else {
           this.yaxis.tickSize = null;
+        }
+        if (this.settings.yaxis.tickGenerator?.length) {
+          try {
+            this.yaxis.ticks = new Function('axis',
+              this.settings.yaxis.tickGenerator);
+          } catch (e) {}
         }
         if (isNumber(this.settings.yaxis.tickDecimals)) {
           this.yaxis.tickDecimals = this.settings.yaxis.tickDecimals;
@@ -717,6 +731,15 @@ export class TbFlot {
     }
   }
 
+  public updateSeriesColor(color: string) {
+    if (this.subscription?.data?.length) {
+      const series = this.subscription.data[0] as TbFlotSeries;
+      series.dataKey.color = color;
+      series.color = color;
+      series.highlightColor = tinycolor(color).setAlpha(.75).toRgbString();
+    }
+  }
+
   private latestDataByDataIndex(index: number): FormattedData {
     if (this.latestData[index]) {
       return this.latestData[index];
@@ -802,6 +825,8 @@ export class TbFlot {
       clearTimeout(this.resizeTimeoutHandle);
       this.resizeTimeoutHandle = null;
     }
+    this.yMinSubject.complete();
+    this.yMaxSubject.complete();
   }
 
   private createPlot() {
@@ -818,6 +843,7 @@ export class TbFlot {
         } else {
           this.plot = $.plot(this.$element, this.subscription.data, this.options) as JQueryPlot;
         }
+        this.updateYMinMax();
       } else {
         this.createPlotTimeoutHandle = setTimeout(this.createPlot.bind(this), 30);
       }
@@ -830,6 +856,20 @@ export class TbFlot {
       this.plot.setupGrid();
     }
     this.plot.draw();
+    this.updateYMinMax();
+  }
+
+  private updateYMinMax() {
+    if (this.plot?.getYAxes().length) {
+      const min = this.plot?.getYAxes()[0].min;
+      const max = this.plot?.getYAxes()[0].max;
+      if (this.yMinSubject.value !== min) {
+        this.yMinSubject.next(min);
+      }
+      if (this.yMaxSubject.value !== max) {
+        this.yMaxSubject.next(max);
+      }
+    }
   }
 
   private redrawPlot() {

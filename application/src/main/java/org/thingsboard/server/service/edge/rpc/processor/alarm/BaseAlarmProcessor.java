@@ -49,6 +49,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             return Futures.immediateFuture(null);
         }
         try {
+            edgeSynchronizationManager.getSync().set(true);
             switch (alarmUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -72,26 +73,26 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     } else {
                         alarmService.updateAlarm(AlarmUpdateRequest.fromAlarm(alarm));
                     }
-                    return Futures.immediateFuture(null);
+                    break;
                 case ALARM_ACK_RPC_MESSAGE:
                     Alarm alarmToAck = alarmService.findAlarmById(tenantId, alarmId);
                     if (alarmToAck != null) {
                         alarmService.acknowledgeAlarm(tenantId, alarmId, alarmUpdateMsg.getAckTs());
                     }
-                    return Futures.immediateFuture(null);
+                    break;
                 case ALARM_CLEAR_RPC_MESSAGE:
                     Alarm alarmToClear = alarmService.findAlarmById(tenantId, alarmId);
                     if (alarmToClear != null) {
                         alarmService.clearAlarm(tenantId, alarmId, alarmUpdateMsg.getClearTs(),
                                 JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
                     }
-                    return Futures.immediateFuture(null);
+                    break;
                 case ENTITY_DELETED_RPC_MESSAGE:
                     Alarm alarmToDelete = alarmService.findAlarmById(tenantId, alarmId);
                     if (alarmToDelete != null) {
                         alarmService.delAlarm(tenantId, alarmId);
                     }
-                    return Futures.immediateFuture(null);
+                    break;
                 case UNRECOGNIZED:
                 default:
                     return handleUnsupportedMsgType(alarmUpdateMsg.getMsgType());
@@ -99,7 +100,10 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         } catch (Exception e) {
             log.error("[{}] Failed to process alarm update msg [{}]", tenantId, alarmUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
+        } finally {
+            edgeSynchronizationManager.getSync().remove();
         }
+        return Futures.immediateFuture(null);
     }
 
     private EntityId getAlarmOriginator(TenantId tenantId, String entityName, EntityType entityType) {

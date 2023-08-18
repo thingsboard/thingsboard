@@ -716,7 +716,7 @@ public class TenantServiceTest extends AbstractServiceTest {
         user.setFirstName("tenantAdmin");
         user.setLastName("tenantAdmin");
         user.setTenantId(tenant.getId());
-        return userService.saveUser(user);
+        return userService.saveUser(TenantId.SYS_TENANT_ID, user);
     }
 
     private Tenant createAndSaveTenant(TenantProfile tenantProfile) {

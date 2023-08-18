@@ -17,7 +17,7 @@
 import { isDefinedAndNotNull, isNumber, isNumeric, parseFunction } from '@core/utils';
 import { DataKey, Datasource, DatasourceData } from '@shared/models/widget.models';
 import { Injector } from '@angular/core';
-import { DatePipe, formatDate } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -60,6 +60,7 @@ export interface Font {
   family: string;
   weight: fontWeight;
   style: fontStyle;
+  lineHeight: string;
 }
 
 export enum ColorType {
@@ -89,6 +90,24 @@ export interface ColorSettings {
   colorFunction?: string;
 }
 
+export interface TimewindowStyle {
+  showIcon: boolean;
+  icon: string;
+  iconSize: string;
+  iconPosition: 'left' | 'right';
+  font?: Font;
+  color?: string;
+  displayTypePrefix?: boolean;
+}
+
+export const defaultTimewindowStyle: TimewindowStyle = {
+  showIcon: true,
+  icon: 'query_builder',
+  iconSize: '24px',
+  iconPosition: 'left',
+  displayTypePrefix: true
+};
+
 export const constantColor = (color: string): ColorSettings => ({
   type: ColorType.constant,
   color,
@@ -100,18 +119,44 @@ export const constantColor = (color: string): ColorSettings => ({
     'return \'blue\';'
 });
 
+export const cssSizeToStrSize = (size?: number, unit?: cssUnit): string => (isDefinedAndNotNull(size) ? size + '' : '0') + (unit || 'px');
+
+export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
+  if (!strSize || !strSize.trim().length) {
+    return [0, 'px'];
+  }
+  let resolvedUnit: cssUnit;
+  let resolvedSize = strSize;
+  for (const unit of cssUnits) {
+    if (strSize.endsWith(unit)) {
+      resolvedUnit = unit;
+      break;
+    }
+  }
+  if (resolvedUnit) {
+    resolvedSize = strSize.substring(0, strSize.length - resolvedUnit.length);
+  }
+  resolvedUnit = resolvedUnit || 'px';
+  let numericSize = 0;
+  if (isNumeric(resolvedSize)) {
+    numericSize = Number(resolvedSize);
+  }
+  return [numericSize, resolvedUnit];
+};
+
 type ValueColorFunction = (value: any) => string;
 
 export abstract class ColorProcessor {
 
   static fromSettings(color: ColorSettings): ColorProcessor {
-    switch (color.type) {
+    const settings = color || constantColor(null);
+    switch (settings.type) {
       case ColorType.constant:
-        return new ConstantColorProcessor(color);
+        return new ConstantColorProcessor(settings);
       case ColorType.range:
-        return new RangeColorProcessor(color);
+        return new RangeColorProcessor(settings);
       case ColorType.function:
-        return new FunctionColorProcessor(color);
+        return new FunctionColorProcessor(settings);
     }
   }
 
@@ -147,12 +192,18 @@ class RangeColorProcessor extends ColorProcessor {
     if (this.settings.rangeList?.length && isDefinedAndNotNull(value) && isNumeric(value)) {
       const num = Number(value);
       for (const range of this.settings.rangeList) {
-        if ((!isNumber(range.from) || num >= range.from) && (!isNumber(range.to) || num < range.to)) {
+        if (RangeColorProcessor.constantRange(range) && range.from === num) {
+          return range.color;
+        } else if ((!isNumber(range.from) || num >= range.from) && (!isNumber(range.to) || num < range.to)) {
           return range.color;
         }
       }
     }
     return this.settings.color;
+  }
+
+  private static constantRange(range: ColorRange): boolean {
+    return isNumber(range.from) && isNumber(range.to) && range.from === range.to;
   }
 }
 
@@ -225,7 +276,7 @@ export abstract class DateFormatProcessor {
     }
   }
 
-  formatted = '';
+  formatted = '&nbsp;';
 
   protected constructor(protected $injector: Injector,
                         protected settings: DateFormatSettings) {
@@ -298,19 +349,19 @@ export interface BackgroundSettings {
   overlay: OverlaySettings;
 }
 
-export const iconStyle = (size: number, sizeUnit: cssUnit): ComponentStyle => {
-  const iconSize = size + sizeUnit;
+export const iconStyle = (size: number | string, sizeUnit: cssUnit = 'px'): ComponentStyle => {
+  const iconSize = typeof size === 'number' ? size + sizeUnit : size;
   return {
     width: iconSize,
+    minWidth: iconSize,
     height: iconSize,
     fontSize: iconSize,
     lineHeight: iconSize
   };
 };
 
-export const textStyle = (font?: Font, lineHeight = '1.5', letterSpacing = '0.25px'): ComponentStyle => {
+export const textStyle = (font?: Font, letterSpacing = 'normal'): ComponentStyle => {
   const style: ComponentStyle = {
-    lineHeight,
     letterSpacing
   };
   if (font?.style) {
@@ -318,6 +369,9 @@ export const textStyle = (font?: Font, lineHeight = '1.5', letterSpacing = '0.25
   }
   if (font?.weight) {
     style.fontWeight = font.weight;
+  }
+  if (font?.lineHeight) {
+    style.lineHeight = font.lineHeight;
   }
   if (font?.size) {
     style.fontSize = (font.size + (font.sizeUnit || 'px'));
@@ -388,6 +442,16 @@ export const getSingleTsValue = (data: Array<DatasourceData>): [number, any] => 
     const dsData = data[0];
     if (dsData.data.length) {
       return dsData.data[0];
+    }
+  }
+  return null;
+};
+
+export const getLatestSingleTsValue = (data: Array<DatasourceData>): [number, any] => {
+  if (data.length) {
+    const dsData = data[0];
+    if (dsData.data.length) {
+      return dsData.data[dsData.data.length - 1];
     }
   }
   return null;

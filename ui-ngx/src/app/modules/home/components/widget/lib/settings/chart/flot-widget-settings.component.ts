@@ -74,7 +74,8 @@ export const flotDefaultSettings = (chartType: ChartType): Partial<TbFlotSetting
       color: null,
       tickSize: null,
       tickDecimals: 0,
-      ticksFormatter: ''
+      ticksFormatter: '',
+      tickGenerator: ''
     }
   };
   if (chartType === 'graph') {

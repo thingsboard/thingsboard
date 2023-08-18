@@ -44,6 +44,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     protected volatile Set<TopicPartitionInfo> partitions;
     protected final ReentrantLock consumerLock = new ReentrantLock(); //NonfairSync
     final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
+    protected volatile boolean queueDeleted = false;
 
     @Getter
     private final String topic;
@@ -94,7 +95,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                 partitions = subscribeQueue.poll();
             }
             if (!subscribed) {
-                List<String> topicNames = partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+                List<String> topicNames = getFullTopicNames();
                 doSubscribe(topicNames);
                 subscribed = true;
             }
@@ -103,7 +104,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
             consumerLock.unlock();
         }
 
-        if (records.isEmpty()) { return sleepAndReturnEmpty(startNanos, durationInMillis); }
+        if (records.isEmpty() && !isLongPollingSupported()) {
+            return sleepAndReturnEmpty(startNanos, durationInMillis);
+        }
 
         return decodeRecords(records);
     }
@@ -162,7 +165,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
 
     @Override
     public void unsubscribe() {
-        log.info("unsubscribe topic and stop consumer {}", getTopic());
+        log.info("Unsubscribing from topics and stopping consumer for topics {}", partitions.stream()
+                .map(TopicPartitionInfo::getFullTopicName)
+                .collect(Collectors.joining(", ")));
         stopped = true;
         consumerLock.lock();
         try {
@@ -186,5 +191,23 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     abstract protected void doCommit();
 
     abstract protected void doUnsubscribe();
+
+    @Override
+    public void onQueueDelete() {
+        queueDeleted = true;
+    }
+
+    public boolean isQueueDeleted() {
+        return queueDeleted;
+    }
+
+    @Override
+    public List<String> getFullTopicNames() {
+        return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+    }
+
+    protected boolean isLongPollingSupported() {
+        return false;
+    }
 
 }

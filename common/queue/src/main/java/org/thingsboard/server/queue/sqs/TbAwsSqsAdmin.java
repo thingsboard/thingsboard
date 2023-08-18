@@ -26,6 +26,7 @@ import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -63,11 +64,12 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
     }
 
     @Override
-    public void createTopicIfNotExists(String topic) {
+    public void createTopicIfNotExists(String topic, String properties) {
         String queueName = convertTopicToQueueName(topic);
         if (queues.containsKey(queueName)) {
             return;
         }
+        Map<String, String> attributes = PropertyUtils.getProps(this.attributes, properties, TbAwsSqsQueueAttributes::toConfigs);
         final CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName).withAttributes(attributes);
         String queueUrl = sqsClient.createQueue(createQueueRequest).getQueueUrl();
         queues.put(getQueueNameFromUrl(queueUrl), queueUrl);

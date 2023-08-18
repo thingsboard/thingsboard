@@ -21,7 +21,7 @@
       <h2>{{'widget.add' | translate}}:</h2>
       <span fxFlex>{{data.widgetInfo.widgetName}}</span>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap.gt-xs="16px" style="min-width: fit-content;">
-        <tb-toggle-select *ngIf="hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs"
+        <tb-toggle-select *ngIf="widgetConfig.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs"
                           [(ngModel)]="widgetConfigMode" [ngModelOptions]="{standalone: true}">
           <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
           <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
@@ -36,13 +36,14 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <tb-widget-config class="tb-absolute-fill"
+    <tb-widget-config
+      #widgetConfigComponent
+      class="tb-absolute-fill"
       [aliasController]="aliasController"
       [functionsOnly]="false"
       [dashboard]="dashboard"
       [widget]="widget"
-      [widgetConfigMode]="widgetConfigMode"
-      [hideHeader]="widgetConfigMode === widgetConfigModes.basic"
+      [hideHeader]="hideHeader"
       isAdd
       formControlName="widgetConfig">
     </tb-widget-config>

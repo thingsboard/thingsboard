@@ -273,6 +273,12 @@ import {
   ValueCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/value-card-widget-settings.component';
 import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
+import {
+  AggregatedValueCardKeySettingsComponent
+} from '@home/components/widget/lib/settings/cards/aggregated-value-card-key-settings.component';
+import {
+  AggregatedValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/aggregated-value-card-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -374,7 +380,9 @@ import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
     QuickLinksWidgetSettingsComponent,
-    ValueCardWidgetSettingsComponent
+    ValueCardWidgetSettingsComponent,
+    AggregatedValueCardKeySettingsComponent,
+    AggregatedValueCardWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -481,7 +489,9 @@ import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
     QuickLinksWidgetSettingsComponent,
-    ValueCardWidgetSettingsComponent
+    ValueCardWidgetSettingsComponent,
+    AggregatedValueCardKeySettingsComponent,
+    AggregatedValueCardWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -553,5 +563,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-gateway-service-rpc-settings':GatewayServiceRPCSettingsComponent,
   'tb-doc-links-widget-settings': DocLinksWidgetSettingsComponent,
   'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent,
-  'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent
+  'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent,
+  'tb-aggregated-value-card-key-settings': AggregatedValueCardKeySettingsComponent,
+  'tb-aggregated-value-card-widget-settings': AggregatedValueCardWidgetSettingsComponent
 };

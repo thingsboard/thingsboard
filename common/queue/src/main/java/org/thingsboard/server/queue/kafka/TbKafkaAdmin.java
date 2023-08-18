@@ -21,6 +21,7 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.Collections;
 import java.util.Map;
@@ -62,12 +63,12 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     }
 
     @Override
-    public void createTopicIfNotExists(String topic) {
+    public void createTopicIfNotExists(String topic, String properties) {
         if (topics.contains(topic)) {
             return;
         }
         try {
-            NewTopic newTopic = new NewTopic(topic, numPartitions, replicationFactor).configs(topicConfigs);
+            NewTopic newTopic = new NewTopic(topic, numPartitions, replicationFactor).configs(PropertyUtils.getProps(topicConfigs, properties));
             createTopic(newTopic).values().get(topic).get();
             topics.add(topic);
         } catch (ExecutionException ee) {
@@ -81,7 +82,6 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             log.warn("[{}] Failed to create topic", topic, e);
             throw new RuntimeException(e);
         }
-
     }
 
     @Override

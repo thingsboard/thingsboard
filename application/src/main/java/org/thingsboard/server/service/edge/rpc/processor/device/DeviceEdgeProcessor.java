@@ -35,12 +35,8 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -54,7 +50,6 @@ import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -71,6 +66,8 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         log.trace("[{}] executing processDeviceMsgFromEdge [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
         DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
         try {
+            edgeSynchronizationManager.getSync().set(true);
+
             switch (deviceUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -93,6 +90,8 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
             } else {
                 return Futures.immediateFailedFuture(e);
             }
+        } finally {
+            edgeSynchronizationManager.getSync().remove();
         }
     }
 
@@ -111,15 +110,6 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         }
     }
 
-    private void createRelationFromEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId) {
-        EntityRelation relation = new EntityRelation();
-        relation.setFrom(edgeId);
-        relation.setTo(entityId);
-        relation.setTypeGroup(RelationTypeGroup.COMMON);
-        relation.setType(EntityRelation.EDGE_TYPE);
-        relationService.saveRelation(tenantId, relation);
-    }
-
     private void pushDeviceCreatedEventToRuleEngine(TenantId tenantId, Edge edge, DeviceId deviceId) {
         try {
             Device device = deviceService.findDeviceById(tenantId, deviceId);
@@ -134,27 +124,12 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
+                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", deviceId, TbMsgType.ENTITY_CREATED.name(), e);
         }
-    }
-
-    private TbMsgMetaData getActionTbMsgMetaData(Edge edge, CustomerId customerId) {
-        TbMsgMetaData metaData = getTbMsgMetaData(edge);
-        if (customerId != null && !customerId.isNullUid()) {
-            metaData.putValue("customerId", customerId.toString());
-        }
-        return metaData;
-    }
-
-    private TbMsgMetaData getTbMsgMetaData(Edge edge) {
-        TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("edgeId", edge.getId().toString());
-        metaData.putValue("edgeName", edge.getName());
-        return metaData;
     }
 
     public ListenableFuture<Void> processDeviceRpcCallFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
@@ -307,9 +282,5 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addDeviceCredentialsRequestMsg(deviceCredentialsRequestMsg);
         return builder.build();
-    }
-
-    public ListenableFuture<Void> processDeviceNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotification(tenantId, edgeNotificationMsg);
     }
 }

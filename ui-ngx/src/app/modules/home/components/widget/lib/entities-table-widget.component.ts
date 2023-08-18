@@ -42,23 +42,15 @@ import {
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  createLabelFromDatasource,
-  deepClone,
-  hashCode,
-  isDefined,
-  isNumber,
-  isObject,
-  isUndefined
-} from '@core/utils';
+import { deepClone, hashCode, isDefined, isNumber, isObject, isUndefined } from '@core/utils';
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { BehaviorSubject, fromEvent, merge, Observable } from 'rxjs';
+import { BehaviorSubject, merge, Observable, Subject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
-import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -113,6 +105,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { AggregationType } from '@shared/models/time/time.models';
+import { FormBuilder } from '@angular/forms';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -139,6 +132,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
+  textSearch = this.fb.control('', {nonNullable: true});
+
   public displayPagination = true;
   public enableStickyHeader = true;
   public enableStickyAction = true;
@@ -163,8 +158,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
   private widgetResize$: ResizeObserver;
-
-  private entitiesTitlePattern: string;
+  private destroy$ = new Subject<void>();
 
   private defaultPageSize = 10;
   private defaultSortOrder = 'entityName';
@@ -204,7 +198,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
               private datePipe: DatePipe,
               private translate: TranslateService,
               private domSanitizer: DomSanitizer,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private fb: FormBuilder) {
     super(store);
     this.pageLink = {
       page: 0,
@@ -238,35 +233,33 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngAfterViewInit(): void {
-    fromEvent(this.searchInputField.nativeElement, 'keyup')
-      .pipe(
-        debounceTime(150),
-        distinctUntilChanged(),
-        tap(() => {
-          if (this.displayPagination) {
-            this.paginator.pageIndex = 0;
-          }
-          this.updateData();
-        })
-      )
-      .subscribe();
+    this.textSearch.valueChanges.pipe(
+      debounceTime(150),
+      distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      if (this.displayPagination) {
+        this.paginator.pageIndex = 0;
+      }
+      this.pageLink.textSearch = value.trim();
+      this.updateData();
+    });
 
     if (this.displayPagination) {
-      this.sort.sortChange.subscribe(() => this.paginator.pageIndex = 0);
+      this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
     }
-    ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>)
-      .pipe(
-        tap(() => this.updateData())
-      )
-      .subscribe();
+    ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateData());
     this.updateData();
   }
 
   public onDataUpdated() {
-    this.updateTitle(true);
     this.entityDatasource.dataUpdated();
     this.clearCache();
     this.ctx.detectChanges();
@@ -281,15 +274,14 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
 
-    this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length || !!this.ctx.actionsApi.getActionDescriptors('rowDoubleClick').length;
+    this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length ||
+      !!this.ctx.actionsApi.getActionDescriptors('rowDoubleClick').length;
 
     if (this.settings.entitiesTitle && this.settings.entitiesTitle.length) {
-      this.entitiesTitlePattern = this.utils.customTranslation(this.settings.entitiesTitle, this.settings.entitiesTitle);
+      this.ctx.widgetTitle = this.settings.entitiesTitle;
     } else {
-      this.entitiesTitlePattern = this.translate.instant('entity.entities');
+      this.ctx.widgetTitle = this.translate.instant('entity.entities');
     }
-
-    this.updateTitle(false);
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
@@ -317,16 +309,6 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);
-  }
-
-  private updateTitle(updateWidgetParams = false) {
-    const newTitle = createLabelFromDatasource(this.subscription.datasources[0], this.entitiesTitlePattern);
-    if (this.ctx.widgetTitle !== newTitle) {
-      this.ctx.widgetTitle = newTitle;
-      if (updateWidgetParams) {
-        this.ctx.updateWidgetParams();
-      }
-    }
   }
 
   private updateDatasources() {
@@ -498,14 +480,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       overlayRef.dispose();
     });
 
-    const columns: DisplayColumn[] = this.columns.map(column => {
-      return {
+    const columns: DisplayColumn[] = this.columns.map(column => ({
         title: column.title,
         def: column.def,
         display: this.displayedColumns.indexOf(column.def) > -1,
         selectable: this.columnSelectionAvailability[column.def]
-      };
-    });
+      }));
 
     const providers: StaticProvider[] = [
       {
@@ -534,7 +514,6 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   private enterFilterMode() {
     this.textSearchMode = true;
-    this.pageLink.textSearch = '';
     this.ctx.hideTitlePanel = true;
     this.ctx.detectChanges(true);
     setTimeout(() => {
@@ -545,11 +524,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   exitFilterMode() {
     this.textSearchMode = false;
-    this.pageLink.textSearch = null;
-    if (this.displayPagination) {
-      this.paginator.pageIndex = 0;
-    }
-    this.updateData();
+    this.textSearch.reset();
     this.ctx.hideTitlePanel = false;
     this.ctx.detectChanges(true);
   }

@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,8 +32,7 @@ import { DatasourceData, DatasourceType, WidgetConfig, widgetType } from '@share
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import cssjs from '@core/css/css';
-import { fromEvent } from 'rxjs';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, skip, startWith, takeUntil } from 'rxjs/operators';
 import { constructTableCssString } from '@home/components/widget/lib/table-widget.models';
 import { Overlay } from '@angular/cdk/overlay';
 import {
@@ -36,7 +44,7 @@ import {
   NodesInsertedCallback
 } from '@shared/components/nav-tree.component';
 import { EntityType } from '@shared/models/entity-type.models';
-import { deepClone, hashCode } from '@core/utils';
+import { deepClone, hashCode, isDefinedAndNotNull, isEmptyStr } from '@core/utils';
 import {
   defaultNodeIconFunction,
   defaultNodeOpenedFunction,
@@ -60,13 +68,15 @@ import {
 import { EntityRelationsQuery } from '@shared/models/relation.models';
 import { AliasFilterType, RelationsQueryFilter } from '@shared/models/alias.models';
 import { EntityFilter } from '@shared/models/query/query.models';
+import { FormBuilder } from '@angular/forms';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'tb-entities-hierarchy-widget',
   templateUrl: './entities-hierarchy-widget.component.html',
   styleUrls: ['./entities-hierarchy-widget.component.scss']
 })
-export class EntitiesHierarchyWidgetComponent extends PageComponent implements OnInit, AfterViewInit {
+export class EntitiesHierarchyWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input()
   ctx: WidgetContext;
@@ -75,8 +85,8 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
 
   public toastTargetId = 'entities-hierarchy-' + this.utils.guid();
 
-  public textSearchMode = false;
-  public textSearch = null;
+  textSearchMode = false;
+  textSearch = this.fb.control('', {nonNullable: true});
 
   public nodeEditCallbacks: NavTreeEditCallbacks = {};
 
@@ -106,11 +116,14 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     }
   };
 
+  private destroy$ = new Subject<void>();
+
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private utils: UtilsService) {
+              private utils: UtilsService,
+              private fb: FormBuilder) {
     super(store);
   }
 
@@ -125,15 +138,25 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
   }
 
   ngAfterViewInit(): void {
-    fromEvent(this.searchInputField.nativeElement, 'keyup')
-      .pipe(
-        debounceTime(150),
-        distinctUntilChanged(),
-        tap(() => {
-          this.updateSearchNodes();
-        })
-      )
-      .subscribe();
+    this.textSearch.valueChanges.pipe(
+      debounceTime(150),
+      startWith(''),
+      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
+      skip(1),
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      if (isDefinedAndNotNull(value) && !isEmptyStr(value)) {
+        this.nodeEditCallbacks.search(value.trim());
+      } else {
+        this.nodeEditCallbacks.clearSearch();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   public onDataUpdated() {
@@ -190,7 +213,6 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
 
   private enterFilterMode() {
     this.textSearchMode = true;
-    this.textSearch = '';
     this.ctx.hideTitlePanel = true;
     this.ctx.detectChanges(true);
     setTimeout(() => {
@@ -201,18 +223,9 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
 
   exitFilterMode() {
     this.textSearchMode = false;
-    this.textSearch = null;
-    this.updateSearchNodes();
+    this.textSearch.reset();
     this.ctx.hideTitlePanel = false;
     this.ctx.detectChanges(true);
-  }
-
-  private updateSearchNodes() {
-    if (this.textSearch != null) {
-      this.nodeEditCallbacks.search(this.textSearch);
-    } else {
-      this.nodeEditCallbacks.clearSearch();
-    }
   }
 
   private updateNodeData(subscriptionData: Array<DatasourceData>) {

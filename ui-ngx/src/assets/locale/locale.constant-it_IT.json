@@ -276,6 +276,7 @@
         "attributes": "Attributi",
         "latest-telemetry": "Ultima telemetria",
         "attributes-scope": "Visibilità attributi entità",
+        "scope-telemetry": "Telemetria",
         "scope-latest-telemetry": "Ultima telemetria",
         "scope-client": "Attributi client",
         "scope-server": "Attributi server",

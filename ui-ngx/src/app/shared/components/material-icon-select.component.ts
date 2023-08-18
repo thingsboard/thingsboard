@@ -54,17 +54,9 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
   @Input()
   disabled: boolean;
 
-  private iconClearButtonValue: boolean;
-  get iconClearButton(): boolean {
-    return this.iconClearButtonValue;
-  }
   @Input()
-  set iconClearButton(value: boolean) {
-    const newVal = coerceBooleanProperty(value);
-    if (this.iconClearButtonValue !== newVal) {
-      this.iconClearButtonValue = newVal;
-    }
-  }
+  @coerceBoolean()
+  iconClearButton = false;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -135,11 +127,12 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
 
   openIconDialog() {
     if (!this.disabled) {
-      this.dialogs.materialIconPicker(this.materialIconFormGroup.get('icon').value).subscribe(
-        (icon) => {
-          if (icon) {
+      this.dialogs.materialIconPicker(this.materialIconFormGroup.get('icon').value,
+        this.iconClearButton).subscribe(
+        (result) => {
+          if (!result?.canceled) {
             this.materialIconFormGroup.patchValue(
-              {icon}, {emitEvent: true}
+              {icon: result?.icon}, {emitEvent: true}
             );
             this.cd.markForCheck();
           }
@@ -159,7 +152,8 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
       const materialIconsPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, MaterialIconsComponent, 'left', true, null,
         {
-          selectedIcon: this.materialIconFormGroup.get('icon').value
+          selectedIcon: this.materialIconFormGroup.get('icon').value,
+          iconClearButton: this.iconClearButton
         },
         {},
         {}, {}, true);

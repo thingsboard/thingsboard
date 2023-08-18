@@ -228,7 +228,6 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         save(deviceId, LAST_CONNECT_TIME, ts);
         pushRuleEngineMessage(stateData, TbMsgType.CONNECT_EVENT);
         checkAndUpdateState(deviceId, stateData);
-
     }
 
     @Override
@@ -397,12 +396,17 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     }
 
     void checkAndUpdateState(@Nonnull DeviceId deviceId, @Nonnull DeviceStateData state) {
-        if (state.getState().isActive()) {
+        var deviceState = state.getState();
+        if (deviceState.isActive()) {
             updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, state);
         } else {
             //trying to fix activity state
-            if (isActive(System.currentTimeMillis(), state.getState())) {
-                updateActivityState(deviceId, state, state.getState().getLastActivityTime());
+            if (isActive(System.currentTimeMillis(), deviceState)) {
+                updateActivityState(deviceId, state, deviceState.getLastActivityTime());
+                if (deviceState.getLastInactivityAlarmTime() != 0L && deviceState.getLastInactivityAlarmTime() >= deviceState.getLastActivityTime()) {
+                    deviceState.setLastInactivityAlarmTime(0L);
+                    save(deviceId, INACTIVITY_ALARM_TIME, 0L);
+                }
             }
         }
     }

@@ -11,7 +11,8 @@
         "permission-denied-text": "You don't have permission to perform this operation!"
     },
     "account": {
-        "account": "Account"
+        "account": "Account",
+        "notification-settings": "Notification settings"
     },
     "action": {
         "activate": "Activate",
@@ -512,6 +513,7 @@
         "severity-indeterminate": "Indeterminate",
         "acknowledge": "Acknowledge",
         "clear": "Clear",
+        "delete": "Delete",
         "search": "Search alarms",
         "selected-alarms": "{ count, plural, =1 {1 alarm} other {# alarms} } selected",
         "no-data": "No data to display",
@@ -522,10 +524,14 @@
         "aknowledge-alarms-text": "Are you sure you want to acknowledge { count, plural, =1 {1 alarm} other {# alarms} }?",
         "aknowledge-alarm-title": "Acknowledge Alarm",
         "aknowledge-alarm-text": "Are you sure you want to acknowledge Alarm?",
+        "selected-alarms-are-acknowledged": "Selected alarms are already acknowledged",
         "clear-alarms-title": "Clear { count, plural, =1 {1 alarm} other {# alarms} }",
         "clear-alarms-text": "Are you sure you want to clear { count, plural, =1 {1 alarm} other {# alarms} }?",
         "clear-alarm-title": "Clear Alarm",
         "clear-alarm-text": "Are you sure you want to clear Alarm?",
+        "delete-alarms-title": "Delete { count, plural, =1 {1 alarm} other {# alarms} }",
+        "delete-alarms-text": "Are you sure you want to delete { count, plural, =1 {1 alarm} other {# alarms} }?",
+        "selected-alarms-are-cleared": "Selected alarms are already cleared",
         "alarm-status-filter": "Alarm Status Filter",
         "alarm-filter-title": "Alarm Filter",
         "assigned": "Assigned",
@@ -699,6 +705,7 @@
         "latest-telemetry": "Latest telemetry",
         "no-latest-telemetry": "No latest telemetry",
         "attributes-scope": "Entity attributes scope",
+        "scope-telemetry": "Telemetry",
         "scope-latest-telemetry": "Latest telemetry",
         "scope-client": "Client attributes",
         "scope-server": "Server attributes",
@@ -725,7 +732,20 @@
         "no-attributes-text": "No attributes found",
         "no-telemetry-text": "No telemetry found",
         "copy-key": "Copy key",
-        "copy-value": "Copy value"
+        "copy-value": "Copy value",
+        "add-telemetry": "Add telemetry",
+        "copy-value": "Copy value",
+        "delete-timeseries": {
+            "start-time": "Start time",
+            "ends-on": "Ends on",
+            "strategy": "Strategy",
+            "delete-strategy": "Delete strategy",
+            "all-data": "Delete all data",
+            "all-data-except-latest-value": "Delete all data except latest value",
+            "latest-value": "Delete latest value",
+            "all-data-for-time-period": "Delete all data for time period",
+            "rewrite-latest-value": "Rewrite latest value"
+        }
     },
     "api-usage": {
         "api-features": "API features",
@@ -1207,7 +1227,11 @@
         "delta-calculation-result-delta-absolute": "Delta (absolute)",
         "delta-calculation-result-delta-percent": "Delta (percent)",
         "source": "Source",
-        "latest": "Latest"
+        "latest": "Latest",
+        "latest-value": "Latest value",
+        "delta": "delta",
+        "percent": "percent",
+        "absolute": "absolute"
     },
     "datasource": {
         "type": "Datasource type",
@@ -1408,6 +1432,7 @@
             "use-following-instructions": "Use the following instructions for sending telemetry on behalf of the device using shell",
             "execute-following-command": "Execute the following command",
             "install-curl-windows": "Starting Windows 10 b17063, cURL is available by default",
+            "install-curl-macos": "Starting Mac OS X 10.2 6C115 (Jaguar), cURL is available by default",
             "install-mqtt-windows": "Use the instructions to download, install, setup and run mosquitto_pub",
             "install-coap-client": "Use the instructions to download, install, setup and run coap-client",
             "install-necessary-client-tools": "Install necessary client tools",
@@ -2036,6 +2061,7 @@
         "entity-types": "Entity types",
         "entity-type-list": "Entity type list",
         "any-entity": "Any entity",
+        "add-entity-type": "Add entity type",
         "enter-entity-type": "Enter entity type",
         "no-entities-matching": "No entities matching '{{entity}}' were found.",
         "no-entity-types-matching": "No entity types matching '{{entityType}}' were found.",
@@ -3159,6 +3185,8 @@
             "email-preview": "Email notification preview",
             "slack": "Slack",
             "slack-preview": "Slack notification preview",
+            "microsoft-teams": "Microsoft Teams",
+            "microsoft-teams-preview": "Microsoft Teams notification preview",
             "sms": "SMS",
             "sms-preview": "SMS notification preview",
             "web": "Web",
@@ -3324,6 +3352,7 @@
         "tenant-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all tenant profiles",
         "tenants-list-rule-hint": "If the field is empty, the trigger will be applied to all tenants",
         "threshold": "Threshold",
+        "theme-color": "Theme color",
         "time": "Time",
         "track-rule-node-events": "Track rule node events",
         "trigger": {
@@ -3345,7 +3374,21 @@
         "updated": "Updated",
         "use-template": "Use template",
         "view-all": "View all",
-        "warning": "Warning"
+        "warning": "Warning",
+        "webhook-url": "Webhook URL",
+        "webhook-url-required": "Webhook URL is required",
+        "channel-name": "Channel name",
+        "channel-name-required": "Channel name is required",
+        "settings": {
+            "notification-settings": "Notification settings",
+            "reset-all": "Reset all settings",
+            "reset-all-title": "Are you sure you want to reset form?",
+            "reset-all-text": "After the confirmation, the settings form will reset to the default value and save.",
+            "type": "Type",
+            "enable-all": "Enable all",
+            "disable-all": "Disable all",
+            "delivery-not-configured": "Delivery method is not configured"
+        }
     },
     "ota-update": {
       "add": "Add package",
@@ -3556,6 +3599,7 @@
         "delete-from-relations-title": "Are you sure you want to delete { count, plural, =1 {1 relation} other {# relations} }?",
         "delete-from-relations-text": "Be careful, after the confirmation all selected relations will be removed and current entity will be unrelated from the corresponding entities.",
         "remove-relation-filter": "Remove relation filter",
+        "remove-filter": "Remove filter",
         "add-relation-filter": "Add relation filter",
         "any-relation": "Any relation",
         "relation-filters": "Relation filters",
@@ -3808,6 +3852,8 @@
         "description": "Description",
         "description-hint": "This text will be displayed in the Queue description instead of the selected strategy",
         "alt-description": "Submit Strategy: {{submitStrategy}}, Processing Strategy: {{processingStrategy}}",
+        "custom-properties": "Custom properties",
+        "custom-properties-hint": "Custom queue (topic) creation properties, e.g. 'retention.ms:604800000;retention.bytes:1048576000'",
         "strategies": {
             "sequential-by-originator-label": "Sequential by originator",
             "sequential-by-originator-hint": "New message for e.g. device A is not submitted until previous message for device A is acknowledged",
@@ -3875,8 +3921,8 @@
         "tenant-required": "Tenant is required",
         "search": "Search tenants",
         "selected-tenants": "{ count, plural, =1 {1 tenant} other {# tenants} } selected",
-        "isolated-tb-rule-engine": "Processing in isolated ThingsBoard Rule Engine container",
-        "isolated-tb-rule-engine-details": "Requires separate microservice(s) per isolated Tenant"
+        "isolated-tb-rule-engine": "Use isolated ThingsBoard Rule Engine queues",
+        "isolated-tb-rule-engine-details": "Each tenant will have dedicated Rule Engine queues"
     },
     "tenant-profile": {
         "tenant-profile": "Tenant profile",
@@ -4134,7 +4180,16 @@
         "interval": "Interval",
         "just-now": "Just now",
         "just-now-lower": "just now",
-        "ago": "ago"
+        "ago": "ago",
+        "style": "Timewindow style",
+        "icon": "Icon",
+        "icon-position": "Icon position",
+        "icon-position-left": "Left",
+        "icon-position-right": "Right",
+        "font": "Font",
+        "color": "Color",
+        "displayTypePrefix": "Display Realtime/History prefix",
+        "preview": "Preview"
     },
     "unit": {
         "millimeter": "Millimeter",
@@ -5943,6 +5998,27 @@
             "date": "Date",
             "value-card-style": "Value card style"
         },
+        "aggregated-value-card": {
+            "subtitle": "Subtitle",
+            "chart": "Chart",
+            "values": "Values",
+            "value-appearance": "Value appearance",
+            "position": "Position",
+            "position-center": "Center",
+            "position-right-top": "Right top",
+            "position-right-bottom": "Right bottom",
+            "position-left-top": "Left top",
+            "position-left-bottom": "Left bottom",
+            "font": "Font",
+            "color": "Color",
+            "arrow": "Arrow",
+            "display-up-down-arrow": "Display Up/Down arrow",
+            "add-value": "Add value",
+            "remove-value": "Remove value",
+            "no-values": "No values configured",
+            "aggregation": "Aggregation",
+            "aggregated-value-card-style": "Aggregated value card style"
+        },
         "table": {
             "common-table-settings": "Common Table Settings",
             "enable-search": "Enable search",
@@ -6033,7 +6109,8 @@
             "font-weight-lighter": "Lighter",
             "color": "Color",
             "shadow-color": "Shadow color",
-            "preview": "Preview"
+            "preview": "Preview",
+            "line-height": "Line height"
         },
         "home": {
             "no-data-available": "No data available"

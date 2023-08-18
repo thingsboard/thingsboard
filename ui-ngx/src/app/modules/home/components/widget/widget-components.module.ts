@@ -53,6 +53,9 @@ import {
   GatewayRemoteConfigurationDialogComponent
 } from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
 import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/value-card-widget.component';
+import {
+  AggregatedValueCardWidgetComponent
+} from '@home/components/widget/lib/cards/aggregated-value-card-widget.component';
 
 @NgModule({
   declarations:
@@ -84,7 +87,8 @@ import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/valu
       DeviceGatewayCommandComponent,
       GatewayConfigurationComponent,
       GatewayRemoteConfigurationDialogComponent,
-      ValueCardWidgetComponent
+      ValueCardWidgetComponent,
+      AggregatedValueCardWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -120,7 +124,8 @@ import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/valu
         DeviceGatewayCommandComponent,
         GatewayConfigurationComponent,
         GatewayRemoteConfigurationDialogComponent,
-        ValueCardWidgetComponent
+        ValueCardWidgetComponent,
+        AggregatedValueCardWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

@@ -17,6 +17,9 @@
 -->
 <div class="tb-value-card-panel" [class]="this.layout" [style]="backgroundStyle">
   <div class="tb-value-card-overlay" [style]="overlayStyle"></div>
+  <div class="tb-value-card-title-panel">
+    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  </div>
   <ng-container [ngSwitch]="layout">
     <ng-template [ngSwitchCase]="valueCardLayout.square">
       <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
@@ -60,10 +63,10 @@
   <tb-icon *ngIf="showIcon" [style]="iconStyle" [style.color]="iconColor.color">{{ icon }}</tb-icon>
 </ng-template>
 <ng-template #labelTpl>
-  <div *ngIf="showLabel" [style]="labelStyle" [style.color]="labelColor.color">{{ label }}</div>
+  <div *ngIf="showLabel" [style]="labelStyle" [style.color]="labelColor.color">{{ label$ | async }}</div>
 </ng-template>
 <ng-template #dateTpl>
-  <div *ngIf="showDate" [style]="dateStyle" [style.color]="dateColor.color">{{ dateFormat.formatted }}</div>
+  <div *ngIf="showDate" [style]="dateStyle" [style.color]="dateColor.color" [innerHTML]="dateFormat.formatted"></div>
 </ng-template>
 <ng-template #valueTpl>
   <div class="tb-value-card-value" [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
