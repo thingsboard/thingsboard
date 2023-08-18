@@ -55,6 +55,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.thingsboard.server.common.data.StringUtils.generateSafeToken;
@@ -247,8 +248,9 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     @Override
     @Transactional
     public void deleteUser(TenantId tenantId, User user) {
+        Objects.requireNonNull(user, "User is null");
         UserId userId = user.getId();
-        log.trace("Executing deleteUser [{}]", userId);
+        log.trace("[{}] Executing deleteUser [{}]", tenantId, userId);
         validateId(userId, INCORRECT_USER_ID + userId);
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());

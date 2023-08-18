@@ -286,10 +286,9 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public List<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UUID userId, int limit) {
-        log.debug("[{}] findAlarmIdsByAssigneeId [{}] limit {}", tenantId, userId, limit);
-        List<UUID> assignedAlarmIds = alarmRepository.findAlarmIdsByAssigneeId(userId, PageRequest.of(0, limit));
-        return DaoUtil.fromUUIDs(assignedAlarmIds, AlarmId::new);
+    public PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UUID userId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(alarmRepository.findAlarmIdsByAssigneeId(tenantId.getId(), userId, DaoUtil.toPageable(pageLink)))
+                .mapData(AlarmId::new);
     }
 
     @Override

@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
 
@@ -315,8 +316,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Query(value = "SELECT a FROM AlarmInfoEntity a WHERE a.tenantId = :tenantId AND a.id = :alarmId")
     AlarmInfoEntity findAlarmInfoById(@Param("tenantId") UUID tenantId, @Param("alarmId") UUID alarmId);
 
-    @Query("SELECT a.id FROM AlarmEntity a WHERE a.assigneeId = :assigneeId")
-    List<UUID> findAlarmIdsByAssigneeId(@Param("assigneeId") UUID assigneeId, Pageable pageable);
+    @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.assigneeId = :assigneeId")
+    Page<UUID> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId, @Param("assigneeId") UUID assigneeId, Pageable pageable);
 
     @Query(value = "SELECT create_or_update_active_alarm(:t_id, :c_id, :a_id, :a_created_ts, :a_o_id, :a_o_type, :a_type, :a_severity, " +
             ":a_start_ts, :a_end_ts, :a_details, :a_propagate, :a_propagate_to_owner, " +

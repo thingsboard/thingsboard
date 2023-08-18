@@ -77,7 +77,7 @@ public interface AlarmDao extends Dao<Alarm> {
 
     PageData<AlarmId> findAlarmsIdsByEndTsBeforeAndTenantId(Long time, TenantId tenantId, PageLink pageLink);
 
-    List<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UUID userId, int limit);
+    PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UUID userId, PageLink pageLink);
 
     void createEntityAlarmRecord(EntityAlarm entityAlarm);
 
