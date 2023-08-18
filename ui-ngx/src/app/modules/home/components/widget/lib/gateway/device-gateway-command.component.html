@@ -55,5 +55,21 @@
         </div>
       </ng-template>
     </mat-tab>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
+        MacOS
+      </ng-template>
+      <ng-template matTabContent>
+        <div class="tb-form-panel no-padding no-border tb-tab-body">
+          <tb-markdown usePlainMarkdown containerClass="start-code" data="
+                    ```bash
+                    {{linuxCode}}
+                    {:copy-code}
+                    ```
+                "></tb-markdown>
+        </div>
+      </ng-template>
+    </mat-tab>
   </mat-tab-group>
 </div>

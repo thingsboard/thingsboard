@@ -65,9 +65,11 @@ export class DeviceGatewayCommandComponent implements OnInit {
     switch (currentOS) {
       case 'linux':
       case 'android':
+        this.tabIndex = 1;
+        break;
       case 'macos':
       case 'ios':
-        this.tabIndex = 1;
+        this.tabIndex = 2;
         break;
       case 'windows':
         this.tabIndex = 0;
