@@ -15,7 +15,6 @@
 ///
 
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -24,11 +23,6 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { DeviceService } from '@core/http/device.service';
 import { helpBaseUrl } from '@shared/models/constants';
 
-enum OsType {
-  linux = 'linux',
-  macos = 'macos',
-  windows = 'win'
-}
 
 @Component({
   selector: 'tb-gateway-command',
@@ -46,9 +40,10 @@ export class DeviceGatewayCommandComponent implements OnInit {
 
   linuxCode: string;
   windowsCode: string;
-  selectedOSCControl: FormControl;
-  osTypes = OsType;
+
   helpLink: string = helpBaseUrl + '/docs/iot-gateway/install/docker-installation/';
+
+  tabIndex = 0;
 
   constructor(protected router: Router,
               protected store: Store<AppState>,
@@ -65,17 +60,16 @@ export class DeviceGatewayCommandComponent implements OnInit {
         this.cd.detectChanges();
       });
     }
-    this.selectedOSCControl = new FormControl('');
     // @ts-ignore
     const platform = window.navigator?.userAgentData?.platform || window.navigator.platform,
       macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
       windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
     if (macosPlatforms.indexOf(platform) !== -1) {
-      this.selectedOSCControl.setValue(OsType.linux);
+      this.tabIndex = 1;
     } else if (windowsPlatforms.indexOf(platform) !== -1) {
-      this.selectedOSCControl.setValue(OsType.windows);
+      this.tabIndex = 0;
     } else if (/Linux/.test(platform)) {
-      this.selectedOSCControl.setValue(OsType.linux);
+      this.tabIndex = 1;
     }
   }
 
