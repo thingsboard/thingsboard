@@ -25,10 +25,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.housekeeper.HouseKeeperService;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 
@@ -62,6 +66,15 @@ public class InMemoryHouseKeeperServiceService implements HouseKeeperService {
         if (executor != null) {
             log.debug("Stopping HouseKeeper service");
             executor.shutdown();
+        }
+    }
+
+    @TransactionalEventListener(fallbackExecution = true)
+    public void handleEvent(DeleteEntityEvent<?> event) {
+        log.trace("[{}] DeleteEntityEvent handler: {}", event.getTenantId(), event);
+        EntityId entityId = event.getEntityId();
+        if (EntityType.USER.equals(entityId.getEntityType())) {
+            unassignDeletedUserAlarms(event.getTenantId(), (User) event.getEntity(), event.getTs());
         }
     }
 

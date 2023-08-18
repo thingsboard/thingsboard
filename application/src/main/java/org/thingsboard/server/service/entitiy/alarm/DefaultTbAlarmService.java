@@ -20,7 +20,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -36,13 +35,11 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.housekeeper.HouseKeeperService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -154,8 +151,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
             AlarmAssignee assignee = alarmInfo.getAssignee();
-            String systemComment = String.format("Alarm was assigned by user %s to user %s", user.getTitle(),
-                    (assignee.getFirstName() == null || assignee.getLastName() == null) ? assignee.getEmail() : assignee.getFirstName() + " " + assignee.getLastName());
+            String systemComment = String.format("Alarm was assigned by user %s to user %s", user.getTitle(), assignee.getTitle());
             addSystemAlarmComment(alarmInfo, user, "ASSIGN", systemComment, assignee.getId());
             notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_ASSIGNED, user);
@@ -198,15 +194,6 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             pageLink = pageLink.nextPageLink();
         }
         return totalAlarmIds;
-    }
-
-    @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(DeleteEntityEvent<?> event) {
-        log.trace("[{}] DeleteEntityEvent handler: {}", event.getTenantId(), event);
-        EntityId entityId = event.getEntityId();
-        if (EntityType.USER.equals(entityId.getEntityType())) {
-            housekeeper.unassignDeletedUserAlarms(event.getTenantId(), (User) event.getEntity(), event.getTs());
-        }
     }
 
     @Override
