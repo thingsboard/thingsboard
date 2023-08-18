@@ -23,14 +23,16 @@ import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntitySubtype, EntityType } from '@shared/models/entity-type.models';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipGrid, MatChipInputEvent } from '@angular/material/chips';
+import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { AssetService } from '@core/http/asset.service';
 import { DeviceService } from '@core/http/device.service';
 import { EdgeService } from '@core/http/edge.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { coerceBoolean } from '@shared/decorators/coercion';
+import { AlarmService } from '@core/http/alarm.service';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { FloatLabelType } from '@angular/material/form-field';
 
 @Component({
@@ -84,6 +86,16 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   @Input()
   filledInputPlaceholder: string;
 
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  @coerceArray()
+  additionalClasses: Array<string>;
+
   @ViewChild('entitySubtypeInput') entitySubtypeInput: ElementRef<HTMLInputElement>;
   @ViewChild('entitySubtypeAutocomplete') entitySubtypeAutocomplete: MatAutocomplete;
   @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
@@ -114,6 +126,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
               private deviceService: DeviceService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
+              private alarmService: AlarmService,
               private fb: FormBuilder) {
     this.entitySubtypeListFormGroup = this.fb.group({
       entitySubtypeList: [this.entitySubtypeList, this.required ? [Validators.required] : []],
@@ -173,6 +186,16 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
         this.noSubtypesMathingText = 'entity-view.no-entity-view-types-matching';
         this.subtypeListEmptyText = 'entity-view.entity-view-type-list-empty';
         this.broadcastSubscription = this.broadcast.on('entityViewSaved', () => {
+          this.entitySubtypes = null;
+        });
+        break;
+      case EntityType.ALARM:
+        this.placeholder = this.required ? this.translate.instant('alarm.enter-alarm-type')
+          : this.translate.instant('alarm.any-type');
+        this.secondaryPlaceholder = '+' + this.translate.instant('alarm.alarm-type');
+        this.noSubtypesMathingText = 'alarm.no-alarm-types-matching';
+        this.subtypeListEmptyText = 'alarm.alarm-type-list-empty';
+        this.broadcastSubscription = this.broadcast.on('alarmSaved', () => {
           this.entitySubtypes = null;
         });
         break;
@@ -294,6 +317,9 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
           break;
         case EntityType.ENTITY_VIEW:
           subTypesObservable = this.entityViewService.getEntityViewTypes({ignoreLoading: true});
+          break;
+        case EntityType.ALARM:
+          subTypesObservable = this.alarmService.getAlarmTypes({ignoreLoading: true});
           break;
       }
       if (subTypesObservable) {

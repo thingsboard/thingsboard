@@ -127,3 +127,10 @@ UPDATE resource
 
 ALTER TABLE notification_request ALTER COLUMN info SET DATA TYPE varchar(1000000);
 
+CREATE TABLE IF NOT EXISTS alarm_types (
+    tenant_id uuid NOT NULL,
+    type varchar(255) NOT NULL,
+    CONSTRAINT tenant_id_type_unq_key UNIQUE (tenant_id, type)
+    );
+
+INSERT INTO alarm_types (tenant_id, type) SELECT DISTINCT tenant_id, type FROM alarm ON CONFLICT (tenant_id, type) DO NOTHING;
