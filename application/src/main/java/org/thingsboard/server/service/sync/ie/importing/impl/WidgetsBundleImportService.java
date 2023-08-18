@@ -63,10 +63,10 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
             }
         } else {
             Map<String, WidgetTypeInfo> existingWidgets = widgetTypeService.findWidgetTypesInfosByTenantIdAndBundleAlias(ctx.getTenantId(), savedWidgetsBundle.getAlias()).stream()
-                    .collect(Collectors.toMap(BaseWidgetType::getAlias, w -> w));
+                    .collect(Collectors.toMap(BaseWidgetType::getFqn, w -> w));
             for (WidgetTypeDetails widget : exportData.getWidgets()) {
                 WidgetTypeInfo existingWidget;
-                if ((existingWidget = existingWidgets.remove(widget.getAlias())) != null) {
+                if ((existingWidget = existingWidgets.remove(widget.getFqn())) != null) {
                     widget.setId(existingWidget.getId());
                     widget.setCreatedTime(existingWidget.getCreatedTime());
                 } else {

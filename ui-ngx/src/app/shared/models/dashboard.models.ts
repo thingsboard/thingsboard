@@ -74,10 +74,10 @@ export interface DashboardLayoutInfo {
 }
 
 export interface LayoutDimension {
-  type?: LayoutType,
-  fixedWidth?: number,
-  fixedLayout?: DashboardLayoutId,
-  leftWidthPercentage?: number
+  type?: LayoutType;
+  fixedWidth?: number;
+  fixedLayout?: DashboardLayoutId;
+  leftWidthPercentage?: number;
 }
 
 export declare type DashboardLayoutId = 'main' | 'right';
@@ -137,16 +137,16 @@ export interface HomeDashboardInfo {
   hideDashboardToolbar: boolean;
 }
 
-export function isPublicDashboard(dashboard: DashboardInfo): boolean {
+export const isPublicDashboard = (dashboard: DashboardInfo): boolean => {
   if (dashboard && dashboard.assignedCustomers) {
     return dashboard.assignedCustomers
       .filter(customerInfo => customerInfo.public).length > 0;
   } else {
     return false;
   }
-}
+};
 
-export function getDashboardAssignedCustomersText(dashboard: DashboardInfo): string {
+export const getDashboardAssignedCustomersText = (dashboard: DashboardInfo): string => {
   if (dashboard && dashboard.assignedCustomers && dashboard.assignedCustomers.length > 0) {
     return dashboard.assignedCustomers
       .filter(customerInfo => !customerInfo.public)
@@ -155,14 +155,13 @@ export function getDashboardAssignedCustomersText(dashboard: DashboardInfo): str
   } else {
     return '';
   }
-}
+};
 
-export function isCurrentPublicDashboardCustomer(dashboard: DashboardInfo, customerId: string): boolean {
+export const isCurrentPublicDashboardCustomer = (dashboard: DashboardInfo, customerId: string): boolean => {
   if (customerId && dashboard && dashboard.assignedCustomers) {
-    return dashboard.assignedCustomers.filter(customerInfo => {
-      return customerInfo.public && customerId === customerInfo.customerId.id;
-    }).length > 0;
+    return dashboard.assignedCustomers.filter(customerInfo =>
+      customerInfo.public && customerId === customerInfo.customerId.id).length > 0;
   } else {
     return false;
   }
-}
+};

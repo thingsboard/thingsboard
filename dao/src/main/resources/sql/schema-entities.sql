@@ -488,13 +488,15 @@ CREATE TABLE IF NOT EXISTS user_credentials (
 CREATE TABLE IF NOT EXISTS widget_type (
     id uuid NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    alias varchar(255),
+    fqn varchar(512),
     bundle_alias varchar(255),
     descriptor varchar(1000000),
     name varchar(255),
     tenant_id uuid,
     image varchar(1000000),
-    description varchar(255)
+    deprecated boolean NOT NULL DEFAULT false,
+    description varchar(255),
+    CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn)
 );
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
@@ -206,10 +207,59 @@ public class WidgetTypeController extends AutoCommitController {
         } else {
             tenantId = getCurrentUser().getTenantId();
         }
-        WidgetType widgetType = widgetTypeService.findWidgetTypeByTenantIdBundleAliasAndAlias(tenantId, bundleAlias, alias);
+        WidgetType widgetType = widgetTypeService.findWidgetTypeByTenantIdAndFqn(tenantId, bundleAlias + "." + alias);
         checkNotNull(widgetType);
         accessControlService.checkPermission(getCurrentUser(), Resource.WIDGET_TYPE, Operation.READ, widgetType.getId(), widgetType);
         return widgetType;
+    }
+
+    @ApiOperation(value = "Get Widget Type by fqn (getWidgetTypeByFqn)",
+            notes = "Get the Widget Type by FQN. " + WIDGET_TYPE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/widgetType", params = {"fqn"}, method = RequestMethod.GET)
+    @ResponseBody
+    public WidgetType getWidgetTypeByFqn(
+            @ApiParam(value = "Widget Type fqn", required = true)
+            @RequestParam String fqn) throws ThingsboardException {
+        String[] parts = fqn.split("\\.");
+        String scopeQualifier = parts.length > 0 ? parts[0] : null;
+        if (parts.length < 2 || (!scopeQualifier.equals("system") && !scopeQualifier.equals("tenant"))) {
+            throw new ThingsboardException("Invalid fqn!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        TenantId tenantId;
+        if ("system".equals(scopeQualifier)) {
+            tenantId = TenantId.fromUUID(ModelConstants.NULL_UUID);
+        } else {
+            tenantId = getCurrentUser().getTenantId();
+        }
+        String typeFqn = fqn.substring(scopeQualifier.length() + 1);
+        WidgetType widgetType = widgetTypeService.findWidgetTypeByTenantIdAndFqn(tenantId, typeFqn);
+        checkNotNull(widgetType);
+        accessControlService.checkPermission(getCurrentUser(), Resource.WIDGET_TYPE, Operation.READ, widgetType.getId(), widgetType);
+        return widgetType;
+    }
+
+    @ApiOperation(value = "Set widget type deprecated (setWidgetTypeDeprecated)",
+            notes = "Set Widget Type deprecated flag. Referencing non-existing Widget Type Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetType/{widgetTypeId}/deprecate/{deprecated}", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void setWidgetTypeDeprecated(
+            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetTypeId") String strWidgetTypeId,
+            @PathVariable("deprecated") boolean deprecated) throws Exception {
+        checkParameter("widgetTypeId", strWidgetTypeId);
+        var currentUser = getCurrentUser();
+        WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
+        WidgetTypeDetails wtd = checkWidgetTypeId(widgetTypeId, Operation.WRITE);
+        widgetTypeService.setWidgetTypeDeprecated(currentUser.getTenantId(), widgetTypeId, deprecated);
+
+        if (wtd != null && !Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
+            WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(wtd.getTenantId(), wtd.getBundleAlias());
+            if (widgetsBundle != null) {
+                autoCommit(currentUser, widgetsBundle.getId());
+            }
+        }
     }
 
 }

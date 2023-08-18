@@ -744,9 +744,9 @@ export class ImportExportService {
       return false;
     }
     const widget = widgetItem.widget;
-    if (isUndefined(widget.isSystemType) ||
-      isUndefined(widget.bundleAlias) ||
-      isUndefined(widget.typeAlias) ||
+    if ((isUndefined(widget.typeFullFqn) && (isUndefined((widget as any).isSystemType) ||
+                                             isUndefined((widget as any).bundleAlias) ||
+                                             isUndefined((widget as any).typeAlias))) ||
       isUndefined(widget.type)) {
       return false;
     }
@@ -982,6 +982,7 @@ export class ImportExportService {
   }
 
   private prepareDashboardExport(dashboard: Dashboard): Dashboard {
+    dashboard = this.dashboardUtils.validateAndUpdateDashboard(dashboard);
     dashboard = this.prepareExport(dashboard);
     delete dashboard.assignedCustomers;
     return dashboard;
