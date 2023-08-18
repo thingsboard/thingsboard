@@ -112,8 +112,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         }
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
-            String systemComment = String.format("Alarm was acknowledged by user %s",
-                    (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName());
+            String systemComment = String.format("Alarm was acknowledged by user %s", user.getTitle());
             addSystemAlarmComment(alarmInfo, user, "ACK", systemComment);
             notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_ACK, user);
@@ -136,8 +135,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         }
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isCleared()) {
-            String systemComment = String.format("Alarm was cleared by user %s",
-                    (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName());
+            String systemComment = String.format("Alarm was cleared by user %s", user.getTitle());
             addSystemAlarmComment(alarmInfo, user, "CLEAR", systemComment);
             notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_CLEAR, user);
@@ -156,8 +154,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
             AlarmAssignee assignee = alarmInfo.getAssignee();
-            String systemComment = String.format("Alarm was assigned by user %s to user %s",
-                    (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName(),
+            String systemComment = String.format("Alarm was assigned by user %s to user %s", user.getTitle(),
                     (assignee.getFirstName() == null || assignee.getLastName() == null) ? assignee.getEmail() : assignee.getFirstName() + " " + assignee.getLastName());
             addSystemAlarmComment(alarmInfo, user, "ASSIGN", systemComment, assignee.getId());
             notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
@@ -176,8 +173,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         }
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
-            String systemComment = String.format("Alarm was unassigned by user %s",
-                    (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName());
+            String systemComment = String.format("Alarm was unassigned by user %s", user.getTitle());
             addSystemAlarmComment(alarmInfo, user, "ASSIGN", systemComment);
             notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_UNASSIGNED, user);
@@ -234,8 +230,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                 continue;
             }
             if (result.isModified()) {
-                String comment = String.format("Alarm was unassigned because user %s - was deleted",
-                        (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName());
+                String comment = String.format("Alarm was unassigned because user %s - was deleted", user.getTitle());
                 addSystemAlarmComment(result.getAlarm(), null, "ASSIGN", comment);
                 notificationEntityService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
             }
