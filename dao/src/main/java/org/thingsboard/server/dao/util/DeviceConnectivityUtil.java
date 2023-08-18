@@ -31,11 +31,11 @@ public class DeviceConnectivityUtil {
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
-    public static final String GATEWAY = "gateway";
     public static final String PEM_CERT_FILE_NAME = "tb-server-chain.pem";
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
     public static final String DOCKER_RUN = "docker run --rm -it ";
+    public static final String GATEWAY_DOCKER_RUN = "docker run -it ";
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
 
@@ -88,7 +88,7 @@ public class DeviceConnectivityUtil {
 
         String gatewayContainerName = "tbGateway" + StringUtils.capitalize(host.replace(".", ""));
 
-        StringBuilder command = new StringBuilder(DOCKER_RUN);
+        StringBuilder command = new StringBuilder(GATEWAY_DOCKER_RUN);
         command.append("-v {gatewayVolumePathPrefix}/logs:/thingsboard_gateway/logs".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
         command.append(" -v {gatewayVolumePathPrefix}/extensions:/thingsboard_gateway/extensions".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
         command.append(" -v {gatewayVolumePathPrefix}/config:/thingsboard_gateway/config".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
