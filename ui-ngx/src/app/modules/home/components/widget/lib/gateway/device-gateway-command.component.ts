@@ -59,12 +59,10 @@ export class DeviceGatewayCommandComponent implements OnInit {
 
 
   ngOnInit(): void {
-    const HOST = window.location.hostname;
     if (this.deviceId) {
-      this.deviceService.getDeviceCredentials(this.deviceId).subscribe(credentials => {
-        this.token = credentials.credentialsId;
-        this.createRunCode(HOST);
-        this.cd.detectChanges()
+      this.deviceService.getDevicePublishLaunchCommands(this.deviceId).subscribe(commands => {
+        this.createRunCode(commands.mqtt);
+        this.cd.detectChanges();
       });
     }
     this.selectedOSCControl = new FormControl('');
@@ -79,23 +77,11 @@ export class DeviceGatewayCommandComponent implements OnInit {
     } else if (/Linux/.test(platform)) {
       this.selectedOSCControl.setValue(OsType.linux);
     }
-    this.createRunCode(HOST);
   }
 
-  createRunCode(HOST) {
-    this.linuxCode = 'docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ' +
-      '~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tb-gateway -e host=' +
-      HOST +
-      ' -e port=1883 -e accessToken=' +
-      this.token +
-      ' --restart always thingsboard/tb-gateway';
-    this.windowsCode = 'docker run -it -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config -v ' +
-      '%HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs ' +
-      '--name tb-gateway -e host=' +
-      HOST +
-      ' -e port=1883 -e accessToken=' +
-      this.token +
-      ' --restart always thingsboard/tb-gateway';
+  createRunCode(commands) {
+    this.linuxCode = commands.linux;
+    this.windowsCode = commands.windows;
   }
 
   onDockerCodeCopied() {
