@@ -72,10 +72,13 @@
         </mat-chip-option>
       </mat-chip-listbox>
     </div>
-    <div class="tb-form-row" ngClass.xs="filters-row-mobile">
+    <div class="tb-form-row column-xs">
       <div class="fixed-title-width" ngClass.xs="filters-title-mobile" translate>alarm.alarm-type-list</div>
-      <tb-entity-subtype-list subscriptSizing="dynamic" appearance="outline" additionalClasses="tb-chips"
-                              [entityType]="entityType.ALARM" formControlName="typeList">
+      <tb-entity-subtype-list subscriptSizing="dynamic"
+                              formControlName="typeList"
+                              appearance="outline"
+                              [additionalClasses]="['tb-chips', 'flex']"
+                              [entityType]="entityType.ALARM">
       </tb-entity-subtype-list>
     </div>
     <div class="tb-form-row column-xs">
