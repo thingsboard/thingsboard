@@ -39,11 +39,14 @@ public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends
     @Column(name = ModelConstants.WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY)
     private String bundleAlias;
 
-    @Column(name = ModelConstants.WIDGET_TYPE_ALIAS_PROPERTY)
-    private String alias;
+    @Column(name = ModelConstants.WIDGET_TYPE_FQN_PROPERTY)
+    private String fqn;
 
     @Column(name = ModelConstants.WIDGET_TYPE_NAME_PROPERTY)
     private String name;
+
+    @Column(name = ModelConstants.WIDGET_TYPE_DEPRECATED_PROPERTY)
+    private boolean deprecated;
 
     public AbstractWidgetTypeEntity() {
         super();
@@ -58,8 +61,9 @@ public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends
             this.tenantId = widgetType.getTenantId().getId();
         }
         this.bundleAlias = widgetType.getBundleAlias();
-        this.alias = widgetType.getAlias();
+        this.fqn = widgetType.getFqn();
         this.name = widgetType.getName();
+        this.deprecated = widgetType.isDeprecated();
     }
 
     public AbstractWidgetTypeEntity(AbstractWidgetTypeEntity widgetTypeEntity) {
@@ -67,8 +71,9 @@ public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends
         this.setCreatedTime(widgetTypeEntity.getCreatedTime());
         this.tenantId = widgetTypeEntity.getTenantId();
         this.bundleAlias = widgetTypeEntity.getBundleAlias();
-        this.alias = widgetTypeEntity.getAlias();
+        this.fqn = widgetTypeEntity.getFqn();
         this.name = widgetTypeEntity.getName();
+        this.deprecated = widgetTypeEntity.isDeprecated();
     }
 
     protected BaseWidgetType toBaseWidgetType() {
@@ -78,8 +83,9 @@ public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends
             widgetType.setTenantId(TenantId.fromUUID(tenantId));
         }
         widgetType.setBundleAlias(bundleAlias);
-        widgetType.setAlias(alias);
+        widgetType.setFqn(fqn);
         widgetType.setName(name);
+        widgetType.setDeprecated(deprecated);
         return widgetType;
     }
 

@@ -38,9 +38,10 @@ import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { isEmptyStr } from '@core/utils';
+import { isEmptyStr, isNotEmptyStr } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -51,8 +52,7 @@ export enum widgetType {
 }
 
 export interface WidgetTypeTemplate {
-  bundleAlias: string;
-  alias: string;
+  fullFqn: string;
 }
 
 export interface WidgetTypeData {
@@ -71,8 +71,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
         icon: 'timeline',
         configHelpLinkId: 'widgetsConfigTimeseries',
         template: {
-          bundleAlias: 'charts',
-          alias: 'basic_timeseries'
+          fullFqn: 'system.charts.basic_timeseries'
         }
       }
     ],
@@ -83,8 +82,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
         icon: 'track_changes',
         configHelpLinkId: 'widgetsConfigLatest',
         template: {
-          bundleAlias: 'cards',
-          alias: 'attributes_card'
+          fullFqn: 'system.cards.attributes_card'
         }
       }
     ],
@@ -95,8 +93,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
         icon: 'mdi:developer-board',
         configHelpLinkId: 'widgetsConfigRpc',
         template: {
-          bundleAlias: 'gpio_widgets',
-          alias: 'basic_gpio_control'
+          fullFqn: 'system.gpio_widgets.basic_gpio_control'
         }
       }
     ],
@@ -107,8 +104,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
         icon: 'error',
         configHelpLinkId: 'widgetsConfigAlarm',
         template: {
-          bundleAlias: 'alarm_widgets',
-          alias: 'alarms_table'
+          fullFqn: 'system.alarm_widgets.alarms_table'
         }
       }
     ],
@@ -119,8 +115,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
         icon: 'font_download',
         configHelpLinkId: 'widgetsConfigStatic',
         template: {
-          bundleAlias: 'cards',
-          alias: 'html_card'
+          fullFqn: 'system.cards.html_card'
         }
       }
     ]
@@ -198,9 +193,37 @@ export interface WidgetControllerDescriptor {
 export interface BaseWidgetType extends BaseData<WidgetTypeId> {
   tenantId: TenantId;
   bundleAlias: string;
-  alias: string;
+  fqn: string;
   name: string;
+  deprecated: boolean;
 }
+
+export const fullWidgetTypeFqn = (type: BaseWidgetType): string =>
+  ((!type.tenantId || type.tenantId?.id === NULL_UUID) ? 'system' : 'tenant') + '.' + type.fqn;
+
+export const widgetTypeFqn = (fullFqn: string): string => {
+  if (isNotEmptyStr(fullFqn)) {
+    const parts = fullFqn.split('.');
+    if (parts.length > 1) {
+      const scopeQualifier = parts[0];
+      if (['system', 'tenant'].includes(scopeQualifier)) {
+        return fullFqn.substring(scopeQualifier.length + 1);
+      }
+    }
+  }
+  return fullFqn;
+};
+
+export const isValidWidgetFullFqn = (fullFqn: string): boolean => {
+  if (isNotEmptyStr(fullFqn)) {
+    const parts = fullFqn.split('.');
+    if (parts.length > 1) {
+      const scopeQualifier = parts[0];
+      return ['system', 'tenant'].includes(scopeQualifier);
+    }
+  }
+  return false;
+};
 
 export interface WidgetType extends BaseWidgetType {
   descriptor: WidgetTypeDescriptor;
@@ -670,9 +693,7 @@ export interface Widget extends WidgetInfo{
 
 export interface WidgetInfo {
   id?: string;
-  isSystemType: boolean;
-  bundleAlias: string;
-  typeAlias: string;
+  typeFullFqn: string;
   type: widgetType;
   title: string;
   image?: string;

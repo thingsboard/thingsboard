@@ -63,7 +63,7 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
 
         Assert.assertNotNull(savedWidgetType);
         Assert.assertNotNull(savedWidgetType.getId());
-        Assert.assertNotNull(savedWidgetType.getAlias());
+        Assert.assertNotNull(savedWidgetType.getFqn());
         Assert.assertTrue(savedWidgetType.getCreatedTime() > 0);
         Assert.assertEquals(widgetType.getTenantId(), savedWidgetType.getTenantId());
         Assert.assertEquals(widgetType.getName(), savedWidgetType.getName());
@@ -211,7 +211,7 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testUpdateWidgetTypeAlias() throws IOException {
+    public void testUpdateWidgetTypeFqn() throws IOException {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
         widgetsBundle.setTitle("Widgets bundle");
@@ -223,7 +223,7 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
-        savedWidgetType.setAlias("some_alias");
+        savedWidgetType.setFqn("some_fqn");
         try {
             Assertions.assertThrows(DataValidationException.class, () -> {
                 widgetTypeService.saveWidgetType(savedWidgetType);
@@ -254,7 +254,7 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindWidgetTypeByTenantIdBundleAliasAndAlias() throws IOException {
+    public void testFindWidgetTypeByTenantIdAndFqn() throws IOException {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
         widgetsBundle.setTitle("Widgets bundle");
@@ -266,7 +266,7 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetType savedWidgetType = new WidgetType(widgetTypeService.saveWidgetType(widgetType));
-        WidgetType foundWidgetType = widgetTypeService.findWidgetTypeByTenantIdBundleAliasAndAlias(tenantId, savedWidgetsBundle.getAlias(), savedWidgetType.getAlias());
+        WidgetType foundWidgetType = widgetTypeService.findWidgetTypeByTenantIdAndFqn(tenantId, savedWidgetType.getFqn());
         Assert.assertNotNull(foundWidgetType);
         Assert.assertEquals(savedWidgetType, foundWidgetType);
 

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -38,7 +39,7 @@ import java.util.Optional;
 
 @Service("WidgetTypeDaoService")
 @Slf4j
-public class WidgetTypeServiceImpl implements WidgetTypeService {
+public class WidgetTypeServiceImpl extends AbstractEntityService implements WidgetTypeService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
@@ -71,10 +72,16 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     public WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetTypeDetails) {
         log.trace("Executing saveWidgetType [{}]", widgetTypeDetails);
         widgetTypeValidator.validate(widgetTypeDetails, WidgetType::getTenantId);
-        WidgetTypeDetails result = widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())
-                .entityId(result.getId()).added(widgetTypeDetails.getId() == null).build());
-        return result;
+        try {
+            WidgetTypeDetails result = widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())
+                    .entityId(result.getId()).added(widgetTypeDetails.getId() == null).build());
+            return result;
+        } catch (Exception t) {
+            checkConstraintViolation(t,
+                    "uq_widget_type_fqn", "Widget type with such fqn already exists!");
+            throw t;
+        }
     }
 
     @Override
@@ -83,6 +90,17 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         Validator.validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
         widgetTypeDao.removeById(tenantId, widgetTypeId.getId());
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(widgetTypeId).build());
+    }
+
+    @Override
+    public void setWidgetTypeDeprecated(TenantId tenantId, WidgetTypeId widgetTypeId, boolean deprecated) {
+        log.trace("Executing setWidgetTypeDeprecated, widgetTypeId [{}], deprecated [{}]", widgetTypeId, deprecated);
+        Validator.validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
+        WidgetTypeDetails widgetTypeDetails = widgetTypeDao.findById(tenantId, widgetTypeId.getId());
+        if (widgetTypeDetails.isDeprecated() != deprecated) {
+            widgetTypeDetails.setDeprecated(deprecated);
+            widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
+        }
     }
 
     @Override
@@ -118,12 +136,11 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
-    public WidgetType findWidgetTypeByTenantIdBundleAliasAndAlias(TenantId tenantId, String bundleAlias, String alias) {
-        log.trace("Executing findWidgetTypeByTenantIdBundleAliasAndAlias, tenantId [{}], bundleAlias [{}], alias [{}]", tenantId, bundleAlias, alias);
+    public WidgetType findWidgetTypeByTenantIdAndFqn(TenantId tenantId, String fqn) {
+        log.trace("Executing findWidgetTypeByTenantIdAndFqn, tenantId [{}], fqn [{}]", tenantId, fqn);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validateString(bundleAlias, INCORRECT_BUNDLE_ALIAS + bundleAlias);
-        Validator.validateString(alias, "Incorrect alias " + alias);
-        return widgetTypeDao.findByTenantIdBundleAliasAndAlias(tenantId.getId(), bundleAlias, alias);
+        Validator.validateString(fqn, "Incorrect fqn " + fqn);
+        return widgetTypeDao.findByTenantIdAndFqn(tenantId.getId(), fqn);
     }
 
     @Override

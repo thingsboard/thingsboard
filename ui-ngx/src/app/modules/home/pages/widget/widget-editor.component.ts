@@ -564,7 +564,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       (saveWidgetAsData) => {
         if (saveWidgetAsData) {
           this.widget.widgetName = saveWidgetAsData.widgetName;
-          this.widget.alias = undefined;
+          this.widget.fullFqn = undefined;
           const config = JSON.parse(this.widget.defaultConfig);
           config.title = this.widget.widgetName;
           this.widget.defaultConfig = JSON.stringify(config);

@@ -20,6 +20,7 @@ import {
   Datasource,
   DatasourceData,
   FormattedData,
+  fullWidgetTypeFqn,
   JsonSettingsSchema,
   Widget,
   WidgetActionDescriptor,
@@ -30,6 +31,7 @@ import {
   widgetType,
   WidgetTypeDescriptor,
   WidgetTypeDetails,
+  widgetTypeFqn,
   WidgetTypeParameters
 } from '@shared/models/widget.models';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
@@ -84,6 +86,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { EdgeService } from '@core/http/edge.service';
 import * as RxJS from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import * as RxJSOperators from 'rxjs/operators';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -92,7 +95,6 @@ import { MillisecondsToTimeStringPipe, TelemetrySubscriber } from '@app/shared/p
 import { UserId } from '@shared/models/id/user-id';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { DynamicComponentModule } from '@core/services/dynamic-component-factory.service';
-import { BehaviorSubject, Observable } from 'rxjs';
 
 export interface IWidgetAction {
   name: string;
@@ -446,11 +448,13 @@ export class WidgetContext {
     return new PageLink(pageSize, page, textSearch, sortOrder);
   }
 
-  timePageLink(startTime: number, endTime: number, pageSize: number, page: number = 0, textSearch: string = null, sortOrder: SortOrder = null) {
+  timePageLink(startTime: number, endTime: number, pageSize: number, page: number = 0,
+               textSearch: string = null, sortOrder: SortOrder = null) {
     return new TimePageLink(pageSize, page, textSearch, sortOrder, startTime, endTime);
   }
 
-  alarmQuery(entityId: EntityId, pageLink: TimePageLink, searchStatus: AlarmSearchStatus, status: AlarmStatus, fetchOriginator: boolean, assigneeId: UserId) {
+  alarmQuery(entityId: EntityId, pageLink: TimePageLink, searchStatus: AlarmSearchStatus,
+             status: AlarmStatus, fetchOriginator: boolean, assigneeId: UserId) {
     return new AlarmQuery(entityId, pageLink, searchStatus, status, fetchOriginator, assigneeId);
   }
 }
@@ -505,7 +509,9 @@ export interface IDynamicWidgetComponent {
 
 export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescriptor {
   widgetName: string;
-  alias: string;
+  bundleAlias: string;
+  fullFqn: string;
+  deprecated: boolean;
   typeSettingsSchema?: string | any;
   typeDataKeySettingsSchema?: string | any;
   typeLatestDataKeySettingsSchema?: string | any;
@@ -536,7 +542,9 @@ export interface WidgetConfigComponentData {
 export const MissingWidgetType: WidgetInfo = {
   type: widgetType.latest,
   widgetName: 'Widget type not found',
-  alias: 'undefined',
+  bundleAlias: 'undefined',
+  fullFqn: 'undefined',
+  deprecated: false,
   sizeX: 8,
   sizeY: 6,
   resources: [],
@@ -560,7 +568,9 @@ export const MissingWidgetType: WidgetInfo = {
 export const ErrorWidgetType: WidgetInfo = {
   type: widgetType.latest,
   widgetName: 'Error loading widget',
-  alias: 'error',
+  bundleAlias: 'error',
+  fullFqn: 'error',
+  deprecated: false,
   sizeX: 8,
   sizeY: 6,
   resources: [],
@@ -599,48 +609,38 @@ export interface WidgetTypeInstance {
   onDestroy?: () => void;
 }
 
-export function detailsToWidgetInfo(widgetTypeDetailsEntity: WidgetTypeDetails): WidgetInfo {
+export const toWidgetInfo = (widgetTypeEntity: WidgetType): WidgetInfo => ({
+  widgetName: widgetTypeEntity.name,
+  bundleAlias: widgetTypeEntity.bundleAlias,
+  fullFqn: fullWidgetTypeFqn(widgetTypeEntity),
+  deprecated: widgetTypeEntity.deprecated,
+  type: widgetTypeEntity.descriptor.type,
+  sizeX: widgetTypeEntity.descriptor.sizeX,
+  sizeY: widgetTypeEntity.descriptor.sizeY,
+  resources: widgetTypeEntity.descriptor.resources,
+  templateHtml: widgetTypeEntity.descriptor.templateHtml,
+  templateCss: widgetTypeEntity.descriptor.templateCss,
+  controllerScript: widgetTypeEntity.descriptor.controllerScript,
+  settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
+  dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
+  latestDataKeySettingsSchema: widgetTypeEntity.descriptor.latestDataKeySettingsSchema,
+  settingsDirective: widgetTypeEntity.descriptor.settingsDirective,
+  dataKeySettingsDirective: widgetTypeEntity.descriptor.dataKeySettingsDirective,
+  latestDataKeySettingsDirective: widgetTypeEntity.descriptor.latestDataKeySettingsDirective,
+  hasBasicMode: widgetTypeEntity.descriptor.hasBasicMode,
+  basicModeDirective: widgetTypeEntity.descriptor.basicModeDirective,
+  defaultConfig: widgetTypeEntity.descriptor.defaultConfig
+});
+
+export const detailsToWidgetInfo = (widgetTypeDetailsEntity: WidgetTypeDetails): WidgetInfo => {
   const widgetInfo = toWidgetInfo(widgetTypeDetailsEntity);
   widgetInfo.image = widgetTypeDetailsEntity.image;
   widgetInfo.description = widgetTypeDetailsEntity.description;
   return widgetInfo;
-}
+};
 
-export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
-  return {
-    widgetName: widgetTypeEntity.name,
-    alias: widgetTypeEntity.alias,
-    type: widgetTypeEntity.descriptor.type,
-    sizeX: widgetTypeEntity.descriptor.sizeX,
-    sizeY: widgetTypeEntity.descriptor.sizeY,
-    resources: widgetTypeEntity.descriptor.resources,
-    templateHtml: widgetTypeEntity.descriptor.templateHtml,
-    templateCss: widgetTypeEntity.descriptor.templateCss,
-    controllerScript: widgetTypeEntity.descriptor.controllerScript,
-    settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
-    dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
-    latestDataKeySettingsSchema: widgetTypeEntity.descriptor.latestDataKeySettingsSchema,
-    settingsDirective: widgetTypeEntity.descriptor.settingsDirective,
-    dataKeySettingsDirective: widgetTypeEntity.descriptor.dataKeySettingsDirective,
-    latestDataKeySettingsDirective: widgetTypeEntity.descriptor.latestDataKeySettingsDirective,
-    hasBasicMode: widgetTypeEntity.descriptor.hasBasicMode,
-    basicModeDirective: widgetTypeEntity.descriptor.basicModeDirective,
-    defaultConfig: widgetTypeEntity.descriptor.defaultConfig
-  };
-}
-
-export function toWidgetTypeDetails(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
-                                    bundleAlias: string, createdTime: number): WidgetTypeDetails {
-  const widgetTypeEntity = toWidgetType(widgetInfo, id, tenantId, bundleAlias, createdTime);
-  const widgetTypeDetails: WidgetTypeDetails = {...widgetTypeEntity,
-    description: widgetInfo.description,
-    image: widgetInfo.image
-  };
-  return widgetTypeDetails;
-}
-
-export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
-                             bundleAlias: string, createdTime: number): WidgetType {
+export const toWidgetType = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
+                             bundleAlias: string, createdTime: number): WidgetType => {
   const descriptor: WidgetTypeDescriptor = {
     type: widgetInfo.type,
     sizeX: widgetInfo.sizeX,
@@ -664,14 +664,25 @@ export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     tenantId,
     createdTime,
     bundleAlias,
-    alias: widgetInfo.alias,
+    fqn: widgetTypeFqn(widgetInfo.fullFqn),
     name: widgetInfo.widgetName,
+    deprecated: widgetInfo.deprecated,
     descriptor
   };
-}
+};
 
-export function updateEntityParams(params: StateParams, targetEntityParamName?: string, targetEntityId?: EntityId,
-                                   entityName?: string, entityLabel?: string) {
+export const toWidgetTypeDetails = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
+                                    bundleAlias: string, createdTime: number): WidgetTypeDetails => {
+  const widgetTypeEntity = toWidgetType(widgetInfo, id, tenantId, bundleAlias, createdTime);
+  return {
+    ...widgetTypeEntity,
+    description: widgetInfo.description,
+    image: widgetInfo.image
+  };
+};
+
+export const updateEntityParams = (params: StateParams, targetEntityParamName?: string, targetEntityId?: EntityId,
+                                   entityName?: string, entityLabel?: string) => {
   if (targetEntityId) {
     let targetEntityParams: StateParams;
     if (targetEntityParamName && targetEntityParamName.length) {
@@ -692,4 +703,4 @@ export function updateEntityParams(params: StateParams, targetEntityParamName?: 
       targetEntityParams.entityLabel = entityLabel;
     }
   }
-}
+};

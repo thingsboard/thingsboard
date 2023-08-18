@@ -35,6 +35,8 @@ public interface WidgetTypeService extends EntityDaoService {
 
     void deleteWidgetType(TenantId tenantId, WidgetTypeId widgetTypeId);
 
+    void setWidgetTypeDeprecated(TenantId tenantId, WidgetTypeId widgetTypeId, boolean deprecated);
+
     List<WidgetType> findWidgetTypesByTenantIdAndBundleAlias(TenantId tenantId, String bundleAlias);
 
     List<WidgetTypeDetails> findWidgetTypesDetailsByTenantIdAndBundleAlias(TenantId tenantId, String bundleAlias);
@@ -43,7 +45,7 @@ public interface WidgetTypeService extends EntityDaoService {
 
     List<WidgetTypeDetails> findWidgetTypesInfosByTenantIdAndResourceId(TenantId tenantId, TbResourceId tbResourceId);
 
-    WidgetType findWidgetTypeByTenantIdBundleAliasAndAlias(TenantId tenantId, String bundleAlias, String alias);
+    WidgetType findWidgetTypeByTenantIdAndFqn(TenantId tenantId, String fqn);
 
     void deleteWidgetTypesByTenantIdAndBundleAlias(TenantId tenantId, String bundleAlias);
 

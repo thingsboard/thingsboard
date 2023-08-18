@@ -127,3 +127,17 @@ UPDATE resource
 
 ALTER TABLE notification_request ALTER COLUMN info SET DATA TYPE varchar(1000000);
 
+ALTER TABLE widget_type
+    ADD COLUMN IF NOT EXISTS fqn varchar(512);
+ALTER TABLE widget_type
+    ADD COLUMN IF NOT EXISTS deprecated boolean NOT NULL DEFAULT false;
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'uq_widget_type_fqn') THEN
+            UPDATE widget_type SET fqn = concat(widget_type.bundle_alias, '.', widget_type.alias);
+            ALTER TABLE widget_type ADD CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn);
+            ALTER TABLE widget_type DROP COLUMN IF EXISTS alias;
+        END IF;
+    END;
+$$;

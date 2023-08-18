@@ -19,7 +19,7 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { IAliasController } from '@core/api/widget-api.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
-import { WidgetInfo, widgetType } from '@shared/models/widget.models';
+import { fullWidgetTypeFqn, WidgetInfo, widgetType } from '@shared/models/widget.models';
 import { distinctUntilChanged, map, publishReplay, refCount, share, switchMap, tap } from 'rxjs/operators';
 import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -116,9 +116,7 @@ export class DashboardWidgetSelectComponent implements OnInit {
             const widgetInfos = widgets.map((widgetTypeInfo) => {
                 widgetTypes.add(widgetTypeInfo.widgetType);
                 const widget: WidgetInfo = {
-                  isSystemType: isSystem,
-                  bundleAlias,
-                  typeAlias: widgetTypeInfo.alias,
+                  typeFullFqn: fullWidgetTypeFqn(widgetTypeInfo),
                   type: widgetTypeInfo.widgetType,
                   title: widgetTypeInfo.name,
                   image: widgetTypeInfo.image,

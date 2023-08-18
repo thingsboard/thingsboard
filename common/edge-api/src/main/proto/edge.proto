@@ -362,7 +362,7 @@ message WidgetTypeUpdateMsg {
   int64 idMSB = 2;
   int64 idLSB = 3;
   optional string bundleAlias = 4;
-  optional string alias = 5;
+  optional string fqn = 5;
   optional string name = 6;
   optional string descriptorJson = 7;
   bool isSystem = 8;
