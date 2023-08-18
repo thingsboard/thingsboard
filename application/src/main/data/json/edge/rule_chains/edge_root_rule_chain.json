@@ -50,7 +50,9 @@
         "debugMode": false,
         "configuration": {
           "scope": "CLIENT_SCOPE",
-          "notifyDevice": "false"
+          "notifyDevice": "false",
+          "sendAttributesUpdatedNotification": "false",
+          "updateAttributesOnValueChange": "true"
         },
         "externalId": null
       },
