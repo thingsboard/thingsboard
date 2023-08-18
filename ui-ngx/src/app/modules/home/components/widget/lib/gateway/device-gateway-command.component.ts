@@ -22,6 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DeviceService } from '@core/http/device.service';
 import { helpBaseUrl } from '@shared/models/constants';
+import { getOS } from '@core/utils';
 
 
 @Component({
@@ -60,16 +61,19 @@ export class DeviceGatewayCommandComponent implements OnInit {
         this.cd.detectChanges();
       });
     }
-    // @ts-ignore
-    const platform = window.navigator?.userAgentData?.platform || window.navigator.platform,
-      macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
-      windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
-    if (macosPlatforms.indexOf(platform) !== -1) {
-      this.tabIndex = 1;
-    } else if (windowsPlatforms.indexOf(platform) !== -1) {
-      this.tabIndex = 0;
-    } else if (/Linux/.test(platform)) {
-      this.tabIndex = 1;
+    const currentOS = getOS();
+    switch (currentOS) {
+      case 'linux':
+      case 'android':
+      case 'macos':
+      case 'ios':
+        this.tabIndex = 1;
+        break;
+      case 'windows':
+        this.tabIndex = 0;
+        break;
+      default:
+        this.tabIndex = 1;
     }
   }
 
