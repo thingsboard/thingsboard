@@ -38,7 +38,7 @@ export class WidgetEditorDashboardResolver implements Resolve<Dashboard> {
   resolve(route: ActivatedRouteSnapshot): Dashboard {
     const editWidgetInfo = this.utils.editWidgetInfo;
     const widget: Widget = {
-      typeFullFqn: 'customWidget',
+      typeFullFqn: 'system.customWidget',
       type: editWidgetInfo.type,
       title: 'My widget',
       image: null,

@@ -86,7 +86,7 @@ export class WidgetComponentService {
           {
             widgetName: this.utils.editWidgetInfo.widgetName,
             bundleAlias: 'customWidgetBundle',
-            fullFqn: 'customWidget',
+            fullFqn: 'system.customWidget',
             deprecated: false,
             type: this.utils.editWidgetInfo.type,
             sizeX: this.utils.editWidgetInfo.sizeX,
