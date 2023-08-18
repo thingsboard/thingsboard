@@ -162,7 +162,7 @@
         <module>ui-ngx</module>
         <module>tools</module>
         <module>application</module>
-        <module>msa</module>
+        <!--module>msa</module-->          <!-- 注释微服务模块 -->
         <module>rest-client</module>
         <module>monitoring</module>
     </modules>
@@ -783,7 +783,7 @@
                         </lifecycleMappingMetadata>
                     </configuration>
                 </plugin>
-                <plugin>
+                <!--plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
                     <version>3.0</version>
@@ -850,14 +850,14 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>
+                </plugin-->
             </plugins>
         </pluginManagement>
         <plugins>
-            <plugin>
+            <!--plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
-            </plugin>
+            </plugin-->
         </plugins>
     </build>
 

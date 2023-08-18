@@ -73,6 +73,8 @@
                         <configuration>
                             <nodeVersion>v16.15.1</nodeVersion>
                             <yarnVersion>v1.22.17</yarnVersion>
+                            <nodeDownloadRoot>http://repo.huaweicloud.com/nodejs/</nodeDownloadRoot>
+                            <yarnDownloadRoot>http://repo.huaweicloud.com/yarn/</yarnDownloadRoot>
                         </configuration>
                     </execution>
                     <execution>

@@ -15,6 +15,15 @@
  */
 import org.apache.tools.ant.filters.ReplaceTokens
 
+buildscript {
+    repositories {
+        mavenLocal()
+        maven {
+            url 'https://repo.huaweicloud.com/repository/maven/'
+        }
+    }
+}
+
 plugins {
     id "nebula.ospackage" version "8.6.3"
 }
