@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.dao.housekeeper.HouseKeeperService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.ArrayList;
@@ -53,9 +52,6 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Autowired
     protected TbAlarmCommentService alarmCommentService;
-
-    @Autowired
-    private HouseKeeperService housekeeper;
 
     @Override
     public Alarm save(Alarm alarm, User user) throws ThingsboardException {

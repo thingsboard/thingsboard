@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -47,7 +46,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class InMemoryHouseKeeperServiceService implements HouseKeeperService {
 
-    @Lazy
     final TbAlarmService alarmService;
 
     ListeningExecutorService executor;
