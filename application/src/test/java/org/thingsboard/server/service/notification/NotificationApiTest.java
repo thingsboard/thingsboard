@@ -619,7 +619,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         Notification notification = getAnotherWsClient().getLastDataUpdate().getUpdate();
         assertThat(notification.getSubject()).isEqualTo(expectedNotification.getSubject());
         assertThat(notification.getText()).isEqualTo(expectedNotification.getText());
-        System.err.println(notification);
     }
 
     @Test

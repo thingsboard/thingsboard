@@ -207,7 +207,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 try {
                     processForTarget(target, ctx);
                 } catch (Exception e) {
-                    log.error("[{}] Failed to process notification request for target {}", requestId, target.getId());
+                    log.error("[{}] Failed to process notification request for target {}", requestId, target.getId(), e);
                 }
             }
             log.debug("[{}] Notification request processing is finished", requestId);
