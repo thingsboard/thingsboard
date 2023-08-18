@@ -26,6 +26,7 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
 
     private Boolean notifyDevice;
     private boolean sendAttributesUpdatedNotification;
+    private boolean updateAttributesOnValueChange;
 
     @Override
     public TbMsgAttributesNodeConfiguration defaultConfiguration() {
@@ -33,6 +34,7 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
         configuration.setScope(DataConstants.SERVER_SCOPE);
         configuration.setNotifyDevice(false);
         configuration.setSendAttributesUpdatedNotification(false);
+        configuration.setUpdateAttributesOnValueChange(false);
         return configuration;
     }
 }

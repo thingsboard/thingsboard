@@ -15,8 +15,12 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.Pair;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -25,12 +29,15 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
@@ -70,23 +77,56 @@ public class TbMsgAttributesNode implements TbNode {
             return;
         }
         String src = msg.getData();
-        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(JsonParser.parseString(src)));
-        if (attributes.isEmpty()) {
+        List<AttributeKvEntry> newAttributes = new ArrayList<>(JsonConverter.convertToAttributes(JsonParser.parseString(src)));
+        if (newAttributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;
         }
         String scope = getScope(msg.getMetaData().getValue(SCOPE));
         boolean sendAttributesUpdateNotification = checkSendNotification(scope);
-        ctx.getTelemetryService().saveAndNotify(
-                ctx.getTenantId(),
-                msg.getOriginator(),
-                scope,
-                attributes,
-                checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)),
-                sendAttributesUpdateNotification ?
-                        new AttributesUpdateNodeCallback(ctx, msg, scope, attributes) :
-                        new TelemetryNodeCallback(ctx, msg)
-        );
+        ListenableFuture<List<AttributeKvEntry>> findFuture;
+        if (config.isUpdateAttributesOnValueChange()) {
+            List<String> keys = newAttributes.stream().map(KvEntry::getKey).collect(Collectors.toList());
+            findFuture = ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, keys);
+        } else {
+            findFuture = Futures.immediateFuture(null);
+        }
+        Futures.addCallback(findFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(List<AttributeKvEntry> currentAttributes) {
+                List<AttributeKvEntry> attributes = newAttributes;
+                if (config.isUpdateAttributesOnValueChange()
+                        && currentAttributes != null
+                        && !currentAttributes.isEmpty()) {
+                    Set<Pair<String, Object>> currentKeyValuePairs = currentAttributes.stream()
+                            .map(item -> Pair.of(item.getKey(), item.getValue()))
+                            .collect(Collectors.toSet());
+                    attributes = attributes.stream()
+                            .filter(item -> !currentKeyValuePairs.contains(Pair.of(item.getKey(), item.getValue())))
+                            .collect(Collectors.toList());
+                }
+                if (attributes.isEmpty()) {
+                    ctx.tellSuccess(msg);
+                } else {
+                    ctx.getTelemetryService().saveAndNotify(
+                            ctx.getTenantId(),
+                            msg.getOriginator(),
+                            scope,
+                            attributes,
+                            checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)),
+                            sendAttributesUpdateNotification ?
+                                    new AttributesUpdateNodeCallback(ctx, msg, scope, attributes) :
+                                    new TelemetryNodeCallback(ctx, msg)
+                    );
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                ctx.tellFailure(msg, throwable);
+            }
+        }, ctx.getDbCallbackExecutor());
+
     }
 
     private boolean checkSendNotification(String scope) {
