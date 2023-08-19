@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<svg width="1543.4268" height="320.00026" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <!-- Created with SVG-edit - https://github.com/SVG-Edit/svgedit-->
+ <g class="layer">
+  <title>Layer 1</title>
+  <text fill="#000000" font-family="serif" font-size="288" id="svg_1" stroke-width="0" text-anchor="middle" x="839.573242" xml:space="preserve" y="254.999725">物联网平台</text>
+  <polygon cx="7.573242" cy="88.999725" edge="71.532432" fill="#000000" id="svg_2" orient="x" points="122.42236328125,155.99972534179688 80.37665557861328,213.8706817626953 12.345268249511719,191.76593017578125 12.345268249511719,120.23350524902344 80.37665557861328,98.12876892089844 122.42236328125,155.99972534179688 " shape="regularPoly" sides="5" strokecolor="none" transform="rotate(14.3358 67.3838 156)"/>
+  <polygon cx="14.573242" cy="84.999725" edge="0" fill="#000000" id="svg_4" orient="x" shape="regularPoly" sides="5" strokecolor="none"/>
+  <polygon cx="20.573242" cy="62.999725" edge="0" fill="#000000" id="svg_5" orient="x" shape="regularPoly" sides="5" strokecolor="none"/>
+  <polygon cx="-24.426758" cy="58.999725" edge="0" fill="#000000" id="svg_6" orient="x" shape="regularPoly" sides="5" strokecolor="none"/>
+ </g>
+</svg>
