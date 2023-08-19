@@ -22,8 +22,8 @@ import { Component } from '@angular/core';
   styleUrls: ['./logo.component.scss']
 })
 export class LogoComponent {
-
-  logo = 'assets/logo_title_white.svg';
+// 登录页面的logo
+  logo = 'assets/icon.svg';
 
   gotoThingsboard(): void {
     window.open('https://thingsboard.io', '_blank');
