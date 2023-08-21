@@ -68,8 +68,6 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     private static final String CLAIM_DATA_ATTRIBUTE_NAME = "claimingData";
 
     @Autowired
-    private TbClusterService clusterService;
-    @Autowired
     private DeviceService deviceService;
     @Autowired
     private AttributesService attributesService;
@@ -153,7 +151,6 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                     if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                         device.setCustomerId(customerId);
                         Device savedDevice = deviceService.saveDevice(device);
-                        clusterService.onDeviceUpdated(savedDevice, device);
                         return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS), MoreExecutors.directExecutor());
                     }
                     return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(null, ClaimResponse.CLAIMED), MoreExecutors.directExecutor());
@@ -180,7 +177,6 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             Customer unassignedCustomer = customerService.findCustomerById(tenantId, device.getCustomerId());
             device.setCustomerId(null);
             Device savedDevice = deviceService.saveDevice(device);
-            clusterService.onDeviceUpdated(savedDevice, device);
             if (isAllowedClaimingByDefault) {
                 return Futures.immediateFuture(new ReclaimResult(unassignedCustomer));
             }

@@ -27,15 +27,12 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.widget.BaseWidgetType;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
@@ -140,11 +137,10 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
         TenantId tenantId = tbResource.getTenantId();
         try {
             TbResource savedResource = checkNotNull(doSave(tbResource));
-            tbClusterService.onResourceChange(savedResource, null);
-            notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
             return savedResource;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
                     tbResource, actionType, user, e);
             throw e;
         }
@@ -152,15 +148,16 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
 
     @Override
     public void delete(TbResource tbResource, User user) {
+        ActionType actionType = ActionType.DELETED;
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
         try {
-            resourceService.deleteResource(tenantId, resourceId);
-            tbClusterService.onResourceDeleted(tbResource, null);
-            notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
+            resourceService.deleteResource(tenantId, tbResource);
+            logEntityActionService.logEntityAction(tenantId, resourceId, tbResource,
+                    actionType, user, resourceId.toString());
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
-                    ActionType.DELETED, user, e, resourceId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    actionType, user, e, resourceId.toString());
             throw e;
         }
     }

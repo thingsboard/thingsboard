@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.entitiy.alarm.DefaultTbAlarmCommentService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
@@ -61,7 +61,7 @@ public class DefaultTbAlarmCommentServiceTest {
     @MockBean
     protected DbCallbackExecutorService dbExecutor;
     @MockBean
-    protected TbNotificationEntityService notificationEntityService;
+    protected TbLogEntityActionService notificationEntityService;
     @MockBean
     protected AlarmService alarmService;
     @MockBean

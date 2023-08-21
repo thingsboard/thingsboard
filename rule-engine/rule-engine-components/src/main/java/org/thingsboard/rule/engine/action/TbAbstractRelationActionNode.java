@@ -192,7 +192,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newDevice.setType(entitykey.getType());
                         newDevice.setTenantId(ctx.getTenantId());
                         Device savedDevice = deviceService.saveDevice(newDevice);
-                        ctx.getClusterService().onDeviceUpdated(savedDevice, null);
                         ctx.enqueue(ctx.deviceCreatedMsg(savedDevice, ctx.getSelfId()),
                                 () -> log.trace("Pushed Device Created message: {}", savedDevice),
                                 throwable -> log.warn("Failed to push Device Created message: {}", savedDevice, throwable));

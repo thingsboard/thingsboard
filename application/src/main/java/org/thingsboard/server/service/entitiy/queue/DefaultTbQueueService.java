@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 @AllArgsConstructor
 public class DefaultTbQueueService extends AbstractTbEntityService implements TbQueueService {
+
     private static final long DELETE_DELAY = 30;
 
     private final QueueService queueService;

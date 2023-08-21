@@ -64,7 +64,7 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void broadcastEntityStateChangeEvent(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
 
-    void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback);
+    void onDeviceProfileChange(DeviceProfile deviceProfile, DeviceProfile oldDeviceProfile, TbQueueCallback callback);
 
     void onDeviceProfileDelete(DeviceProfile deviceProfile, TbQueueCallback callback);
 

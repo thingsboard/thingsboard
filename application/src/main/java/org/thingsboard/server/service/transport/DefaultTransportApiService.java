@@ -332,9 +332,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     ObjectNode additionalInfo = JacksonUtil.newObjectNode();
                     additionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
                     device.setAdditionalInfo(additionalInfo);
-                    Device savedDevice = deviceService.saveDevice(device);
-                    tbClusterService.onDeviceUpdated(savedDevice, null);
-                    device = savedDevice;
+                    device = deviceService.saveDevice(device);
 
                     relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
 
@@ -360,7 +358,6 @@ public class DefaultTransportApiService implements TransportApiService {
                         ObjectNode newDeviceAdditionalInfo = (ObjectNode) deviceAdditionalInfo;
                         newDeviceAdditionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
                         Device savedDevice = deviceService.saveDevice(device);
-                        tbClusterService.onDeviceUpdated(savedDevice, device);
                     }
                 }
                 GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
@@ -665,7 +662,6 @@ public class DefaultTransportApiService implements TransportApiService {
                 device.setName(deviceName);
                 device.setType("LwM2M");
                 device = deviceService.saveDevice(device);
-                tbClusterService.onDeviceUpdated(device, null);
             }
             TransportProtos.LwM2MRegistrationResponseMsg registrationResponseMsg =
                     TransportProtos.LwM2MRegistrationResponseMsg.newBuilder()

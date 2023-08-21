@@ -823,28 +823,28 @@ public class TelemetryController extends BaseController {
     }
 
     private void logTimeseriesDeleted(SecurityUser user, EntityId entityId, List<String> keys, long startTs, long endTs, Throwable e) {
-        notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.TIMESERIES_DELETED, user,
+        logEntityActionService.logEntityAction(user.getTenantId(), entityId, ActionType.TIMESERIES_DELETED, user,
                 toException(e), keys, startTs, endTs);
     }
 
     private void logTelemetryUpdated(SecurityUser user, EntityId entityId, List<TsKvEntry> telemetry, Throwable e) {
-        notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.TIMESERIES_UPDATED, user,
+        logEntityActionService.logEntityAction(user.getTenantId(), entityId, ActionType.TIMESERIES_UPDATED, user,
                 toException(e), telemetry);
     }
 
     private void logAttributesDeleted(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
-        notificationEntityService.logEntityAction(user.getTenantId(), (UUIDBased & EntityId) entityId,
+        logEntityActionService.logEntityAction(user.getTenantId(), (UUIDBased & EntityId) entityId,
                 ActionType.ATTRIBUTES_DELETED, user, toException(e), scope, keys);
     }
 
     private void logAttributesUpdated(SecurityUser user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) {
-        notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.ATTRIBUTES_UPDATED, user,
+        logEntityActionService.logEntityAction(user.getTenantId(), entityId, ActionType.ATTRIBUTES_UPDATED, user,
                 toException(e), scope, attributes);
     }
 
 
     private void logAttributesRead(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
-        notificationEntityService.logEntityAction(user.getTenantId(), entityId, ActionType.ATTRIBUTES_READ, user,
+        logEntityActionService.logEntityAction(user.getTenantId(), entityId, ActionType.ATTRIBUTES_READ, user,
                 toException(e), scope, keys);
     }
 

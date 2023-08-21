@@ -397,11 +397,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 tenantId, edgeId, type, action, entityId, body);
 
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body);
-
-        return Futures.transform(edgeEventService.saveAsync(edgeEvent), unused -> {
-            tbClusterService.onEdgeEventUpdate(tenantId, edgeId);
-            return null;
-        }, dbCallbackExecutorService);
+        return edgeEventService.saveAsync(edgeEvent);
     }
 
 }

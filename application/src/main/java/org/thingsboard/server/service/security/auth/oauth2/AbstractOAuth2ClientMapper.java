@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -85,9 +84,6 @@ public abstract class AbstractOAuth2ClientMapper {
 
     @Autowired
     protected TbTenantProfileCache tenantProfileCache;
-
-    @Autowired
-    protected TbClusterService tbClusterService;
 
     @Value("${edges.enabled}")
     @Getter
@@ -181,9 +177,6 @@ public abstract class AbstractOAuth2ClientMapper {
             installScripts.createDefaultRuleChains(tenant.getId());
             installScripts.createDefaultEdgeRuleChains(tenant.getId());
             tenantProfileCache.evict(tenant.getId());
-            tbClusterService.onTenantChange(tenant, null);
-            tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(),
-                    ComponentLifecycleEvent.CREATED);
         } else {
             tenant = tenants.get(0);
         }

@@ -68,10 +68,10 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                     throw e;
                 }
             }
-            notificationEntityService.logEntityAction(tenantId, savedUser.getId(), savedUser, customerId, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, savedUser.getId(), savedUser, customerId, actionType, user);
             return savedUser;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER), tbUser, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.USER), tbUser, actionType, user, e);
             throw e;
         }
     }
@@ -84,9 +84,9 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
         try {
             tbAlarmService.unassignUserAlarms(tbUser.getTenantId(), tbUser, System.currentTimeMillis());
             userService.deleteUser(tenantId, userId);
-            notificationEntityService.logEntityAction(tenantId, userId, tbUser, customerId, actionType, user, customerId.toString());
+            logEntityActionService.logEntityAction(tenantId, userId, tbUser, customerId, actionType, user, customerId.toString());
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER),
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.USER),
                     actionType, user, e, userId.toString());
             throw e;
         }

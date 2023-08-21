@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -82,12 +81,12 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                 resultAlarm = unassign(alarm, alarm.getAssignTs(), user);
             }
             if (result.isModified()) {
-                notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), resultAlarm,
+                logEntityActionService.logEntityAction(tenantId, alarm.getOriginator(), resultAlarm,
                         resultAlarm.getCustomerId(), actionType, user);
             }
             return new Alarm(resultAlarm);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM), alarm, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ALARM), alarm, actionType, user, e);
             throw e;
         }
     }
@@ -118,7 +117,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } catch (ThingsboardException e) {
                 log.error("Failed to save alarm comment", e);
             }
-            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_ACK, user);
         } else {
             throw new ThingsboardException("Alarm was already acknowledged!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -152,7 +151,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } catch (ThingsboardException e) {
                 log.error("Failed to save alarm comment", e);
             }
-            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_CLEAR, user);
         } else {
             throw new ThingsboardException("Alarm was already cleared!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -184,7 +183,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } catch (ThingsboardException e) {
                 log.error("Failed to save alarm comment", e);
             }
-            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_ASSIGNED, user);
         } else {
             throw new ThingsboardException("Alarm was already assigned to this user!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -213,7 +212,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             } catch (ThingsboardException e) {
                 log.error("Failed to save alarm comment", e);
             }
-            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_UNASSIGNED, user);
         } else {
             throw new ThingsboardException("Alarm was already unassigned!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -245,7 +244,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                     } catch (ThingsboardException e) {
                         log.error("Failed to save alarm comment", e);
                     }
-                    notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), result.getAlarm(),
+                    logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), result.getAlarm(),
                             alarm.getCustomerId(), ActionType.ALARM_UNASSIGNED, user);
                 }
             }
@@ -258,7 +257,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     @Override
     public Boolean delete(Alarm alarm, User user) {
         TenantId tenantId = alarm.getTenantId();
-        notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
+        logEntityActionService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
                 ActionType.DELETED, user);
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }

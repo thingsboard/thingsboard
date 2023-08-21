@@ -15,15 +15,21 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 
 @Service
@@ -35,10 +41,26 @@ public class BaseEdgeEventService implements EdgeEventService {
 
     private final DataValidator<EdgeEvent> edgeEventValidator;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     @Override
     public ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent) {
         edgeEventValidator.validate(edgeEvent, EdgeEvent::getTenantId);
-        return edgeEventDao.saveAsync(edgeEvent);
+
+        ListenableFuture<Void> saveFuture = edgeEventDao.saveAsync(edgeEvent);
+
+        Futures.addCallback(saveFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void result) {
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(edgeEvent.getTenantId())
+                        .entity(edgeEvent).entityId(edgeEvent.getEdgeId()).build());
+            }
+
+            @Override
+            public void onFailure(@NotNull Throwable throwable) {}
+        }, MoreExecutors.directExecutor());
+
+        return saveFuture;
     }
 
     @Override

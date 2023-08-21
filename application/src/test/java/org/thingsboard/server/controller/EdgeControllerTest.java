@@ -137,9 +137,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
         Assert.assertEquals(edge.getName(), savedEdge.getName());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
-                ActionType.ADDED);
+                ActionType.ADDED, 2);
 
         savedEdge.setName("My new edge");
         doPost("/api/edge", savedEdge, Edge.class);
@@ -147,9 +147,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
         Assert.assertEquals(foundEdge.getName(), savedEdge.getName());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(foundEdge, foundEdge.getId(), foundEdge.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(foundEdge, foundEdge.getId(), foundEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
-                ActionType.UPDATED);
+                ActionType.UPDATED, 1);
     }
 
     @Test
@@ -244,9 +244,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
         doDelete("/api/edge/" + savedEdge.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
-                ActionType.DELETED, savedEdge.getId().getId().toString());
+                ActionType.DELETED, 1, savedEdge.getId().getId().toString());
 
         doGet("/api/edge/" + savedEdge.getId().getId().toString())
                 .andExpect(status().isNotFound())

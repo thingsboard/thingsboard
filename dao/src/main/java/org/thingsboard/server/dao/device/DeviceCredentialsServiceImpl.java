@@ -107,12 +107,12 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
             oldDeviceCredentials = deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId());
         }
         try {
-            var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
-            publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
+            DeviceCredentials result = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
+            publishEvictEvent(new DeviceCredentialsEvictEvent(result.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
             if (oldDeviceCredentials != null) {
-                eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(value.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
+                eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entity(result).entityId(result.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
             }
-            return value;
+            return result;
         } catch (Exception t) {
             handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);

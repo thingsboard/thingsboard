@@ -21,9 +21,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -38,9 +45,6 @@ import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 
 import javax.annotation.PostConstruct;
-
-import static org.thingsboard.server.service.entitiy.DefaultTbNotificationEntityService.edgeTypeByActionType;
-
 
 /**
  * This event listener does not support async event processing because relay on ThreadLocal
@@ -92,7 +96,13 @@ public class EdgeEventSourcingListener {
         if (edgeSynchronizationManager.isSync()) {
             return;
         }
+        EntityType entityType = event.getEntityId().getEntityType();
         try {
+            if (EntityType.EDGE.equals(entityType) ||
+                    EntityType.TENANT.equals(entityType) ||
+                    EntityType.TB_RESOURCE.equals(entityType)) {
+                return;
+            }
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                     JacksonUtil.toString(event.getEntity()), null, EdgeEventActionType.DELETED);
@@ -102,14 +112,18 @@ public class EdgeEventSourcingListener {
     }
 
     @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(ActionEntityEvent event) {
+    public void handleEvent(ActionEntityEvent<?> event) {
         if (edgeSynchronizationManager.isSync()) {
+            return;
+        }
+        if (EntityType.DEVICE.equals(event.getEntityId().getEntityType())
+                && ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType())) {
             return;
         }
         try {
             log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
-                    event.getBody(), null, edgeTypeByActionType(event.getActionType()));
+                    event.getBody(), null, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()));
         } catch (Exception e) {
             log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event);
         }
@@ -132,7 +146,7 @@ public class EdgeEventSourcingListener {
             }
             log.trace("[{}] RelationActionEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
-                    JacksonUtil.toString(relation), EdgeEventType.RELATION, edgeTypeByActionType(event.getActionType()));
+                    JacksonUtil.toString(relation), EdgeEventType.RELATION, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()));
         } catch (Exception e) {
             log.error("[{}] failed to process RelationActionEvent: {}", event.getTenantId(), event);
         }
@@ -151,6 +165,11 @@ public class EdgeEventSourcingListener {
         } else if (entity instanceof AlarmApiCallResult) {
             AlarmApiCallResult alarmApiCallResult = (AlarmApiCallResult) entity;
             return alarmApiCallResult.isModified();
+        } else if (entity instanceof Edge ||
+                entity instanceof ApiUsageState ||
+                entity instanceof TbResource ||
+                entity instanceof EdgeEvent) {
+            return false;
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
         return true;

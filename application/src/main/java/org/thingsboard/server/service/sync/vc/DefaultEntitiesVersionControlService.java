@@ -71,7 +71,7 @@ import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.impl.MissingEntityException;
@@ -112,7 +112,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final GitVersionControlQueueService gitServiceQueue;
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
-    private final TbNotificationEntityService entityNotificationService;
+    private final TbLogEntityActionService logEntityActionService;
     private final TransactionTemplate transactionTemplate;
     private final TbTransactionalCache<UUID, VersionControlTaskCacheEntry> taskCache;
 
@@ -431,10 +431,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             if (ctx.getImportedEntities().get(entityType) == null || !ctx.getImportedEntities().get(entityType).contains(entity.getId())) {
                 exportableEntitiesService.removeById(ctx.getTenantId(), entity.getId());
 
-                ctx.addEventCallback(() -> {
-                    entityNotificationService.logEntityAction(ctx.getTenantId(), entity.getId(), entity, null,
-                            ActionType.DELETED, ctx.getUser());
-                });
+                ctx.addEventCallback(() -> logEntityActionService.logEntityAction(ctx.getTenantId(), entity.getId(), entity, null,
+                        ActionType.DELETED, ctx.getUser()));
                 ctx.registerDeleted(entityType);
             }
         });

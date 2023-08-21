@@ -43,10 +43,10 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
         ActionType actionType = ActionType.RELATION_ADD_OR_UPDATE;
         try {
             relationService.saveRelation(tenantId, relation);
-            notificationEntityService.logEntityRelationAction(tenantId, customerId,
+            logEntityActionService.logEntityRelationAction(tenantId, customerId,
                     relation, user, actionType, null, relation);
         } catch (Exception e) {
-            notificationEntityService.logEntityRelationAction(tenantId, customerId,
+            logEntityActionService.logEntityRelationAction(tenantId, customerId,
                     relation, user, actionType, e, relation);
             throw e;
         }
@@ -60,9 +60,9 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
             if (!found) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
-            notificationEntityService.logEntityRelationAction(tenantId, customerId, relation, user, actionType, null, relation);
+            logEntityActionService.logEntityRelationAction(tenantId, customerId, relation, user, actionType, null, relation);
         } catch (Exception e) {
-            notificationEntityService.logEntityRelationAction(tenantId, customerId,
+            logEntityActionService.logEntityRelationAction(tenantId, customerId,
                     relation, user, actionType, e, relation);
             throw e;
         }
@@ -72,9 +72,9 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
     public void deleteCommonRelations(TenantId tenantId, CustomerId customerId, EntityId entityId, User user) throws ThingsboardException {
         try {
             relationService.deleteEntityCommonRelations(tenantId, entityId);
-            notificationEntityService.logEntityAction(tenantId, entityId, null, customerId, ActionType.RELATIONS_DELETED, user);
+            logEntityActionService.logEntityAction(tenantId, entityId, null, customerId, ActionType.RELATIONS_DELETED, user);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, entityId, null, customerId,
+            logEntityActionService.logEntityAction(tenantId, entityId, null, customerId,
                     ActionType.RELATIONS_DELETED, user, e);
             throw e;
         }
