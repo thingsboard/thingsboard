@@ -46,7 +46,7 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     private final AdminSettingsService adminSettingsService;
     @Lazy
     private final Optional<TbClusterService> tbClusterService;
-    private final NotificationCenter notificationCenter;
+    private final Optional<NotificationCenter> notificationCenter;
     private final JwtSettingsValidator jwtSettingsValidator;
 
     @Value("${security.jwt.tokenExpirationTime:9000}")
@@ -128,7 +128,9 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
                         log.warn("WARNING: The platform is configured to use default JWT Signing Key. " +
                                 "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
                                 "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
-                        notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(), DefaultNotifications.jwtSigningKeyIssue.toTemplate());
+                        notificationCenter.ifPresent(notificationCenter -> {
+                            notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(), DefaultNotifications.jwtSigningKeyIssue.toTemplate());
+                        });
                     }
                     this.jwtSettings = result;
                 }

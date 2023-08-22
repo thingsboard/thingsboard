@@ -66,6 +66,9 @@ import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 @RequiredArgsConstructor
 public class DefaultNotifications {
 
+    private static final String YELLOW_COLOR = "#F9D916";
+    private static final String RED_COLOR = "#e91a1a";
+
     public static final DefaultNotification maintenanceWork = DefaultNotification.builder()
             .name("Maintenance work notification")
             .subject("Infrastructure maintenance")
@@ -77,7 +80,7 @@ public class DefaultNotifications {
             .type(NotificationType.ENTITIES_LIMIT)
             .subject("${entityType}s limit will be reached soon for tenant ${tenantName}")
             .text("${entityType}s usage: ${currentCount}/${limit} (${percents}%)")
-            .icon("warning").color("#F9D916")
+            .icon("warning").color(YELLOW_COLOR)
             .rule(DefaultRule.builder()
                     .name("Entities count limit (sysadmin)")
                     .triggerConfig(EntitiesLimitNotificationRuleTriggerConfig.builder()
@@ -100,7 +103,7 @@ public class DefaultNotifications {
             .type(NotificationType.API_USAGE_LIMIT)
             .subject("${feature} feature will be disabled soon for tenant ${tenantName}")
             .text("Usage: ${currentValue} out of ${limit} ${unitLabel}s")
-            .icon("warning").color("#F9D916")
+            .icon("warning").color(YELLOW_COLOR)
             .rule(DefaultRule.builder()
                     .name("API feature warning (sysadmin)")
                     .triggerConfig(ApiUsageLimitNotificationRuleTriggerConfig.builder()
@@ -123,7 +126,7 @@ public class DefaultNotifications {
             .type(NotificationType.API_USAGE_LIMIT)
             .subject("${feature} feature was disabled for tenant ${tenantName}")
             .text("Used ${currentValue} out of ${limit} ${unitLabel}s")
-            .icon("block").color("#e91a1a")
+            .icon("block").color(RED_COLOR)
             .rule(DefaultRule.builder()
                     .name("API feature disabled (sysadmin)")
                     .triggerConfig(ApiUsageLimitNotificationRuleTriggerConfig.builder()
@@ -147,7 +150,7 @@ public class DefaultNotifications {
             .type(NotificationType.RATE_LIMITS)
             .subject("Rate limits exceeded")
             .text("Rate limits for ${api} exceeded")
-            .icon("block").color("#e91a1a")
+            .icon("block").color(RED_COLOR)
             .rule(DefaultRule.builder()
                     .name("Per-tenant rate limits exceeded")
                     .triggerConfig(RateLimitsNotificationRuleTriggerConfig.builder()
@@ -164,7 +167,7 @@ public class DefaultNotifications {
             .type(NotificationType.RATE_LIMITS)
             .subject("Rate limits exceeded")
             .text("Rate limits for ${api} exceeded for '${limitLevelEntityName}'")
-            .icon("block").color("#e91a1a")
+            .icon("block").color(RED_COLOR)
             .rule(DefaultRule.builder()
                     .name("Per-entity rate limits exceeded")
                     .triggerConfig(RateLimitsNotificationRuleTriggerConfig.builder()
@@ -328,7 +331,7 @@ public class DefaultNotifications {
             .type(NotificationType.GENERAL)
             .subject("WARNING: security issue")
             .text("The platform is configured to use default JWT Signing Key. Please change it on the security settings page")
-            .icon("warning").color("#F9D916")
+            .icon("warning").color(YELLOW_COLOR)
             .button("Go to settings").link("/security-settings/general")
             .build();
 

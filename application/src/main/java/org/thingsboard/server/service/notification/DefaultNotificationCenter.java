@@ -182,7 +182,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .tenantId(tenantId)
                 .template(template)
-                .targets(List.of(EntityId.NULL_UUID)) // TODO: refactor
+                .targets(List.of(EntityId.NULL_UUID)) // this is temporary and will be removed when 'create from scratch' functionality is implemented for recipients
                 .status(NotificationRequestStatus.PROCESSING)
                 .build();
         try {
