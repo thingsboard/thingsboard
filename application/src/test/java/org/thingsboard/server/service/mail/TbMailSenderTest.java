@@ -50,9 +50,6 @@ public class TbMailSenderTest {
         List<MimeMessage> mimeMessages = new ArrayList<>(1);
         mimeMessages.add(mimeMsg);
 
-        Mockito.doNothing().when(tbMailSender).updateOauth2PasswordIfExpired();
-        Mockito.doNothing().when(tbMailSender).doSendSuper(any(), any());
-
         willCallRealMethod().given(tbMailSender).doSend(any(), any());
         tbMailSender.doSend(mimeMessages.toArray(new MimeMessage[0]), null);
 
@@ -62,9 +59,6 @@ public class TbMailSenderTest {
 
     @Test
     public void testTestConnection() throws MessagingException {
-        Mockito.doNothing().when(tbMailSender).updateOauth2PasswordIfExpired();
-        Mockito.doNothing().when(tbMailSender).testConnectionSuper();
-
         willCallRealMethod().given(tbMailSender).testConnection();
         tbMailSender.testConnection();
 
@@ -78,7 +72,6 @@ public class TbMailSenderTest {
         willReturn(oauth2).given(tbMailSender).getOauth2Enabled();
         willReturn(expiresIn).given(tbMailSender).getTokenExpires();
 
-        Mockito.doNothing().when(tbMailSender).refreshAccessToken();
         willCallRealMethod().given(tbMailSender).updateOauth2PasswordIfExpired();
         tbMailSender.updateOauth2PasswordIfExpired();
 
