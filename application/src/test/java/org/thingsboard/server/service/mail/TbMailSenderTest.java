@@ -15,32 +15,37 @@
  */
 package org.thingsboard.server.service.mail;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.thingsboard.common.util.JacksonUtil;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.MimeMessage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.willCallRealMethod;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 
-@RunWith(MockitoJUnitRunner.class)
 public class TbMailSenderTest {
+
+    private TbMailSender tbMailSender;
+
+    @BeforeEach
+    void setUp() {
+        tbMailSender = mock(TbMailSender.class);
+    }
 
     @Test
     public void testDoSendSendMail() {
-        ObjectNode jsonConfig = getBasicMailConfig();
-        TbMailSender tbMailSender = spy(new TbMailSender(mock(TbMailContextComponent.class), jsonConfig));
-
         MimeMessage mimeMsg = new MimeMessage(Session.getInstance(new Properties()));
         List<MimeMessage> mimeMessages = new ArrayList<>(1);
         mimeMessages.add(mimeMsg);
@@ -48,66 +53,50 @@ public class TbMailSenderTest {
         Mockito.doNothing().when(tbMailSender).updateOauth2PasswordIfExpired();
         Mockito.doNothing().when(tbMailSender).doSendSuper(any(), any());
 
+        willCallRealMethod().given(tbMailSender).doSend(any(), any());
         tbMailSender.doSend(mimeMessages.toArray(new MimeMessage[0]), null);
 
         Mockito.verify(tbMailSender, times(1)).updateOauth2PasswordIfExpired();
+        Mockito.verify(tbMailSender, times(1)).doSendSuper(any(), any());
     }
 
     @Test
     public void testTestConnection() throws MessagingException {
-        ObjectNode jsonConfig = getBasicMailConfig();
-        TbMailSender tbMailSender = spy(new TbMailSender(mock(TbMailContextComponent.class), jsonConfig));
-
         Mockito.doNothing().when(tbMailSender).updateOauth2PasswordIfExpired();
         Mockito.doNothing().when(tbMailSender).testConnectionSuper();
 
+        willCallRealMethod().given(tbMailSender).testConnection();
         tbMailSender.testConnection();
 
         Mockito.verify(tbMailSender, times(1)).updateOauth2PasswordIfExpired();
+        Mockito.verify(tbMailSender, times(1)).testConnectionSuper();
     }
 
-    @Test
-    public void testUpdateOauth2PasswordIfExpiredIfOauth2Enabled() {
-        ObjectNode jsonConfig = getOauth2Config();
-        TbMailSender tbMailSender = spy(new TbMailSender(mock(TbMailContextComponent.class), jsonConfig));
+    @ParameterizedTest
+    @MethodSource("provideSenderConfiguration")
+    public void testUpdateOauth2PasswordIfExpiredIfOauth2Enabled(boolean oauth2, long expiresIn, boolean passwordUpdateNeeded) {
+        willReturn(oauth2).given(tbMailSender).getOauth2Enabled();
+        willReturn(expiresIn).given(tbMailSender).getTokenExpires();
 
         Mockito.doNothing().when(tbMailSender).refreshAccessToken();
-
+        willCallRealMethod().given(tbMailSender).updateOauth2PasswordIfExpired();
         tbMailSender.updateOauth2PasswordIfExpired();
 
-        Mockito.verify(tbMailSender, times(1)).refreshAccessToken();
-        Mockito.verify(tbMailSender, times(1)).setPassword(any());
+        if (passwordUpdateNeeded) {
+            Mockito.verify(tbMailSender, times(1)).refreshAccessToken();
+            Mockito.verify(tbMailSender, times(1)).setPassword(any());
+        } else {
+            Mockito.verify(tbMailSender, Mockito.never()).refreshAccessToken();
+            Mockito.verify(tbMailSender, Mockito.never()).setPassword(any());
+        }
     }
 
-    @Test
-    public void testUpdateOauth2PasswordIfExpiredIfOauth2Disabled() {
-        ObjectNode jsonConfig = getBasicMailConfig();
-        TbMailSender tbMailSender = spy(new TbMailSender(mock(TbMailContextComponent.class), jsonConfig));
-
-        tbMailSender.updateOauth2PasswordIfExpired();
-
-        Mockito.verify(tbMailSender, Mockito.never()).refreshAccessToken();
-        Mockito.verify(tbMailSender, Mockito.never()).setPassword(any());
-    }
-
-    private static ObjectNode getOauth2Config() {
-        ObjectNode jsonConfig = JacksonUtil.newObjectNode();
-        jsonConfig.put("smtpProtocol", "smtps");
-        jsonConfig.put("timeout", "1000");
-        jsonConfig.put("enableOauth2", true);
-        jsonConfig.put("smtpHost", "smtp.gmail.com");
-        jsonConfig.put("smtpPort", "465");
-        jsonConfig.put("username", "testUser");
-        return jsonConfig;
-    }
-
-    private static ObjectNode getBasicMailConfig() {
-        ObjectNode jsonConfig = JacksonUtil.newObjectNode();
-        jsonConfig.put("smtpProtocol", "smtps");
-        jsonConfig.put("timeout", "1000");
-        jsonConfig.put("smtpHost", "smtp.gmail.com");
-        jsonConfig.put("smtpPort", "465");
-        jsonConfig.put("username", "testUser");
-        return jsonConfig;
+    private static Stream<Arguments> provideSenderConfiguration() {
+        return Stream.of(
+                Arguments.of(true, 0L, true),
+                Arguments.of(true, System.currentTimeMillis() + 5000, false),
+                Arguments.of(false, 0L, false),
+                Arguments.of(false, System.currentTimeMillis() + 5000, false)
+        );
     }
 }

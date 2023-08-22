@@ -25,6 +25,8 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.StringUtils;
@@ -48,6 +50,7 @@ public class TbMailSender extends JavaMailSenderImpl {
     private static final String MAIL_PROP = "mail.";
     private final TbMailContextComponent ctx;
     private final Lock lock;
+
     private final Boolean oauth2Enabled;
     private volatile String accessToken;
     private volatile long tokenExpires;
@@ -68,13 +71,21 @@ public class TbMailSender extends JavaMailSenderImpl {
         setJavaMailProperties(createJavaMailProperties(jsonConfig));
     }
 
+    public Boolean getOauth2Enabled() {
+        return oauth2Enabled;
+    }
+
+    public long getTokenExpires() {
+        return tokenExpires;
+    }
+
     @Override
-    protected void doSend(MimeMessage[] mimeMessages, @Nullable Object[] originalMessages) {
+    protected void doSend(MimeMessage[] mimeMessages, @Nullable Object[] originalMessages) throws MailException {
         updateOauth2PasswordIfExpired();
         doSendSuper(mimeMessages, originalMessages);
     }
 
-    protected void doSendSuper(MimeMessage[] mimeMessages, Object[] originalMessages) {
+    public void doSendSuper(MimeMessage[] mimeMessages, Object[] originalMessages) {
         super.doSend(mimeMessages, originalMessages);
     }
 
@@ -88,8 +99,8 @@ public class TbMailSender extends JavaMailSenderImpl {
         super.testConnection();
     }
 
-    public void updateOauth2PasswordIfExpired() {
-        if (oauth2Enabled && (System.currentTimeMillis() > tokenExpires)){
+    public void updateOauth2PasswordIfExpired()  {
+        if (getOauth2Enabled() && (System.currentTimeMillis() > getTokenExpires())){
             refreshAccessToken();
             setPassword(accessToken);
         }
@@ -143,7 +154,7 @@ public class TbMailSender extends JavaMailSenderImpl {
     public void refreshAccessToken() {
         lock.lock();
         try {
-            if (System.currentTimeMillis() > tokenExpires) {
+            if (System.currentTimeMillis() > getTokenExpires()) {
                 AdminSettings settings = ctx.getAdminSettingsService().findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
                 JsonNode jsonValue = settings.getJsonValue();
 
