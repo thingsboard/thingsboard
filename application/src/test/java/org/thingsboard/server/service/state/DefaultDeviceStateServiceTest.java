@@ -241,7 +241,8 @@ public class DefaultDeviceStateServiceTest {
         activityVerify(true);
 
         Mockito.reset(telemetrySubscriptionService);
-        Thread.sleep(newTimeout);
+        //added 1sec to be sure activity period passed
+        Thread.sleep(newTimeout + 1000);
         service.checkStates();
         activityVerify(false);
     }
