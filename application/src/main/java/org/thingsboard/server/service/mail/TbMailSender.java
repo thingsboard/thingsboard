@@ -28,8 +28,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mail.MailOauth2Provider;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -71,24 +69,28 @@ public class TbMailSender extends JavaMailSenderImpl {
     }
 
     @Override
-    public void doSend(MimeMessage[] mimeMessages, @Nullable Object[] originalMessages) {
+    protected void doSend(MimeMessage[] mimeMessages, @Nullable Object[] originalMessages) {
         updateOauth2PasswordIfExpired();
+        doSendSuper(mimeMessages, originalMessages);
+    }
+
+    protected void doSendSuper(MimeMessage[] mimeMessages, Object[] originalMessages) {
         super.doSend(mimeMessages, originalMessages);
     }
 
     @Override
     public void testConnection() throws MessagingException {
         updateOauth2PasswordIfExpired();
+        testConnectionSuper();
+    }
+
+    public void testConnectionSuper() throws MessagingException {
         super.testConnection();
     }
 
-    private void updateOauth2PasswordIfExpired() {
+    public void updateOauth2PasswordIfExpired() {
         if (oauth2Enabled && (System.currentTimeMillis() > tokenExpires)){
-            try {
-                refreshAccessToken();
-            } catch (ThingsboardException e) {
-                throw new RuntimeException(e);
-            }
+            refreshAccessToken();
             setPassword(accessToken);
         }
     }
@@ -138,7 +140,7 @@ public class TbMailSender extends JavaMailSenderImpl {
         return javaMailProperties;
     }
 
-    public void refreshAccessToken() throws ThingsboardException {
+    public void refreshAccessToken() {
         lock.lock();
         try {
             if (System.currentTimeMillis() > tokenExpires) {
@@ -164,8 +166,8 @@ public class TbMailSender extends JavaMailSenderImpl {
                 tokenExpires = System.currentTimeMillis() + (tokenResponse.getExpiresInSeconds().intValue() * 1000);
             }
         } catch (Exception e) {
-            log.warn("Unable to retrieve access token: {}", e.getMessage());
-            throw new ThingsboardException("Error while retrieving access token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
+            log.error("Unable to retrieve access token: {}", e.getMessage());
+            throw new RuntimeException("Error while retrieving access token: " + e.getMessage());
         } finally {
             lock.unlock();
         }
