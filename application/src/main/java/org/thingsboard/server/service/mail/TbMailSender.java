@@ -23,7 +23,6 @@ import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -35,7 +34,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mail.MailOauth2Provider;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
-import javax.mail.Transport;
+import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.time.Duration;
 import java.time.Instant;
@@ -71,24 +70,27 @@ public class TbMailSender extends JavaMailSenderImpl {
         setJavaMailProperties(createJavaMailProperties(jsonConfig));
     }
 
-    @SneakyThrows
     @Override
     public void doSend(MimeMessage[] mimeMessages, @Nullable Object[] originalMessages) {
-        if (oauth2Enabled && (System.currentTimeMillis() > tokenExpires)){
-            refreshAccessToken();
-            setPassword(accessToken);
-        }
+        updateOauth2PasswordIfExpired();
         super.doSend(mimeMessages, originalMessages);
     }
 
-    @SneakyThrows
     @Override
-    public void testConnection() {
+    public void testConnection() throws MessagingException {
+        updateOauth2PasswordIfExpired();
+        super.testConnection();
+    }
+
+    private void updateOauth2PasswordIfExpired() {
         if (oauth2Enabled && (System.currentTimeMillis() > tokenExpires)){
-            refreshAccessToken();
+            try {
+                refreshAccessToken();
+            } catch (ThingsboardException e) {
+                throw new RuntimeException(e);
+            }
             setPassword(accessToken);
         }
-        super.testConnection();
     }
 
     private Properties createJavaMailProperties(JsonNode jsonConfig) {
