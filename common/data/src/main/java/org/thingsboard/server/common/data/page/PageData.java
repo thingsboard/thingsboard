@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 @ApiModel
 public class PageData<T> implements Serializable {
 
+    public static final PageData EMPTY_PAGE_DATA = new PageData<>();
+
     private final List<T> data;
     private final int totalPages;
     private final long totalElements;
@@ -47,6 +49,11 @@ public class PageData<T> implements Serializable {
         this.totalPages = totalPages;
         this.totalElements = totalElements;
         this.hasNext = hasNext;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> PageData<T> emptyPageData() {
+        return (PageData<T>) EMPTY_PAGE_DATA;
     }
 
     @ApiModelProperty(position = 1, value = "Array of the entities", accessMode = ApiModelProperty.AccessMode.READ_ONLY)

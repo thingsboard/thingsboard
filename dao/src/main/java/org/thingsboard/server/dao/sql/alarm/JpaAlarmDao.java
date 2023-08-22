@@ -375,7 +375,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     public PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink) {
         Page<String> page = alarmRepository.findTenantAlarmTypes(tenantId, Objects.toString(pageLink.getTextSearch(), ""), toPageable(pageLink));
         if (page.isEmpty()) {
-            return new PageData<>();
+            return PageData.emptyPageData();
         }
 
         List<EntitySubtype> data = convertTenantEntityTypesToDto(tenantId, EntityType.ALARM, page.getContent());

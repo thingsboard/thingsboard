@@ -801,13 +801,22 @@ public class AlarmControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetAlarmTypes() throws Exception {
+    public void testSaveAlarmTypes() throws Exception {
         loginTenantAdmin();
 
         List<String> types = new ArrayList<>();
 
         for (int i = 1; i < 13; i++) {
             types.add(createAlarm(TEST_ALARM_TYPE + i).getType());
+        }
+
+        Device device = new Device();
+        device.setName("Test device 2");
+        device.setCustomerId(customerId);
+        customerDevice = doPost("/api/device", device, Device.class);
+
+        for (int i = 1; i < 10; i++) {
+            createAlarm(TEST_ALARM_TYPE + i);
         }
 
         List<String> foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
