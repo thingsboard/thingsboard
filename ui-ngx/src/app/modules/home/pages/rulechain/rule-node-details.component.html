@@ -22,7 +22,7 @@
   </button>
 </div>
 <form [formGroup]="ruleNodeFormGroup" class="mat-padding">
-  <fieldset [disabled]="(isLoading$ | async) || !isEdit || isReadOnly">
+  <fieldset [disabled]="(isLoading$ | async)">
     <section>
       <section class="title-row">
         <mat-form-field fxFlex class="mat-block">
