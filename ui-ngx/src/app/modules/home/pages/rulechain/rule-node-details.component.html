@@ -22,44 +22,40 @@
   </button>
 </div>
 <form [formGroup]="ruleNodeFormGroup" class="mat-padding">
-  <fieldset [disabled]="(isLoading$ | async)">
-    <section>
-      <section class="title-row">
-        <mat-form-field fxFlex class="mat-block">
-          <mat-label translate>rulenode.name</mat-label>
-          <input matInput formControlName="name" required>
-          <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')
+  <section class="title-row">
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>rulenode.name</mat-label>
+      <input matInput formControlName="name" required>
+      <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')
                          || ruleNodeFormGroup.get('name').hasError('pattern')">
-            {{ 'rulenode.name-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('maxlength')">
-            {{ 'rulenode.name-max-length' | translate }}
-          </mat-error>
-        </mat-form-field>
-        <section class="node-setting">
-          <mat-slide-toggle formControlName="debugMode">
-            {{ 'rulenode.debug-mode' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle *ngIf="isSingletonEditAllowed()" formControlName="singletonMode">
-            {{ 'rulenode.singleton-mode' | translate }}
-          </mat-slide-toggle >
-        </section>
-      </section>
-      <tb-rule-node-config #ruleNodeConfigComponent
-        formControlName="configuration"
-        [ruleNodeId]="ruleNode.ruleNodeId?.id"
-        [ruleChainId]="ruleChainId"
-        [ruleChainType]="ruleChainType"
-        [nodeDefinition]="ruleNode.component.configurationDescriptor.nodeDefinition"
-        (initRuleNode)="initRuleNode.emit($event)"
-        (changeScript)="changeScript.emit($event)">
-      </tb-rule-node-config>
-      <div formGroupName="additionalInfo" fxLayout="column" class="description-block">
-        <mat-form-field class="mat-block">
-          <mat-label translate>rulenode.rule-node-description</mat-label>
-          <textarea matInput formControlName="description" rows="1"></textarea>
-        </mat-form-field>
-      </div>
+        {{ 'rulenode.name-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('maxlength')">
+        {{ 'rulenode.name-max-length' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <section class="node-setting">
+      <mat-slide-toggle formControlName="debugMode">
+        {{ 'rulenode.debug-mode' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle *ngIf="isSingletonEditAllowed()" formControlName="singletonMode">
+        {{ 'rulenode.singleton-mode' | translate }}
+      </mat-slide-toggle>
     </section>
-  </fieldset>
+  </section>
+  <tb-rule-node-config #ruleNodeConfigComponent
+                       formControlName="configuration"
+                       [ruleNodeId]="ruleNode.ruleNodeId?.id"
+                       [ruleChainId]="ruleChainId"
+                       [ruleChainType]="ruleChainType"
+                       [nodeDefinition]="ruleNode.component.configurationDescriptor.nodeDefinition"
+                       (initRuleNode)="initRuleNode.emit($event)"
+                       (changeScript)="changeScript.emit($event)">
+  </tb-rule-node-config>
+  <div formGroupName="additionalInfo" fxLayout="column" class="description-block">
+    <mat-form-field class="mat-block">
+      <mat-label translate>rulenode.rule-node-description</mat-label>
+      <textarea matInput formControlName="description" rows="1"></textarea>
+    </mat-form-field>
+  </div>
 </form>
