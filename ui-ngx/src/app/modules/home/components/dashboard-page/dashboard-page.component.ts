@@ -161,12 +161,14 @@ import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 })
 export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
 
+  private forcePristine = true;
+
   get isDirty(): boolean {
-    return this.isEdit;
+    return this.isEdit && this.forcePristine;
   }
 
   set isDirty(value: boolean) {
-
+    this.forcePristine = value;
   }
 
   authState: AuthState = getCurrentAuthState(this.store);
