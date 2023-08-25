@@ -692,6 +692,21 @@ mat-label {
     margin: 0;
   }
 
+  .tb-table-widget {
+    .mat-mdc-table {
+      .mat-mdc-cell {
+        background: inherit;
+        color: inherit;
+        font-size: inherit;
+        font-family: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+      }
+    }
+  }
+
   .mat-mdc-footer-row::after, .mat-mdc-header-row::after, .mat-mdc-row::after {
     content: none;
   }
