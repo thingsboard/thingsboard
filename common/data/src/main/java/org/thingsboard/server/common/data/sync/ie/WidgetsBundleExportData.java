@@ -35,7 +35,7 @@ public class WidgetsBundleExportData extends EntityExportData<WidgetsBundle> {
     @Override
     public EntityExportData<WidgetsBundle> sort() {
         super.sort();
-        widgets.sort(Comparator.comparing(BaseWidgetType::getAlias));
+        widgets.sort(Comparator.comparing(BaseWidgetType::getFqn));
         return this;
     }
 

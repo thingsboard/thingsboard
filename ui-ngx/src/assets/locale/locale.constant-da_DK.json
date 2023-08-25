@@ -453,6 +453,7 @@
     "attributes": "Attributter",
     "latest-telemetry": "Seneste telemetri",
     "attributes-scope": "Omfang af entitetsattributter",
+    "scope-telemetry": "Telemetri",
     "scope-latest-telemetry": "Seneste telemetri",
     "scope-client": "Klientattributter",
     "scope-server": "Serverattributter",
@@ -1095,13 +1096,7 @@
     "device-configuration": "Enhedskonfiguration",
     "transport-configuration": "Transportkonfiguration",
     "wizard": {
-      "device-wizard": "Enhedsguide",
-      "device-details": "Enhedsoplysninger",
-      "new-device-profile": "Opret ny enhedsprofil",
-      "existing-device-profile": "Vælg eksisterende enhedsprofil",
-      "specific-configuration": "Specifik konfiguration",
-      "customer-to-assign-device": "Kunden skal tildele enheden",
-      "add-credential": "Tilføj brugeroplysninger"
+      "device-details": "Enhedsoplysninger"
     }
   },
   "device-profile": {
@@ -1120,8 +1115,6 @@
     "set-default": "Gør enhedsprofil standard",
     "delete": "Slet enhedsprofil",
     "copyId": "Kopiér enhedsprofil-id",
-    "new-device-profile-name": "Enhedsprofilnavn",
-    "new-device-profile-name-required": "Enhedsprofilnavn er påkrævet.",
     "name": "Navn",
     "name-required": "Navn er påkrævet.",
     "type": "Profiltype",

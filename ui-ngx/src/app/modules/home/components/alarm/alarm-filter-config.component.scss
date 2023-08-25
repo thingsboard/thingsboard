@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 :host {
-  display: block;
-  overflow: hidden;
+  display: flex;
   max-width: 100%;
   .mdc-button {
     max-width: 100%;
@@ -30,6 +29,18 @@
     .mdc-button__label {
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+  }
+}
+
+::ng-deep {
+  .tb-alarm-filter-config-component {
+    flex: 1;
+
+    .mat-mdc-chip {
+      .mdc-evolution-chip__cell, .mat-mdc-chip-action, .mat-mdc-chip-action-label {
+        overflow: hidden;
+      }
     }
   }
 }

@@ -42,6 +42,7 @@ import { AlarmModule } from '@home/pages/alarm/alarm.module';
 import { EntitiesModule } from '@home/pages/entities/entities.module';
 import { FeaturesModule } from '@home/pages/features/features.module';
 import { NotificationModule } from '@home/pages/notification/notification.module';
+import { AccountModule } from '@home/pages/account/account.module';
 
 @NgModule({
   exports: [
@@ -70,7 +71,8 @@ import { NotificationModule } from '@home/pages/notification/notification.module
     ApiUsageModule,
     OtaUpdateModule,
     UserModule,
-    VcModule
+    VcModule,
+    AccountModule
   ]
 })
 export class HomePagesModule { }

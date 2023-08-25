@@ -55,7 +55,7 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(TenantId.SYS_TENANT_ID);
         widgetType.setName("WIDGET_TYPE_" + number);
-        widgetType.setAlias("ALIAS_" + number);
+        widgetType.setFqn("FQN_" + number);
         widgetType.setBundleAlias(BUNDLE_ALIAS);
         return widgetTypeDao.save(TenantId.SYS_TENANT_ID, widgetType);
     }
@@ -74,10 +74,10 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    public void testFindByTenantIdAndBundleAliasAndAlias() {
+    public void testFindByTenantIdAndFqn() {
         WidgetType result = widgetTypeList.get(0);
         assertNotNull(result);
-        WidgetType widgetType = widgetTypeDao.findByTenantIdBundleAliasAndAlias(TenantId.SYS_TENANT_ID.getId(), BUNDLE_ALIAS, "ALIAS_0");
+        WidgetType widgetType = widgetTypeDao.findByTenantIdAndFqn(TenantId.SYS_TENANT_ID.getId(), "FQN_0");
         assertEquals(result.getId(), widgetType.getId());
     }
 }

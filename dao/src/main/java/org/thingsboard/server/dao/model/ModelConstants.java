@@ -309,11 +309,14 @@ public class ModelConstants {
     public static final String WIDGET_TYPE_TABLE_NAME = "widget_type";
     public static final String WIDGET_TYPE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY = "bundle_alias";
-    public static final String WIDGET_TYPE_ALIAS_PROPERTY = ALIAS_PROPERTY;
+
+    public static final String WIDGET_TYPE_FQN_PROPERTY = "fqn";
     public static final String WIDGET_TYPE_NAME_PROPERTY = "name";
     public static final String WIDGET_TYPE_IMAGE_PROPERTY = "image";
     public static final String WIDGET_TYPE_DESCRIPTION_PROPERTY = "description";
     public static final String WIDGET_TYPE_DESCRIPTOR_PROPERTY = "descriptor";
+
+    public static final String WIDGET_TYPE_DEPRECATED_PROPERTY = "deprecated";
 
     /**
      * Dashboard constants.
@@ -535,6 +538,7 @@ public class ModelConstants {
      */
     public static final String EDGE_EVENT_TABLE_NAME = "edge_event";
     public static final String EDGE_EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String EDGE_EVENT_SEQUENTIAL_ID_PROPERTY = "seq_id";
     public static final String EDGE_EVENT_EDGE_ID_PROPERTY = "edge_id";
     public static final String EDGE_EVENT_TYPE_PROPERTY = "edge_event_type";
     public static final String EDGE_EVENT_ACTION_PROPERTY = "edge_event_action";

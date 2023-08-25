@@ -52,12 +52,12 @@ export class AlarmService {
     return this.http.post<Alarm>('/api/alarm', alarm, defaultHttpOptionsFromConfig(config));
   }
 
-  public ackAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
-    return this.http.post<void>(`/api/alarm/${alarmId}/ack`, null, defaultHttpOptionsFromConfig(config));
+  public ackAlarm(alarmId: string, config?: RequestConfig): Observable<AlarmInfo> {
+    return this.http.post<AlarmInfo>(`/api/alarm/${alarmId}/ack`, null, defaultHttpOptionsFromConfig(config));
   }
 
-  public clearAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
-    return this.http.post<void>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptionsFromConfig(config));
+  public clearAlarm(alarmId: string, config?: RequestConfig): Observable<AlarmInfo> {
+    return this.http.post<AlarmInfo>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptionsFromConfig(config));
   }
 
   public assignAlarm(alarmId: string, assigneeId: string, config?: RequestConfig): Observable<void> {
@@ -68,8 +68,8 @@ export class AlarmService {
     return this.http.delete<void>(`/api/alarm/${alarmId}/assign`, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
-    return this.http.delete<void>(`/api/alarm/${alarmId}`, defaultHttpOptionsFromConfig(config));
+  public deleteAlarm(alarmId: string, config?: RequestConfig): Observable<boolean> {
+    return this.http.delete<boolean>(`/api/alarm/${alarmId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public getAlarms(query: AlarmQuery,

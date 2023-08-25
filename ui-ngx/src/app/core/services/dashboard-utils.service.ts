@@ -29,13 +29,20 @@ import {
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { deepClone, isDefined, isDefinedAndNotNull, isString, isUndefined } from '@core/utils';
 import {
-  DataKey,
+  deepClone,
+  isDefined,
+  isDefinedAndNotNull,
+  isEmptyStr,
+  isNotEmptyStr,
+  isString,
+  isUndefined
+} from '@core/utils';
+import {
   Datasource,
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
-  defaultLegendConfig,
+  defaultLegendConfig, isValidWidgetFullFqn,
   Widget,
   WidgetConfig,
   WidgetConfigMode,
@@ -215,12 +222,11 @@ export class DashboardUtilsService {
 
   public validateAndUpdateWidget(widget: Widget): Widget {
     widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
+    widget = this.validateAndUpdateWidgetTypeFqn(widget);
     // Temp workaround
-    if (widget.isSystemType && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
-      widget.typeAlias = 'basic_timeseries';
-    }
-    if (widget.isSystemType && widget.bundleAlias === 'charts' &&
-      ['state_chart', 'basic_timeseries', 'timeseries_bars_flot'].includes(widget.typeAlias)) {
+    if (['system.charts.state_chart',
+         'system.charts.basic_timeseries',
+         'system.charts.timeseries_bars_flot'].includes(widget.typeFullFqn)) {
       const widgetConfig = widget.config;
       const widgetSettings = widget.config.settings;
       if (isDefinedAndNotNull(widgetConfig.showLegend)) {
@@ -235,6 +241,20 @@ export class DashboardUtilsService {
       } else if (isUndefined(widgetSettings.legendConfig)) {
         widgetSettings.legendConfig = defaultLegendConfig(widget.type);
       }
+    }
+    return widget;
+  }
+
+  private validateAndUpdateWidgetTypeFqn(widget: Widget): Widget {
+    if (!isValidWidgetFullFqn(widget.typeFullFqn)) {
+      const w = widget as any;
+      if (isDefinedAndNotNull(w.isSystemType) && isNotEmptyStr(w.bundleAlias) && isNotEmptyStr(w.typeAlias)) {
+        widget.typeFullFqn = (w.isSystemType ? 'system' : 'tenant') + '.' + w.bundleAlias + '.' + w.typeAlias;
+      }
+    }
+    // Temp workaround
+    if (widget.typeFullFqn === 'system.charts.timeseries') {
+      widget.typeFullFqn = 'system.charts.basic_timeseries';
     }
     return widget;
   }
@@ -348,10 +368,8 @@ export class DashboardUtilsService {
   private convertDatasourcesFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor,
                                            config: WidgetConfig, datasources?: Datasource[]): Datasource[] {
     const newDatasources: Datasource[] = [];
-    if (datasources) {
-      datasources.forEach(datasource => {
-        newDatasources.push(this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, datasource));
-      });
+    if (datasources?.length) {
+      newDatasources.push(this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, datasources[0]));
     }
     return newDatasources;
   }
@@ -484,6 +502,14 @@ export class DashboardUtilsService {
       widgetsArray.push(widget);
     }
     return widgetsArray;
+  }
+
+  public isEmptyDashboard(dashboard: Dashboard): boolean {
+    if (dashboard?.configuration?.widgets) {
+      return Object.keys(dashboard?.configuration?.widgets).length === 0;
+    } else {
+      return true;
+    }
   }
 
   public addWidgetToLayout(dashboard: Dashboard,

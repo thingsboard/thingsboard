@@ -42,8 +42,14 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
     List<WidgetTypeDetailsEntity> findByTenantIdAndBundleAlias(UUID tenantId, String bundleAlias);
 
     @Query("SELECT wt FROM WidgetTypeEntity wt " +
-            "WHERE wt.tenantId = :tenantId AND wt.bundleAlias = :bundleAlias AND wt.alias = :alias")
-    WidgetTypeEntity findWidgetTypeByTenantIdAndBundleAliasAndAlias(@Param("tenantId") UUID tenantId,
-                                                          @Param("bundleAlias") String bundleAlias,
-                                                          @Param("alias") String alias);
+            "WHERE wt.tenantId = :tenantId AND wt.fqn = :fqn")
+    WidgetTypeEntity findWidgetTypeByTenantIdAndFqn(@Param("tenantId") UUID tenantId,
+                                                    @Param("fqn") String fqn);
+
+    @Query(value = "SELECT * FROM widget_type wt " +
+            "WHERE wt.tenant_id = :tenantId AND cast(wt.descriptor as json) ->> 'resources' LIKE LOWER(CONCAT('%', :resourceId, '%'))",
+    nativeQuery = true)
+    List<WidgetTypeDetailsEntity> findWidgetTypesInfosByTenantIdAndResourceId(@Param("tenantId") UUID tenantId,
+                                                                    @Param("resourceId") UUID resourceId);
+
 }

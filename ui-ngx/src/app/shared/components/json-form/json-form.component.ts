@@ -216,9 +216,9 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   private onColorClick(key: (string | number)[],
                        val: tinycolor.ColorFormats.RGBA,
                        colorSelectedFn: (color: tinycolor.ColorFormats.RGBA) => void) {
-    this.dialogs.colorPicker(tinycolor(val).toRgbString()).subscribe((color) => {
-      if (color && colorSelectedFn) {
-        colorSelectedFn(tinycolor(color).toRgb());
+    this.dialogs.colorPicker(tinycolor(val).toRgbString()).subscribe((result) => {
+      if (!result?.canceled && colorSelectedFn) {
+        colorSelectedFn(tinycolor(result?.color).toRgb());
       }
     });
   }
@@ -226,9 +226,9 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   private onIconClick(key: (string | number)[],
                       val: string,
                       iconSelectedFn: (icon: string) => void) {
-    this.dialogs.materialIconPicker(val).subscribe((icon) => {
-      if (icon && iconSelectedFn) {
-        iconSelectedFn(icon);
+    this.dialogs.materialIconPicker(val).subscribe((result) => {
+      if (!result?.canceled && iconSelectedFn) {
+        iconSelectedFn(result?.icon);
       }
     });
   }

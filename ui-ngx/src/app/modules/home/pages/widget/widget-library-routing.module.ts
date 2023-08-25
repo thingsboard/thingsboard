@@ -65,9 +65,7 @@ export class WidgetsTypesDataResolver implements Resolve<WidgetsData> {
     const isSystem = widgetsBundle.tenantId.id === NULL_UUID;
     return this.widgetsService.loadBundleLibraryWidgets(bundleAlias,
       isSystem).pipe(
-      map((widgets) => {
-          return { widgets };
-        }
+      map((widgets) => ({ widgets })
       ));
   }
 }
@@ -81,12 +79,10 @@ export class WidgetEditorDataResolver implements Resolve<WidgetEditorData> {
   resolve(route: ActivatedRouteSnapshot): Observable<WidgetEditorData> {
     const widgetTypeId = route.params.widgetTypeId;
     return this.widgetsService.getWidgetTypeById(widgetTypeId).pipe(
-      map((result) => {
-        return {
+      map((result) => ({
           widgetTypeDetails: result,
           widget: detailsToWidgetInfo(result)
-        };
-      })
+        }))
     );
   }
 }

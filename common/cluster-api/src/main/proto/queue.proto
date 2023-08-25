@@ -28,6 +28,7 @@ message ServiceInfo {
   repeated string serviceTypes = 2;
   repeated string transports = 6;
   SystemInfoProto systemInfo = 10;
+  repeated string assignedTenantProfiles = 11;
 }
 
 message SystemInfoProto {

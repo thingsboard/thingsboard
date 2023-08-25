@@ -74,13 +74,20 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails> {
     List<WidgetTypeInfo> findWidgetTypesInfosByTenantIdAndBundleAlias(UUID tenantId, String bundleAlias);
 
     /**
-     * Find widget type by tenantId, bundleAlias and alias.
+     * Find widget type by tenantId and FQN.
      *
      * @param tenantId the tenantId
-     * @param bundleAlias the bundle alias
-     * @param alias the alias
+     * @param fqn the FQN
      * @return the widget type object
      */
-    WidgetType findByTenantIdBundleAliasAndAlias(UUID tenantId, String bundleAlias, String alias);
+    WidgetType findByTenantIdAndFqn(UUID tenantId, String fqn);
 
+    /**
+     * Find widget types infos by tenantId and resourceId in descriptor.
+     *
+     * @param tenantId the tenantId
+     * @param tbResourceId the resourceId
+     * @return the list of widget types infos objects
+     */
+    List<WidgetTypeDetails> findWidgetTypesInfosByTenantIdAndResourceId(UUID tenantId, UUID tbResourceId);
 }

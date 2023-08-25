@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +44,7 @@ import static org.thingsboard.server.controller.UserController.ACTIVATE_URL_PATT
 public class DefaultUserService extends AbstractTbEntityService implements TbUserService {
 
     private final UserService userService;
+    private final TbAlarmService tbAlarmService;
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
 
@@ -52,7 +54,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
         ActionType actionType = tbUser.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             boolean sendEmail = tbUser.getId() == null && sendActivationMail;
-            User savedUser = checkNotNull(userService.saveUser(tbUser));
+            User savedUser = checkNotNull(userService.saveUser(tenantId, tbUser));
             if (sendEmail) {
                 UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
                 String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
@@ -66,8 +68,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                     throw e;
                 }
             }
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, savedUser.getId(),
-                    savedUser, user, actionType, true, null);
+            notificationEntityService.logEntityAction(tenantId, savedUser.getId(), savedUser, customerId, actionType, user);
             return savedUser;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER), tbUser, actionType, user, e);
@@ -77,15 +78,16 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
 
     @Override
     public void delete(TenantId tenantId, CustomerId customerId, User tbUser, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.DELETED;
         UserId userId = tbUser.getId();
 
         try {
+            tbAlarmService.unassignUserAlarms(tbUser.getTenantId(), tbUser, System.currentTimeMillis());
             userService.deleteUser(tenantId, userId);
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, userId, tbUser,
-                    user, ActionType.DELETED, true, null, customerId.toString());
+            notificationEntityService.logEntityAction(tenantId, userId, tbUser, customerId, actionType, user, customerId.toString());
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER),
-                    ActionType.DELETED, user, e, userId.toString());
+                    actionType, user, e, userId.toString());
             throw e;
         }
     }

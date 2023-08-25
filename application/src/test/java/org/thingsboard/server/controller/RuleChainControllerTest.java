@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNode;
 import org.thingsboard.rule.engine.action.TbCreateAlarmNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode;
 import org.thingsboard.rule.engine.metadata.TbGetRelatedDataNodeConfiguration;
 import org.thingsboard.server.common.data.StringUtils;
@@ -52,7 +50,6 @@ import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -63,7 +60,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class RuleChainControllerTest extends AbstractControllerTest {
 
-    private IdComparator<RuleChain> idComparator = new IdComparator<>();
+    private final IdComparator<RuleChain> idComparator = new IdComparator<>();
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -245,7 +242,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         doDelete("/api/ruleChain/" + savedRuleChain.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedRuleChain, savedRuleChain.getId(), savedRuleChain.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventOneTime(savedRuleChain, savedRuleChain.getId(), savedRuleChain.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.DELETED, savedRuleChain.getId().getId().toString());
 
@@ -260,14 +257,13 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
 
 
-        List<RuleChain> edgeRuleChains = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<RuleChain> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId() + "/ruleChains?",
                 new TypeReference<>() {
                 }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
-        edgeRuleChains.addAll(pageData.getData());
+        List<RuleChain> edgeRuleChains = new ArrayList<>(pageData.getData());
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -284,11 +280,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new RuleChain(), new RuleChain(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, ActionType.ADDED, cntEntity, 0, cntEntity * 2);
-        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new RuleChain(), new RuleChain(),
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ASSIGNED_TO_EDGE, ActionType.ASSIGNED_TO_EDGE, cntEntity, cntEntity, cntEntity * 2,
-                new String(), new String(), new String());
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity * 2);
         Mockito.reset(tbClusterService, auditLogService);
 
         List<RuleChain> loadedEdgeRuleChains = new ArrayList<>();
@@ -303,8 +295,8 @@ public class RuleChainControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edgeRuleChains, idComparator);
-        Collections.sort(loadedEdgeRuleChains, idComparator);
+        edgeRuleChains.sort(idComparator);
+        loadedEdgeRuleChains.sort(idComparator);
 
         Assert.assertEquals(edgeRuleChains, loadedEdgeRuleChains);
 

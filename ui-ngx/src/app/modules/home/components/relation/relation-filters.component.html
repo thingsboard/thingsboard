@@ -15,49 +15,47 @@
     limitations under the License.
 
 -->
-<div class="tb-relation-filters" [formGroup]="relationFiltersFormGroup">
-  <div class="container">
-    <div class="body" [fxShow]="relationFiltersFormArray.length">
-      <div style="margin-bottom: 10px;" class="row" fxFlex fxLayout="row"
-           fxLayoutAlign="start center" formArrayName="relationFilters"
+<div class="tb-form-panel no-border no-padding">
+  <div class="tb-form-table" [formGroup]="relationFiltersFormGroup">
+    <div class="tb-form-table-header">
+      <div class="tb-form-table-header-cell flex-50">{{ 'relation.type' | translate }}</div>
+      <div class="tb-form-table-header-cell flex-50">{{ 'entity.entity-types' | translate }}</div>
+      <div class="tb-form-table-header-cell actions-header"></div>
+    </div>
+    <div class="tb-form-table-body" formArrayName="relationFilters">
+      <div class="tb-form-table-row"
            *ngFor="let relationFilterControl of relationFiltersFormArray.controls; let $index = index">
-        <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-          <div class="input-block" fxFlex fxLayout="row" fxLayoutGap="28px" fxLayoutAlign="start center" style="margin-right: 8px">
-            <tb-relation-type-autocomplete fxFlex="50"
-              subscriptSizing="dynamic"
-              style="min-width: 200px;"
-              [formControl]="relationFilterControl.get('relationType')">
-            </tb-relation-type-autocomplete>
-            <tb-entity-type-list fxFlex="50"
-              subscriptSizing="dynamic"
-              [label]="'entity.entity-types' | translate"
-              floatLabel="always"
-              [allowedEntityTypes]="allowedEntityTypes"
-              [formControl]="relationFilterControl.get('entityTypes')">
-            </tb-entity-type-list>
-          </div>
-          <button mat-icon-button color="primary"
-                  type="button"
+        <tb-relation-type-autocomplete subscriptSizing="dynamic"
+                                       class="flex-50" showLabel="false"
+                                       [additionalClasses]="['tb-inline-field']"
+                                       appearance="outline"
+                                       [formControl]="relationFilterControl.get('relationType')">
+        </tb-relation-type-autocomplete>
+        <tb-entity-type-list class="entity-type-list flex-50" subscriptSizing="dynamic" appearance="outline"
+                             [additionalClasses]="['tb-inline-field', 'tb-chips', 'flex']"
+                             filledInputPlaceholder="{{ 'entity.add-entity-type' | translate }}"
+                             [allowedEntityTypes]="allowedEntityTypes"
+                             [formControl]="relationFilterControl.get('entityTypes')">
+        </tb-entity-type-list>
+        <div class="tb-form-table-row-cell-buttons">
+          <button type="button"
+                  mat-icon-button
                   (click)="removeFilter($index)"
                   [disabled]="isLoading$ | async"
-                  matTooltip="{{ 'relation.remove-relation-filter' | translate }}"
+                  matTooltip="{{ 'relation.remove-filter' | translate }}"
                   matTooltipPosition="above">
-            <mat-icon>close</mat-icon>
+            <mat-icon>delete</mat-icon>
           </button>
+        </div>
+      </div>
+      <div [fxShow]="!relationFiltersFormArray.length">
+        <span fxLayoutAlign="center center" class="tb-prompt" translate>relation.any-relation</span>
       </div>
     </div>
   </div>
-  <div class="any-filter" [fxShow]="!relationFiltersFormArray.length">
-        <span fxLayoutAlign="center center"
-              class="tb-prompt" translate>relation.any-relation</span>
+  <div>
+    <button type="button" mat-stroked-button color="primary" (click)="addFilter()">
+      {{ 'filter.add' | translate }}
+    </button>
   </div>
-  <button mat-stroked-button color="primary"
-          class="add-button"
-          [disabled]="isLoading$ | async"
-          (click)="addFilter()"
-          type="button"
-          matTooltip="{{ 'relation.add-relation-filter' | translate }}"
-          matTooltipPosition="above">
-    {{ 'relation.add-relation-filter' | translate }}
-  </button>
 </div>

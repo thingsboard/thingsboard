@@ -83,7 +83,7 @@ export function loadNodeCtxFunction<F extends (...args: any[]) => any>(functionB
 }
 
 export function materialIconHtml(materialIcon: string): string {
-  return '<mat-icon class="node-icon material-icons" role="img" aria-hidden="false">' + materialIcon + '</mat-icon>';
+  return '<mat-icon class="mat-icon node-icon material-icons" role="img" aria-hidden="false">' + materialIcon + '</mat-icon>';
 }
 
 export function iconUrlHtml(iconUrl: string): string {

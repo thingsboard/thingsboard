@@ -119,6 +119,7 @@ interface JQueryPlotSelection {
   color?: string;
   shape?: JQueryPlotSelectionShape;
   minSize?: number;
+  touch?: boolean;
 }
 
 interface JQueryPlotSelectionRanges {

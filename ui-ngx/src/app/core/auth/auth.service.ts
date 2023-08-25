@@ -244,7 +244,7 @@ export class AuthService {
     if (authState && authState.authUser) {
       if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
         if ((this.userHasDefaultDashboard(authState) && authState.forceFullscreen) || authState.authUser.isPublic) {
-          if (path === 'profile' || path === 'security') {
+          if (path.startsWith('account')) {
             if (this.userHasProfile(authState.authUser)) {
               return false;
             } else {
@@ -385,10 +385,10 @@ export class AuthService {
         } else if (authPayload.authUser) {
           authPayload.authUser.authority = Authority.ANONYMOUS;
         }
-        if (authPayload.authUser.isPublic) {
+        if (authPayload.authUser?.isPublic) {
           authPayload.forceFullscreen = true;
         }
-        if (authPayload.authUser.isPublic) {
+        if (authPayload.authUser?.isPublic) {
           this.loadSystemParams().subscribe(
             (sysParams) => {
               authPayload = {...authPayload, ...sysParams};
@@ -399,10 +399,10 @@ export class AuthService {
               loadUserSubject.error(err);
             }
           );
-        } else if (authPayload.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
+        } else if (authPayload.authUser?.authority === Authority.PRE_VERIFICATION_TOKEN) {
           loadUserSubject.next(authPayload);
           loadUserSubject.complete();
-        } else if (authPayload.authUser.userId) {
+        } else if (authPayload.authUser?.userId) {
           this.userService.getUser(authPayload.authUser.userId).subscribe(
             (user) => {
               authPayload.userDetails = user;

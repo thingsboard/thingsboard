@@ -71,7 +71,6 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import {
-  DatasourceType,
   Widget,
   WidgetConfig,
   WidgetInfo,
@@ -150,6 +149,7 @@ import { tap } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 
 // @dynamic
 @Component({
@@ -159,7 +159,15 @@ import { ResizeObserver } from '@juggle/resize-observer';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardPageComponent extends PageComponent implements IDashboardController, OnInit, AfterViewInit, OnDestroy {
+export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
+
+  get isDirty(): boolean {
+    return this.isEdit;
+  }
+
+  set isDirty(value: boolean) {
+
+  }
 
   authState: AuthState = getCurrentAuthState(this.store);
 
@@ -182,7 +190,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   get hideToolbar(): boolean {
-    return (this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit;
+    return ((this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit) || (this.isEditingWidget || this.isAddingWidget);
   }
 
   @Input()
@@ -406,6 +414,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.updateLayoutSizes();
     });
     this.dashboardResize$.observe(this.dashboardContainer.nativeElement);
+    if (!this.widgetEditMode && !this.readonly && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
+      this.setEditMode(true, false);
+    }
   }
 
   private init(data: DashboardPageInitData) {
@@ -1140,14 +1151,14 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
     this.searchBundle = '';
-    this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
+    this.widgetComponentService.getWidgetInfo(widget.typeFullFqn).subscribe(
       (widgetTypeInfo) => {
         const config: WidgetConfig = this.dashboardUtils.widgetConfigFromWidgetType(widgetTypeInfo);
-        config.title = 'New ' + widgetTypeInfo.widgetName;
+        if (!config.title) {
+          config.title = 'New ' + widgetTypeInfo.widgetName;
+        }
         let newWidget: Widget = {
-          isSystemType: widget.isSystemType,
-          bundleAlias: widget.bundleAlias,
-          typeAlias: widgetTypeInfo.alias,
+          typeFullFqn: widgetTypeInfo.fullFqn,
           type: widgetTypeInfo.type,
           title: 'New widget',
           image: null,
@@ -1166,6 +1177,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
             Widget>(AddWidgetDialogComponent, {
             disableClose: true,
             panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+            maxWidth: '95vw',
             data: {
               dashboard: this.dashboard,
               aliasController: this.dashboardCtx.aliasController,

@@ -66,7 +66,7 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, widgetTypeUpdateMsg.getMsgType());
         Assert.assertEquals(savedWidgetType.getUuidId().getMostSignificantBits(), widgetTypeUpdateMsg.getIdMSB());
         Assert.assertEquals(savedWidgetType.getUuidId().getLeastSignificantBits(), widgetTypeUpdateMsg.getIdLSB());
-        Assert.assertEquals(savedWidgetType.getAlias(), widgetTypeUpdateMsg.getAlias());
+        Assert.assertEquals(savedWidgetType.getFqn(), widgetTypeUpdateMsg.getFqn());
         Assert.assertEquals(savedWidgetType.getName(), widgetTypeUpdateMsg.getName());
         Assert.assertEquals(JacksonUtil.toJsonNode(widgetTypeUpdateMsg.getDescriptorJson()), savedWidgetType.getDescriptor());
 

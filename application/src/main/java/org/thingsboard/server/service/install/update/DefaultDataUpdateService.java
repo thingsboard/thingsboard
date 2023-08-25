@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -202,19 +203,24 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 } else {
                     log.info("Skipping audit logs migration");
                 }
-                boolean skipEdgeEventsMigration = getEnv("TB_SKIP_EDGE_EVENTS_MIGRATION", false);
-                if (!skipEdgeEventsMigration) {
-                    log.info("Starting edge events migration. Can be skipped with TB_SKIP_EDGE_EVENTS_MIGRATION env variable set to true");
-                    edgeEventDao.migrateEdgeEvents();
-                } else {
-                    log.info("Skipping edge events migration");
-                }
+                migrateEdgeEvents("Starting edge events migration. ");
                 break;
             case "3.5.1":
                 log.info("Updating data from version 3.5.1 to 3.5.2 ...");
+                migrateEdgeEvents("Starting edge events migration - adding seq_id column. ");
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
+        }
+    }
+
+    private void migrateEdgeEvents(String logPrefix) {
+        boolean skipEdgeEventsMigration = getEnv("TB_SKIP_EDGE_EVENTS_MIGRATION", false);
+        if (!skipEdgeEventsMigration) {
+            log.info(logPrefix + "Can be skipped with TB_SKIP_EDGE_EVENTS_MIGRATION env variable set to true");
+            edgeEventDao.migrateEdgeEvents();
+        } else {
+            log.info("Skipping edge events migration");
         }
     }
 
@@ -497,7 +503,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
                             md.getNodes().add(ruleNode);
                             md.setFirstNodeIndex(newIdx);
-                            md.addConnectionInfo(newIdx, oldIdx, "Success");
+                            md.addConnectionInfo(newIdx, oldIdx, TbNodeConnectionType.SUCCESS);
                             ruleChainService.saveRuleChainMetaData(tenant.getId(), md, Function.identity());
                         }
                     } catch (Exception e) {

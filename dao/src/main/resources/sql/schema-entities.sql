@@ -482,13 +482,15 @@ CREATE TABLE IF NOT EXISTS user_credentials (
 CREATE TABLE IF NOT EXISTS widget_type (
     id uuid NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    alias varchar(255),
+    fqn varchar(512),
     bundle_alias varchar(255),
     descriptor varchar(1000000),
     name varchar(255),
     tenant_id uuid,
     image varchar(1000000),
-    description varchar(255)
+    deprecated boolean NOT NULL DEFAULT false,
+    description varchar(255),
+    CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn)
 );
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (
@@ -720,6 +722,7 @@ CREATE TABLE IF NOT EXISTS edge (
 );
 
 CREATE TABLE IF NOT EXISTS edge_event (
+    seq_id INT GENERATED ALWAYS AS IDENTITY,
     id uuid NOT NULL,
     created_time bigint NOT NULL,
     edge_id uuid,
@@ -731,6 +734,7 @@ CREATE TABLE IF NOT EXISTS edge_event (
     tenant_id uuid,
     ts bigint NOT NULL
 ) PARTITION BY RANGE(created_time);
+ALTER TABLE IF EXISTS edge_event ALTER COLUMN seq_id SET CYCLE;
 
 CREATE TABLE IF NOT EXISTS rpc (
     id uuid NOT NULL CONSTRAINT rpc_pkey PRIMARY KEY,
@@ -824,7 +828,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     targets VARCHAR(10000) NOT NULL,
     template_id UUID,
     template VARCHAR(10000000),
-    info VARCHAR(1000),
+    info VARCHAR(1000000),
     additional_config VARCHAR(1000),
     originator_entity_id UUID,
     originator_entity_type VARCHAR(32),

@@ -66,9 +66,6 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   disabled: boolean;
 
   @Input()
-  showClearButton = true;
-
-  @Input()
   showPreview = true;
 
   @Input()

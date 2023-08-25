@@ -67,7 +67,7 @@ public class AlarmsCleanUpServiceTest extends AbstractControllerTest {
     @Test
     public void testAlarmsCleanUp() throws Exception {
         int ttlDays = 1;
-        updateDefaultTenantProfile(profileConfiguration -> {
+        updateDefaultTenantProfileConfig(profileConfiguration -> {
             profileConfiguration.setAlarmsTtlDays(ttlDays);
         });
 

@@ -167,6 +167,8 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                         attributes.put(attr.getKey(), attr.getDoubleValue().get());
                     } else if (attr.getDataType() == DataType.LONG && attr.getLongValue().isPresent()) {
                         attributes.put(attr.getKey(), attr.getLongValue().get());
+                    } else if (attr.getDataType() == DataType.JSON && attr.getJsonValue().isPresent()) {
+                        attributes.set(attr.getKey(), JacksonUtil.toJsonNode(attr.getJsonValue().get()));
                     } else {
                         attributes.put(attr.getKey(), attr.getValueAsString());
                     }
