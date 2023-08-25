@@ -29,16 +29,12 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async">
-      <tb-rule-node #tbRuleNode
-        [ruleNode]="ruleNode"
-        [ruleChainId]="ruleChainId"
-        [ruleChainType]="ruleChainType"
-        [isEdit]="true"
-        [isAdd]="true"
-        [isReadOnly]="false">
-      </tb-rule-node>
-    </fieldset>
+    <tb-rule-node #tbRuleNode
+                  [ruleNode]="ruleNode"
+                  [ruleChainId]="ruleChainId"
+                  [ruleChainType]="ruleChainType"
+                  isAdd>
+    </tb-rule-node>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"
