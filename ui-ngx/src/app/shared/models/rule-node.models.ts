@@ -74,6 +74,7 @@ export interface IRuleNodeConfigurationComponent {
   ruleNodeId: string;
   ruleChainId: string;
   hasScript: boolean;
+  disabled: boolean;
   testScriptLabel?: string;
   changeScript?: EventEmitter<void>;
   ruleChainType: RuleChainType;
@@ -100,6 +101,14 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
   configurationValue: RuleNodeConfiguration;
 
   private configurationSet = false;
+
+  set disabled(value: boolean) {
+    if (value) {
+      this.configForm().disable({emitEvent: false});
+    } else {
+      this.configForm().enable({emitEvent: false});
+    }
+  };
 
   set configuration(value: RuleNodeConfiguration) {
     this.configurationValue = value;
