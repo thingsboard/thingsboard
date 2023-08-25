@@ -69,7 +69,7 @@
                                                                    width: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px' }">
                   <div [fxHide]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                     <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
-                      <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
+                      <span *ngIf="!actionDescriptor.icon" style="width: 48px;"></span>
                       <button *ngIf="actionDescriptor.icon"
                               mat-icon-button [disabled]="isLoading$ | async"
                               matTooltip="{{ actionDescriptor.displayName }}"
