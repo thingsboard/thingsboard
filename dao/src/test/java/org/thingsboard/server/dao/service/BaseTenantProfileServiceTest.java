@@ -188,17 +188,6 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveSameTenantProfileWithDifferentIsolatedTbRuleEngine() {
-        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
-        TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-        savedTenantProfile.setIsolatedTbRuleEngine(true);
-        addMainQueueConfig(savedTenantProfile);
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
-        });
-    }
-
-    @Test
     public void testDeleteTenantProfileWithExistingTenant() {
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
         TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);

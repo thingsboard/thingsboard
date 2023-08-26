@@ -22,6 +22,7 @@ import com.microsoft.azure.servicebus.primitives.MessagingEntityAlreadyExistsExc
 import com.microsoft.azure.servicebus.primitives.ServiceBusException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -60,7 +61,7 @@ public class TbServiceBusAdmin implements TbQueueAdmin {
     }
 
     @Override
-    public void createTopicIfNotExists(String topic) {
+    public void createTopicIfNotExists(String topic, String properties) {
         if (queues.contains(topic)) {
             return;
         }
@@ -68,7 +69,7 @@ public class TbServiceBusAdmin implements TbQueueAdmin {
         try {
             QueueDescription queueDescription = new QueueDescription(topic);
             queueDescription.setRequiresDuplicateDetection(false);
-            setQueueConfigs(queueDescription);
+            setQueueConfigs(queueDescription, PropertyUtils.getProps(queueConfigs, properties));
 
             client.createQueue(queueDescription);
             queues.add(topic);
@@ -107,7 +108,7 @@ public class TbServiceBusAdmin implements TbQueueAdmin {
         }
     }
 
-    private void setQueueConfigs(QueueDescription queueDescription) {
+    private void setQueueConfigs(QueueDescription queueDescription, Map<String, String> queueConfigs) {
         queueConfigs.forEach((confKey, confValue) -> {
             switch (confKey) {
                 case MAX_SIZE:

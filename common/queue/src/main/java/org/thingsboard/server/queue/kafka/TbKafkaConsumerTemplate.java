@@ -114,7 +114,6 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
 
     @Override
     protected void doUnsubscribe() {
-        log.info("unsubscribe topic and close consumer for topic {}", getTopic());
         if (consumer != null) {
             consumer.unsubscribe();
             consumer.close();
@@ -123,4 +122,10 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
             statsService.unregisterClientGroup(groupId);
         }
     }
+
+    @Override
+    public boolean isLongPollingSupported() {
+        return true;
+    }
+
 }

@@ -301,7 +301,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationRuleProcessing_entitiesLimit() throws Exception {
         int limit = 5;
-        updateDefaultTenantProfile(profileConfiguration -> {
+        updateDefaultTenantProfileConfig(profileConfiguration -> {
             profileConfiguration.setMaxDevices(limit);
             profileConfiguration.setMaxAssets(limit);
             profileConfiguration.setMaxCustomers(limit);
@@ -396,7 +396,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationRequestsPerRuleRateLimits() throws Exception {
         int notificationRequestsLimit = 10;
-        updateDefaultTenantProfile(profileConfiguration -> {
+        updateDefaultTenantProfileConfig(profileConfiguration -> {
             profileConfiguration.setTenantNotificationRequestsPerRuleRateLimit(notificationRequestsLimit + ":300");
         });
 

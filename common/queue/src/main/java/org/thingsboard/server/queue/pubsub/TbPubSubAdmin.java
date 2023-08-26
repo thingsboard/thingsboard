@@ -103,7 +103,7 @@ public class TbPubSubAdmin implements TbQueueAdmin {
     }
 
     @Override
-    public void createTopicIfNotExists(String partition) {
+    public void createTopicIfNotExists(String partition, String properties) {
         TopicName topicName = TopicName.newBuilder()
                 .setTopic(partition)
                 .setProject(pubSubSettings.getProjectId())

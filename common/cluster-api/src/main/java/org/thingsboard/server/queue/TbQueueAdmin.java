@@ -17,7 +17,11 @@ package org.thingsboard.server.queue;
 
 public interface TbQueueAdmin {
 
-    void createTopicIfNotExists(String topic);
+    default void createTopicIfNotExists(String topic) {
+        createTopicIfNotExists(topic, null);
+    }
+
+    void createTopicIfNotExists(String topic, String properties);
 
     void destroy();
 
