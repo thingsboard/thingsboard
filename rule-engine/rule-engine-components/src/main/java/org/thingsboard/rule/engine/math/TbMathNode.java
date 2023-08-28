@@ -154,10 +154,17 @@ public class TbMathNode implements TbNode {
                         tryProcessQueue(lockAndQueue);
                     }
                 }, ctx.getDbCallbackExecutor());
-            } catch (Throwable e) {
+            } catch (Throwable t) {
                 semaphore.release();
-                log.warn("[{}] Failed to process message: {}", lockAndQueue.getEntityId(), tbMsgTbContext == null ? null : tbMsgTbContext.getMsg(), e);
-                throw e;
+                if (tbMsgTbContext == null) { // if no message polled, the loop become infinite, will throw exception
+                    log.error("[{}] Failed to process TbMsgTbContext queue", lockAndQueue.getEntityId(), t);
+                    throw t;
+                }
+                TbMsg msg = tbMsgTbContext.getMsg();
+                TbContext ctx = tbMsgTbContext.getCtx();
+                log.warn("[{}] Failed to process message: {}", lockAndQueue.getEntityId(), msg, t);
+                ctx.tellFailure(msg, t); // you are not allowed to throw here, because queue will remain unprocessed
+                continue; // We are probably the last who process the queue. We have to continue poll until get successful callback or queue is empty
             }
             break; //submitted async exact one task. next poll will try on callback
         }
@@ -364,7 +371,7 @@ public class TbMathNode implements TbNode {
         return function.apply(arg1.getValue(), arg2.getValue());
     }
 
-    private ListenableFuture<TbMathArgumentValue> resolveArguments(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, TbMathArgument arg) {
+    ListenableFuture<TbMathArgumentValue> resolveArguments(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, TbMathArgument arg) {
         switch (arg.getType()) {
             case CONSTANT:
                 return Futures.immediateFuture(TbMathArgumentValue.constant(arg));

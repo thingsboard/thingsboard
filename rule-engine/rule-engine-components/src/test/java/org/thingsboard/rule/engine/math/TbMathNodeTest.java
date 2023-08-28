@@ -64,6 +64,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -575,6 +576,59 @@ public class TbMathNodeTest {
         verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(fastMsgList.size() + slowMsgList.size()))).tellSuccess(any());
 
         verify(ctx, never()).tellFailure(any(), any());
+    }
+
+    @Test
+    public void testExp4j_concurrentBySingleOriginator_processMsgAsyncException() {
+        TbMathNode node = spy(initNodeWithCustomFunction("2a+3b",
+                new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a"),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
+        ));
+
+        willThrow(new RuntimeException("Message body has no 'delta'")).given(node).resolveArguments(any(), any(), any(), any());
+
+        EntityId originatorSlow = DeviceId.fromString("7f01170d-6bba-419c-b95c-2b4c3ba32f30");
+        CountDownLatch slowProcessingLatch = new CountDownLatch(1);
+
+        List<TbMsg> slowMsgList = IntStream.range(0, 5)
+                .mapToObj(x -> TbMsg.newMsg("TEST", originatorSlow, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
+                .collect(Collectors.toList());
+
+        assertThat(slowMsgList.size()).as("slow msgs >= rule-dispatcher pool size").isGreaterThanOrEqualTo(RULE_DISPATCHER_POOL_SIZE);
+
+        log.debug("rule-dispatcher [{}], db-callback [{}], slowMsg [{}]", RULE_DISPATCHER_POOL_SIZE, DB_CALLBACK_POOL_SIZE, slowMsgList.size());
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            if (slowProcessingLatch.getCount() > 0) {
+                log.debug("Await on slowProcessingLatch before processMsgAsync");
+                try {
+                    assertThat(slowProcessingLatch.await(30, TimeUnit.SECONDS)).as("await on slowProcessingLatch").isTrue();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            log.debug("\uD83D\uDC0C processMsgAsync with exception [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).processMsgAsync(eq(ctx), argThat(slowMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("submit slow originator onMsg [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).onMsg(eq(ctx), argThat(slowMsgList::contains));
+
+        // submit slow msg may block all rule engine dispatcher threads
+        slowMsgList.forEach(msg -> ruleEngineDispatcherExecutor.executeAsync(() -> node.onMsg(ctx, msg)));
+        // wait until dispatcher threads started with all slowMsg
+        verify(node, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).onMsg(eq(ctx), argThat(slowMsgList::contains));
+
+        slowProcessingLatch.countDown();
+
+        verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).tellFailure(any(), any());
+        verify(ctx, never()).tellSuccess(any());
+
     }
 
     static class RuleDispatcherExecutor extends AbstractListeningExecutor {
