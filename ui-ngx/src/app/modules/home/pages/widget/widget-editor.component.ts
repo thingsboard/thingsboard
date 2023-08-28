@@ -15,20 +15,22 @@
 ///
 
 import { PageComponent } from '@shared/components/page.component';
-import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Inject,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
-import { detailsToWidgetInfo, toWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
-import {
-  Widget,
-  WidgetConfig,
-  WidgetType,
-  widgetType,
-  WidgetTypeDetails,
-  widgetTypesData
-} from '@shared/models/widget.models';
+import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
+import { Widget, WidgetConfig, widgetType, WidgetTypeDetails, widgetTypesData } from '@shared/models/widget.models';
 import { ActivatedRoute, Router } from '@angular/router';
 import { deepClone } from '@core/utils';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
@@ -51,13 +53,18 @@ import {
   SaveWidgetTypeAsDialogComponent,
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
-import { forkJoin, from, Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
-import Timeout = NodeJS.Timeout;
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
+import {
+  MoveWidgetTypeDialogComponent,
+  MoveWidgetTypeDialogData,
+  MoveWidgetTypeDialogResult
+} from '@home/pages/widget/move-widget-type-dialog.component';
+import Timeout = NodeJS.Timeout;
 
 // @dynamic
 @Component({
@@ -148,6 +155,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   iframeWidgetEditModeInited = false;
   saveWidgetPending = false;
   saveWidgetAsPending = false;
+  moveWidgetPending = false;
 
   gotError = false;
   errorMarkers: number[] = [];
@@ -156,6 +164,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   saveWidgetTimeout: Timeout;
 
   hotKeys: Hotkey[] = [];
+
+  updateBreadcrumbs = new EventEmitter();
 
   private rxSubscriptions = new Array<Subscription>();
 
@@ -248,6 +258,16 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           return false;
         }, ['INPUT', 'SELECT', 'TEXTAREA'],
         this.translate.instant('widget.saveAs'))
+    );
+    this.hotKeys.push(
+      new Hotkey('shift+ctrl+m', (event: KeyboardEvent) => {
+          if (!getCurrentIsLoading(this.store) && !this.moveDisabled()) {
+            event.preventDefault();
+            this.moveWidget();
+          }
+          return false;
+        }, ['INPUT', 'SELECT', 'TEXTAREA'],
+        this.translate.instant('widget.move'))
     );
     this.hotKeys.push(
       new Hotkey('shift+ctrl+f', (event: KeyboardEvent) => {
@@ -542,17 +562,22 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   private commitSaveWidget() {
     const id = (this.widgetTypeDetails && this.widgetTypeDetails.id) ? this.widgetTypeDetails.id : undefined;
     const createdTime = (this.widgetTypeDetails && this.widgetTypeDetails.createdTime) ? this.widgetTypeDetails.createdTime : undefined;
-    this.widgetService.saveWidgetTypeDetails(this.widget, id, this.widgetsBundle.alias, createdTime).subscribe(
-      (widgetTypeDetails) => {
-        this.setWidgetTypeDetails(widgetTypeDetails);
+    this.widgetService.saveWidgetTypeDetails(this.widget, id, this.widgetsBundle.alias, createdTime).subscribe({
+      next: (widgetTypeDetails) => {
         this.saveWidgetPending = false;
+        if (!this.widgetTypeDetails?.id) {
+          this.isDirty = false;
+          this.router.navigate(['..', widgetTypeDetails.id.id], {relativeTo: this.route});
+        } else {
+          this.setWidgetTypeDetails(widgetTypeDetails);
+        }
         this.store.dispatch(new ActionNotificationShow(
           {message: this.translate.instant('widget.widget-saved'), type: 'success', duration: 500}));
       },
-      () => {
+      error: () => {
         this.saveWidgetPending = false;
       }
-    );
+    });
   }
 
   private commitSaveWidgetAs() {
@@ -570,12 +595,18 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           this.widget.defaultConfig = JSON.stringify(config);
           this.isDirty = false;
           this.widgetService.saveWidgetTypeDetails(this.widget, undefined, saveWidgetAsData.bundleAlias, undefined).subscribe(
-            (widgetTypeDetails) => {
-              this.router.navigateByUrl(`/widgets-bundles/${saveWidgetAsData.bundleId}/widgetTypes/${widgetTypeDetails.id.id}`);
-            }
-          );
+            {
+              next: (widgetTypeDetails) => {
+                this.saveWidgetAsPending = false;
+                this.router.navigateByUrl(`/widgets-bundles/${saveWidgetAsData.bundleId}/widgetTypes/${widgetTypeDetails.id.id}`);
+              },
+              error: () => {
+                this.saveWidgetAsPending = false;
+              }
+            });
+        } else {
+          this.saveWidgetAsPending = false;
         }
-        this.saveWidgetAsPending = false;
       }
     );
   }
@@ -587,6 +618,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.widget.defaultConfig = JSON.stringify(config);
     this.origWidget = deepClone(this.widget);
     this.isDirty = false;
+    this.updateBreadcrumbs.emit();
   }
 
   applyWidgetScript(): void {
@@ -623,6 +655,34 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.applyWidgetScript();
   }
 
+  moveWidget() {
+    this.moveWidgetPending = true;
+    this.dialog.open<MoveWidgetTypeDialogComponent, MoveWidgetTypeDialogData,
+      MoveWidgetTypeDialogResult>(MoveWidgetTypeDialogComponent, {
+      disableClose: true,
+      data: {
+        currentBundleId: this.widgetsBundle.id.id
+      },
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+    }).afterClosed().subscribe(
+      (moveWidgetTypeData) => {
+        if (moveWidgetTypeData) {
+          this.widgetService.moveWidgetType(this.widgetTypeDetails.id.id, moveWidgetTypeData.bundleAlias).subscribe({
+            next: (widgetTypeDetails) => {
+              this.moveWidgetPending = false;
+              this.router.navigateByUrl(`/widgets-bundles/${moveWidgetTypeData.bundleId}/widgetTypes/${widgetTypeDetails.id.id}`);
+            },
+            error: () => {
+              this.moveWidgetPending = false;
+            }
+          });
+        } else {
+          this.moveWidgetPending = false;
+        }
+      }
+    );
+  }
+
   undoDisabled(): boolean {
     return !this.isDirty
     || !this.iframeWidgetEditModeInited
@@ -642,6 +702,15 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     return !this.iframeWidgetEditModeInited
       || this.saveWidgetPending
       || this.saveWidgetAsPending;
+  }
+
+  moveDisabled(): boolean {
+    return this.isReadOnly
+      || !this.widgetTypeDetails?.id
+      || !this.iframeWidgetEditModeInited
+      || this.saveWidgetPending
+      || this.saveWidgetAsPending
+      || this.moveWidgetPending;
   }
 
   beautifyCss(): void {

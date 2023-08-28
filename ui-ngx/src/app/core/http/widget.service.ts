@@ -152,9 +152,12 @@ export class WidgetService {
     return this.getBundleWidgetTypes(bundleAlias, isSystem, config).pipe(
       map((types) => {
         types = types.sort((a, b) => {
-          let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
+          let result = (a.deprecated ? 1 : 0) - (b.deprecated ? 1 : 0);
           if (result === 0) {
-            result = b.createdTime - a.createdTime;
+            result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
+            if (result === 0) {
+              result = b.createdTime - a.createdTime;
+            }
           }
           return result;
         });
@@ -180,6 +183,9 @@ export class WidgetService {
           };
 
           widget.config.title = widgetTypeInfo.widgetName;
+          if (type.deprecated) {
+            widget.config.title += ` (${this.translate.instant('widget.deprecated')})`;
+          }
 
           widgetTypes.push(widget);
           top += sizeY;
@@ -210,6 +216,22 @@ export class WidgetService {
                                config?: RequestConfig): Observable<WidgetTypeDetails> {
     const widgetTypeDetails = toWidgetTypeDetails(widgetInfo, id, undefined, bundleAlias, createdTime);
     return this.http.post<WidgetTypeDetails>('/api/widgetType', widgetTypeDetails,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      tap((savedWidgetType) => {
+        this.widgetTypeUpdated(savedWidgetType);
+      }));
+  }
+
+  public setWidgetTypeDeprecated(widgetTypeId: string, deprecated: boolean, config?: RequestConfig): Observable<WidgetTypeDetails> {
+    return this.http.post<WidgetTypeDetails>(`/api/widgetType/${widgetTypeId}/deprecate/${deprecated}`,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      tap((savedWidgetType) => {
+        this.widgetTypeUpdated(savedWidgetType);
+      }));
+  }
+
+  public moveWidgetType(widgetTypeId: string, targetBundleAlias: string, config?: RequestConfig): Observable<WidgetTypeDetails> {
+    return this.http.post<WidgetTypeDetails>(`/api/widgetType/${widgetTypeId}/move?targetBundleAlias=${targetBundleAlias}`,
       defaultHttpOptionsFromConfig(config)).pipe(
       tap((savedWidgetType) => {
         this.widgetTypeUpdated(savedWidgetType);
