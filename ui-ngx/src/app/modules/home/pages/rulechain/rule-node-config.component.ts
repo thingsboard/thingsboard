@@ -165,6 +165,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
     } else {
       this.ruleNodeConfigFormGroup.enable({emitEvent: false});
     }
+    if (this.definedConfigComponent) {
+      this.definedConfigComponent.disabled = this.disabled;
+    }
   }
 
   writeValue(value: RuleNodeConfiguration): void {
@@ -222,6 +225,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       this.definedConfigComponent.ruleChainId = this.ruleChainId;
       this.definedConfigComponent.ruleChainType = this.ruleChainType;
       this.definedConfigComponent.configuration = this.configuration;
+      this.definedConfigComponent.disabled = this.disabled;
       this.changeSubscription = this.definedConfigComponent.configurationChanged.subscribe((configuration) => {
         this.updateModel(configuration);
       });
