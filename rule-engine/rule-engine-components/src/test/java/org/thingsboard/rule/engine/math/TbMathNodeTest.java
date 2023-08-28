@@ -57,7 +57,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -490,10 +489,11 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey")
         );
         TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 10).toString());
-        Throwable thrown = assertThrows(RuntimeException.class, () -> {
-            node.onMsg(ctx, msg);
-        });
-        Assert.assertNotNull(thrown.getMessage());
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<Throwable> tCaptor = ArgumentCaptor.forClass(Throwable.class);
+        Mockito.verify(ctx, Mockito.timeout(5000)).tellFailure(eq(msg), tCaptor.capture());
+        Assert.assertNotNull(tCaptor.getValue().getMessage());
     }
 
     @Test
@@ -504,10 +504,11 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), "[]");
-        Throwable thrown = assertThrows(RuntimeException.class, () -> {
-            node.onMsg(ctx, msg);
-        });
-        Assert.assertNotNull(thrown.getMessage());
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<Throwable> tCaptor = ArgumentCaptor.forClass(Throwable.class);
+        Mockito.verify(ctx, Mockito.timeout(5000)).tellFailure(eq(msg), tCaptor.capture());
+        Assert.assertNotNull(tCaptor.getValue().getMessage());
     }
 
     @Test
