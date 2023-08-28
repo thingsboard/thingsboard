@@ -55,7 +55,7 @@
         "continue": "继续",
         "discard-changes": "放弃更改",
         "download": "下载",
-        "next": "Next",
+        "next": "下一个",
         "next-with-label": "下一个：{{label}}",
         "read-more": "阅读更多",
         "hide": "隐藏",
@@ -258,7 +258,7 @@
             "copy-mobile-app-secret": "复制应用程序密钥",
             "add-mobile-app": "添加应用程序",
             "delete-mobile-app": "删除应用程序信息",
-            "providers": "Providers",
+            "providers": "供应商",
             "platform-web": "Web",
             "platform-android": "Android",
             "platform-ios": "iOS",
@@ -522,7 +522,7 @@
         "refresh": "刷新",
         "oldest-first": "最早优先",
         "newest-first": "最新优先",
-        "activity": "Activity",
+        "activity": "活动",
         "export": "导出 CSV",
         "author": "作者",
         "created-date": "创建时间",
@@ -543,17 +543,17 @@
         "filter-type-state-entity": "仪表板状态实体",
         "filter-type-state-entity-description": "仪表板实体令牌状态参数",
         "filter-type-asset-type": "资产类型",
-        "filter-type-asset-type-description": "类型为 '{{assetType}}' 的资产",
-        "filter-type-asset-type-and-name-description": "类型为 '{{assetType}}' 且以 '{{prefix}}' 开头的资产",
+        "filter-type-asset-type-description": "类型为 '{{assetTypes}}' 的资产",
+        "filter-type-asset-type-and-name-description": "类型为 '{{assetTypes}}' 且以 '{{prefix}}' 开头的资产",
         "filter-type-device-type": "设备类型",
-        "filter-type-device-type-description": "类型为 '{{deviceType}}' 的设备",
-        "filter-type-device-type-and-name-description": "类型为 '{{deviceType}}' 且以 '{{prefix}}' 开头的设备",
+        "filter-type-device-type-description": "类型为 '{{deviceTypes}}' 的设备",
+        "filter-type-device-type-and-name-description": "类型为 '{{deviceTypes}}' 且以 '{{prefix}}' 开头的设备",
         "filter-type-entity-view-type": "实体视图类型",
-        "filter-type-entity-view-type-description": "类型为 '{{entityView}}' 的实体视图",
-        "filter-type-entity-view-type-and-name-description": "类型为 {{entityView}}' 且以 '{{prefix}}' 开头的实体视图",
+        "filter-type-entity-view-type-description": "类型为 '{{entityViews}}' 的实体视图",
+        "filter-type-entity-view-type-and-name-description": "类型为 {{entityViews}}' 且以 '{{prefix}}' 开头的实体视图",
         "filter-type-edge-type": "边缘类型",
-        "filter-type-edge-type-description": "类型为 '{{edgeType}}' 的边缘",
-        "filter-type-edge-type-and-name-description": "类型为 '{{edgeType}}' 且以 '{{prefix}}' 开头的边缘",
+        "filter-type-edge-type-description": "类型为 '{{edgeTypes}}' 的边缘",
+        "filter-type-edge-type-and-name-description": "类型为 '{{edgeTypes}}' 且以 '{{prefix}}' 开头的边缘",
         "filter-type-relations-query": "关联查询",
         "filter-type-relations-query-description": "具有 {{relationType}} 关联 {{direction}} {{rootEntity}} 的 {{entities}} ",
         "filter-type-asset-search-query": "资产搜索查询",
@@ -690,7 +690,7 @@
         "add-to-dashboard": "添加到仪表板",
         "add-widget-to-dashboard": "将部件添加到仪表板",
         "selected-attributes": "已选择 { count, plural, =1 {1 个属性} other {# 个属性} }",
-        "selected-telemetry": "已选择 { count, plural, =1 {1 telemetry unit} other {# telemetry units} }",
+        "selected-telemetry": "已选择 { count, plural, =1 {1 遥测装置} other {# 遥测装置} }",
         "no-attributes-text": "未找到属性",
         "no-telemetry-text": "未找到遥测数据",
         "copy-key": "复制键",
@@ -5260,90 +5260,6 @@
             "critical": "严重",
             "assigned-to-me": "分配给我",
             "total": "总数"
-        },
-        "getting-started": {
-            "get-started": "开始使用",
-            "finish": "完成",
-            "done-welcome-title": "欢迎加入",
-            "done-welcome-text": "你做得很棒！",
-            "sys-admin": {
-                "step1": {
-                    "title": "创建租户和租户管理员",
-                    "content": "<p>租户是拥有或生产设备和资产的个人或组织。租户可以拥有多个租户管理员用户、客户、设备和资产。</p><p>租户管理员可以在租户账户内创建和管理设备、资产、客户和仪表盘。</p><p>请按照文档中的说明进行操作：</p>",
-                    "how-to-create-tenant": "如何创建租户和租户管理员"
-                },
-                "step2": {
-                    "title": "配置功能：邮件服务器",
-                    "content": "<p>邮件服务器配置对于用户激活、密码恢复和告警通知非常重要。</p><p>请按照文档中的说明进行配置：</p>",
-                    "how-to-configure-mail-server": "如何配置邮件服务器"
-                },
-                "step3": {
-                    "title": "配置功能：短信提供商",
-                    "content": "<p>配置短信提供商，通过短信向客户通知告警。</p><p>请按照文档中的说明进行配置：</p>",
-                    "how-to-configure-sms-provider": "如何配置短信提供商"
-                },
-                "step4": {
-                    "title": "配置功能：双因素认证（2FA）",
-                    "content": "<p>通过双因素认证提高平台账户的安全性。</p><p>请按照文档中的说明进行配置：</p>",
-                    "how-to-configure-2fa": "如何配置双因素认证（2FA）"
-                },
-                "step5": {
-                    "title": "配置功能：OAuth 2",
-                    "content": "<p>使用 OAuth 2.0 的单点登录功能简化租户和客户用户的登录过程。</p><p>请按照文档中的说明进行配置：</p>",
-                    "how-to-configure-oauth2": "如何配置 OAuth 2"
-                },
-                "step6": {
-                    "title": "配置功能：Slack",
-                    "content": "<p>根据您设置的通知规则，通过 Slack 将通知发送给租户和客户用户。</p><p>请按照文档中的说明进行配置：</p>",
-                    "how-to-configure-notifications": "如何配置 Slack"
-                }
-            },
-            "tenant-admin": {
-                "step1": {
-                    "title": "创建设备",
-                    "content": "<p>让我们通过用户界面将您的第一个设备添加到平台上。按照文档中的说明进行操作：</p>",
-                    "how-to-create-device": "如何创建设备"
-                },
-                "step2": {
-                    "title": "连接设备",
-                    "content-before": "<p>要连接设备，您需要获取设备凭据。我们建议在本指南中使用默认的自动生成的凭据，即访问令牌。</p><ul><li>转到设备表格</li><li>单击设备行以打开设备详细信息</li><li>按下“复制访问令牌”按钮</li></ul><p>使用简单的命令通过HTTP发布数据。不要忘记用您的设备访问令牌替换<em> $ACCESS_TOKEN </em>：</p>",
-                    "ubuntu": {
-                        "install-curl": "在 Ubuntu 安装 cURL："
-                    },
-                    "macos": {
-                        "install-curl": "在 MacOS 安装 cURL："
-                    },
-                    "windows": {
-                        "install-curl": "从 Windows10 b17063 开始，默认情况下提供cURL。"
-                    },
-                    "replace-access-token": "使用您的设备令牌替换<em> $ACCESS_TOKEN </em>：",
-                    "content-after": "<p>您也可以使用其他协议，比如 MQTT、CoAP 等。</p><p>按照文档中的说明进行操作：</p>",
-                    "how-to-connect-device": "如何连接设备"
-                },
-                "step3": {
-                    "title": "创建仪表盘",
-                    "content": "<p>创建一个仪表盘，用于可视化来自资产、设备等实体的数据。</p><p>按照文档中的说明进行操作：</p>",
-                    "how-to-create-dashboard": "如何创建仪表盘"
-                },
-                "step4": {
-                    "title": "配置告警规则",
-                    "alarm-rules": "告警规则",
-                    "content": "<p>让我们在温度达到25°C时触发告警。按照文档中的说明进行操作：</p>",
-                    "how-to-configure-alarm-rules": "如何配置告警规则"
-                },
-                "step5": {
-                    "title": "创建告警",
-                    "content-before": "<p>为了触发告警，请发送一个新的温度值，温度大于或等于26°C。</p>",
-                    "replace-access-token": "请将<em>$ACCESS_TOKEN</em>替换为您的设备的令牌：",
-                    "content-after": "<p>按照文档中的说明进行操作：</p>",
-                    "how-to-create-alarm": "如何创建告警"
-                },
-                "step6": {
-                    "title": "创建客户并分配仪表盘",
-                    "content": "<p>通过创建终端用户仪表盘，客户用户只能查看自己的设备，其他客户的数据将被隐藏。</p><p>按照文档中的说明进行操作：</p>",
-                    "how-to-create-customer-and-assign-dashboard": "如何创建客户并分配仪表盘"
-                }
-            }
         }
     },
     "icon": {
@@ -5365,7 +5281,7 @@
             "row-click": "点击行时",
             "polygon-click": "单击多边形",
             "marker-click": "点击标记时",
-            "circle-click": "On circle click",
+            "circle-click": "在圆圈上单击",
             "tooltip-tag-action": "Tooltip tag action",
             "node-selected": "选择节点时",
             "element-click": "点击HTML元素时",
