@@ -150,7 +150,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
                 }
                 apiUsageReportClient.ifPresent(client -> client.report(tenantId, customerId, ApiUsageRecordKey.JS_EXEC_COUNT, 1));
                 pushedMsgs.incrementAndGet();
-                log.trace("InvokeScript uuid {} with timeout {}ms", scriptId, getMaxInvokeRequestsTimeout());
+                log.trace("[{}] InvokeScript uuid {} with timeout {}ms", tenantId, scriptId, getMaxInvokeRequestsTimeout());
                 var task = doInvokeFunction(scriptId, args);
 
                 var resultFuture = Futures.transformAsync(task.getResultFuture(), output -> {
@@ -167,7 +167,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
             } else {
                 String message = "Script invocation is blocked due to maximum error count "
                         + getMaxErrors() + ", scriptId " + scriptId + "!";
-                log.warn(message);
+                log.warn("[{}] " + message, tenantId);
                 return error(message);
             }
         } else {
