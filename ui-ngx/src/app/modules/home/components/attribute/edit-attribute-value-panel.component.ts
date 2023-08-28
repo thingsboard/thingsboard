@@ -21,6 +21,7 @@ import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { OverlayRef } from '@angular/cdk/overlay';
+import { requiredAllowEmptyArrayValidator } from '@core/utils';
 
 export const EDIT_ATTRIBUTE_VALUE_PANEL_DATA = new InjectionToken<any>('EditAttributeValuePanelData');
 
@@ -52,7 +53,7 @@ export class EditAttributeValuePanelComponent extends PageComponent implements O
 
   ngOnInit(): void {
     this.attributeFormGroup = this.fb.group({
-      value: [this.data.attributeValue, []]
+      value: [this.data.attributeValue, [requiredAllowEmptyArrayValidator()]]
     });
   }
 

@@ -24,6 +24,7 @@ import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-t
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -773,4 +774,16 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
     } while (matches);
   }
   return label;
+}
+
+export function requiredAllowEmptyArrayValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value: any = control.value;
+    if (value == null || (typeof value === 'string' && value.length === 0)) {
+      return {
+        required: true
+      };
+    }
+    return null;
+  }
 }

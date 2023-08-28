@@ -25,6 +25,7 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
+import { requiredAllowEmptyArrayValidator } from '@core/utils';
 
 export interface AddAttributeDialogData {
   entityId: EntityId;
@@ -57,7 +58,7 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
   ngOnInit(): void {
     this.attributeFormGroup = this.fb.group({
       key: ['', [Validators.required, Validators.maxLength(255)]],
-      value: [null, []]
+      value: [null, [requiredAllowEmptyArrayValidator()]]
     });
   }
 

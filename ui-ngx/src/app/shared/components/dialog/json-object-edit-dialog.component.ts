@@ -22,7 +22,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { isNotEmptyStr } from '@core/utils';
+import { isNotEmptyStr, requiredAllowEmptyArrayValidator } from '@core/utils';
 
 export interface JsonObjectEditDialogData {
   jsonValue: object;
@@ -60,7 +60,7 @@ export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEdi
       this.cancelButtonLabel = this.data.cancelLabel;
     }
     this.jsonFormGroup = this.fb.group({
-      json: [this.data.jsonValue, []]
+      json: [this.data.jsonValue, [requiredAllowEmptyArrayValidator()]]
     });
   }
 
