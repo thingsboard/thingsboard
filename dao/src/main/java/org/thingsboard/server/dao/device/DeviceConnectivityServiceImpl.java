@@ -19,8 +19,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.openssl.PEMParser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -35,11 +37,17 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.CHECK_DOCUMENTATION;
@@ -59,6 +67,8 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public static final String INCORRECT_DEVICE_ID = "Incorrect deviceId ";
     public static final String DEFAULT_DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
 
+    private final Map<String, Resource> certs = new ConcurrentHashMap<>();
+
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
 
@@ -67,6 +77,9 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
     @Autowired
     private DeviceConnectivityConfiguration deviceConnectivityConfiguration;
+
+    @Autowired
+    private DeviceConnectivityServiceImpl deviceConnectivityService;
 
     @Override
     public JsonNode findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
@@ -115,15 +128,50 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
     @Override
     public Resource getPemCertFile(String protocol) {
-        String certFilePath = deviceConnectivityConfiguration.getConnectivity()
-                .get(protocol)
-                .getPemCertFile();
+        return certs.computeIfAbsent(protocol, key -> {
+            String certFilePath = deviceConnectivityConfiguration.getConnectivity()
+                    .get(protocol)
+                    .getPemCertFile();
+            if (StringUtils.isNotBlank(certFilePath) && ResourceUtils.resourceExists(this, certFilePath)) {
+                try {
+                    return getCert(certFilePath);
+                } catch (Exception e) {
+                    String msg = String.format("Failed to read %s server certificate!", protocol);
+                    log.warn(msg);
+                    throw new RuntimeException(msg, e);
+                }
+            } else {
+                return null;
+            }
+        });
+    }
 
-        if (StringUtils.isNotBlank(certFilePath) && ResourceUtils.resourceExists(this, certFilePath)) {
-            return new ClassPathResource(certFilePath);
-        } else {
-            return null;
+    private Resource getCert(String path) throws Exception {
+        StringBuilder pemContentBuilder = new StringBuilder();
+
+        try (InputStream inStream = ResourceUtils.getInputStream(this, path);
+             PEMParser pemParser = new PEMParser(new InputStreamReader(inStream))) {
+
+            Object object;
+
+            while ((object = pemParser.readObject()) != null) {
+                if (object instanceof X509CertificateHolder) {
+                    var certHolder = (X509CertificateHolder) object;
+                    String certBase64 = Base64.getEncoder().encodeToString(certHolder.getEncoded());
+
+                    pemContentBuilder.append("-----BEGIN CERTIFICATE-----\n");
+                    int index = 0;
+                    while (index < certBase64.length()) {
+                        pemContentBuilder.append(certBase64, index, Math.min(index + 64, certBase64.length()));
+                        pemContentBuilder.append("\n");
+                        index += 64;
+                    }
+                    pemContentBuilder.append("-----END CERTIFICATE-----\n");
+                }
+            }
         }
+
+        return new ByteArrayResource(pemContentBuilder.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     private JsonNode getHttpTransportPublishCommands(String defaultHostname, DeviceCredentials deviceCredentials) throws URISyntaxException {
