@@ -19,14 +19,11 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetProfileId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 @Slf4j
 public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
@@ -50,9 +47,9 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             assetProfile.setImage(assetProfileUpdateMsg.hasImage()
                     ? new String(assetProfileUpdateMsg.getImage().toByteArray(), StandardCharsets.UTF_8) : null);
 
-            setDefaultRuleChainId(assetProfile, assetProfileUpdateMsg);
-            setDefaultEdgeRuleChainId(assetProfile, assetProfileUpdateMsg);
-            setDefaultDashboardId(assetProfile, assetProfileUpdateMsg);
+            setDefaultRuleChainId(tenantId, assetProfile, assetProfileUpdateMsg);
+            setDefaultEdgeRuleChainId(tenantId, assetProfile, assetProfileUpdateMsg);
+            setDefaultDashboardId(tenantId, assetProfile, assetProfileUpdateMsg);
 
             assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
             if (created) {
@@ -65,9 +62,9 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
         return created;
     }
 
-    protected abstract void setDefaultRuleChainId(AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
+    protected abstract void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
 
-    protected abstract void setDefaultEdgeRuleChainId(AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
+    protected abstract void setDefaultEdgeRuleChainId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
 
-    protected abstract void setDefaultDashboardId(AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
+    protected abstract void setDefaultDashboardId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
 }

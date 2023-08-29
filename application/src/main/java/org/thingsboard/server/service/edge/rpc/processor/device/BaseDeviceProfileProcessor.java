@@ -70,9 +70,9 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
                     dataDecodingEncodingService.decode(deviceProfileUpdateMsg.getProfileDataBytes().toByteArray());
             deviceProfile.setProfileData(profileDataOpt.orElse(null));
 
-            setDefaultRuleChainId(deviceProfile, deviceProfileUpdateMsg);
-            setDefaultEdgeRuleChainId(deviceProfile, deviceProfileUpdateMsg);
-            setDefaultDashboardId(deviceProfile, deviceProfileUpdateMsg);
+            setDefaultRuleChainId(tenantId, deviceProfile, deviceProfileUpdateMsg);
+            setDefaultEdgeRuleChainId(tenantId, deviceProfile, deviceProfileUpdateMsg);
+            setDefaultDashboardId(tenantId, deviceProfile, deviceProfileUpdateMsg);
 
             String defaultQueueName = StringUtils.isNotBlank(deviceProfileUpdateMsg.getDefaultQueueName())
                     ? deviceProfileUpdateMsg.getDefaultQueueName() : null;
@@ -95,9 +95,9 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
         return created;
     }
 
-    protected abstract void setDefaultRuleChainId(DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg);
+    protected abstract void setDefaultRuleChainId(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg);
 
-    protected abstract void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg);
+    protected abstract void setDefaultEdgeRuleChainId(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg);
 
-    protected abstract void setDefaultDashboardId(DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg);
+    protected abstract void setDefaultDashboardId(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg);
 }
