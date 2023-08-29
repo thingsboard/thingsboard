@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 
+import javax.annotation.PostConstruct;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -78,8 +79,18 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     @Autowired
     private DeviceConnectivityConfiguration deviceConnectivityConfiguration;
 
-    @Autowired
-    private DeviceConnectivityServiceImpl deviceConnectivityService;
+    @PostConstruct
+    private void init() {
+        DeviceConnectivityInfo mqtts = deviceConnectivityConfiguration.getConnectivity().get(MQTTS);
+        if (mqtts != null && mqtts.isEnabled()) {
+            String certFilePath = mqtts.getPemCertFile();
+            if (StringUtils.isBlank(certFilePath) || !ResourceUtils.resourceExists(this, certFilePath)) {
+                String error = StringUtils.isBlank(certFilePath) ? "path is empty" : "file is not exists";
+                log.error("MQTTS is enabled but cert {}!", error);
+            }
+        }
+
+    }
 
     @Override
     public JsonNode findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
