@@ -15,25 +15,21 @@
 ///
 
 import { Component, Input } from '@angular/core';
-import { HelpLinks } from '@shared/models/constants';
+import { TooltipPosition } from '@angular/material/tooltip';
 
 @Component({
-  selector: '[tb-help]',
-  templateUrl: './help.component.html'
+  selector: '[tb-hint-tooltip-icon]',
+  templateUrl: './hint-tooltip-icon.component.html',
+  styleUrls: ['./hint-tooltip-icon.component.scss']
 })
-export class HelpComponent {
+export class HintTooltipIconComponent {
 
-  @Input('tb-help') helpLinkId: string;
+  @Input('tb-hint-tooltip-icon') tooltipText: string;
 
-  gotoHelpPage(): void {
-    let helpUrl = HelpLinks.linksMap[this.helpLinkId];
-    if (!helpUrl && this.helpLinkId &&
-      (this.helpLinkId.startsWith('http://') || this.helpLinkId.startsWith('https://'))) {
-      helpUrl = this.helpLinkId;
-    }
-    if (helpUrl) {
-      window.open(helpUrl, '_blank');
-    }
-  }
+  @Input()
+  tooltipPosition: TooltipPosition = 'right';
+
+  @Input()
+  hintIcon = 'info';
 
 }

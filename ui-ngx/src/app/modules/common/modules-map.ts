@@ -183,6 +183,7 @@ import * as ToggleSelectComponent from '@shared/components/toggle-select.compone
 import * as UnitInputComponent from '@shared/components/unit-input.component';
 import * as MaterialIconsComponent from '@shared/components/material-icons.component';
 import * as TbIconComponent from '@shared/components/icon.component';
+import * as HintTooltipIconComponent from '@shared/components/hint-tooltip-icon.component';
 
 import * as AddEntityDialogComponent from '@home/components/entity/add-entity-dialog.component';
 import * as EntitiesTableComponent from '@home/components/entity/entities-table.component';
@@ -486,6 +487,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/unit-input.component': UnitInputComponent,
     '@shared/components/material-icons.component': MaterialIconsComponent,
     '@shared/components/icon.component': TbIconComponent,
+    '@shared/components/hint-tooltip-icon.component': HintTooltipIconComponent,
 
     '@home/components/entity/add-entity-dialog.component': AddEntityDialogComponent,
     '@home/components/entity/entities-table.component': EntitiesTableComponent,
