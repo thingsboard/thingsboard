@@ -105,6 +105,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     boolean prometheusStatsEnabled;
     @Value("${queue.rule-engine.topic-deletion-delay:30}")
     private int topicDeletionDelayInSec;
+    @Value("${queue.rule-engine.repartition-thread-pool-size:1}")
+    private int repartitionThreadPoolSize;
 
     private final StatsFactory statsFactory;
     private final TbRuleEngineSubmitStrategyFactory submitStrategyFactory;
@@ -121,7 +123,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final ConcurrentMap<QueueKey, TbRuleEngineConsumerStats> consumerStats = new ConcurrentHashMap<>();
     private final ConcurrentMap<QueueKey, TbTopicWithConsumerPerPartition> topicsConsumerPerPartition = new ConcurrentHashMap<>();
     final ExecutorService submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-submit"));
-    final ScheduledExecutorService repartitionExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition"));
+    private ScheduledExecutorService repartitionExecutor;
 
     public DefaultTbRuleEngineConsumerService(TbRuleEngineProcessingStrategyFactory processingStrategyFactory,
                                               TbRuleEngineSubmitStrategyFactory submitStrategyFactory,
@@ -154,6 +156,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @PostConstruct
     public void init() {
         super.init("tb-rule-engine-consumer", "tb-rule-engine-notifications-consumer");
+        this.repartitionExecutor = Executors.newScheduledThreadPool(repartitionThreadPoolSize, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition"));
+
         List<Queue> queues = queueService.findAllQueues();
         for (Queue configuration : queues) {
             if (partitionService.isManagedByCurrentService(configuration.getTenantId())) {
