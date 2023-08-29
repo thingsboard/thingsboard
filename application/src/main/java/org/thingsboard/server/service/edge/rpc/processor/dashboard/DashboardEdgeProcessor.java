@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -25,6 +26,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -41,6 +43,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -144,5 +147,15 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
                 break;
         }
         return downlinkMsg;
+    }
+
+    @Override
+    protected Set<ShortCustomerInfo> setAssignedCustomers(TenantId tenantId, Dashboard dashboard, DashboardUpdateMsg dashboardUpdateMsg) {
+        Set<ShortCustomerInfo> assignedCustomers = null;
+        if (dashboardUpdateMsg.hasAssignedCustomers()) {
+            assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
+            dashboard.setAssignedCustomers(assignedCustomers);
+        }
+        return assignedCustomers;
     }
 }

@@ -303,21 +303,21 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         UplinkResponseMsg latestResponseMsg = edgeImitator.getLatestResponseMsg();
         Assert.assertTrue(latestResponseMsg.getSuccess());
 
-        AssetProfile assetProfile = doGet("/api/deviceProfile/" + uuid, AssetProfile.class);
-        Assert.assertNotNull(assetProfile);
-        Assert.assertEquals("Device Profile On Edge", assetProfile.getName());
+        AssetProfile deviceProfile = doGet("/api/deviceProfile/" + uuid, AssetProfile.class);
+        Assert.assertNotNull(deviceProfile);
+        Assert.assertEquals("Device Profile On Edge", deviceProfile.getName());
 
         // delete profile
         edgeImitator.expectMessageAmount(1);
-        doDelete("/api/deviceProfile/" + assetProfile.getUuidId())
+        doDelete("/api/deviceProfile/" + deviceProfile.getUuidId())
                 .andExpect(status().isOk());
         Assert.assertTrue(edgeImitator.waitForMessages());
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof DeviceProfileUpdateMsg);
         DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) latestMessage;
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
-        Assert.assertEquals(assetProfile.getUuidId().getMostSignificantBits(), deviceProfileUpdateMsg.getIdMSB());
-        Assert.assertEquals(assetProfile.getUuidId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
+        Assert.assertEquals(deviceProfile.getUuidId().getMostSignificantBits(), deviceProfileUpdateMsg.getIdMSB());
+        Assert.assertEquals(deviceProfile.getUuidId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
 
         // cleanup
         unAssignFromEdgeAndDeleteDashboard(dashboardId);
