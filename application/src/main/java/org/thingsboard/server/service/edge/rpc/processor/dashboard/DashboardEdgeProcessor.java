@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -150,12 +149,8 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
     }
 
     @Override
-    protected Set<ShortCustomerInfo> setAssignedCustomers(TenantId tenantId, Dashboard dashboard, DashboardUpdateMsg dashboardUpdateMsg) {
-        Set<ShortCustomerInfo> assignedCustomers = null;
-        if (dashboardUpdateMsg.hasAssignedCustomers()) {
-            assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
-            dashboard.setAssignedCustomers(assignedCustomers);
-        }
+    protected Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers) {
+        // do nothing on cloud
         return assignedCustomers;
     }
 }

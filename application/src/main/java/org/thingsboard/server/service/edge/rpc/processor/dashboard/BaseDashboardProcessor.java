@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
@@ -44,7 +45,12 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         dashboard.setImage(dashboardUpdateMsg.hasImage() ? dashboardUpdateMsg.getImage() : null);
         dashboard.setConfiguration(JacksonUtil.toJsonNode(dashboardUpdateMsg.getConfiguration()));
 
-        Set<ShortCustomerInfo> assignedCustomers = setAssignedCustomers(tenantId, dashboard, dashboardUpdateMsg);
+        Set<ShortCustomerInfo> assignedCustomers = null;
+        if (dashboardUpdateMsg.hasAssignedCustomers()) {
+            assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
+            assignedCustomers = filterNonExistingCustomers(tenantId, assignedCustomers);
+            dashboard.setAssignedCustomers(assignedCustomers);
+        }
 
         dashboardValidator.validate(dashboard, Dashboard::getTenantId);
         if (created) {
@@ -63,7 +69,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         return created;
     }
 
-    protected abstract Set<ShortCustomerInfo> setAssignedCustomers(TenantId tenantId, Dashboard dashboard, DashboardUpdateMsg dashboardUpdateMsg);
+    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers);
 
     private void unassignCustomersFromDashboard(TenantId tenantId, Dashboard dashboard) {
         if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
