@@ -31,7 +31,7 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { AlarmFilterConfig, alarmFilterConfigEquals } from '@shared/models/query/query.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import {
   AlarmAssigneeOption,
@@ -44,8 +44,8 @@ import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from '@core/utils';
-import { Subscription } from 'rxjs';
-import { UtilsService } from '@core/services/utils.service';
+import { fromEvent, Subscription } from 'rxjs';
+import { POSITION_MAP } from '@shared/components/popover.models';
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmFilterConfigData');
 
@@ -128,7 +128,6 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
               private translate: TranslateService,
               private overlay: Overlay,
               private nativeElement: ElementRef,
-              private utils: UtilsService,
               private viewContainerRef: ViewContainerRef) {
   }
 
@@ -202,14 +201,9 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
       minWidth: ''
     });
     config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'start',
-      originY: 'bottom',
-      overlayX: 'start',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(this.nativeElement)
-      .withPositions([connectedPosition]);
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(this.nativeElement)
+      .withPositions([POSITION_MAP.bottomLeft]);
 
     this.alarmFilterOverlayRef = this.overlay.create(config);
     this.alarmFilterOverlayRef.backdropClick().subscribe(() => {
@@ -217,7 +211,9 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
     });
     this.alarmFilterOverlayRef.attach(new TemplatePortal(this.alarmFilterPanel,
       this.viewContainerRef));
-    this.resizeWindows = this.utils.updateOverlayMaxHeigth(this.alarmFilterOverlayRef);
+    this.resizeWindows = fromEvent(window, 'resize').subscribe(() => {
+      this.alarmFilterOverlayRef.updatePosition();
+    });
   }
 
   cancel() {
