@@ -188,6 +188,8 @@ message DashboardUpdateMsg {
   string configuration = 7;
   optional string assignedCustomers = 8;
   optional string image = 9;
+  optional int32 mobileOrder = 10;
+  bool mobileHide = 11;
 }
 
 message DeviceUpdateMsg {

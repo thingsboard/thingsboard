@@ -52,6 +52,9 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             dashboard.setAssignedCustomers(assignedCustomers);
         }
 
+        dashboard.setMobileOrder(dashboardUpdateMsg.hasMobileOrder() ? dashboardUpdateMsg.getMobileOrder() : null);
+        dashboard.setMobileHide(dashboardUpdateMsg.getMobileHide());
+
         dashboardValidator.validate(dashboard, Dashboard::getTenantId);
         if (created) {
             dashboard.setId(dashboardId);
