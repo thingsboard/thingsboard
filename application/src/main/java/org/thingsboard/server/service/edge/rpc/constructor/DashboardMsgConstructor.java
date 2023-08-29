@@ -37,6 +37,9 @@ public class DashboardMsgConstructor {
         if (dashboard.getAssignedCustomers() != null) {
             builder.setAssignedCustomers(JacksonUtil.toString(dashboard.getAssignedCustomers()));
         }
+        if (dashboard.getImage() != null) {
+            builder.setImage(dashboard.getImage());
+        }
         return builder.build();
     }
 

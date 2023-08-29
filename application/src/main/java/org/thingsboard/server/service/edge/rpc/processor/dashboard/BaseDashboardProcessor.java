@@ -42,6 +42,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             dashboard.setCreatedTime(Uuids.unixTimestamp(dashboardId.getId()));
         }
         dashboard.setTitle(dashboardUpdateMsg.getTitle());
+        dashboard.setImage(dashboardUpdateMsg.hasImage() ? dashboardUpdateMsg.getImage() : null);
         dashboard.setConfiguration(JacksonUtil.toJsonNode(dashboardUpdateMsg.getConfiguration()));
         Set<ShortCustomerInfo> assignedCustomers = null;
         if (dashboardUpdateMsg.hasAssignedCustomers()) {

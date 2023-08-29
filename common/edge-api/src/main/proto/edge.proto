@@ -187,6 +187,7 @@ message DashboardUpdateMsg {
   string title = 6;
   string configuration = 7;
   optional string assignedCustomers = 8;
+  optional string image = 9;
 }
 
 message DeviceUpdateMsg {
