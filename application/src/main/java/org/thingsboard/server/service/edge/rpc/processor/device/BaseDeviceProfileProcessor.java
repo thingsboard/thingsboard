@@ -54,7 +54,6 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
             }
             deviceProfile.setName(deviceProfileUpdateMsg.getName());
             deviceProfile.setDescription(deviceProfileUpdateMsg.hasDescription() ? deviceProfileUpdateMsg.getDescription() : null);
-            deviceProfile.setDefault(deviceProfileUpdateMsg.getDefault());
             deviceProfile.setType(DeviceProfileType.valueOf(deviceProfileUpdateMsg.getType()));
             deviceProfile.setTransportType(deviceProfileUpdateMsg.hasTransportType()
                     ? DeviceTransportType.valueOf(deviceProfileUpdateMsg.getTransportType()) : DeviceTransportType.DEFAULT);
