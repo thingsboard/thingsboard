@@ -61,12 +61,12 @@ public class EdgeSyncCursor {
                 fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
             }
         }
+        fetchers.add(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
         fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
         fetchers.add(new AssetProfilesEdgeEventFetcher(ctx.getAssetProfileService()));
         fetchers.add(new DevicesEdgeEventFetcher(ctx.getDeviceService()));
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));
         fetchers.add(new EntityViewsEdgeEventFetcher(ctx.getEntityViewService()));
-        fetchers.add(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
         if (fullSync) {
             fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
