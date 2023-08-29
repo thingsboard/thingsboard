@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Slf4j
-public class BaseAssetProfileProcessor extends BaseEdgeProcessor {
+public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
     protected boolean saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg) {
         boolean created = false;
@@ -50,11 +50,9 @@ public class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             assetProfile.setImage(assetProfileUpdateMsg.hasImage()
                     ? new String(assetProfileUpdateMsg.getImage().toByteArray(), StandardCharsets.UTF_8) : null);
 
-            UUID defaultRuleChainUUID = safeGetUUID(assetProfileUpdateMsg.getDefaultRuleChainIdMSB(), assetProfileUpdateMsg.getDefaultRuleChainIdLSB());
-            assetProfile.setDefaultRuleChainId(defaultRuleChainUUID != null ? new RuleChainId(defaultRuleChainUUID) : null);
-
-            UUID defaultDashboardUUID = safeGetUUID(assetProfileUpdateMsg.getDefaultDashboardIdMSB(), assetProfileUpdateMsg.getDefaultDashboardIdLSB());
-            assetProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);
+            setDefaultRuleChainId(assetProfile, assetProfileUpdateMsg);
+            setDefaultEdgeRuleChainId(assetProfile, assetProfileUpdateMsg);
+            setDefaultDashboardId(assetProfile, assetProfileUpdateMsg);
 
             assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
             if (created) {
@@ -66,4 +64,10 @@ public class BaseAssetProfileProcessor extends BaseEdgeProcessor {
         }
         return created;
     }
+
+    protected abstract void setDefaultRuleChainId(AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
+
+    protected abstract void setDefaultEdgeRuleChainId(AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
+
+    protected abstract void setDefaultDashboardId(AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
 }

@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -128,5 +130,22 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
                 break;
         }
         return downlinkMsg;
+    }
+
+    @Override
+    protected void setDefaultRuleChainId(AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg) {
+        // do nothing on cloud
+    }
+
+    @Override
+    protected void setDefaultEdgeRuleChainId(AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg) {
+        UUID defaultEdgeRuleChainUUID = safeGetUUID(assetProfileUpdateMsg.getDefaultRuleChainIdMSB(), assetProfileUpdateMsg.getDefaultRuleChainIdLSB());
+        assetProfile.setDefaultEdgeRuleChainId(defaultEdgeRuleChainUUID != null ? new RuleChainId(defaultEdgeRuleChainUUID) : null);
+    }
+
+    @Override
+    protected void setDefaultDashboardId(AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg) {
+        UUID defaultDashboardUUID = safeGetUUID(assetProfileUpdateMsg.getDefaultDashboardIdMSB(), assetProfileUpdateMsg.getDefaultDashboardIdLSB());
+        assetProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);
     }
 }
